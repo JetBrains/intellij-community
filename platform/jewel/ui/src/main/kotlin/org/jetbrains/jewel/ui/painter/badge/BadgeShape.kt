@@ -17,12 +17,15 @@ import androidx.compose.ui.unit.LayoutDirection
  */
 @Immutable
 public interface BadgeShape : Shape {
-
     /**
      * Create the outline of the clear area (or "hole") surrounding this badge
      * shape.
      */
-    public fun createHoleOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline
+    public fun createHoleOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline
 }
 
 internal val emptyOutline = Outline.Rectangle(Rect.Zero)

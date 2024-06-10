@@ -16,12 +16,10 @@ public class AlertStyling(
     public val warning: WarningAlertStyling,
     public val caution: CautionAlertStyling,
 ) {
-
     public companion object
 }
 
 public sealed interface BaseAlertStyling {
-
     public val padding: PaddingValues
     public val lineWidth: Dp
     public val lineColor: Color
@@ -45,7 +43,6 @@ public class NoteAlertStyling(
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
-
     public companion object
 }
 
@@ -61,7 +58,6 @@ public class TipAlertStyling(
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
-
     public companion object
 }
 
@@ -77,7 +73,6 @@ public class ImportantAlertStyling(
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
-
     public companion object
 }
 
@@ -93,7 +88,6 @@ public class WarningAlertStyling(
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
-
     public companion object
 }
 
@@ -109,6 +103,5 @@ public class CautionAlertStyling(
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
-
     public companion object
 }

@@ -616,6 +616,7 @@ public final class org/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$F
 	public static final field TopCenter Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced$InfoPosition;
 	public static final field TopEnd Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced$InfoPosition;
 	public static final field TopStart Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced$InfoPosition;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced$InfoPosition;
 	public static fun values ()[Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced$InfoPosition;
 }

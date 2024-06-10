@@ -40,11 +40,9 @@ import javax.swing.UIManager
 
 private val logger = Logger.getInstance("JewelBridge")
 
-public fun java.awt.Color.toComposeColor(): Color =
-    Color(red = red, green = green, blue = blue, alpha = alpha)
+public fun java.awt.Color.toComposeColor(): Color = Color(red = red, green = green, blue = blue, alpha = alpha)
 
-public fun java.awt.Color?.toComposeColorOrUnspecified(): Color =
-    this?.toComposeColor() ?: Color.Unspecified
+public fun java.awt.Color?.toComposeColorOrUnspecified(): Color = this?.toComposeColor() ?: Color.Unspecified
 
 public fun retrieveColorOrNull(key: String): Color? =
     try {
@@ -64,8 +62,7 @@ public fun retrieveColorOrUnspecified(key: String): Color {
     return color ?: Color.Unspecified
 }
 
-public fun retrieveColorsOrUnspecified(vararg keys: String): List<Color> =
-    keys.map { retrieveColorOrUnspecified(it) }
+public fun retrieveColorsOrUnspecified(vararg keys: String): List<Color> = keys.map { retrieveColorOrUnspecified(it) }
 
 public fun List<Color>.createVerticalBrush(
     startY: Float = 0.0f,
@@ -95,8 +92,7 @@ public fun retrieveIntAsDpOrUnspecified(key: String): Dp =
         Dp.Unspecified
     }
 
-public fun retrieveInsetsAsPaddingValues(key: String): PaddingValues =
-    UIManager.getInsets(key)?.toPaddingValues() ?: keyNotFound(key, "Insets")
+public fun retrieveInsetsAsPaddingValues(key: String): PaddingValues = UIManager.getInsets(key)?.toPaddingValues() ?: keyNotFound(key, "Insets")
 
 /**
  * Converts a [Insets] to [PaddingValues]. If the receiver is a [JBInsets]
@@ -116,16 +112,14 @@ public fun Insets.toPaddingValues(): PaddingValues =
  * [JBInsets.getUnscaled] values, treated as [Dp]. This avoids double
  * scaling.
  */
-public fun JBInsets.toPaddingValues(): PaddingValues =
-    PaddingValues(unscaled.left.dp, unscaled.top.dp, unscaled.right.dp, unscaled.bottom.dp)
+public fun JBInsets.toPaddingValues(): PaddingValues = PaddingValues(unscaled.left.dp, unscaled.top.dp, unscaled.right.dp, unscaled.bottom.dp)
 
 /**
  * Converts a [Dimension] to [DpSize]. If the receiver is a [JBDimension]
  * instance, this function delegates to the specific [toDpSize] for it,
  * which is scaling-aware.
  */
-public fun Dimension.toDpSize(): DpSize =
-    if (this is JBDimension) toDpSize() else DpSize(width.dp, height.dp)
+public fun Dimension.toDpSize(): DpSize = if (this is JBDimension) toDpSize() else DpSize(width.dp, height.dp)
 
 /**
  * Converts a [JBDimension] to [DpSize], in a scaling-aware way. This means
@@ -139,7 +133,10 @@ public fun JBDimension.toDpSize(): DpSize {
 
 public fun retrieveArcAsCornerSize(key: String): CornerSize = CornerSize(retrieveIntAsDp(key) / 2)
 
-public fun retrieveArcAsCornerSizeOrDefault(key: String, default: CornerSize): CornerSize {
+public fun retrieveArcAsCornerSizeOrDefault(
+    key: String,
+    default: CornerSize,
+): CornerSize {
     val intValue = retrieveIntAsDpOrUnspecified(key)
     if (intValue.isUnspecified) return default
     return CornerSize(intValue / 2)
@@ -159,7 +156,10 @@ public fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize
     keysNotFound(keys.toList(), "Int")
 }
 
-public fun retrieveTextStyle(fontKey: String, colorKey: String? = null): TextStyle {
+public fun retrieveTextStyle(
+    fontKey: String,
+    colorKey: String? = null,
+): TextStyle {
     val baseColor = colorKey?.let { retrieveColorOrUnspecified(colorKey) } ?: Color.Unspecified
     return retrieveTextStyle(fontKey, color = baseColor)
 }
@@ -176,8 +176,9 @@ public fun retrieveTextStyle(
     val lafFont = UIManager.getFont(key) ?: keyNotFound(key, "Font")
     val jbFont = JBFont.create(lafFont, false)
 
-    val derivedFont = jbFont.let { if (bold) it.asBold() else it.asPlain() }
-        .let { if (fontStyle == FontStyle.Italic) it.asItalic() else it }
+    val derivedFont =
+        jbFont.let { if (bold) it.asBold() else it.asPlain() }
+            .let { if (fontStyle == FontStyle.Italic) it.asItalic() else it }
 
     return TextStyle(
         color = color,

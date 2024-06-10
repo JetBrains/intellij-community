@@ -8,10 +8,8 @@ import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.unit.Dp
 
 public sealed class Stroke {
-
     @Immutable
     public object None : Stroke() {
-
         override fun toString(): String = "None"
     }
 

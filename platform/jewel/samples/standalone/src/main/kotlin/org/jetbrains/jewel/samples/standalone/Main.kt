@@ -39,18 +39,21 @@ fun main() {
 
         IntUiTheme(
             theme = themeDefinition,
-            styling = ComponentStyling.default().decoratedWindow(
-                titleBarStyle = when (MainViewModel.theme) {
-                    IntUiThemes.Light -> TitleBarStyle.light()
-                    IntUiThemes.LightWithLightHeader -> TitleBarStyle.lightWithLightHeader()
-                    IntUiThemes.Dark -> TitleBarStyle.dark()
-                    IntUiThemes.System -> if (MainViewModel.theme.isDark()) {
-                        TitleBarStyle.dark()
-                    } else {
-                        TitleBarStyle.light()
-                    }
-                },
-            ),
+            styling =
+                ComponentStyling.default().decoratedWindow(
+                    titleBarStyle =
+                        when (MainViewModel.theme) {
+                            IntUiThemes.Light -> TitleBarStyle.light()
+                            IntUiThemes.LightWithLightHeader -> TitleBarStyle.lightWithLightHeader()
+                            IntUiThemes.Dark -> TitleBarStyle.dark()
+                            IntUiThemes.System ->
+                                if (MainViewModel.theme.isDark()) {
+                                    TitleBarStyle.dark()
+                                } else {
+                                    TitleBarStyle.light()
+                                }
+                        },
+                ),
             swingCompatMode = MainViewModel.swingCompat,
         ) {
             DecoratedWindow(

@@ -35,10 +35,11 @@ import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 @View(title = "Welcome", position = 0, icon = "icons/meetNewUi.svg")
 fun WelcomeView() {
     Column(
-        modifier = Modifier.trackActivation()
-            .fillMaxSize()
-            .background(JewelTheme.globalColors.panelBackground)
-            .padding(24.dp),
+        modifier =
+            Modifier.trackActivation()
+                .fillMaxSize()
+                .background(JewelTheme.globalColors.panelBackground)
+                .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         val meetNewUiImage =
@@ -88,16 +89,21 @@ fun WelcomeView() {
 }
 
 @Composable
-fun ThemeSelectionChip(theme: IntUiThemes, name: String, icon: String) {
+fun ThemeSelectionChip(
+    theme: IntUiThemes,
+    name: String,
+    icon: String,
+) {
     RadioButtonChip(
         selected = MainViewModel.theme == theme,
         onClick = { MainViewModel.theme = theme },
         enabled = true,
     ) {
-        val painterProvider = rememberResourcePainterProvider(
-            icon,
-            StandaloneSampleIcons::class.java,
-        )
+        val painterProvider =
+            rememberResourcePainterProvider(
+                icon,
+                StandaloneSampleIcons::class.java,
+            )
         val painter by painterProvider.getPainter(Selected(MainViewModel.theme == theme))
         Row(
             horizontalArrangement = Arrangement.spacedBy(5.dp),

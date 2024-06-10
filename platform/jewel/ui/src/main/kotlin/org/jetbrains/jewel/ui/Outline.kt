@@ -17,8 +17,10 @@ public enum class Outline {
     ;
 
     public companion object {
-
-        public fun of(warning: Boolean, error: Boolean): Outline =
+        public fun of(
+            warning: Boolean,
+            error: Boolean,
+        ): Outline =
             when {
                 error -> Error
                 warning -> Warning

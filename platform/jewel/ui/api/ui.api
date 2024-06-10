@@ -71,6 +71,7 @@ public final class org/jetbrains/jewel/ui/NoIndication : androidx/compose/founda
 public final class org/jetbrains/jewel/ui/Orientation : java/lang/Enum {
 	public static final field Horizontal Lorg/jetbrains/jewel/ui/Orientation;
 	public static final field Vertical Lorg/jetbrains/jewel/ui/Orientation;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/Orientation;
 	public static fun values ()[Lorg/jetbrains/jewel/ui/Orientation;
 }
@@ -80,6 +81,7 @@ public final class org/jetbrains/jewel/ui/Outline : java/lang/Enum {
 	public static final field Error Lorg/jetbrains/jewel/ui/Outline;
 	public static final field None Lorg/jetbrains/jewel/ui/Outline;
 	public static final field Warning Lorg/jetbrains/jewel/ui/Outline;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/Outline;
 	public static fun values ()[Lorg/jetbrains/jewel/ui/Outline;
 }

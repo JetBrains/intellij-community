@@ -29,6 +29,4 @@ public fun DecoratedWindowColors.Companion.dark(
     inactiveBorderColor: Color = borderColor,
 ): DecoratedWindowColors = DecoratedWindowColors(borderColor, inactiveBorderColor)
 
-public fun DecoratedWindowMetrics.Companion.defaults(
-    borderWidth: Dp = 1.dp,
-): DecoratedWindowMetrics = DecoratedWindowMetrics(borderWidth)
+public fun DecoratedWindowMetrics.Companion.defaults(borderWidth: Dp = 1.dp): DecoratedWindowMetrics = DecoratedWindowMetrics(borderWidth)

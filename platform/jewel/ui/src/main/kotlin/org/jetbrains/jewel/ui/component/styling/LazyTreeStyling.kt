@@ -22,7 +22,6 @@ public class LazyTreeStyle(
     public val metrics: LazyTreeMetrics,
     public val icons: LazyTreeIcons,
 ) {
-
     public companion object
 }
 
@@ -37,7 +36,6 @@ public class LazyTreeColors(
     public val contentSelected: Color,
     public val contentSelectedFocused: Color,
 ) {
-
     @Composable
     public fun contentFor(state: TreeElementState): State<Color> =
         rememberUpdatedState(
@@ -62,7 +60,6 @@ public class LazyTreeMetrics(
     public val elementMinHeight: Dp,
     public val chevronContentGap: Dp,
 ) {
-
     public companion object
 }
 
@@ -74,9 +71,11 @@ public class LazyTreeIcons(
     public val chevronSelectedCollapsed: PainterProvider,
     public val chevronSelectedExpanded: PainterProvider,
 ) {
-
     @Composable
-    public fun chevron(isExpanded: Boolean, isSelected: Boolean): PainterProvider =
+    public fun chevron(
+        isExpanded: Boolean,
+        isSelected: Boolean,
+    ): PainterProvider =
         when {
             isSelected && isExpanded -> chevronSelectedExpanded
             isSelected && !isExpanded -> chevronSelectedCollapsed

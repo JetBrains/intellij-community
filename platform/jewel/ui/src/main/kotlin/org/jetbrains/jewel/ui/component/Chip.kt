@@ -55,13 +55,14 @@ public fun Chip(
         enabled = enabled,
         selected = selected,
         style = style,
-        modifier = modifier.clickable(
-            onClick = onClick,
-            enabled = enabled,
-            role = Role.Button,
-            interactionSource = interactionSource,
-            indication = null,
-        ),
+        modifier =
+            modifier.clickable(
+                onClick = onClick,
+                enabled = enabled,
+                role = Role.Button,
+                interactionSource = interactionSource,
+                indication = null,
+            ),
         content = content,
     )
 }
@@ -81,14 +82,15 @@ public fun ToggleableChip(
         enabled = enabled,
         selected = checked,
         style = style,
-        modifier = modifier.toggleable(
-            onValueChange = onClick,
-            enabled = enabled,
-            role = Role.Checkbox,
-            interactionSource = interactionSource,
-            indication = null,
-            value = checked,
-        ),
+        modifier =
+            modifier.toggleable(
+                onValueChange = onClick,
+                enabled = enabled,
+                role = Role.Checkbox,
+                interactionSource = interactionSource,
+                indication = null,
+                value = checked,
+            ),
         content = content,
     )
 }
@@ -108,14 +110,15 @@ public fun RadioButtonChip(
         enabled,
         selected,
         style,
-        modifier = modifier.selectable(
-            onClick = onClick,
-            enabled = enabled,
-            role = Role.RadioButton,
-            interactionSource = interactionSource,
-            indication = null,
-            selected = selected,
-        ),
+        modifier =
+            modifier.selectable(
+                onClick = onClick,
+                enabled = enabled,
+                role = Role.RadioButton,
+                interactionSource = interactionSource,
+                indication = null,
+                selected = selected,
+            ),
         content,
     )
 }
@@ -160,16 +163,18 @@ private fun ChipImpl(
         }
 
     Row(
-        modifier = modifier
-            .background(colors.backgroundFor(chipState).value, shape)
-            .border(Stroke.Alignment.Center, borderWidth, borderColor, shape)
-            .focusOutline(chipState, shape)
-            .padding(style.metrics.padding),
+        modifier =
+            modifier
+                .background(colors.backgroundFor(chipState).value, shape)
+                .border(Stroke.Alignment.Center, borderWidth, borderColor, shape)
+                .focusOutline(chipState, shape)
+                .padding(style.metrics.padding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
-        val resolvedContentColor = colors.contentFor(state = chipState).value
-            .takeOrElse { LocalContentColor.current }
+        val resolvedContentColor =
+            colors.contentFor(state = chipState).value
+                .takeOrElse { LocalContentColor.current }
 
         CompositionLocalProvider(LocalContentColor provides resolvedContentColor) {
             content()
@@ -181,7 +186,6 @@ private fun ChipImpl(
 @JvmInline
 public value class ChipState(public val state: ULong) :
     FocusableComponentState, SelectableComponentState {
-
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -222,7 +226,6 @@ public value class ChipState(public val state: ULong) :
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     public companion object {
-
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

@@ -222,9 +222,10 @@ private fun rememberVectorXmlResource(
     loader: ResourceLoader = ResourceLoader.Default,
 ): Painter {
     val density = LocalDensity.current
-    val image = remember(resourcePath, density, loader) {
-        useResource(resourcePath, loader) { loadXmlImageVector(InputSource(it), density) }
-    }
+    val image =
+        remember(resourcePath, density, loader) {
+            useResource(resourcePath, loader) { loadXmlImageVector(InputSource(it), density) }
+        }
     return rememberVectorPainter(image)
 }
 

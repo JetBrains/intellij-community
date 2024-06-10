@@ -111,9 +111,10 @@ public fun <T> BasicLazyTree(
 ) {
     val scope = rememberCoroutineScope()
 
-    val flattenedTree = remember(tree, treeState.openNodes, treeState.allNodes) {
-        tree.roots.flatMap { it.flattenTree(treeState) }
-    }
+    val flattenedTree =
+        remember(tree, treeState.openNodes, treeState.allNodes) {
+            tree.roots.flatMap { it.flattenTree(treeState) }
+        }
 
     remember(tree) { // if tree changes we need to update selection changes
         onSelectionChange(
@@ -144,18 +145,21 @@ public fun <T> BasicLazyTree(
                 TreeElementState.of(
                     active = isActive,
                     selected = isSelected,
-                    expanded = (element as? Tree.Element.Node)
-                        ?.let { it.id in treeState.openNodes }
-                        ?: false,
+                    expanded =
+                        (element as? Tree.Element.Node)
+                            ?.let { it.id in treeState.openNodes }
+                            ?: false,
                 )
 
             val backgroundShape by derivedStateOf {
-                val hasRoundedTopCorners = flattenedTree.getOrNull(index - 1)?.id?.let {
-                    it !in treeState.delegate.selectedKeys
-                } ?: true
-                val hasRoundedBottomCorners = flattenedTree.getOrNull(index + 1)?.id?.let {
-                    it !in treeState.delegate.selectedKeys
-                } ?: true
+                val hasRoundedTopCorners =
+                    flattenedTree.getOrNull(index - 1)?.id?.let {
+                        it !in treeState.delegate.selectedKeys
+                    } ?: true
+                val hasRoundedBottomCorners =
+                    flattenedTree.getOrNull(index + 1)?.id?.let {
+                        it !in treeState.delegate.selectedKeys
+                    } ?: true
                 val topCornerSize = computerCornerSize(hasRoundedTopCorners, elementBackgroundCornerSize)
                 val bottomCornerSize = computerCornerSize(hasRoundedBottomCorners, elementBackgroundCornerSize)
                 RoundedCornerShape(
@@ -168,41 +172,42 @@ public fun <T> BasicLazyTree(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier =
-                Modifier.defaultMinSize(minHeight = elementMinHeight)
-                    .padding(elementPadding)
-                    .elementBackground(
-                        state = elementState,
-                        selectedFocused = elementBackgroundSelectedFocused,
-                        focused = elementBackgroundFocused,
-                        selected = elementBackgroundSelected,
-                        backgroundShape = backgroundShape,
-                    )
-                    .padding(elementContentPadding)
-                    .padding(start = (element.depth * indentSize.value).dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) {
-                        (pointerEventScopedActions as? DefaultTreeViewPointerEventAction)
-                            ?.notifyItemClicked(
-                                item = flattenedTree[index] as Tree.Element<T>,
-                                scope = scope,
-                                doubleClickTimeDelayMillis = platformDoubleClickDelay.inWholeMilliseconds,
-                                onElementClick = onElementClick,
-                                onElementDoubleClick = onElementDoubleClick,
-                            )
-                        treeState.delegate.lastActiveItemIndex = index
-                    },
-            ) {
-                if (element is Tree.Element.Node) {
-                    Box(
-                        modifier = Modifier.clickable(
+                    Modifier.defaultMinSize(minHeight = elementMinHeight)
+                        .padding(elementPadding)
+                        .elementBackground(
+                            state = elementState,
+                            selectedFocused = elementBackgroundSelectedFocused,
+                            focused = elementBackgroundFocused,
+                            selected = elementBackgroundSelected,
+                            backgroundShape = backgroundShape,
+                        )
+                        .padding(elementContentPadding)
+                        .padding(start = (element.depth * indentSize.value).dp)
+                        .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                         ) {
-                            treeState.toggleNode(element.id)
-                            onElementDoubleClick(element as Tree.Element<T>)
+                            (pointerEventScopedActions as? DefaultTreeViewPointerEventAction)
+                                ?.notifyItemClicked(
+                                    item = flattenedTree[index] as Tree.Element<T>,
+                                    scope = scope,
+                                    doubleClickTimeDelayMillis = platformDoubleClickDelay.inWholeMilliseconds,
+                                    onElementClick = onElementClick,
+                                    onElementDoubleClick = onElementDoubleClick,
+                                )
+                            treeState.delegate.lastActiveItemIndex = index
                         },
+            ) {
+                if (element is Tree.Element.Node) {
+                    Box(
+                        modifier =
+                            Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {
+                                treeState.toggleNode(element.id)
+                                onElementDoubleClick(element as Tree.Element<T>)
+                            },
                     ) {
                         chevronContent(elementState)
                     }
@@ -225,22 +230,21 @@ private fun Modifier.elementBackground(
     focused: Color,
     selected: Color,
     backgroundShape: RoundedCornerShape,
-) =
-    background(
-        color = when {
+) = background(
+    color =
+        when {
             state.isActive && state.isSelected -> selectedFocused
             state.isActive && !state.isSelected -> focused
             state.isSelected && !state.isActive -> selected
             else -> Color.Unspecified
         },
-        shape = backgroundShape,
-    )
+    shape = backgroundShape,
+)
 
 @Immutable
 @JvmInline
 public value class TreeElementState(public val state: ULong) :
     FocusableComponentState, SelectableComponentState {
-
     @Stable
     override val isActive: Boolean
         get() = state and Active != 0UL
@@ -293,7 +297,6 @@ public value class TreeElementState(public val state: ULong) :
         )
 
     public companion object {
-
         private const val EXPANDED_BIT_OFFSET = CommonStateBitMask.FIRST_AVAILABLE_OFFSET
 
         private val Expanded = 1UL shl EXPANDED_BIT_OFFSET

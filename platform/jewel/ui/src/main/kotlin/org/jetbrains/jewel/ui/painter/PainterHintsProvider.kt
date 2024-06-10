@@ -17,7 +17,6 @@ import org.jetbrains.jewel.ui.painter.hints.HiDpi
  */
 @Immutable
 public interface PainterHintsProvider {
-
     /**
      * These hints will be consumed before the hints which are passed as a
      * parameter to [PainterProvider.getPainter].
@@ -37,10 +36,8 @@ public interface PainterHintsProvider {
  * [LocalIsDarkTheme][org.jetbrains.jewel.LocalIsDarkTheme] is true.
  */
 public object CommonPainterHintsProvider : PainterHintsProvider {
-
     @Composable
-    override fun hints(path: String): List<PainterHint> =
-        listOf(HiDpi(), Dark(JewelTheme.isDark))
+    override fun hints(path: String): List<PainterHint> = listOf(HiDpi(), Dark(JewelTheme.isDark))
 }
 
 public val LocalPainterHintsProvider: ProvidableCompositionLocal<PainterHintsProvider> =

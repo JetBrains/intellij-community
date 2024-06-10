@@ -110,9 +110,10 @@ private fun CloseIconButton(
             val isDark = JewelTheme.isDark
 
             val colors = noBackgroundIconButtonColors(isDark)
-            val style = remember(isDark, colors) {
-                IconButtonStyle(colors, IconButtonMetrics.defaults())
-            }
+            val style =
+                remember(isDark, colors) {
+                    IconButtonStyle(colors, IconButtonMetrics.defaults())
+                }
 
             IconButton(
                 onClick,
@@ -130,24 +131,25 @@ private fun CloseIconButton(
 }
 
 @Composable
-private fun noBackgroundIconButtonColors(isDark: Boolean) = if (isDark) {
-    IconButtonColors.dark(
-        background = Color.Unspecified,
-        backgroundDisabled = Color.Unspecified,
-        backgroundSelected = Color.Unspecified,
-        backgroundSelectedActivated = Color.Unspecified,
-        backgroundFocused = Color.Unspecified,
-        backgroundPressed = Color.Unspecified,
-        backgroundHovered = Color.Unspecified,
-    )
-} else {
-    IconButtonColors.light(
-        background = Color.Unspecified,
-        backgroundDisabled = Color.Unspecified,
-        backgroundSelected = Color.Unspecified,
-        backgroundSelectedActivated = Color.Unspecified,
-        backgroundFocused = Color.Unspecified,
-        backgroundPressed = Color.Unspecified,
-        backgroundHovered = Color.Unspecified,
-    )
-}
+private fun noBackgroundIconButtonColors(isDark: Boolean) =
+    if (isDark) {
+        IconButtonColors.dark(
+            background = Color.Unspecified,
+            backgroundDisabled = Color.Unspecified,
+            backgroundSelected = Color.Unspecified,
+            backgroundSelectedActivated = Color.Unspecified,
+            backgroundFocused = Color.Unspecified,
+            backgroundPressed = Color.Unspecified,
+            backgroundHovered = Color.Unspecified,
+        )
+    } else {
+        IconButtonColors.light(
+            background = Color.Unspecified,
+            backgroundDisabled = Color.Unspecified,
+            backgroundSelected = Color.Unspecified,
+            backgroundSelectedActivated = Color.Unspecified,
+            backgroundFocused = Color.Unspecified,
+            backgroundPressed = Color.Unspecified,
+            backgroundHovered = Color.Unspecified,
+        )
+    }

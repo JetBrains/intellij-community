@@ -69,5 +69,4 @@ public fun Color.Companion.fromRGBAHexStringOrNull(rgba: String): Color? =
         ?.let { Color(it) }
 
 /** Heuristically determines if the color can be thought of as "dark". */
-public fun Color.isDark(): Boolean =
-    (luminance() + 0.05) / 0.05 < 4.5
+public fun Color.isDark(): Boolean = (luminance() + 0.05) / 0.05 < 4.5

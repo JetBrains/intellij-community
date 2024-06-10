@@ -27,7 +27,6 @@ public class BadgePainter(
     private val color: Color,
     private val shape: BadgeShape,
 ) : DelegatePainter(source) {
-
     /**
      * Optional [Paint] used to draw contents into an offscreen layer to
      * apply alpha or [ColorFilter] parameters accordingly. If no alpha or

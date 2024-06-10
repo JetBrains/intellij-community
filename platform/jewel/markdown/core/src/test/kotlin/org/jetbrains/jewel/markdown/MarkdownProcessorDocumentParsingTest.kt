@@ -26,7 +26,6 @@ import org.junit.Test
     "LargeClass", // Detekt hates huge test suites I guess
 ) // All used in purposefully odd Markdown
 class MarkdownProcessorDocumentParsingTest {
-
     private val processor = MarkdownProcessor()
 
     @Test
@@ -8354,15 +8353,16 @@ class MarkdownProcessorDocumentParsingTest {
 
     @Test
     fun `should parse spec sample 354 correctly {Emphasis and strong emphasis}`() {
-        val parsed = processor.processMarkdownDocument(
-            """
+        val parsed =
+            processor.processMarkdownDocument(
+                """
             |*$*alpha.
             |
             |*£*bravo.
             |
             |*€*charlie.
-            """.trimMargin(),
-        )
+                """.trimMargin(),
+            )
 
         /*
          * Expected HTML:

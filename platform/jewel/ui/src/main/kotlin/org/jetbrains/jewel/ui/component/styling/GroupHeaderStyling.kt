@@ -13,14 +13,12 @@ public class GroupHeaderStyle(
     public val colors: GroupHeaderColors,
     public val metrics: GroupHeaderMetrics,
 ) {
-
     public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
 public class GroupHeaderColors(public val divider: Color) {
-
     public companion object
 }
 
@@ -30,7 +28,6 @@ public class GroupHeaderMetrics(
     public val dividerThickness: Dp,
     public val indent: Dp,
 ) {
-
     public companion object
 }
 

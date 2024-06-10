@@ -44,12 +44,13 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 public fun MarkdownStyling.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling = InlinesStyling.create(
-        baseTextStyle,
-        defaultEditorTextStyle
-            .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColor)
-            .toSpanStyle(),
-    ),
+    inlinesStyling: InlinesStyling =
+        InlinesStyling.create(
+            baseTextStyle,
+            defaultEditorTextStyle
+                .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColor)
+                .toSpanStyle(),
+        ),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.create(inlinesStyling),
     heading: Heading = Heading.create(baseTextStyle),
@@ -72,55 +73,59 @@ public fun MarkdownStyling.Companion.create(
         htmlBlock,
     )
 
-public fun Paragraph.Companion.create(
-    inlinesStyling: InlinesStyling = InlinesStyling.create(),
-): Paragraph = Paragraph(inlinesStyling)
+public fun Paragraph.Companion.create(inlinesStyling: InlinesStyling = InlinesStyling.create()): Paragraph = Paragraph(inlinesStyling)
 
 public fun Heading.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
-    h1: Heading.H1 = Heading.H1.create(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * 2,
-            lineHeight = baseTextStyle.fontSize * 2 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h1: Heading.H1 =
+        Heading.H1.create(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * 2,
+                lineHeight = baseTextStyle.fontSize * 2 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h2: Heading.H2 = Heading.H2.create(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * 1.5,
-            lineHeight = baseTextStyle.fontSize * 1.5 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h2: Heading.H2 =
+        Heading.H2.create(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * 1.5,
+                lineHeight = baseTextStyle.fontSize * 1.5 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h3: Heading.H3 = Heading.H3.create(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * 1.25,
-            lineHeight = baseTextStyle.fontSize * 1.25 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h3: Heading.H3 =
+        Heading.H3.create(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * 1.25,
+                lineHeight = baseTextStyle.fontSize * 1.25 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h4: Heading.H4 = Heading.H4.create(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize,
-            lineHeight = baseTextStyle.fontSize * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h4: Heading.H4 =
+        Heading.H4.create(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize,
+                lineHeight = baseTextStyle.fontSize * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h5: Heading.H5 = Heading.H5.create(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * .875,
-            lineHeight = baseTextStyle.fontSize * .875 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h5: Heading.H5 =
+        Heading.H5.create(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * .875,
+                lineHeight = baseTextStyle.fontSize * .875 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h6: Heading.H6 = Heading.H6.create(
-        baseTextStyle.copy(
-            color = Color(0xFF656d76),
-            fontSize = baseTextStyle.fontSize * .85,
-            lineHeight = baseTextStyle.fontSize * .85 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h6: Heading.H6 =
+        Heading.H6.create(
+            baseTextStyle.copy(
+                color = Color(0xFF656d76),
+                fontSize = baseTextStyle.fontSize * .85,
+                lineHeight = baseTextStyle.fontSize * .85 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
 public fun Heading.H1.Companion.create(

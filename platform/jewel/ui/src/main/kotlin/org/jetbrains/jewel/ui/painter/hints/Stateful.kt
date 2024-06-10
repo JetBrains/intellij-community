@@ -11,18 +11,18 @@ import org.jetbrains.jewel.ui.painter.PainterSuffixHint
 @Immutable
 @GenerateDataFunctions
 private class StatefulImpl(private val state: InteractiveComponentState) : PainterSuffixHint() {
-
-    override fun PainterProviderScope.suffix(): String = buildString {
-        if (state.isEnabled) {
-            when {
-                state is FocusableComponentState && state.isFocused -> append("Focused")
-                state.isPressed -> append("Pressed")
-                state.isHovered -> append("Hovered")
+    override fun PainterProviderScope.suffix(): String =
+        buildString {
+            if (state.isEnabled) {
+                when {
+                    state is FocusableComponentState && state.isFocused -> append("Focused")
+                    state.isPressed -> append("Pressed")
+                    state.isHovered -> append("Hovered")
+                }
+            } else {
+                append("Disabled")
             }
-        } else {
-            append("Disabled")
         }
-    }
 }
 
 /**

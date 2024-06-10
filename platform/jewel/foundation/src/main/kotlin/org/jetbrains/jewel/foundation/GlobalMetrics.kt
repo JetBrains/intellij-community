@@ -11,7 +11,6 @@ public class GlobalMetrics(
     public val outlineWidth: Dp,
     public val rowHeight: Dp,
 ) {
-
     public companion object
 }
 

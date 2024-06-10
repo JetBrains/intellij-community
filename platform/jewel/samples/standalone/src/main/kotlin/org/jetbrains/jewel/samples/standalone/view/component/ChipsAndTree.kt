@@ -98,16 +98,17 @@ fun SelectableLazyColumnSample() {
                     ) { index ->
                         Text(
                             text = listOfItems[index],
-                            modifier = Modifier.fillMaxWidth()
-                                .then(
-                                    when {
-                                        isSelected && isActive -> Modifier.background(Color.Blue)
-                                        isSelected && !isActive -> Modifier.background(Color.Gray)
-                                        else -> Modifier
+                            modifier =
+                                Modifier.fillMaxWidth()
+                                    .then(
+                                        when {
+                                            isSelected && isActive -> Modifier.background(Color.Blue)
+                                            isSelected && !isActive -> Modifier.background(Color.Gray)
+                                            else -> Modifier
+                                        },
+                                    ).clickable {
+                                        println("click on $index")
                                     },
-                                ).clickable {
-                                    println("click on $index")
-                                },
                         )
                     }
                 },
@@ -208,12 +209,13 @@ fun TreeSample(modifier: Modifier = Modifier) {
     }
 
     OutlinedButton({
-        tree = buildTree {
-            addNode("root ${Random.nextInt()}") {
-                addLeaf("leaf 1")
-                addLeaf("leaf 2")
+        tree =
+            buildTree {
+                addNode("root ${Random.nextInt()}") {
+                    addLeaf("leaf 1")
+                    addLeaf("leaf 2")
+                }
             }
-        }
     }) {
         Text("Update tree")
     }

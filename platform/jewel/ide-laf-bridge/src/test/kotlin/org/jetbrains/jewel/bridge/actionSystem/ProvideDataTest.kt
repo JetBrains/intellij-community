@@ -16,7 +16,6 @@ import org.junit.Rule
 import org.junit.Test
 
 class ProvideDataTest {
-
     @JvmField @Rule
     val rule = createComposeRule()
 
@@ -28,14 +27,15 @@ class ProvideDataTest {
             rule.setContent {
                 focusManager = LocalFocusManager.current
                 Box(
-                    modifier = rootDataProviderModifier.testTag("provider")
-                        .provideData {
-                            when (it) {
-                                "data" -> "ok"
-                                else -> null
+                    modifier =
+                        rootDataProviderModifier.testTag("provider")
+                            .provideData {
+                                when (it) {
+                                    "data" -> "ok"
+                                    else -> null
+                                }
                             }
-                        }
-                        .focusable(),
+                            .focusable(),
                 )
             }
             rule.awaitIdle()
@@ -57,26 +57,27 @@ class ProvideDataTest {
             rule.setContent {
                 focusManager = LocalFocusManager.current
                 Box(
-                    modifier = rootDataProviderModifier.testTag("root_provider")
-                        .provideData {
-                            when (it) {
-                                "isRoot" -> "yes"
-                                else -> null
+                    modifier =
+                        rootDataProviderModifier.testTag("root_provider")
+                            .provideData {
+                                when (it) {
+                                    "isRoot" -> "yes"
+                                    else -> null
+                                }
                             }
-                        }
-                        .focusable(),
+                            .focusable(),
                 ) {
                     Box(modifier = Modifier.testTag("non_data_provider").focusable()) {
                         Box(
                             modifier =
-                            Modifier.testTag("data_provider_item")
-                                .provideData {
-                                    when (it) {
-                                        "data" -> "ok"
-                                        else -> null
+                                Modifier.testTag("data_provider_item")
+                                    .provideData {
+                                        when (it) {
+                                            "data" -> "ok"
+                                            else -> null
+                                        }
                                     }
-                                }
-                                .focusable(),
+                                    .focusable(),
                         )
                     }
                 }

@@ -46,21 +46,21 @@ import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 
 internal class SwingComparisonTabPanel : BorderLayoutPanel() {
-
-    private val mainContent = panel {
-        buttonsRow()
-        separator()
-        labelsRows()
-        separator()
-        iconsRow()
-        separator()
-        textFieldsRow()
-        separator()
-        textAreasRow()
-    }.apply {
-        border = JBUI.Borders.empty(0, 10)
-        isOpaque = false
-    }
+    private val mainContent =
+        panel {
+            buttonsRow()
+            separator()
+            labelsRows()
+            separator()
+            iconsRow()
+            separator()
+            textFieldsRow()
+            separator()
+            textAreasRow()
+        }.apply {
+            border = JBUI.Borders.empty(0, 10)
+            isOpaque = false
+        }
 
     private val scrollingContainer =
         JBScrollPane(
@@ -136,10 +136,11 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
             compose {
                 var text by remember { mutableStateOf("") }
                 val metrics = remember(JBFont.label(), LocalDensity.current) { getFontMetrics(JBFont.label()) }
-                val charWidth = remember(metrics.widths) {
-                    // Same logic as in JTextArea
-                    metrics.charWidth('m')
-                }
+                val charWidth =
+                    remember(metrics.widths) {
+                        // Same logic as in JTextArea
+                        metrics.charWidth('m')
+                    }
                 val lineHeight = metrics.height
 
                 val width = remember(charWidth) { (COLUMNS_SHORT * charWidth) }

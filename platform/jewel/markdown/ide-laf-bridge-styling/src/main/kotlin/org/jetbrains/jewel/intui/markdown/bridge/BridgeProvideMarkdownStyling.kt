@@ -19,11 +19,12 @@ public fun ProvideMarkdownStyling(
     themeName: String = JewelTheme.name,
     markdownStyling: MarkdownStyling = remember(themeName) { MarkdownStyling.create() },
     markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor() },
-    markdownBlockRenderer: MarkdownBlockRenderer = remember(markdownStyling) {
-        MarkdownBlockRenderer.create(
-            markdownStyling,
-        )
-    },
+    markdownBlockRenderer: MarkdownBlockRenderer =
+        remember(markdownStyling) {
+            MarkdownBlockRenderer.create(
+                markdownStyling,
+            )
+        },
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(

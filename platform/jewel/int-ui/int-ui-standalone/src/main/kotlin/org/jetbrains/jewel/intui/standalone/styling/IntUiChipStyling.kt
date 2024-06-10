@@ -163,5 +163,4 @@ public fun ChipMetrics.Companion.defaults(
     padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
     borderWidth: Dp = 1.dp,
     borderWidthSelected: Dp = 2.dp,
-): ChipMetrics =
-    ChipMetrics(cornerSize, padding, borderWidth, borderWidthSelected)
+): ChipMetrics = ChipMetrics(cornerSize, padding, borderWidth, borderWidthSelected)

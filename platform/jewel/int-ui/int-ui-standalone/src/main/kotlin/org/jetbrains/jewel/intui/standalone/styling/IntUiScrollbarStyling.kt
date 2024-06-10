@@ -17,35 +17,30 @@ public fun ScrollbarStyle.Companion.light(
     colors: ScrollbarColors = ScrollbarColors.light(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.defaults(),
     hoverDuration: Duration = 300.milliseconds,
-): ScrollbarStyle =
-    ScrollbarStyle(colors, metrics, hoverDuration)
+): ScrollbarStyle = ScrollbarStyle(colors, metrics, hoverDuration)
 
 @Composable
 public fun ScrollbarStyle.Companion.dark(
     colors: ScrollbarColors = ScrollbarColors.dark(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.defaults(),
     hoverDuration: Duration = 300.milliseconds,
-): ScrollbarStyle =
-    ScrollbarStyle(colors, metrics, hoverDuration)
+): ScrollbarStyle = ScrollbarStyle(colors, metrics, hoverDuration)
 
 @Composable
 public fun ScrollbarColors.Companion.light(
     thumbBackground: Color = Color(0x33000000),
     thumbBackgroundHovered: Color = Color(0x80000000),
-): ScrollbarColors =
-    ScrollbarColors(thumbBackground, thumbBackgroundHovered)
+): ScrollbarColors = ScrollbarColors(thumbBackground, thumbBackgroundHovered)
 
 @Composable
 public fun ScrollbarColors.Companion.dark(
     thumbBackground: Color = Color(0x59808080),
     thumbBackgroundHovered: Color = Color(0x8C808080),
-): ScrollbarColors =
-    ScrollbarColors(thumbBackground, thumbBackgroundHovered)
+): ScrollbarColors = ScrollbarColors(thumbBackground, thumbBackgroundHovered)
 
 public fun ScrollbarMetrics.Companion.defaults(
     thumbCornerSize: CornerSize = CornerSize(100),
     thumbThickness: Dp = 8.dp,
     minThumbLength: Dp = 16.dp,
     trackPadding: PaddingValues = PaddingValues(start = 7.dp, end = 3.dp),
-): ScrollbarMetrics =
-    ScrollbarMetrics(thumbCornerSize, thumbThickness, minThumbLength, trackPadding)
+): ScrollbarMetrics = ScrollbarMetrics(thumbCornerSize, thumbThickness, minThumbLength, trackPadding)

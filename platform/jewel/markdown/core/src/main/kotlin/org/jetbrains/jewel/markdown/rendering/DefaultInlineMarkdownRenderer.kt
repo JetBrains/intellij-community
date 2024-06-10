@@ -15,7 +15,6 @@ import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 
 @ExperimentalJewelApi
 public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<MarkdownProcessorExtension>) : InlineMarkdownRenderer {
-
     public constructor(vararg extensions: MarkdownProcessorExtension) : this(extensions.toList())
 
     private val plainTextRenderer =
@@ -117,7 +116,6 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
     }
 
     public companion object {
-
         internal const val INLINE_IMAGE = "inline_image"
     }
 }

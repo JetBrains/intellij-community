@@ -18,16 +18,14 @@ public fun HorizontalProgressBarStyle.Companion.light(
     colors: HorizontalProgressBarColors = HorizontalProgressBarColors.light(),
     metrics: HorizontalProgressBarMetrics = HorizontalProgressBarMetrics.defaults(),
     indeterminateCycleDuration: Duration = 800.milliseconds,
-): HorizontalProgressBarStyle =
-    HorizontalProgressBarStyle(colors, metrics, indeterminateCycleDuration)
+): HorizontalProgressBarStyle = HorizontalProgressBarStyle(colors, metrics, indeterminateCycleDuration)
 
 @Composable
 public fun HorizontalProgressBarStyle.Companion.dark(
     colors: HorizontalProgressBarColors = HorizontalProgressBarColors.dark(),
     metrics: HorizontalProgressBarMetrics = HorizontalProgressBarMetrics.defaults(),
     indeterminateCycleDuration: Duration = 800.milliseconds,
-): HorizontalProgressBarStyle =
-    HorizontalProgressBarStyle(colors, metrics, indeterminateCycleDuration)
+): HorizontalProgressBarStyle = HorizontalProgressBarStyle(colors, metrics, indeterminateCycleDuration)
 
 @Composable
 public fun HorizontalProgressBarColors.Companion.light(
@@ -61,5 +59,4 @@ public fun HorizontalProgressBarMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(100),
     minHeight: Dp = 4.dp,
     indeterminateHighlightWidth: Dp = 140.dp,
-): HorizontalProgressBarMetrics =
-    HorizontalProgressBarMetrics(cornerSize, minHeight, indeterminateHighlightWidth)
+): HorizontalProgressBarMetrics = HorizontalProgressBarMetrics(cornerSize, minHeight, indeterminateHighlightWidth)

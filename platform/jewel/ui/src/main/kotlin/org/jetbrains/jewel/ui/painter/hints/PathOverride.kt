@@ -9,9 +9,7 @@ import org.jetbrains.jewel.ui.painter.PainterProviderScope
 @Immutable
 @GenerateDataFunctions
 private class PathOverrideImpl(private val overrides: Map<String, String>) : PainterPathHint {
-
-    override fun PainterProviderScope.patch(): String =
-        overrides[path] ?: path
+    override fun PainterProviderScope.patch(): String = overrides[path] ?: path
 
     override fun toString(): String = "PathOverrideImpl(overrides=$overrides)"
 }

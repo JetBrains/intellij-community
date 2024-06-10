@@ -40,12 +40,13 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 public fun MarkdownStyling.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling = InlinesStyling.light(
-        baseTextStyle,
-        editorTextStyle
-            .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
-            .toSpanStyle(),
-    ),
+    inlinesStyling: InlinesStyling =
+        InlinesStyling.light(
+            baseTextStyle,
+            editorTextStyle
+                .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
+                .toSpanStyle(),
+        ),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.light(inlinesStyling),
     heading: Heading = Heading.light(baseTextStyle),
@@ -71,12 +72,13 @@ public fun MarkdownStyling.Companion.light(
 public fun MarkdownStyling.Companion.dark(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(
-        baseTextStyle,
-        editorTextStyle
-            .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColorDark)
-            .toSpanStyle(),
-    ),
+    inlinesStyling: InlinesStyling =
+        InlinesStyling.dark(
+            baseTextStyle,
+            editorTextStyle
+                .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColorDark)
+                .toSpanStyle(),
+        ),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.dark(inlinesStyling),
     heading: Heading = Heading.dark(baseTextStyle),
@@ -99,114 +101,123 @@ public fun MarkdownStyling.Companion.dark(
         htmlBlock,
     )
 
-public fun Paragraph.Companion.light(
-    inlinesStyling: InlinesStyling = InlinesStyling.light(),
-): Paragraph = Paragraph(inlinesStyling)
+public fun Paragraph.Companion.light(inlinesStyling: InlinesStyling = InlinesStyling.light()): Paragraph = Paragraph(inlinesStyling)
 
-public fun Paragraph.Companion.dark(
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(),
-): Paragraph = Paragraph(inlinesStyling)
+public fun Paragraph.Companion.dark(inlinesStyling: InlinesStyling = InlinesStyling.dark()): Paragraph = Paragraph(inlinesStyling)
 
 public fun Heading.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
-    h1: Heading.H1 = Heading.H1.light(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * 2,
-            lineHeight = baseTextStyle.fontSize * 2 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h1: Heading.H1 =
+        Heading.H1.light(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * 2,
+                lineHeight = baseTextStyle.fontSize * 2 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h2: Heading.H2 = Heading.H2.light(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * 1.5,
-            lineHeight = baseTextStyle.fontSize * 1.5 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h2: Heading.H2 =
+        Heading.H2.light(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * 1.5,
+                lineHeight = baseTextStyle.fontSize * 1.5 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h3: Heading.H3 = Heading.H3.light(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * 1.25,
-            lineHeight = baseTextStyle.fontSize * 1.25 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h3: Heading.H3 =
+        Heading.H3.light(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * 1.25,
+                lineHeight = baseTextStyle.fontSize * 1.25 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h4: Heading.H4 = Heading.H4.light(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize,
-            lineHeight = baseTextStyle.fontSize * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h4: Heading.H4 =
+        Heading.H4.light(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize,
+                lineHeight = baseTextStyle.fontSize * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h5: Heading.H5 = Heading.H5.light(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * .875,
-            lineHeight = baseTextStyle.fontSize * .875 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h5: Heading.H5 =
+        Heading.H5.light(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * .875,
+                lineHeight = baseTextStyle.fontSize * .875 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h6: Heading.H6 = Heading.H6.light(
-        baseTextStyle.copy(
-            color = Color(0xFF656d76),
-            fontSize = baseTextStyle.fontSize * .85,
-            lineHeight = baseTextStyle.fontSize * .85 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h6: Heading.H6 =
+        Heading.H6.light(
+            baseTextStyle.copy(
+                color = Color(0xFF656d76),
+                fontSize = baseTextStyle.fontSize * .85,
+                lineHeight = baseTextStyle.fontSize * .85 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
 public fun Heading.Companion.dark(
     baseTextStyle: TextStyle = defaultTextStyle,
-    h1: Heading.H1 = Heading.H1.light(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * 2,
-            lineHeight = baseTextStyle.fontSize * 2 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h1: Heading.H1 =
+        Heading.H1.light(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * 2,
+                lineHeight = baseTextStyle.fontSize * 2 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h2: Heading.H2 = Heading.H2.light(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * 1.5,
-            lineHeight = baseTextStyle.fontSize * 1.5 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h2: Heading.H2 =
+        Heading.H2.light(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * 1.5,
+                lineHeight = baseTextStyle.fontSize * 1.5 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h3: Heading.H3 = Heading.H3.light(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * 1.25,
-            lineHeight = baseTextStyle.fontSize * 1.25 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h3: Heading.H3 =
+        Heading.H3.light(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * 1.25,
+                lineHeight = baseTextStyle.fontSize * 1.25 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h4: Heading.H4 = Heading.H4.light(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize,
-            lineHeight = baseTextStyle.fontSize * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h4: Heading.H4 =
+        Heading.H4.light(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize,
+                lineHeight = baseTextStyle.fontSize * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h5: Heading.H5 = Heading.H5.light(
-        baseTextStyle.copy(
-            fontSize = baseTextStyle.fontSize * .875,
-            lineHeight = baseTextStyle.fontSize * .875 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h5: Heading.H5 =
+        Heading.H5.light(
+            baseTextStyle.copy(
+                fontSize = baseTextStyle.fontSize * .875,
+                lineHeight = baseTextStyle.fontSize * .875 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
-    h6: Heading.H6 = Heading.H6.light(
-        baseTextStyle.copy(
-            color = Color(0xFF656d76),
-            fontSize = baseTextStyle.fontSize * .85,
-            lineHeight = baseTextStyle.fontSize * .85 * 1.25,
-            fontWeight = FontWeight.SemiBold,
+    h6: Heading.H6 =
+        Heading.H6.light(
+            baseTextStyle.copy(
+                color = Color(0xFF656d76),
+                fontSize = baseTextStyle.fontSize * .85,
+                lineHeight = baseTextStyle.fontSize * .85 * 1.25,
+                fontWeight = FontWeight.SemiBold,
+            ),
         ),
-    ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
 public fun Heading.H1.Companion.light(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        fontSize = defaultTextSize * 2,
-        lineHeight = defaultTextSize * 2 * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            fontSize = defaultTextSize * 2,
+            lineHeight = defaultTextSize * 2 * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFFD8DEE4),
@@ -215,11 +226,12 @@ public fun Heading.H1.Companion.light(
 ): Heading.H1 = Heading.H1(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 public fun Heading.H1.Companion.dark(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        fontSize = defaultTextSize * 2,
-        lineHeight = defaultTextSize * 2 * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            fontSize = defaultTextSize * 2,
+            lineHeight = defaultTextSize * 2 * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFF21262d),
@@ -228,11 +240,12 @@ public fun Heading.H1.Companion.dark(
 ): Heading.H1 = Heading.H1(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 public fun Heading.H2.Companion.light(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        fontSize = defaultTextSize * 1.5,
-        lineHeight = defaultTextSize * 1.5 * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            fontSize = defaultTextSize * 1.5,
+            lineHeight = defaultTextSize * 1.5 * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFFD8DEE4),
@@ -241,11 +254,12 @@ public fun Heading.H2.Companion.light(
 ): Heading.H2 = Heading.H2(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 public fun Heading.H2.Companion.dark(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        fontSize = defaultTextSize * 1.5,
-        lineHeight = defaultTextSize * 1.5 * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            fontSize = defaultTextSize * 1.5,
+            lineHeight = defaultTextSize * 1.5 * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFF21262d),
@@ -255,11 +269,12 @@ public fun Heading.H2.Companion.dark(
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H3.Companion.light(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        fontSize = defaultTextSize * 1.25,
-        lineHeight = defaultTextSize * 1.25 * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            fontSize = defaultTextSize * 1.25,
+            lineHeight = defaultTextSize * 1.25 * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
@@ -269,11 +284,12 @@ public fun Heading.H3.Companion.light(
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H3.Companion.dark(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        fontSize = defaultTextSize * 1.25,
-        lineHeight = defaultTextSize * 1.25 * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            fontSize = defaultTextSize * 1.25,
+            lineHeight = defaultTextSize * 1.25 * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
@@ -283,11 +299,12 @@ public fun Heading.H3.Companion.dark(
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H4.Companion.light(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        fontSize = defaultTextSize,
-        lineHeight = defaultTextSize * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            fontSize = defaultTextSize,
+            lineHeight = defaultTextSize * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
@@ -297,11 +314,12 @@ public fun Heading.H4.Companion.light(
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
 public fun Heading.H4.Companion.dark(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        fontSize = defaultTextSize,
-        lineHeight = defaultTextSize * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            fontSize = defaultTextSize,
+            lineHeight = defaultTextSize * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
@@ -311,11 +329,12 @@ public fun Heading.H4.Companion.dark(
 
 // H5 is identical to H4 and H6
 public fun Heading.H5.Companion.light(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        fontSize = defaultTextSize * .875,
-        lineHeight = defaultTextSize * .875 * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            fontSize = defaultTextSize * .875,
+            lineHeight = defaultTextSize * .875 * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
@@ -325,11 +344,12 @@ public fun Heading.H5.Companion.light(
 
 // H5 is identical to H4 and H6
 public fun Heading.H5.Companion.dark(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        fontSize = defaultTextSize * .875,
-        lineHeight = defaultTextSize * .875 * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            fontSize = defaultTextSize * .875,
+            lineHeight = defaultTextSize * .875 * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
@@ -339,12 +359,13 @@ public fun Heading.H5.Companion.dark(
 
 // H6 is identical to H4 and H5
 public fun Heading.H6.Companion.light(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        color = Color(0xFF656d76),
-        fontSize = defaultTextSize * .85,
-        lineHeight = defaultTextSize * .85 * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            color = Color(0xFF656d76),
+            fontSize = defaultTextSize * .85,
+            lineHeight = defaultTextSize * .85 * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
@@ -354,12 +375,13 @@ public fun Heading.H6.Companion.light(
 
 // H6 is identical to H4 and H5
 public fun Heading.H6.Companion.dark(
-    baseTextStyle: TextStyle = defaultTextStyle.copy(
-        color = Color(0xFF656d76),
-        fontSize = defaultTextSize * .85,
-        lineHeight = defaultTextSize * .85 * 1.25,
-        fontWeight = FontWeight.SemiBold,
-    ),
+    baseTextStyle: TextStyle =
+        defaultTextStyle.copy(
+            color = Color(0xFF656d76),
+            fontSize = defaultTextSize * .85,
+            lineHeight = defaultTextSize * .85 * 1.25,
+            fontWeight = FontWeight.SemiBold,
+        ),
     inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,

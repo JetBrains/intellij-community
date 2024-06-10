@@ -9,7 +9,6 @@ public class ThemeIconData(
     public val colorPalette: Map<String, String?>,
     public val selectionColorPalette: Map<String, Int>,
 ) {
-
     public fun selectionColorMapping(): Map<Color, Color> =
         selectionColorPalette
             .mapNotNull { (key, value) ->
@@ -20,7 +19,6 @@ public class ThemeIconData(
             .toMap()
 
     public companion object {
-
         public val Empty: ThemeIconData =
             ThemeIconData(
                 iconOverrides = emptyMap(),

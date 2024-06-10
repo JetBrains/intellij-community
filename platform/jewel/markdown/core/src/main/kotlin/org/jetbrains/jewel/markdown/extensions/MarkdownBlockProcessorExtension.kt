@@ -5,7 +5,6 @@ import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 
 public interface MarkdownBlockProcessorExtension {
-
     /**
      * Returns true if the [block] can be processed by this extension instance.
      *
@@ -19,5 +18,8 @@ public interface MarkdownBlockProcessorExtension {
      * [block], as implementations might throw an exception for unsupported
      * block types.
      */
-    public fun processMarkdownBlock(block: CustomBlock, processor: MarkdownProcessor): MarkdownBlock.CustomBlock?
+    public fun processMarkdownBlock(
+        block: CustomBlock,
+        processor: MarkdownProcessor,
+    ): MarkdownBlock.CustomBlock?
 }

@@ -23,7 +23,6 @@ public class LinkStyle(
     public val icons: LinkIcons,
     public val textStyles: LinkTextStyles,
 ) {
-
     public companion object
 }
 
@@ -37,7 +36,6 @@ public class LinkColors(
     public val contentHovered: Color,
     public val contentVisited: Color,
 ) {
-
     @Composable
     public fun contentFor(state: LinkState): State<Color> =
         rememberUpdatedState(
@@ -62,7 +60,6 @@ public class LinkMetrics(
     public val textIconGap: Dp,
     public val iconSize: DpSize,
 ) {
-
     public companion object
 }
 
@@ -72,7 +69,6 @@ public class LinkIcons(
     public val dropdownChevron: PainterProvider,
     public val externalLink: PainterProvider,
 ) {
-
     public companion object
 }
 
@@ -86,7 +82,6 @@ public class LinkTextStyles(
     public val hovered: TextStyle,
     public val visited: TextStyle,
 ) {
-
     @Composable
     public fun styleFor(state: LinkState): State<TextStyle> =
         rememberUpdatedState(

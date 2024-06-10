@@ -10,7 +10,6 @@ import java.awt.Graphics2D
 import javax.swing.JLabel
 
 internal class ApiLevelIndication(apiLevel: Int) : JLabel("API level $apiLevel") {
-
     init {
         border = JBUI.Borders.empty(2, 4)
         foreground = ReleaseChannel.Other.foreground

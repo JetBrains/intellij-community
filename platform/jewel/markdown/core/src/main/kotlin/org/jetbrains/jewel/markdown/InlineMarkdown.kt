@@ -27,7 +27,6 @@ import org.commonmark.node.Text as CMText
  * [block-level elements][MarkdownBlock].
  */
 public sealed interface InlineMarkdown {
-
     public val nativeNode: Node
 
     @JvmInline
@@ -61,35 +60,37 @@ public sealed interface InlineMarkdown {
     public value class Text(override val nativeNode: CMText) : InlineMarkdown
 
     public val children: Iterable<InlineMarkdown>
-        get() = object : Iterable<InlineMarkdown> {
-            override fun iterator(): Iterator<InlineMarkdown> =
-                object : Iterator<InlineMarkdown> {
-                    var current = this@InlineMarkdown.nativeNode.firstChild
+        get() =
+            object : Iterable<InlineMarkdown> {
+                override fun iterator(): Iterator<InlineMarkdown> =
+                    object : Iterator<InlineMarkdown> {
+                        var current = this@InlineMarkdown.nativeNode.firstChild
 
-                    override fun hasNext(): Boolean = current != null
+                        override fun hasNext(): Boolean = current != null
 
-                    override fun next(): InlineMarkdown =
-                        if (hasNext()) {
-                            current.toInlineNode().also {
-                                current = current.next
+                        override fun next(): InlineMarkdown =
+                            if (hasNext()) {
+                                current.toInlineNode().also {
+                                    current = current.next
+                                }
+                            } else {
+                                throw NoSuchElementException()
                             }
-                        } else {
-                            throw NoSuchElementException()
-                        }
-                }
-        }
+                    }
+            }
 }
 
-public fun Node.toInlineNode(): InlineMarkdown = when (this) {
-    is CMText -> Text(this)
-    is CMLink -> Link(this)
-    is CMEmphasis -> Emphasis(this)
-    is CMStrongEmphasis -> StrongEmphasis(this)
-    is CMCode -> Code(this)
-    is CMHtmlInline -> HtmlInline(this)
-    is CMImage -> Image(this)
-    is CMHardLineBreak -> HardLineBreak(this)
-    is CMSoftLineBreak -> SoftLineBreak(this)
-    is CMCustomNode -> CustomNode(this)
-    else -> error("Unexpected block $this")
-}
+public fun Node.toInlineNode(): InlineMarkdown =
+    when (this) {
+        is CMText -> Text(this)
+        is CMLink -> Link(this)
+        is CMEmphasis -> Emphasis(this)
+        is CMStrongEmphasis -> StrongEmphasis(this)
+        is CMCode -> Code(this)
+        is CMHtmlInline -> HtmlInline(this)
+        is CMImage -> Image(this)
+        is CMHardLineBreak -> HardLineBreak(this)
+        is CMSoftLineBreak -> SoftLineBreak(this)
+        is CMCustomNode -> CustomNode(this)
+        else -> error("Unexpected block $this")
+    }

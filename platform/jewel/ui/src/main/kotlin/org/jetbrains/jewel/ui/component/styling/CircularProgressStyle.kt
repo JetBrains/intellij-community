@@ -11,7 +11,6 @@ public class CircularProgressStyle(
     public val frameTime: Duration,
     public val color: Color,
 ) {
-
     public companion object
 }
 

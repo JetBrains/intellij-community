@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 
 public interface FocusableComponentState : InteractiveComponentState {
-
     public val isFocused: Boolean
 
     @Composable

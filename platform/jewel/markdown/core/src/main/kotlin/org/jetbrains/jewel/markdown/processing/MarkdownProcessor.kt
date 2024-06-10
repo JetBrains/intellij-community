@@ -38,17 +38,17 @@ public class MarkdownProcessor(
     private val extensions: List<MarkdownProcessorExtension> = emptyList(),
     private val optimizeEdits: Boolean = true,
 ) {
-
     public constructor(vararg extensions: MarkdownProcessorExtension) : this(extensions.toList())
 
-    private val commonMarkParser = Parser.builder()
-        .let { builder ->
-            builder.extensions(extensions.map(MarkdownProcessorExtension::parserExtension))
-            if (optimizeEdits) {
-                builder.includeSourceSpans(IncludeSourceSpans.BLOCKS)
+    private val commonMarkParser =
+        Parser.builder()
+            .let { builder ->
+                builder.extensions(extensions.map(MarkdownProcessorExtension::parserExtension))
+                if (optimizeEdits) {
+                    builder.includeSourceSpans(IncludeSourceSpans.BLOCKS)
+                }
+                builder.build()
             }
-            builder.build()
-        }
 
     private data class State(val lines: List<String>, val blocks: List<Block>, val indexes: List<Pair<Int, Int>>)
 
@@ -85,7 +85,9 @@ public class MarkdownProcessor(
      *
      * @see DefaultInlineMarkdownRenderer
      */
-    public fun processMarkdownDocument(@Language("Markdown") rawMarkdown: String): List<MarkdownBlock> {
+    public fun processMarkdownDocument(
+        @Language("Markdown") rawMarkdown: String,
+    ): List<MarkdownBlock> {
         return if (!optimizeEdits) {
             textToBlocks(rawMarkdown)
         } else {
@@ -96,7 +98,9 @@ public class MarkdownProcessor(
     }
 
     @VisibleForTesting
-    internal fun processWithQuickEdits(@Language("Markdown") rawMarkdown: String): List<Block> {
+    internal fun processWithQuickEdits(
+        @Language("Markdown") rawMarkdown: String,
+    ): List<Block> {
         val (previousLines, previousBlocks, previousIndexes) = currentState
         val newLines = rawMarkdown.lines()
         val nLinesDelta = newLines.size - previousLines.size
@@ -151,14 +155,15 @@ public class MarkdownProcessor(
                 (node.sourceSpans.first().lineIndex + firstLine) to
                     (node.sourceSpans.last().lineIndex + firstLine)
             }
-        val suffixIndexes = previousIndexes.subList(lastBlock, previousBlocks.size).map {
-            (it.first + nLinesDelta) to (it.second + nLinesDelta)
-        }
+        val suffixIndexes =
+            previousIndexes.subList(lastBlock, previousBlocks.size).map {
+                (it.first + nLinesDelta) to (it.second + nLinesDelta)
+            }
         val newBlocks = (
             previousBlocks.subList(0, firstBlock) +
                 updatedBlocks +
                 previousBlocks.subList(lastBlock, previousBlocks.size)
-            )
+        )
         val newIndexes = previousIndexes.subList(0, firstBlock) + updatedIndexes + suffixIndexes
         currentState = State(newLines, newBlocks, newIndexes)
         return newBlocks
@@ -197,8 +202,7 @@ public class MarkdownProcessor(
             else -> null
         }
 
-    private fun BlockQuote.toMarkdownBlockQuote(): MarkdownBlock.BlockQuote =
-        MarkdownBlock.BlockQuote(processChildren(this))
+    private fun BlockQuote.toMarkdownBlockQuote(): MarkdownBlock.BlockQuote = MarkdownBlock.BlockQuote(processChildren(this))
 
     private fun Heading.toMarkdownHeadingOrNull(): MarkdownBlock.Heading? {
         if (level < 1 || level > 6) return null
@@ -211,8 +215,7 @@ public class MarkdownProcessor(
             MimeType.Known.fromMarkdownLanguageName(info),
         )
 
-    private fun IndentedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.IndentedCodeBlock =
-        CodeBlock.IndentedCodeBlock(literal.trimEnd('\n'))
+    private fun IndentedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.IndentedCodeBlock = CodeBlock.IndentedCodeBlock(literal.trimEnd('\n'))
 
     private fun BulletList.toMarkdownListOrNull(): ListBlock.UnorderedList? {
         val children = processListItems()
@@ -228,21 +231,23 @@ public class MarkdownProcessor(
         return ListBlock.OrderedList(children, isTight, markerStartNumber, markerDelimiter)
     }
 
-    private fun CMListBlock.processListItems() = buildList {
-        forEachChild { child ->
-            if (child !is ListItem) return@forEachChild
-            add(MarkdownBlock.ListItem(processChildren(child)))
-        }
-    }
-
-    public fun processChildren(node: Node): List<MarkdownBlock> = buildList {
-        node.forEachChild { child ->
-            val parsedBlock = child.tryProcessMarkdownBlock()
-            if (parsedBlock != null) {
-                this.add(parsedBlock)
+    private fun CMListBlock.processListItems() =
+        buildList {
+            forEachChild { child ->
+                if (child !is ListItem) return@forEachChild
+                add(MarkdownBlock.ListItem(processChildren(child)))
             }
         }
-    }
+
+    public fun processChildren(node: Node): List<MarkdownBlock> =
+        buildList {
+            node.forEachChild { child ->
+                val parsedBlock = child.tryProcessMarkdownBlock()
+                if (parsedBlock != null) {
+                    this.add(parsedBlock)
+                }
+            }
+        }
 
     private fun Node.forEachChild(action: (Node) -> Unit) {
         var child = firstChild

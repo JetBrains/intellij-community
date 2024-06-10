@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.foundation.state
 
 public interface InteractiveComponentState {
-
     public val isActive: Boolean
 
     public val isEnabled: Boolean

@@ -67,11 +67,12 @@ internal fun ComponentShowcaseTab() {
 
     val scrollState = rememberScrollState()
     Row(
-        modifier = Modifier.trackComponentActivation(LocalComponent.current)
-            .fillMaxSize()
-            .background(bgColor)
-            .verticalScroll(scrollState)
-            .padding(16.dp),
+        modifier =
+            Modifier.trackComponentActivation(LocalComponent.current)
+                .fillMaxSize()
+                .background(bgColor)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ColumnOne()
@@ -252,25 +253,26 @@ private fun RowScope.ColumnTwo() {
             },
         )
 
-        val tree = remember {
-            buildTree {
-                addNode("root 1") {
-                    addLeaf("leaf 1")
-                    addLeaf("leaf 2")
-                }
-                addNode("root 2") {
-                    addLeaf("leaf 1")
-                    addNode("node 1") {
+        val tree =
+            remember {
+                buildTree {
+                    addNode("root 1") {
+                        addLeaf("leaf 1")
+                        addLeaf("leaf 2")
+                    }
+                    addNode("root 2") {
+                        addLeaf("leaf 1")
+                        addNode("node 1") {
+                            addLeaf("leaf 1")
+                            addLeaf("leaf 2")
+                        }
+                    }
+                    addNode("root 3") {
                         addLeaf("leaf 1")
                         addLeaf("leaf 2")
                     }
                 }
-                addNode("root 3") {
-                    addLeaf("leaf 1")
-                    addLeaf("leaf 2")
-                }
             }
-        }
         LazyTree(
             tree = tree,
             modifier = Modifier.height(200.dp).fillMaxWidth(),

@@ -10,13 +10,15 @@ internal enum class LogLevel(val color: String) {
 }
 
 internal interface Logger {
-
     var currentLogLevel: LogLevel
 
     // Resets previous color codes
     private fun resetColor() = "\u001b[0m"
 
-    public fun log(level: LogLevel, msg: String)
+    public fun log(
+        level: LogLevel,
+        msg: String,
+    )
 
     public fun e(msg: String) {
         log(LogLevel.Error, LogLevel.Error.color + msg + resetColor())

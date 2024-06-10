@@ -15,7 +15,6 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
  * functionality provided by `JBFont` in the IntelliJ Platform.
  */
 public object Typography {
-
     /** The text style to use for labels. Identical to [JewelTheme.defaultTextStyle]. */
     @Composable
     public fun labelTextStyle(): TextStyle = JewelTheme.defaultTextStyle
@@ -32,40 +31,35 @@ public object Typography {
      * [JewelTheme.defaultTextStyle].
      */
     @Composable
-    public fun h0TextStyle(): TextStyle =
-        JewelTheme.defaultTextStyle.copy(fontSize = labelTextSize() + 12.sp, fontWeight = FontWeight.Bold)
+    public fun h0TextStyle(): TextStyle = JewelTheme.defaultTextStyle.copy(fontSize = labelTextSize() + 12.sp, fontWeight = FontWeight.Bold)
 
     /**
      * The text style to use for h1 titles. Derived from
      * [JewelTheme.defaultTextStyle].
      */
     @Composable
-    public fun h1TextStyle(): TextStyle =
-        JewelTheme.defaultTextStyle.copy(fontSize = labelTextSize() + 9.sp, fontWeight = FontWeight.Bold)
+    public fun h1TextStyle(): TextStyle = JewelTheme.defaultTextStyle.copy(fontSize = labelTextSize() + 9.sp, fontWeight = FontWeight.Bold)
 
     /**
      * The text style to use for h2 titles. Derived from
      * [JewelTheme.defaultTextStyle].
      */
     @Composable
-    public fun h2TextStyle(): TextStyle =
-        JewelTheme.defaultTextStyle.copy(fontSize = labelTextSize() + 5.sp)
+    public fun h2TextStyle(): TextStyle = JewelTheme.defaultTextStyle.copy(fontSize = labelTextSize() + 5.sp)
 
     /**
      * The text style to use for h3 titles. Derived from
      * [JewelTheme.defaultTextStyle].
      */
     @Composable
-    public fun h3TextStyle(): TextStyle =
-        JewelTheme.defaultTextStyle.copy(fontSize = labelTextSize() + 3.sp)
+    public fun h3TextStyle(): TextStyle = JewelTheme.defaultTextStyle.copy(fontSize = labelTextSize() + 3.sp)
 
     /**
      * The text style to use for h4 titles. Derived from
      * [JewelTheme.defaultTextStyle].
      */
     @Composable
-    public fun h4TextStyle(): TextStyle =
-        JewelTheme.defaultTextStyle.copy(fontSize = labelTextSize() + 1.sp, fontWeight = FontWeight.Bold)
+    public fun h4TextStyle(): TextStyle = JewelTheme.defaultTextStyle.copy(fontSize = labelTextSize() + 1.sp, fontWeight = FontWeight.Bold)
 
     /** The text style used for code editors. Usually is a monospaced font. */
     @Composable

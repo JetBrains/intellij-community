@@ -32,8 +32,9 @@ internal fun <L : Any, K> MessageBus.flow(
     topic: Topic<L>,
     parentScope: CoroutineScope,
     listener: ProducerScope<K>.() -> L,
-): Flow<K> = callbackFlow {
-    val connection: SimpleMessageBusConnection = connect(parentScope)
-    connection.subscribe(topic, listener())
-    awaitClose { connection.disconnect() }
-}
+): Flow<K> =
+    callbackFlow {
+        val connection: SimpleMessageBusConnection = connect(parentScope)
+        connection.subscribe(topic, listener())
+        awaitClose { connection.disconnect() }
+    }

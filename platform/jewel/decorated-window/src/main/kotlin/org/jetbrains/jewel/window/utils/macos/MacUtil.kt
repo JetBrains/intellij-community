@@ -10,7 +10,6 @@ import java.util.logging.Logger
 import javax.swing.SwingUtilities
 
 internal object MacUtil {
-
     private val logger = Logger.getLogger(MacUtil::class.java.simpleName)
 
     init {
@@ -19,7 +18,9 @@ internal object MacUtil {
                 UnsafeAccessing.desktopModule,
                 listOf("sun.awt", "sun.lwawt", "sun.lwawt.macosx"),
             )
-        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
             logger.log(Level.WARNING, "Assign access for jdk.desktop failed.", e)
         }
     }

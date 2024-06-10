@@ -93,36 +93,41 @@ fun DecoratedWindowScope.TitleBarView() {
                 }
             }) {
                 IconButton({
-                    MainViewModel.theme = when (MainViewModel.theme) {
-                        IntUiThemes.Light -> IntUiThemes.LightWithLightHeader
-                        IntUiThemes.LightWithLightHeader -> IntUiThemes.Dark
-                        IntUiThemes.Dark, IntUiThemes.System -> IntUiThemes.Light
-                    }
+                    MainViewModel.theme =
+                        when (MainViewModel.theme) {
+                            IntUiThemes.Light -> IntUiThemes.LightWithLightHeader
+                            IntUiThemes.LightWithLightHeader -> IntUiThemes.Dark
+                            IntUiThemes.Dark, IntUiThemes.System -> IntUiThemes.Light
+                        }
                 }, Modifier.size(40.dp).padding(5.dp)) {
                     when (MainViewModel.theme) {
-                        IntUiThemes.Light -> Icon(
-                            "icons/lightTheme@20x20.svg",
-                            "Themes",
-                            StandaloneSampleIcons::class.java,
-                        )
+                        IntUiThemes.Light ->
+                            Icon(
+                                "icons/lightTheme@20x20.svg",
+                                "Themes",
+                                StandaloneSampleIcons::class.java,
+                            )
 
-                        IntUiThemes.LightWithLightHeader -> Icon(
-                            "icons/lightWithLightHeaderTheme@20x20.svg",
-                            "Themes",
-                            StandaloneSampleIcons::class.java,
-                        )
+                        IntUiThemes.LightWithLightHeader ->
+                            Icon(
+                                "icons/lightWithLightHeaderTheme@20x20.svg",
+                                "Themes",
+                                StandaloneSampleIcons::class.java,
+                            )
 
-                        IntUiThemes.Dark -> Icon(
-                            "icons/darkTheme@20x20.svg",
-                            "Themes",
-                            StandaloneSampleIcons::class.java,
-                        )
+                        IntUiThemes.Dark ->
+                            Icon(
+                                "icons/darkTheme@20x20.svg",
+                                "Themes",
+                                StandaloneSampleIcons::class.java,
+                            )
 
-                        IntUiThemes.System -> Icon(
-                            "icons/systemTheme@20x20.svg",
-                            "Themes",
-                            StandaloneSampleIcons::class.java,
-                        )
+                        IntUiThemes.System ->
+                            Icon(
+                                "icons/systemTheme@20x20.svg",
+                                "Themes",
+                                StandaloneSampleIcons::class.java,
+                            )
                     }
                 }
             }

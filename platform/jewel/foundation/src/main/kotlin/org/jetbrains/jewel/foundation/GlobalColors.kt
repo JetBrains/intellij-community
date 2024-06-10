@@ -13,7 +13,6 @@ public class GlobalColors(
     public val text: TextColors,
     public val panelBackground: Color,
 ) {
-
     public companion object
 }
 
@@ -26,7 +25,6 @@ public class TextColors(
     public val info: Color,
     public val error: Color,
 ) {
-
     public companion object
 }
 
@@ -37,7 +35,6 @@ public class BorderColors(
     public val focused: Color,
     public val disabled: Color,
 ) {
-
     public companion object
 }
 
@@ -50,7 +47,6 @@ public class OutlineColors(
     public val warning: Color,
     public val error: Color,
 ) {
-
     public companion object
 }
 

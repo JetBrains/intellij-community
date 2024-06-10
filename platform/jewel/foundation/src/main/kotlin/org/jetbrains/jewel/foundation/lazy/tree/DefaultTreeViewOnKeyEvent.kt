@@ -7,8 +7,10 @@ public open class DefaultTreeViewOnKeyEvent(
     override val keybindings: TreeViewKeybindings,
     private val treeState: TreeState,
 ) : TreeViewOnKeyEvent {
-
-    override fun onSelectParent(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+    override fun onSelectParent(
+        keys: List<SelectableLazyListKey>,
+        state: SelectableLazyListState,
+    ) {
         val currentKey = keys[state.lastActiveItemIndex ?: 0].key
         val keyNodeList = treeState.allNodes.map { it.first }
 
@@ -66,7 +68,10 @@ public open class DefaultTreeViewOnKeyEvent(
         }
     }
 
-    override fun onSelectChild(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+    override fun onSelectChild(
+        keys: List<SelectableLazyListKey>,
+        state: SelectableLazyListState,
+    ) {
         val currentKey = keys[state.lastActiveItemIndex ?: 0].key
         if (
             currentKey in treeState.allNodes.map { it.first } &&

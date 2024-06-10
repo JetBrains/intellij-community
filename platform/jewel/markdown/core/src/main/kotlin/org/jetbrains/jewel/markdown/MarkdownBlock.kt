@@ -5,11 +5,9 @@ import org.commonmark.node.Heading as CMHeading
 import org.commonmark.node.Paragraph as CMParagraph
 
 public sealed interface MarkdownBlock {
-
     public data class BlockQuote(val children: List<MarkdownBlock>) : MarkdownBlock
 
     public sealed interface CodeBlock : MarkdownBlock {
-
         public val content: String
 
         public data class IndentedCodeBlock(
@@ -28,7 +26,6 @@ public sealed interface MarkdownBlock {
     public value class Heading(
         private val nativeBlock: CMHeading,
     ) : MarkdownBlock, BlockWithInlineMarkdown {
-
         override val inlineContent: Iterable<InlineMarkdown>
             get() = nativeBlock.inlineContent()
 
@@ -39,7 +36,6 @@ public sealed interface MarkdownBlock {
     public data class HtmlBlock(val content: String) : MarkdownBlock
 
     public sealed interface ListBlock : MarkdownBlock {
-
         public val children: List<ListItem>
         public val isTight: Boolean
 
@@ -65,14 +61,12 @@ public sealed interface MarkdownBlock {
 
     @JvmInline
     public value class Paragraph(private val nativeBlock: CMParagraph) : MarkdownBlock, BlockWithInlineMarkdown {
-
         override val inlineContent: Iterable<InlineMarkdown>
             get() = nativeBlock.inlineContent()
     }
 }
 
 public interface BlockWithInlineMarkdown {
-
     public val inlineContent: Iterable<InlineMarkdown>
 }
 

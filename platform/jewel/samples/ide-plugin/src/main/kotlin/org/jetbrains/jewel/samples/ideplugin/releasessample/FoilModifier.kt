@@ -74,22 +74,24 @@ vec4 main(float2 fragCoord) {
 private val runtimeEffect = RuntimeEffect.makeForShader(FOIL_SHADER_CODE)
 private val shaderBuilder = RuntimeShaderBuilder(runtimeEffect)
 
-internal fun Modifier.holoFoil(offset: Float, intensity: Float = 1f) =
-    graphicsLayer {
-        shaderBuilder.uniform("resolution", size.width, size.height)
-        shaderBuilder.uniform("offset", 0f, offset)
-        shaderBuilder.uniform("intensity", intensity * .65f)
+internal fun Modifier.holoFoil(
+    offset: Float,
+    intensity: Float = 1f,
+) = graphicsLayer {
+    shaderBuilder.uniform("resolution", size.width, size.height)
+    shaderBuilder.uniform("offset", 0f, offset)
+    shaderBuilder.uniform("intensity", intensity * .65f)
 
-        renderEffect =
-            ImageFilter.makeRuntimeShader(
-                runtimeShaderBuilder = shaderBuilder,
-                shaderNames = arrayOf("content"),
-                inputs = arrayOf(null),
-            ).asComposeRenderEffect()
+    renderEffect =
+        ImageFilter.makeRuntimeShader(
+            runtimeShaderBuilder = shaderBuilder,
+            shaderNames = arrayOf("content"),
+            inputs = arrayOf(null),
+        ).asComposeRenderEffect()
 
-        rotationX = offset * 4f * intensity
-        rotationY = offset * 10f * intensity
-        rotationZ = offset * -3f * intensity
-        scaleX = 1f - .1f * intensity
-        scaleY = 1f - .1f * intensity
-    }
+    rotationX = offset * 4f * intensity
+    rotationY = offset * 10f * intensity
+    rotationZ = offset * -3f * intensity
+    scaleX = 1f - .1f * intensity
+    scaleY = 1f - .1f * intensity
+}

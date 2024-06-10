@@ -20,7 +20,6 @@ private val LocalDataProviderNode = modifierLocalOf<DataProviderNode?> { null }
 internal class DataProviderNode(
     var dataProvider: (dataId: String) -> Any?,
 ) : Modifier.Node(), ModifierLocalModifierNode, FocusEventModifierNode {
-
     // TODO: should we use state here and in parent with children for thread safety? Will it trigger
     // recompositions?
     var hasFocus = false

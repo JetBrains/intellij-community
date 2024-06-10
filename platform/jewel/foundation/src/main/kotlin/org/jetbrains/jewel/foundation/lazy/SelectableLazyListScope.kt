@@ -10,7 +10,6 @@ import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey.Selectable
  * Interface defining the scope for building a selectable lazy list.
  */
 public interface SelectableLazyListScope {
-
     /**
      * Represents an item in a selectable lazy list.
      *
@@ -66,7 +65,6 @@ public interface SelectableLazyListScope {
 }
 
 internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
-
     /**
      * Provides a set of keys that cannot be selected.
      * Here we use an assumption that amount of selectable items >> amount of non-selectable items.

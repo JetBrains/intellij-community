@@ -19,16 +19,14 @@ public fun RadioButtonStyle.Companion.light(
     colors: RadioButtonColors = RadioButtonColors.light(),
     metrics: RadioButtonMetrics = RadioButtonMetrics.defaults(),
     icons: RadioButtonIcons = RadioButtonIcons.light(),
-): RadioButtonStyle =
-    RadioButtonStyle(colors, metrics, icons)
+): RadioButtonStyle = RadioButtonStyle(colors, metrics, icons)
 
 @Composable
 public fun RadioButtonStyle.Companion.dark(
     colors: RadioButtonColors = RadioButtonColors.dark(),
     metrics: RadioButtonMetrics = RadioButtonMetrics.defaults(),
     icons: RadioButtonIcons = RadioButtonIcons.dark(),
-): RadioButtonStyle =
-    RadioButtonStyle(colors, metrics, icons)
+): RadioButtonStyle = RadioButtonStyle(colors, metrics, icons)
 
 @Composable
 public fun RadioButtonColors.Companion.light(
@@ -86,11 +84,9 @@ public fun RadioButtonMetrics.Companion.defaults(
 public fun RadioButtonIcons.Companion.light(
     radioButton: PainterProvider =
         standalonePainterProvider("com/intellij/ide/ui/laf/icons/intellij/radio.svg"),
-): RadioButtonIcons =
-    RadioButtonIcons(radioButton)
+): RadioButtonIcons = RadioButtonIcons(radioButton)
 
 public fun RadioButtonIcons.Companion.dark(
     radioButton: PainterProvider =
         standalonePainterProvider("com/intellij/ide/ui/laf/icons/darcula/radio.svg"),
-): RadioButtonIcons =
-    RadioButtonIcons(radioButton)
+): RadioButtonIcons = RadioButtonIcons(radioButton)

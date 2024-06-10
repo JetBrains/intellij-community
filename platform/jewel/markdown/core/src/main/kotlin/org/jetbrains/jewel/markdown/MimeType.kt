@@ -38,7 +38,6 @@ import org.jetbrains.jewel.markdown.MimeType.Known.YAML
  */
 @JvmInline
 public value class MimeType(private val mimeType: String) {
-
     public fun displayName(): String =
         when (normalizeString()) {
             Known.KOTLIN.mimeType -> if (isGradle()) "Gradle DSL" else "Kotlin"
@@ -202,14 +201,15 @@ public value class MimeType(private val mimeType: String) {
      * Returns whether the given attribute should be included in a normalized
      * string
      */
-    private fun isRelevantAttribute(attribute: String): Boolean = when (attribute) {
-        ATTR_ROLE,
-        ATTR_ROOT_TAG,
-        ATTR_FOLDER_TYPE,
-        -> true
+    private fun isRelevantAttribute(attribute: String): Boolean =
+        when (attribute) {
+            ATTR_ROLE,
+            ATTR_ROOT_TAG,
+            ATTR_FOLDER_TYPE,
+            -> true
 
-        else -> false
-    }
+            else -> false
+        }
 
     /**
      * Returns just the language portion of the mime type.
@@ -241,7 +241,6 @@ public value class MimeType(private val mimeType: String) {
     override fun toString(): String = mimeType
 
     private companion object {
-
         /**
          * Attribute used to indicate the role this source file plays; for example,
          * an XML file may be a "manifest" or a "resource".

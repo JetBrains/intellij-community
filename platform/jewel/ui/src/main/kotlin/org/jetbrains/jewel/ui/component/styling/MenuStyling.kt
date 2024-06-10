@@ -24,7 +24,6 @@ public class MenuStyle(
     public val metrics: MenuMetrics,
     public val icons: MenuIcons,
 ) {
-
     public companion object
 }
 
@@ -36,7 +35,6 @@ public class MenuColors(
     public val shadow: Color,
     public val itemColors: MenuItemColors,
 ) {
-
     public companion object
 }
 
@@ -65,7 +63,6 @@ public class MenuItemColors(
     public val keybindingTintHovered: Color,
     public val separator: Color,
 ) {
-
     @Composable
     public fun backgroundFor(state: MenuItemState): State<Color> =
         rememberUpdatedState(
@@ -133,7 +130,6 @@ public class MenuMetrics(
     public val itemMetrics: MenuItemMetrics,
     public val submenuMetrics: SubmenuMetrics,
 ) {
-
     public companion object
 }
 
@@ -150,21 +146,18 @@ public class MenuItemMetrics(
     public val iconSize: Dp,
     public val minHeight: Dp,
 ) {
-
     public companion object
 }
 
 @Stable
 @GenerateDataFunctions
 public class SubmenuMetrics(public val offset: DpOffset) {
-
     public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
 public class MenuIcons(public val submenuChevron: PainterProvider) {
-
     public companion object
 }
 

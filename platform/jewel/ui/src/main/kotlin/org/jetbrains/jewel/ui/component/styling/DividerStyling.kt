@@ -14,7 +14,6 @@ public class DividerStyle(
     public val color: Color,
     public val metrics: DividerMetrics,
 ) {
-
     public companion object
 }
 
@@ -24,9 +23,7 @@ public class DividerMetrics(
     public val thickness: Dp,
     public val startIndent: Dp,
 ) {
-
     public companion object {
-
         public fun defaults(
             thickness: Dp = 1.dp,
             startIndent: Dp = 0.dp,

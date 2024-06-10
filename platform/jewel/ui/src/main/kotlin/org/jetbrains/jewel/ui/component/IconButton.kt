@@ -48,13 +48,14 @@ public fun IconButton(
 
     IconButtonImpl(
         state = buttonState,
-        modifier = modifier.clickable(
-            onClick = onClick,
-            enabled = enabled,
-            role = Role.Button,
-            interactionSource = interactionSource,
-            indication = NoIndication,
-        ),
+        modifier =
+            modifier.clickable(
+                onClick = onClick,
+                enabled = enabled,
+                role = Role.Button,
+                interactionSource = interactionSource,
+                indication = NoIndication,
+            ),
         style = style,
         interactionSource = interactionSource,
         content = content,
@@ -71,9 +72,10 @@ public fun SelectableIconButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable (BoxScope.(IconButtonState) -> Unit),
 ) {
-    val buttonState = remember(interactionSource) {
-        mutableStateOf(IconButtonState.of(enabled = enabled))
-    }
+    val buttonState =
+        remember(interactionSource) {
+            mutableStateOf(IconButtonState.of(enabled = enabled))
+        }
 
     remember(enabled, selected) {
         buttonState.value = buttonState.value.copy(enabled = enabled, selected = selected)
@@ -81,18 +83,19 @@ public fun SelectableIconButton(
 
     IconButtonImpl(
         state = buttonState,
-        modifier = modifier
-            .selectable(
-                onClick = onClick,
-                enabled = enabled,
-                role = Role.RadioButton,
-                interactionSource = interactionSource,
-                indication = null,
-                selected = selected,
-            )
-            .onActivated(enabled = enabled) {
-                buttonState.value = buttonState.value.copy(active = it)
-            },
+        modifier =
+            modifier
+                .selectable(
+                    onClick = onClick,
+                    enabled = enabled,
+                    role = Role.RadioButton,
+                    interactionSource = interactionSource,
+                    indication = null,
+                    selected = selected,
+                )
+                .onActivated(enabled = enabled) {
+                    buttonState.value = buttonState.value.copy(active = it)
+                },
         style = style,
         interactionSource = interactionSource,
         content = content,
@@ -128,10 +131,11 @@ private fun IconButtonImpl(
     val background by style.colors.backgroundFor(buttonState)
     val border by style.colors.borderFor(buttonState)
     Box(
-        modifier = modifier.defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
-            .padding(style.metrics.padding)
-            .background(background, shape)
-            .border(style.metrics.borderWidth, border, shape),
+        modifier =
+            modifier.defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
+                .padding(style.metrics.padding)
+                .background(background, shape)
+                .border(style.metrics.borderWidth, border, shape),
         contentAlignment = Alignment.Center,
         content = { content(buttonState) },
     )
@@ -140,7 +144,6 @@ private fun IconButtonImpl(
 @Immutable
 @JvmInline
 public value class IconButtonState(public val state: ULong) : FocusableComponentState, SelectableComponentState {
-
     override val isSelected: Boolean
         get() = state and CommonStateBitMask.Selected != 0UL
 
@@ -182,7 +185,6 @@ public value class IconButtonState(public val state: ULong) : FocusableComponent
             "isActive=$isActive)"
 
     public companion object {
-
         public fun of(
             enabled: Boolean = true,
             selected: Boolean = false,

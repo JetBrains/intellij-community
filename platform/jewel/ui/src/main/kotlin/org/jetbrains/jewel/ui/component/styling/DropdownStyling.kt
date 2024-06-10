@@ -26,7 +26,6 @@ public class DropdownStyle(
     public val textStyle: TextStyle,
     public val menuStyle: MenuStyle,
 ) {
-
     public companion object
 }
 
@@ -54,7 +53,6 @@ public class DropdownColors(
     public val iconTintPressed: Color,
     public val iconTintHovered: Color,
 ) {
-
     @Composable
     public fun backgroundFor(state: DropdownState): State<Color> =
         rememberUpdatedState(
@@ -119,14 +117,12 @@ public class DropdownMetrics(
     public val contentPadding: PaddingValues,
     public val borderWidth: Dp,
 ) {
-
     public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
 public class DropdownIcons(public val chevronDown: PainterProvider) {
-
     public companion object
 }
 

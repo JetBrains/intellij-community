@@ -22,7 +22,6 @@ public class SliderStyle(
     public val metrics: SliderMetrics,
     public val thumbShape: Shape,
 ) {
-
     public companion object
 }
 
@@ -45,7 +44,6 @@ public class SliderColors(
     public val thumbBorderPressed: Color,
     public val thumbBorderHovered: Color,
 ) {
-
     @Composable
     public fun thumbFillFor(state: SliderState): State<Color> =
         rememberUpdatedState(
@@ -77,14 +75,13 @@ public class SliderColors(
         pressed: Color,
         hovered: Color,
         focused: Color,
-    ) =
-        when {
-            !isEnabled -> disabled
-            isFocused -> focused
-            isPressed && !JewelTheme.isSwingCompatMode -> pressed
-            isHovered && !JewelTheme.isSwingCompatMode -> hovered
-            else -> normal
-        }
+    ) = when {
+        !isEnabled -> disabled
+        isFocused -> focused
+        isPressed && !JewelTheme.isSwingCompatMode -> pressed
+        isHovered && !JewelTheme.isSwingCompatMode -> hovered
+        else -> normal
+    }
 
     public companion object
 }
@@ -99,7 +96,6 @@ public class SliderMetrics(
     public val stepLineWidth: Dp,
     public val trackToStepSpacing: Dp,
 ) {
-
     public companion object
 }
 

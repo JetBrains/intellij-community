@@ -19,7 +19,6 @@ public val ButtonStyle.Companion.Default: IntUiDefaultButtonStyleFactory
     get() = IntUiDefaultButtonStyleFactory
 
 public object IntUiDefaultButtonStyleFactory {
-
     @Composable
     public fun light(
         colors: ButtonColors = ButtonColors.Default.light(),
@@ -37,27 +36,23 @@ public val ButtonStyle.Companion.Outlined: IntUiOutlinedButtonStyleFactory
     get() = IntUiOutlinedButtonStyleFactory
 
 public object IntUiOutlinedButtonStyleFactory {
-
     @Composable
     public fun light(
         colors: ButtonColors = ButtonColors.Outlined.light(),
         metrics: ButtonMetrics = ButtonMetrics.outlined(),
-    ): ButtonStyle =
-        ButtonStyle(colors, metrics)
+    ): ButtonStyle = ButtonStyle(colors, metrics)
 
     @Composable
     public fun dark(
         colors: ButtonColors = ButtonColors.Outlined.dark(),
         metrics: ButtonMetrics = ButtonMetrics.outlined(),
-    ): ButtonStyle =
-        ButtonStyle(colors, metrics)
+    ): ButtonStyle = ButtonStyle(colors, metrics)
 }
 
 public val ButtonColors.Companion.Default: IntUiDefaultButtonColorFactory
     get() = IntUiDefaultButtonColorFactory
 
 public object IntUiDefaultButtonColorFactory {
-
     @Composable
     public fun light(
         background: Brush = SolidColor(IntUiLightTheme.colors.blue(4)),
@@ -135,7 +130,6 @@ public val ButtonColors.Companion.Outlined: IntUiOutlinedButtonColorFactory
     get() = IntUiOutlinedButtonColorFactory
 
 public object IntUiOutlinedButtonColorFactory {
-
     @Composable
     public fun light(
         background: Brush = SolidColor(IntUiLightTheme.colors.grey(14)),
@@ -214,13 +208,11 @@ public fun ButtonMetrics.Companion.default(
     padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
     minSize: DpSize = DpSize(72.dp, 28.dp),
     borderWidth: Dp = 0.dp,
-): ButtonMetrics =
-    ButtonMetrics(cornerSize, padding, minSize, borderWidth)
+): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth)
 
 public fun ButtonMetrics.Companion.outlined(
     cornerSize: CornerSize = CornerSize(4.dp),
     padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
     minSize: DpSize = DpSize(72.dp, 28.dp),
     borderWidth: Dp = 1.dp,
-): ButtonMetrics =
-    ButtonMetrics(cornerSize, padding, minSize, borderWidth)
+): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth)

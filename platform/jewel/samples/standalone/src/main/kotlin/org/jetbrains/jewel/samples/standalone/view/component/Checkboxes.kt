@@ -23,25 +23,28 @@ fun Checkboxes() {
     ) {
         var checked by remember { mutableStateOf(ToggleableState.On) }
         TriStateCheckboxRow("Checkbox", checked, {
-            checked = when (checked) {
-                ToggleableState.On -> ToggleableState.Off
-                ToggleableState.Off -> ToggleableState.Indeterminate
-                ToggleableState.Indeterminate -> ToggleableState.On
-            }
+            checked =
+                when (checked) {
+                    ToggleableState.On -> ToggleableState.Off
+                    ToggleableState.Off -> ToggleableState.Indeterminate
+                    ToggleableState.Indeterminate -> ToggleableState.On
+                }
         })
         TriStateCheckboxRow("Error", checked, {
-            checked = when (checked) {
-                ToggleableState.On -> ToggleableState.Off
-                ToggleableState.Off -> ToggleableState.Indeterminate
-                ToggleableState.Indeterminate -> ToggleableState.On
-            }
+            checked =
+                when (checked) {
+                    ToggleableState.On -> ToggleableState.Off
+                    ToggleableState.Off -> ToggleableState.Indeterminate
+                    ToggleableState.Indeterminate -> ToggleableState.On
+                }
         }, outline = Outline.Error)
         TriStateCheckboxRow("Warning", checked, {
-            checked = when (checked) {
-                ToggleableState.On -> ToggleableState.Off
-                ToggleableState.Off -> ToggleableState.Indeterminate
-                ToggleableState.Indeterminate -> ToggleableState.On
-            }
+            checked =
+                when (checked) {
+                    ToggleableState.On -> ToggleableState.Off
+                    ToggleableState.Off -> ToggleableState.Indeterminate
+                    ToggleableState.Indeterminate -> ToggleableState.On
+                }
         }, outline = Outline.Warning)
         TriStateCheckboxRow("Disabled", checked, {}, enabled = false)
     }

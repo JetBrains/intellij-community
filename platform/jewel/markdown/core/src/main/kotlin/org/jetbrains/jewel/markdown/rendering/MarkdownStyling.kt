@@ -33,12 +33,10 @@ public class MarkdownStyling(
     public val thematicBreak: ThematicBreak,
     public val htmlBlock: HtmlBlock,
 ) {
-
     @GenerateDataFunctions
     public class Paragraph(
         override val inlinesStyling: InlinesStyling,
     ) : WithInlinesStyling {
-
         public companion object
     }
 
@@ -51,7 +49,6 @@ public class MarkdownStyling(
         public val h5: H5,
         public val h6: H6,
     ) {
-
         public sealed interface HN : WithInlinesStyling, WithUnderline {
             public val padding: PaddingValues
         }
@@ -64,7 +61,6 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
-
             public companion object
         }
 
@@ -76,7 +72,6 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
-
             public companion object
         }
 
@@ -88,7 +83,6 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
-
             public companion object
         }
 
@@ -100,7 +94,6 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
-
             public companion object
         }
 
@@ -112,7 +105,6 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
-
             public companion object
         }
 
@@ -124,7 +116,6 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
-
             public companion object
         }
 
@@ -140,7 +131,6 @@ public class MarkdownStyling(
         public val strokeCap: StrokeCap,
         public val textColor: Color,
     ) {
-
         public companion object
     }
 
@@ -149,7 +139,6 @@ public class MarkdownStyling(
         public val ordered: Ordered,
         public val unordered: Unordered,
     ) {
-
         @GenerateDataFunctions
         public class Ordered(
             public val numberStyle: TextStyle,
@@ -160,7 +149,6 @@ public class MarkdownStyling(
             public val itemVerticalSpacingTight: Dp,
             public val padding: PaddingValues,
         ) {
-
             public companion object
         }
 
@@ -173,7 +161,6 @@ public class MarkdownStyling(
             public val itemVerticalSpacingTight: Dp,
             public val padding: PaddingValues,
         ) {
-
             public companion object
         }
 
@@ -185,7 +172,6 @@ public class MarkdownStyling(
         public val indented: Indented,
         public val fenced: Fenced,
     ) {
-
         @GenerateDataFunctions
         public class Indented(
             public val editorTextStyle: TextStyle,
@@ -197,7 +183,6 @@ public class MarkdownStyling(
             public val fillWidth: Boolean,
             public val scrollsHorizontally: Boolean,
         ) {
-
             public companion object
         }
 
@@ -215,7 +200,6 @@ public class MarkdownStyling(
             public val infoPadding: PaddingValues,
             public val infoPosition: InfoPosition,
         ) {
-
             public enum class InfoPosition {
                 TopStart,
                 TopCenter,
@@ -242,7 +226,6 @@ public class MarkdownStyling(
         public val borderWidth: Dp,
         public val borderColor: Color,
     ) {
-
         public companion object
     }
 
@@ -252,7 +235,6 @@ public class MarkdownStyling(
         public val lineWidth: Dp,
         public val lineColor: Color,
     ) {
-
         public companion object
     }
 
@@ -266,7 +248,6 @@ public class MarkdownStyling(
         public val borderColor: Color,
         public val fillWidth: Boolean,
     ) {
-
         public companion object
     }
 
@@ -274,12 +255,10 @@ public class MarkdownStyling(
 }
 
 public interface WithInlinesStyling {
-
     public val inlinesStyling: InlinesStyling
 }
 
 public interface WithUnderline {
-
     public val underlineWidth: Dp
     public val underlineColor: Color
     public val underlineGap: Dp
@@ -295,7 +274,6 @@ public class InlinesStyling(
     public val inlineHtml: SpanStyle,
     public val renderInlineHtml: Boolean,
 ) {
-
     public companion object
 }
 

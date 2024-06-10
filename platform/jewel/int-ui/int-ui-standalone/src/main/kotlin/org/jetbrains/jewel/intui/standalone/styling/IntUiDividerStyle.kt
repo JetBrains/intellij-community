@@ -11,12 +11,10 @@ import org.jetbrains.jewel.ui.component.styling.DividerStyle
 public fun DividerStyle.Companion.light(
     color: Color = IntUiLightTheme.colors.grey(12),
     metrics: DividerMetrics = DividerMetrics.defaults(),
-): DividerStyle =
-    DividerStyle(color, metrics)
+): DividerStyle = DividerStyle(color, metrics)
 
 @Composable
 public fun DividerStyle.Companion.dark(
     color: Color = IntUiDarkTheme.colors.grey(1),
     metrics: DividerMetrics = DividerMetrics.defaults(),
-): DividerStyle =
-    DividerStyle(color, metrics)
+): DividerStyle = DividerStyle(color, metrics)

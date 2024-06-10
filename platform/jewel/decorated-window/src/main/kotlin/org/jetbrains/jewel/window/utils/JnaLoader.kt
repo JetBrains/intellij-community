@@ -6,7 +6,6 @@ import java.util.logging.Logger
 import kotlin.system.measureTimeMillis
 
 internal object JnaLoader {
-
     private var loaded: Boolean? = null
     private val logger = Logger.getLogger(JnaLoader::class.java.simpleName)
 
@@ -18,7 +17,9 @@ internal object JnaLoader {
                 val time = measureTimeMillis { Native.POINTER_SIZE }
                 logger.info("JNA library (${Native.POINTER_SIZE shl 3}-bit) loaded in $time ms")
                 loaded = true
-            } catch (@Suppress("TooGenericExceptionCaught") t: Throwable) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught") t: Throwable,
+            ) {
                 logger.log(
                     Level.WARNING,
                     "Unable to load JNA library(os=${

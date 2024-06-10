@@ -22,7 +22,6 @@ public class TabStyle(
     public val icons: TabIcons,
     public val contentAlpha: TabContentAlpha,
 ) {
-
     public companion object
 }
 
@@ -35,14 +34,12 @@ public class TabMetrics(
     public val tabContentSpacing: Dp,
     public val closeContentGap: Dp,
 ) {
-
     public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
 public class TabIcons(public val close: PainterProvider) {
-
     public companion object
 }
 
@@ -65,7 +62,6 @@ public class TabColors(
     public val underlineHovered: Color,
     public val underlineSelected: Color,
 ) {
-
     @Composable
     public fun contentFor(state: TabState): State<Color> =
         rememberUpdatedState(
@@ -128,7 +124,6 @@ public class TabContentAlpha(
     public val contentHovered: Float,
     public val contentSelected: Float,
 ) {
-
     @Composable
     public fun iconFor(state: TabState): State<Float> =
         rememberUpdatedState(

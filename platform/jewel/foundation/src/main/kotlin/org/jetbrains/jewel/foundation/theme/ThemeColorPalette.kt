@@ -20,7 +20,6 @@ public class ThemeColorPalette(
     public val teal: List<Color>,
     public val rawMap: Map<String, Color>,
 ) {
-
     public fun grey(index: Int): Color = grey[index - 1]
 
     public fun greyOrNull(index: Int): Color? = grey.getOrNull(index - 1)
@@ -76,7 +75,6 @@ public class ThemeColorPalette(
     }
 
     public companion object {
-
         public val Empty: ThemeColorPalette =
             ThemeColorPalette(
                 grey = emptyList(),

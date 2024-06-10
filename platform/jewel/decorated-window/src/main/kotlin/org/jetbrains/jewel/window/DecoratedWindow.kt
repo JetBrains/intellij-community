@@ -89,43 +89,44 @@ public fun DecoratedWindow(
         var decoratedWindowState by remember { mutableStateOf(DecoratedWindowState.of(window)) }
 
         DisposableEffect(window) {
-            val adapter = object : WindowAdapter(), ComponentListener {
-                override fun windowActivated(e: WindowEvent?) {
-                    decoratedWindowState = DecoratedWindowState.of(window)
-                }
+            val adapter =
+                object : WindowAdapter(), ComponentListener {
+                    override fun windowActivated(e: WindowEvent?) {
+                        decoratedWindowState = DecoratedWindowState.of(window)
+                    }
 
-                override fun windowDeactivated(e: WindowEvent?) {
-                    decoratedWindowState = DecoratedWindowState.of(window)
-                }
+                    override fun windowDeactivated(e: WindowEvent?) {
+                        decoratedWindowState = DecoratedWindowState.of(window)
+                    }
 
-                override fun windowIconified(e: WindowEvent?) {
-                    decoratedWindowState = DecoratedWindowState.of(window)
-                }
+                    override fun windowIconified(e: WindowEvent?) {
+                        decoratedWindowState = DecoratedWindowState.of(window)
+                    }
 
-                override fun windowDeiconified(e: WindowEvent?) {
-                    decoratedWindowState = DecoratedWindowState.of(window)
-                }
+                    override fun windowDeiconified(e: WindowEvent?) {
+                        decoratedWindowState = DecoratedWindowState.of(window)
+                    }
 
-                override fun windowStateChanged(e: WindowEvent) {
-                    decoratedWindowState = DecoratedWindowState.of(window)
-                }
+                    override fun windowStateChanged(e: WindowEvent) {
+                        decoratedWindowState = DecoratedWindowState.of(window)
+                    }
 
-                override fun componentResized(e: ComponentEvent?) {
-                    decoratedWindowState = DecoratedWindowState.of(window)
-                }
+                    override fun componentResized(e: ComponentEvent?) {
+                        decoratedWindowState = DecoratedWindowState.of(window)
+                    }
 
-                override fun componentMoved(e: ComponentEvent?) {
-                    // Empty
-                }
+                    override fun componentMoved(e: ComponentEvent?) {
+                        // Empty
+                    }
 
-                override fun componentShown(e: ComponentEvent?) {
-                    // Empty
-                }
+                    override fun componentShown(e: ComponentEvent?) {
+                        // Empty
+                    }
 
-                override fun componentHidden(e: ComponentEvent?) {
-                    // Empty
+                    override fun componentHidden(e: ComponentEvent?) {
+                        // Empty
+                    }
                 }
-            }
 
             window.addWindowListener(adapter)
             window.addWindowStateListener(adapter)
@@ -155,13 +156,14 @@ public fun DecoratedWindow(
         ) {
             Layout(
                 content = {
-                    val scope = object : DecoratedWindowScope {
-                        override val state: DecoratedWindowState
-                            get() = decoratedWindowState
+                    val scope =
+                        object : DecoratedWindowScope {
+                            override val state: DecoratedWindowState
+                                get() = decoratedWindowState
 
-                        override val window: ComposeWindow
-                            get() = this@Window.window
-                    }
+                            override val window: ComposeWindow
+                                get() = this@Window.window
+                        }
                     scope.content()
                 },
                 modifier = undecoratedWindowBorder.trackWindowActivation(window),
@@ -173,15 +175,16 @@ public fun DecoratedWindow(
 
 @Stable
 public interface DecoratedWindowScope : FrameWindowScope {
-
     override val window: ComposeWindow
 
     public val state: DecoratedWindowState
 }
 
 private object DecoratedWindowMeasurePolicy : MeasurePolicy {
-
-    override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+    override fun MeasureScope.measure(
+        measurables: List<Measurable>,
+        constraints: Constraints,
+    ): MeasureResult {
         if (measurables.isEmpty()) {
             return layout(width = constraints.minWidth, height = constraints.minHeight) {}
         }
@@ -222,7 +225,6 @@ private object DecoratedWindowMeasurePolicy : MeasurePolicy {
 @Immutable
 @JvmInline
 public value class DecoratedWindowState(public val state: ULong) {
-
     public val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -248,11 +250,9 @@ public value class DecoratedWindowState(public val state: ULong) {
             active = active,
         )
 
-    override fun toString(): String =
-        "${javaClass.simpleName}(isFullscreen=$isFullscreen, isActive=$isActive)"
+    override fun toString(): String = "${javaClass.simpleName}(isFullscreen=$isFullscreen, isActive=$isActive)"
 
     public companion object {
-
         public val Active: ULong = 1UL shl 0
         public val Fullscreen: ULong = 1UL shl 1
         public val Minimize: ULong = 1UL shl 2

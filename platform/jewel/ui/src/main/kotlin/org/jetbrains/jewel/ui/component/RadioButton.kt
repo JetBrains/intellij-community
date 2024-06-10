@@ -213,8 +213,9 @@ private fun RadioButtonImpl(
             }
 
             val contentColor by colors.contentFor(radioButtonState)
-            val resolvedContentColor = contentColor.takeOrElse { textStyle.color }
-                .takeOrElse { LocalContentColor.current }
+            val resolvedContentColor =
+                contentColor.takeOrElse { textStyle.color }
+                    .takeOrElse { LocalContentColor.current }
 
             CompositionLocalProvider(
                 LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color }),
@@ -227,14 +228,16 @@ private fun RadioButtonImpl(
 }
 
 @Composable
-private fun RadioButtonImage(radioButtonPainter: Painter, modifier: Modifier = Modifier) {
+private fun RadioButtonImage(
+    radioButtonPainter: Painter,
+    modifier: Modifier = Modifier,
+) {
     Box(modifier.paint(radioButtonPainter, alignment = Alignment.TopStart))
 }
 
 @Immutable
 @JvmInline
 public value class RadioButtonState(public val state: ULong) : SelectableComponentState, FocusableComponentState {
-
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -275,7 +278,6 @@ public value class RadioButtonState(public val state: ULong) : SelectableCompone
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     public companion object {
-
         public fun of(
             selected: Boolean,
             enabled: Boolean = true,

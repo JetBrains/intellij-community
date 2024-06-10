@@ -12,7 +12,6 @@ import org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
 import org.jetbrains.skiko.hostOs
 
 public open class DefaultTreeViewKeybindings : DefaultSelectableColumnKeybindings(), TreeViewKeybindings {
-
     public companion object : DefaultTreeViewKeybindings()
 
     override val KeyEvent.isSelectParent: Boolean
@@ -38,7 +37,6 @@ public open class DefaultTreeViewKeybindings : DefaultSelectableColumnKeybinding
 }
 
 public interface TreeViewKeybindings : SelectableColumnKeybindings {
-
     /**
      * Select Parent Node.
      */

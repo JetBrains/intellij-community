@@ -10,7 +10,6 @@ public abstract class PalettePainterHintsProvider(
     protected val themeIconPalette: Map<String, String?>,
     protected val themeColorPalette: Map<String, Color?>,
 ) : PainterHintsProvider {
-
     protected abstract val checkBoxByKeyPaletteHint: PainterHint
     protected abstract val checkBoxByColorPaletteHint: PainterHint
     protected abstract val treePaletteHint: PainterHint
@@ -54,7 +53,10 @@ public abstract class PalettePainterHintsProvider(
      * IntelliJ Platform, also on the IDE version and the current theme (New UI
      * vs Classic UI).
      */
-    protected fun getPaletteHint(path: String, isNewUi: Boolean): PainterHint {
+    protected fun getPaletteHint(
+        path: String,
+        isNewUi: Boolean,
+    ): PainterHint {
         if (!path.contains("com/intellij/ide/ui/laf/icons/") && !path.contains("themes/expUI/icons/dark/")) return uiPaletteHint
 
         val file = path.substringAfterLast('/')

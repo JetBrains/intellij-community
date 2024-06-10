@@ -255,19 +255,20 @@ private fun LinkImpl(
     val pointerChangeModifier = Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR)))
 
     Row(
-        modifier = modifier
-            .thenIf(linkState.isEnabled) { pointerChangeModifier }
-            .clickable(
-                onClick = {
-                    linkState = linkState.copy(visited = true)
-                    onClick()
-                },
-                enabled = enabled,
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = null,
-            )
-            .focusOutline(linkState, RoundedCornerShape(style.metrics.focusHaloCornerSize)),
+        modifier =
+            modifier
+                .thenIf(linkState.isEnabled) { pointerChangeModifier }
+                .clickable(
+                    onClick = {
+                        linkState = linkState.copy(visited = true)
+                        onClick()
+                    },
+                    enabled = enabled,
+                    role = Role.Button,
+                    interactionSource = interactionSource,
+                    indication = null,
+                )
+                .focusOutline(linkState, RoundedCornerShape(style.metrics.focusHaloCornerSize)),
         horizontalArrangement = Arrangement.spacedBy(style.metrics.textIconGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -294,7 +295,6 @@ private fun LinkImpl(
 @Immutable
 @JvmInline
 public value class LinkState(public val state: ULong) : FocusableComponentState {
-
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -355,7 +355,6 @@ public value class LinkState(public val state: ULong) : FocusableComponentState 
         }
 
     public companion object {
-
         private const val VISITED_BIT_OFFSET = CommonStateBitMask.FIRST_AVAILABLE_OFFSET
 
         private val Visited = 1UL shl VISITED_BIT_OFFSET

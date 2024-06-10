@@ -12,7 +12,6 @@ import org.w3c.dom.Element
 
 @Immutable
 private object DarkImpl : PainterSuffixHint() {
-
     override fun PainterProviderScope.suffix(): String = "_dark"
 
     override fun PainterProviderScope.canApply(): Boolean = acceptedHints.all { it !is StrokeImpl }
@@ -23,7 +22,6 @@ private object DarkImpl : PainterSuffixHint() {
 @Immutable
 @GenerateDataFunctions
 private class StrokeImpl(private val color: Color) : PainterSuffixHint(), PainterSvgPatchHint {
-
     override fun PainterProviderScope.suffix(): String = "_stroke"
 
     override fun PainterProviderScope.patch(element: Element) {
@@ -34,32 +32,34 @@ private class StrokeImpl(private val color: Color) : PainterSuffixHint(), Painte
 
     override fun PainterProviderScope.canApply(): Boolean = true
 
-    private val backgroundPalette = listOf(
-        Color(0xFFEBECF0),
-        Color(0xFFE7EFFD),
-        Color(0xFFDFF2E0),
-        Color(0xFFF2FCF3),
-        Color(0xFFFFE8E8),
-        Color(0xFFFFF5F5),
-        Color(0xFFFFF8E3),
-        Color(0xFFFFF4EB),
-        Color(0xFFEEE0FF),
-    )
+    private val backgroundPalette =
+        listOf(
+            Color(0xFFEBECF0),
+            Color(0xFFE7EFFD),
+            Color(0xFFDFF2E0),
+            Color(0xFFF2FCF3),
+            Color(0xFFFFE8E8),
+            Color(0xFFFFF5F5),
+            Color(0xFFFFF8E3),
+            Color(0xFFFFF4EB),
+            Color(0xFFEEE0FF),
+        )
 
-    private val strokeColors = listOf(
-        Color(0xFF000000),
-        Color(0xFFFFFFFF),
-        Color(0xFF818594),
-        Color(0xFF6C707E),
-        Color(0xFF3574F0),
-        Color(0xFF5FB865),
-        Color(0xFFE35252),
-        Color(0xFFEB7171),
-        Color(0xFFE3AE4D),
-        Color(0xFFFCC75B),
-        Color(0xFFF28C35),
-        Color(0xFF955AE0),
-    )
+    private val strokeColors =
+        listOf(
+            Color(0xFF000000),
+            Color(0xFFFFFFFF),
+            Color(0xFF818594),
+            Color(0xFF6C707E),
+            Color(0xFF3574F0),
+            Color(0xFF5FB865),
+            Color(0xFFE35252),
+            Color(0xFFEB7171),
+            Color(0xFFE3AE4D),
+            Color(0xFFFCC75B),
+            Color(0xFFF28C35),
+            Color(0xFF955AE0),
+        )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -80,8 +80,7 @@ private class StrokeImpl(private val color: Color) : PainterSuffixHint(), Painte
  * [color]. All fills are removed.
  */
 @Suppress("FunctionName")
-public fun Stroke(color: Color): PainterHint =
-    if (color.isSpecified) StrokeImpl(color) else PainterHint.None
+public fun Stroke(color: Color): PainterHint = if (color.isSpecified) StrokeImpl(color) else PainterHint.None
 
 /**
  * Switches between the light and dark variants of an image based on
@@ -103,5 +102,4 @@ public fun Stroke(color: Color): PainterHint =
  * | `my-icon@2x.png`    | `my-icon@2x_dark.png`    |
  */
 @Suppress("FunctionName")
-public fun Dark(isDark: Boolean = true): PainterHint =
-    if (isDark) DarkImpl else PainterHint.None
+public fun Dark(isDark: Boolean = true): PainterHint = if (isDark) DarkImpl else PainterHint.None

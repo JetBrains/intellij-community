@@ -21,7 +21,6 @@ public class IconButtonStyle(
     public val colors: IconButtonColors,
     public val metrics: IconButtonMetrics,
 ) {
-
     public companion object
 }
 
@@ -44,7 +43,6 @@ public class IconButtonColors(
     public val borderPressed: Color,
     public val borderHovered: Color,
 ) {
-
     @Composable
     public fun foregroundFor(state: IconButtonState): State<Color> =
         rememberUpdatedState(
@@ -93,7 +91,6 @@ public class IconButtonMetrics(
     public val padding: PaddingValues,
     public val minSize: DpSize,
 ) {
-
     public companion object
 }
 

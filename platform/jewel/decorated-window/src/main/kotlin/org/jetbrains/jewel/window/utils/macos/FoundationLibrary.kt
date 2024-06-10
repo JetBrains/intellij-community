@@ -4,11 +4,29 @@ import com.sun.jna.Callback
 import com.sun.jna.Library
 import com.sun.jna.Pointer
 
+@Suppress(
+    "ktlint:standard:function-naming",
+    "ktlint:standard:property-naming",
+    "Unused",
+    "FunctionName",
+    "ConstPropertyName",
+) // Borrowed code
 internal interface FoundationLibrary : Library {
-    fun NSLog(pString: Pointer?, thing: Any?)
+    fun NSLog(
+        pString: Pointer?,
+        thing: Any?,
+    )
+
     fun NSFullUserName(): ID?
-    fun objc_allocateClassPair(supercls: ID?, name: String?, extraBytes: Int): ID?
+
+    fun objc_allocateClassPair(
+        supercls: ID?,
+        name: String?,
+        extraBytes: Int,
+    ): ID?
+
     fun objc_registerClassPair(cls: ID?)
+
     fun CFStringCreateWithBytes(
         allocator: Pointer?,
         bytes: ByteArray?,
@@ -17,33 +35,90 @@ internal interface FoundationLibrary : Library {
         isExternalRepresentation: Byte,
     ): ID?
 
-    fun CFStringGetCString(theString: ID?, buffer: ByteArray?, bufferSize: Int, encoding: Int): Byte
+    fun CFStringGetCString(
+        theString: ID?,
+        buffer: ByteArray?,
+        bufferSize: Int,
+        encoding: Int,
+    ): Byte
+
     fun CFStringGetLength(theString: ID?): Int
+
     fun CFStringConvertNSStringEncodingToEncoding(nsEncoding: Long): Long
+
     fun CFStringConvertEncodingToIANACharSetName(cfEncoding: Long): ID?
+
     fun CFStringConvertIANACharSetNameToEncoding(encodingName: ID?): Long
+
     fun CFStringConvertEncodingToNSStringEncoding(cfEncoding: Long): Long
+
     fun CFRetain(cfTypeRef: ID?)
+
     fun CFRelease(cfTypeRef: ID?)
+
     fun CFGetRetainCount(cfTypeRef: Pointer?): Int
+
     fun objc_getClass(className: String?): ID?
+
     fun objc_getProtocol(name: String?): ID?
-    fun class_createInstance(pClass: ID?, extraBytes: Int): ID?
+
+    fun class_createInstance(
+        pClass: ID?,
+        extraBytes: Int,
+    ): ID?
+
     fun sel_registerName(selectorName: String?): Pointer?
-    fun class_replaceMethod(cls: ID?, selName: Pointer?, impl: Callback?, types: String?): ID?
+
+    fun class_replaceMethod(
+        cls: ID?,
+        selName: Pointer?,
+        impl: Callback?,
+        types: String?,
+    ): ID?
+
     fun objc_getMetaClass(name: String?): ID?
 
     /**
-     * Note: Vararg version. Should only be used only for selectors with a single fixed argument followed by varargs.
+     * Note: Vararg version. Should only be used only for selectors with a
+     * single fixed argument followed by varargs.
      */
-    fun objc_msgSend(receiver: ID?, selector: Pointer?, firstArg: Any?, vararg args: Any?): ID?
-    fun class_respondsToSelector(cls: ID?, selName: Pointer?): Boolean
-    fun class_addMethod(cls: ID?, selName: Pointer?, imp: Callback?, types: String?): Boolean
-    fun class_addMethod(cls: ID?, selName: Pointer?, imp: ID?, types: String?): Boolean
-    fun class_addProtocol(aClass: ID?, protocol: ID?): Boolean
+    fun objc_msgSend(
+        receiver: ID?,
+        selector: Pointer?,
+        firstArg: Any?,
+        vararg args: Any?,
+    ): ID?
+
+    fun class_respondsToSelector(
+        cls: ID?,
+        selName: Pointer?,
+    ): Boolean
+
+    fun class_addMethod(
+        cls: ID?,
+        selName: Pointer?,
+        imp: Callback?,
+        types: String?,
+    ): Boolean
+
+    fun class_addMethod(
+        cls: ID?,
+        selName: Pointer?,
+        imp: ID?,
+        types: String?,
+    ): Boolean
+
+    fun class_addProtocol(
+        aClass: ID?,
+        protocol: ID?,
+    ): Boolean
+
     fun class_isMetaClass(cls: ID?): Boolean
+
     fun NSStringFromSelector(selector: Pointer?): ID?
+
     fun NSStringFromClass(aClass: ID?): ID?
+
     fun objc_getClass(clazz: Pointer?): Pointer?
 
     companion object {

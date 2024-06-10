@@ -3,7 +3,8 @@ package org.jetbrains.jewel.samples.standalone.view.markdown
 import org.intellij.lang.annotations.Language
 
 @Language("Markdown")
-internal val JewelReadme = """
+internal val JewelReadme =
+    """
 # Jewel: a Compose for Desktop theme
 
 <img alt="Jewel logo" src="art/jewel-logo.svg" width="20%"/>
@@ -366,4 +367,4 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
-""".trimIndent()
+    """.trimIndent()

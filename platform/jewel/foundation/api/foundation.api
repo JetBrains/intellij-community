@@ -89,6 +89,7 @@ public final class org/jetbrains/jewel/foundation/Stroke$Alignment : java/lang/E
 	public static final field Center Lorg/jetbrains/jewel/foundation/Stroke$Alignment;
 	public static final field Inside Lorg/jetbrains/jewel/foundation/Stroke$Alignment;
 	public static final field Outside Lorg/jetbrains/jewel/foundation/Stroke$Alignment;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/foundation/Stroke$Alignment;
 	public static fun values ()[Lorg/jetbrains/jewel/foundation/Stroke$Alignment;
 }
@@ -347,6 +348,7 @@ public final class org/jetbrains/jewel/foundation/lazy/SelectionMode : java/lang
 	public static final field Multiple Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;
 	public static final field None Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;
 	public static final field Single Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;
 	public static fun values ()[Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;
 }

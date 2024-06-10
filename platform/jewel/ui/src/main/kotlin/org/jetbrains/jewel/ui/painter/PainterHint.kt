@@ -20,14 +20,12 @@ import org.w3c.dom.Element
  */
 @Immutable
 public sealed interface PainterHint {
-
     public fun PainterProviderScope.canApply(): Boolean = true
 
     /**
      * An empty [PainterHint], it will be ignored.
      */
     public companion object None : PainterHint {
-
         override fun PainterProviderScope.canApply(): Boolean = false
 
         override fun toString(): String = "None"
@@ -39,9 +37,7 @@ public sealed interface PainterHint {
  */
 @Immutable
 public interface SvgPainterHint : PainterHint {
-
-    override fun PainterProviderScope.canApply(): Boolean =
-        path.substringAfterLast('.').lowercase() == "svg"
+    override fun PainterProviderScope.canApply(): Boolean = path.substringAfterLast('.').lowercase() == "svg"
 }
 
 /**
@@ -49,7 +45,6 @@ public interface SvgPainterHint : PainterHint {
  */
 @Immutable
 public interface BitmapPainterHint : PainterHint {
-
     override fun PainterProviderScope.canApply(): Boolean =
         when (path.substringAfterLast('.').lowercase()) {
             "svg", "xml" -> false
@@ -62,9 +57,7 @@ public interface BitmapPainterHint : PainterHint {
  */
 @Immutable
 public interface XmlPainterHint : PainterHint {
-
-    override fun PainterProviderScope.canApply(): Boolean =
-        path.substringAfterLast('.').lowercase() == "xml"
+    override fun PainterProviderScope.canApply(): Boolean = path.substringAfterLast('.').lowercase() == "xml"
 }
 
 /**
@@ -74,7 +67,6 @@ public interface XmlPainterHint : PainterHint {
  */
 @Immutable
 public interface PainterPathHint : PainterHint {
-
     /** Patch the path, if needed. */
     public fun PainterProviderScope.patch(): String
 }
@@ -85,7 +77,6 @@ public interface PainterPathHint : PainterHint {
  */
 @Immutable
 public interface PainterSvgPatchHint : SvgPainterHint {
-
     /**
      * Patch the SVG content.
      */
@@ -94,7 +85,6 @@ public interface PainterSvgPatchHint : SvgPainterHint {
 
 @Immutable
 public interface PainterWrapperHint : PainterHint {
-
     public fun PainterProviderScope.wrap(painter: Painter): Painter
 }
 
@@ -106,16 +96,16 @@ public interface PainterWrapperHint : PainterHint {
  */
 @Immutable
 public abstract class PainterPrefixHint : PainterPathHint {
+    override fun PainterProviderScope.patch(): String =
+        buildString {
+            append(path.substringBeforeLast('/', ""))
+            append('/')
+            append(prefix())
+            append(path.substringBeforeLast('.').substringAfterLast('/'))
 
-    override fun PainterProviderScope.patch(): String = buildString {
-        append(path.substringBeforeLast('/', ""))
-        append('/')
-        append(prefix())
-        append(path.substringBeforeLast('.').substringAfterLast('/'))
-
-        append('.')
-        append(path.substringAfterLast('.'))
-    }
+            append('.')
+            append(path.substringAfterLast('.'))
+        }
 
     public abstract fun PainterProviderScope.prefix(): String
 }
@@ -128,16 +118,16 @@ public abstract class PainterPrefixHint : PainterPathHint {
  */
 @Immutable
 public abstract class PainterSuffixHint : PainterPathHint {
+    override fun PainterProviderScope.patch(): String =
+        buildString {
+            append(path.substringBeforeLast('/', ""))
+            append('/')
+            append(path.substringBeforeLast('.').substringAfterLast('/'))
+            append(suffix())
 
-    override fun PainterProviderScope.patch(): String = buildString {
-        append(path.substringBeforeLast('/', ""))
-        append('/')
-        append(path.substringBeforeLast('.').substringAfterLast('/'))
-        append(suffix())
-
-        append('.')
-        append(path.substringAfterLast('.'))
-    }
+            append('.')
+            append(path.substringAfterLast('.'))
+        }
 
     public abstract fun PainterProviderScope.suffix(): String
 }

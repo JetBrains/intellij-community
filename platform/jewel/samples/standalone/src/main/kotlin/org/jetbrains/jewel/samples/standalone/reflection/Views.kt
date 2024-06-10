@@ -14,19 +14,22 @@ import kotlin.reflect.jvm.kotlinFunction
 internal fun findViews(packageName: String): List<ViewInfo> {
     val path = "/" + packageName.replace('.', '/').removePrefix("/")
 
-    val uri = Class.forName("org.jetbrains.jewel.samples.standalone.reflection.ViewsKt")
-        .getResource(path)?.toURI() ?: return emptyList()
+    val uri =
+        Class.forName("org.jetbrains.jewel.samples.standalone.reflection.ViewsKt")
+            .getResource(path)?.toURI() ?: return emptyList()
 
-    val directory = if (uri.scheme == "jar") {
-        val fileSystem = try {
-            FileSystems.getFileSystem(uri)
-        } catch (_: FileSystemNotFoundException) {
-            FileSystems.newFileSystem(uri, emptyMap<String, Any>())
+    val directory =
+        if (uri.scheme == "jar") {
+            val fileSystem =
+                try {
+                    FileSystems.getFileSystem(uri)
+                } catch (_: FileSystemNotFoundException) {
+                    FileSystems.newFileSystem(uri, emptyMap<String, Any>())
+                }
+            fileSystem.getPath(path)
+        } else {
+            Paths.get(uri)
         }
-        fileSystem.getPath(path)
-    } else {
-        Paths.get(uri)
-    }
 
     val result = mutableListOf<ViewInfo>()
 
@@ -34,23 +37,25 @@ internal fun findViews(packageName: String): List<ViewInfo> {
         Files.list(directory)
             .filter { f -> Files.isRegularFile(f) && !f.name.contains('$') && f.name.endsWith("Kt.class") }
             .forEach { f ->
-                val fullyQualifiedClassName = packageName +
-                    f.absolutePathString().removePrefix(directory.absolutePathString())
-                        .dropLast(6) // remove .class
-                        .replace('/', '.')
+                val fullyQualifiedClassName =
+                    packageName +
+                        f.absolutePathString().removePrefix(directory.absolutePathString())
+                            .dropLast(6) // remove .class
+                            .replace('/', '.')
                 try {
-                    result += Class.forName(fullyQualifiedClassName).methods.mapNotNull {
-                        val annotation = it.getAnnotation(View::class.java) ?: return@mapNotNull null
-                        val kFunc = it.kotlinFunction ?: return@mapNotNull null
-                        if (kFunc.parameters.isNotEmpty() || kFunc.returnType.classifier != Unit::class) return@mapNotNull null
+                    result +=
+                        Class.forName(fullyQualifiedClassName).methods.mapNotNull {
+                            val annotation = it.getAnnotation(View::class.java) ?: return@mapNotNull null
+                            val kFunc = it.kotlinFunction ?: return@mapNotNull null
+                            if (kFunc.parameters.isNotEmpty() || kFunc.returnType.classifier != Unit::class) return@mapNotNull null
 
-                        ViewInfo(
-                            title = annotation.title,
-                            position = annotation.position,
-                            icon = annotation.icon,
-                            content = it.kotlinFunction as @Composable () -> Unit,
-                        )
-                    }
+                            ViewInfo(
+                                title = annotation.title,
+                                position = annotation.position,
+                                icon = annotation.icon,
+                                content = it.kotlinFunction as @Composable () -> Unit,
+                            )
+                        }
                 } catch (e: ClassNotFoundException) {
                     System.err.println(e)
                 } catch (ignore: InstantiationException) {

@@ -20,8 +20,10 @@ import javax.swing.JComponent
 @Suppress("unused")
 @ExperimentalCoroutinesApi
 internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
-
-    override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+    override fun createToolWindowContent(
+        project: Project,
+        toolWindow: ToolWindow,
+    ) {
         toolWindow.addComposeTab("Components") {
             ComponentShowcaseTab()
         }
@@ -38,7 +40,10 @@ internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
         toolWindow.addSwingTab(SwingComparisonTabPanel(), "Swing Comparison")
     }
 
-    private fun ToolWindow.addSwingTab(component: JComponent, @TabTitle title: String) {
+    private fun ToolWindow.addSwingTab(
+        component: JComponent,
+        @TabTitle title: String,
+    ) {
         val manager = contentManager
         val tabContent = manager.factory.createContent(component, title, true)
         tabContent.isCloseable = false

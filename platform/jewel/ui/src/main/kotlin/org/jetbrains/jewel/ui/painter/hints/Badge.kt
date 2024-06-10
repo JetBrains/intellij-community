@@ -15,11 +15,12 @@ private class BadgeImpl(
     private val color: Color,
     private val shape: BadgeShape,
 ) : PainterWrapperHint {
-
     override fun PainterProviderScope.wrap(painter: Painter): Painter = BadgePainter(painter, color, shape)
 }
 
 /** Adds a colored badge to the image being loaded. */
 @Suppress("FunctionName")
-public fun Badge(color: Color, shape: BadgeShape): PainterHint =
-    if (color.isSpecified) BadgeImpl(color, shape) else PainterHint.None
+public fun Badge(
+    color: Color,
+    shape: BadgeShape,
+): PainterHint = if (color.isSpecified) BadgeImpl(color, shape) else PainterHint.None

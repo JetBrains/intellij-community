@@ -15,7 +15,6 @@ import org.jetbrains.jewel.ui.component.InputFieldState
 
 @Stable
 public interface InputFieldStyle {
-
     public val colors: InputFieldColors
     public val metrics: InputFieldMetrics
     public val textStyle: TextStyle
@@ -23,7 +22,6 @@ public interface InputFieldStyle {
 
 @Immutable
 public interface InputFieldColors {
-
     public val background: Color
     public val backgroundDisabled: Color
     public val backgroundFocused: Color
@@ -103,7 +101,6 @@ public interface InputFieldColors {
 
 @Stable
 public interface InputFieldMetrics {
-
     public val cornerSize: CornerSize
     public val contentPadding: PaddingValues
     public val minSize: DpSize

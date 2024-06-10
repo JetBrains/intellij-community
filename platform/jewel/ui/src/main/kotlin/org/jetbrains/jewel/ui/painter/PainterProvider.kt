@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.painter.Painter
  * references.
  */
 public interface PainterProvider {
-
     /**
      * Provides a [Painter] using the specified [PainterHint]s. The painters
      * are [remember][androidx.compose.runtime.remember]ed and this function

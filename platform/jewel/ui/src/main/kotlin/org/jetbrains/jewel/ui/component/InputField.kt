@@ -71,20 +71,22 @@ internal fun InputField(
     val backgroundColor by colors.backgroundFor(inputState)
     val shape = RoundedCornerShape(style.metrics.cornerSize)
 
-    val backgroundModifier = Modifier.thenIf(!undecorated && backgroundColor.isSpecified) {
-        background(backgroundColor, shape)
-    }
+    val backgroundModifier =
+        Modifier.thenIf(!undecorated && backgroundColor.isSpecified) {
+            background(backgroundColor, shape)
+        }
 
     val borderColor by style.colors.borderFor(inputState)
     val hasNoOutline = outline == Outline.None
-    val borderModifier = Modifier.thenIf(!undecorated && borderColor.isSpecified && hasNoOutline) {
-        border(
-            alignment = Stroke.Alignment.Center,
-            width = style.metrics.borderWidth,
-            color = borderColor,
-            shape = shape,
-        )
-    }
+    val borderModifier =
+        Modifier.thenIf(!undecorated && borderColor.isSpecified && hasNoOutline) {
+            border(
+                alignment = Stroke.Alignment.Center,
+                width = style.metrics.borderWidth,
+                color = borderColor,
+                shape = shape,
+            )
+        }
 
     val contentColor by colors.contentFor(inputState)
     val mergedTextStyle = style.textStyle.merge(textStyle).copy(color = contentColor)
@@ -92,11 +94,12 @@ internal fun InputField(
 
     BasicTextField(
         value = value,
-        modifier = modifier
-            .then(backgroundModifier)
-            .then(borderModifier)
-            .thenIf(!undecorated && hasNoOutline) { focusOutline(inputState, shape) }
-            .outline(inputState, outline, shape, Stroke.Alignment.Center),
+        modifier =
+            modifier
+                .then(backgroundModifier)
+                .then(borderModifier)
+                .thenIf(!undecorated && hasNoOutline) { focusOutline(inputState, shape) }
+                .outline(inputState, outline, shape, Stroke.Alignment.Center),
         onValueChange = onValueChange,
         enabled = enabled,
         readOnly = readOnly,
@@ -118,7 +121,6 @@ internal fun InputField(
 @Immutable
 @JvmInline
 public value class InputFieldState(public val state: ULong) : FocusableComponentState {
-
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -154,7 +156,6 @@ public value class InputFieldState(public val state: ULong) : FocusableComponent
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     public companion object {
-
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,
@@ -164,11 +165,11 @@ public value class InputFieldState(public val state: ULong) : FocusableComponent
         ): InputFieldState =
             InputFieldState(
                 state =
-                (if (enabled) Enabled else 0UL) or
-                    (if (focused) Focused else 0UL) or
-                    (if (hovered) Hovered else 0UL) or
-                    (if (pressed) Pressed else 0UL) or
-                    (if (active) Active else 0UL),
+                    (if (enabled) Enabled else 0UL) or
+                        (if (focused) Focused else 0UL) or
+                        (if (hovered) Hovered else 0UL) or
+                        (if (pressed) Pressed else 0UL) or
+                        (if (active) Active else 0UL),
             )
     }
 }

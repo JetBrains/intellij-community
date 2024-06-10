@@ -17,15 +17,13 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 public fun IconButtonStyle.Companion.light(
     colors: IconButtonColors = IconButtonColors.light(),
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
-): IconButtonStyle =
-    IconButtonStyle(colors, metrics)
+): IconButtonStyle = IconButtonStyle(colors, metrics)
 
 @Composable
 public fun IconButtonStyle.Companion.dark(
     colors: IconButtonColors = IconButtonColors.dark(),
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
-): IconButtonStyle =
-    IconButtonStyle(colors, metrics)
+): IconButtonStyle = IconButtonStyle(colors, metrics)
 
 @Composable
 public fun IconButtonColors.Companion.light(
@@ -104,5 +102,4 @@ public fun IconButtonMetrics.Companion.defaults(
     borderWidth: Dp = 1.dp,
     padding: PaddingValues = PaddingValues(0.dp),
     minSize: DpSize = DpSize(16.dp, 16.dp),
-): IconButtonMetrics =
-    IconButtonMetrics(cornerSize, borderWidth, padding, minSize)
+): IconButtonMetrics = IconButtonMetrics(cornerSize, borderWidth, padding, minSize)

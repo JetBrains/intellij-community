@@ -21,15 +21,15 @@ import java.time.format.FormatStyle
 import javax.swing.ScrollPaneConstants
 
 internal class DetailsPanel(private val scope: CoroutineScope) : JBPanelWithEmptyText(BorderLayout()), ComponentWithEmptyText {
-
     fun display(contentItem: ContentItem?) {
         removeAll()
 
-        val content = when (contentItem) {
-            is ContentItem.AndroidRelease -> ItemDetailsPanel(contentItem, scope)
-            is ContentItem.AndroidStudio -> ItemDetailsPanel(contentItem, scope)
-            null -> return
-        }
+        val content =
+            when (contentItem) {
+                is ContentItem.AndroidRelease -> ItemDetailsPanel(contentItem, scope)
+                is ContentItem.AndroidStudio -> ItemDetailsPanel(contentItem, scope)
+                null -> return
+            }
         add(content, BorderLayout.CENTER)
     }
 }
@@ -38,32 +38,34 @@ private class ItemDetailsPanel(
     contentItem: ContentItem,
     scope: CoroutineScope,
 ) : BorderLayoutPanel() {
-
     private val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
 
     init {
-        val bufferedImage = contentItem.imagePath
-            ?.let { ImageLoader.loadFromResource(it, javaClass) }
-            ?.let { ImageUtil.toBufferedImage(it) }
+        val bufferedImage =
+            contentItem.imagePath
+                ?.let { ImageLoader.loadFromResource(it, javaClass) }
+                ?.let { ImageUtil.toBufferedImage(it) }
 
         if (bufferedImage != null) {
-            val imageContainer = ImageComponent(scope).apply {
-                maximumHeight = scale(200)
-                image = bufferedImage
-            }
+            val imageContainer =
+                ImageComponent(scope).apply {
+                    maximumHeight = scale(200)
+                    image = bufferedImage
+                }
 
             addToTop(imageContainer)
         }
 
         // Using the Kotlin DSL v2 to make this less painful
-        val mainContentPanel = panel {
-            commonContent(contentItem)
+        val mainContentPanel =
+            panel {
+                commonContent(contentItem)
 
-            when (contentItem) {
-                is ContentItem.AndroidRelease -> androidReleaseContent(contentItem)
-                is ContentItem.AndroidStudio -> androidStudioContent(contentItem)
+                when (contentItem) {
+                    is ContentItem.AndroidRelease -> androidReleaseContent(contentItem)
+                    is ContentItem.AndroidStudio -> androidStudioContent(contentItem)
+                }
             }
-        }
         mainContentPanel.border = JBUI.Borders.empty(12, 20)
 
         val scrollingContainer =

@@ -18,21 +18,23 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 @Composable
 public fun ProvideMarkdownStyling(
     isDark: Boolean = JewelTheme.isDark,
-    markdownStyling: MarkdownStyling = remember(isDark) {
-        if (isDark) {
-            MarkdownStyling.dark()
-        } else {
-            MarkdownStyling.light()
-        }
-    },
+    markdownStyling: MarkdownStyling =
+        remember(isDark) {
+            if (isDark) {
+                MarkdownStyling.dark()
+            } else {
+                MarkdownStyling.light()
+            }
+        },
     markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor() },
-    markdownBlockRenderer: MarkdownBlockRenderer = remember(markdownStyling) {
-        if (isDark) {
-            MarkdownBlockRenderer.dark(markdownStyling)
-        } else {
-            MarkdownBlockRenderer.light(markdownStyling)
-        }
-    },
+    markdownBlockRenderer: MarkdownBlockRenderer =
+        remember(markdownStyling) {
+            if (isDark) {
+                MarkdownBlockRenderer.dark(markdownStyling)
+            } else {
+                MarkdownBlockRenderer.light(markdownStyling)
+            }
+        },
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(

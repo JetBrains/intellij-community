@@ -133,8 +133,9 @@ public fun TextField(
         val minSize = style.metrics.minSize
 
         TextFieldDecorationBox(
-            modifier = Modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height)
-                .padding(style.metrics.contentPadding),
+            modifier =
+                Modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height)
+                    .padding(style.metrics.contentPadding),
             innerTextField = innerTextField,
             textStyle = textStyle,
             placeholderTextColor = style.colors.placeholder,
@@ -195,28 +196,33 @@ private fun TextFieldDecorationBox(
         occupiedSpaceHorizontally += trailingPlaceable?.width ?: 0
         occupiedSpaceHorizontally += leadingPlaceable?.width ?: 0
 
-        val textFieldConstraints = incomingConstraints.offset(horizontal = -occupiedSpaceHorizontally)
-            .copy(minHeight = 0)
-        val textFieldPlaceable = measurables.single { it.layoutId == TEXT_FIELD_ID }
-            .measure(textFieldConstraints)
+        val textFieldConstraints =
+            incomingConstraints.offset(horizontal = -occupiedSpaceHorizontally)
+                .copy(minHeight = 0)
+        val textFieldPlaceable =
+            measurables.single { it.layoutId == TEXT_FIELD_ID }
+                .measure(textFieldConstraints)
 
         // measure placeholder
         val placeholderConstraints = textFieldConstraints.copy(minWidth = 0)
-        val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }
-            ?.measure(placeholderConstraints)
+        val placeholderPlaceable =
+            measurables.find { it.layoutId == PLACEHOLDER_ID }
+                ?.measure(placeholderConstraints)
 
-        val width = calculateWidth(
-            leadingPlaceable,
-            trailingPlaceable,
-            textFieldPlaceable,
-            incomingConstraints,
-        )
-        val height = calculateHeight(
-            leadingPlaceable,
-            trailingPlaceable,
-            textFieldPlaceable,
-            incomingConstraints,
-        )
+        val width =
+            calculateWidth(
+                leadingPlaceable,
+                trailingPlaceable,
+                textFieldPlaceable,
+                incomingConstraints,
+            )
+        val height =
+            calculateHeight(
+                leadingPlaceable,
+                trailingPlaceable,
+                textFieldPlaceable,
+                incomingConstraints,
+            )
 
         layout(width, height) {
             place(

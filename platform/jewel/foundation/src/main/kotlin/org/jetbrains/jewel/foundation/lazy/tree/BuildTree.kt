@@ -4,13 +4,10 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import java.io.File
 import java.nio.file.Path
 
-public fun <T> buildTree(builder: TreeBuilder<T>.() -> Unit): Tree<T> =
-    TreeBuilder<T>().apply(builder).build()
+public fun <T> buildTree(builder: TreeBuilder<T>.() -> Unit): Tree<T> = TreeBuilder<T>().apply(builder).build()
 
 public class TreeBuilder<T> : TreeGeneratorScope<T> {
-
     public sealed class Element<T> {
-
         public abstract val id: Any?
 
         @GenerateDataFunctions
@@ -26,7 +23,10 @@ public class TreeBuilder<T> : TreeGeneratorScope<T> {
 
     private val heads = mutableListOf<Element<T>>()
 
-    override fun addLeaf(data: T, id: Any?) {
+    override fun addLeaf(
+        data: T,
+        id: Any?,
+    ) {
         heads.add(Element.Leaf(data, id))
     }
 
@@ -45,8 +45,9 @@ public class TreeBuilder<T> : TreeGeneratorScope<T> {
     public fun build(): Tree<T> {
         val elements = mutableListOf<Tree.Element<T>>()
         for (index in heads.indices) {
-            val previous: Tree.Element<T>? = elements.getOrNull(index - 1)
-                ?.let { evaluatePrevious(it) }
+            val previous: Tree.Element<T>? =
+                elements.getOrNull(index - 1)
+                    ?.let { evaluatePrevious(it) }
 
             val current = getCurrentTreeElement(index, previous)
             elements.add(current)
@@ -55,9 +56,12 @@ public class TreeBuilder<T> : TreeGeneratorScope<T> {
         return Tree(elements)
     }
 
-    private fun getCurrentTreeElement(index: Int, previous: Tree.Element<T>?) =
-        when (val elementBuilder = heads[index]) {
-            is Element.Leaf -> Tree.Element.Leaf(
+    private fun getCurrentTreeElement(
+        index: Int,
+        previous: Tree.Element<T>?,
+    ) = when (val elementBuilder = heads[index]) {
+        is Element.Leaf ->
+            Tree.Element.Leaf(
                 data = elementBuilder.data,
                 depth = 0,
                 childIndex = index,
@@ -67,7 +71,8 @@ public class TreeBuilder<T> : TreeGeneratorScope<T> {
                 id = elementBuilder.id ?: "$index",
             )
 
-            is Element.Node -> Tree.Element.Node(
+        is Element.Node ->
+            Tree.Element.Node(
                 data = elementBuilder.data,
                 depth = 0,
                 childIndex = index,
@@ -77,7 +82,7 @@ public class TreeBuilder<T> : TreeGeneratorScope<T> {
                 next = null,
                 id = elementBuilder.id ?: "$index",
             )
-        }
+    }
 }
 
 private fun <T> generateElements(
@@ -91,26 +96,28 @@ private fun <T> generateElements(
         val previous = if (index == 0) parent else elements[index - 1]
         val current =
             when (val elementBuilder = childrenGeneratorScope.elements[index]) {
-                is TreeBuilder.Element.Leaf -> Tree.Element.Leaf(
-                    data = elementBuilder.data,
-                    depth = parent.depth + 1,
-                    childIndex = index,
-                    parent = parent,
-                    previous = previous,
-                    next = null,
-                    id = elementBuilder.id ?: (parent.id.toString() + "." + index),
-                )
+                is TreeBuilder.Element.Leaf ->
+                    Tree.Element.Leaf(
+                        data = elementBuilder.data,
+                        depth = parent.depth + 1,
+                        childIndex = index,
+                        parent = parent,
+                        previous = previous,
+                        next = null,
+                        id = elementBuilder.id ?: (parent.id.toString() + "." + index),
+                    )
 
-                is TreeBuilder.Element.Node -> Tree.Element.Node(
-                    data = elementBuilder.data,
-                    depth = parent.depth + 1,
-                    childIndex = index,
-                    parent = parent,
-                    childrenGenerator = { generateElements(it, elementBuilder) },
-                    previous = previous,
-                    next = null,
-                    id = elementBuilder.id ?: (parent.id.toString() + "." + index),
-                )
+                is TreeBuilder.Element.Node ->
+                    Tree.Element.Node(
+                        data = elementBuilder.data,
+                        depth = parent.depth + 1,
+                        childIndex = index,
+                        parent = parent,
+                        childrenGenerator = { generateElements(it, elementBuilder) },
+                        previous = previous,
+                        next = null,
+                        id = elementBuilder.id ?: (parent.id.toString() + "." + index),
+                    )
             }
         previous.next = current
         elements.add(current)
@@ -129,20 +136,21 @@ private fun <T> evaluatePrevious(element: Tree.Element<T>): Tree.Element<T> =
     }
 
 public interface TreeGeneratorScope<T> {
-
     public fun addNode(
         data: T,
         id: Any? = null,
         childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit = {},
     )
 
-    public fun addLeaf(data: T, id: Any? = null)
+    public fun addLeaf(
+        data: T,
+        id: Any? = null,
+    )
 
     public fun add(element: TreeBuilder.Element<T>)
 }
 
 public class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.Node<T>) : TreeGeneratorScope<T> {
-
     @GenerateDataFunctions
     public class ParentInfo<T>(public val data: T, public val depth: Int, public val index: Int)
 
@@ -152,7 +160,10 @@ public class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.N
 
     internal val elements = mutableListOf<TreeBuilder.Element<T>>()
 
-    override fun addLeaf(data: T, id: Any?) {
+    override fun addLeaf(
+        data: T,
+        id: Any?,
+    ) {
         elements.add(TreeBuilder.Element.Leaf(data, id))
     }
 
@@ -169,8 +180,7 @@ public class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.N
     }
 }
 
-public fun Path.asTree(isOpen: (File) -> Boolean = { false }): Tree<File> =
-    toFile().asTree(isOpen)
+public fun Path.asTree(isOpen: (File) -> Boolean = { false }): Tree<File> = toFile().asTree(isOpen)
 
 public fun File.asTree(isOpen: (File) -> Boolean = { false }): Tree<File> =
     buildTree {

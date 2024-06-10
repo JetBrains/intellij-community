@@ -17,7 +17,6 @@ public class DecoratedWindowStyle(
     public val colors: DecoratedWindowColors,
     public val metrics: DecoratedWindowMetrics,
 ) {
-
     public companion object
 }
 
@@ -27,7 +26,6 @@ public class DecoratedWindowColors(
     public val border: Color,
     public val borderInactive: Color,
 ) {
-
     @Composable
     public fun borderFor(state: DecoratedWindowState): State<Color> =
         rememberUpdatedState(
@@ -43,7 +41,6 @@ public class DecoratedWindowColors(
 @Immutable
 @GenerateDataFunctions
 public class DecoratedWindowMetrics(public val borderWidth: Dp) {
-
     public companion object
 }
 

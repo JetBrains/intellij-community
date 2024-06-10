@@ -4,17 +4,17 @@ import org.jetbrains.skiko.SystemTheme
 import org.jetbrains.skiko.currentSystemTheme
 
 enum class IntUiThemes {
-    Light, LightWithLightHeader, Dark, System;
+    Light,
+    LightWithLightHeader,
+    Dark,
+    System,
+    ;
 
-    fun isDark() =
-        (if (this == System) fromSystemTheme(currentSystemTheme) else this) == Dark
+    fun isDark() = (if (this == System) fromSystemTheme(currentSystemTheme) else this) == Dark
 
-    fun isLightHeader() =
-        this == LightWithLightHeader
+    fun isLightHeader() = this == LightWithLightHeader
 
     companion object {
-
-        fun fromSystemTheme(systemTheme: SystemTheme) =
-            if (systemTheme == SystemTheme.LIGHT) Light else Dark
+        fun fromSystemTheme(systemTheme: SystemTheme) = if (systemTheme == SystemTheme.LIGHT) Light else Dark
     }
 }

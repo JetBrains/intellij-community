@@ -46,18 +46,20 @@ public fun TabStrip(
             .onHover { tabStripState = tabStripState.copy(hovered = it) },
     ) {
         Row(
-            modifier = Modifier.horizontalScroll(scrollState)
-                .scrollable(
-                    orientation = Orientation.Vertical,
-                    reverseDirection = ScrollableDefaults.reverseDirection(
-                        LocalLayoutDirection.current,
-                        Orientation.Vertical,
-                        false,
-                    ),
-                    state = scrollState,
-                    interactionSource = remember { MutableInteractionSource() },
-                )
-                .selectableGroup(),
+            modifier =
+                Modifier.horizontalScroll(scrollState)
+                    .scrollable(
+                        orientation = Orientation.Vertical,
+                        reverseDirection =
+                            ScrollableDefaults.reverseDirection(
+                                LocalLayoutDirection.current,
+                                Orientation.Vertical,
+                                false,
+                            ),
+                        state = scrollState,
+                        interactionSource = remember { MutableInteractionSource() },
+                    )
+                    .selectableGroup(),
         ) {
             tabs.forEach { TabImpl(isActive = tabStripState.isActive, tabData = it) }
         }
@@ -77,7 +79,6 @@ public fun TabStrip(
 
 @Immutable
 public sealed class TabData {
-
     public abstract val selected: Boolean
     public abstract val content: @Composable TabContentScope.(tabState: TabState) -> Unit
     public abstract val closable: Boolean
@@ -108,7 +109,6 @@ public sealed class TabData {
 @Immutable
 @JvmInline
 public value class TabStripState(public val state: ULong) : FocusableComponentState {
-
     override val isActive: Boolean
         get() = state and CommonStateBitMask.Active != 0UL
 
@@ -130,20 +130,20 @@ public value class TabStripState(public val state: ULong) : FocusableComponentSt
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
-    ): TabStripState = of(
-        enabled = enabled,
-        focused = focused,
-        pressed = pressed,
-        hovered = hovered,
-        active = active,
-    )
+    ): TabStripState =
+        of(
+            enabled = enabled,
+            focused = focused,
+            pressed = pressed,
+            hovered = hovered,
+            active = active,
+        )
 
     override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
             "isPressed=$isPressed, isActive=$isActive)"
 
     public companion object {
-
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

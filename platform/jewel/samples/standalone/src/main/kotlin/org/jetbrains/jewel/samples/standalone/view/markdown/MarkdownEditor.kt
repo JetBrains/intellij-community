@@ -49,7 +49,10 @@ internal fun MarkdownEditor(
 }
 
 @Composable
-private fun ControlsRow(onMarkdownChange: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun ControlsRow(
+    onMarkdownChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(16.dp),

@@ -13,9 +13,7 @@ import org.jetbrains.jewel.foundation.LocalGlobalColors
 import org.jetbrains.jewel.foundation.LocalGlobalMetrics
 
 public interface JewelTheme {
-
     public companion object {
-
         public val name: String
             @Composable
             @ReadOnlyComposable
@@ -81,7 +79,10 @@ public fun JewelTheme(
 }
 
 @Composable
-public fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
+public fun JewelTheme(
+    theme: ThemeDefinition,
+    content: @Composable () -> Unit,
+) {
     CompositionLocalProvider(
         LocalThemeName provides theme.name,
         LocalIsDarkTheme provides theme.isDark,
@@ -95,9 +96,10 @@ public fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
     )
 }
 
-public val LocalThemeName: ProvidableCompositionLocal<String> = staticCompositionLocalOf {
-    error("No ThemeName provided")
-}
+public val LocalThemeName: ProvidableCompositionLocal<String> =
+    staticCompositionLocalOf {
+        error("No ThemeName provided")
+    }
 
 public val LocalContentColor: ProvidableCompositionLocal<Color> =
     staticCompositionLocalOf {
@@ -120,9 +122,10 @@ public val LocalColorPalette: ProvidableCompositionLocal<ThemeColorPalette> =
         ThemeColorPalette.Empty
     }
 
-public val LocalIconData: ProvidableCompositionLocal<ThemeIconData> = staticCompositionLocalOf {
-    ThemeIconData.Empty
-}
+public val LocalIconData: ProvidableCompositionLocal<ThemeIconData> =
+    staticCompositionLocalOf {
+        ThemeIconData.Empty
+    }
 
 public val LocalTextStyle: ProvidableCompositionLocal<TextStyle> =
     staticCompositionLocalOf {
@@ -141,6 +144,9 @@ public val LocalConsoleTextStyle: ProvidableCompositionLocal<TextStyle> =
 
 /** Overrides the dark mode for the current composition scope. */
 @Composable
-public fun OverrideDarkMode(isDark: Boolean, content: @Composable () -> Unit) {
+public fun OverrideDarkMode(
+    isDark: Boolean,
+    content: @Composable () -> Unit,
+) {
     CompositionLocalProvider(LocalIsDarkTheme provides isDark, content = content)
 }

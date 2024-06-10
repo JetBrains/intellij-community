@@ -20,7 +20,6 @@ public class DotBadgeShape(
     public val radius: Float = 3.5f / 20,
     public val border: Float = 1.5f / 20,
 ) : BadgeShape {
-
     override fun createHoleOutline(
         size: Size,
         layoutDirection: LayoutDirection,
@@ -33,7 +32,10 @@ public class DotBadgeShape(
         density: Density,
     ): Outline = createOutline(size, hole = false)
 
-    private fun createOutline(size: Size, hole: Boolean): Outline {
+    private fun createOutline(
+        size: Size,
+        hole: Boolean,
+    ): Outline {
         val dotSize = size.width.coerceAtMost(size.height)
 
         if (dotSize <= 0) return emptyOutline
@@ -67,7 +69,6 @@ public class DotBadgeShape(
     }
 
     public companion object {
-
         public val Default: DotBadgeShape = DotBadgeShape()
     }
 }

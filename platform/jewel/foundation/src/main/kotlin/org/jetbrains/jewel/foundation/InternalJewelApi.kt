@@ -16,6 +16,5 @@ import kotlin.RequiresOptIn.Level
     AnnotationTarget.PROPERTY_SETTER,
     AnnotationTarget.TYPEALIAS,
     AnnotationTarget.VALUE_PARAMETER,
-
 )
 public annotation class InternalJewelApi

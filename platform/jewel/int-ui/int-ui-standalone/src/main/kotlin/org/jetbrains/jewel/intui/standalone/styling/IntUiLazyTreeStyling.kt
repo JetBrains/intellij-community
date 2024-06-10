@@ -20,16 +20,14 @@ public fun LazyTreeStyle.Companion.light(
     colors: LazyTreeColors = LazyTreeColors.light(),
     metrics: LazyTreeMetrics = LazyTreeMetrics.defaults(),
     icons: LazyTreeIcons = LazyTreeIcons.defaults(),
-): LazyTreeStyle =
-    LazyTreeStyle(colors, metrics, icons)
+): LazyTreeStyle = LazyTreeStyle(colors, metrics, icons)
 
 @Composable
 public fun LazyTreeStyle.Companion.dark(
     colors: LazyTreeColors = LazyTreeColors.dark(),
     metrics: LazyTreeMetrics = LazyTreeMetrics.defaults(),
     icons: LazyTreeIcons = LazyTreeIcons.defaults(),
-): LazyTreeStyle =
-    LazyTreeStyle(colors, metrics, icons)
+): LazyTreeStyle = LazyTreeStyle(colors, metrics, icons)
 
 @Composable
 public fun LazyTreeColors.Companion.light(

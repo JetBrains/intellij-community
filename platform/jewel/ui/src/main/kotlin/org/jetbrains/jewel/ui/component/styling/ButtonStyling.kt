@@ -22,7 +22,6 @@ public class ButtonStyle(
     public val colors: ButtonColors,
     public val metrics: ButtonMetrics,
 ) {
-
     public companion object
 }
 
@@ -45,7 +44,6 @@ public class ButtonColors(
     public val borderPressed: Brush,
     public val borderHovered: Brush,
 ) {
-
     @Composable
     public fun backgroundFor(state: ButtonState): State<Brush> =
         rememberUpdatedState(
@@ -96,7 +94,6 @@ public class ButtonMetrics(
     public val minSize: DpSize,
     public val borderWidth: Dp,
 ) {
-
     public companion object
 }
 

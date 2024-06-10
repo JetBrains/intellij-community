@@ -21,16 +21,14 @@ public fun TextFieldStyle.Companion.light(
     colors: TextFieldColors = TextFieldColors.light(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
     textStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
-): TextFieldStyle =
-    TextFieldStyle(colors, metrics, textStyle)
+): TextFieldStyle = TextFieldStyle(colors, metrics, textStyle)
 
 @Composable
 public fun TextFieldStyle.Companion.dark(
     colors: TextFieldColors = TextFieldColors.dark(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
     textStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
-): TextFieldStyle =
-    TextFieldStyle(colors, metrics, textStyle)
+): TextFieldStyle = TextFieldStyle(colors, metrics, textStyle)
 
 @Composable
 public fun TextFieldColors.Companion.light(
@@ -133,5 +131,4 @@ public fun TextFieldMetrics.Companion.defaults(
     contentPadding: PaddingValues = PaddingValues(horizontal = 9.dp, vertical = 6.dp),
     minSize: DpSize = DpSize(144.dp, 28.dp),
     borderWidth: Dp = 1.dp,
-): TextFieldMetrics =
-    TextFieldMetrics(borderWidth, contentPadding, cornerSize, minSize)
+): TextFieldMetrics = TextFieldMetrics(borderWidth, contentPadding, cornerSize, minSize)

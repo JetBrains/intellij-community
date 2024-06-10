@@ -19,7 +19,6 @@ public class TextFieldStyle(
     override val metrics: TextFieldMetrics,
     override val textStyle: TextStyle,
 ) : InputFieldStyle {
-
     public companion object
 }
 
@@ -48,7 +47,6 @@ public class TextFieldColors(
     override val caretHovered: Color,
     public val placeholder: Color,
 ) : InputFieldColors {
-
     public companion object
 }
 
@@ -60,7 +58,6 @@ public class TextFieldMetrics(
     override val cornerSize: CornerSize,
     override val minSize: DpSize,
 ) : InputFieldMetrics {
-
     public companion object
 }
 

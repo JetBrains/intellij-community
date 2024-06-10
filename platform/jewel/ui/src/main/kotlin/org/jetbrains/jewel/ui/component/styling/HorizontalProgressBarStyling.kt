@@ -16,7 +16,6 @@ public class HorizontalProgressBarStyle(
     public val metrics: HorizontalProgressBarMetrics,
     public val indeterminateCycleDuration: Duration,
 ) {
-
     public companion object
 }
 
@@ -28,7 +27,6 @@ public class HorizontalProgressBarColors(
     public val indeterminateBase: Color,
     public val indeterminateHighlight: Color,
 ) {
-
     public companion object
 }
 
@@ -39,7 +37,6 @@ public class HorizontalProgressBarMetrics(
     public val minHeight: Dp,
     public val indeterminateHighlightWidth: Dp,
 ) {
-
     public companion object
 }
 

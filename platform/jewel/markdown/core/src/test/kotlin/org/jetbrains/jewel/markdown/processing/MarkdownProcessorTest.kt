@@ -13,7 +13,8 @@ import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Test
 
-private val rawMarkdown = """
+private val rawMarkdown =
+    """
     Paragraph 0
     continue p0
     # Header 1
@@ -34,30 +35,30 @@ private val rawMarkdown = """
     
     Paragraph 8
     continue p8
-""".trimIndent()
+    """.trimIndent()
 
 @Suppress(
     "LargeClass", // Detekt triggers on files > 600 lines
 )
 class MarkdownProcessorTest {
-
     private val htmlRenderer = HtmlRenderer.builder().build()
 
     @Test
     fun `first blocks stay the same`() {
         val processor = MarkdownProcessor()
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
-        val secondRun = processor.processWithQuickEdits(
-            """
-            Paragraph 0
-            continue p0
-            # Header 1
-            Paragraph 2
-            
-            * list item 3-1
-            * list item 3-2
-            """.trimIndent(),
-        )
+        val secondRun =
+            processor.processWithQuickEdits(
+                """
+                Paragraph 0
+                continue p0
+                # Header 1
+                Paragraph 2
+                
+                * list item 3-1
+                * list item 3-2
+                """.trimIndent(),
+            )
         assertSame(firstRun[0], secondRun[0])
         assertSame(firstRun[1], secondRun[1])
         assertNotSame(firstRun[2], secondRun[2])
@@ -81,29 +82,30 @@ class MarkdownProcessorTest {
     fun `first block edited`() {
         val processor = MarkdownProcessor()
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
-        val secondRun = processor.processWithQuickEdits(
-            """
-            Paragraph *CHANGE*
-            # Header 1
-            Paragraph 2
-            * list item 3-1
-            * list item 3-2
-            * list item 3-3
-            ## Header 4
-            Paragraph 5
-            continue paragraph 5
-    
-    
-            ```
-            line 6-1
-            line 6-2
-            ```
-            Paragraph 7
-            
-            Paragraph 8
-            continue p8
-            """.trimIndent(),
-        )
+        val secondRun =
+            processor.processWithQuickEdits(
+                """
+                Paragraph *CHANGE*
+                # Header 1
+                Paragraph 2
+                * list item 3-1
+                * list item 3-2
+                * list item 3-3
+                ## Header 4
+                Paragraph 5
+                continue paragraph 5
+                
+                
+                ```
+                line 6-1
+                line 6-2
+                ```
+                Paragraph 7
+                
+                Paragraph 8
+                continue p8
+                """.trimIndent(),
+            )
         assertHtmlEquals(
             """
             <p>Paragraph <em>CHANGE</em></p>
@@ -136,30 +138,31 @@ class MarkdownProcessorTest {
     fun `last block edited`() {
         val processor = MarkdownProcessor()
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
-        val secondRun = processor.processWithQuickEdits(
-            """
-            Paragraph 0
-            continue p0
-            # Header 1
-            Paragraph 2
-            * list item 3-1
-            * list item 3-2
-            * list item 3-3
-            ## Header 4
-            Paragraph 5
-            continue paragraph 5
-    
-    
-            ```
-            line 6-1
-            line 6-2
-            ```
-            Paragraph 7
-            
-            Paragraph *CHANGE*
-            continue p8
-            """.trimIndent(),
-        )
+        val secondRun =
+            processor.processWithQuickEdits(
+                """
+                Paragraph 0
+                continue p0
+                # Header 1
+                Paragraph 2
+                * list item 3-1
+                * list item 3-2
+                * list item 3-3
+                ## Header 4
+                Paragraph 5
+                continue paragraph 5
+                
+                
+                ```
+                line 6-1
+                line 6-2
+                ```
+                Paragraph 7
+                
+                Paragraph *CHANGE*
+                continue p8
+                """.trimIndent(),
+            )
         assertHtmlEquals(
             """
             <p>Paragraph 0
@@ -194,30 +197,31 @@ class MarkdownProcessorTest {
     fun `middle block edited`() {
         val processor = MarkdownProcessor()
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
-        val secondRun = processor.processWithQuickEdits(
-            """
-            Paragraph 0
-            continue p0
-            # Header 1
-            Paragraph 2
-            * list item 3-1
-            * list item *CHANGE*
-            * list item 3-3
-            ## Header 4
-            Paragraph 5
-            continue paragraph 5
-    
+        val secondRun =
+            processor.processWithQuickEdits(
+                """
+                Paragraph 0
+                continue p0
+                # Header 1
+                Paragraph 2
+                * list item 3-1
+                * list item *CHANGE*
+                * list item 3-3
+                ## Header 4
+                Paragraph 5
+                continue paragraph 5
+                
 
-            ```
-            line 6-1
-            line 6-2
-            ```
-            Paragraph 7
-            
-            Paragraph 8
-            continue p8
-            """.trimIndent(),
-        )
+                ```
+                line 6-1
+                line 6-2
+                ```
+                Paragraph 7
+                
+                Paragraph 8
+                continue p8
+                """.trimIndent(),
+            )
         assertHtmlEquals(
             """
             <p>Paragraph 0
@@ -254,29 +258,30 @@ class MarkdownProcessorTest {
     fun `blocks merged`() {
         val processor = MarkdownProcessor()
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
-        val secondRun = processor.processWithQuickEdits(
-            """
-            Paragraph 0
-            continue p0
-            # Header 1
-            Paragraph 2
-            * list item 3-1
-            * list item 3-2
-            * list item 3-3
-            ## Header 4
-            Paragraph 5
-            continue paragraph 5
-    
-    
-            ```
-            line 6-1
-            line 6-2
-            ```
-            Paragraph 7
-            Paragraph 8
-            continue p8
-            """.trimIndent(),
-        )
+        val secondRun =
+            processor.processWithQuickEdits(
+                """
+                Paragraph 0
+                continue p0
+                # Header 1
+                Paragraph 2
+                * list item 3-1
+                * list item 3-2
+                * list item 3-3
+                ## Header 4
+                Paragraph 5
+                continue paragraph 5
+                
+                
+                ```
+                line 6-1
+                line 6-2
+                ```
+                Paragraph 7
+                Paragraph 8
+                continue p8
+                """.trimIndent(),
+            )
         assertHtmlEquals(
             """
             <p>Paragraph 0
@@ -310,29 +315,30 @@ class MarkdownProcessorTest {
     fun `blocks split`() {
         val processor = MarkdownProcessor()
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
-        val secondRun = processor.processWithQuickEdits(
-            """
-            Paragraph 0
-            continue p0
-            # Header 1
-            Paragraph 2
-            * list item 3-1
-            * list item 3-2
-            * list item 3-3
-            ## Header 4
-            Paragraph 5
-            
-            continue paragraph 5
-            ```
-            line 6-1
-            line 6-2
-            ```
-            Paragraph 7
-            
-            Paragraph 8
-            continue p8
-            """.trimIndent(),
-        )
+        val secondRun =
+            processor.processWithQuickEdits(
+                """
+                Paragraph 0
+                continue p0
+                # Header 1
+                Paragraph 2
+                * list item 3-1
+                * list item 3-2
+                * list item 3-3
+                ## Header 4
+                Paragraph 5
+                
+                continue paragraph 5
+                ```
+                line 6-1
+                line 6-2
+                ```
+                Paragraph 7
+                
+                Paragraph 8
+                continue p8
+                """.trimIndent(),
+            )
         assertHtmlEquals(
             """
             <p>Paragraph 0
@@ -367,25 +373,26 @@ class MarkdownProcessorTest {
     fun `blocks deleted`() {
         val processor = MarkdownProcessor()
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
-        val secondRun = processor.processWithQuickEdits(
-            """
-            Paragraph 0
-            continue p0
-            # Header 1
-            Paragraph 2
-            * list item 3-1
-            * list item 3-2
-            * list item 3-3
-            ```
-            line 6-1
-            line 6-2
-            ```
-            Paragraph 7
-            
-            Paragraph 8
-            continue p8
-            """.trimIndent(),
-        )
+        val secondRun =
+            processor.processWithQuickEdits(
+                """
+                Paragraph 0
+                continue p0
+                # Header 1
+                Paragraph 2
+                * list item 3-1
+                * list item 3-2
+                * list item 3-3
+                ```
+                line 6-1
+                line 6-2
+                ```
+                Paragraph 7
+                
+                Paragraph 8
+                continue p8
+                """.trimIndent(),
+            )
         assertHtmlEquals(
             """
             <p>Paragraph 0
@@ -418,7 +425,8 @@ class MarkdownProcessorTest {
     fun `blocks added`() {
         val processor = MarkdownProcessor()
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
-        val secondDocument = """
+        val secondDocument =
+            """
             Paragraph 0
             continue p0
             # Header 1
@@ -443,10 +451,11 @@ class MarkdownProcessorTest {
             
             Paragraph 8
             continue p8
-        """.trimIndent()
-        val secondRun = processor.processWithQuickEdits(
-            secondDocument,
-        )
+            """.trimIndent()
+        val secondRun =
+            processor.processWithQuickEdits(
+                secondDocument,
+            )
         assertHtmlEquals(
             """
             <p>Paragraph 0
@@ -598,21 +607,23 @@ class MarkdownProcessorTest {
 
             """.trimIndent(),
         )
-        val forthRun = processor.processWithQuickEdits(
-            """
-            # Header 0
-            # Header 1
-            
-            
-            some paragraph
-            # Header 2
-            # Header 7
-            # Header 8
-            # Header 9
+        val forthRun =
+            processor.processWithQuickEdits(
+                """
+                # Header 0
+                # Header 1
+                
+                
+                some paragraph
+                # Header 2
+                # Header 7
+                # Header 8
+                # Header 9
 
-            """.trimIndent(),
-        )
-        val fifthDocument = """
+                """.trimIndent(),
+            )
+        val fifthDocument =
+            """
             # Header 0
             # Header 1
             
@@ -627,10 +638,11 @@ class MarkdownProcessorTest {
             # Header 8
             # Header 9
 
-        """.trimIndent()
-        val fifthRun = processor.processWithQuickEdits(
-            fifthDocument,
-        )
+            """.trimIndent()
+        val fifthRun =
+            processor.processWithQuickEdits(
+                fifthDocument,
+            )
 
         assertIndexesEqual(fifthDocument, processor.getCurrentIndexesInTest())
 
@@ -659,7 +671,10 @@ class MarkdownProcessorTest {
         )
     }
 
-    private fun assertHtmlEquals(@Language("html") text: String, actual: List<Block>) {
+    private fun assertHtmlEquals(
+        @Language("html") text: String,
+        actual: List<Block>,
+    ) {
         assertEquals(text, actual.joinToString("") { htmlRenderer.render(it) })
     }
 }

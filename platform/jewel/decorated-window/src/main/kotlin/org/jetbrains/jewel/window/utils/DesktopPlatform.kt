@@ -8,7 +8,6 @@ public enum class DesktopPlatform {
     ;
 
     public companion object {
-
         public val Current: DesktopPlatform by lazy {
             val name = System.getProperty("os.name")
             when {

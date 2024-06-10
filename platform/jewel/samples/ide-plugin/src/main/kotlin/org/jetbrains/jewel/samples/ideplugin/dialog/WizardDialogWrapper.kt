@@ -31,7 +31,6 @@ internal class WizardDialogWrapper(
     private val pages: List<WizardPage>,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : DialogWrapper(project), CoroutineScope {
-
     private val logger = thisLogger()
 
     override val coroutineContext: CoroutineContext =
@@ -95,8 +94,7 @@ internal class WizardDialogWrapper(
         }
     }
 
-    override fun createActions(): Array<Action> =
-        arrayOf(cancelAction, backAction, nextAction, finishAction)
+    override fun createActions(): Array<Action> = arrayOf(cancelAction, backAction, nextAction, finishAction)
 
     private fun onBackClick() {
         if (currentPageIndex.value <= 0) {
@@ -122,7 +120,6 @@ internal class WizardDialogWrapper(
     }
 
     private inner class CancelAction : DialogWrapperAction("Cancel") {
-
         override fun doAction(e: ActionEvent?) {
             logger.debug("Cancel clicked")
             doCancelAction()
@@ -133,7 +130,6 @@ internal class WizardDialogWrapper(
         @Nls name: String,
         private val onAction: () -> Unit,
     ) : DialogWrapperAction(name) {
-
         override fun doAction(e: ActionEvent?) {
             onAction()
         }
@@ -141,7 +137,6 @@ internal class WizardDialogWrapper(
 }
 
 interface WizardPage {
-
     @Composable
     fun PageContent()
 

@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.LayoutDirection
  * custom alphas, filters and layoutDirection to it.
  */
 public open class DelegatePainter(private val delegate: Painter) : Painter() {
-
     override val intrinsicSize: Size
         get() = delegate.intrinsicSize
 

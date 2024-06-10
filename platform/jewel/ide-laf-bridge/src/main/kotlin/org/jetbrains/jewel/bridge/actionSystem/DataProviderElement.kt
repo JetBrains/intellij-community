@@ -5,7 +5,6 @@ import androidx.compose.ui.node.ModifierNodeElement
 internal class DataProviderElement(
     val dataProvider: (dataId: String) -> Any?,
 ) : ModifierNodeElement<DataProviderNode>() {
-
     override fun create(): DataProviderNode = DataProviderNode(dataProvider)
 
     override fun update(node: DataProviderNode) {

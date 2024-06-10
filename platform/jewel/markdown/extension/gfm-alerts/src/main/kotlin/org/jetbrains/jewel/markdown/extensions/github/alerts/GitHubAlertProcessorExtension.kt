@@ -29,7 +29,6 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
 public object GitHubAlertProcessorExtension : MarkdownProcessorExtension {
-
     override val parserExtension: ParserExtension = GitHubAlertCommonMarkExtension
     override val textRendererExtension: TextContentRendererExtension =
         GitHubAlertCommonMarkExtension
@@ -37,10 +36,12 @@ public object GitHubAlertProcessorExtension : MarkdownProcessorExtension {
     override val processorExtension: MarkdownBlockProcessorExtension = GitHubAlertProcessorExtension
 
     private object GitHubAlertProcessorExtension : MarkdownBlockProcessorExtension {
-
         override fun canProcess(block: CustomBlock): Boolean = block is AlertBlock
 
-        override fun processMarkdownBlock(block: CustomBlock, processor: MarkdownProcessor): MarkdownBlock.CustomBlock? {
+        override fun processMarkdownBlock(
+            block: CustomBlock,
+            processor: MarkdownProcessor,
+        ): MarkdownBlock.CustomBlock? {
             val children = processor.processChildren(block)
 
             if (children.isEmpty()) return null
@@ -61,13 +62,11 @@ public class GitHubAlertRendererExtension(
     alertStyling: AlertStyling,
     rootStyling: MarkdownStyling,
 ) : MarkdownRendererExtension {
-
     override val blockRenderer: MarkdownBlockRendererExtension =
         GitHubAlertBlockRenderer(alertStyling, rootStyling)
 }
 
 private object GitHubAlertCommonMarkExtension : ParserExtension, TextContentRendererExtension {
-
     private val AlertStartRegex =
         ">\\s+\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)]\\s*".toRegex(RegexOption.IGNORE_CASE)
 
@@ -92,7 +91,6 @@ private object GitHubAlertCommonMarkExtension : ParserExtension, TextContentRend
 }
 
 private class AlertParser(type: String) : AbstractBlockParser() {
-
     private val block =
         when (type.lowercase()) {
             "note" -> Note()
@@ -132,7 +130,6 @@ private class AlertParser(type: String) : AbstractBlockParser() {
 
 private class AlertTextContentNodeRenderer(private val context: TextContentNodeRendererContext) :
     NodeRenderer {
-
     private val writer = context.writer
 
     override fun getNodeTypes(): Set<Class<out Node>> = setOf(AlertBlock::class.java)
@@ -162,7 +159,6 @@ private class AlertTextContentNodeRenderer(private val context: TextContentNodeR
 }
 
 internal sealed class AlertBlock : CustomBlock() {
-
     class Note : AlertBlock()
 
     class Tip : AlertBlock()

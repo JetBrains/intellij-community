@@ -76,7 +76,6 @@ public open class DefaultMarkdownBlockRenderer(
     private val rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
     private val inlineRenderer: InlineMarkdownRenderer = DefaultInlineMarkdownRenderer(),
 ) : MarkdownBlockRenderer {
-
     @Composable
     override fun render(
         blocks: List<MarkdownBlock>,
@@ -278,8 +277,9 @@ public open class DefaultMarkdownBlockRenderer(
                         text = "$number${block.delimiter}",
                         style = styling.numberStyle,
                         color = styling.numberStyle.color.takeOrElse { LocalContentColor.current },
-                        modifier = Modifier.widthIn(min = styling.numberMinWidth)
-                            .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                        modifier =
+                            Modifier.widthIn(min = styling.numberMinWidth)
+                                .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                         textAlign = styling.numberTextAlign,
                     )
 
@@ -340,7 +340,10 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(block: CodeBlock, styling: MarkdownStyling.Code) {
+    override fun render(
+        block: CodeBlock,
+        styling: MarkdownStyling.Code,
+    ) {
         when (block) {
             is FencedCodeBlock -> render(block, styling.fenced)
             is IndentedCodeBlock -> render(block, styling.indented)
@@ -348,7 +351,10 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(block: IndentedCodeBlock, styling: MarkdownStyling.Code.Indented) {
+    override fun render(
+        block: IndentedCodeBlock,
+        styling: MarkdownStyling.Code.Indented,
+    ) {
         HorizontallyScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
             Modifier.background(styling.background, styling.shape)
@@ -359,14 +365,18 @@ public open class DefaultMarkdownBlockRenderer(
                 text = block.content,
                 style = styling.editorTextStyle,
                 color = styling.editorTextStyle.color.takeOrElse { LocalContentColor.current },
-                modifier = Modifier.padding(styling.padding)
-                    .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                modifier =
+                    Modifier.padding(styling.padding)
+                        .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
             )
         }
     }
 
     @Composable
-    override fun render(block: FencedCodeBlock, styling: MarkdownStyling.Code.Fenced) {
+    override fun render(
+        block: FencedCodeBlock,
+        styling: MarkdownStyling.Code.Fenced,
+    ) {
         HorizontallyScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
             Modifier.background(styling.background, styling.shape)
@@ -428,15 +438,21 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(block: HtmlBlock, styling: MarkdownStyling.HtmlBlock) {
+    override fun render(
+        block: HtmlBlock,
+        styling: MarkdownStyling.HtmlBlock,
+    ) {
         // HTML blocks are intentionally not rendered
     }
 
     @Composable
-    private fun rememberRenderedContent(block: BlockWithInlineMarkdown, styling: InlinesStyling, enabled: Boolean) =
-        remember(block.inlineContent, styling, enabled) {
-            inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled)
-        }
+    private fun rememberRenderedContent(
+        block: BlockWithInlineMarkdown,
+        styling: InlinesStyling,
+        enabled: Boolean,
+    ) = remember(block.inlineContent, styling, enabled) {
+        inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled)
+    }
 
     @OptIn(ExperimentalTextApi::class)
     @Composable
@@ -450,9 +466,10 @@ public open class DefaultMarkdownBlockRenderer(
         onUnhandledClick: () -> Unit,
     ) {
         var hoverPointerIcon by remember { mutableStateOf(PointerIcon.Default) }
-        val actualPointerIcon = remember(hoverPointerIcon, enabled) {
-            if (enabled) hoverPointerIcon else PointerIcon.Default
-        }
+        val actualPointerIcon =
+            remember(hoverPointerIcon, enabled) {
+                if (enabled) hoverPointerIcon else PointerIcon.Default
+            }
 
         val textColor = color.takeOrElse { LocalContentColor.current.takeOrElse { textStyle.color } }
 

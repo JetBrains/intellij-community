@@ -20,32 +20,28 @@ public fun CheckboxStyle.Companion.light(
     colors: CheckboxColors = CheckboxColors.light(),
     metrics: CheckboxMetrics = CheckboxMetrics.defaults(),
     icons: CheckboxIcons = CheckboxIcons.light(),
-): CheckboxStyle =
-    CheckboxStyle(colors, metrics, icons)
+): CheckboxStyle = CheckboxStyle(colors, metrics, icons)
 
 @Composable
 public fun CheckboxStyle.Companion.dark(
     colors: CheckboxColors = CheckboxColors.dark(),
     metrics: CheckboxMetrics = CheckboxMetrics.defaults(),
     icons: CheckboxIcons = CheckboxIcons.dark(),
-): CheckboxStyle =
-    CheckboxStyle(colors, metrics, icons)
+): CheckboxStyle = CheckboxStyle(colors, metrics, icons)
 
 @Composable
 public fun CheckboxColors.Companion.light(
     content: Color = Color.Unspecified,
     contentDisabled: Color = IntUiLightTheme.colors.grey(8),
     contentSelected: Color = content,
-): CheckboxColors =
-    CheckboxColors(content, contentDisabled, contentSelected)
+): CheckboxColors = CheckboxColors(content, contentDisabled, contentSelected)
 
 @Composable
 public fun CheckboxColors.Companion.dark(
     content: Color = Color.Unspecified,
     contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
     contentSelected: Color = content,
-): CheckboxColors =
-    CheckboxColors(content, contentDisabled, contentSelected)
+): CheckboxColors = CheckboxColors(content, contentDisabled, contentSelected)
 
 public fun CheckboxMetrics.Companion.defaults(
     checkboxSize: DpSize = DpSize(24.dp, 24.dp),
@@ -75,11 +71,9 @@ public fun CheckboxMetrics.Companion.defaults(
 @Composable
 public fun CheckboxIcons.Companion.light(
     checkbox: PainterProvider = standalonePainterProvider("com/intellij/ide/ui/laf/icons/intellij/checkBox.svg"),
-): CheckboxIcons =
-    CheckboxIcons(checkbox)
+): CheckboxIcons = CheckboxIcons(checkbox)
 
 @Composable
 public fun CheckboxIcons.Companion.dark(
     checkbox: PainterProvider = standalonePainterProvider("com/intellij/ide/ui/laf/icons/darcula/checkBox.svg"),
-): CheckboxIcons =
-    CheckboxIcons(checkbox)
+): CheckboxIcons = CheckboxIcons(checkbox)

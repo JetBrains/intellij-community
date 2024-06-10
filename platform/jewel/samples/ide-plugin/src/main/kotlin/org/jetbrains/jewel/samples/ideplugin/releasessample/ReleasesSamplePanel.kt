@@ -25,54 +25,60 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
 class ReleasesSamplePanel(scope: CoroutineScope) : BorderLayoutPanel() {
-
     private val sidePanel = DetailsPanel(scope)
 
     private var currentContentSource: ContentSource<*> = AndroidStudioReleases
 
-    private val filterTextField = SearchTextField(false).apply {
-        addDocumentListener(object : DocumentListener {
-            override fun insertUpdate(e: DocumentEvent) {
-                filterContent(text)
-            }
+    private val filterTextField =
+        SearchTextField(false).apply {
+            addDocumentListener(
+                object : DocumentListener {
+                    override fun insertUpdate(e: DocumentEvent) {
+                        filterContent(text)
+                    }
 
-            override fun removeUpdate(e: DocumentEvent) {
-                filterContent(text)
-            }
+                    override fun removeUpdate(e: DocumentEvent) {
+                        filterContent(text)
+                    }
 
-            override fun changedUpdate(e: DocumentEvent) {
-                filterContent(text)
-            }
-        })
-    }
+                    override fun changedUpdate(e: DocumentEvent) {
+                        filterContent(text)
+                    }
+                },
+            )
+        }
 
-    private val actions: List<AnAction> = listOf(
-        object : CheckboxAction(AndroidStudioReleases.displayName), DumbAware {
+    private val actions: List<AnAction> =
+        listOf(
+            object : CheckboxAction(AndroidStudioReleases.displayName), DumbAware {
+                override fun isSelected(e: AnActionEvent): Boolean = currentContentSource == AndroidStudioReleases
 
-            override fun isSelected(e: AnActionEvent): Boolean =
-                currentContentSource == AndroidStudioReleases
+                override fun setSelected(
+                    e: AnActionEvent,
+                    state: Boolean,
+                ) {
+                    setContentSource(AndroidStudioReleases)
+                }
 
-            override fun setSelected(e: AnActionEvent, state: Boolean) {
-                setContentSource(AndroidStudioReleases)
-            }
+                override fun getActionUpdateThread() = ActionUpdateThread.BGT
+            },
+            object : CheckboxAction(AndroidReleases.displayName), DumbAware {
+                override fun isSelected(e: AnActionEvent): Boolean = currentContentSource == AndroidReleases
 
-            override fun getActionUpdateThread() = ActionUpdateThread.BGT
-        },
-        object : CheckboxAction(AndroidReleases.displayName), DumbAware {
+                override fun setSelected(
+                    e: AnActionEvent,
+                    state: Boolean,
+                ) {
+                    setContentSource(AndroidReleases)
+                }
 
-            override fun isSelected(e: AnActionEvent): Boolean =
-                currentContentSource == AndroidReleases
+                override fun getActionUpdateThread() = ActionUpdateThread.BGT
+            },
+        )
 
-            override fun setSelected(e: AnActionEvent, state: Boolean) {
-                setContentSource(AndroidReleases)
-            }
-
-            override fun getActionUpdateThread() = ActionUpdateThread.BGT
-        },
-    )
-
-    private val overflowAction = MoreActionGroup()
-        .apply { addAll(actions) }
+    private val overflowAction =
+        MoreActionGroup()
+            .apply { addAll(actions) }
 
     private val overflowActionButton: ActionButton =
         ActionButton(
@@ -82,36 +88,40 @@ class ReleasesSamplePanel(scope: CoroutineScope) : BorderLayoutPanel() {
             ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE,
         )
 
-    private val topBar = BorderLayoutPanel().apply {
-        addToLeft(JBLabel("Filter elements: "))
-        addToCenter(filterTextField)
-        addToRight(overflowActionButton)
-        border = JBUI.Borders.empty(4)
-    }
+    private val topBar =
+        BorderLayoutPanel().apply {
+            addToLeft(JBLabel("Filter elements: "))
+            addToCenter(filterTextField)
+            addToRight(overflowActionButton)
+            border = JBUI.Borders.empty(4)
+        }
 
     private var lastSelected: ContentItem? = null
-    private val contentList = JBList<ContentItem>().apply {
-        selectionMode = ListSelectionModel.SINGLE_SELECTION
+    private val contentList =
+        JBList<ContentItem>().apply {
+            selectionMode = ListSelectionModel.SINGLE_SELECTION
 
-        addListSelectionListener {
-            if (selectedValue != lastSelected) {
-                lastSelected = selectedValue
-                onListSelectionChanged()
+            addListSelectionListener {
+                if (selectedValue != lastSelected) {
+                    lastSelected = selectedValue
+                    onListSelectionChanged()
+                }
             }
         }
-    }
 
-    private val mainPanel = BorderLayoutPanel().apply {
-        addToTop(topBar)
+    private val mainPanel =
+        BorderLayoutPanel().apply {
+            addToTop(topBar)
 
-        val scrollPane = JBScrollPane(contentList).apply {
-            setBorder(JBUI.Borders.empty())
-            setViewportBorder(JBUI.Borders.empty())
-            horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+            val scrollPane =
+                JBScrollPane(contentList).apply {
+                    setBorder(JBUI.Borders.empty())
+                    setViewportBorder(JBUI.Borders.empty())
+                    horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+                }
+
+            addToCenter(scrollPane)
         }
-
-        addToCenter(scrollPane)
-    }
 
     init {
         val splitter = OnePixelSplitter(false, .7f, .25f, .75f)

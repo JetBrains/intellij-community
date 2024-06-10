@@ -27,7 +27,6 @@ public class TitleBarStyle(
     public val paneButtonStyle: IconButtonStyle,
     public val paneCloseButtonStyle: IconButtonStyle,
 ) {
-
     public companion object
 }
 
@@ -38,28 +37,22 @@ public class TitleBarColors(
     public val inactiveBackground: Color,
     public val content: Color,
     public val border: Color,
-
     // The background color for newControlButtons(three circles in left top corner) in MacOS
     // fullscreen mode
     public val fullscreenControlButtonsBackground: Color,
-
     // The hover and press background color for window control buttons(minimize, maximize) in Linux
     public val titlePaneButtonHoveredBackground: Color,
     public val titlePaneButtonPressedBackground: Color,
-
     // The hover and press background color for window close button in Linux
     public val titlePaneCloseButtonHoveredBackground: Color,
     public val titlePaneCloseButtonPressedBackground: Color,
-
     // The hover and press background color for IconButtons in title bar content
     public val iconButtonHoveredBackground: Color,
     public val iconButtonPressedBackground: Color,
-
     // The hover and press background color for Dropdown in title bar content
     public val dropdownPressedBackground: Color,
     public val dropdownHoveredBackground: Color,
 ) {
-
     @Composable
     public fun backgroundFor(state: DecoratedWindowState): State<Color> =
         rememberUpdatedState(
@@ -80,7 +73,6 @@ public class TitleBarMetrics(
     public val gradientEndX: Dp,
     public val titlePaneButtonSize: DpSize,
 ) {
-
     public companion object
 }
 
@@ -92,7 +84,6 @@ public class TitleBarIcons(
     public val restoreButton: PainterProvider,
     public val closeButton: PainterProvider,
 ) {
-
     public companion object
 }
 

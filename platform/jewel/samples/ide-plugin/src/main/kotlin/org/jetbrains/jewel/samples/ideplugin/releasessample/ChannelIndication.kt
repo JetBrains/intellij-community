@@ -10,7 +10,6 @@ import java.awt.Graphics2D
 import javax.swing.JLabel
 
 internal class ChannelIndication(private val channel: ReleaseChannel) : JLabel(channel.name.lowercase()) {
-
     init {
         border = JBUI.Borders.empty(2, 4)
         foreground = channel.foreground // TODO why does this not work UGGHHH

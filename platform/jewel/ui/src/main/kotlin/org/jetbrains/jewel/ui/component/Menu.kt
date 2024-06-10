@@ -153,17 +153,18 @@ internal fun MenuContent(
     val menuShape = RoundedCornerShape(style.metrics.cornerSize)
 
     Box(
-        modifier = modifier
-            .shadow(
-                elevation = style.metrics.shadowSize,
-                shape = menuShape,
-                ambientColor = colors.shadow,
-                spotColor = colors.shadow,
-            )
-            .border(Stroke.Alignment.Inside, style.metrics.borderWidth, colors.border, menuShape)
-            .background(colors.background, menuShape)
-            .width(IntrinsicSize.Max)
-            .onHover { localMenuManager.onHoveredChange(it) },
+        modifier =
+            modifier
+                .shadow(
+                    elevation = style.metrics.shadowSize,
+                    shape = menuShape,
+                    ambientColor = colors.shadow,
+                    spotColor = colors.shadow,
+                )
+                .border(Stroke.Alignment.Inside, style.metrics.borderWidth, colors.border, menuShape)
+                .background(colors.background, menuShape)
+                .width(IntrinsicSize.Max)
+                .onHover { localMenuManager.onHoveredChange(it) },
     ) {
         Column(Modifier.verticalScroll(scrollState).padding(style.metrics.contentPadding)) {
             items.forEach {
@@ -187,33 +188,34 @@ private fun ShowMenuItem(
     canShowKeybinding: Boolean = false,
 ) {
     when (item) {
-        is MenuSelectableItem -> MenuItem(
-            selected = item.isSelected,
-            onClick = item.onClick,
-            enabled = item.isEnabled,
-            canShowIcon = canShowIcon,
-            canShowKeybinding = canShowKeybinding,
-            iconResource = item.iconResource,
-            iconClass = item.iconClass,
-            keybinding = item.keybinding,
-            content = item.content,
-        )
+        is MenuSelectableItem ->
+            MenuItem(
+                selected = item.isSelected,
+                onClick = item.onClick,
+                enabled = item.isEnabled,
+                canShowIcon = canShowIcon,
+                canShowKeybinding = canShowKeybinding,
+                iconResource = item.iconResource,
+                iconClass = item.iconClass,
+                keybinding = item.keybinding,
+                content = item.content,
+            )
 
-        is SubmenuItem -> MenuSubmenuItem(
-            enabled = item.isEnabled,
-            submenu = item.submenu,
-            canShowIcon = canShowIcon,
-            iconResource = item.iconResource,
-            iconClass = item.iconClass,
-            content = item.content,
-        )
+        is SubmenuItem ->
+            MenuSubmenuItem(
+                enabled = item.isEnabled,
+                submenu = item.submenu,
+                canShowIcon = canShowIcon,
+                iconResource = item.iconResource,
+                iconClass = item.iconClass,
+                content = item.content,
+            )
 
         else -> item.content()
     }
 }
 
 public interface MenuScope {
-
     public fun selectableItem(
         selected: Boolean,
         iconResource: String? = null,
@@ -263,50 +265,50 @@ public fun <T> MenuScope.items(
     }
 }
 
-private fun (MenuScope.() -> Unit).asList() = buildList {
-    this@asList(
-        object : MenuScope {
-            override fun selectableItem(
-                selected: Boolean,
-                iconResource: String?,
-                iconClass: Class<*>,
-                keybinding: Set<Char>?,
-                onClick: () -> Unit,
-                enabled: Boolean,
-                content: @Composable () -> Unit,
-            ) {
-                add(
-                    MenuSelectableItem(
-                        isSelected = selected,
-                        isEnabled = enabled,
-                        iconResource = iconResource,
-                        iconClass = iconClass,
-                        keybinding = keybinding,
-                        onClick = onClick,
-                        content = content,
-                    ),
-                )
-            }
+private fun (MenuScope.() -> Unit).asList() =
+    buildList {
+        this@asList(
+            object : MenuScope {
+                override fun selectableItem(
+                    selected: Boolean,
+                    iconResource: String?,
+                    iconClass: Class<*>,
+                    keybinding: Set<Char>?,
+                    onClick: () -> Unit,
+                    enabled: Boolean,
+                    content: @Composable () -> Unit,
+                ) {
+                    add(
+                        MenuSelectableItem(
+                            isSelected = selected,
+                            isEnabled = enabled,
+                            iconResource = iconResource,
+                            iconClass = iconClass,
+                            keybinding = keybinding,
+                            onClick = onClick,
+                            content = content,
+                        ),
+                    )
+                }
 
-            override fun passiveItem(content: @Composable () -> Unit) {
-                add(MenuPassiveItem(content))
-            }
+                override fun passiveItem(content: @Composable () -> Unit) {
+                    add(MenuPassiveItem(content))
+                }
 
-            override fun submenu(
-                enabled: Boolean,
-                iconResource: String?,
-                iconClass: Class<*>,
-                submenu: MenuScope.() -> Unit,
-                content: @Composable () -> Unit,
-            ) {
-                add(SubmenuItem(enabled, iconResource, iconClass, submenu, content))
-            }
-        },
-    )
-}
+                override fun submenu(
+                    enabled: Boolean,
+                    iconResource: String?,
+                    iconClass: Class<*>,
+                    submenu: MenuScope.() -> Unit,
+                    content: @Composable () -> Unit,
+                ) {
+                    add(SubmenuItem(enabled, iconResource, iconClass, submenu, content))
+                }
+            },
+        )
+    }
 
 private interface MenuItem {
-
     val content: @Composable () -> Unit
 }
 
@@ -393,20 +395,21 @@ internal fun MenuItem(
     val localInputModeManager = LocalInputModeManager.current
 
     Box(
-        modifier = modifier
-            .focusRequester(focusRequester)
-            .selectable(
-                selected = selected,
-                onClick = {
-                    onClick()
-                    menuManager.closeAll(localInputModeManager.inputMode, true)
-                },
-                enabled = enabled,
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = null,
-            )
-            .fillMaxWidth(),
+        modifier =
+            modifier
+                .focusRequester(focusRequester)
+                .selectable(
+                    selected = selected,
+                    onClick = {
+                        onClick()
+                        menuManager.closeAll(localInputModeManager.inputMode, true)
+                    },
+                    enabled = enabled,
+                    role = Role.Button,
+                    interactionSource = interactionSource,
+                    indication = null,
+                )
+                .fillMaxWidth(),
     ) {
         DisposableEffect(Unit) {
             if (selected) {
@@ -425,10 +428,11 @@ internal fun MenuItem(
             val backgroundColor by itemColors.backgroundFor(itemState)
 
             Row(
-                modifier = Modifier.fillMaxWidth()
-                    .defaultMinSize(minHeight = itemMetrics.minHeight)
-                    .drawItemBackground(itemMetrics, backgroundColor)
-                    .padding(itemMetrics.contentPadding),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .defaultMinSize(minHeight = itemMetrics.minHeight)
+                        .drawItemBackground(itemMetrics, backgroundColor)
+                        .padding(itemMetrics.contentPadding),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -451,9 +455,10 @@ internal fun MenuItem(
                 }
 
                 if (canShowKeybinding) {
-                    val keybindingText = remember(keybinding) {
-                        keybinding?.joinToString("") { it.toString() }.orEmpty()
-                    }
+                    val keybindingText =
+                        remember(keybinding) {
+                            keybinding?.joinToString("") { it.toString() }.orEmpty()
+                        }
                     Text(
                         modifier = Modifier.padding(style.metrics.itemMetrics.keybindingsPadding),
                         text = keybindingText,
@@ -508,25 +513,26 @@ public fun MenuSubmenuItem(
 
     val backgroundColor by itemColors.backgroundFor(itemState)
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .drawItemBackground(menuMetrics.itemMetrics, backgroundColor)
-            .focusRequester(focusRequester)
-            .clickable(
-                onClick = { itemState = itemState.copy(selected = !itemState.isSelected) },
-                enabled = enabled,
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = null,
-            )
-            .onKeyEvent {
-                if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionRight) {
-                    itemState = itemState.copy(selected = true)
-                    true
-                } else {
-                    false
-                }
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .drawItemBackground(menuMetrics.itemMetrics, backgroundColor)
+                .focusRequester(focusRequester)
+                .clickable(
+                    onClick = { itemState = itemState.copy(selected = !itemState.isSelected) },
+                    enabled = enabled,
+                    role = Role.Button,
+                    interactionSource = interactionSource,
+                    indication = null,
+                )
+                .onKeyEvent {
+                    if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionRight) {
+                        itemState = itemState.copy(selected = true)
+                        true
+                    } else {
+                        false
+                    }
+                },
     ) {
         CompositionLocalProvider(
             LocalContentColor provides itemColors.contentFor(itemState).value,
@@ -574,24 +580,26 @@ public fun MenuSubmenuItem(
     }
 }
 
-private fun Modifier.drawItemBackground(itemMetrics: MenuItemMetrics, backgroundColor: Color) =
-    drawBehind {
-        val cornerSizePx = itemMetrics.selectionCornerSize.toPx(size, density = this)
-        val cornerRadius = CornerRadius(cornerSizePx, cornerSizePx)
+private fun Modifier.drawItemBackground(
+    itemMetrics: MenuItemMetrics,
+    backgroundColor: Color,
+) = drawBehind {
+    val cornerSizePx = itemMetrics.selectionCornerSize.toPx(size, density = this)
+    val cornerRadius = CornerRadius(cornerSizePx, cornerSizePx)
 
-        val outerPadding = itemMetrics.outerPadding
-        val offset =
-            Offset(
-                x = outerPadding.calculateLeftPadding(layoutDirection).toPx(),
-                y = outerPadding.calculateTopPadding().toPx(),
-            )
-        drawRoundRect(
-            color = backgroundColor,
-            cornerRadius = cornerRadius,
-            topLeft = offset,
-            size = size.subtract(outerPadding, density = this, layoutDirection),
+    val outerPadding = itemMetrics.outerPadding
+    val offset =
+        Offset(
+            x = outerPadding.calculateLeftPadding(layoutDirection).toPx(),
+            y = outerPadding.calculateTopPadding().toPx(),
         )
-    }
+    drawRoundRect(
+        color = backgroundColor,
+        cornerRadius = cornerRadius,
+        topLeft = offset,
+        size = size.subtract(outerPadding, density = this, layoutDirection),
+    )
+}
 
 private fun Size.subtract(
     paddingValues: PaddingValues,
@@ -629,9 +637,10 @@ internal fun Submenu(
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
     var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
     val parentMenuManager = LocalMenuManager.current
-    val menuManager = remember(parentMenuManager, onDismissRequest) {
-        parentMenuManager.submenuManager(onDismissRequest)
-    }
+    val menuManager =
+        remember(parentMenuManager, onDismissRequest) {
+            parentMenuManager.submenuManager(onDismissRequest)
+        }
 
     Popup(
         popupPositionProvider = popupPositionProvider,
@@ -660,7 +669,6 @@ internal fun Submenu(
 @Immutable
 @JvmInline
 public value class MenuItemState(public val state: ULong) : SelectableComponentState, FocusableComponentState {
-
     override val isActive: Boolean
         get() = state and Selected != 0UL
 
@@ -701,7 +709,6 @@ public value class MenuItemState(public val state: ULong) : SelectableComponentS
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     public companion object {
-
         public fun of(
             selected: Boolean,
             enabled: Boolean,

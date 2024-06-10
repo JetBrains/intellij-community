@@ -13,13 +13,15 @@ import kotlin.math.roundToInt
 @Immutable
 @GenerateDataFunctions
 private class ColorBasedReplacementPainterSvgPatchHint(val map: Map<Color, Color>) : PainterSvgPatchHint {
-
     override fun PainterProviderScope.patch(element: Element) {
         element.patchPalette(map)
     }
 }
 
-internal fun Element.patchPalette(fill: Map<Color, Color>, stroke: Map<Color, Color> = fill) {
+internal fun Element.patchPalette(
+    fill: Map<Color, Color>,
+    stroke: Map<Color, Color> = fill,
+) {
     patchColorAttribute("fill", fill)
     patchColorAttribute("stroke", stroke)
 
@@ -33,7 +35,10 @@ internal fun Element.patchPalette(fill: Map<Color, Color>, stroke: Map<Color, Co
     }
 }
 
-private fun Element.patchColorAttribute(attrName: String, pattern: Map<Color, Color>) {
+private fun Element.patchColorAttribute(
+    attrName: String,
+    pattern: Map<Color, Color>,
+) {
     val color = getAttribute(attrName)
     val opacity = getAttribute("$attrName-opacity")
 
@@ -48,7 +53,10 @@ private fun Element.patchColorAttribute(attrName: String, pattern: Map<Color, Co
     }
 }
 
-private fun tryParseColor(color: String, alpha: Float): Color? {
+private fun tryParseColor(
+    color: String,
+    alpha: Float,
+): Color? {
     val rawColor = color.lowercase()
     if (rawColor.startsWith("#") && rawColor.length - 1 <= 8) {
         return fromHexOrNull(rawColor, alpha)
@@ -56,39 +64,53 @@ private fun tryParseColor(color: String, alpha: Float): Color? {
     return null
 }
 
-private fun fromHexOrNull(rawColor: String, alpha: Float): Color? {
-    val startPos = if (rawColor.startsWith("#")) 1 else if (rawColor.startsWith("0x")) 2 else 0
+private fun fromHexOrNull(
+    rawColor: String,
+    alpha: Float,
+): Color? {
+    val startPos =
+        if (rawColor.startsWith("#")) {
+            1
+        } else if (rawColor.startsWith("0x")) {
+            2
+        } else {
+            0
+        }
     val length = rawColor.length - startPos
     val alphaOverride = alpha.takeIf { it != 1.0f }?.let { (it * 255).roundToInt() }
 
     return when (length) {
-        3 -> Color(
-            red = rawColor.substring(startPos, startPos + 1).toInt(16),
-            green = rawColor.substring(startPos + 1, startPos + 2).toInt(16),
-            blue = rawColor.substring(startPos + 2, startPos + 3).toInt(16),
-            alpha = alphaOverride ?: 255,
-        )
+        3 ->
+            Color(
+                red = rawColor.substring(startPos, startPos + 1).toInt(16),
+                green = rawColor.substring(startPos + 1, startPos + 2).toInt(16),
+                blue = rawColor.substring(startPos + 2, startPos + 3).toInt(16),
+                alpha = alphaOverride ?: 255,
+            )
 
-        4 -> Color(
-            red = rawColor.substring(startPos, startPos + 1).toInt(16),
-            green = rawColor.substring(startPos + 1, startPos + 2).toInt(16),
-            blue = rawColor.substring(startPos + 2, startPos + 3).toInt(16),
-            alpha = alphaOverride ?: rawColor.substring(startPos + 3, startPos + 4).toInt(16),
-        )
+        4 ->
+            Color(
+                red = rawColor.substring(startPos, startPos + 1).toInt(16),
+                green = rawColor.substring(startPos + 1, startPos + 2).toInt(16),
+                blue = rawColor.substring(startPos + 2, startPos + 3).toInt(16),
+                alpha = alphaOverride ?: rawColor.substring(startPos + 3, startPos + 4).toInt(16),
+            )
 
-        6 -> Color(
-            red = rawColor.substring(startPos, startPos + 2).toInt(16),
-            green = rawColor.substring(startPos + 2, startPos + 4).toInt(16),
-            blue = rawColor.substring(startPos + 4, startPos + 6).toInt(16),
-            alpha = alphaOverride ?: 255,
-        )
+        6 ->
+            Color(
+                red = rawColor.substring(startPos, startPos + 2).toInt(16),
+                green = rawColor.substring(startPos + 2, startPos + 4).toInt(16),
+                blue = rawColor.substring(startPos + 4, startPos + 6).toInt(16),
+                alpha = alphaOverride ?: 255,
+            )
 
-        8 -> Color(
-            red = rawColor.substring(startPos, startPos + 2).toInt(16),
-            green = rawColor.substring(startPos + 2, startPos + 4).toInt(16),
-            blue = rawColor.substring(startPos + 4, startPos + 6).toInt(16),
-            alpha = alphaOverride ?: rawColor.substring(startPos + 6, startPos + 8).toInt(16),
-        )
+        8 ->
+            Color(
+                red = rawColor.substring(startPos, startPos + 2).toInt(16),
+                green = rawColor.substring(startPos + 2, startPos + 4).toInt(16),
+                blue = rawColor.substring(startPos + 4, startPos + 6).toInt(16),
+                alpha = alphaOverride ?: rawColor.substring(startPos + 6, startPos + 8).toInt(16),
+            )
 
         else -> null
     }

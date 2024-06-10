@@ -50,10 +50,8 @@ import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.editorTabStyle
 
 public interface TabContentScope {
-
     @Composable
-    public fun Modifier.tabContentAlpha(state: TabState): Modifier =
-        alpha(JewelTheme.editorTabStyle.contentAlpha.contentFor(state).value)
+    public fun Modifier.tabContentAlpha(state: TabState): Modifier = alpha(JewelTheme.editorTabStyle.contentAlpha.contentFor(state).value)
 }
 
 internal class TabContentScopeContainer : TabContentScope
@@ -189,14 +187,15 @@ internal fun TabImpl(
 
                 val closePainter by tabStyle.icons.close.getPainter(Stateful(closeButtonState))
                 Image(
-                    modifier = Modifier
-                        .clickable(
-                            interactionSource = closeActionInteractionSource,
-                            indication = null,
-                            onClick = tabData.onClose,
-                            role = Role.Button,
-                        )
-                        .size(16.dp),
+                    modifier =
+                        Modifier
+                            .clickable(
+                                interactionSource = closeActionInteractionSource,
+                                indication = null,
+                                onClick = tabData.onClose,
+                                role = Role.Button,
+                            )
+                            .size(16.dp),
                     painter = closePainter,
                     contentDescription = "Close tab",
                 )
@@ -210,7 +209,6 @@ internal fun TabImpl(
 @Immutable
 @JvmInline
 public value class TabState(public val state: ULong) : SelectableComponentState {
-
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -246,7 +244,6 @@ public value class TabState(public val state: ULong) : SelectableComponentState 
             "isHovered=$isHovered, isPressed=$isPressed isActive=$isActive)"
 
     public companion object {
-
         public fun of(
             selected: Boolean,
             enabled: Boolean = true,

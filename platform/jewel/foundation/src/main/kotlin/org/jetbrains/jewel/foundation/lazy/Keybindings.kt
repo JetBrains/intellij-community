@@ -12,7 +12,6 @@ import androidx.compose.ui.input.pointer.isMetaPressed
 import androidx.compose.ui.input.pointer.isShiftPressed
 
 public interface SelectableColumnKeybindings {
-
     public val KeyEvent.isContiguousSelectionKeyPressed: Boolean
 
     public val PointerKeyboardModifiers.isContiguousSelectionKeyPressed: Boolean
@@ -97,7 +96,6 @@ public interface SelectableColumnKeybindings {
 }
 
 public open class DefaultMacOsSelectableColumnKeybindings : DefaultSelectableColumnKeybindings() {
-
     public companion object : DefaultMacOsSelectableColumnKeybindings()
 
     override val KeyEvent.isMultiSelectionKeyPressed: Boolean
@@ -108,7 +106,6 @@ public open class DefaultMacOsSelectableColumnKeybindings : DefaultSelectableCol
 }
 
 public open class DefaultSelectableColumnKeybindings : SelectableColumnKeybindings {
-
     public companion object : DefaultSelectableColumnKeybindings()
 
     override val KeyEvent.isContiguousSelectionKeyPressed: Boolean

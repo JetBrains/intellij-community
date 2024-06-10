@@ -23,9 +23,11 @@ import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.theme.menuStyle
 
 public object ContextMenuRepresentation : ContextMenuRepresentation {
-
     @Composable
-    override fun Representation(state: ContextMenuState, items: () -> List<ContextMenuItem>) {
+    override fun Representation(
+        state: ContextMenuState,
+        items: () -> List<ContextMenuItem>,
+    ) {
         val isOpen = state.status is ContextMenuState.Status.Open
 
         if (isOpen) {

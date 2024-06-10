@@ -48,7 +48,6 @@ public class ResourcePainterProvider(
     private val basePath: String,
     vararg classLoaders: ClassLoader,
 ) : PainterProvider {
-
     private val classLoaders = classLoaders.toSet()
 
     private val cache = ConcurrentHashMap<Int, Painter>()
@@ -207,16 +206,15 @@ public class ResourcePainterProvider(
         )
 
     @Composable
-    private fun createBitmapPainter(
-        url: URL,
-    ) = tryLoadingResource(
-        url = url,
-        loadingAction = { resourceUrl ->
-            val bitmap = resourceUrl.openStream().use { loadImageBitmap(it) }
-            BitmapPainter(bitmap)
-        },
-        paintAction = { it },
-    )
+    private fun createBitmapPainter(url: URL) =
+        tryLoadingResource(
+            url = url,
+            loadingAction = { resourceUrl ->
+                val bitmap = resourceUrl.openStream().use { loadImageBitmap(it) }
+                BitmapPainter(bitmap)
+            },
+            paintAction = { it },
+        )
 
     @Composable
     private fun <T> tryLoadingResource(
@@ -248,7 +246,6 @@ public class ResourcePainterProvider(
         override val path: String = rawPath,
         override val acceptedHints: MutableList<PainterHint> = mutableListOf(),
     ) : ResourcePainterProviderScope, Density by localDensity {
-
         fun apply(pathHint: PainterPathHint): Scope? {
             with(pathHint) {
                 val patched = patch()

@@ -73,11 +73,12 @@ private fun CircularProgressIndicatorImpl(
 
     val density = LocalDensity.current
     val frames by produceState(emptyList(), density, style.color, defaultColor, dispatcher) {
-        value = withContext(dispatcher) {
-            frameRetriever(style.color.takeOrElse { defaultColor }).map {
-                loadSvgPainter(it.byteInputStream(), density)
+        value =
+            withContext(dispatcher) {
+                frameRetriever(style.color.takeOrElse { defaultColor }).map {
+                    loadSvgPainter(it.byteInputStream(), density)
+                }
             }
-        }
     }
 
     if (frames.isEmpty()) {
@@ -91,13 +92,13 @@ private fun CircularProgressIndicatorImpl(
                 targetValue = framesCount,
                 typeConverter = Int.VectorConverter,
                 animationSpec =
-                InfiniteRepeatableSpec(
-                    tween(
-                        easing = LinearEasing,
-                        durationMillis = (style.frameTime.inWholeMilliseconds * framesCount).toInt(),
+                    InfiniteRepeatableSpec(
+                        tween(
+                            easing = LinearEasing,
+                            durationMillis = (style.frameTime.inWholeMilliseconds * framesCount).toInt(),
+                        ),
+                        repeatMode = RepeatMode.Restart,
                     ),
-                    repeatMode = RepeatMode.Restart,
-                ),
             )
 
         val currentPainter = frames[currentIndex]
@@ -106,7 +107,6 @@ private fun CircularProgressIndicatorImpl(
 }
 
 private object SpinnerProgressIconGenerator {
-
     private val opacityList = listOf(1.0f, 0.93f, 0.78f, 0.69f, 0.62f, 0.48f, 0.38f, 0.0f)
 
     private fun StringBuilder.closeRoot() = append("</svg>")
@@ -130,7 +130,10 @@ private object SpinnerProgressIconGenerator {
         closeRoot()
     }
 
-    private fun StringBuilder.elements(colorHex: String, opacityList: List<Float>) {
+    private fun StringBuilder.elements(
+        colorHex: String,
+        opacityList: List<Float>,
+    ) {
         appendLine()
         appendLine("""    <rect fill="$colorHex" opacity="${opacityList[0]}" x="7" y="1" width="2" height="4" rx="1"/>""")
         appendLine("""    <rect fill="$colorHex" opacity="${opacityList[1]}" x="2.34961" y="3.76416" width="2" height="4" rx="1"""")
@@ -147,25 +150,25 @@ private object SpinnerProgressIconGenerator {
     }
 
     object Small {
-
-        fun generateSvgFrames(colorHex: String): List<String> = buildList {
-            val opacityListShifted = opacityList.toMutableList()
-            repeat(opacityList.count()) {
-                add(generateSvgIcon(size = 16, colorHex = colorHex, opacityListShifted = opacityListShifted))
-                opacityListShifted.shtr()
+        fun generateSvgFrames(colorHex: String): List<String> =
+            buildList {
+                val opacityListShifted = opacityList.toMutableList()
+                repeat(opacityList.count()) {
+                    add(generateSvgIcon(size = 16, colorHex = colorHex, opacityListShifted = opacityListShifted))
+                    opacityListShifted.shtr()
+                }
             }
-        }
     }
 
     object Big {
-
-        fun generateSvgFrames(colorHex: String): List<String> = buildList {
-            val opacityListShifted = opacityList.toMutableList()
-            repeat(opacityList.count()) {
-                add(generateSvgIcon(size = 32, colorHex = colorHex, opacityListShifted = opacityListShifted))
-                opacityListShifted.shtr()
+        fun generateSvgFrames(colorHex: String): List<String> =
+            buildList {
+                val opacityListShifted = opacityList.toMutableList()
+                repeat(opacityList.count()) {
+                    add(generateSvgIcon(size = 32, colorHex = colorHex, opacityListShifted = opacityListShifted))
+                    opacityListShifted.shtr()
+                }
             }
-        }
     }
 
     private fun <T> MutableList<T>.shtr() {

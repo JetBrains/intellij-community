@@ -44,23 +44,24 @@ public fun SliderColors.Companion.light(
     thumbBorderDisabled: Color = IntUiLightTheme.colors.grey(11),
     thumbBorderPressed: Color = IntUiLightTheme.colors.grey(7),
     thumbBorderHovered: Color = IntUiLightTheme.colors.grey(9),
-): SliderColors = SliderColors(
-    track,
-    trackFilled,
-    trackDisabled,
-    trackFilledDisabled,
-    stepMarker,
-    thumbFill,
-    thumbFillDisabled,
-    thumbFillFocused,
-    thumbFillPressed,
-    thumbFillHovered,
-    thumbBorder,
-    thumbBorderFocused,
-    thumbBorderDisabled,
-    thumbBorderPressed,
-    thumbBorderHovered,
-)
+): SliderColors =
+    SliderColors(
+        track,
+        trackFilled,
+        trackDisabled,
+        trackFilledDisabled,
+        stepMarker,
+        thumbFill,
+        thumbFillDisabled,
+        thumbFillFocused,
+        thumbFillPressed,
+        thumbFillHovered,
+        thumbBorder,
+        thumbBorderFocused,
+        thumbBorderDisabled,
+        thumbBorderPressed,
+        thumbBorderHovered,
+    )
 
 @Composable
 public fun SliderColors.Companion.dark(
@@ -79,23 +80,24 @@ public fun SliderColors.Companion.dark(
     thumbBorderDisabled: Color = IntUiDarkTheme.colors.grey(5),
     thumbBorderPressed: Color = IntUiDarkTheme.colors.grey(8),
     thumbBorderHovered: Color = IntUiDarkTheme.colors.grey(9),
-): SliderColors = SliderColors(
-    track,
-    trackFilled,
-    trackDisabled,
-    trackFilledDisabled,
-    stepMarker,
-    thumbFill,
-    thumbFillDisabled,
-    thumbFillFocused,
-    thumbFillPressed,
-    thumbFillHovered,
-    thumbBorder,
-    thumbBorderFocused,
-    thumbBorderDisabled,
-    thumbBorderPressed,
-    thumbBorderHovered,
-)
+): SliderColors =
+    SliderColors(
+        track,
+        trackFilled,
+        trackDisabled,
+        trackFilledDisabled,
+        stepMarker,
+        thumbFill,
+        thumbFillDisabled,
+        thumbFillFocused,
+        thumbFillPressed,
+        thumbFillHovered,
+        thumbBorder,
+        thumbBorderFocused,
+        thumbBorderDisabled,
+        thumbBorderPressed,
+        thumbBorderHovered,
+    )
 
 @Composable
 public fun SliderMetrics.Companion.defaults(
@@ -105,5 +107,4 @@ public fun SliderMetrics.Companion.defaults(
     stepLineHeight: Dp = 8.dp,
     stepLineWidth: Dp = 1.dp,
     trackToStepSpacing: Dp = thumbSize.height / 2 + 4.dp,
-): SliderMetrics =
-    SliderMetrics(trackHeight, thumbSize, thumbBorderWidth, stepLineHeight, stepLineWidth, trackToStepSpacing)
+): SliderMetrics = SliderMetrics(trackHeight, thumbSize, thumbBorderWidth, stepLineHeight, stepLineWidth, trackToStepSpacing)

@@ -19,7 +19,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Level.APP)
 internal class SwingBridgeService(scope: CoroutineScope) {
-
     internal val currentBridgeThemeData: StateFlow<BridgeThemeData> =
         IntelliJApplication.lookAndFeelChangedFlow(scope)
             .mapLatest { tryGettingThemeData() }
@@ -50,26 +49,25 @@ internal class SwingBridgeService(scope: CoroutineScope) {
         val themeDefinition: ThemeDefinition,
         val componentStyling: ComponentStyling,
     ) {
-
         companion object {
+            val DEFAULT =
+                run {
+                    val textStyle = TextStyle.Default.copy(fontSize = 13.sp)
+                    val monospaceTextStyle = textStyle.copy(fontFamily = FontFamily.Monospace)
+                    val themeDefinition = createBridgeThemeDefinition(textStyle, monospaceTextStyle, monospaceTextStyle)
 
-            val DEFAULT = run {
-                val textStyle = TextStyle.Default.copy(fontSize = 13.sp)
-                val monospaceTextStyle = textStyle.copy(fontFamily = FontFamily.Monospace)
-                val themeDefinition = createBridgeThemeDefinition(textStyle, monospaceTextStyle, monospaceTextStyle)
-
-                BridgeThemeData(
-                    themeDefinition = themeDefinition,
-                    componentStyling =
-                    createBridgeComponentStyling(
-                        theme = themeDefinition,
-                        textFieldTextStyle = textStyle,
-                        textAreaTextStyle = textStyle,
-                        dropdownTextStyle = textStyle,
-                        linkTextStyle = textStyle,
-                    ),
-                )
-            }
+                    BridgeThemeData(
+                        themeDefinition = themeDefinition,
+                        componentStyling =
+                            createBridgeComponentStyling(
+                                theme = themeDefinition,
+                                textFieldTextStyle = textStyle,
+                                textAreaTextStyle = textStyle,
+                                dropdownTextStyle = textStyle,
+                                linkTextStyle = textStyle,
+                            ),
+                    )
+                }
         }
     }
 }

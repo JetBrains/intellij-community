@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.onEach
 
 @Service(Service.Level.PROJECT)
 internal class ReleasesSampleService : CoroutineScope, Disposable {
-
     private val dispatcher = AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
 
     override val coroutineContext = SupervisorJob() + CoroutineName("ReleasesSampleService") + dispatcher
@@ -35,8 +34,9 @@ internal class ReleasesSampleService : CoroutineScope, Disposable {
             val normalizedFilter = filter.trim()
             if (normalizedFilter.isBlank()) return@combine source
 
-            val filteredContentItems = source.items
-                .filter { it.matches(normalizedFilter) }
+            val filteredContentItems =
+                source.items
+                    .filter { it.matches(normalizedFilter) }
 
             FilteredContentSource(filteredContentItems, source)
         }

@@ -92,10 +92,11 @@ public fun JewelTheme.Companion.darkThemeDefinition(
     )
 
 @Composable
-public fun ComponentStyling.default(): ComponentStyling = with {
-    val isDark = JewelTheme.isDark
-    if (isDark) dark() else light()
-}
+public fun ComponentStyling.default(): ComponentStyling =
+    with {
+        val isDark = JewelTheme.isDark
+        if (isDark) dark() else light()
+    }
 
 @Composable
 public fun ComponentStyling.dark(

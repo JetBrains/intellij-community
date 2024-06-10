@@ -27,16 +27,17 @@ fun Links() {
 
         ExternalLink("ExternalLink", {})
 
-        val items = remember {
-            listOf(
-                "Light",
-                "Dark",
-                "---",
-                "High Contrast",
-                "Darcula",
-                "IntelliJ Light",
-            )
-        }
+        val items =
+            remember {
+                listOf(
+                    "Light",
+                    "Dark",
+                    "---",
+                    "High Contrast",
+                    "Darcula",
+                    "IntelliJ Light",
+                )
+            }
         var selected by remember { mutableStateOf(items.first()) }
         DropdownLink("DropdownLink") {
             items.forEach {

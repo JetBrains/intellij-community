@@ -174,20 +174,24 @@ private fun TextAreaDecorationBox(
         val leftPadding = contentPadding.calculateLeftPadding(layoutDirection)
         val rightPadding = contentPadding.calculateRightPadding(layoutDirection)
         val horizontalPadding = (leftPadding + rightPadding).roundToPx()
-        val verticalPadding = (contentPadding.calculateTopPadding() + contentPadding.calculateBottomPadding())
-            .roundToPx()
+        val verticalPadding =
+            (contentPadding.calculateTopPadding() + contentPadding.calculateBottomPadding())
+                .roundToPx()
 
-        val textAreaConstraints = incomingConstraints
-            .offset(horizontal = -horizontalPadding, vertical = -verticalPadding)
-            .copy(minHeight = 0)
+        val textAreaConstraints =
+            incomingConstraints
+                .offset(horizontal = -horizontalPadding, vertical = -verticalPadding)
+                .copy(minHeight = 0)
 
-        val textAreaPlaceable = measurables.single { it.layoutId == TEXT_AREA_ID }
-            .measure(textAreaConstraints)
+        val textAreaPlaceable =
+            measurables.single { it.layoutId == TEXT_AREA_ID }
+                .measure(textAreaConstraints)
 
         // Measure placeholder
         val placeholderConstraints = textAreaConstraints.copy(minWidth = 0, minHeight = 0)
-        val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }
-            ?.measure(placeholderConstraints)
+        val placeholderPlaceable =
+            measurables.find { it.layoutId == PLACEHOLDER_ID }
+                ?.measure(placeholderConstraints)
 
         val width = calculateWidth(textAreaPlaceable, placeholderPlaceable, textAreaConstraints)
         val height = calculateHeight(textAreaPlaceable, placeholderPlaceable, verticalPadding, textAreaConstraints)

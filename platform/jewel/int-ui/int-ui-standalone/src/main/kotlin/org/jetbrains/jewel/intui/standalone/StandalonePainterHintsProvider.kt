@@ -17,12 +17,11 @@ import org.jetbrains.jewel.ui.painter.hints.PathOverride
 public class StandalonePainterHintsProvider(
     theme: ThemeDefinition,
 ) : PalettePainterHintsProvider(
-    theme.isDark,
-    intellijColorPalette,
-    theme.iconData.colorPalette,
-    theme.colorPalette.rawMap,
-) {
-
+        theme.isDark,
+        intellijColorPalette,
+        theme.iconData.colorPalette,
+        theme.colorPalette.rawMap,
+    ) {
     override val checkBoxByColorPaletteHint: PainterHint
     override val checkBoxByKeyPaletteHint: PainterHint
     override val treePaletteHint: PainterHint
@@ -114,7 +113,6 @@ public class StandalonePainterHintsProvider(
         }
 
     public companion object {
-
         // Extracted from com.intellij.ide.ui.UITheme#colorPalette
         private val intellijColorPalette =
             mapOf(

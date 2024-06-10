@@ -8,7 +8,6 @@ import org.junit.Before
 import org.junit.Rule
 
 open class BasicJewelUiTest {
-
     @get:Rule
     val composeRule = createComposeRule()
 

@@ -55,5 +55,4 @@ public fun Typography.small(): TextStyle =
     }
 
 // Copied from JBFont — current as of IJP 233.
-private fun mediumAndSmallFontsAsRegular(): Boolean =
-    SystemInfo.isWindows && !NewUiValue.isEnabled()
+private fun mediumAndSmallFontsAsRegular(): Boolean = SystemInfo.isWindows && !NewUiValue.isEnabled()

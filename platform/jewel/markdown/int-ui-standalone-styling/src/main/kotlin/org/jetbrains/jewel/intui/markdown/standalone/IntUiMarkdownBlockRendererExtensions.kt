@@ -12,12 +12,10 @@ public fun MarkdownBlockRenderer.Companion.light(
     styling: MarkdownStyling = MarkdownStyling.light(),
     rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
     inlineRenderer: InlineMarkdownRenderer = InlineMarkdownRenderer.default(),
-): MarkdownBlockRenderer =
-    DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer)
+): MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer)
 
 public fun MarkdownBlockRenderer.Companion.dark(
     styling: MarkdownStyling = MarkdownStyling.dark(),
     rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
     inlineRenderer: InlineMarkdownRenderer = InlineMarkdownRenderer.default(),
-): MarkdownBlockRenderer =
-    DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer)
+): MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer)

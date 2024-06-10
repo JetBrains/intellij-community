@@ -94,36 +94,38 @@ public fun Dropdown(
 
     var componentWidth by remember { mutableIntStateOf(-1) }
     Box(
-        modifier = modifier
-            .clickable(
-                onClick = {
-                    // TODO: Trick to skip click event when close menu by click dropdown
-                    if (!skipNextClick) {
-                        expanded = !expanded
-                    }
-                    skipNextClick = false
-                },
-                enabled = enabled,
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = null,
-            )
-            .background(colors.backgroundFor(dropdownState).value, shape)
-            .thenIf(hasNoOutline) {
-                border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
-            }
-            .thenIf(outline == Outline.None) { focusOutline(dropdownState, shape) }
-            .outline(dropdownState, outline, shape)
-            .width(IntrinsicSize.Max)
-            .defaultMinSize(minSize.width, minSize.height.coerceAtLeast(arrowMinSize.height))
-            .onSizeChanged { componentWidth = it.width },
+        modifier =
+            modifier
+                .clickable(
+                    onClick = {
+                        // TODO: Trick to skip click event when close menu by click dropdown
+                        if (!skipNextClick) {
+                            expanded = !expanded
+                        }
+                        skipNextClick = false
+                    },
+                    enabled = enabled,
+                    role = Role.Button,
+                    interactionSource = interactionSource,
+                    indication = null,
+                )
+                .background(colors.backgroundFor(dropdownState).value, shape)
+                .thenIf(hasNoOutline) {
+                    border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
+                }
+                .thenIf(outline == Outline.None) { focusOutline(dropdownState, shape) }
+                .outline(dropdownState, outline, shape)
+                .width(IntrinsicSize.Max)
+                .defaultMinSize(minSize.width, minSize.height.coerceAtLeast(arrowMinSize.height))
+                .onSizeChanged { componentWidth = it.width },
         contentAlignment = Alignment.CenterStart,
     ) {
         CompositionLocalProvider(LocalContentColor provides colors.contentFor(dropdownState).value) {
             Box(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(style.metrics.contentPadding)
-                    .padding(end = arrowMinSize.width),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(style.metrics.contentPadding)
+                        .padding(end = arrowMinSize.width),
                 contentAlignment = Alignment.CenterStart,
                 content = content,
             )
@@ -151,8 +153,9 @@ public fun Dropdown(
                     }
                     true
                 },
-                modifier = menuModifier.focusProperties { canFocus = true }
-                    .defaultMinSize(minWidth = with(density) { componentWidth.toDp() }),
+                modifier =
+                    menuModifier.focusProperties { canFocus = true }
+                        .defaultMinSize(minWidth = with(density) { componentWidth.toDp() }),
                 style = style.menuStyle,
                 horizontalAlignment = Alignment.Start,
                 content = menuContent,
@@ -164,7 +167,6 @@ public fun Dropdown(
 @Immutable
 @JvmInline
 public value class DropdownState(public val state: ULong) : FocusableComponentState {
-
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -200,7 +202,6 @@ public value class DropdownState(public val state: ULong) : FocusableComponentSt
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     public companion object {
-
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

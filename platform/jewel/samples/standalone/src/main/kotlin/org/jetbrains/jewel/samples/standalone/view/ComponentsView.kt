@@ -55,10 +55,11 @@ fun ComponentsToolBar() {
         ComponentsViewModel.views.forEach {
             Tooltip(
                 tooltip = { Text("Show ${it.title}") },
-                style = TooltipStyle(
-                    JewelTheme.tooltipStyle.colors,
-                    TooltipMetrics.defaults(showDelay = 150.milliseconds),
-                ),
+                style =
+                    TooltipStyle(
+                        JewelTheme.tooltipStyle.colors,
+                        TooltipMetrics.defaults(showDelay = 150.milliseconds),
+                    ),
                 tooltipPlacement = TooltipPlacement.ComponentRect(Alignment.CenterEnd, Alignment.CenterEnd),
             ) {
                 SelectableIconButton(

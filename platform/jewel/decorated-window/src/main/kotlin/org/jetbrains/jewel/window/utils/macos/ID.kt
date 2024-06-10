@@ -7,7 +7,6 @@ import com.sun.jna.NativeLong
  * value (like 0 or 1)
  */
 internal class ID : NativeLong {
-
     constructor()
     constructor(peer: Long) : super(peer)
 
@@ -23,7 +22,6 @@ internal class ID : NativeLong {
     override fun toInt(): Int = super.toInt()
 
     companion object {
-
         @JvmField
         val NIL = ID(0L)
     }

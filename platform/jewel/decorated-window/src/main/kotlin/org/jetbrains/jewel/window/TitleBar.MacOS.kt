@@ -16,26 +16,26 @@ import org.jetbrains.jewel.window.styling.TitleBarStyle
 import org.jetbrains.jewel.window.utils.macos.MacUtil
 
 public fun Modifier.newFullscreenControls(newControls: Boolean = true): Modifier =
-    this then NewFullscreenControlsElement(
-        newControls,
-        debugInspectorInfo {
-            name = "newFullscreenControls"
-            value = newControls
-        },
-    )
+    this then
+        NewFullscreenControlsElement(
+            newControls,
+            debugInspectorInfo {
+                name = "newFullscreenControls"
+                value = newControls
+            },
+        )
 
 private class NewFullscreenControlsElement(
     val newControls: Boolean,
     val inspectorInfo: InspectorInfo.() -> Unit,
 ) : ModifierNodeElement<NewFullscreenControlsNode>() {
-
-    override fun create(): NewFullscreenControlsNode =
-        NewFullscreenControlsNode(newControls)
+    override fun create(): NewFullscreenControlsNode = NewFullscreenControlsNode(newControls)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        val otherModifier = other as? NewFullscreenControlsElement
-            ?: return false
+        val otherModifier =
+            other as? NewFullscreenControlsElement
+                ?: return false
         return newControls == otherModifier.newControls
     }
 
@@ -59,13 +59,14 @@ internal fun DecoratedWindowScope.TitleBarOnMacOs(
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
     content: @Composable TitleBarScope.(DecoratedWindowState) -> Unit,
 ) {
-    val newFullscreenControls = modifier.foldOut(false) { e, r ->
-        if (e is NewFullscreenControlsElement) {
-            e.newControls
-        } else {
-            r
+    val newFullscreenControls =
+        modifier.foldOut(false) { e, r ->
+            if (e is NewFullscreenControlsElement) {
+                e.newControls
+            } else {
+                r
+            }
         }
-    }
 
     if (newFullscreenControls) {
         System.setProperty("apple.awt.newFullScreeControls", true.toString())

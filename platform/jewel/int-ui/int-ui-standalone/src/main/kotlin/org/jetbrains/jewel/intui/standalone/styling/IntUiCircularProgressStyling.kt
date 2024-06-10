@@ -13,11 +13,9 @@ import kotlin.time.Duration.Companion.milliseconds
 public fun CircularProgressStyle.Companion.dark(
     frameTime: Duration = 125.milliseconds,
     color: Color = Color(0xFF6F737A),
-): CircularProgressStyle =
-    CircularProgressStyle(frameTime, color)
+): CircularProgressStyle = CircularProgressStyle(frameTime, color)
 
 public fun CircularProgressStyle.Companion.light(
     frameTime: Duration = 125.milliseconds,
     color: Color = Color(0xFFA8ADBD),
-): CircularProgressStyle =
-    CircularProgressStyle(frameTime, color)
+): CircularProgressStyle = CircularProgressStyle(frameTime, color)

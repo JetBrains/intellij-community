@@ -28,7 +28,6 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 @Suppress("ImplicitUnitReturnType")
 class PainterHintTest : BasicJewelUiTest() {
-
     @Test
     fun `empty hint should be ignored`() =
         runComposeTest({
@@ -55,9 +54,9 @@ class PainterHintTest : BasicJewelUiTest() {
         override val path: String = rawPath,
         override val acceptedHints: List<PainterHint> = listOf(),
     ) : PainterProviderScope, Density by density {
-
-        private val documentBuilderFactory = DocumentBuilderFactory.newDefaultInstance()
-            .apply { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
+        private val documentBuilderFactory =
+            DocumentBuilderFactory.newDefaultInstance()
+                .apply { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
 
         fun applyPathHints(vararg hints: PainterHint): String {
             var result = rawPath
@@ -71,7 +70,10 @@ class PainterHintTest : BasicJewelUiTest() {
             return result
         }
 
-        fun applyPaletteHints(svg: String, vararg hints: PainterHint): String {
+        fun applyPaletteHints(
+            svg: String,
+            vararg hints: PainterHint,
+        ): String {
             val doc = documentBuilderFactory.newDocumentBuilder().parse(svg.toByteArray().inputStream())
 
             hints.filterIsInstance<PainterSvgPatchHint>().onEach {
@@ -85,8 +87,10 @@ class PainterHintTest : BasicJewelUiTest() {
         }
     }
 
-    private fun testScope(path: String, density: Float = 1f): TestPainterProviderScope =
-        TestPainterProviderScope(Density(density), path)
+    private fun testScope(
+        path: String,
+        density: Float = 1f,
+    ): TestPainterProviderScope = TestPainterProviderScope(Density(density), path)
 
     @Test
     fun `dark painter hint should append suffix when isDark is true`() {
@@ -105,16 +109,18 @@ class PainterHintTest : BasicJewelUiTest() {
     @Test
     fun `override painter hint should replace path entirely`() {
         val basePath = "icons/github.svg"
-        val patchedPath = testScope(basePath)
-            .applyPathHints(PathOverride(mapOf("icons/github.svg" to "icons/search.svg")))
+        val patchedPath =
+            testScope(basePath)
+                .applyPathHints(PathOverride(mapOf("icons/github.svg" to "icons/search.svg")))
         assertEquals("icons/search.svg", patchedPath)
     }
 
     @Test
     fun `override painter hint should not replace path when not matched`() {
         val basePath = "icons/github.svg"
-        val patchedPath = testScope(basePath)
-            .applyPathHints(PathOverride(mapOf("icons/settings.svg" to "icons/search.svg")))
+        val patchedPath =
+            testScope(basePath)
+                .applyPathHints(PathOverride(mapOf("icons/settings.svg" to "icons/search.svg")))
         assertEquals(basePath, patchedPath)
     }
 
@@ -189,8 +195,9 @@ class PainterHintTest : BasicJewelUiTest() {
     fun `stateful painter hint disabled state takes higher priority over other states`() {
         val basePath = "icons/checkbox.svg"
         val state = CheckboxState.of(toggleableState = ToggleableState.Off)
-        val patchedPath = testScope(basePath)
-            .applyPathHints(Stateful(state.copy(enabled = false, pressed = true, hovered = true, focused = true)))
+        val patchedPath =
+            testScope(basePath)
+                .applyPathHints(Stateful(state.copy(enabled = false, pressed = true, hovered = true, focused = true)))
         assertEquals("icons/checkboxDisabled.svg", patchedPath)
     }
 
@@ -206,8 +213,9 @@ class PainterHintTest : BasicJewelUiTest() {
     fun `stateful painter hint focused state takes higher priority over pressed and hovered states`() {
         val basePath = "icons/checkbox.svg"
         val state = CheckboxState.of(toggleableState = ToggleableState.Off)
-        val patchedPath = testScope(basePath)
-            .applyPathHints(Stateful(state.copy(pressed = true, hovered = true, focused = true)))
+        val patchedPath =
+            testScope(basePath)
+                .applyPathHints(Stateful(state.copy(pressed = true, hovered = true, focused = true)))
         assertEquals("icons/checkboxFocused.svg", patchedPath)
     }
 
@@ -223,8 +231,9 @@ class PainterHintTest : BasicJewelUiTest() {
     fun `stateful painter hint pressed state takes higher priority over hovered state`() {
         val basePath = "icons/checkbox.svg"
         val state = CheckboxState.of(toggleableState = ToggleableState.Off)
-        val patchedPath = testScope(basePath)
-            .applyPathHints(Stateful(state.copy(pressed = true, hovered = true)))
+        val patchedPath =
+            testScope(basePath)
+                .applyPathHints(Stateful(state.copy(pressed = true, hovered = true)))
         assertEquals("icons/checkboxPressed.svg", patchedPath)
     }
 
@@ -261,18 +270,19 @@ class PainterHintTest : BasicJewelUiTest() {
             |</svg>
             """.trimMargin()
 
-        val patchedSvg = testScope("fake_icon.svg")
-            .applyPaletteHints(
-                baseSvg,
-                ColorBasedPaletteReplacement(
-                    mapOf(
-                        Color(0x80000000) to Color(0xFF123456),
-                        Color.Black to Color.White,
-                        Color.Green to Color.Red,
+        val patchedSvg =
+            testScope("fake_icon.svg")
+                .applyPaletteHints(
+                    baseSvg,
+                    ColorBasedPaletteReplacement(
+                        mapOf(
+                            Color(0x80000000) to Color(0xFF123456),
+                            Color.Black to Color.White,
+                            Color.Green to Color.Red,
+                        ),
                     ),
-                ),
-            )
-            .replace("\r\n", "\n")
+                )
+                .replace("\r\n", "\n")
 
         assertEquals(
             """

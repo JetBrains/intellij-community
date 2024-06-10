@@ -18,7 +18,6 @@ public class ScrollbarStyle(
     public val metrics: ScrollbarMetrics,
     public val hoverDuration: Duration,
 ) {
-
     public companion object
 }
 
@@ -28,7 +27,6 @@ public class ScrollbarColors(
     public val thumbBackground: Color,
     public val thumbBackgroundHovered: Color,
 ) {
-
     public companion object
 }
 
@@ -40,7 +38,6 @@ public class ScrollbarMetrics(
     public val minThumbLength: Dp,
     public val trackPadding: PaddingValues,
 ) {
-
     public companion object
 }
 

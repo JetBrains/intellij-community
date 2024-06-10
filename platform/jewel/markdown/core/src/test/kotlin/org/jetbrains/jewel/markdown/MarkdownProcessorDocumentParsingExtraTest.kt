@@ -4,7 +4,6 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.junit.Test
 
 class MarkdownProcessorDocumentParsingExtraTest {
-
     private val processor = MarkdownProcessor()
 
     @Test

@@ -127,7 +127,6 @@ private fun TitleBarScope.ControlButton(
 }
 
 private object Inactive : PainterSuffixHint() {
-
     override fun PainterProviderScope.suffix(): String = "Inactive"
 
     override fun toString(): String = "Inactive"

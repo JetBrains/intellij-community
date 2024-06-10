@@ -8,7 +8,6 @@ public class MenuManager(
     public val onDismissRequest: (InputMode) -> Boolean,
     private val parentMenuManager: MenuManager? = null,
 ) {
-
     private var isHovered: Boolean = false
 
     /**
@@ -29,7 +28,10 @@ public class MenuManager(
      * @param force true to force close all menus ignore parent hover state,
      *     false otherwise.
      */
-    public fun closeAll(mode: InputMode, force: Boolean) {
+    public fun closeAll(
+        mode: InputMode,
+        force: Boolean,
+    ) {
         // We ignore the pointer event if the menu is hovered in unforced mode.
         if (!force && mode == InputMode.Touch && isHovered) return
 

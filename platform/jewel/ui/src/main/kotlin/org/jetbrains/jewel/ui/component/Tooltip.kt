@@ -43,23 +43,24 @@ public fun Tooltip(
                 LocalContentColor provides style.colors.content,
             ) {
                 Box(
-                    modifier = Modifier
-                        .shadow(
-                            elevation = style.metrics.shadowSize,
-                            shape = RoundedCornerShape(style.metrics.cornerSize),
-                            ambientColor = style.colors.shadow,
-                            spotColor = Color.Transparent,
-                        )
-                        .background(
-                            color = style.colors.background,
-                            shape = RoundedCornerShape(style.metrics.cornerSize),
-                        )
-                        .border(
-                            width = style.metrics.borderWidth,
-                            color = style.colors.border,
-                            shape = RoundedCornerShape(style.metrics.cornerSize),
-                        )
-                        .padding(style.metrics.contentPadding),
+                    modifier =
+                        Modifier
+                            .shadow(
+                                elevation = style.metrics.shadowSize,
+                                shape = RoundedCornerShape(style.metrics.cornerSize),
+                                ambientColor = style.colors.shadow,
+                                spotColor = Color.Transparent,
+                            )
+                            .background(
+                                color = style.colors.background,
+                                shape = RoundedCornerShape(style.metrics.cornerSize),
+                            )
+                            .border(
+                                width = style.metrics.borderWidth,
+                                color = style.colors.border,
+                                shape = RoundedCornerShape(style.metrics.cornerSize),
+                            )
+                            .padding(style.metrics.contentPadding),
                 ) {
                     OverrideDarkMode(style.colors.background.isDark()) {
                         tooltip()
@@ -115,19 +116,20 @@ public fun rememberPopupPositionProviderAtFixedPosition(
     offset: DpOffset = DpOffset.Zero,
     alignment: Alignment = Alignment.BottomEnd,
     windowMargin: Dp = 4.dp,
-): PopupPositionProvider = with(LocalDensity.current) {
-    val offsetPx = Offset(offset.x.toPx(), offset.y.toPx())
-    val windowMarginPx = windowMargin.roundToPx()
+): PopupPositionProvider =
+    with(LocalDensity.current) {
+        val offsetPx = Offset(offset.x.toPx(), offset.y.toPx())
+        val windowMarginPx = windowMargin.roundToPx()
 
-    val initialPosition = remember { positionPx }
+        val initialPosition = remember { positionPx }
 
-    remember(offsetPx, alignment, windowMarginPx) {
-        PopupPositionProviderAtPosition(
-            positionPx = initialPosition,
-            isRelativeToAnchor = true,
-            offsetPx = offsetPx,
-            alignment = alignment,
-            windowMarginPx = windowMarginPx,
-        )
+        remember(offsetPx, alignment, windowMarginPx) {
+            PopupPositionProviderAtPosition(
+                positionPx = initialPosition,
+                isRelativeToAnchor = true,
+                offsetPx = offsetPx,
+                alignment = alignment,
+                windowMarginPx = windowMarginPx,
+            )
+        }
     }
-}

@@ -25,23 +25,24 @@ public fun SliderColors.Companion.light(
     thumbBorderDisabled: Color = retrieveColorOrUnspecified("ColorPalette.Grey11").takeOrElse { Color(0xFFDFE1E5) },
     thumbBorderPressed: Color = retrieveColorOrUnspecified("ColorPalette.Grey7").takeOrElse { Color(0xFF818594) },
     thumbBorderHovered: Color = retrieveColorOrUnspecified("ColorPalette.Grey9").takeOrElse { Color(0xFFC9CCD6) },
-): SliderColors = SliderColors(
-    track,
-    trackFilled,
-    trackDisabled,
-    trackFilledDisabled,
-    stepMarker,
-    thumbFill,
-    thumbFillDisabled,
-    thumbFillFocused,
-    thumbFillPressed,
-    thumbFillHovered,
-    thumbBorder,
-    thumbBorderFocused,
-    thumbBorderDisabled,
-    thumbBorderPressed,
-    thumbBorderHovered,
-)
+): SliderColors =
+    SliderColors(
+        track,
+        trackFilled,
+        trackDisabled,
+        trackFilledDisabled,
+        stepMarker,
+        thumbFill,
+        thumbFillDisabled,
+        thumbFillFocused,
+        thumbFillPressed,
+        thumbFillHovered,
+        thumbBorder,
+        thumbBorderFocused,
+        thumbBorderDisabled,
+        thumbBorderPressed,
+        thumbBorderHovered,
+    )
 
 public fun SliderColors.Companion.dark(
     track: Color = retrieveColorOrUnspecified("ColorPalette.Grey4").takeOrElse { Color(0xFF43454A) },
@@ -59,23 +60,24 @@ public fun SliderColors.Companion.dark(
     thumbBorderDisabled: Color = retrieveColorOrUnspecified("ColorPalette.Grey5").takeOrElse { Color(0xFF4E5157) },
     thumbBorderPressed: Color = retrieveColorOrUnspecified("ColorPalette.Grey8").takeOrElse { Color(0xFF868A91) },
     thumbBorderHovered: Color = retrieveColorOrUnspecified("ColorPalette.Grey9").takeOrElse { Color(0xFF9DA0A8) },
-): SliderColors = SliderColors(
-    track,
-    trackFilled,
-    trackDisabled,
-    trackFilledDisabled,
-    stepMarker,
-    thumbFill,
-    thumbFillDisabled,
-    thumbFillFocused,
-    thumbFillPressed,
-    thumbFillHovered,
-    thumbBorder,
-    thumbBorderFocused,
-    thumbBorderDisabled,
-    thumbBorderPressed,
-    thumbBorderHovered,
-)
+): SliderColors =
+    SliderColors(
+        track,
+        trackFilled,
+        trackDisabled,
+        trackFilledDisabled,
+        stepMarker,
+        thumbFill,
+        thumbFillDisabled,
+        thumbFillFocused,
+        thumbFillPressed,
+        thumbFillHovered,
+        thumbBorder,
+        thumbBorderFocused,
+        thumbBorderDisabled,
+        thumbBorderPressed,
+        thumbBorderHovered,
+    )
 
 public fun SliderMetrics.Companion.defaults(
     trackHeight: Dp = 4.dp,
@@ -84,5 +86,4 @@ public fun SliderMetrics.Companion.defaults(
     stepLineHeight: Dp = 8.dp,
     stepLineWidth: Dp = 1.dp,
     trackToStepSpacing: Dp = thumbSize.height / 2 + 4.dp,
-): SliderMetrics =
-    SliderMetrics(trackHeight, thumbSize, thumbBorderWidth, stepLineHeight, stepLineWidth, trackToStepSpacing)
+): SliderMetrics = SliderMetrics(trackHeight, thumbSize, thumbBorderWidth, stepLineHeight, stepLineWidth, trackToStepSpacing)

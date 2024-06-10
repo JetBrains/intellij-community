@@ -33,7 +33,6 @@ import kotlin.time.Duration.Companion.seconds
 private class ProjectScopeProviderService(val scope: CoroutineScope)
 
 internal class JewelDemoAction : DumbAwareAction() {
-
     override fun actionPerformed(event: AnActionEvent) {
         val project = checkNotNull(event.project) { "Project not available" }
         val scope = project.service<ProjectScopeProviderService>().scope
@@ -49,7 +48,6 @@ internal class JewelDemoAction : DumbAwareAction() {
 }
 
 private class FirstPage(private val project: Project) : WizardPage {
-
     override val canGoBackwards: StateFlow<Boolean> = MutableStateFlow(true)
 
     private val checkboxChecked = MutableStateFlow(false)
@@ -76,7 +74,6 @@ private class FirstPage(private val project: Project) : WizardPage {
 }
 
 private class SecondPage : WizardPage {
-
     override val canGoBackwards: StateFlow<Boolean> = MutableStateFlow(true)
     override val canGoForward: StateFlow<Boolean> = MutableStateFlow(true)
 

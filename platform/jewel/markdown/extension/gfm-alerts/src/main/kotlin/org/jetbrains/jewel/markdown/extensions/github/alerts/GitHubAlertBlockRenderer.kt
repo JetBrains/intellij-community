@@ -36,9 +36,7 @@ public class GitHubAlertBlockRenderer(
     private val styling: AlertStyling,
     private val rootStyling: MarkdownStyling,
 ) : MarkdownBlockRendererExtension {
-
-    override fun canRender(block: CustomBlock): Boolean =
-        block is Alert
+    override fun canRender(block: CustomBlock): Boolean = block is Alert
 
     @Composable
     override fun render(

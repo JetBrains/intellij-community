@@ -68,7 +68,6 @@ internal data class AnchorVerticalMenuPositionProvider(
     val alignment: Alignment.Horizontal,
     val density: Density,
 ) : PopupPositionProvider {
-
     override fun calculatePosition(
         anchorBounds: IntRect,
         windowSize: IntSize,
@@ -80,23 +79,26 @@ internal data class AnchorVerticalMenuPositionProvider(
         val leftMargin = with(density) { contentMargin.calculateLeftPadding(layoutDirection).roundToPx() }
         val rightMargin = with(density) { contentMargin.calculateRightPadding(layoutDirection).roundToPx() }
 
-        val windowSpaceBounds = IntRect(
-            left = leftMargin,
-            top = topMargin,
-            right = windowSize.width - rightMargin,
-            bottom = windowSize.height - bottomMargin,
-        )
+        val windowSpaceBounds =
+            IntRect(
+                left = leftMargin,
+                top = topMargin,
+                right = windowSize.width - rightMargin,
+                bottom = windowSize.height - bottomMargin,
+            )
 
         // The content offset specified using the dropdown offset parameter.
-        val contentOffsetX = with(density) {
-            contentOffset.x.roundToPx() * if (layoutDirection == LayoutDirection.Ltr) 1 else -1
-        }
+        val contentOffsetX =
+            with(density) {
+                contentOffset.x.roundToPx() * if (layoutDirection == LayoutDirection.Ltr) 1 else -1
+            }
         val contentOffsetY = with(density) { contentOffset.y.roundToPx() }
 
         // Compute horizontal position.
-        val x = anchorBounds.left +
-            alignment.align(popupContentSize.width, anchorBounds.width, layoutDirection) +
-            contentOffsetX
+        val x =
+            anchorBounds.left +
+                alignment.align(popupContentSize.width, anchorBounds.width, layoutDirection) +
+                contentOffsetX
 
         // Compute vertical position.
         val aboveSpacing = anchorBounds.top - contentOffsetY - topMargin
@@ -127,7 +129,6 @@ internal data class AnchorHorizontalMenuPositionProvider(
     val alignment: Alignment.Vertical,
     val density: Density,
 ) : PopupPositionProvider {
-
     override fun calculatePosition(
         anchorBounds: IntRect,
         windowSize: IntSize,
@@ -139,23 +140,26 @@ internal data class AnchorHorizontalMenuPositionProvider(
         val leftMargin = with(density) { contentMargin.calculateLeftPadding(layoutDirection).roundToPx() }
         val rightMargin = with(density) { contentMargin.calculateRightPadding(layoutDirection).roundToPx() }
 
-        val windowSpaceBounds = IntRect(
-            left = leftMargin,
-            top = topMargin,
-            right = windowSize.width - rightMargin,
-            bottom = windowSize.height - bottomMargin,
-        )
+        val windowSpaceBounds =
+            IntRect(
+                left = leftMargin,
+                top = topMargin,
+                right = windowSize.width - rightMargin,
+                bottom = windowSize.height - bottomMargin,
+            )
 
         // The content offset specified using the dropdown offset parameter.
-        val contentOffsetX = with(density) {
-            contentOffset.x.roundToPx() * if (layoutDirection == LayoutDirection.Ltr) 1 else -1
-        }
+        val contentOffsetX =
+            with(density) {
+                contentOffset.x.roundToPx() * if (layoutDirection == LayoutDirection.Ltr) 1 else -1
+            }
         val contentOffsetY = with(density) { contentOffset.y.roundToPx() }
 
         // Compute horizontal position.
-        val y = anchorBounds.top +
-            alignment.align(popupContentSize.height, anchorBounds.height) +
-            contentOffsetY
+        val y =
+            anchorBounds.top +
+                alignment.align(popupContentSize.height, anchorBounds.height) +
+                contentOffsetY
 
         // Compute vertical position.
         val leftSpacing = anchorBounds.left - contentOffsetX - windowSpaceBounds.left

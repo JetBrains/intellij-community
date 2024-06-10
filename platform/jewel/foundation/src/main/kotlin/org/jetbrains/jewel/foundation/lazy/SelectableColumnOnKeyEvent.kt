@@ -5,7 +5,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 public interface SelectableColumnOnKeyEvent {
-
     public val keybindings: SelectableColumnKeybindings
 
     /**
@@ -34,9 +33,10 @@ public interface SelectableColumnOnKeyEvent {
         state: SelectableLazyListState,
     ) {
         val initialIndex = state.lastActiveItemIndex ?: return
-        val newSelection = HashSet<Any>(max(initialIndex, state.selectedKeys.size)).apply {
-            addAll(state.selectedKeys)
-        }
+        val newSelection =
+            HashSet<Any>(max(initialIndex, state.selectedKeys.size)).apply {
+                addAll(state.selectedKeys)
+            }
         var lastActiveItemIndex = initialIndex
         for (index in initialIndex - 1 downTo 0) {
             val key = keys[index]
@@ -75,9 +75,10 @@ public interface SelectableColumnOnKeyEvent {
         state: SelectableLazyListState,
     ) {
         val initialIndex = state.lastActiveItemIndex ?: return
-        val newSelection = HashSet<Any>(max(keys.size - initialIndex, state.selectedKeys.size)).apply {
-            addAll(state.selectedKeys)
-        }
+        val newSelection =
+            HashSet<Any>(max(keys.size - initialIndex, state.selectedKeys.size)).apply {
+                addAll(state.selectedKeys)
+            }
         var lastActiveItemIndex = initialIndex
         for (index in initialIndex + 1..keys.lastIndex) {
             val key = keys[index]
@@ -239,7 +240,10 @@ public interface SelectableColumnOnKeyEvent {
     /**
      * Select All.
      */
-    public fun onSelectAll(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+    public fun onSelectAll(
+        keys: List<SelectableLazyListKey>,
+        state: SelectableLazyListState,
+    ) {
         state.selectedKeys = keys.filterIsInstance<Selectable>().map { it.key }.toSet()
     }
 }
@@ -247,6 +251,5 @@ public interface SelectableColumnOnKeyEvent {
 public open class DefaultSelectableOnKeyEvent(
     override val keybindings: SelectableColumnKeybindings,
 ) : SelectableColumnOnKeyEvent {
-
     public companion object : DefaultSelectableOnKeyEvent(DefaultSelectableColumnKeybindings)
 }

@@ -10,9 +10,8 @@ import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import javax.swing.JComponent
 
-public fun JewelComposePanel(
-    content: @Composable () -> Unit,
-): JComponent =
+@Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
+public fun JewelComposePanel(content: @Composable () -> Unit): JComponent =
     ComposePanel().apply {
         setContent {
             SwingBridgeTheme {
@@ -24,6 +23,7 @@ public fun JewelComposePanel(
     }
 
 @ExperimentalJewelApi
-public val LocalComponent: ProvidableCompositionLocal<JComponent> = staticCompositionLocalOf {
-    error("CompositionLocal LocalComponent not provided")
-}
+public val LocalComponent: ProvidableCompositionLocal<JComponent> =
+    staticCompositionLocalOf {
+        error("CompositionLocal LocalComponent not provided")
+    }

@@ -20,7 +20,6 @@ public class RadioButtonStyle(
     public val metrics: RadioButtonMetrics,
     public val icons: RadioButtonIcons,
 ) {
-
     public companion object
 }
 
@@ -34,7 +33,6 @@ public class RadioButtonColors(
     public val contentSelectedHovered: Color,
     public val contentSelectedDisabled: Color,
 ) {
-
     @Composable
     public fun contentFor(state: RadioButtonState): State<Color> =
         rememberUpdatedState(
@@ -61,16 +59,16 @@ public class RadioButtonMetrics(
     public val outlineSelectedFocusedSize: DpSize,
     public val iconContentGap: Dp,
 ) {
-
     @Composable
-    public fun outlineSizeFor(state: RadioButtonState): State<DpSize> = rememberUpdatedState(
-        when {
-            state.isFocused && state.isSelected -> outlineSelectedFocusedSize
-            !state.isFocused && state.isSelected -> outlineSelectedSize
-            state.isFocused && !state.isSelected -> outlineFocusedSize
-            else -> outlineSize
-        },
-    )
+    public fun outlineSizeFor(state: RadioButtonState): State<DpSize> =
+        rememberUpdatedState(
+            when {
+                state.isFocused && state.isSelected -> outlineSelectedFocusedSize
+                !state.isFocused && state.isSelected -> outlineSelectedSize
+                state.isFocused && !state.isSelected -> outlineFocusedSize
+                else -> outlineSize
+            },
+        )
 
     public companion object
 }
@@ -78,7 +76,6 @@ public class RadioButtonMetrics(
 @Immutable
 @GenerateDataFunctions
 public class RadioButtonIcons(public val radioButton: PainterProvider) {
-
     public companion object
 }
 

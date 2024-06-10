@@ -21,7 +21,6 @@ public class TooltipStyle(
     public val colors: TooltipColors,
     public val metrics: TooltipMetrics,
 ) {
-
     public companion object
 }
 
@@ -33,7 +32,6 @@ public class TooltipColors(
     public val border: Color,
     public val shadow: Color,
 ) {
-
     public companion object
 }
 
@@ -47,9 +45,7 @@ public class TooltipMetrics(
     public val shadowSize: Dp,
     public val placement: TooltipPlacement,
 ) {
-
     public companion object {
-
         public fun defaults(
             contentPadding: PaddingValues = PaddingValues(vertical = 9.dp, horizontal = 12.dp),
             showDelay: Duration = 1200.milliseconds,

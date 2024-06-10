@@ -120,17 +120,18 @@ private fun ButtonImpl(
     val borderColor by colors.borderFor(buttonState)
 
     Box(
-        modifier = modifier
-            .clickable(
-                onClick = onClick,
-                enabled = enabled,
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = null,
-            )
-            .background(colors.backgroundFor(buttonState).value, shape)
-            .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
-            .focusOutline(buttonState, shape),
+        modifier =
+            modifier
+                .clickable(
+                    onClick = onClick,
+                    enabled = enabled,
+                    role = Role.Button,
+                    interactionSource = interactionSource,
+                    indication = null,
+                )
+                .background(colors.backgroundFor(buttonState).value, shape)
+                .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
+                .focusOutline(buttonState, shape),
         propagateMinConstraints = true,
     ) {
         val contentColor by colors.contentFor(buttonState)
@@ -153,7 +154,6 @@ private fun ButtonImpl(
 @Immutable
 @JvmInline
 public value class ButtonState(public val state: ULong) : FocusableComponentState {
-
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -189,7 +189,6 @@ public value class ButtonState(public val state: ULong) : FocusableComponentStat
             "isPressed=$isPressed, isActive=$isActive)"
 
     public companion object {
-
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

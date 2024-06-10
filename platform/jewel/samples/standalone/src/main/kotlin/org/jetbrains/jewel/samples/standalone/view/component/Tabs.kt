@@ -51,39 +51,42 @@ private fun DefaultTabShowcase() {
     var tabIds by remember { mutableStateOf((1..12).toList()) }
     val maxId = remember(tabIds) { tabIds.maxOrNull() ?: 0 }
 
-    val tabs = remember(tabIds, selectedTabIndex) {
-        tabIds.mapIndexed { index, id ->
-            TabData.Default(
-                selected = index == selectedTabIndex,
-                content = { tabState ->
-                    val iconProvider =
-                        rememberResourcePainterProvider("icons/search.svg", StandaloneSampleIcons::class.java)
-                    val icon by iconProvider.getPainter(Stateful(tabState))
-                    SimpleTabContent(
-                        label = "Default Tab $id",
-                        state = tabState,
-                        icon = icon,
-                    )
-                },
-                onClose = {
-                    tabIds = tabIds.toMutableList().apply { removeAt(index) }
-                    if (selectedTabIndex >= index) {
-                        val maxPossibleIndex = max(0, tabIds.lastIndex)
-                        selectedTabIndex = (selectedTabIndex - 1)
-                            .coerceIn(0..maxPossibleIndex)
-                    }
-                },
-                onClick = { selectedTabIndex = index },
-            )
+    val tabs =
+        remember(tabIds, selectedTabIndex) {
+            tabIds.mapIndexed { index, id ->
+                TabData.Default(
+                    selected = index == selectedTabIndex,
+                    content = { tabState ->
+                        val iconProvider =
+                            rememberResourcePainterProvider("icons/search.svg", StandaloneSampleIcons::class.java)
+                        val icon by iconProvider.getPainter(Stateful(tabState))
+                        SimpleTabContent(
+                            label = "Default Tab $id",
+                            state = tabState,
+                            icon = icon,
+                        )
+                    },
+                    onClose = {
+                        tabIds = tabIds.toMutableList().apply { removeAt(index) }
+                        if (selectedTabIndex >= index) {
+                            val maxPossibleIndex = max(0, tabIds.lastIndex)
+                            selectedTabIndex =
+                                (selectedTabIndex - 1)
+                                    .coerceIn(0..maxPossibleIndex)
+                        }
+                    },
+                    onClick = { selectedTabIndex = index },
+                )
+            }
         }
-    }
 
     TabStripWithAddButton(tabs) {
         val insertionIndex = (selectedTabIndex + 1).coerceIn(0..tabIds.size)
         val nextTabId = maxId + 1
 
-        tabIds = tabIds.toMutableList()
-            .apply { add(insertionIndex, nextTabId) }
+        tabIds =
+            tabIds.toMutableList()
+                .apply { add(insertionIndex, nextTabId) }
         selectedTabIndex = insertionIndex
     }
 }
@@ -95,56 +98,60 @@ private fun EditorTabShowcase() {
     var tabIds by remember { mutableStateOf((1..12).toList()) }
     val maxId = remember(tabIds) { tabIds.maxOrNull() ?: 0 }
 
-    val tabs = remember(tabIds, selectedTabIndex) {
-        tabIds.mapIndexed { index, id ->
-            TabData.Editor(
-                selected = index == selectedTabIndex,
-                content = { tabState ->
-                    SimpleTabContent(
-                        state = tabState,
-                        modifier = Modifier,
-                        icon = {
-                            Icon(
-                                resource = "icons/search.svg",
-                                contentDescription = null,
-                                iconClass = StandaloneSampleIcons::class.java,
-                                modifier = Modifier.size(16.dp).tabContentAlpha(state = tabState),
-                                tint = Color.Magenta,
-                            )
-                        },
-                        label = { Text("Editor tab $id") },
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .thenIf(tabState.isHovered) {
-                                drawWithCache {
-                                    onDrawBehind {
-                                        drawCircle(color = Color.Magenta.copy(alpha = .4f), radius = 6.dp.toPx())
-                                    }
-                                }
+    val tabs =
+        remember(tabIds, selectedTabIndex) {
+            tabIds.mapIndexed { index, id ->
+                TabData.Editor(
+                    selected = index == selectedTabIndex,
+                    content = { tabState ->
+                        SimpleTabContent(
+                            state = tabState,
+                            modifier = Modifier,
+                            icon = {
+                                Icon(
+                                    resource = "icons/search.svg",
+                                    contentDescription = null,
+                                    iconClass = StandaloneSampleIcons::class.java,
+                                    modifier = Modifier.size(16.dp).tabContentAlpha(state = tabState),
+                                    tint = Color.Magenta,
+                                )
                             },
-                    )
-                },
-                onClose = {
-                    tabIds = tabIds.toMutableList().apply { removeAt(index) }
-                    if (selectedTabIndex >= index) {
-                        val maxPossibleIndex = max(0, tabIds.lastIndex)
-                        selectedTabIndex = (selectedTabIndex - 1)
-                            .coerceIn(0..maxPossibleIndex)
-                    }
-                },
-                onClick = { selectedTabIndex = index },
-            )
+                            label = { Text("Editor tab $id") },
+                        )
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(12.dp)
+                                    .thenIf(tabState.isHovered) {
+                                        drawWithCache {
+                                            onDrawBehind {
+                                                drawCircle(color = Color.Magenta.copy(alpha = .4f), radius = 6.dp.toPx())
+                                            }
+                                        }
+                                    },
+                        )
+                    },
+                    onClose = {
+                        tabIds = tabIds.toMutableList().apply { removeAt(index) }
+                        if (selectedTabIndex >= index) {
+                            val maxPossibleIndex = max(0, tabIds.lastIndex)
+                            selectedTabIndex =
+                                (selectedTabIndex - 1)
+                                    .coerceIn(0..maxPossibleIndex)
+                        }
+                    },
+                    onClick = { selectedTabIndex = index },
+                )
+            }
         }
-    }
 
     TabStripWithAddButton(tabs) {
         val insertionIndex = (selectedTabIndex + 1).coerceIn(0..tabIds.size)
         val nextTabId = maxId + 1
 
-        tabIds = tabIds.toMutableList()
-            .apply { add(insertionIndex, nextTabId) }
+        tabIds =
+            tabIds.toMutableList()
+                .apply { add(insertionIndex, nextTabId) }
         selectedTabIndex = insertionIndex
     }
 }

@@ -19,7 +19,6 @@ import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.skiko.hostOs
 
 public interface KeyActions {
-
     public val keybindings: SelectableColumnKeybindings
     public val actions: SelectableColumnOnKeyEvent
 
@@ -32,7 +31,6 @@ public interface KeyActions {
 }
 
 public interface PointerEventActions {
-
     public fun handlePointerEventPress(
         pointerEvent: PointerEvent,
         keybindings: SelectableColumnKeybindings,
@@ -58,7 +56,6 @@ public interface PointerEventActions {
 }
 
 public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
-
     override fun handlePointerEventPress(
         pointerEvent: PointerEvent,
         keybindings: SelectableColumnKeybindings,
@@ -128,17 +125,18 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
                 } else {
                     lastFocussed downTo currentIndex
                 }
-            val keys = buildList {
-                for (i in indexInterval) {
-                    val currentKey = allKeys[i]
-                    if (
-                        currentKey is SelectableLazyListKey.Selectable &&
-                        !state.selectedKeys.contains(allKeys[i].key)
-                    ) {
-                        add(currentKey.key)
+            val keys =
+                buildList {
+                    for (i in indexInterval) {
+                        val currentKey = allKeys[i]
+                        if (
+                            currentKey is SelectableLazyListKey.Selectable &&
+                            !state.selectedKeys.contains(allKeys[i].key)
+                        ) {
+                            add(currentKey.key)
+                        }
                     }
                 }
-            }
             state.selectedKeys += keys
             state.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
         }
@@ -148,7 +146,6 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
 public class DefaultTreeViewPointerEventAction(
     private val treeState: TreeState,
 ) : DefaultSelectableLazyColumnEventAction() {
-
     override fun handlePointerEventPress(
         pointerEvent: PointerEvent,
         keybindings: SelectableColumnKeybindings,
@@ -210,10 +207,11 @@ public class DefaultTreeViewPointerEventAction(
 }
 
 public fun DefaultTreeViewKeyActions(treeState: TreeState): DefaultTreeViewKeyActions {
-    val keybindings = when {
-        hostOs.isMacOS -> DefaultMacOsTreeColumnKeybindings
-        else -> DefaultTreeViewKeybindings
-    }
+    val keybindings =
+        when {
+            hostOs.isMacOS -> DefaultMacOsTreeColumnKeybindings
+            else -> DefaultTreeViewKeybindings
+        }
     return DefaultTreeViewKeyActions(keybindings, DefaultTreeViewOnKeyEvent(keybindings, treeState))
 }
 
@@ -221,37 +219,36 @@ public class DefaultTreeViewKeyActions(
     override val keybindings: TreeViewKeybindings,
     override val actions: DefaultTreeViewOnKeyEvent,
 ) : DefaultSelectableLazyColumnKeyActions(keybindings, actions) {
-
     override fun handleOnKeyEvent(
         event: KeyEvent,
         keys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
         selectionMode: SelectionMode,
-    ): KeyEvent.() -> Boolean = lambda@{
-        if (type == KeyEventType.KeyUp) return@lambda false
-        val keyEvent = this
-        with(keybindings) {
-            with(actions) {
-                if (selectionMode == SelectionMode.None) return@lambda false
-                when {
-                    isSelectParent -> onSelectParent(keys, state)
-                    isSelectChild -> onSelectChild(keys, state)
-                    super.handleOnKeyEvent(event, keys, state, selectionMode).invoke(keyEvent) ->
-                        return@lambda true
+    ): KeyEvent.() -> Boolean =
+        lambda@{
+            if (type == KeyEventType.KeyUp) return@lambda false
+            val keyEvent = this
+            with(keybindings) {
+                with(actions) {
+                    if (selectionMode == SelectionMode.None) return@lambda false
+                    when {
+                        isSelectParent -> onSelectParent(keys, state)
+                        isSelectChild -> onSelectChild(keys, state)
+                        super.handleOnKeyEvent(event, keys, state, selectionMode).invoke(keyEvent) ->
+                            return@lambda true
 
-                    else -> return@lambda false
+                        else -> return@lambda false
+                    }
                 }
             }
+            return@lambda true
         }
-        return@lambda true
-    }
 }
 
 public open class DefaultSelectableLazyColumnKeyActions(
     override val keybindings: SelectableColumnKeybindings,
     override val actions: SelectableColumnOnKeyEvent = DefaultSelectableOnKeyEvent(keybindings),
 ) : KeyActions {
-
     public companion object : DefaultSelectableLazyColumnKeyActions(
         when {
             hostOs.isMacOS -> DefaultMacOsSelectableColumnKeybindings
@@ -264,10 +261,11 @@ public open class DefaultSelectableLazyColumnKeyActions(
         keys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
         selectionMode: SelectionMode,
-    ): KeyEvent.() -> Boolean = lambda@{
-        if (type == KeyEventType.KeyUp || selectionMode == SelectionMode.None) return@lambda false
-        with(keybindings) { with(actions) { execute(keys, state, selectionMode) } }
-    }
+    ): KeyEvent.() -> Boolean =
+        lambda@{
+            if (type == KeyEventType.KeyUp || selectionMode == SelectionMode.None) return@lambda false
+            with(keybindings) { with(actions) { execute(keys, state, selectionMode) } }
+        }
 
     context(SelectableColumnKeybindings, SelectableColumnOnKeyEvent)
     private fun KeyEvent.execute(

@@ -11,7 +11,6 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
  * [MarkdownBlock.CustomBlock]s.
  */
 public interface MarkdownBlockRendererExtension {
-
     /** Check whether the provided [block] can be rendered by this extension. */
     public fun canRender(block: CustomBlock): Boolean
 

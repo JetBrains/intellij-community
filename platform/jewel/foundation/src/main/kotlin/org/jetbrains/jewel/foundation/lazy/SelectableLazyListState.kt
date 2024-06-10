@@ -20,7 +20,6 @@ public val SelectableLazyListState.visibleItemsRange: IntRange
     get() = firstVisibleItemIndex..firstVisibleItemIndex + layoutInfo.visibleItemsInfo.size
 
 public interface SelectableScope {
-
     public var selectedKeys: Set<Any>
 }
 
@@ -33,7 +32,6 @@ public interface SelectableScope {
 public class SelectableLazyListState(
     public val lazyListState: LazyListState,
 ) : ScrollableState by lazyListState, SelectableScope {
-
     internal var lastKeyEventUsedMouse: Boolean = false
 
     override var selectedKeys: Set<Any> by mutableStateOf(emptySet())
@@ -53,17 +51,19 @@ public class SelectableLazyListState(
         val visibleRange = visibleItemsRange.drop(2).dropLast(4)
         if (itemIndex !in visibleRange && visibleRange.isNotEmpty()) {
             when {
-                itemIndex < visibleRange.first() -> lazyListState.scrollToItem(
-                    max(0, itemIndex - 2),
-                    animateScroll,
-                    scrollOffset,
-                )
+                itemIndex < visibleRange.first() ->
+                    lazyListState.scrollToItem(
+                        max(0, itemIndex - 2),
+                        animateScroll,
+                        scrollOffset,
+                    )
 
-                itemIndex > visibleRange.last() -> lazyListState.scrollToItem(
-                    index = max(itemIndex - (visibleRange.size + 2), 0),
-                    animate = animateScroll,
-                    scrollOffset = 0,
-                )
+                itemIndex > visibleRange.last() ->
+                    lazyListState.scrollToItem(
+                        index = max(itemIndex - (visibleRange.size + 2), 0),
+                        animate = animateScroll,
+                        scrollOffset = 0,
+                    )
             }
         }
         lastActiveItemIndex = itemIndex
@@ -111,7 +111,6 @@ private suspend fun LazyListState.scrollToItem(
  * Represents a selectable key used in a selectable lazy list.
  */
 public sealed class SelectableLazyListKey {
-
     /**
      * The key associated with the item.
      */
@@ -148,7 +147,6 @@ public sealed class SelectableLazyListKey {
 }
 
 public interface SelectableLazyItemScope : LazyItemScope {
-
     public val isSelected: Boolean
     public val isActive: Boolean
 }
@@ -157,7 +155,6 @@ public interface SelectableLazyItemScope : LazyItemScope {
  * Specifies the selection mode for a selectable lazy list.
  */
 public enum class SelectionMode {
-
     /**
      * No selection is allowed.
      */
@@ -186,8 +183,9 @@ public enum class SelectionMode {
 public fun rememberSelectableLazyListState(
     firstVisibleItemIndex: Int = 0,
     firstVisibleItemScrollOffset: Int = 0,
-): SelectableLazyListState = remember {
-    SelectableLazyListState(
-        LazyListState(firstVisibleItemIndex, firstVisibleItemScrollOffset),
-    )
-}
+): SelectableLazyListState =
+    remember {
+        SelectableLazyListState(
+            LazyListState(firstVisibleItemIndex, firstVisibleItemScrollOffset),
+        )
+    }

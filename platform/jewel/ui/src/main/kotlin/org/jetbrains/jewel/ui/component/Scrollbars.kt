@@ -31,14 +31,15 @@ public fun VerticalScrollbar(
     val shape by remember { mutableStateOf(RoundedCornerShape(style.metrics.thumbCornerSize)) }
     val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.inWholeMilliseconds) }
 
-    val composeScrollbarStyle = ComposeScrollbarStyle(
-        minimalHeight = style.metrics.minThumbLength,
-        thickness = style.metrics.thumbThickness,
-        shape = shape,
-        hoverDurationMillis = hoverDurationMillis.toInt(),
-        unhoverColor = style.colors.thumbBackground,
-        hoverColor = style.colors.thumbBackgroundHovered,
-    )
+    val composeScrollbarStyle =
+        ComposeScrollbarStyle(
+            minimalHeight = style.metrics.minThumbLength,
+            thickness = style.metrics.thumbThickness,
+            shape = shape,
+            hoverDurationMillis = hoverDurationMillis.toInt(),
+            unhoverColor = style.colors.thumbBackground,
+            hoverColor = style.colors.thumbBackgroundHovered,
+        )
 
     CompositionLocalProvider(LocalScrollbarStyle provides composeScrollbarStyle) {
         VerticalScrollbar(
@@ -64,14 +65,15 @@ public fun HorizontalScrollbar(
         mutableStateOf(style.hoverDuration.toInt(DurationUnit.MILLISECONDS))
     }
 
-    val composeScrollbarStyle = ComposeScrollbarStyle(
-        minimalHeight = style.metrics.minThumbLength,
-        thickness = style.metrics.thumbThickness,
-        shape = shape,
-        hoverDurationMillis = hoverDurationMillis,
-        unhoverColor = style.colors.thumbBackground,
-        hoverColor = style.colors.thumbBackgroundHovered,
-    )
+    val composeScrollbarStyle =
+        ComposeScrollbarStyle(
+            minimalHeight = style.metrics.minThumbLength,
+            thickness = style.metrics.thumbThickness,
+            shape = shape,
+            hoverDurationMillis = hoverDurationMillis,
+            unhoverColor = style.colors.thumbBackground,
+            hoverColor = style.colors.thumbBackgroundHovered,
+        )
     CompositionLocalProvider(LocalScrollbarStyle provides composeScrollbarStyle) {
         HorizontalScrollbar(
             adapter = adapter,
@@ -96,14 +98,15 @@ public fun TabStripHorizontalScrollbar(
         mutableStateOf(style.hoverDuration.inWholeMilliseconds.toInt())
     }
 
-    val composeScrollbarStyle = ComposeScrollbarStyle(
-        minimalHeight = style.metrics.minThumbLength,
-        thickness = 3.dp,
-        shape = shape,
-        hoverDurationMillis = hoverDurationMillis,
-        unhoverColor = style.colors.thumbBackground,
-        hoverColor = style.colors.thumbBackgroundHovered,
-    )
+    val composeScrollbarStyle =
+        ComposeScrollbarStyle(
+            minimalHeight = style.metrics.minThumbLength,
+            thickness = 3.dp,
+            shape = shape,
+            hoverDurationMillis = hoverDurationMillis,
+            unhoverColor = style.colors.thumbBackground,
+            hoverColor = style.colors.thumbBackgroundHovered,
+        )
     CompositionLocalProvider(LocalScrollbarStyle provides composeScrollbarStyle) {
         HorizontalScrollbar(
             adapter = adapter,

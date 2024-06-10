@@ -242,6 +242,7 @@ public final class org/jetbrains/jewel/window/utils/DesktopPlatform : java/lang/
 	public static final field MacOS Lorg/jetbrains/jewel/window/utils/DesktopPlatform;
 	public static final field Unknown Lorg/jetbrains/jewel/window/utils/DesktopPlatform;
 	public static final field Windows Lorg/jetbrains/jewel/window/utils/DesktopPlatform;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/window/utils/DesktopPlatform;
 	public static fun values ()[Lorg/jetbrains/jewel/window/utils/DesktopPlatform;
 }

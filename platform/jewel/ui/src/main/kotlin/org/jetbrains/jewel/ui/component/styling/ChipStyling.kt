@@ -22,7 +22,6 @@ public class ChipStyle(
     public val colors: ChipColors,
     public val metrics: ChipMetrics,
 ) {
-
     public companion object
 }
 
@@ -60,7 +59,6 @@ public class ChipColors(
     public val borderSelectedFocused: Color,
     public val borderSelectedHovered: Color,
 ) {
-
     @Composable
     public fun backgroundFor(state: ChipState): State<Brush> =
         rememberUpdatedState(
@@ -138,7 +136,6 @@ public class ChipMetrics(
     public val borderWidth: Dp,
     public val borderWidthSelected: Dp,
 ) {
-
     public companion object
 }
 

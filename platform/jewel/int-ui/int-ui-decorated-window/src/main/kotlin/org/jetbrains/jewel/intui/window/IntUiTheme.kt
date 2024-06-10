@@ -16,10 +16,12 @@ public fun ComponentStyling.decoratedWindow(
     provide {
         val isDark = JewelTheme.isDark
 
-        val currentWindowStyle = windowStyle
-            ?: if (isDark) DecoratedWindowStyle.dark() else DecoratedWindowStyle.light()
-        val currentTitleBarStyle = titleBarStyle
-            ?: if (isDark) TitleBarStyle.dark() else TitleBarStyle.light()
+        val currentWindowStyle =
+            windowStyle
+                ?: if (isDark) DecoratedWindowStyle.dark() else DecoratedWindowStyle.light()
+        val currentTitleBarStyle =
+            titleBarStyle
+                ?: if (isDark) TitleBarStyle.dark() else TitleBarStyle.light()
 
         arrayOf(
             LocalDecoratedWindowStyle provides currentWindowStyle,

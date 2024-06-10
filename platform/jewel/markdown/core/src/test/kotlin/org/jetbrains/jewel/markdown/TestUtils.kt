@@ -35,27 +35,28 @@ fun List<MarkdownBlock>.assertEquals(vararg expected: MarkdownBlock) {
 fun List<MarkdownBlock>.findDifferences(
     expected: List<MarkdownBlock>,
     indentSize: Int,
-): List<String> = buildList {
-    val indent = " ".repeat(indentSize)
-    val thisSize = this@findDifferences.size
-    if (expected.size != thisSize) {
-        add("$indent * Content size mismatch. Was $thisSize, but we expected ${expected.size}")
-        add("$indent     Actual:   ${this@findDifferences}")
-        add("$indent     Expected: $expected\n")
-        add("$indent   ℹ️ Note: skipping cells comparison as it's meaningless")
-        return@buildList
-    }
+): List<String> =
+    buildList {
+        val indent = " ".repeat(indentSize)
+        val thisSize = this@findDifferences.size
+        if (expected.size != thisSize) {
+            add("$indent * Content size mismatch. Was $thisSize, but we expected ${expected.size}")
+            add("$indent     Actual:   ${this@findDifferences}")
+            add("$indent     Expected: $expected\n")
+            add("$indent   ℹ️ Note: skipping cells comparison as it's meaningless")
+            return@buildList
+        }
 
-    for ((i, item) in this@findDifferences.withIndex()) {
-        val difference = item.findDifferenceWith(expected[i], indentSize + 2)
-        if (difference.isNotEmpty()) {
-            add(
-                "$indent * Item #$i is not the same as the expected value.\n\n" +
-                    "${difference.joinToString("\n")}\n",
-            )
+        for ((i, item) in this@findDifferences.withIndex()) {
+            val difference = item.findDifferenceWith(expected[i], indentSize + 2)
+            if (difference.isNotEmpty()) {
+                add(
+                    "$indent * Item #$i is not the same as the expected value.\n\n" +
+                        "${difference.joinToString("\n")}\n",
+                )
+            }
         }
     }
-}
 
 private fun MarkdownBlock.findDifferenceWith(
     expected: MarkdownBlock,
@@ -86,14 +87,19 @@ private fun MarkdownBlock.findDifferenceWith(
 
 private var htmlRenderer = HtmlRenderer.builder().build()
 
-fun BlockWithInlineMarkdown.toHtml() = buildString {
-    for (node in this@toHtml.inlineContent) {
-        // new lines are rendered as spaces in tests
-        append(htmlRenderer.render(node.nativeNode).replace("\n", " "))
+fun BlockWithInlineMarkdown.toHtml() =
+    buildString {
+        for (node in this@toHtml.inlineContent) {
+            // new lines are rendered as spaces in tests
+            append(htmlRenderer.render(node.nativeNode).replace("\n", " "))
+        }
     }
-}
 
-private fun diffParagraph(actual: Paragraph, expected: MarkdownBlock, indent: String) = buildList {
+private fun diffParagraph(
+    actual: Paragraph,
+    expected: MarkdownBlock,
+    indent: String,
+) = buildList {
     val actualInlineHtml = actual.toHtml()
     val expectedInlineHtml = (expected as Paragraph).toHtml()
     if (actualInlineHtml != expectedInlineHtml) {
@@ -105,7 +111,11 @@ private fun diffParagraph(actual: Paragraph, expected: MarkdownBlock, indent: St
     }
 }
 
-private fun diffHtmlBlock(actual: HtmlBlock, expected: MarkdownBlock, indent: String) = buildList {
+private fun diffHtmlBlock(
+    actual: HtmlBlock,
+    expected: MarkdownBlock,
+    indent: String,
+) = buildList {
     if (actual.content != (expected as HtmlBlock).content) {
         add(
             "$indent * HTML block content mismatch.\n\n" +
@@ -115,37 +125,47 @@ private fun diffHtmlBlock(actual: HtmlBlock, expected: MarkdownBlock, indent: St
     }
 }
 
-private fun diffFencedCodeBlock(actual: FencedCodeBlock, expected: MarkdownBlock, indent: String) =
-    buildList {
-        if (actual.mimeType != (expected as FencedCodeBlock).mimeType) {
-            add(
-                "$indent * Fenced code block mime type mismatch.\n\n" +
-                    "$indent     Actual:   ${actual.mimeType}\n" +
-                    "$indent     Expected: ${expected.mimeType}",
-            )
-        }
-
-        if (actual.content != expected.content) {
-            add(
-                "$indent * Fenced code block content mismatch.\n\n" +
-                    "$indent     Actual:   ${actual.content}\n" +
-                    "$indent     Expected: ${expected.content}",
-            )
-        }
+private fun diffFencedCodeBlock(
+    actual: FencedCodeBlock,
+    expected: MarkdownBlock,
+    indent: String,
+) = buildList {
+    if (actual.mimeType != (expected as FencedCodeBlock).mimeType) {
+        add(
+            "$indent * Fenced code block mime type mismatch.\n\n" +
+                "$indent     Actual:   ${actual.mimeType}\n" +
+                "$indent     Expected: ${expected.mimeType}",
+        )
     }
 
-private fun diffIndentedCodeBlock(actual: CodeBlock, expected: MarkdownBlock, indent: String) =
-    buildList {
-        if (actual.content != (expected as IndentedCodeBlock).content) {
-            add(
-                "$indent * Indented code block content mismatch.\n\n" +
-                    "$indent     Actual:   ${actual.content}\n" +
-                    "$indent     Expected: ${expected.content}",
-            )
-        }
+    if (actual.content != expected.content) {
+        add(
+            "$indent * Fenced code block content mismatch.\n\n" +
+                "$indent     Actual:   ${actual.content}\n" +
+                "$indent     Expected: ${expected.content}",
+        )
     }
+}
 
-private fun diffHeading(actual: Heading, expected: MarkdownBlock, indent: String) = buildList {
+private fun diffIndentedCodeBlock(
+    actual: CodeBlock,
+    expected: MarkdownBlock,
+    indent: String,
+) = buildList {
+    if (actual.content != (expected as IndentedCodeBlock).content) {
+        add(
+            "$indent * Indented code block content mismatch.\n\n" +
+                "$indent     Actual:   ${actual.content}\n" +
+                "$indent     Expected: ${expected.content}",
+        )
+    }
+}
+
+private fun diffHeading(
+    actual: Heading,
+    expected: MarkdownBlock,
+    indent: String,
+) = buildList {
     val actualInlineHtml = actual.toHtml()
     val expectedInlineHtml = (expected as Heading).toHtml()
     if (actualInlineHtml != expectedInlineHtml) {
@@ -157,58 +177,63 @@ private fun diffHeading(actual: Heading, expected: MarkdownBlock, indent: String
     }
 }
 
-private fun diffList(actual: ListBlock, expected: MarkdownBlock, indentSize: Int, indent: String) =
-    buildList {
-        addAll(actual.children.findDifferences((expected as ListBlock).children, indentSize))
+private fun diffList(
+    actual: ListBlock,
+    expected: MarkdownBlock,
+    indentSize: Int,
+    indent: String,
+) = buildList {
+    addAll(actual.children.findDifferences((expected as ListBlock).children, indentSize))
 
-        if (actual.isTight != expected.isTight) {
-            add(
-                "$indent * List isTight mismatch.\n\n" +
-                    "$indent     Actual:   ${actual.isTight}\n" +
-                    "$indent     Expected: ${expected.isTight}",
-            )
-        }
+    if (actual.isTight != expected.isTight) {
+        add(
+            "$indent * List isTight mismatch.\n\n" +
+                "$indent     Actual:   ${actual.isTight}\n" +
+                "$indent     Expected: ${expected.isTight}",
+        )
+    }
 
-        when (actual) {
-            is OrderedList -> {
-                if (actual.startFrom != (expected as OrderedList).startFrom) {
-                    add(
-                        "$indent * List startFrom mismatch.\n\n" +
-                            "$indent     Actual:   ${actual.startFrom}\n" +
-                            "$indent     Expected: ${expected.startFrom}",
-                    )
-                }
-
-                if (actual.delimiter != expected.delimiter) {
-                    add(
-                        "$indent * List delimiter mismatch.\n\n" +
-                            "$indent     Actual:   ${actual.delimiter}\n" +
-                            "$indent     Expected: ${expected.delimiter}",
-                    )
-                }
+    when (actual) {
+        is OrderedList -> {
+            if (actual.startFrom != (expected as OrderedList).startFrom) {
+                add(
+                    "$indent * List startFrom mismatch.\n\n" +
+                        "$indent     Actual:   ${actual.startFrom}\n" +
+                        "$indent     Expected: ${expected.startFrom}",
+                )
             }
 
-            is UnorderedList -> {
-                if (actual.marker != (expected as UnorderedList).marker) {
-                    add(
-                        "$indent * List bulletMarker mismatch.\n\n" +
-                            "$indent     Actual:   ${actual.marker}\n" +
-                            "$indent     Expected: ${expected.marker}",
-                    )
-                }
+            if (actual.delimiter != expected.delimiter) {
+                add(
+                    "$indent * List delimiter mismatch.\n\n" +
+                        "$indent     Actual:   ${actual.delimiter}\n" +
+                        "$indent     Expected: ${expected.delimiter}",
+                )
+            }
+        }
+
+        is UnorderedList -> {
+            if (actual.marker != (expected as UnorderedList).marker) {
+                add(
+                    "$indent * List bulletMarker mismatch.\n\n" +
+                        "$indent     Actual:   ${actual.marker}\n" +
+                        "$indent     Expected: ${expected.marker}",
+                )
             }
         }
     }
+}
 
 private val parser = Parser.builder().build()
 
-private fun Node.children() = buildList {
-    var child = firstChild
-    while (child != null) {
-        add(child)
-        child = child.next
+private fun Node.children() =
+    buildList {
+        var child = firstChild
+        while (child != null) {
+            add(child)
+            child = child.next
+        }
     }
-}
 
 /** skip root Document and Paragraph nodes */
 private fun inlineMarkdowns(content: String): List<InlineMarkdown> {
@@ -222,14 +247,20 @@ private fun inlineMarkdowns(content: String): List<InlineMarkdown> {
 
 private val inlineParser = InlineParserImpl(InlineParserContextImpl(emptyList(), LinkReferenceDefinitions()))
 
-fun paragraph(@Language("Markdown") content: String): Paragraph = Paragraph(
-    org.commonmark.node.Paragraph().let { block ->
-        inlineParser.parse(SourceLines.of(content.lines().map { SourceLine.of(it, null) }), block)
-        block
-    },
-)
+fun paragraph(
+    @Language("Markdown") content: String,
+): Paragraph =
+    Paragraph(
+        org.commonmark.node.Paragraph().let { block ->
+            inlineParser.parse(SourceLines.of(content.lines().map { SourceLine.of(it, null) }), block)
+            block
+        },
+    )
 
-fun heading(level: Int, @Language("Markdown") content: String) = Heading(
+fun heading(
+    level: Int,
+    @Language("Markdown") content: String,
+) = Heading(
     org.commonmark.node.Heading().let { block ->
         inlineParser.parse(SourceLines.of(SourceLine.of(content, null)), block)
         block.level = level
@@ -239,8 +270,10 @@ fun heading(level: Int, @Language("Markdown") content: String) = Heading(
 
 fun indentedCodeBlock(content: String) = IndentedCodeBlock(content)
 
-fun fencedCodeBlock(content: String, mimeType: MimeType? = null) =
-    FencedCodeBlock(content, mimeType)
+fun fencedCodeBlock(
+    content: String,
+    mimeType: MimeType? = null,
+) = FencedCodeBlock(content, mimeType)
 
 fun blockQuote(vararg contents: MarkdownBlock) = BlockQuote(contents.toList())
 

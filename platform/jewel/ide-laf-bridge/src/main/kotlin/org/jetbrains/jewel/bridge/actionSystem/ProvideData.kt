@@ -14,6 +14,8 @@ import com.intellij.openapi.actionSystem.DataProvider
 import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.JComponent
 
+// TODO: choose better naming?
+
 /**
  * Layout composable that create the bridge between [Modifier.provideData]
  * used inside [content] and [component]. So, IntelliJ's [DataManager] can
@@ -23,7 +25,6 @@ import javax.swing.JComponent
  * [DataProviderNode] hierarchy and collect it according [DataProvider]
  * rules (see javadoc).
  */
-// TODO: choose better naming?
 @Suppress("unused", "FunctionName")
 @Composable
 public fun ComponentDataProviderBridge(
@@ -59,12 +60,10 @@ public fun ComponentDataProviderBridge(
  * @see ComponentDataProviderBridge
  */
 @Suppress("unused")
-public fun Modifier.provideData(dataProvider: (dataId: String) -> Any?): Modifier =
-    this then DataProviderElement(dataProvider)
+public fun Modifier.provideData(dataProvider: (dataId: String) -> Any?): Modifier = this then DataProviderElement(dataProvider)
 
 @VisibleForTesting
 internal class RootDataProviderModifier : ModifierNodeElement<DataProviderNode>() {
-
     private val rootNode = DataProviderNode { null }
 
     val dataProvider: (String) -> Any? = { rootNode.getData(it) }

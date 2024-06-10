@@ -74,7 +74,6 @@ public class DefaultComponentStyling(
     public val tooltipStyle: TooltipStyle,
     public val undecoratedDropdownStyle: DropdownStyle,
 ) : ComponentStyling {
-
     @Composable
     override fun styles(): Array<out ProvidedValue<*>> =
         arrayOf(

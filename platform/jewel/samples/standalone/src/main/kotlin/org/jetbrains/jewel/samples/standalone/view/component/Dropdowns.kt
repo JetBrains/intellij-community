@@ -24,16 +24,17 @@ fun Dropdowns() {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val items = remember {
-            listOf(
-                "Light",
-                "Dark",
-                "---",
-                "High Contrast",
-                "Darcula",
-                "IntelliJ Light",
-            )
-        }
+        val items =
+            remember {
+                listOf(
+                    "Light",
+                    "Dark",
+                    "---",
+                    "High Contrast",
+                    "Darcula",
+                    "IntelliJ Light",
+                )
+            }
         var selected by remember { mutableStateOf(items.first()) }
 
         Dropdown(
@@ -122,13 +123,14 @@ fun Dropdowns() {
                         selectableItem(
                             iconResource = dropdownIconsSample.random(),
                             iconClass = DropdownStyle::class.java,
-                            keybinding = if (Random.nextBoolean()) {
-                                null
-                            } else {
-                                dropdownKeybindingsSample.shuffled()
-                                    .take(2)
-                                    .toSet()
-                            },
+                            keybinding =
+                                if (Random.nextBoolean()) {
+                                    null
+                                } else {
+                                    dropdownKeybindingsSample.shuffled()
+                                        .take(2)
+                                        .toSet()
+                                },
                             selected = false,
                             onClick = { },
                         ) {
@@ -144,13 +146,14 @@ fun Dropdowns() {
                             selectableItem(
                                 iconResource = dropdownIconsSample.random(),
                                 iconClass = DropdownStyle::class.java,
-                                keybinding = if (Random.nextBoolean()) {
-                                    null
-                                } else {
-                                    dropdownKeybindingsSample.shuffled()
-                                        .take(2)
-                                        .toSet()
-                                },
+                                keybinding =
+                                    if (Random.nextBoolean()) {
+                                        null
+                                    } else {
+                                        dropdownKeybindingsSample.shuffled()
+                                            .take(2)
+                                            .toSet()
+                                    },
                                 selected = false,
                                 onClick = { },
                             ) {
