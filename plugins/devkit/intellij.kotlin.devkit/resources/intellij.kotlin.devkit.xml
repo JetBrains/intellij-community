@@ -48,9 +48,6 @@
                      key="inspection.use.platform.process.await.exit.display.name"/>
 
     <iconProvider implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteIconProvider" order="first"/>
-
-    <!-- INTERNAL -->
-    <consoleFilterProvider implementation="org.jetbrains.idea.devkit.kotlin.run.ModulePathFilterProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">

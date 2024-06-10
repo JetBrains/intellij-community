@@ -588,6 +588,9 @@
                  description="Enables commit messages validation for intellij project"/>
 
     <iconMapper mappingFile="DevkitIconMappings.json"/>
+
+    <!-- INTERNAL -->
+    <consoleFilterProvider implementation="org.jetbrains.idea.devkit.run.ModulePathFilterProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
