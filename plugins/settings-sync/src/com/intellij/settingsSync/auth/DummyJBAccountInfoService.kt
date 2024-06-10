@@ -19,6 +19,10 @@ object DummyJBAccountInfoService : JBAccountInfoService {
     return _idToken
   }
 
+  override fun startLoginSession(loginMode: JBAccountInfoService.LoginMode): JBAccountInfoService.LoginSession {
+    TODO("Not yet implemented")
+  }
+
   override fun invokeJBALogin(userIdConsumer: Consumer<in String>?, onFailure: Runnable?) {
     refreshIdToken()
     SettingsSyncEvents.getInstance().fireLoginStateChanged()
