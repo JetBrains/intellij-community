@@ -66,12 +66,11 @@ internal class UastHintedVisitorAdapterHintsInspection : DevKitUastInspectionBas
   }
 
   private fun inspectVisitorAndHints(expression: UCallExpression, holder: ProblemsHolder) {
-    val expressionSourcePsi = expression.sourcePsi
-    val project = expressionSourcePsi?.project ?: return
+    val expressionSourcePsi = expression.sourcePsi ?: return
     val hintParamValue = expression.getArgumentForParameter(UAST_VISITOR_HINT_INDEX) ?: return
     val hintClassLiterals = getHintClasses(hintParamValue).takeIf { it.isNotEmpty() } ?: return
-    val uElementClass = JavaPsiFacade.getInstance(holder.project).findClass(UElement::class.java.name, expressionSourcePsi.resolveScope)
-                        ?: return
+    val project = holder.project
+    val uElementClass = JavaPsiFacade.getInstance(project).findClass(UElement::class.java.name, expressionSourcePsi.resolveScope) ?: return
     val classLiteralAndExpandedClassesList = hintClassLiterals
       .mapNotNull {
         val resolvedClass = (it.type as? PsiClassType)?.resolve() ?: return@mapNotNull null
