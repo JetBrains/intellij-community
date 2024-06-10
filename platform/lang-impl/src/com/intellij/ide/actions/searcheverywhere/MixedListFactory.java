@@ -75,6 +75,8 @@ final class MixedListFactory extends SEResultsListFactory {
       public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == SearchListModel.MORE_ELEMENT) {
           return getMoreElementRenderer(list, index, isSelected, cellHasFocus);
+        } else if (value == SearchListModel.HAS_ONLY_SIMILAR_ELEMENT) {
+          return getOnlySimilarElementRenderer(list, index, isSelected, cellHasFocus);
         }
 
         return getNonMoreElementRenderer(list, value, index, isSelected, cellHasFocus, model, myRenderersCache);

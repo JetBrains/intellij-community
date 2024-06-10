@@ -112,6 +112,10 @@ private class ElementInfoManager(private val seUI: SearchEverywhereUI) {
       content.text = "'More...' element"
       return
     }
+    if (info.element == SearchListModel.HAS_ONLY_SIMILAR_ELEMENT) {
+      content.text = "'No exact matches...' element"
+      return
+    }
 
     content.text = info.description
   }

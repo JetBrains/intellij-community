@@ -15,7 +15,7 @@ import java.util.List;
 
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 15);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 16);
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
@@ -64,14 +64,16 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
                                                                                    EventFields.InputEventByAnAction);
   public static final EventId DIALOG_CLOSED = GROUP.registerEvent("dialogClosed");
   public static final IntEventField SELECTED_ITEM_NUMBER = EventFields.Int("selectedItemNumber");
+  public static final BooleanEventField HAS_ONLY_SIMILAR_ELEMENT = EventFields.Boolean("hasOnlySimilarElement");
 
   public static final VarargEventId CONTRIBUTOR_ITEM_SELECTED = GROUP.registerVarargEvent("contributorItemChosen", CONTRIBUTOR_ID_FIELD,
                                                                                           EventFields.Language, CURRENT_TAB_FIELD,
-                                                                                          SELECTED_ITEM_NUMBER);
+                                                                                          SELECTED_ITEM_NUMBER, HAS_ONLY_SIMILAR_ELEMENT);
   public static final EventId MORE_ITEM_SELECTED = GROUP.registerEvent("moreItemChosen");
   public static final IntEventField ITEM_NUMBER_BEFORE_MORE = EventFields.Int("itemsNumberBeforeMore");
   public static final BooleanEventField IS_ONLY_MORE = EventFields.Boolean("isOnlyMore");
   public static final VarargEventId MORE_ITEM_SHOWN = GROUP.registerVarargEvent("moreItemShown", ITEM_NUMBER_BEFORE_MORE, IS_ONLY_MORE);
+  public static final EventId HAS_ONLY_SIMILAR_ITEM_SHOWN = GROUP.registerEvent("hasOnlySimilarItemShown");
   public static final EventId COMMAND_USED = GROUP.registerEvent("commandUsed");
 
   public static final VarargEventId COMMAND_COMPLETED = GROUP.registerVarargEvent("commandCompleted",
