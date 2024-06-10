@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
+import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -205,8 +206,16 @@ object ChangeTypeQuickFixFactories {
             val actualType = getActualType(diagnostic.actualType)
             val expectedType = diagnostic.expectedType
             buildList {
+                var primitiveLiteralData: PrimitiveLiteralData? = null
                 if (expression is KtConstantExpression && expectedType.isNumberOrUNumberType() && actualType.isNumberOrUNumberType()) {
-                    add(WrongPrimitiveLiteralFix(expression, preparePrimitiveLiteral(expression, expectedType)))
+                    primitiveLiteralData = preparePrimitiveLiteral(expression, expectedType)
+                    add(WrongPrimitiveLiteralFix(expression, primitiveLiteralData))
+                }
+                if (expectedType.isNumberOrCharType() && actualType.isNumberOrCharType()) {
+                    if (primitiveLiteralData == null || !WrongPrimitiveLiteralFix.isAvailable(primitiveLiteralData)) {
+                        val elementContext = prepareNumberConversionElementContext(actualType, expectedType)
+                        add(NumberConversionFix(expression as KtExpression, elementContext).asIntention())
+                    }
                 }
             }
         }

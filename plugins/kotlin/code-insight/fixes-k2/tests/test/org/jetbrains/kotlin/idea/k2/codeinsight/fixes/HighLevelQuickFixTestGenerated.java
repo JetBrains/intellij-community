@@ -3798,6 +3798,235 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion")
+    public abstract static class NumberConversion extends AbstractHighLevelQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/fromChar")
+        public static class FromChar extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("byte.kt")
+            public void testByte() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/fromChar/byte.kt");
+            }
+
+            @TestMetadata("double.kt")
+            public void testDouble() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/fromChar/double.kt");
+            }
+
+            @TestMetadata("float.kt")
+            public void testFloat() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/fromChar/float.kt");
+            }
+
+            @TestMetadata("int.kt")
+            public void testInt() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/fromChar/int.kt");
+            }
+
+            @TestMetadata("intFromCharLiteral.kt")
+            public void testIntFromCharLiteral() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/fromChar/intFromCharLiteral.kt");
+            }
+
+            @TestMetadata("long.kt")
+            public void testLong() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/fromChar/long.kt");
+            }
+
+            @TestMetadata("longFromCharLiteral.kt")
+            public void testLongFromCharLiteral() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/fromChar/longFromCharLiteral.kt");
+            }
+
+            @TestMetadata("short.kt")
+            public void testShort() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/fromChar/short.kt");
+            }
+
+            @TestMetadata("shortWithVer1_4.kt")
+            public void testShortWithVer1_4() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/fromChar/shortWithVer1_4.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toByte")
+        public static class ToByte extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("double.kt")
+            public void testDouble() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toByte/double.kt");
+            }
+
+            @TestMetadata("float.kt")
+            public void testFloat() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toByte/float.kt");
+            }
+
+            @TestMetadata("floatWithVer1_2.kt")
+            public void testFloatWithVer1_2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toByte/floatWithVer1_2.kt");
+            }
+
+            @TestMetadata("long.kt")
+            public void testLong() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toByte/long.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toChar")
+        public static class ToChar extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("byte.kt")
+            public void testByte() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toChar/byte.kt");
+            }
+
+            @TestMetadata("double.kt")
+            public void testDouble() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toChar/double.kt");
+            }
+
+            @TestMetadata("doubleLiteral.kt")
+            public void testDoubleLiteral() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toChar/doubleLiteral.kt");
+            }
+
+            @TestMetadata("float.kt")
+            public void testFloat() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toChar/float.kt");
+            }
+
+            @TestMetadata("floatLiteral.kt")
+            public void testFloatLiteral() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toChar/floatLiteral.kt");
+            }
+
+            @TestMetadata("int.kt")
+            public void testInt() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toChar/int.kt");
+            }
+
+            @TestMetadata("long.kt")
+            public void testLong() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toChar/long.kt");
+            }
+
+            @TestMetadata("longLiteral.kt")
+            public void testLongLiteral() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toChar/longLiteral.kt");
+            }
+
+            @TestMetadata("short.kt")
+            public void testShort() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toChar/short.kt");
+            }
+
+            @TestMetadata("shortWithVer1_4.kt")
+            public void testShortWithVer1_4() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toChar/shortWithVer1_4.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toShort")
+        public static class ToShort extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("double.kt")
+            public void testDouble() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toShort/double.kt");
+            }
+
+            @TestMetadata("float.kt")
+            public void testFloat() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toShort/float.kt");
+            }
+
+            @TestMetadata("floatWithVer1_2.kt")
+            public void testFloatWithVer1_2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toShort/floatWithVer1_2.kt");
+            }
+
+            @TestMetadata("long.kt")
+            public void testLong() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/toShort/long.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion")
+        public static class Uncategorized extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("convertBinaryExpression.kt")
+            public void testConvertBinaryExpression() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/convertBinaryExpression.kt");
+            }
+
+            @TestMetadata("convertExpression.kt")
+            public void testConvertExpression() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/convertExpression.kt");
+            }
+
+            @TestMetadata("convertToSigned.kt")
+            public void testConvertToSigned() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/convertToSigned.kt");
+            }
+
+            @TestMetadata("convertToUnsigned.kt")
+            public void testConvertToUnsigned() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion/convertToUnsigned.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch")
     public static class ParameterTypeMismatch extends AbstractHighLevelQuickFixTest {
         @java.lang.Override
@@ -5975,7 +6204,92 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/equalityNotApplicable")
+    public abstract static class EqualityNotApplicable extends AbstractHighLevelQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/equalityNotApplicable/charLiteralConversion")
+        public static class CharLiteralConversion extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("charEqString.kt")
+            public void testCharEqString() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/equalityNotApplicable/charLiteralConversion/charEqString.kt");
+            }
+
+            @TestMetadata("charEqString2.kt")
+            public void testCharEqString2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/equalityNotApplicable/charLiteralConversion/charEqString2.kt");
+            }
+
+            @TestMetadata("charEqString3.kt")
+            public void testCharEqString3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/equalityNotApplicable/charLiteralConversion/charEqString3.kt");
+            }
+
+            @TestMetadata("charEqString4.kt")
+            public void testCharEqString4() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/equalityNotApplicable/charLiteralConversion/charEqString4.kt");
+            }
+
+            @TestMetadata("charEqStringDoubleQuote.kt")
+            public void testCharEqStringDoubleQuote() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/equalityNotApplicable/charLiteralConversion/charEqStringDoubleQuote.kt");
+            }
+
+            @TestMetadata("charEqStringSingleQuote.kt")
+            public void testCharEqStringSingleQuote() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/equalityNotApplicable/charLiteralConversion/charEqStringSingleQuote.kt");
+            }
+
+            @TestMetadata("interpolation.kt")
+            public void testInterpolation() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/equalityNotApplicable/charLiteralConversion/interpolation.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/equalityNotApplicable/numberConversion")
+        public static class NumberConversion extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("left.kt")
+            public void testLeft() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/equalityNotApplicable/numberConversion/left.kt");
+            }
+
+            @TestMetadata("nullableLeft.kt")
+            public void testNullableLeft() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/equalityNotApplicable/numberConversion/nullableLeft.kt");
+            }
+
+            @TestMetadata("nullableRight.kt")
+            public void testNullableRight() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/equalityNotApplicable/numberConversion/nullableRight.kt");
+            }
+
+            @TestMetadata("right.kt")
+            public void testRight() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/equalityNotApplicable/numberConversion/right.kt");
+            }
+        }
+    }
 
 
 
