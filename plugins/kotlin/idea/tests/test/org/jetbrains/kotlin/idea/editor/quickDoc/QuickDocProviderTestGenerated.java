@@ -140,6 +140,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/FunctionTypeParameter.kt");
     }
 
+    @TestMetadata("FunctionalReceiver.kt")
+    public void testFunctionalReceiver() throws Exception {
+        runTest("testData/editor/quickDoc/FunctionalReceiver.kt");
+    }
+
     @TestMetadata("IndentedCodeBlock.kt")
     public void testIndentedCodeBlock() throws Exception {
         runTest("testData/editor/quickDoc/IndentedCodeBlock.kt");

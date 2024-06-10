@@ -497,7 +497,14 @@ internal class KotlinIdeDeclarationRenderer(
                             val receiverSymbol = callableSymbol.receiverParameter
                             if (receiverSymbol != null) {
                                 withSuffix(highlight(".") { asDot }) {
+                                    val isFunctional = receiverSymbol.type is KaFunctionalType
+                                    if (isFunctional) {
+                                        append(highlight("(") { asParentheses })
+                                    }
                                     declarationRenderer.callableReceiverRenderer.renderReceiver(analysisSession, receiverSymbol, declarationRenderer, printer)
+                                    if (isFunctional) {
+                                        append(highlight(")") { asParentheses })
+                                    }
                                 }
                             }
 
