@@ -329,13 +329,15 @@ function myDiff(oldCode, newCode) {
 }
 
 function unifiedSlideDiff(prevCode, currCode, slideIndex) {
-  console.log("prevCode:")
-  console.log(prevCode)
-  console.log("currCode:")
-  console.log(currCode)
+  console.log("prevCode:");
+  console.log(prevCode);
+  console.log("currCode:");
+  console.log(currCode);
 
   const changes = myDiff(prevCode, currCode);
   const unifiedDiff = [];
+  let oldLineNumber = 1;
+  let newLineNumber = 1;
 
   changes.forEach(change => {
     const { lines, added, removed } = change;
@@ -344,20 +346,30 @@ function unifiedSlideDiff(prevCode, currCode, slideIndex) {
         unifiedDiff.push({
           content: `+ ${line}`,
           type: "added",
+          oldLineNumber: '',
+          newLineNumber: newLineNumber,
           slideIndex
         });
+        newLineNumber++;
       } else if (removed) {
         unifiedDiff.push({
           content: `- ${line}`,
           type: "removed",
+          oldLineNumber: oldLineNumber,
+          newLineNumber: '',
           slideIndex
         });
+        oldLineNumber++;
       } else {
         unifiedDiff.push({
           content: `  ${line}`,
           type: "unchanged",
+          oldLineNumber: oldLineNumber,
+          newLineNumber: newLineNumber,
           slideIndex
         });
+        oldLineNumber++;
+        newLineNumber++;
       }
     });
   });
@@ -512,17 +524,22 @@ function addDiffView(sessionDiv, popup, lookup, originalText) {
 
   const suggestionsText = lookup["suggestions"].map(s => s.presentationText).join("\n");
 
-  console.log("Original Text:", originalText);
-  console.log("Suggestions Text:", suggestionsText);
-
   const unifiedDiff = unifiedSlideDiff(originalText, suggestionsText, 1);
-
-  console.log("Unified Diff:", unifiedDiff);
 
   unifiedDiff.forEach(line => {
     const lineDiv = document.createElement("DIV");
     lineDiv.textContent = line.content;
-    lineDiv.style.whiteSpace = "pre"; // Ensure indentation is preserved
+
+    const oldLineNumberSpan = document.createElement("span");
+    oldLineNumberSpan.textContent = line.oldLineNumber !== '' ? line.oldLineNumber : ' ';
+    oldLineNumberSpan.style.width = '30px';
+    oldLineNumberSpan.style.display = 'inline-block';
+
+    const newLineNumberSpan = document.createElement("span");
+    newLineNumberSpan.textContent = line.newLineNumber !== '' ? line.newLineNumber : ' ';
+    newLineNumberSpan.style.width = '30px';
+    newLineNumberSpan.style.display = 'inline-block';
+
     if (line.type === "added") {
       lineDiv.style.color = "green";
     } else if (line.type === "removed") {
@@ -530,6 +547,9 @@ function addDiffView(sessionDiv, popup, lookup, originalText) {
     } else {
       lineDiv.style.color = "black";
     }
+
+    lineDiv.prepend(newLineNumberSpan);
+    lineDiv.prepend(oldLineNumberSpan);
     diffDiv.appendChild(lineDiv);
   });
 
