@@ -16,18 +16,6 @@ a:com.intellij.dupLocator.AbstractMatchingVisitor
 - matchSons(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
 - f:matchSonsInAnyOrder(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
 - matchSonsOptionally(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
-f:com.intellij.dupLocator.DefaultDuplocatorState
-- com.intellij.dupLocator.ExternalizableDuplocatorState
-- DISCARD_COST:I
-- DISTINGUISH_FUNCTIONS:Z
-- DISTINGUISH_LITERALS:Z
-- DISTINGUISH_VARIABLES:Z
-- LOWER_BOUND:I
-- <init>():V
-- distinguishLiterals():Z
-- distinguishRole(com.intellij.dupLocator.PsiElementRole):Z
-- getDiscardCost():I
-- getLowerBound():I
 com.intellij.dupLocator.DupInfo
 - a:getComment(I):java.lang.String
 - a:getFileCount(I):I
@@ -38,11 +26,7 @@ com.intellij.dupLocator.DupInfo
 - a:getPatterns():I
 - a:getTitle(I):java.lang.String
 - a:getUsageOccurences(I):com.intellij.usageView.UsageInfo[]
-f:com.intellij.dupLocator.DupLocatorBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 a:com.intellij.dupLocator.DuplicatesProfile
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - acceptsContentForIndexing(com.intellij.util.indexing.FileContent):Z
 - a:createVisitor(com.intellij.dupLocator.treeHash.FragmentsCollector):com.intellij.dupLocator.DuplocateVisitor
@@ -54,6 +38,7 @@ a:com.intellij.dupLocator.DuplicatesProfile
 - getComment(com.intellij.dupLocator.DupInfo,I):java.lang.String
 - a:getDuplocatorState(com.intellij.lang.Language):com.intellij.dupLocator.DuplocatorState
 - getLanguage(com.intellij.psi.PsiElement):com.intellij.lang.Language
+- s:getProfile(java.lang.Class):com.intellij.dupLocator.DuplicatesProfile
 - getRole(com.intellij.psi.PsiElement):com.intellij.dupLocator.PsiElementRole
 - isMyDuplicate(com.intellij.dupLocator.DupInfo,I):Z
 - a:isMyLanguage(com.intellij.lang.Language):Z
@@ -91,14 +76,6 @@ com.intellij.dupLocator.LightDuplicateProfile
 - a:process(com.intellij.lang.LighterAST,com.intellij.dupLocator.LightDuplicateProfile$Callback):V
 com.intellij.dupLocator.LightDuplicateProfile$Callback
 - a:process(I,I,com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode[]):V
-f:com.intellij.dupLocator.MultilanguageDuplocatorSettings
-- com.intellij.openapi.components.PersistentStateComponent
-- <init>():V
-- s:getInstance():com.intellij.dupLocator.MultilanguageDuplocatorSettings
-- getState():org.jdom.Element
-- getState(com.intellij.lang.Language):com.intellij.dupLocator.DefaultDuplocatorState
-- loadState(org.jdom.Element):V
-- registerState(com.intellij.lang.Language,com.intellij.dupLocator.DefaultDuplocatorState):V
 a:com.intellij.dupLocator.NodeSpecificHasher
 - com.intellij.dupLocator.DuplocateVisitor
 - <init>():V
@@ -115,16 +92,8 @@ e:com.intellij.dupLocator.PsiElementRole
 - sf:VARIABLE_NAME:com.intellij.dupLocator.PsiElementRole
 - s:valueOf(java.lang.String):com.intellij.dupLocator.PsiElementRole
 - s:values():com.intellij.dupLocator.PsiElementRole[]
-f:com.intellij.dupLocator.TreeComparator
-- s:areEqual(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.dupLocator.NodeSpecificHasher,I):Z
 com.intellij.dupLocator.TreeHasher
 - a:hash(com.intellij.psi.PsiElement,com.intellij.dupLocator.NodeSpecificHasher):V
-com.intellij.dupLocator._DupInfo
-- a:getDensity(java.lang.Integer):I
-- a:getHeight(java.lang.Integer):I
-- a:getOccurencies(java.lang.Integer):java.util.HashSet
-- a:getPatterns():java.util.TreeSet
-- a:toString(java.lang.Integer):java.lang.String
 com.intellij.dupLocator.equivalence.EquivalenceDescriptor
 - a:getCodeBlocks():java.util.List
 - a:getConstants():java.util.List
@@ -151,40 +120,12 @@ c:com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
 - optionallyInPattern(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
 - optionallyInPattern(com.intellij.psi.PsiElement[]):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
 a:com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - s:ourUseDefaultEquivalence:Z
 - <init>():V
 - a:buildDescriptor(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptor
 - getIgnoredTokens():com.intellij.psi.tree.TokenSet
 - s:getInstance(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider
 - a:isMyContext(com.intellij.psi.PsiElement):Z
-c:com.intellij.dupLocator.equivalence.MultiChildDescriptor
-- <init>(com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType,com.intellij.psi.PsiElement[]):V
-- getElements():com.intellij.psi.PsiElement[]
-- getType():com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
-e:com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
-- java.lang.Enum
-- sf:DEFAULT:com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
-- sf:IN_ANY_ORDER:com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
-- sf:OPTIONALLY:com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
-- sf:OPTIONALLY_IN_PATTERN:com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
-- s:valueOf(java.lang.String):com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
-- s:values():com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType[]
-c:com.intellij.dupLocator.equivalence.SingleChildDescriptor
-- <init>(com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType,com.intellij.psi.PsiElement):V
-- getElement():com.intellij.psi.PsiElement
-- getType():com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
-e:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
-- java.lang.Enum
-- sf:CHILDREN:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
-- sf:CHILDREN_IN_ANY_ORDER:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
-- sf:CHILDREN_OPTIONALLY:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
-- sf:CHILDREN_OPTIONALLY_IN_PATTERN:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
-- sf:DEFAULT:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
-- sf:OPTIONALLY:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
-- sf:OPTIONALLY_IN_PATTERN:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
-- s:valueOf(java.lang.String):com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
-- s:values():com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType[]
 f:com.intellij.dupLocator.iterators.ArrayBackedNodeIterator
 - com.intellij.dupLocator.iterators.NodeIterator
 - <init>(com.intellij.psi.PsiElement[]):V
@@ -244,8 +185,8 @@ a:com.intellij.dupLocator.treeHash.AbstractTreeHasher
 - pf:myCallBack:com.intellij.dupLocator.treeHash.FragmentsCollector
 - pf:myForIndexing:Z
 - <init>(com.intellij.dupLocator.treeHash.FragmentsCollector,Z):V
-- p:buildFragment(com.intellij.dupLocator.NodeSpecificHasher,com.intellij.psi.PsiElement,I):com.intellij.dupLocator.treeHash.TreePsiFragment
-- p:buildFragment(com.intellij.dupLocator.NodeSpecificHasher,java.util.List,I,I):com.intellij.dupLocator.treeHash.TreePsiFragment
+- p:buildFragment(com.intellij.dupLocator.NodeSpecificHasher,com.intellij.psi.PsiElement,I):com.intellij.dupLocator.util.PsiFragment
+- p:buildFragment(com.intellij.dupLocator.NodeSpecificHasher,java.util.List,I,I):com.intellij.dupLocator.util.PsiFragment
 - p:computeElementHash(com.intellij.psi.PsiElement,com.intellij.dupLocator.util.PsiFragment,com.intellij.dupLocator.NodeSpecificHasher):com.intellij.dupLocator.treeHash.TreeHashResult
 - p:getCost(com.intellij.psi.PsiElement):I
 - pa:getDiscardCost(com.intellij.psi.PsiElement):I
@@ -257,11 +198,6 @@ a:com.intellij.dupLocator.treeHash.AbstractTreeHasher
 - shouldAnonymize(com.intellij.psi.PsiElement,com.intellij.dupLocator.NodeSpecificHasher):Z
 - s:vector(I[]):I
 - s:vector(I[],I):I
-f:com.intellij.dupLocator.treeHash.DuplicatesMatchingVisitor
-- com.intellij.dupLocator.AbstractMatchingVisitor
-- <init>(com.intellij.dupLocator.treeHash.NodeSpecificHasherBase,com.intellij.dupLocator.util.NodeFilter,I):V
-- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
-- matchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator):Z
 a:com.intellij.dupLocator.treeHash.DuplicatesProfileBase
 - com.intellij.dupLocator.DuplicatesProfile
 - <init>():V
@@ -282,26 +218,6 @@ c:com.intellij.dupLocator.treeHash.DuplocatorHashCallback
 - s:writeDuplicates(java.nio.file.Path,com.intellij.openapi.project.Project,com.intellij.dupLocator.DupInfo):V
 com.intellij.dupLocator.treeHash.FragmentsCollector
 - a:add(I,I,com.intellij.dupLocator.util.PsiFragment):V
-c:com.intellij.dupLocator.treeHash.GroupNodeDescription
-- <init>(I,java.lang.String,java.lang.String):V
-- getComment():java.lang.String
-- getFilesCount():I
-- getTitle():java.lang.String
-c:com.intellij.dupLocator.treeHash.NodeSpecificHasherBase
-- com.intellij.dupLocator.NodeSpecificHasher
-- pf:myForIndexing:Z
-- <init>(com.intellij.dupLocator.DuplocatorSettings,com.intellij.dupLocator.treeHash.FragmentsCollector,com.intellij.dupLocator.treeHash.DuplicatesProfileBase):V
-- <init>(com.intellij.dupLocator.DuplocatorSettings,com.intellij.dupLocator.treeHash.FragmentsCollector,com.intellij.dupLocator.treeHash.DuplicatesProfileBase,Z):V
-- areNodesEqual(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
-- areTreesEqual(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,I):Z
-- checkDeep(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
-- getDuplicatesProfile():com.intellij.dupLocator.treeHash.DuplicatesProfileBase
-- getNodeChildren(com.intellij.psi.PsiElement):java.util.List
-- getNodeCost(com.intellij.psi.PsiElement):I
-- getNodeFilter():com.intellij.dupLocator.util.NodeFilter
-- getNodeHash(com.intellij.psi.PsiElement):I
-- hashingFinished():V
-- visitNode(com.intellij.psi.PsiElement):V
 c:com.intellij.dupLocator.treeHash.TreeHashResult
 - <init>(I,I,com.intellij.dupLocator.util.PsiFragment):V
 - getCost():I
@@ -310,11 +226,6 @@ c:com.intellij.dupLocator.treeHash.TreeHashResult
 f:com.intellij.dupLocator.treeHash.TreeHashingUtils
 - <init>():V
 - s:hashCodeBlockForIndexing(com.intellij.dupLocator.treeHash.AbstractTreeHasher,com.intellij.dupLocator.treeHash.FragmentsCollector,java.util.List,com.intellij.dupLocator.util.PsiFragment,com.intellij.dupLocator.NodeSpecificHasher):com.intellij.dupLocator.treeHash.TreeHashResult
-c:com.intellij.dupLocator.treeHash.TreePsiFragment
-- com.intellij.dupLocator.util.PsiFragment
-- <init>(com.intellij.dupLocator.NodeSpecificHasher,com.intellij.psi.PsiElement,I):V
-- <init>(com.intellij.dupLocator.NodeSpecificHasher,java.util.List,I,I):V
-- isEqual(com.intellij.psi.PsiElement[],I):Z
 com.intellij.dupLocator.treeView.NodeMatcher
 - a:match(com.intellij.psi.PsiElement):Z
 f:com.intellij.dupLocator.util.DuplocatorUtil

@@ -1,9 +1,11 @@
 package com.intellij.dupLocator.equivalence;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class SingleChildDescriptor {
   private final MyType myType;
   private final PsiElement myElement;

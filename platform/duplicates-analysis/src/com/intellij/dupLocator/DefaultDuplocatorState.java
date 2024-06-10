@@ -1,10 +1,10 @@
 package com.intellij.dupLocator;
 
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class DefaultDuplocatorState implements ExternalizableDuplocatorState {
-  private static final Logger LOG = Logger.getInstance(DefaultDuplocatorState.class);
 
   public boolean DISTINGUISH_VARIABLES = false;
   public boolean DISTINGUISH_FUNCTIONS = true;

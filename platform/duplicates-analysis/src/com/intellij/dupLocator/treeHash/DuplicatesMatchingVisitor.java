@@ -21,14 +21,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
+final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
   private final NodeSpecificHasherBase myNodeSpecificHasher;
   private final NodeFilter myNodeFilter;
   private final int myDiscardCost;
   private final TreeHasherBase myTreeHasher;
   private final Map<PsiElement, TreeHashResult> myPsiElement2HashAndCost = new HashMap<>();
 
-  public DuplicatesMatchingVisitor(NodeSpecificHasherBase nodeSpecificHasher,
+  DuplicatesMatchingVisitor(NodeSpecificHasherBase nodeSpecificHasher,
                                    @NotNull NodeFilter nodeFilter,
                                    int discardCost) {
     myNodeSpecificHasher = nodeSpecificHasher;
