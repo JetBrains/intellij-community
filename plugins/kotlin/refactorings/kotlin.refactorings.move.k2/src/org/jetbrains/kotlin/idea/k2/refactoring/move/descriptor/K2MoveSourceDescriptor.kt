@@ -2,13 +2,13 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 sealed interface K2MoveSourceDescriptor<T : PsiElement> {
     val elements: Set<T>
 
-    class FileSource(override val elements: Set<PsiFile>) : K2MoveSourceDescriptor<PsiFile>
+    class FileSource(override val elements: Set<PsiFileSystemItem>) : K2MoveSourceDescriptor<PsiFileSystemItem>
 
     class ElementSource(override val elements: Set<KtNamedDeclaration>) : K2MoveSourceDescriptor<KtNamedDeclaration>
 }

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
@@ -29,8 +29,8 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
     context(Panel)
     fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
-    class FileSource(files: Set<PsiFile>) : K2MoveSourceModel<PsiFile> {
-        override var elements: Set<PsiFile> = files
+    class FileSource(fsItems: Set<PsiFileSystemItem>) : K2MoveSourceModel<PsiFileSystemItem> {
+        override var elements: Set<PsiFileSystemItem> = fsItems
             internal set
 
         override fun toDescriptor(): K2MoveSourceDescriptor.FileSource = K2MoveSourceDescriptor.FileSource(elements)
@@ -39,7 +39,7 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
         override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = elements.firstOrNull()?.project ?: return
 
-            class PresentableFile(val file: PsiFile, val presentation: TargetPresentation)
+            class PresentableFile(val file: PsiFileSystemItem, val presentation: TargetPresentation)
 
             val presentableFiles = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
                 elements.map { file ->

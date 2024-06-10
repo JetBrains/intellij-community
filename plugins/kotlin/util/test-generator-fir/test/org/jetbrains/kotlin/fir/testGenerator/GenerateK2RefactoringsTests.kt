@@ -118,7 +118,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         testClass<AbstractK2MoveDirectoryTest> {
             model("refactoring/moveDirectory", pattern = TEST, flatten = true)
         }
-        testClass<AbstractK2MoveFileTest> {
+        testClass<AbstractK2MoveFileOrDirectoriesTest> {
             model("refactoring/moveFile", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MoveTopLevelTest> {

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDirectory
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
+import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
@@ -51,10 +53,25 @@ class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveDescriptor.
 }
 
 class K2MoveFilesHandler : MoveFileHandler() {
+    /**
+     * Stores whether a package of a file needs to be updated.
+     */
+    private var KtFile.packageNeedsUpdate: Boolean? by CopyablePsiUserDataProperty(Key.create("PACKAGE_NEEDS_UPDATE"))
+
     override fun canProcessElement(element: PsiFile): Boolean {
         if (!Registry.`is`("kotlin.k2.smart.move")) return false
         return element is KtFile
     }
+
+    /**
+     * Before moving files that need their package to be updated are marked. When a package doesn't match the directory structure of the
+     * project, we don't try to update the package.
+     */
+    fun markRequiresUpdate(file: KtFile) {
+        file.packageNeedsUpdate = true
+    }
+
+    fun needsUpdate(file: KtFile) = file.containingDirectory?.getFqNameWithImplicitPrefix() == file.packageFqName
 
     override fun findUsages(
         psiFile: PsiFile,
@@ -63,7 +80,8 @@ class K2MoveFilesHandler : MoveFileHandler() {
         searchInNonJavaFiles: Boolean
     ): List<UsageInfo> {
         require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
-        return if (psiFile.requiresPackageUpdate) {
+        return if (needsUpdate(psiFile)) {
+            markRequiresUpdate(psiFile)
             val newPkgName = newParent.getFqNameWithImplicitPrefix() ?: return emptyList()
             psiFile.findUsages(searchInComments, searchInNonJavaFiles, newPkgName)
         } else emptyList() // don't need to update usages when package doesn't change
@@ -86,17 +104,13 @@ class K2MoveFilesHandler : MoveFileHandler() {
 
     override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
         require(file is KtFile) { "Can only prepare Kotlin files" }
-        if (file.requiresPackageUpdate) {
+        if (file.packageNeedsUpdate == true && file.packageFqName != moveDestination.getFqNameWithImplicitPrefix()) {
             file.updatePackageDirective(moveDestination)
         }
+        file.packageNeedsUpdate = null
         val declarations = file.allDeclarationsToUpdate
         declarations.forEach { oldToNewMap[it] = it } // to pass files that are moved through MoveFileHandler API
     }
-
-    private val KtFile.requiresPackageUpdate: Boolean
-        get() {
-            return containingDirectory?.getFqNameWithImplicitPrefix() == packageFqName
-        }
 
     override fun updateMovedFile(file: PsiFile) {}
 

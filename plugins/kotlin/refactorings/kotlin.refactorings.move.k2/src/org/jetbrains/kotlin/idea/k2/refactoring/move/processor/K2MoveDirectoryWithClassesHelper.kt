@@ -44,6 +44,7 @@ class K2MoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
         val psiManager = PsiManager.getInstance(project)
         filesToMove.forEach { (file, targetDirWrapper) ->
             val ktFile = psiManager.findFile(file) as? KtFile ?: return@forEach
+            if (moveFileHandler.needsUpdate(ktFile)) moveFileHandler.markRequiresUpdate(ktFile)
             val rootDirPkg = JavaDirectoryService.getInstance().getPackage(targetDirWrapper.getRootDirectory())
             if (rootDirPkg != null) {
                 val relativePkgName = targetDirWrapper.getRelativePathFromRoot().replace("/".toRegex(), ".")

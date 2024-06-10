@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../idea/tests/testData/refactoring/moveFile")
-public class K2MoveFileTestGenerated extends AbstractK2MoveFileTest {
+public class K2MoveFileOrDirectoriesTestGenerated extends AbstractK2MoveFileOrDirectoriesTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -148,6 +148,11 @@ public class K2MoveFileTestGenerated extends AbstractK2MoveFileTest {
     @TestMetadata("kotlin/withoutUsages/withoutUsages.test")
     public void testKotlin_withoutUsages_WithoutUsages() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/withoutUsages/withoutUsages.test");
+    }
+
+    @TestMetadata("mixed/moveClassWithPackage/moveClassWithPackage.test")
+    public void testMixed_moveClassWithPackage_MoveClassWithPackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/mixed/moveClassWithPackage/moveClassWithPackage.test");
     }
 
     @TestMetadata("mixed/moveClass/moveClass.test")
