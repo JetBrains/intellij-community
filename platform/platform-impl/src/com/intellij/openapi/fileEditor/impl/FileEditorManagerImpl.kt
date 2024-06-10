@@ -37,7 +37,6 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.isSingletonFileEditor
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TEXT_EDITOR_PROVIDER_TYPE_ID
@@ -258,10 +257,8 @@ open class FileEditorManagerImpl(
           }
 
           val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-          val ideDocumentHistory = project.serviceAsync<IdeDocumentHistory>()
           // expected in EDT
           withContext(Dispatchers.EDT) {
-            ideDocumentHistory.onSelectionChanged()
             runCatching {
               fireSelectionChanged(
                 newState = state,
