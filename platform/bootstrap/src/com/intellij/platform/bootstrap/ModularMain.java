@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap;
 
 import com.intellij.ide.plugins.ProductLoadingStrategy;
@@ -15,8 +15,12 @@ import java.util.ArrayList;
 @SuppressWarnings("unused")
 public final class ModularMain {
   @SuppressWarnings("ConfusingMainMethod")
-  public static void main(@NotNull RuntimeModuleRepository moduleRepository, String @NotNull [] args,
-                          @NotNull ArrayList<Object> startupTimings, long startTimeUnixNano) {
+  public static void main(
+    @NotNull RuntimeModuleRepository moduleRepository,
+    String @NotNull [] args,
+    @NotNull ArrayList<Object> startupTimings,
+    long startTimeUnixNano
+  ) {
     //when this new way to load the platform will become default, strategy instance may be passed explicitly instead
     ModuleBasedProductLoadingStrategy strategy = new ModuleBasedProductLoadingStrategy(moduleRepository);
     ProductLoadingStrategy.Companion.setStrategy(strategy);

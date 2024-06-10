@@ -83,16 +83,18 @@ fun initApplication(context: InitAppContext) {
   }
 }
 
-internal suspend fun loadApp(app: ApplicationImpl,
-                             pluginSetDeferred: Deferred<Deferred<PluginSet>>,
-                             appInfoDeferred: Deferred<ApplicationInfoEx>,
-                             euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
-                             asyncScope: CoroutineScope,
-                             initLafJob: Job,
-                             logDeferred: Deferred<Logger>,
-                             appRegisteredJob: CompletableDeferred<Unit>,
-                             args: List<String>,
-                             initAwtToolkitAndEventQueueJob: Job): ApplicationStarter {
+internal suspend fun loadApp(
+  app: ApplicationImpl,
+  pluginSetDeferred: Deferred<Deferred<PluginSet>>,
+  appInfoDeferred: Deferred<ApplicationInfoEx>,
+  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
+  asyncScope: CoroutineScope,
+  initLafJob: Job,
+  logDeferred: Deferred<Logger>,
+  appRegisteredJob: CompletableDeferred<Unit>,
+  args: List<String>,
+  initAwtToolkitAndEventQueueJob: Job
+): ApplicationStarter {
   return span("app initialization") {
     val initServiceContainerJob = launch {
       val pluginSet = span("plugin descriptor init waiting") {
@@ -243,10 +245,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
   }
 }
 
-private suspend fun preloadNonHeadlessServices(
-  app: ApplicationImpl,
-  initLafJob: Job,
-) {
+private suspend fun preloadNonHeadlessServices(app: ApplicationImpl, initLafJob: Job) {
   coroutineScope {
     launch { // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
       initLafJob.join()
@@ -262,10 +261,7 @@ private suspend fun preloadNonHeadlessServices(
     }
 
     launch(CoroutineName("actionConfigurationCustomizer preloading")) {
-      @Suppress("ControlFlowWithEmptyBody")
-      for (ignored in ActionConfigurationCustomizer.EP.lazySequence()) {
-        // just preload
-      }
+      ActionConfigurationCustomizer.EP.lazySequence().forEach { /* just preload */ }
     }
 
     // https://youtrack.jetbrains.com/issue/IDEA-341318
@@ -318,12 +314,7 @@ ${dumpCoroutines(stripDump = false)}
   }
 }
 
-private suspend fun initLafManagerAndCss(
-  app: ApplicationImpl,
-  asyncScope: CoroutineScope,
-  initLafJob: Job,
-  loadIconMapping: Job?,
-): Job? {
+private suspend fun initLafManagerAndCss(app: ApplicationImpl, asyncScope: CoroutineScope, initLafJob: Job, loadIconMapping: Job?): Job? {
   return coroutineScope {
     // LaF must be initialized before app init because icons maybe requested and, as a result,
     // a scale must be already initialized (especially important for Linux)
@@ -465,9 +456,8 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
   }
 }
 
-private fun createDefaultAppStarter(): ApplicationStarter {
-  return if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
-}
+private fun createDefaultAppStarter(): ApplicationStarter =
+  if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
 
 @VisibleForTesting
 internal fun createAppLocatorFile() {

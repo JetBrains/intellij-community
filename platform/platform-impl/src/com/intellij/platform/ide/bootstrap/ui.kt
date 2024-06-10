@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment", "ReplaceGetOrSet")
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -106,7 +104,7 @@ private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job?) {
   }
 
   // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
-  // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
+  // and to compute system font data, we need to know `Label.font` UI default (that's why we compute base LaF first)
   if (!isHeadless && !SystemInfoRt.isMac) {
     JBUIScale.preload {
       runActivity("base LaF defaults getting") { baseLaF.defaults }
@@ -149,7 +147,8 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
     // Otherwise, it's possible to have EDT being terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
     // [AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
     // and thus will effectively disable auto shutdown behavior for this application.
-    AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
+    @Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+    sun.awt.AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
   }
 
   // required for both UI scale computation and base LaF
@@ -229,7 +228,7 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
               .invoke(AppUIUtil.getFrameClass())
           }
         }
-        catch (ignore: Throwable) {
+        catch (_: Throwable) {
         }
       }
     }
@@ -250,7 +249,7 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
       }
     }
 
-    // preload cursors used by the drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock - see RIDER-80810
+    // preloading cursors used by the drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock (see RIDER-80810)
     launch(CoroutineName("DnD setup") + RawSwingDispatcher) {
       DragSource.getDefaultDragSource()
     }
@@ -288,9 +287,10 @@ fun createBaseLaF(): LookAndFeel {
       for (key in gtkDefaults.keys) {
         if (key.toString().endsWith(".font")) {
           // `UIDefaults#get` unwraps lazy values
-          fontDefaults.put(key, gtkDefaults.get(key))
+          fontDefaults.put(key, gtkDefaults[key])
         }
       }
+      @Suppress("UsePropertyAccessSyntax")
       return IdeaLaf(customFontDefaults = if (fontDefaults.isEmpty()) null else fontDefaults)
     }
   }

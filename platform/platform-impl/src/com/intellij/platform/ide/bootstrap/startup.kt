@@ -1,6 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
@@ -480,7 +479,7 @@ private suspend fun lockSystemDirs(args: List<String>) {
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
       try {
-        commandProcessor.get()(processorArgs).await()
+        commandProcessor.get().invoke(processorArgs).await()
       }
       catch (t: Throwable) {
         @Suppress("SSBasedInspection")
