@@ -2,6 +2,7 @@
 package com.intellij.ide.workspace
 
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.project.stateStore
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -16,7 +17,13 @@ internal class WorkspaceAttachProcessor : ProjectAttachProcessor() {
       return false
     }
     getCoroutineScope(project).launch {
+      val modules = ModuleManager.getInstance(project).modules.toSet()
       linkToWorkspace(project, projectDir.pathString)
+      if (callback != null) {
+        ModuleManager.getInstance(project).modules.subtract(modules).firstOrNull()?.let {
+          module -> callback.projectOpened(project, module)
+        }
+      }
     }
     return true
   }

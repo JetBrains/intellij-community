@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.trackActivityBlocking
+import java.util.function.Consumer
 import javax.swing.Icon
 
 abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
@@ -47,6 +48,10 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
         step.setupProject(project)
       }
     }
+  }
+
+  override fun createModuleConfigurator(): Consumer<Module>? {
+    return panel!!.step.createModuleConfigurator()
   }
 
   override fun cleanup() {

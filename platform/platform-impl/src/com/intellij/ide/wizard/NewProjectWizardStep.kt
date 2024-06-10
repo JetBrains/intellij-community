@@ -3,11 +3,13 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.module.ModifiableModuleModel
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.dsl.builder.Panel
+import java.util.function.Consumer
 
 /**
  * Defines vertical step in new project wizard. It is step which
@@ -83,6 +85,8 @@ interface NewProjectWizardStep {
    * [WizardContext.isCreatingNewProject].
    */
   fun setupProject(project: Project) {}
+
+  fun createModuleConfigurator(): Consumer<Module>? = null
 
   /**
    * See related doc for [NewProjectWizardStep.keywords].

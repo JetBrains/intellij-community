@@ -10576,6 +10576,7 @@ a:com.intellij.ide.wizard.AbstractNewProjectWizardBuilder
 - <init>():V
 - cleanup():V
 - commitModule(com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel):com.intellij.openapi.module.Module
+- createModuleConfigurator():java.util.function.Consumer
 - pa:createStep(com.intellij.ide.util.projectWizard.WizardContext):com.intellij.ide.wizard.NewProjectWizardStep
 - f:getCustomOptionsStep(com.intellij.ide.util.projectWizard.WizardContext,com.intellij.openapi.Disposable):com.intellij.ide.util.projectWizard.ModuleWizardStep
 - getDescription():java.lang.String
@@ -10732,6 +10733,7 @@ f:com.intellij.ide.wizard.NewProjectWizardChainStep
 - com.intellij.ide.wizard.AbstractNewProjectWizardStep
 - sf:Companion:com.intellij.ide.wizard.NewProjectWizardChainStep$Companion
 - <init>(com.intellij.ide.wizard.NewProjectWizardStep):V
+- createModuleConfigurator():java.util.function.Consumer
 - f:nextStep(kotlin.jvm.functions.Function1):com.intellij.ide.wizard.NewProjectWizardChainStep
 - setupProject(com.intellij.openapi.project.Project):V
 - setupUI(com.intellij.ui.dsl.builder.Panel):V
@@ -10768,6 +10770,7 @@ com.intellij.ide.wizard.NewProjectWizardStep
 - sf:GENERATE_ONBOARDING_TIPS_NAME:java.lang.String
 - sf:GIT_PROPERTY_NAME:java.lang.String
 - sf:GROUP_ID_PROPERTY_NAME:java.lang.String
+- createModuleConfigurator():java.util.function.Consumer
 - a:getContext():com.intellij.ide.util.projectWizard.WizardContext
 - a:getData():com.intellij.openapi.util.UserDataHolder
 - a:getKeywords():com.intellij.ide.wizard.NewProjectWizardStep$Keywords
@@ -23270,6 +23273,7 @@ a:com.intellij.platform.DirectoryProjectConfigurator$AsyncDirectoryProjectConfig
 - f:configureProject(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Ref,Z):V
 - f:isEdtRequired():Z
 com.intellij.platform.DirectoryProjectGenerator
+- configureModule(com.intellij.openapi.module.Module,com.intellij.openapi.vfs.VirtualFile,java.lang.Object):V
 - createLazyPeer():com.intellij.openapi.util.NotNullLazyValue
 - createPeer():com.intellij.platform.ProjectGeneratorPeer
 - a:generateProject(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.Object,com.intellij.openapi.module.Module):V

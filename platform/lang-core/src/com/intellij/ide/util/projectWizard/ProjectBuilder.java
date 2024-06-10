@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class ProjectBuilder {
   public boolean isUpdate() {
@@ -44,5 +45,13 @@ public abstract class ProjectBuilder {
 
   public @Nullable Project createProject(String name, String path) {
     return ProjectManager.getInstance().createProject(name, path);
+  }
+
+  /**
+   * Configure project when it's added to workspace as module.
+   */
+  @Nullable
+  public Consumer<Module> createModuleConfigurator() {
+    return null;
   }
 }
