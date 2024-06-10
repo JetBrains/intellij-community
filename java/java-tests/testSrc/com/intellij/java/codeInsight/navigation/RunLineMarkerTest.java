@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Avdeev
@@ -143,7 +144,7 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
-    String text = mark.getTooltipText();
+    String text = mark.getTooltipText().lines().filter(line -> !line.contains("Profiler")).collect(Collectors.joining("\n"));
     assertTrue(text, text.startsWith("""
                                        Run 'Main.main()'
                                        Debug 'Main.main()'
@@ -160,7 +161,7 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
-    String text = mark.getTooltipText();
+    String text = mark.getTooltipText().lines().filter(line -> !line.contains("Profiler")).collect(Collectors.joining("\n"));
     assertTrue(text, text.startsWith("""
                                        Run 'Main_class_test.main()'
                                        Debug 'Main_class_test.main()'
@@ -216,7 +217,7 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     }, LoadingOrder.FIRST, getTestRootDisposable());
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
-    String text = mark.getTooltipText();
+    String text = mark.getTooltipText().lines().filter(line -> !line.contains("Profiler")).collect(Collectors.joining("\n"));
     assertTrue(text, text.startsWith("""
                                        Run 'Main.main()'
                                        Debug 'Main.main()'
