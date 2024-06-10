@@ -1079,7 +1079,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public @NotNull DebuggerManagerThreadImpl getManagerThread() {
+  public final @NotNull DebuggerManagerThreadImpl getManagerThread() {
     return myDebuggerManagerThread;
   }
 

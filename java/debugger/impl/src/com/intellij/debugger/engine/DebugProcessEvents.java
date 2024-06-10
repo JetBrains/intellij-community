@@ -831,7 +831,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
         debugProcess.logError("Many suspend all switch contexts: " + suspendAllContexts);
       }
 
-      // Already stopped, so this is "remaining" event. Need to resume the event.
       noStandardSuspendNeeded = true;
       ThreadReferenceProxyImpl threadProxy = debugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
       if (suspendManager.myExplicitlyResumedThreads.contains(threadProxy)) {
@@ -854,6 +853,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         });
       }
       else {
+        // Already stopped, so this is "remaining" event. Need to resume the event.
         List<SuspendContextImpl> suspendAllSwitchContexts =
           ContainerUtil.filter(suspendManager.getEventContexts(), c -> c.mySuspendAllSwitchedContext);
         if (suspendAllSwitchContexts.size() != 1) {

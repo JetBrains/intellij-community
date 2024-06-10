@@ -161,8 +161,6 @@ public class SuspendManagerImpl implements SuspendManager {
     if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
       if (!ContainerUtil.exists(myPausedContexts, c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL)) {
         myExplicitlyResumedThreads.clear();
-      } else if (eventThread != null && !ContainerUtil.exists(myEventContexts, c -> c.suspends(eventThread))) {
-        myExplicitlyResumedThreads.add(eventThread);
       }
     }
     Set<ThreadReferenceProxyImpl> resumedThreads = context.myResumedThreads;
