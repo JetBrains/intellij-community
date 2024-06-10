@@ -188,7 +188,6 @@ com.intellij.remote.RemoteCredentials
 c:com.intellij.remote.RemoteCredentialsHolder
 - com.intellij.remote.MutableRemoteCredentials
 - sf:ANONYMOUS:java.lang.String
-- sf:CONNECTION_CONFIG_PATCH:java.lang.String
 - sf:HOST:java.lang.String
 - sf:PASSPHRASE:java.lang.String
 - sf:PASSWORD:java.lang.String
@@ -214,7 +213,6 @@ c:com.intellij.remote.RemoteCredentialsHolder
 - getPassword():java.lang.String
 - getPort():I
 - getPrivateKeyFile():java.lang.String
-- getSerializedUserName():java.lang.String
 - getUserName():java.lang.String
 - hashCode():I
 - isOpenSshConfigUsageForced():Z
