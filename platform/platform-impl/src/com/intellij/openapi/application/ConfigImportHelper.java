@@ -355,7 +355,7 @@ public final class ConfigImportHelper {
         Restarter.scheduleRestart(false);
       }
       catch (IOException e) {
-        StartupErrorReporter.showMessage(BootstrapBundle.message("restart.failed.title"), e);
+        StartupErrorReporter.showError(BootstrapBundle.message("restart.failed.title"), e);
       }
       System.exit(0);
     }
@@ -833,7 +833,7 @@ public final class ConfigImportHelper {
     catch (Exception e) {
       log.warn(e);
       String message = BootstrapBundle.message("import.settings.failed", IoErrorText.message(e));
-      StartupErrorReporter.showMessage(BootstrapBundle.message("import.settings.failed.title"), message, false);
+      StartupErrorReporter.showWarning(BootstrapBundle.message("import.settings.failed.title"), message);
     }
   }
 

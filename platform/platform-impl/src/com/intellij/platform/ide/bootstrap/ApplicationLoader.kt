@@ -447,14 +447,14 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
       span("app custom starter creation") {
         val starter = findStarter(commandName) ?: createDefaultAppStarter()
         if (AppMode.isHeadless() && !starter.isHeadless) {
-          val message = IdeBundle.message(
-            "application.cannot.start.in.a.headless.mode",
+          val message = BootstrapBundle.message(
+            "bootstrap.error.message.headless",
             if (starter is IdeStarter) 0 else 1,
             commandName,
             if (args.isEmpty()) 0 else 1,
             args.joinToString(" ")
           )
-          StartupErrorReporter.showMessage(IdeBundle.message("main.startup.error"), message, true)
+          StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), message)
           exitProcess(AppExitCodes.NO_GRAPHICS)
         }
         // must be executed before container creation

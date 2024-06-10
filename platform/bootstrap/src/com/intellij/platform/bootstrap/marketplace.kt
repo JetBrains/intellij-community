@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.BootstrapBundle
@@ -106,9 +106,8 @@ fun initMarketplace() {
   catch (e: Throwable) {
     // at this point, logging is not initialized yet, so reporting the error directly
     val path = pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).toString()
-    val message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at $path"
-    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.jetbrains.marketplace.boot.failure"),
-                                     Exception(message, e))
+    val message = BootstrapBundle.message("bootstrap.error.message.marketplace", path)
+    StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.marketplace"), Exception(message, e))
   }
 }
 

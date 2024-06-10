@@ -30,7 +30,6 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import sun.awt.AWTAutoShutdown
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
@@ -88,8 +87,7 @@ private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job?) {
   if (!isHeadless) {
     span("graphics environment checking") {
       if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance) {
-        StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"),
-                                         BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
+        StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), BootstrapBundle.message("bootstrap.error.message.no.graphics"))
         exitProcess(AppExitCodes.NO_GRAPHICS)
       }
     }

@@ -31,7 +31,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import sun.font.FontManagerFactory
 import java.awt.Toolkit
-import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
@@ -79,8 +78,8 @@ internal fun mainImpl(rawArgs: Array<String>,
       awaitCancellation()
     }
   }
-  catch (e: Throwable) {
-    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
+  catch (t: Throwable) {
+    StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), t)
     exitProcess(AppExitCodes.STARTUP_EXCEPTION)
   }
 }
@@ -284,7 +283,6 @@ private fun preprocessArgs(args: Array<String>): List<String> {
   return otherArgs
 }
 
-@Suppress("HardCodedStringLiteral")
 private fun installPluginUpdates() {
   try {
     // referencing `StartupActionScriptManager` is OK - a string constant will be inlined
@@ -295,18 +293,8 @@ private fun installPluginUpdates() {
       StartupActionScriptManager.executeActionScript()
     }
   }
-  catch (e: IOException) {
-    StartupErrorReporter.showMessage(
-      "Plugin Installation Error",
-      """
-       The IDE failed to install or update some plugins.
-       Please try again, and if the problem persists, please report it
-       to https://jb.gg/ide/critical-startup-errors
-       
-       The cause: $e
-     """.trimIndent(),
-      false
-    )
+  catch (t: Throwable) {
+    StartupErrorReporter.pluginInstallationProblem(t)
   }
 }
 

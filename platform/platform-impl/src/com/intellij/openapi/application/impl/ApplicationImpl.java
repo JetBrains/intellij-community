@@ -639,7 +639,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         }
         catch (Throwable t) {
           logErrorDuringExit("Failed to restart the application", t);
-          StartupErrorReporter.showMessage(BootstrapBundle.message("restart.failed.title"), t);
+          StartupErrorReporter.showError(BootstrapBundle.message("restart.failed.title"), t);
           if (exitCode == 0) {
             exitCode = AppExitCodes.RESTART_FAILED;
           }
