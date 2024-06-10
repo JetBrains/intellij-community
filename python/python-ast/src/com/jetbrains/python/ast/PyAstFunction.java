@@ -3,7 +3,6 @@ package com.jetbrains.python.ast;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
@@ -12,7 +11,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
 import com.jetbrains.python.ast.docstring.DocStringUtilCore;
@@ -21,8 +19,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,7 +28,7 @@ import java.util.Optional;
 @ApiStatus.Experimental
 public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStatement,
                                        PyAstDecoratable, PyAstCallable, PyAstStatementListContainer, PyAstPossibleClassMember,
-                                       AstScopeOwner, PyAstDocStringOwner, PyAstTypeCommentOwner, PyAstAnnotationOwner, PyAstTypeParameterListOwner {
+                                       AstScopeOwner, PyAstDocStringOwner, PyAstTypeCommentOwner, PyAstAnnotationOwner, PyAstTypeParameterListOwner{
 
   PyAstFunction[] EMPTY_ARRAY = new PyAstFunction[0];
   ArrayFactory<PyAstFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyAstFunction[count];
@@ -86,39 +82,6 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
     else {
       return null;
     }
-  }
-
-  /**
-   * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning..
-   *
-   * @return the deprecation message or null if the function is not deprecated.
-   */
-  @Nullable
-  default String getDeprecationMessage() {
-    return extractDeprecationMessage();
-  }
-
-  @Nullable
-  default String extractDeprecationMessage() {
-    PyAstStatementList statementList = getStatementList();
-    return extractDeprecationMessage(Arrays.asList(statementList.getStatements()));
-  }
-
-  static @Nullable String extractDeprecationMessage(List<? extends PyAstStatement> statements) {
-    for (PyAstStatement statement : statements) {
-      if (statement instanceof PyAstExpressionStatement expressionStatement) {
-        if (expressionStatement.getExpression() instanceof PyAstCallExpression callExpression) {
-          if (callExpression.isCalleeText(PyNames.WARN)) {
-            PyAstReferenceExpression warningClass = callExpression.getArgument(1, PyAstReferenceExpression.class);
-            if (warningClass != null && (PyNames.DEPRECATION_WARNING.equals(warningClass.getReferencedName()) ||
-                                         PyNames.PENDING_DEPRECATION_WARNING.equals(warningClass.getReferencedName()))) {
-              return PyPsiUtilsCore.strValue(callExpression.getArguments()[0]);
-            }
-          }
-        }
-      }
-    }
-    return null;
   }
 
   @Override

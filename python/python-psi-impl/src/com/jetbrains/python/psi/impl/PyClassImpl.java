@@ -1305,6 +1305,15 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return PyClass.super.getDocStringValue();
   }
 
+  @Override
+  public @Nullable String getDeprecationMessage() {
+    PyClassStub stub = getStub();
+    if (stub != null) {
+      return stub.getDeprecationMessage();
+    }
+    return PyClass.super.getDeprecationMessage();
+  }
+
   @Nullable
   @Override
   public StructuredDocString getStructuredDocString() {

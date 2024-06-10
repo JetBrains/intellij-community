@@ -83,6 +83,43 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
   }
 
+  public void testDeprecatedClass() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.copyDirectoryToProject("deprecation/deprecatedClass", "");
+    myFixture.configureByFile("deprecatedClass.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testDeprecatedMethod() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedMethod.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testDeprecatedAdd() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedAdd.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testDeprecatedFromTypingExtension() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedFromTypingExtension.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testDeprecatedWithSeveralArguments() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedWithSeveralArguments.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testCustomDeprecatedAnnotation() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/customDeprecatedAnnotation.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
   public void testAbcDeprecatedAbstracts() {
     myFixture.enableInspections(PyDeprecationInspection.class);
     myFixture.configureByFile("deprecation/abcDeprecatedAbstracts.py");
