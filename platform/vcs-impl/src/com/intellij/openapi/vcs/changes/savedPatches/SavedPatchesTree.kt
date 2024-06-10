@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
@@ -66,9 +67,9 @@ class SavedPatchesTree(project: Project,
     if (visibleProvidersList.isNotEmpty()) {
       val selectedObjects = selectedPatchObjects()
       visibleProvidersList.forEach { provider ->
-        DataSink.uiDataSnapshot(sink) { dataId: String ->
+        DataSink.uiDataSnapshot(sink, DataProvider { dataId ->
           provider.getData(dataId, selectedObjects)
-        }
+        })
       }
     }
   }

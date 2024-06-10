@@ -4,6 +4,7 @@ package com.intellij.platform.navbar.frontend.compatibility
 import com.intellij.ide.CopyPasteDelegator
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.EdtDataRule
@@ -22,10 +23,10 @@ internal class NavBarEdtDataRule : EdtDataRule {
     sink[PlatformDataKeys.COPY_PROVIDER] = delegator.copyProvider
     sink[PlatformDataKeys.PASTE_PROVIDER] = delegator.pasteProvider
 
-    DataSink.uiDataSnapshot(sink) { dataId: String ->
+    DataSink.uiDataSnapshot(sink, DataProvider { dataId ->
       extensionData(dataId) { innerDataId ->
         snapshot[DataKey.create(innerDataId)]
       }
-    }
+    })
   }
 }

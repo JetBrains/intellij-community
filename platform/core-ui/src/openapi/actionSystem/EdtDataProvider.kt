@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -89,6 +90,7 @@ interface DataSink {
   fun uiDataSnapshot(provider: DataProvider)
 
   companion object {
+    private val LOG = Logger.getInstance(DataSink.javaClass)
 
     @ApiStatus.Obsolete
     @JvmStatic
@@ -113,6 +115,10 @@ interface DataSink {
         }
         if (provider is DataProvider) {
           sink.uiDataSnapshot(provider)
+        }
+        if (provider is Function1<*, *>) {
+          LOG.error("Kotlin functions are not supported, use " +
+                    "DataProvider/EdtDataProvider/DataSnapshotProvider explicitly")
         }
       }
     }

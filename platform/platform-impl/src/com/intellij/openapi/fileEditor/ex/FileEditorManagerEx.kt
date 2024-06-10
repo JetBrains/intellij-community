@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.ide.impl.DataValidators
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.EdtDataRule
@@ -216,9 +217,9 @@ abstract class FileEditorManagerEx : FileEditorManager() {
       val project = snapshot[PlatformDataKeys.PROJECT] ?: return
       val caret = snapshot[PlatformDataKeys.CARET] ?: return
       getInstanceEx(project).dataProviders.forEach { provider ->
-        DataSink.uiDataSnapshot(sink) { dataId: String ->
+        DataSink.uiDataSnapshot(sink, DataProvider { dataId ->
           provider.getData(dataId, caret.editor, caret)
-        }
+        })
       }
     }
   }
