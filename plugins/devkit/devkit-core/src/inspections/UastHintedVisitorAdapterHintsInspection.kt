@@ -39,7 +39,7 @@ private val UAST_VISITOR_BASE_CLASS_NAMES = setOf(
   "org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor"
 )
 
-class UastHintedVisitorAdapterHintsInspection : DevKitUastInspectionBase() {
+internal class UastHintedVisitorAdapterHintsInspection : DevKitUastInspectionBase() {
 
   override fun isAllowed(holder: ProblemsHolder): Boolean {
     return super.isAllowed(holder) &&
