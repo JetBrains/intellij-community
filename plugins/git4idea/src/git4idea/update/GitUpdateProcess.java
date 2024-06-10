@@ -96,15 +96,20 @@ public final class GitUpdateProcess {
 
     GitUtil.updateRepositories(repositories);
 
-    mySubmodulesInDetachedHead = new LinkedHashMap<>();
-    for (GitRepository repository : myRepositories) {
-      if (!repository.isOnBranch()) {
-        GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
-        if (submodule != null) {
-          mySubmodulesInDetachedHead.put(repository, submodule);
-        }
+    mySubmodulesInDetachedHead = collectDetachedSubmodules(myRepositories);
+  }
+
+  private static @NotNull Map<GitRepository, GitSubmodule> collectDetachedSubmodules(@NotNull List<GitRepository> repositories) {
+    Map<GitRepository, GitSubmodule> detachedSubmodules = new LinkedHashMap<>();
+    for (GitRepository repository : repositories) {
+      if (repository.isOnBranch()) continue;
+
+      GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
+      if (submodule != null) {
+        detachedSubmodules.put(repository, submodule);
       }
     }
+    return detachedSubmodules;
   }
 
   /**
