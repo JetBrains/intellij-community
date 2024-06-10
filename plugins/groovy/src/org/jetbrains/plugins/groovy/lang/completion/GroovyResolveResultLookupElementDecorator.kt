@@ -6,12 +6,12 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator
 import javax.swing.Icon
 
 @Suppress("EqualsOrHashCode")
-class GroovyResolveResultLookupElement(private val typeText: String?, private val tailText: String?, builder: LookupElementBuilder) : LookupElementDecorator<LookupElementBuilder>(builder) {
+class GroovyResolveResultLookupElementDecorator(private val typeText: String?, private val tailText: String?, builder: LookupElementBuilder) : LookupElementDecorator<LookupElementBuilder>(builder) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is GroovyResolveResultLookupElement) return false
+    if (other !is GroovyResolveResultLookupElementDecorator) return false
     return delegate.lookupString == other.delegate.lookupString && typeText == other.typeText && tailText == other.tailText
   }
 
-  fun withIcon(icon: Icon): GroovyResolveResultLookupElement = GroovyResolveResultLookupElement(typeText, tailText, delegate.withIcon(icon))
+  fun withIcon(icon: Icon): GroovyResolveResultLookupElementDecorator = GroovyResolveResultLookupElementDecorator(typeText, tailText, delegate.withIcon(icon))
 }

@@ -313,8 +313,9 @@ public final class GroovyCompletionUtil {
     PsiSubstitutor substitutor = candidate.getSubstitutor();
     String typeText = getTypeText(element, substitutor, position);
     String tailText = getTailText(element, substitutor);
-    GroovyResolveResultLookupElement groovyResolveResultLookupElement = new GroovyResolveResultLookupElement(typeText, tailText, setupLookupBuilder(element, builder, tailText, typeText));
-    return Collections.singletonList(groovyResolveResultLookupElement);
+    GroovyResolveResultLookupElementDecorator
+      groovyResolveResultLookupElementDecorator = new GroovyResolveResultLookupElementDecorator(typeText, tailText, setupLookupBuilder(element, builder, tailText, typeText));
+    return Collections.singletonList(groovyResolveResultLookupElementDecorator);
   }
 
   private static boolean setterMatches(PrefixMatcher matcher, PsiMethod element, String importedName) {
@@ -339,8 +340,9 @@ public final class GroovyCompletionUtil {
     LookupElementBuilder builder = LookupElementBuilder.create(resolveResult, importedName).withPresentableText(importedName);
     String typeText = getTypeText(element, substitutor, null);
     String tailText = getTailText(element, substitutor);
-    GroovyResolveResultLookupElement groovyResolveResultLookupElement = new GroovyResolveResultLookupElement(typeText, tailText, setupLookupBuilder(element, setupLookupBuilder(element, builder, tailText, typeText), tailText, typeText));
-    return Collections.singletonList(groovyResolveResultLookupElement);
+    GroovyResolveResultLookupElementDecorator
+      groovyResolveResultLookupElementDecorator = new GroovyResolveResultLookupElementDecorator(typeText, tailText, setupLookupBuilder(element, setupLookupBuilder(element, builder, tailText, typeText), tailText, typeText));
+    return Collections.singletonList(groovyResolveResultLookupElementDecorator);
   }
 
   public static LookupElement createLookupElement(PsiNamedElement o) {

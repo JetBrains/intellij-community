@@ -506,8 +506,8 @@ public final class CompleteReferenceExpression {
         Icon icon = getIconForField(field);
         if (element instanceof LookupElementBuilder lookupElementBuilder) {
           myConsumer.consume(lookupElementBuilder.withIcon(icon));
-        } else if (element instanceof GroovyResolveResultLookupElement groovyResolveResultLookupElement) {
-          myConsumer.consume(groovyResolveResultLookupElement.withIcon(icon));
+        } else if (element instanceof GroovyResolveResultLookupElementDecorator groovyResolveResultLookupElementDecorator) {
+          myConsumer.consume(groovyResolveResultLookupElementDecorator.withIcon(icon));
         }
       }
     }
