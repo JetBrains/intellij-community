@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabChooseAccountDialog
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
+import org.jetbrains.plugins.gitlab.ui.util.GitLabPluginProjectScopeProvider
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Component
 import javax.swing.JComponent
@@ -95,14 +96,17 @@ object GitLabLoginUtil {
     title: @NlsContexts.DialogTitle String,
     serverFieldDisabled: Boolean
   ): Int {
-    val dialog = TokenLoginDialog(project, parentComponent, model, title, model.tryGitAuthorizationSignal) {
-      val cs = this
-      TokenLoginInputPanelFactory(model).createIn(
-        cs,
-        serverFieldDisabled,
-        tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
-        errorPresenter = GitLabLoginErrorStatusPresenter(cs, model)
-      )
+    val scopeProvider = project.service<GitLabPluginProjectScopeProvider>()
+    val dialog = scopeProvider.constructDialog("GitLab token login dialog") {
+      TokenLoginDialog(project, this, parentComponent, model, title, model.tryGitAuthorizationSignal) {
+        val cs = this
+        TokenLoginInputPanelFactory(model).createIn(
+          cs,
+          serverFieldDisabled,
+          tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
+          errorPresenter = GitLabLoginErrorStatusPresenter(cs, model)
+        )
+      }
     }
     dialog.showAndGet()
 

@@ -491,6 +491,10 @@ a:com.intellij.collaboration.auth.ServerAccount
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,java.lang.String,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):V
 - b:<init>(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,java.lang.String,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,kotlin.jvm.functions.Function1):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,java.lang.String,kotlin.jvm.functions.Function1):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,java.lang.String,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):V
+- b:<init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,java.lang.String,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,kotlin.jvm.functions.Function1):V
 *f:com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory
 - *sf:Companion:com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory$Companion
 - <init>(com.intellij.collaboration.auth.ui.login.TokenLoginPanelModel):V

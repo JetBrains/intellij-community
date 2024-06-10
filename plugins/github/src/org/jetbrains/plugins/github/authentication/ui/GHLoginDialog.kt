@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
-import com.intellij.collaboration.async.DisposingMainScope
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
@@ -9,13 +9,14 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.UiNotifyConnector
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -29,10 +30,11 @@ internal fun JComponent.setPaddingCompensated(): JComponent =
 internal sealed class GHLoginDialog(
   private val model: GHLoginModel,
   project: Project?,
+  parentCs: CoroutineScope,
   parent: Component?
 ) : DialogWrapper(project, parent, false, IdeModalityType.IDE) {
 
-  private val cs = DisposingMainScope(disposable) + ModalityState.stateForComponent(window).asContextElement()
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.EDT + ModalityState.stateForComponent(window).asContextElement())
 
   protected val loginPanel = GithubLoginPanel(cs, GithubApiRequestExecutor.Factory.getInstance()) { login, server ->
     model.isAccountUnique(server, login)
@@ -69,8 +71,8 @@ internal sealed class GHLoginDialog(
   }
 
 
-  class Token(model: GHLoginModel, project: Project?, parent: Component?) :
-    GHLoginDialog(model, project, parent) {
+  class Token(model: GHLoginModel, project: Project?, parentCs: CoroutineScope, parent: Component?) :
+    GHLoginDialog(model, project, parentCs, parent) {
 
     init {
       title = GithubBundle.message("login.to.github")
@@ -85,8 +87,8 @@ internal sealed class GHLoginDialog(
     override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
   }
 
-  class OAuth(model: GHLoginModel, project: Project?, parent: Component?) :
-    GHLoginDialog(model, project, parent) {
+  class OAuth(model: GHLoginModel, project: Project?, parentCs: CoroutineScope, parent: Component?) :
+    GHLoginDialog(model, project, parentCs, parent) {
 
     init {
       title = GithubBundle.message("login.to.github")
