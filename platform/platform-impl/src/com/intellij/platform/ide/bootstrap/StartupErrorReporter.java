@@ -99,12 +99,6 @@ public final class StartupErrorReporter {
     return jre + ' ' + arch + " (" + vendor + ")\n" + home;
   }
 
-  /** @deprecated use {@link #showWarning(String, String)} or {@link #showError(String, String)} */
-  @Deprecated
-  public static void showMessage(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message, boolean error) {
-    if (error) showError(title, message); else showWarning(title, message);
-  }
-
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message) {
     System.err.println();
