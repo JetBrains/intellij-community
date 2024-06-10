@@ -20,7 +20,7 @@
 
     <projectService serviceImplementation="com.intellij.coverage.CoverageOptionsProvider"/>
     <projectService serviceImplementation="com.intellij.coverage.CoverageDataManagerImpl"/>
-    <executor implementation="com.intellij.coverage.CoverageExecutor" />
+    <executor implementation="com.intellij.coverage.CoverageExecutor" order="first,after debug"/>
     <editorFactoryListener implementation="com.intellij.coverage.CoverageDataAnnotationsManager$CoverageEditorFactoryListener"/>
     <selectInTarget implementation="com.intellij.coverage.view.SelectInCoverageView"/>
 
