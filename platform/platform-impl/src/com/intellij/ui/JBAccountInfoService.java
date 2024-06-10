@@ -5,8 +5,8 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public interface JBAccountInfoService {
@@ -33,32 +33,7 @@ public interface JBAccountInfoService {
   }
 
   default @NotNull Future<String> getAccessToken() {
-    return new Future<>() {
-      @Override
-      public boolean cancel(boolean mayInterruptIfRunning) {
-        return false;
-      }
-
-      @Override
-      public boolean isCancelled() {
-        return false;
-      }
-
-      @Override
-      public boolean isDone() {
-        return true;
-      }
-
-      @Override
-      public String get() {
-        return null;
-      }
-
-      @Override
-      public String get(long timeout, @NotNull TimeUnit unit) {
-        return null;
-      }
-    };
+    return CompletableFuture.completedFuture(null);
   }
 
   void invokeJBALogin(@Nullable Consumer<? super String> userIdConsumer, @Nullable Runnable onFailure);
