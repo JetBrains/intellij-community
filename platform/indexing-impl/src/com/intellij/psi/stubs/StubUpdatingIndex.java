@@ -91,8 +91,18 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
           return true;
         }
 
-        logIfStubTraceEnabled(() -> "Can't build stub using stub file element type " + file.getFileName() +
-                              ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file.getFile()));
+        logIfStubTraceEnabled(() -> {
+          String ret = "Can't build stub" +
+                       ". parserDefinition: " + parserDefinition +
+                       ", elementType: " + elementType +
+                       ", fileName:" + file.getFileName() +
+                       ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file.getFile());
+          VirtualFile parent = file.getFile().getParent();
+          if (parent != null) {
+            ret += ", parentProperties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(parent);
+          }
+          return ret;
+        });
       }
 
       BinaryFileStubBuilder builder = getBinaryStubBuilder(file.getFileType());
