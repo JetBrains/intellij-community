@@ -11,8 +11,8 @@ class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
   }
 
 
-  fun `test should add spaces inside braces when block body is presented`() {
-    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENTED = true
+  fun `test should add spaces inside braces when block body is present`() {
+    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = true
     doTextTest(
       """
       class A {
@@ -41,7 +41,7 @@ class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
 
 
   fun `test should not add spaces inside braces when block body is empty`() {
-    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENTED = true
+    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = true
     doTextTest(
       """
       class A {
@@ -68,7 +68,7 @@ class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
   }
 
   fun `test should not add spaces inside braces when block body is present and option is disabled`() {
-    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENTED = false
+    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = false
     doTextTest(
       """
       class A {

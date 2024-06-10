@@ -924,7 +924,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.LBRACE) {
       int spacesAfterLBrace;
       if (myRole2 == ChildRole.RBRACE) spacesAfterLBrace = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
-      else spacesAfterLBrace = mySettings.SPACE_WITHIN_BRACES || myJavaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENTED ? 1 : 0;
+      else spacesAfterLBrace = mySettings.SPACE_WITHIN_BRACES || myJavaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT ? 1 : 0;
 
       if (!keepInOneLine) {
         int blankLines = 1;
@@ -946,7 +946,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myRole2 == ChildRole.RBRACE) {
-      int spacesBeforeRBrace = mySettings.SPACE_WITHIN_BRACES || myJavaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENTED ? 1 : 0;
+      int spacesBeforeRBrace = mySettings.SPACE_WITHIN_BRACES || myJavaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT ? 1 : 0;
       if (!keepInOneLine) {
         myResult = Spacing.createSpacing(
           spacesBeforeRBrace, spacesBeforeRBrace, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
