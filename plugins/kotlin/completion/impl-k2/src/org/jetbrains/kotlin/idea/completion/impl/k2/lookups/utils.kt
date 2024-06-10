@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
@@ -35,7 +37,7 @@ internal fun withClassifierSymbolInfo(
     .withPsiElement(symbol.psi) // TODO check if it is a heavy operation and should be postponed
     .withIcon(getIconFor(symbol))
     .withTypeText(getTypeTextForClassifier(symbol))
-    .withStrikeoutness(symbol.deprecationStatus != null)
+    .withStrikeoutness(symbol.requireStrikeoutness())
 
 context(KaSession)
 internal fun withCallableSignatureInfo(
@@ -45,8 +47,14 @@ internal fun withCallableSignatureInfo(
     .withPsiElement(signature.symbol.psi)
     .withIcon(getIconFor(signature.symbol))
     .withTypeText(getTypeTextForCallable(signature, treatAsFunctionCall = elementBuilder.`object` is FunctionCallLookupObject))
-    .withStrikeoutness(signature.symbol.deprecationStatus != null)
+    .withStrikeoutness(signature.symbol.requireStrikeoutness())
 
+context(KaSession)
+private fun KaDeclarationSymbol.requireStrikeoutness(): Boolean = when {
+    deprecationStatus != null -> true
+    this is KaPropertySymbol -> getterDeprecationStatus != null && (isVal || setterDeprecationStatus != null)
+    else -> false
+}
 
 // FIXME: This is a hack, we should think how we can get rid of it
 @OptIn(KaAllowAnalysisOnEdt::class)

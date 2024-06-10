@@ -441,6 +441,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/boldOrGrayed/Deprecated.kt");
         }
 
+        @TestMetadata("DeprecatedGetter.kt")
+        public void testDeprecatedGetter() throws Exception {
+            runTest("../../completion/testData/basic/common/boldOrGrayed/DeprecatedGetter.kt");
+        }
+
         @TestMetadata("ImmediateExtensionMembers1.kt")
         public void testImmediateExtensionMembers1() throws Exception {
             runTest("../../completion/testData/basic/common/boldOrGrayed/ImmediateExtensionMembers1.kt");
@@ -504,6 +509,16 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
         @TestMetadata("MemberAfterNullable.kt")
         public void testMemberAfterNullable() throws Exception {
             runTest("../../completion/testData/basic/common/boldOrGrayed/MemberAfterNullable.kt");
+        }
+
+        @TestMetadata("NonDeprecatedGetter.kt")
+        public void testNonDeprecatedGetter() throws Exception {
+            runTest("../../completion/testData/basic/common/boldOrGrayed/NonDeprecatedGetter.kt");
+        }
+
+        @TestMetadata("NonDeprecatedSetter.kt")
+        public void testNonDeprecatedSetter() throws Exception {
+            runTest("../../completion/testData/basic/common/boldOrGrayed/NonDeprecatedSetter.kt");
         }
 
         @TestMetadata("NonPredictableSmartCast.kt")
