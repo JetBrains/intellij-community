@@ -6,6 +6,7 @@ import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.performancePlugin.remotedriver.waitFor
 import org.assertj.swing.awt.AWT.translate
 import org.assertj.swing.awt.AWT.visibleCenterOf
@@ -19,9 +20,12 @@ import org.assertj.swing.keystroke.KeyStrokeMap
 import org.assertj.swing.timing.Pause.pause
 import org.assertj.swing.util.Modifiers
 import java.awt.*
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.io.ByteArrayOutputStream
 import java.time.Duration
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 import javax.swing.JComponent
 import javax.swing.JPopupMenu
@@ -33,6 +37,7 @@ import kotlin.math.ln
 internal class SmoothRobot : Robot {
 
   private val basicRobot: BasicRobot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock() as BasicRobot
+  private val logger = thisLogger()
 
   private val waitConst = 30L
   private var myAwareClick: Boolean = false
@@ -86,15 +91,59 @@ internal class SmoothRobot : Robot {
   }
 
   override fun click(component: Component, mouseButton: MouseButton, counts: Int) {
-    ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
+    clickWithRetry(component, mouseButton, counts)
+  }
+
+  private fun clickWithRetry(component: Component, mouseButton: MouseButton, counts: Int) {
     if (useInputEvents()) {
       postClickEvent(component, mouseButton, counts)
+      return
     }
-    else {
+    //we don't want to register mouse listener to component that doesn't have mouse listeners
+    //this will break event propagation to a parent component
+    if (component.mouseListeners.size == 0) {
       moveMouse(component)
       basicRobot.click(component, mouseButton, counts)
+      return
     }
-    ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
+
+    var attempt = 0
+    var finished = false
+    while (attempt < 3 && !finished) {
+      val clickLatch = CountDownLatch(1)
+      val mouseListener = object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent?) {
+          clickLatch.countDown()
+          logger.info("Mouse clicked on $component")
+        }
+
+        override fun mouseReleased(e: MouseEvent?) {
+          this.mouseClicked(e)
+        }
+
+        //on some components, mouse clicked/released are not registered on click
+        override fun mousePressed(e: MouseEvent?) {
+          this.mouseClicked(e)
+        }
+      }
+
+      component.addMouseListener(mouseListener)
+
+      moveMouse(component)
+
+      ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
+      basicRobot.click(component, mouseButton, counts)
+      val clicked = clickLatch.await(3, TimeUnit.SECONDS)
+      if (!clicked) {
+        logger.warn("Repeating click. Click was unsuccessful on $component")
+        attempt++
+        component.removeMouseListener(mouseListener)
+        continue
+      }
+      finished = true
+
+      component.removeMouseListener(mouseListener)
+    }
   }
 
   override fun click(component: Component, point: Point) {
