@@ -30,7 +30,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
   @Override
   public boolean processAddedClasses(DifferentiateContext context, Iterable<JvmClass> addedClasses, Utils future, Utils present) {
     for (JvmNodeReferenceID sealedSuperClass : unique(map(filter(flat(map(addedClasses, added -> future.allDirectSupertypes(added))), KJvmUtils::isSealed), JVMClassNode::getReferenceID))) {
-      affectSealedClass(context, sealedSuperClass, "Subclass of a sealed class was added, affecting ", future, true /*affectUsages*/  /*forceAffect*/);
+      affectSealedClass(context, sealedSuperClass, "Subclass of a sealed class was added, affecting ", future, true /*affectUsages*/);
     }
     return super.processAddedClasses(context, addedClasses, future, present);
   }

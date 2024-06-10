@@ -100,7 +100,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
     Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
     Predicate<? super NodeSource> affectionFilter = context.getParams().affectionFilter();
     for (NodeSource source : filter(sources, affectionFilter::test)) {
-      if (forceAffect || !context.isCompiled(source) && !deletedSources.contains(source)) {
+      if ((forceAffect || !context.isCompiled(source)) && !deletedSources.contains(source)) {
         context.affectNodeSource(source);
         debug(affectReason, source);
       }
