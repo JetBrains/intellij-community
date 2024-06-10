@@ -73,8 +73,8 @@ import org.jetbrains.jewel.ui.component.Text
 @ExperimentalJewelApi
 public open class DefaultMarkdownBlockRenderer(
     private val rootStyling: MarkdownStyling,
-    private val rendererExtensions: List<MarkdownRendererExtension>,
-    private val inlineRenderer: InlineMarkdownRenderer,
+    private val rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
+    private val inlineRenderer: InlineMarkdownRenderer = DefaultInlineMarkdownRenderer(),
 ) : MarkdownBlockRenderer {
 
     @Composable

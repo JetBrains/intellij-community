@@ -332,6 +332,12 @@ public final class org/jetbrains/jewel/markdown/MarkdownBlock$ThematicBreak : or
 	public static final field INSTANCE Lorg/jetbrains/jewel/markdown/MarkdownBlock$ThematicBreak;
 }
 
+public final class org/jetbrains/jewel/markdown/MarkdownKt {
+	public static final fun LazyMarkdown (Ljava/util/List;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/lazy/LazyListState;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Markdown (Ljava/lang/String;Landroidx/compose/ui/Modifier;ZZLkotlinx/coroutines/CoroutineDispatcher;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/processing/MarkdownProcessor;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Markdown (Ljava/util/List;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Landroidx/compose/runtime/Composer;II)V
+}
+
 public final class org/jetbrains/jewel/markdown/MimeType {
 	public static final field ATTR_FOLDER_TYPE Ljava/lang/String;
 	public static final field ATTR_ROLE Ljava/lang/String;
@@ -401,6 +407,12 @@ public final class org/jetbrains/jewel/markdown/MimeTypeKt {
 	public static final fun isXml-K9GpHcc (Ljava/lang/String;)Z
 }
 
+public final class org/jetbrains/jewel/markdown/SemanticsKt {
+	public static final fun getRawMarkdown ()Landroidx/compose/ui/semantics/SemanticsPropertyKey;
+	public static final fun getRawMarkdown (Landroidx/compose/ui/semantics/SemanticsPropertyReceiver;)Ljava/lang/String;
+	public static final fun setRawMarkdown (Landroidx/compose/ui/semantics/SemanticsPropertyReceiver;Ljava/lang/String;)V
+}
+
 public abstract interface class org/jetbrains/jewel/markdown/extensions/MarkdownBlockProcessorExtension {
 	public abstract fun canProcess (Lorg/commonmark/node/CustomBlock;)Z
 	public abstract fun processMarkdownBlock (Lorg/commonmark/node/CustomBlock;Lorg/jetbrains/jewel/markdown/processing/MarkdownProcessor;)Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;
@@ -412,9 +424,6 @@ public abstract interface class org/jetbrains/jewel/markdown/extensions/Markdown
 }
 
 public final class org/jetbrains/jewel/markdown/extensions/MarkdownKt {
-	public static final fun LazyMarkdown (Ljava/util/List;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/lazy/LazyListState;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Landroidx/compose/runtime/Composer;II)V
-	public static final fun Markdown (Ljava/lang/String;Landroidx/compose/ui/Modifier;ZZLkotlinx/coroutines/CoroutineDispatcher;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/processing/MarkdownProcessor;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Landroidx/compose/runtime/Composer;II)V
-	public static final fun Markdown (Ljava/util/List;Landroidx/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Landroidx/compose/runtime/Composer;II)V
 	public static final fun getLocalMarkdownBlockRenderer ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalMarkdownProcessor ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalMarkdownStyling ()Landroidx/compose/runtime/ProvidableCompositionLocal;
@@ -457,6 +466,7 @@ public final class org/jetbrains/jewel/markdown/rendering/DefaultInlineMarkdownR
 public class org/jetbrains/jewel/markdown/rendering/DefaultMarkdownBlockRenderer : org/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer {
 	public static final field $stable I
 	public fun <init> (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Ljava/util/List;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;)V
+	public synthetic fun <init> (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Ljava/util/List;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun render (Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$BlockQuote;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$BlockQuote;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$FencedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced;Landroidx/compose/runtime/Composer;I)V
