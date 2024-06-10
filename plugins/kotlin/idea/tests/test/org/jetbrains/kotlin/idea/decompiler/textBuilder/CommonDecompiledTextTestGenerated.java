@@ -135,6 +135,11 @@ public class CommonDecompiledTextTestGenerated extends AbstractCommonDecompiledT
         runTest("testData/decompiler/decompiledText/Object/");
     }
 
+    @TestMetadata("PrivateAnonymousTypes")
+    public void testPrivateAnonymousTypes() throws Exception {
+        runTest("testData/decompiler/decompiledText/PrivateAnonymousTypes/");
+    }
+
     @TestMetadata("SecondaryConstructors")
     public void testSecondaryConstructors() throws Exception {
         runTest("testData/decompiler/decompiledText/SecondaryConstructors/");
