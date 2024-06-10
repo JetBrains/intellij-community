@@ -32,14 +32,14 @@ def get_column_types(table):
         return TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(t) for t in table.dtypes])
 
 
-# used by pydevd, isDisplaySupported equals false
+# used by pydevd
 def get_data(table, start_index=None, end_index=None):
     # type: (pl.DataFrame, int, int) -> str
     with __create_config():
         return table[start_index:end_index]._repr_html_()
 
 
-# used by DSTableCommands isDisplaySupported equals true
+# used by DSTableCommands
 def display_data(table, start, end):
     # type: (pl.DataFrame, int, int) -> None
     with __create_config():
