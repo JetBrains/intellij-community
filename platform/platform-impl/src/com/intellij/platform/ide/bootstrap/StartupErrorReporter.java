@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -27,6 +28,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URI;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
@@ -34,7 +36,8 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 @ApiStatus.Internal
 public final class StartupErrorReporter {
-  private static final String STARTUP_ERROR_REPORTING_URL_PROPERTY = "intellij.custom.startup.error.reporting.url";
+  private static final String SUPPORT_URL_PROPERTY = "ij.startup.error.support.url";
+  private static final String REPORT_URL_PROPERTY = "ij.startup.error.report.url";
 
   private static boolean hasGraphics = !ApplicationManagerEx.isInIntegrationTest();
 
@@ -73,7 +76,7 @@ public final class StartupErrorReporter {
       t = awtError;
     }
     else {
-      message.append(BootstrapBundle.message("bootstrap.error.prefix.other", supportUrl()));
+      message.append(BootstrapBundle.message("bootstrap.error.prefix.other"));
     }
 
     message.append("\n\n");
@@ -91,10 +94,6 @@ public final class StartupErrorReporter {
     var arch = sp.getProperty("os.arch", "(unknown arch)");
     var home = sp.getProperty("java.home", "(unknown java.home)");
     return jre + ' ' + arch + " (" + vendor + ")\n" + home;
-  }
-
-  private static @NlsSafe String supportUrl() {
-    return System.getProperty(STARTUP_ERROR_REPORTING_URL_PROPERTY, "https://jb.gg/ide/critical-startup-errors");
   }
 
   /** @deprecated use {@link #showWarning(String, String)} or {@link #showError(String, String)} */
@@ -125,14 +124,45 @@ public final class StartupErrorReporter {
     catch (Throwable ignore) { }
 
     try {
-      var options = new String[]{BootstrapBundle.message("bootstrap.error.option.close")};
-      JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), prepareMessage(message), title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]);
+      var options = new String[]{BootstrapBundle.message("bootstrap.error.option.close"), BootstrapBundle.message("bootstrap.error.option.support"), BootstrapBundle.message("bootstrap.error.option.report")};
+      var choice = JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), prepareMessage(message), title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]);
+      switch (choice) {
+        case 1 -> supportCenter();
+        case 2 -> reportProblem(title, message);
+      }
     }
     catch (Throwable t) {
       System.err.println("\n-----");
       System.err.println(BootstrapBundle.message("bootstrap.error.appendix.graphics"));
       t.printStackTrace(System.err);
     }
+  }
+
+  private static void supportCenter() {
+    try {
+      var url = System.getProperty(SUPPORT_URL_PROPERTY, "https://jb.gg/ide/critical-startup-errors");
+      Desktop.getDesktop().browse(new URI(url));
+    }
+    catch (Throwable t) {
+      showBrowserError(t);
+    }
+  }
+
+  private static void reportProblem(String title, String message) {
+    try {
+      var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$")
+        .replace("$TITLE$", URLUtil.encodeURIComponent(title))
+        .replace("$DESCR$", URLUtil.encodeURIComponent(message));
+      Desktop.getDesktop().browse(new URI(url));
+    }
+    catch (Throwable t) {
+      showBrowserError(t);
+    }
+  }
+
+  private static void showBrowserError(Throwable t) {
+    var message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.browser", t));
+    JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.browser"), JOptionPane.ERROR_MESSAGE);
   }
 
   @SuppressWarnings({"UndesirableClassUsage", "HardCodedStringLiteral"})
