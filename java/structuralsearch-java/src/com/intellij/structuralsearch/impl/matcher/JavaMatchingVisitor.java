@@ -1829,15 +1829,17 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     context.pushResult();
     try {
-      final PsiDocComment docComment = method.getDocComment();
-      if (docComment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(docComment, other.getDocComment()))) return;
-      if (method.hasTypeParameters() && !myMatchingVisitor.setResult(
-        myMatchingVisitor.match(method.getTypeParameterList(), other.getTypeParameterList()))) return;
-
+      final PsiElement docComment = method.getFirstChild();
+      if (docComment instanceof PsiComment && !myMatchingVisitor.setResult(myMatchingVisitor.match(docComment, other.getFirstChild()))) {
+        return;
+      }
+      if (method.hasTypeParameters() && 
+          !myMatchingVisitor.setResult(myMatchingVisitor.match(method.getTypeParameterList(), other.getTypeParameterList()))) {
+        return;
+      }
       if (!myMatchingVisitor.setResult(checkHierarchy(other, method))) {
         return;
       }
-
       if (!myMatchingVisitor.setResult((!method.isConstructor() || other.isConstructor()) &&
                                        (isTypedVar || myMatchingVisitor.matchText(methodNameNode, other.getNameIdentifier())) &&
                                        myMatchingVisitor.match(method.getModifierList(), other.getModifierList()))) {

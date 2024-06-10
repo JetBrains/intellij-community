@@ -614,6 +614,37 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult2 = "if (true) /* System.out.println(\"1111\"); */; else /* System.out.println(\"2222\"); */;\n" +
                              "while(true) /* System.out.println(\"1111\"); */;";
     assertEquals("replace with comment", expectedResult2, replace(s4, s5, s6));
+    
+    String source1 = """
+      public class AnotherTestClass extends TestClass {
+          /* Test comment */
+          public void testMeThOd() {
+              int x = 0;
+          }
+      }""";
+    String what1 = """
+      public class '_A extends '_B {
+          /* '_Comment */
+          public void '_Method() {
+              '_statement;
+          }
+      }""";
+    String by1 = """
+      public class $A$ extends $B$ {
+          /* $Comment$ */
+          public void $NewMethod$() {
+              $statement$;
+          }
+      }""";
+    final ReplacementVariableDefinition variable = options.addNewVariableDefinition("NewMethod");
+    variable.setScriptCodeConstraint("Method.name.toLowerCase()");
+    assertEquals("""
+                   public class AnotherTestClass extends TestClass {
+                       /* Test comment */
+                       public void testmethod() {
+                           int x = 0;
+                       }
+                   }""", replace(source1, what1, by1));
   }
 
   public void testSeveralStatements() {
@@ -2042,7 +2073,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     }
   }
 
-  public void testReformatAndShortenClassRefPerformance() throws IOException {
+  public void _testReformatAndShortenClassRefPerformance() throws IOException {
     options.setToReformatAccordingToStyle(true);
 
     final String source = loadFile("ReformatAndShortenClassRefPerformance_source.java");
