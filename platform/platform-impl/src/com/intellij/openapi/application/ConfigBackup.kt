@@ -16,7 +16,6 @@ import kotlin.io.path.*
 
 @ApiStatus.Internal
 class ConfigBackup(private val configDir: Path) {
-
   @Throws(IOException::class)
   fun moveToBackup(dirToMove: Path) {
     val backupDir = getBackupDir(configDir)
@@ -55,7 +54,7 @@ class ConfigBackup(private val configDir: Path) {
       format.parse(this)
       return true
     }
-    catch (e: DateTimeParseException) {
+    catch (_: DateTimeParseException) {
       return false
     }
   }
