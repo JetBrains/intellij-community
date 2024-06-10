@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -116,6 +117,30 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       8
     ))
     return DynamicInsetPresentation(rounding, offsetFromTopProvider)
+  }
+
+  @Contract(pure = true)
+  fun roundWithBackgroundAndNoInset(base: InlayPresentation): InlayPresentation {
+    val rounding = withInlayAttributes(RoundWithBackgroundPresentation(base, 8, 8))
+    return DynamicInsetPresentation(rounding, offsetFromTopProvider)
+  }
+
+  @Contract(pure = true)
+  fun adjustToNextTextEqualWidth(base: InlayPresentation): InlayPresentation {
+    return DynamicInsetPresentation(base, object : InsetValueProvider {
+
+      fun getInset(roundUp: Boolean): Int {
+        val spaceWidth = EditorUtil.getPlainSpaceWidth(editor)
+        val additionalWidth = spaceWidth - base.width % spaceWidth
+        return if (roundUp) (additionalWidth + 1) / 2 else additionalWidth / 2
+      }
+
+      override val left: Int
+        get() = getInset(true)
+
+      override val right: Int
+        get() = getInset(false)
+    })
   }
 
   @Contract(pure = true)
