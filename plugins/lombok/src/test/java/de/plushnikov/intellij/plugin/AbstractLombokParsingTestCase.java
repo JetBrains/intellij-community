@@ -141,7 +141,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     }
     else if (myRunnerType == ModeRunnerType.INCOMPLETE) {
       IncompleteDependenciesService service = getProject().getService(IncompleteDependenciesService.class);
-      try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState()))) {
+      try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState(this)))) {
         compareFiles(lowercaseFirstLetter);
       }
     }

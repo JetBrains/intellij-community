@@ -20,7 +20,7 @@ public class IncompleteModeHighlightTest extends AbstractLombokHighlightsTest {
 
   private void doIncompleteTest() {
     IncompleteDependenciesService service = getProject().getService(IncompleteDependenciesService.class);
-    try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState()))) {
+    try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState(this)))) {
       String name = getTestName(false);
       myFixture.configureByFile(name + ".java");
       myFixture.testHighlighting(true, true, true);
