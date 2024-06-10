@@ -101,9 +101,6 @@
             serviceInterface="org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KotlinModuleDependentsProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.IdeKotlinModuleDependentsProvider"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
     <projectService

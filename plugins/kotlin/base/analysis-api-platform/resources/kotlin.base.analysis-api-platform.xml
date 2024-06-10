@@ -30,5 +30,8 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinByModulesResolutionScopeProvider"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModuleDependentsProvider"/>
   </extensions>
 </idea-plugin>

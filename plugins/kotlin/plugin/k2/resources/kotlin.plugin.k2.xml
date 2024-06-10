@@ -52,8 +52,8 @@
   </applicationListeners>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"
-                    serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"/>
     <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
     <!-- fir-specific -->
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"

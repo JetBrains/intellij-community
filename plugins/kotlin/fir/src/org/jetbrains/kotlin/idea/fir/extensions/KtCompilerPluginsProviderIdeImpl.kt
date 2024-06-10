@@ -24,7 +24,7 @@ import com.intellij.util.containers.orNull
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -55,7 +55,10 @@ import java.util.*
 import java.util.concurrent.ConcurrentMap
 
 @OptIn(ExperimentalCompilerApi::class)
-internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs: CoroutineScope) : KtCompilerPluginsProvider(), Disposable {
+internal class KtCompilerPluginsProviderIdeImpl(
+    private val project: Project,
+    cs: CoroutineScope,
+) : KotlinCompilerPluginsProvider(), Disposable {
     private val pluginsCacheCachedValue: SynchronizedClearableLazy<PluginsCache?> = SynchronizedClearableLazy { createNewCache() }
     private val pluginsCache: PluginsCache?
         get() = pluginsCacheCachedValue.value
@@ -283,7 +286,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
 
     companion object {
         fun getInstance(project: Project): KtCompilerPluginsProviderIdeImpl {
-            return project.getService(KtCompilerPluginsProvider::class.java) as KtCompilerPluginsProviderIdeImpl
+            return KotlinCompilerPluginsProvider.getInstance(project) as KtCompilerPluginsProviderIdeImpl
         }
         private val LOG = logger<KtCompilerPluginsProviderIdeImpl>()
     }

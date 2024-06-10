@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.base.projectStructure
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -14,17 +14,27 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProviderBase
 import org.jetbrains.kotlin.analysis.project.structure.KtBuiltinsModule
 import org.jetbrains.kotlin.analysis.project.structure.KtDanglingFileModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSdkModule
-import org.jetbrains.kotlin.analysis.project.structure.impl.KotlinModuleDependentsProviderBase
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
+import org.jetbrains.kotlin.idea.base.projectStructure.KtLibraryModuleByModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.KtLibrarySourceModuleByModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryUsageIndex
+import org.jetbrains.kotlin.idea.base.projectStructure.NotUnderContentRootModuleByModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.base.projectStructure.util.getTransitiveLibraryDependencyInfos
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments

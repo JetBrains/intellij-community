@@ -250,7 +250,7 @@ class SdkKtModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModuleInfoBas
     override val project: Project get() = moduleInfo.project
 }
 
-internal class KtLibrarySourceModuleByModuleInfo(
+class KtLibrarySourceModuleByModuleInfo(
     private val moduleInfo: LibrarySourceInfo
 ) : KtModuleByModuleInfoBase(moduleInfo), KtLibrarySourceModule {
     override val libraryName: String
@@ -275,7 +275,7 @@ internal class KtLibrarySourceModuleByModuleInfo(
 }
 
 
-internal class NotUnderContentRootModuleByModuleInfo(
+class NotUnderContentRootModuleByModuleInfo(
     private val moduleInfo: IdeaModuleInfo
 ) : KtModuleByModuleInfoBase(moduleInfo), KtNotUnderContentRootModule {
     override val name: String get() = moduleInfo.name.asString()
