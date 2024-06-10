@@ -1770,7 +1770,6 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 *f:com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder
 - *sf:Companion:com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder$Companion
 - sf:REVIEW_BRANCH_CHECKOUT_FAILED:java.lang.String
-- <init>():V
 - getNotificationIds():java.util.List
 *f:com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder$Companion
 *f:com.intellij.collaboration.ui.notification.CollaborationToolsNotifier

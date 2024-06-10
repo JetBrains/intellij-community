@@ -3,7 +3,7 @@ package com.intellij.collaboration.ui.notification
 
 import com.intellij.notification.impl.NotificationIdsHolder
 
-class CollaborationToolsNotificationIdsHolder : NotificationIdsHolder {
+class CollaborationToolsNotificationIdsHolder internal constructor() : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> = listOf(REVIEW_BRANCH_CHECKOUT_FAILED)
 
   companion object {
