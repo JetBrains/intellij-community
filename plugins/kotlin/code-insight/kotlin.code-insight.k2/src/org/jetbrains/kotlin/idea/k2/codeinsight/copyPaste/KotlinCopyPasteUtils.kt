@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -16,8 +17,13 @@ import kotlin.collections.flatMap
 
 internal val KaSymbol.isExtension: Boolean get() = this is KaCallableSymbol && isExtension
 
-internal inline fun <reified T: KtElement> KtFile.collectElementsOfTypeInRange(startOffset: Int, endOffset: Int): List<T> =
+internal inline fun <reified T : KtElement> KtFile.collectElementsOfTypeInRange(startOffset: Int, endOffset: Int): List<T> =
     elementsInRange(TextRange(startOffset, endOffset)).flatMap { it.collectDescendantsOfType<T>() }
+
+internal fun TextRange.toElementInFile(file: KtFile): KtElement? = file.findElementAt(startOffset)
+    ?.parentsOfType<KtElement>(withSelf = true)
+    ?.takeWhile { it.textRange in this }
+    ?.firstOrNull { it.textRange == this }
 
 internal fun <T> Collection<T>.toSortedStringSet(): Set<String> = map { it.toString() }.toSortedSet()
 

@@ -4,17 +4,18 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
 import java.awt.datatransfer.DataFlavor
 
 data class KotlinReferenceTransferableData(
-    val sourceReferences: List<KotlinSourceReferenceWithRange>,
-    val sourceDeclarations: Set<KtDeclaration>,
-    val sourceFile: KtFile,
+    val sourceFileUrl: String,
+    val sourceFileText: String,
+    val sourceReferenceInfos: List<KotlinSourceReferenceInfo>,
+    /**
+     * The ranges of copied/cut text in the source file.
+     */
+    val sourceRanges: List<TextRange>,
     /**
      * The [FqName] of a non-local declaration containing selected texts, or `null` if no declarations fully include the selections.
      */
@@ -36,20 +37,20 @@ data class KotlinReferenceTransferableData(
 }
 
 /**
- * Represents a reference at the moment of COPY/CUT.
+ * Information about a reference collected at the moment of COPY/CUT.
  * @param rangeInTextToBePasted range in a text which will be used during PASTE, and which is a concatenation of all copied/cut selections
  */
-data class KotlinSourceReferenceWithRange(
-    val sourceReference: KtReference,
+data class KotlinSourceReferenceInfo(
+    val rangeInSource: TextRange,
     val rangeInTextToBePasted: TextRange,
 )
 
 /**
- * Stores a copied/cut reference together with the corresponding pasted element,
+ * Stores a copied/cut reference's element together with the corresponding pasted element,
  * which can be obtained during PASTE and before the formatting is applied.
  */
 data class KotlinSourceReferenceInTargetFile(
-    val sourceReference: KtReference,
+    val sourceElement: KtElement,
     val targetElementPointer: SmartPsiElementPointer<KtElement>,
 )
 
@@ -60,7 +61,7 @@ data class KotlinSourceReferenceInTargetFile(
  * after the text is pasted.
  */
 data class KotlinResolvedSourceReference(
-    val sourceReference: KtReference,
+    val sourceElement: KtElement,
     val fqNames: List<FqName>,
     val isReferenceQualifiable: Boolean,
 )

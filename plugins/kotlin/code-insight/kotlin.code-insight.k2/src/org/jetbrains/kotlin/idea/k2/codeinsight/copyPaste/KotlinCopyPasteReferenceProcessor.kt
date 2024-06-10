@@ -13,9 +13,12 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,12 +29,13 @@ import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMod
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.declarationsSuggestedToBeImported
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.RestoreReferencesDialog
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.ReviewAddedImports.reviewAddedImports
-import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.getFqNameAtOffset
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinCopyPasteCoroutineScopeService
+import org.jetbrains.kotlin.idea.refactoring.createTempCopy
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import java.awt.datatransfer.Transferable
@@ -53,14 +57,12 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
         }
 
         val sourceLocation = getFqNameAtOffset(file, startOffsets.min())?.takeIf { it == getFqNameAtOffset(file, endOffsets.max()) }
+        val sourceRanges = startOffsets.zip(endOffsets) { startOffset, endOffset -> TextRange(startOffset, endOffset) }
+        val sourceReferenceInfos = Helper.collectSourceReferenceInfos(file, startOffsets, endOffsets)
 
-        // we need to use copy of the file because references are resolved during the paste phase when the source file might be already
-        // changed, e.g., in case of CUT, and not COPY;
-        val sourceFileCopy = file.copied()
-        val sourceDeclarations = Helper.collectSourceDeclarations(sourceFileCopy, startOffsets, endOffsets)
-        val sourceReferences = Helper.collectSourceReferences(sourceFileCopy, startOffsets, endOffsets)
-
-        return listOf(KotlinReferenceTransferableData(sourceReferences, sourceDeclarations.toSet(), sourceFileCopy, sourceLocation))
+        // we need to store text of the file at the moment of CUT/COPY because references are resolved during PASTE
+        // when the source file might be already changed, e.g., in case of CUT, and not COPY;
+        return listOf(KotlinReferenceTransferableData(file.virtualFile.url, file.text, sourceReferenceInfos, sourceRanges, sourceLocation))
     }
 
     override fun extractTransferableData(content: Transferable): List<KotlinReferenceTransferableData> {
@@ -88,8 +90,12 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
         ) return
 
         val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) as? KtFile ?: return
-        val (sourceReferencesWithRanges, sourceDeclarations, sourceFileCopy, sourceLocation) = values.single()
         val targetOffset = bounds.startOffset
+
+        val (sourceFileUrl, sourceFileText, sourceReferenceInfos, sourceRanges, sourceLocation) = values.single()
+
+        // creating a copy of the source file at the moment of CUT/COPY can lead to project leak, hence it needs to be created during PASTE
+        val sourceFileCopy = (getSourceFile(project, sourceFileUrl) ?: targetFile).createTempCopy(sourceFileText)
 
         if (!isRestoringRequired(sourceFileCopy, sourceLocation, targetFile, targetOffset)) return
 
@@ -97,7 +103,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
         // Step 1. Find source references in target file and create smart pointers for them.
         // We need to use smart pointers because references are resolved later in a background thread, and at that point the formatting
         // of pasted text is already performed, so it is not possible to rely on text ranges anymore.
-        val sourceReferencesInTargetFile = Helper.findSourceReferencesInTargetFile(sourceReferencesWithRanges, targetFile, targetOffset)
+        val sourceReferencesInTargetFile =
+            Helper.findSourceReferencesInTargetFile(sourceFileCopy, sourceReferenceInfos, targetFile, targetOffset)
 
         KotlinCopyPasteCoroutineScopeService.getCoroutineScope(project).launch {
             val targetReferencesToRestore = try {
@@ -105,7 +112,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
                     // Step 2. Resolve references in source file.
                     val resolvedSourceReferences = readAction {
                         analyzeCopy(sourceFileCopy, DanglingFileResolutionMode.PREFER_SELF) {
-                            Helper.getResolvedSourceReferencesThatMightRequireRestoring(sourceReferencesWithRanges, sourceDeclarations)
+                            Helper.getResolvedSourceReferencesThatMightRequireRestoring(sourceFileCopy, sourceReferenceInfos, sourceRanges)
                         }
                     }
 
@@ -160,6 +167,13 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
                 reviewAddedImports(project, editor, targetFile, restoredTargetReferences.toSortedStringSet())
             }
         }
+    }
+
+    private fun getSourceFile(project: Project, sourceFileUrl: String): KtFile? {
+        val sourceFile = VirtualFileManager.getInstance().findFileByUrl(sourceFileUrl) ?: return null
+        if (sourceFile.getSourceRoot(project) == null) return null
+
+        return PsiManager.getInstance(project).findFile(sourceFile) as? KtFile
     }
 
     /**

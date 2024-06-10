@@ -1,11 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
-import com.intellij.psi.util.parentsOfType
+import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
+import org.jetbrains.kotlin.analysis.api.resolution.KaSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -26,60 +26,70 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import kotlin.collections.flatMap
 
 internal object KotlinReferenceRestoringHelper {
-    fun collectSourceReferences(sourceFile: KtFile, startOffsets: IntArray, endOffsets: IntArray): List<KotlinSourceReferenceWithRange> {
+    fun collectSourceReferenceInfos(sourceFile: KtFile, startOffsets: IntArray, endOffsets: IntArray): List<KotlinSourceReferenceInfo> {
         var currentStartOffsetInPastedText = 0
 
-        val elementsWithRanges = startOffsets.zip(endOffsets).flatMap { (startOffset, endOffset) ->
+        val sourceReferenceInfos = startOffsets.zip(endOffsets).flatMap { (startOffset, endOffset) ->
             // delta between the source text offset and the offset in the text to be pasted
             val deltaBetweenStartOffsets = currentStartOffsetInPastedText - startOffset
-            val elementsWithRanges = sourceFile.collectElementsOfTypeInRange<KtElement>(startOffset, endOffset)
-                .map { it to it.textRange.shiftRight(deltaBetweenStartOffsets) }
+
+            @OptIn(KaAnalysisApiInternals::class)
+            val elements = sourceFile.collectElementsOfTypeInRange<KtElement>(startOffset, endOffset)
+                .filterNot { it is KtSimpleNameExpression && !it.canBeUsedInImport() }
+                .filter { it.mainReference is KaSymbolBasedReference }
+
+            val infos = elements.map { element ->
+                KotlinSourceReferenceInfo(
+                    rangeInSource = element.textRange,
+                    rangeInTextToBePasted = element.textRange.shiftRight(deltaBetweenStartOffsets)
+                )
+            }
 
             // add 1 to take into account separators between blocks in case of multi-caret selection
             currentStartOffsetInPastedText += endOffset - startOffset + 1
 
-            elementsWithRanges
+            infos
         }
 
-        val sourceReferencesWithRanges = elementsWithRanges.mapNotNull { (element, range) ->
-            val reference = when (element) {
-                is KtSimpleNameExpression -> if (element.canBeUsedInImport()) element.mainReference else null
-                else -> element.mainReference
-            }
-            reference?.takeIf { it is KtSymbolBasedReference }?.let { KotlinSourceReferenceWithRange(it, range) }
-        }
-
-        return sourceReferencesWithRanges
+        return sourceReferenceInfos
     }
 
-    fun collectSourceDeclarations(sourceFile: KtFile, startOffsets: IntArray, endOffsets: IntArray): List<KtDeclaration> =
-        startOffsets.zip(endOffsets).flatMap { (startOffset, endOffset) ->
-            sourceFile.collectElementsOfTypeInRange(startOffset, endOffset)
-        }
-
+    /**
+     * Note that the contents of [sourceFile] are expected to be the same as they were at the moment of [sourceReferenceInfos]' collection.
+     */
     fun findSourceReferencesInTargetFile(
-        sourceReferencesWithRanges: List<KotlinSourceReferenceWithRange>,
+        sourceFile: KtFile,
+        sourceReferenceInfos: List<KotlinSourceReferenceInfo>,
         targetFile: KtFile,
         targetOffset: Int,
-    ): List<KotlinSourceReferenceInTargetFile> = sourceReferencesWithRanges.mapNotNull { (sourceReference, rangeInTextToBePasted) ->
-        val targetElementRange = rangeInTextToBePasted.shiftRight(targetOffset)
-        val targetElement = targetFile.findElementAt(targetElementRange.startOffset)
-            ?.parentsOfType(sourceReference.element::class.java, withSelf = true)
-            ?.takeWhile { it.textRange in targetElementRange }
-            ?.firstOrNull { it.textRange == targetElementRange }
+    ): List<KotlinSourceReferenceInTargetFile> = sourceReferenceInfos.mapNotNull { (rangeInSource, rangeInTextToBePasted) ->
+        val sourceElement = rangeInSource.toElementInFile(sourceFile)
+            ?: errorWithAttachment("Failed to obtain sourceElement") { withEntry("sourceText", rangeInSource.substring(sourceFile.text)) }
 
-        targetElement?.let { KotlinSourceReferenceInTargetFile(sourceReference, it.createSmartPointer()) }
+        val targetElementRange = rangeInTextToBePasted.shiftRight(targetOffset)
+        val targetElement = targetElementRange.toElementInFile(targetFile)
+
+        targetElement?.let { KotlinSourceReferenceInTargetFile(sourceElement, it.createSmartPointer()) }
     }
 
+    /**
+     * Note that the contents of [sourceFile] are expected to be the same as they were at the moment of [sourceReferenceInfos]' collection.
+     */
     context(KtAnalysisSession)
     fun getResolvedSourceReferencesThatMightRequireRestoring(
-        sourceReferences: List<KotlinSourceReferenceWithRange>,
-        sourceDeclarations: Set<KtDeclaration>,
-    ): List<KotlinResolvedSourceReference> = sourceReferences.mapNotNull { (sourceReference, _) ->
-        val receiverExpression = (sourceReference.element as? KtSimpleNameExpression)?.getReceiverExpression()
+        sourceFile: KtFile,
+        sourceReferenceInfos: List<KotlinSourceReferenceInfo>,
+        sourceRanges: List<TextRange>,
+    ): List<KotlinResolvedSourceReference> = sourceReferenceInfos.mapNotNull { (rangeInSource, _) ->
+        val sourceElement = rangeInSource.toElementInFile(sourceFile)
+        val sourceReference = sourceElement?.mainReference
+            ?: errorWithAttachment("Failed to obtain sourceReference") { withEntry("sourceText", rangeInSource.substring(sourceFile.text)) }
+
+        val receiverExpression = (rangeInSource.toElementInFile(sourceFile) as? KtSimpleNameExpression)?.getReceiverExpression()
 
         // resolve to all symbols instead of trying to resolve to a single one to cover cases with:
         // - multi-references
@@ -92,12 +102,12 @@ internal object KotlinReferenceRestoringHelper {
         @OptIn(UnsafeCastFunction::class)
         val sourceFqNames = sourceSymbolsGroupedByFqName
             .filterKeys { fqName -> fqName != null }
-            .filterValues { symbols -> symbols.any { symbolMightRequireRestoring(it, receiverExpression, sourceDeclarations) } }
+            .filterValues { symbols -> symbols.any { symbolMightRequireRestoring(it, receiverExpression, sourceFile, sourceRanges) } }
             .keys.castAll<FqName>().toList()
 
         if (sourceFqNames.isEmpty()) return@mapNotNull null
 
-        KotlinResolvedSourceReference(sourceReference, sourceFqNames, isReferenceQualifiable)
+        KotlinResolvedSourceReference(sourceElement, sourceFqNames, isReferenceQualifiable)
     }
 
     sealed class ReferenceToRestore {
@@ -122,11 +132,11 @@ internal object KotlinReferenceRestoringHelper {
         sourceReferencesInTargetFile: List<KotlinSourceReferenceInTargetFile>,
         resolvedSourceReferences: List<KotlinResolvedSourceReference>,
     ): List<ReferenceToRestore> {
-        val resolvedSourceReferencesMap = resolvedSourceReferences.associateBy { it.sourceReference }
+        val resolvedSourceReferencesMap = resolvedSourceReferences.associateBy { it.sourceElement }
 
-        return sourceReferencesInTargetFile.flatMap { (sourceReference, targetElementPointer) ->
+        return sourceReferencesInTargetFile.flatMap { (sourceElement, targetElementPointer) ->
             val targetReference = targetElementPointer.element?.mainReference ?: return@flatMap emptyList()
-            val (_, sourceFqNames, isReferenceQualifiable) = resolvedSourceReferencesMap[sourceReference] ?: return@flatMap emptyList()
+            val (_, sourceFqNames, isReferenceQualifiable) = resolvedSourceReferencesMap[sourceElement] ?: return@flatMap emptyList()
 
             val targetSymbolsGroupedByFqName = targetReference.getResolvedSymbolsGroupedByImportableFqName()
             val targetFqNames = targetSymbolsGroupedByFqName.keys.filterNotNull().toSet()
@@ -149,9 +159,11 @@ internal object KotlinReferenceRestoringHelper {
     private fun symbolMightRequireRestoring(
         symbol: KaSymbol,
         receiverExpression: KtExpression?,
-        sourceDeclarations: Set<KtDeclaration>,
+        sourceFile: KtFile,
+        sourceRanges: List<TextRange>,
     ): Boolean {
-        if (symbol.psi in sourceDeclarations) return false
+        val psi = symbol.psi?.takeIf { it.isValid }
+        if (psi != null && psi.containingFile == sourceFile && sourceRanges.any { psi.textRange in it }) return false
 
         if (receiverExpression != null && (symbol as? KaCallableSymbol)?.canBeUsedAsExtension() != true) return false
 
