@@ -33,7 +33,7 @@ internal fun getK2J2KConversions(context: NewJ2kConverterContext): List<Conversi
     ConstructorConversion(context),
     MoveConstructorsAfterFieldsConversion(context),
     ImplicitInitializerConversion(context),
-    ParameterModificationInMethodCallsConversion(context),
+    ParameterModificationConversion(context),
     BlockToRunConversion(context),
     RecordClassConversion(context),
     PrimaryConstructorDetectConversion(context),

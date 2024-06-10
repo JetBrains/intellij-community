@@ -2705,6 +2705,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/for/forWithoutBody.java");
         }
 
+        @TestMetadata("foreachParameterReassignment.java")
+        public void testForeachParameterReassignment() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/for/foreachParameterReassignment.java");
+        }
+
         @TestMetadata("incompatibleRightType.java")
         public void testIncompatibleRightType() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/for/incompatibleRightType.java");

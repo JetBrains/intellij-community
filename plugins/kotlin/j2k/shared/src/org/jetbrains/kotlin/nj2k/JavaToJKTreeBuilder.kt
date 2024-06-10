@@ -962,7 +962,7 @@ class JavaToJKTreeBuilder(
                 else rawType.asTypeElement(typeElement.annotationList())
             val name = if (nameIdentifier != null) nameIdentifier.toJK() else JKNameIdentifier(name)
 
-            val parameter = if (parent is PsiForeachStatement) {
+            val parameter = if (declarationScope is PsiForeachStatement) {
                 JKForLoopParameter(type, name, annotationList = annotationList(null))
             } else {
                 JKParameter(type, name, isVarArgs, annotationList = annotationList(null))

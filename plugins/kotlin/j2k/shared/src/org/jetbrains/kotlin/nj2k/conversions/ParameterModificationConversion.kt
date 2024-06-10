@@ -10,12 +10,17 @@ import org.jetbrains.kotlin.nj2k.hasWritableUsages
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.determineType
 
-class ParameterModificationInMethodCallsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+/**
+ * If a parameter is reassigned, we need to introduce a local mutable variable with the same name,
+ * because in Kotlin parameters are not mutable.
+ */
+class ParameterModificationConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKMethod -> convertMethod(element)
             is JKLambdaExpression -> convertLambda(element)
+            is JKForInStatement -> convertForInStatement(element)
         }
         return recurse(element)
     }
@@ -37,6 +42,21 @@ class ParameterModificationInMethodCallsConversion(context: NewJ2kConverterConte
 
             else -> {
                 element.statement = blockStatement(declaration, statement.copyTreeAndDetach())
+            }
+        }
+    }
+
+    context(KaSession)
+    private fun convertForInStatement(element: JKForInStatement) {
+        val newVariables = createVariables(listOf(element.parameter), element.body).ifEmpty { return }
+        val declaration = JKDeclarationStatement(newVariables)
+        when (val body = element.body) {
+            is JKBlockStatement -> {
+                body.block.statements = listOf(declaration) + body.block.statements
+            }
+
+            else -> {
+                element.body = blockStatement(declaration, body.copyTreeAndDetach())
             }
         }
     }
