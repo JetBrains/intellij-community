@@ -409,7 +409,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.render-resources", "android.jar")
       spec.withModule("intellij.android.rendering", "android.jar")
       spec.withModule("intellij.android.room", "android.jar")
-      spec.withModule("intellij.android.samples-browser", "android.jar")
+      //spec.withModule("intellij.android.samples-browser", "android.jar") AS Koala Merge
       spec.withModule("intellij.android.sdkUpdates", "android.jar")
       spec.withModule("intellij.android.threading-checker", "android.jar")
       spec.withModule("intellij.android.transport", "android.jar")
