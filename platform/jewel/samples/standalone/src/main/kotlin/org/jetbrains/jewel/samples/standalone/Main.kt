@@ -8,8 +8,10 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.window.application
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.Inter
+import org.jetbrains.jewel.intui.standalone.JetBrainsMono
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.intui.standalone.theme.createDefaultTextStyle
+import org.jetbrains.jewel.intui.standalone.theme.createEditorTextStyle
 import org.jetbrains.jewel.intui.standalone.theme.darkThemeDefinition
 import org.jetbrains.jewel.intui.standalone.theme.default
 import org.jetbrains.jewel.intui.standalone.theme.lightThemeDefinition
@@ -29,12 +31,13 @@ fun main() {
 
     application {
         val textStyle = JewelTheme.createDefaultTextStyle(fontFamily = FontFamily.Inter)
+        val editorStyle = JewelTheme.createEditorTextStyle(fontFamily = FontFamily.JetBrainsMono)
 
         val themeDefinition =
             if (MainViewModel.theme.isDark()) {
-                JewelTheme.darkThemeDefinition(defaultTextStyle = textStyle)
+                JewelTheme.darkThemeDefinition(defaultTextStyle = textStyle, editorTextStyle = editorStyle)
             } else {
-                JewelTheme.lightThemeDefinition(defaultTextStyle = textStyle)
+                JewelTheme.lightThemeDefinition(defaultTextStyle = textStyle, editorTextStyle = editorStyle)
             }
 
         IntUiTheme(
