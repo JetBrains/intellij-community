@@ -310,7 +310,11 @@ public final class GroovyCompletionUtil {
     }
 
     LookupElementBuilder builder = LookupElementBuilder.create(element instanceof PsiPackage ? element : candidate, name);
-    return Collections.singletonList(setupLookupBuilder(element, candidate.getSubstitutor(), builder, position));
+    PsiSubstitutor substitutor = candidate.getSubstitutor();
+    String typeText = getTypeText(element, substitutor, position);
+    String tailText = getTailText(element, substitutor);
+    GroovyResolveResultLookupElement groovyResolveResultLookupElement = new GroovyResolveResultLookupElement(typeText, tailText, setupLookupBuilder(element, builder, tailText, typeText));
+    return Collections.singletonList(groovyResolveResultLookupElement);
   }
 
   private static boolean setterMatches(PrefixMatcher matcher, PsiMethod element, String importedName) {
@@ -340,26 +344,27 @@ public final class GroovyCompletionUtil {
     return setupLookupBuilder(o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, o.getName()), null);
   }
 
-  public static LookupElement setupLookupBuilder(PsiElement element,
-                                                 PsiSubstitutor substitutor,
-                                                 LookupElementBuilder builder,
+  public static LookupElementBuilder setupLookupBuilder(@NotNull PsiElement element,
+                                                 @NotNull PsiSubstitutor substitutor,
+                                                 @NotNull LookupElementBuilder builder,
                                                  @Nullable PsiElement position) {
+    String tailText = getTailText(element, substitutor);
+    String typeText = getTypeText(element, substitutor, position);
+    return setupLookupBuilder(element, builder, tailText, typeText);
+  }
+
+  private static LookupElementBuilder setupLookupBuilder(@NotNull PsiElement element,
+                                                 @NotNull LookupElementBuilder builder,
+                                                 @Nullable String tailText,
+                                                 @Nullable String typeText) {
     builder = builder.withIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
       .withInsertHandler(GroovyInsertHandler.INSTANCE);
     if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED)) {
       builder = builder.strikeout();
     }
-    builder = setTailText(element, builder, substitutor);
-    builder = setTypeText(element, builder, substitutor, position);
+    builder = tailText != null ? builder.withTailText(tailText) : builder;
+    builder = typeText != null ? builder.withTypeText(typeText) : builder;
     return builder;
-  }
-
-
-  private static @NotNull LookupElementBuilder setTailText(@NotNull PsiElement element,
-                                                           @NotNull LookupElementBuilder builder,
-                                                           @NotNull PsiSubstitutor substitutor) {
-    String text = getTailText(element, substitutor);
-    return text != null ? builder.withTailText(text) : builder;
   }
 
   private static @Nullable String getTailText(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
@@ -393,15 +398,6 @@ public final class GroovyCompletionUtil {
 
   private static boolean showSpaceAfterComma(PsiClass element) {
     return CodeStyle.getLanguageSettings(element.getContainingFile(), GroovyLanguage.INSTANCE).SPACE_AFTER_COMMA;
-  }
-
-
-  private static @NotNull LookupElementBuilder setTypeText(@NotNull PsiElement element,
-                                                  @NotNull LookupElementBuilder builder,
-                                                  @NotNull PsiSubstitutor substitutor,
-                                                  @Nullable PsiElement position) {
-    String text = getTypeText(element, substitutor, position);
-    return text != null ? builder.withTypeText(text) : builder;
   }
 
   private static @Nullable String getTypeText(@NotNull PsiElement element,
