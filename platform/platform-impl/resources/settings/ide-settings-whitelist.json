@@ -2,6 +2,13 @@
   "properties": [
     "com.intellij:app:BuiltInServerOptions.*",
     "com.intellij:app:EmmetOptions.*",
+    "com.intellij:app:GeneralSettings.autoSaveFiles",
+    "com.intellij:app:GeneralSettings.autoSaveIfInactive",
+    "com.intellij:app:GeneralSettings.autoSyncFiles",
+    "com.intellij:app:GeneralSettings.backgroundSyncFiles",
+    "com.intellij:app:GeneralSettings.inactiveTimeout",
+    "com.intellij:app:GeneralSettings.isUseSafeWrite",
+    "com.intellij:app:GeneralSettings.searchInBackground",
     "com.intellij:app:HttpConfigurable.*",
     "com.intellij:app:ProjectViewSharedSettings.abbreviatePackages",
     "com.intellij:app:ProjectViewSharedSettings.compactDirectories",
