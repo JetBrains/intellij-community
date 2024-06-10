@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
-import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -1290,10 +1289,17 @@ public final class ExpressionUtils {
     if (array instanceof PsiField && !(array.hasModifierProperty(PsiModifier.PRIVATE) && array.hasModifierProperty(PsiModifier.STATIC))) {
       return null;
     }
-    Boolean isConstantArray = CachedValuesManager.<Boolean>getCachedValue(array, () -> CachedValueProvider.Result
-      .create(isConstantArray(array), PsiModificationTracker.MODIFICATION_COUNT));
+    if (!isConstantContent(array)) return null;
     Arrays.asList(initializers).replaceAll(expr -> isIllegalReference(array, expr) ? null : expr);
-    return Boolean.TRUE.equals(isConstantArray) ? initializers : null;
+    return initializers;
+  }
+
+  private static boolean isConstantContent(PsiVariable array) {
+    Boolean isConstantArray = CachedValuesManager.<Boolean>getCachedValue(array, () -> CachedValueProvider.Result
+      .create(!ContainerUtil.exists(VariableAccessUtils.getVariableReferences(array), 
+                                    ExpressionUtils::canBeMutated), 
+              PsiModificationTracker.MODIFICATION_COUNT));
+    return Boolean.TRUE.equals(isConstantArray);
   }
 
   private static boolean isIllegalReference(PsiVariable array, PsiExpression expr) {
@@ -1303,13 +1309,6 @@ public final class ExpressionUtils {
                return target == array ||
                       target instanceof PsiField && HighlightUtil.isIllegalForwardReferenceToField(ref, (PsiField)target, true) != null;
              }) != null;
-  }
-
-  private static boolean isConstantArray(PsiVariable array) {
-    PsiElement scope = PsiTreeUtil.getParentOfType(array, array instanceof PsiField ? PsiClass.class : PsiCodeBlock.class);
-    if (scope == null) return false;
-    return PsiTreeUtil.processElements(
-      scope, e -> !(e instanceof PsiReferenceExpression ref && ref.isReferenceTo(array) && canBeMutated(ref)));
   }
 
   private static boolean canBeMutated(@NotNull PsiExpression expr) {
@@ -1334,17 +1333,13 @@ public final class ExpressionUtils {
       PsiMethod method = call.resolveMethod();
       if (method == null) return true;
       MutationSignature signature = MutationSignature.fromCall(call);
-      if (signature == MutationSignature.unknown()) return true;
-      if (!signature.isPure()) {
-        PsiParameter parameter = MethodCallUtils.getParameterForArgument(expr);
-        if (parameter == null || !(parameter.getParent() instanceof PsiParameterList paramList)) return true;
-        int index = paramList.getParameterIndex(parameter);
-        if (signature.mutatesArg(index)) return true;
-      }
+      if (!signature.isPure()) return true;
       PsiType type = method.getReturnType();
-      boolean okReturnType = type instanceof PsiPrimitiveType || TypeUtils.isJavaLangString(type)
-                             || Mutability.getMutability(method).isUnmodifiable();
-      return !okReturnType && canBeMutated(call);
+      if (type instanceof PsiPrimitiveType || TypeUtils.isJavaLangString(type)) return false;
+      return canBeMutated(call);
+    }
+    if (parent instanceof PsiLocalVariable variable) {
+      return !isConstantContent(variable);
     }
     if (parent instanceof PsiArrayAccessExpression arrayAccess) {
       return PsiUtil.isAccessedForWriting(arrayAccess);

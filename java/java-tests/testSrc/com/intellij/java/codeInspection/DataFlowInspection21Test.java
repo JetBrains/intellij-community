@@ -127,4 +127,7 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
                          }""");
     doTest();
   }
+
+  public void testArrayElementWrappedInPureMethod() { doTest(); }
+  public void testArrayAddedIntoCollection() { doTest(); }
 }
