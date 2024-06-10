@@ -126,7 +126,7 @@ class PluginXmlPatcherTest {
         <version>x-plugin-version</version>
         <idea-version since-build="new-since" until-build="new-until"/>
 
-        <product-descriptor release-version="__VERSION__" eap="true"/>
+        <product-descriptor code="TEST" release-version="__VERSION__" eap="true"/>
       </idea-plugin>
     """.trimIndent(),
     """
@@ -135,7 +135,7 @@ class PluginXmlPatcherTest {
       <id>com.intellij.css</id>
       <version>x-plugin-version</version>
       <idea-version since-build="new-since" until-build="new-until" />
-      <product-descriptor release-version="X-RELEASE-VERSION-X" release-date="X-RELEASE-DATE-X" />
+      <product-descriptor code="TEST" release-version="X-RELEASE-VERSION-X" release-date="X-RELEASE-DATE-X" />
     </idea-plugin>
     """.trimIndent(),
     toPublish = true,
@@ -151,7 +151,7 @@ class PluginXmlPatcherTest {
         <version>x-plugin-version</version>
         <idea-version since-build="new-since" until-build="new-until"/>
 
-        <product-descriptor />
+        <product-descriptor code="TEST" />
       </idea-plugin>
     """.trimIndent(),
     """
@@ -160,7 +160,7 @@ class PluginXmlPatcherTest {
       <id>com.intellij.css</id>
       <version>x-plugin-version</version>
       <idea-version since-build="new-since" until-build="new-until" />
-      <product-descriptor eap="true" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" />
+      <product-descriptor code="TEST" eap="true" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" />
     </idea-plugin>
     """.trimIndent(),
     toPublish = true,
