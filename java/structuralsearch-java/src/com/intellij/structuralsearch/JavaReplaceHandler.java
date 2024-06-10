@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -125,8 +125,8 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         ObjectUtils.coalesce(patternNamedElements.get(name), patternNamedElements.get('$' + info.getSearchPatternName(name) + '$'));
       if (patternNamedElement == null) continue;
 
-      if (replacementNamedElement == null && originalNamedElements.size() == 1 && replacedNamedElements.size() == 1) {
-        replacementNamedElement = replacedNamedElements.entrySet().iterator().next().getValue();
+      if (replacementNamedElement == null && originalNamedElement == original) {
+        replacementNamedElement = replacement;
       }
 
       PsiElement comment = null;
@@ -387,7 +387,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     while (child != null) {
       if (child instanceof PsiKeyword) {
         append = true;
-        @PsiModifier.ModifierConstant final String modifierText = child.getText();
+        @SuppressWarnings("MagicConstant") @PsiModifier.ModifierConstant final String modifierText = child.getText();
         if (isCompatibleModifier(modifierText, replacementModifierList) && !queryModifierList.hasExplicitModifier(modifierText)) {
           if (anchor != null) replacementModifierList.add(whiteSpace(child.getPrevSibling(), " "));
           replacementModifierList.add(child);
@@ -486,8 +486,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       }
       else if (replacements.length == 1) {
         PsiElement replacement = getMatchExpr(replacements[0], elementToReplace);
-        if (elementToReplace instanceof PsiParameter && replacement instanceof PsiLocalVariable) {
-          final PsiVariable variable = (PsiVariable)replacement;
+        if (elementToReplace instanceof PsiParameter && replacement instanceof PsiLocalVariable variable) {
           final PsiIdentifier identifier = variable.getNameIdentifier();
           assert identifier != null;
           final String text = variable.getText();

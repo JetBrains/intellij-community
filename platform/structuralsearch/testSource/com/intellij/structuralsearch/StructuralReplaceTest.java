@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -2452,7 +2452,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                               "public class A {}";
     assertEquals(expected1b, replace(in1, what, "@SuppressWarnings(\"NONE\") @Deprecated"));
 
-    final String expected1c = "@SuppressWarnings(\"ALL\") class B {}";
+    final String expected1c = """
+      @SuppressWarnings("ALL")
+      public class B {}""";
     assertEquals("Should replace unmatched annotation parameters",
                  expected1c, replace(in1, "@SuppressWarnings class A {}", "@SuppressWarnings class B {}"));
 
