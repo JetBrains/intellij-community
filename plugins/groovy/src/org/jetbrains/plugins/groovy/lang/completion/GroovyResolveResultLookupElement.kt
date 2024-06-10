@@ -3,7 +3,9 @@ package org.jetbrains.plugins.groovy.lang.completion
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
+import javax.swing.Icon
 
+@Suppress("EqualsOrHashCode")
 class GroovyResolveResultLookupElement(private val typeText: String?, private val tailText: String?, builder: LookupElementBuilder) : LookupElementDecorator<LookupElementBuilder>(builder) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -12,7 +14,5 @@ class GroovyResolveResultLookupElement(private val typeText: String?, private va
     return delegate.lookupString == otherDecorator.delegate.lookupString && typeText == otherDecorator.typeText && tailText == otherDecorator.tailText
   }
 
-  override fun hashCode(): Int {
-    return delegate.hashCode()
-  }
+  fun withIcon(icon: Icon): GroovyResolveResultLookupElement = GroovyResolveResultLookupElement(typeText, tailText, delegate.withIcon(icon))
 }
