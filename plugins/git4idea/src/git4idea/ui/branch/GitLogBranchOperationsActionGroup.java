@@ -40,7 +40,7 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     List<VcsRef> refs = e.getData(VcsLogDataKeys.VCS_LOG_REFS);
     if (logUI == null || refs == null) {
-      return AnAction.EMPTY_ARRAY;
+      return EMPTY_ARRAY;
     }
 
     List<VcsRef> branchRefs = ContainerUtil.filter(refs, ref -> {
@@ -98,7 +98,7 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
       groups.add(tagsGroup);
     }
 
-    return groups.toArray(AnAction.EMPTY_ARRAY);
+    return groups.toArray(EMPTY_ARRAY);
   }
 
   private static @Nullable AnAction createBranchGroup(@NotNull Project project,
