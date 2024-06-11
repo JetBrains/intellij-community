@@ -22,6 +22,7 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.normalizePackageName
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -141,6 +142,6 @@ fun PythonPackageManager.isInstalled(name: String): Boolean {
 
 fun PythonRepositoryManager.createSpecification(name: String,
                                                 versionSpec: String? = null): PythonPackageSpecification? {
-  val repository = packagesByRepository().firstOrNull { it.second.any { pkg -> pkg.lowercase() == name.lowercase() } }?.first
+  val repository = packagesByRepository().firstOrNull { it.second.any { pkg -> normalizePackageName(pkg) == normalizePackageName(name) } }?.first
   return repository?.createForcedSpecPackageSpecification(name, versionSpec)
 }
