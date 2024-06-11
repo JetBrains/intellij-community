@@ -197,10 +197,10 @@ private fun toPsiMethodForDeserialized(
             else {
                 val jvmName = when (functionSymbol) {
                     is KtPropertyGetterSymbol -> {
-                        functionSymbol.getJvmNameFromAnnotation(PROPERTY_GETTER.toOptionalFilter())
+                        functionSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets = setOf(PROPERTY_GETTER, null))
                     }
                     is KtPropertySetterSymbol -> {
-                        functionSymbol.getJvmNameFromAnnotation(PROPERTY_SETTER.toOptionalFilter())
+                        functionSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets = setOf(PROPERTY_SETTER, null))
                     }
                     else -> {
                         functionSymbol.getJvmNameFromAnnotation()
@@ -257,21 +257,23 @@ private fun toPsiMethodForDeserialized(
     } else null
 }
 
-private fun KtAnnotatedSymbol.getJvmNameFromAnnotation(
-    useSiteTargetFilter: AnnotationUseSiteTargetFilter = AnyAnnotationUseSiteTargetFilter,
-): String? {
-    val anno = annotationsByClassId(JvmStandardClassIds.JVM_NAME_CLASS_ID, useSiteTargetFilter).firstOrNull() ?: return null
-    return (anno.arguments.firstOrNull()?.expression as? KtConstantAnnotationValue)?.constantValue?.value as? String
-}
+/**
+ * Returns a `JvmName` annotation value.
+ *
+ * @param allowedUseSiteTargets If non-empty, only annotations with the specified use-site targets are checked.
+ */
+private fun KtAnnotatedSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets: Set<AnnotationUseSiteTarget?> = emptySet()): String? {
+    for (annotation in annotations[JvmStandardClassIds.JVM_NAME_CLASS_ID]) {
+        if (allowedUseSiteTargets.isEmpty() || annotation.useSiteTarget in allowedUseSiteTargets) {
+            val firstArgumentExpression = annotation.arguments.firstOrNull()?.expression
+            if (firstArgumentExpression is KaConstantAnnotationValue) {
+                return firstArgumentExpression.constantValue.value as? String
+            }
+            break
+        }
+    }
 
-private fun AnnotationUseSiteTarget.toOptionalFilter(): AnnotationUseSiteTargetFilter {
-    return annotationUseSiteTargetFilterOf(NoAnnotationUseSiteTargetFilter, toFilter())
-}
-
-private fun annotationUseSiteTargetFilterOf(
-    vararg filters: AnnotationUseSiteTargetFilter,
-): AnnotationUseSiteTargetFilter = AnnotationUseSiteTargetFilter { useSiteTarget ->
-    filters.any { filter -> filter.isAllowed(useSiteTarget) }
+    return null
 }
 
 context(KtAnalysisSession)
