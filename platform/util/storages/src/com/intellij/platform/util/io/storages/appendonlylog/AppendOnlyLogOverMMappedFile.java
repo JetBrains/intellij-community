@@ -162,7 +162,22 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
      */
     public static final int RECORDS_COUNT_OFFSET = NEXT_RECORD_TO_BE_COMMITTED_OFFSET + Long.BYTES;
 
-    public static final int FIRST_UNUSED_OFFSET = RECORDS_COUNT_OFFSET + Integer.BYTES;
+    /**
+     * int32: opened(=1)/closed(=0).
+     * Ideally, append-only log doesn't need 'was closed properly' field/status -- nextRecordXXX cursors are enough
+     * to identify finalized/not finalized records, and recover that could be recovered (see ctor for details).
+     * This is true even if app crashed/killed, but since OS is responsible for persisting mmapped buffers changes
+     * even if app crashed.
+     * But if OS itself crashed -- mmapped buffers content could be persisted or lost unpredictably, and all sorts
+     * of inconsistencies could arise (see IJPL-1016 comments for examples).
+     * Possibility of reliable recovery after an OS crash is doubtful, but at least we could identify such a scenario
+     * -- this is what the field is for.
+     */
+    public static final int STORAGE_STATUS = RECORDS_COUNT_OFFSET + Integer.BYTES;
+    private static final int STORAGE_STATUS_OPENED = 1;
+    private static final int STORAGE_STATUS_CLOSED = 0;
+
+    public static final int FIRST_UNUSED_OFFSET = STORAGE_STATUS + Integer.BYTES;
 
     //reserve [8 x int64] just in the case
     public static final int HEADER_SIZE = 8 * Long.BYTES;
@@ -354,6 +369,12 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   private final long startOfRecoveredRegion;
   private final long endOfRecoveredRegion;
 
+  /**
+   * Was the storage closed properly during the previous session?
+   * Value is set in constructor and fixed for a lifecycle of the instance
+   */
+  private final boolean wasClosedProperly;
+
 
   public AppendOnlyLogOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
     this.storage = storage;
@@ -434,6 +455,9 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
       endOfRecoveredRegion = -1;
     }
 
+    wasClosedProperly = (getIntHeaderField(HeaderLayout.STORAGE_STATUS) == HeaderLayout.STORAGE_STATUS_CLOSED);
+    setIntHeaderField(HeaderLayout.STORAGE_STATUS, HeaderLayout.STORAGE_STATUS_OPENED);
+    storage.fsync();//make sure 'opened' status persists
 
     setLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_ALLOCATED_OFFSET, nextRecordToBeAllocatedOffset);
     setLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_COMMITTED_OFFSET, nextRecordToBeCommittedOffset);
@@ -643,10 +667,21 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
            && firstUnCommittedOffset() == HeaderLayout.HEADER_SIZE;
   }
 
+  /**
+   * Was the storage closed properly during the previous session?
+   * Value is determined during storage opening, and kept fixed for a lifecycle of the instance
+   */
+  public boolean wasClosedProperly() {
+    return wasClosedProperly;
+  }
+
   @Override
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
     if (storage.isOpen()) {
+      setIntHeaderField(HeaderLayout.STORAGE_STATUS, HeaderLayout.STORAGE_STATUS_CLOSED);
+
       flush();
+
       storage.close();
       headerPage = null;//help GC unmap pages sooner
     }
@@ -675,7 +710,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   @Override
   public String toString() {
-    return "AppendOnlyLogOverMMappedFile[" + storage.storagePath() + "]";
+    return "AppendOnlyLogOverMMappedFile[" + storage.storagePath() + "]{wasClosedProperly: " + wasClosedProperly + "}";
   }
 
   /**
@@ -925,7 +960,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
       }
       else {
         //if header != 0 => it must be either padding, or (uncommitted?) data record:
-        throw new IOException("header(=" + recordHeader + "](@offset=" + recordOffsetInFile + "): not a padding, nor a data record");
+        throw new IOException("header(=" + recordHeader + "](@offset=" + recordOffsetInFile + "): not a padding, nor a data record" +
+                              moreDiagnosticInfo(recordOffsetInFile));
       }
 
 
@@ -991,14 +1027,20 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     }
 
     if (startOfRecoveredRegion < 0 && endOfRecoveredRegion < 0) {
-      return "(There was no recovery, it can't be related to it)";
+      return "(There was no recovery, it can't be related to it" +
+             (wasClosedProperly ? " but storage wasn't closed properly" : "") +
+             ")";
     }
     if (recordOffsetInFile >= startOfRecoveredRegion && recordOffsetInFile < endOfRecoveredRegion) {
       return "(Record is in the recovered region [" + startOfRecoveredRegion + ".." + endOfRecoveredRegion + ") " +
-             "so it may be due to some un-recovered records)";
+             (wasClosedProperly ? " and storage wasn't closed properly " : "") +
+             "so it may be due to some un-recovered records" +
+             ")";
     }
 
-    return "(There was a recovery so it may be due to some un-recovered records, " +
+    return "(There was a recovery " +
+           (wasClosedProperly ? "and storage wasn't closed properly, " : "") +
+           "so it may be due to some un-recovered records, " +
            "but the record is outside the region [" + startOfRecoveredRegion + ".." + endOfRecoveredRegion + ") recovered)";
   }
 
