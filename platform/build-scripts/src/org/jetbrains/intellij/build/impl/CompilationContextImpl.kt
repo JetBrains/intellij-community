@@ -128,7 +128,7 @@ class CompilationContextImpl private constructor(
   override suspend fun getStableJdkHome(): Path {
     var jdkHome = cachedJdkHome
     if (jdkHome == null) {
-      jdkHome = JdkDownloader.getJdkHome(COMMUNITY_ROOT, Span.current()::addEvent)
+      jdkHome = JdkDownloader.getJdkHome(COMMUNITY_ROOT, infoLog = Span.current()::addEvent)
       cachedJdkHome = jdkHome
     }
     return jdkHome
@@ -138,7 +138,7 @@ class CompilationContextImpl private constructor(
     var jdkHome = cachedJdkHome
     if (jdkHome == null) {
       // blocking doesn't matter, getStableJdkHome is mostly always called before
-      jdkHome = JdkDownloader.blockingGetJdkHome(COMMUNITY_ROOT, Span.current()::addEvent)
+      jdkHome = JdkDownloader.blockingGetJdkHome(COMMUNITY_ROOT, infoLog = Span.current()::addEvent)
       cachedJdkHome = jdkHome
     }
     JdkDownloader.getJavaExecutable(jdkHome)
