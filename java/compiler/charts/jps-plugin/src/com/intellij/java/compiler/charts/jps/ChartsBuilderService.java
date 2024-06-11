@@ -2,7 +2,6 @@
 package com.intellij.java.compiler.charts.jps;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.sun.management.OperatingSystemMXBean;
@@ -24,16 +23,10 @@ import java.util.concurrent.TimeUnit;
 public class ChartsBuilderService extends BuilderService {
   public static final String COMPILATION_STATISTIC_BUILDER_ID = "jps.compile.statistic";
   public static final String COMPILATION_STATUS_BUILDER_ID = "jps.compile.status";
-  public static final String COMPILATION_CHARTS_KEY = "compilation.charts";
 
   @Override
   public @NotNull List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    if (Registry.is(COMPILATION_CHARTS_KEY)) {
-      return List.of(new ChartsModuleLevelBuilder());
-    }
-    else {
-      return List.of();
-    }
+    return List.of(new ChartsModuleLevelBuilder());
   }
 
   private static class ChartsModuleLevelBuilder extends ModuleLevelBuilder {

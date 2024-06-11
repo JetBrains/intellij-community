@@ -10,7 +10,8 @@ import com.intellij.build.BuildViewManager
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.StartBuildEvent
 import com.intellij.compiler.server.CustomBuilderMessageHandler
-import com.intellij.java.compiler.charts.jps.ChartsBuilderService.*
+import com.intellij.java.compiler.charts.jps.ChartsBuilderService.COMPILATION_STATISTIC_BUILDER_ID
+import com.intellij.java.compiler.charts.jps.ChartsBuilderService.COMPILATION_STATUS_BUILDER_ID
 import com.intellij.java.compiler.charts.jps.CompileStatisticBuilderMessage.*
 import com.intellij.java.compiler.charts.ui.CompilationChartsBuildEvent
 import com.intellij.openapi.diagnostic.Logger
@@ -24,6 +25,7 @@ import java.util.*
 class CompilationChartsProjectActivity : ProjectActivity {
   companion object {
     private val LOG: Logger = Logger.getInstance(CompilationChartsProjectActivity::class.java)
+    const val COMPILATION_CHARTS_KEY: String = "compilation.charts"
   }
 
   override suspend fun execute(project: Project) {
