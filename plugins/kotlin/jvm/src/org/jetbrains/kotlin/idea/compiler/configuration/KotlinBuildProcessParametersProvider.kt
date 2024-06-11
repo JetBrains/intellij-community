@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.compiler.server.BuildProcessParametersProvider
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService
 
@@ -19,7 +20,7 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
         if (compilerWorkspaceSettings.preciseIncrementalEnabled) {
             arguments += "-D" + IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY + "=true"
 
-            if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
+            if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation") && !Registry.`is`("compiler.process.use.portable.caches")) {
                 val configuredKotlinVersion = IdeKotlinVersion.opt(KotlinJpsPluginSettings.jpsVersion(project))
                 if (configuredKotlinVersion != null && configuredKotlinVersion.compareTo(MIN_DEP_GRAPH_SUPPORTING_VERSION) >= 0) {
                     arguments += "-Dkotlin.jps.dumb.mode=true"
