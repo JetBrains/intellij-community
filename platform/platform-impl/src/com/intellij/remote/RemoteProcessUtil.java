@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
-import com.google.common.base.Joiner;
 import com.intellij.util.AbstractPathMapper;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathMapper;
@@ -30,6 +29,6 @@ public final class RemoteProcessUtil {
     for (String path : pathsValue.split(File.pathSeparator)) {
       mappedPaths.add(RemoteFile.createRemoteFile(pathMapper.convertToRemote(path), isWin).getPath());
     }
-    return Joiner.on(isWin ? ';' : ':').join(mappedPaths);
+    return String.join(isWin ? ";" : ":", mappedPaths);
   }
 }

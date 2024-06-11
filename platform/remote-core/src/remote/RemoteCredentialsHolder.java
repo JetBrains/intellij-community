@@ -36,17 +36,17 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   private static final Map<AuthType, String> CREDENTIAL_ATTRIBUTES_QUALIFIERS =
     Map.of(AuthType.PASSWORD, "password", AuthType.KEY_PAIR, "passphrase", AuthType.OPEN_SSH, "empty");
 
-  private @NotNull String myHost = "";
-  private int myPort;//will always be equal to myLiteralPort, if it's valid, or equal to 0 otherwise
-  private @NotNull String myLiteralPort = "";
+  private String myHost = "";
+  private int myPort;  // will always be equal to `myLiteralPort` if it's valid, or to 0 otherwise
+  private String myLiteralPort = "";
   private @Nullable String myUserName;
   private @Nullable String myPassword;
-  private @NotNull String myPrivateKeyFile = "";
+  private String myPrivateKeyFile = "";
   private @Nullable String myPassphrase;
   private boolean myStorePassword;
   private boolean myStorePassphrase;
   private boolean myUseOpenSSHConfig;
-  private @NotNull AuthType myAuthType = AuthType.PASSWORD;
+  private AuthType myAuthType = AuthType.PASSWORD;
   private @Nullable SshConnectionConfigPatch myConnectionConfigPatch;
 
   public RemoteCredentialsHolder() {}
@@ -99,9 +99,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   }
 
   @Override
-  @Nullable
   @Transient
-  public String getUserName() {
+  public @Nullable String getUserName() {
     return myUserName;
   }
 
@@ -171,9 +170,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     myPassphrase = StringUtil.notNullize(passphrase);
   }
 
-  @NotNull
   @Override
-  public AuthType getAuthType() {
+  public @NotNull AuthType getAuthType() {
     return myAuthType;
   }
 
@@ -182,9 +180,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     myAuthType = authType;
   }
 
-  @Nullable
   @Override
-  public SshConnectionConfigPatch getConnectionConfigPatch() {
+  public @Nullable SshConnectionConfigPatch getConnectionConfigPatch() {
     return myConnectionConfigPatch;
   }
 
@@ -265,8 +262,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
       myAuthType = AuthType.PASSWORD;
     }
     // try to load credentials from PasswordSafe
-    final CredentialAttributes attributes = createAttributes(false);
-    final Credentials credentials = PasswordSafe.getInstance().get(attributes);
+    CredentialAttributes attributes = createAttributes(false);
+    Credentials credentials = PasswordSafe.getInstance().get(attributes);
     if (credentials != null) {
       final boolean memoryOnly = PasswordSafe.getInstance().isPasswordStoredOnlyInMemory(attributes, credentials);
       if (myAuthType == AuthType.KEY_PAIR) {
@@ -313,29 +310,22 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     // the old `USE_AUTH_AGENT` attribute is used to avoid settings migration
     rootElement.setAttribute(USE_AUTH_AGENT, Boolean.toString(myAuthType == AuthType.OPEN_SSH));
 
-    boolean memoryOnly = (myAuthType == AuthType.KEY_PAIR && !isStorePassphrase())
-                         || (myAuthType == AuthType.PASSWORD && !isStorePassword())
-                         || myAuthType == AuthType.OPEN_SSH;
-    String password;
-    if (myAuthType == AuthType.KEY_PAIR) {
-      password = getPassphrase();
-    }
-    else if (myAuthType == AuthType.PASSWORD) {
-      password = getPassword();
-    }
-    else {
-      password = null;
-    }
+    boolean memoryOnly = myAuthType == AuthType.KEY_PAIR && !isStorePassphrase() ||
+                         myAuthType == AuthType.PASSWORD && !isStorePassword() ||
+                         myAuthType == AuthType.OPEN_SSH;
+    String password = switch (myAuthType) {
+      case KEY_PAIR -> getPassphrase();
+      case PASSWORD -> getPassword();
+      default -> null;
+    };
     PasswordSafe.getInstance().set(createAttributes(memoryOnly), new Credentials(getUserName(), password));
 
     // getConnectionConfigPatch() is omitted intentionally.
     // It's expected that the options will be set with SSH settings by one of `copyTo` calls.
   }
 
-  @NotNull
   private CredentialAttributes createAttributes(boolean memoryOnly) {
-    final String serviceName =
-      SERVICE_NAME_PREFIX + getCredentialsString(this) + "(" + CREDENTIAL_ATTRIBUTES_QUALIFIERS.get(myAuthType) + ")";
+    String serviceName = SERVICE_NAME_PREFIX + getCredentialsString(this) + '(' + CREDENTIAL_ATTRIBUTES_QUALIFIERS.get(myAuthType) + ')';
     return new CredentialAttributes(serviceName, getUserName(), null, memoryOnly);
   }
 

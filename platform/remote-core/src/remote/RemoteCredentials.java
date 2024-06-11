@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -45,15 +45,15 @@ public interface RemoteCredentials {
   }
 
   /**
-   * By default when user connects to a remote server, host fingerprint should be verified via
-   * <pre>~/.ssh/known_hosts</pre> file and user should explicitly confirm connection if he never
-   * connected to the remote host before. When remote host is trusted regardless of known hosts file
+   * By default, when a user connects to a remote server, host fingerprint should be verified via
+   * <pre>~/.ssh/known_hosts</pre> file and a user should explicitly confirm connection if they never
+   * connected to the remote host before.
+   * When a remote host is trusted regardless of known hosts file
    * (for example, when connecting to Vagrant VM), confirmation should be skipped.
    *
-   * @return true if host key verification should be skipped.
-   *
-   * TODO Replace with {@link #getConnectionConfigPatch()}.
+   * @return {@code true} if host key verification should be skipped.
    */
+   // TODO Replace with {@link #getConnectionConfigPatch()}.
   default boolean isSkippingHostKeyVerification() {
     return false;
   }
