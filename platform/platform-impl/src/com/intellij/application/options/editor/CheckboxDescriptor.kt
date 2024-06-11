@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.annotations.ApiStatus
@@ -15,12 +16,14 @@ class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
                          @ApiStatus.Internal val getter: () -> Boolean,
                          @ApiStatus.Internal val setter: (value: Boolean) -> Unit,
                          internal val comment: @NlsContexts.DetailedDescription String? = null,
+                         internal val commentAction: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE,
                          internal val groupName: @Nls String? = null) {
   constructor(name: @NlsContexts.Checkbox String,
               mutableProperty: KMutableProperty0<Boolean>,
               comment: @NlsContexts.DetailedDescription String? = null,
+              commentAction: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE,
               groupName: @Nls String? = null)
-    : this(name, { mutableProperty.get() }, { mutableProperty.set(it) }, comment, groupName)
+    : this(name, { mutableProperty.get() }, { mutableProperty.set(it) }, comment, commentAction, groupName)
 
   fun asUiOptionDescriptor(): BooleanOptionDescription {
     return asOptionDescriptor {
@@ -51,6 +54,6 @@ class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
 fun Row.checkBox(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBCheckBox> {
   val result = checkBox(ui.name)
     .bindSelected(ui.getter, ui.setter)
-  ui.comment?.let { result.comment(it) }
+  ui.comment?.let { result.comment(it, action = ui.commentAction) }
   return result
 }
