@@ -24,6 +24,6 @@ public class GradleSourceSetModelProvider implements ProjectImportModelProvider 
     @NotNull GradleBuild buildModel,
     @NotNull GradleModelConsumer modelConsumer
   ) {
-    GradleModelProviderUtil.buildModels(controller, buildModel, GradleSourceSetModel.class, GradleModelConsumer.NOOP);
+    GradleModelProviderUtil.buildModels(controller, buildModel, GradleSourceSetModel.class, modelConsumer);
   }
 }

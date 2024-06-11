@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.DefaultGradleSourceSetDependencyModel;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -708,6 +710,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private static void extractExternalProjectModels(@NotNull GradleIdeaModelHolder models) {
     associateProjectModelsWithExternalProjects(models);
     replicateBuildModelHierarchyInExternalProjectHierarchy(models);
+    associateSourceSetModelsWithExternalProjects(models);
+    associateSourceSetDependencyModelsWithSourceSetModels(models);
   }
 
   private static void associateProjectModelsWithExternalProjects(@NotNull GradleIdeaModelHolder models) {
@@ -734,6 +738,38 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       var externalProject = (DefaultExternalProject)models.getBuildModel(nestedBuildModel, ExternalProject.class);
       if (externalProject == null) continue;
       rootExternalProject.addChildProject(externalProject);
+    }
+  }
+
+  private static void associateSourceSetModelsWithExternalProjects(@NotNull GradleIdeaModelHolder models) {
+    for (var buildModel : models.getAllBuilds()) {
+      for (var projectModel : buildModel.getProjects()) {
+        var externalProject = (DefaultExternalProject)models.getProjectModel(projectModel, ExternalProject.class);
+        var sourceSetModel = (DefaultGradleSourceSetModel)models.getProjectModel(projectModel, GradleSourceSetModel.class);
+        if (externalProject == null || sourceSetModel == null) continue;
+
+        externalProject.setSourceSetModel(sourceSetModel);
+      }
+    }
+  }
+
+  private static void associateSourceSetDependencyModelsWithSourceSetModels(@NotNull GradleIdeaModelHolder models) {
+    for (var buildModel : models.getAllBuilds()) {
+      for (var projectModel : buildModel.getProjects()) {
+        var sourceSetModel = (DefaultGradleSourceSetModel)models.getProjectModel(projectModel, GradleSourceSetModel.class);
+        var sourceSetDependencyModel = (DefaultGradleSourceSetDependencyModel)models.getProjectModel(projectModel, GradleSourceSetDependencyModel.class);
+        if (sourceSetModel == null || sourceSetDependencyModel == null) continue;
+
+        var sourceSets = sourceSetModel.getSourceSets();
+        var dependencies = sourceSetDependencyModel.getDependencies();
+        var sourceSetNames = new LinkedHashSet<>(sourceSets.keySet());
+        sourceSetNames.retainAll(dependencies.keySet());
+        for (String sourceSetName : sourceSetNames) {
+          var sourceSet = sourceSets.get(sourceSetName);
+          var sourceSetDependencies = dependencies.get(sourceSetName);
+          sourceSet.setDependencies(sourceSetDependencies);
+        }
+      }
     }
   }
 

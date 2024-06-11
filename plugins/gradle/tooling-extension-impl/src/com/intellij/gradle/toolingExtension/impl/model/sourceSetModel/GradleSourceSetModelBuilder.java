@@ -64,8 +64,6 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     sourceSetModel.setAdditionalArtifacts(collectNonSourceSetArtifacts(project, context));
     sourceSetModel.setSourceSets(collectSourceSets(project, context));
 
-    GradleSourceSetCache.getInstance(context).setSourceSetModel(project, sourceSetModel);
-
     return sourceSetModel;
   }
 
@@ -74,8 +72,6 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
                                  @NotNull Project project,
                                  @NotNull ModelBuilderContext context,
                                  @NotNull Exception exception) {
-    GradleSourceSetCache.getInstance(context).markSourceSetModelAsError(project);
-
     context.getMessageReporter().createMessage()
       .withGroup(Messages.SOURCE_SET_MODEL_GROUP)
       .withKind(Message.Kind.ERROR)
