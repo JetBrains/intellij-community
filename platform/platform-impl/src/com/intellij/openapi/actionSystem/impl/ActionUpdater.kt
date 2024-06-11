@@ -502,7 +502,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     return UpdateSessionImpl(this)
   }
 
-  private suspend fun iterateGroupChildren(group: ActionGroup): Flow<AnAction> = flow {
+  private fun iterateGroupChildren(group: ActionGroup): Flow<AnAction> = flow {
     val tree: suspend (AnAction) -> List<AnAction>? = { o ->
       // in all clients the next call is `update`, let's update both actions and groups here
       val presentation = if (o === group) null else updateAction(o)
@@ -576,12 +576,20 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   @Suppress("UNCHECKED_CAST")
   fun <T : Any?> getSessionDataDeferred(key: Pair<String, Any?>, supplier: suspend () -> T): Deferred<T> {
-    sessionData[key]?.let { return it as Deferred<T> }
+    val chain = currentThreadContext()[SharedDataChain]?.chain ?: FList.emptyList<Any>()
+    val existing = sessionData[key]
+    if (existing != null) {
+      if (chain.contains(key)) {
+        throw AssertionError("Circular dependency: ${chain.prepend(key).joinToString(" <- ")}")
+      }
+      return existing as Deferred<T>
+    }
     val bgtScope = bgtScope
     return if (bgtScope != null) {
       sessionData.computeIfAbsent(key) {
         bgtScope.async(currentThreadContext().minusKey(Job) +
-                       CoroutineName("getSessionDataDeferred#${key.first} ($place)" )) {
+                       CoroutineName("getSessionDataDeferred#${key.first} ($place)" ) +
+                       SharedDataChain(chain.prepend(key))) {
           val spanBuilder = Utils.getTracer(true).spanBuilder("${key.first}@$place")
           spanBuilder.useWithScope(EmptyCoroutineContext) {
             supplier()
@@ -852,6 +860,12 @@ private class RecursionElement(val level: Int)
     suspend fun level() = currentCoroutineContext()[this]?.level ?: 0
     suspend fun isNested() = level() > 0
   }
+}
+
+private class SharedDataChain(val chain: FList<Any>)
+  : AbstractCoroutineContextElement(SharedDataChain) {
+  override fun toString(): String = "SharedDataChain(${chain.size})"
+  companion object : CoroutineContext.Key<SharedDataChain>
 }
 
 private class OperationName(val name: String)
