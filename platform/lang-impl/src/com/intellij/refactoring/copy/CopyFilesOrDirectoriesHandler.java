@@ -278,10 +278,10 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
    */
   @Deprecated
   public static void updateAddedFiles(List<? extends PsiFile> added) {
-    updateAddedFiles(added, null);
+    updateAddedFiles(added, ContainerUtil.emptyList());
   }
 
-  public static void updateAddedFiles(List<? extends PsiFile> added, @Nullable List<? extends PsiFile> originals) {
+  public static void updateAddedFiles(List<? extends PsiFile> added, @NotNull List<? extends PsiFile> originals) {
     if (added.isEmpty()) return;
     Project project = added.get(0).getProject();
     DumbService dumbService = DumbService.getInstance(project);
