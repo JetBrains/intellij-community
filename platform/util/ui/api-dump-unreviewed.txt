@@ -2626,6 +2626,7 @@ c:com.intellij.ui.JBColor
 - s:namedColor(java.lang.String,I):com.intellij.ui.JBColor
 - s:namedColor(java.lang.String,I,I):com.intellij.ui.JBColor
 - s:namedColor(java.lang.String,java.awt.Color):com.intellij.ui.JBColor
+- s:namedColorOrNull(java.lang.String):com.intellij.ui.JBColor
 - s:setDark(Z):V
 f:com.intellij.ui.JBGradientPaint
 - java.awt.GradientPaint

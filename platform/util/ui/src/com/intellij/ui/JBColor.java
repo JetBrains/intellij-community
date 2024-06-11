@@ -118,32 +118,32 @@ public class JBColor extends Color {
     return namedColor(propertyName, NAMED_COLOR_FALLBACK_MARKER);
   }
 
+  public static JBColor namedColorOrNull(@NonNls @NotNull String propertyName) {
+    JBColor color = new JBColor(propertyName, NAMED_COLOR_FALLBACK_MARKER);
+    if (color.getColorOrNull() == null) return null;
+    return color;
+  }
+
   public static @NotNull JBColor namedColor(@NonNls @NotNull String propertyName, @NotNull Color defaultColor) {
     return new JBColor(propertyName, defaultColor);
   }
 
   private static @NotNull Color calculateColor(@NonNls @NotNull String name, @Nullable Color defaultColor) {
-    Color color = UIManager.getColor(name);
-    if (color != null) return color;
-    Color patternMatch = findPatternMatch(name);
-    if (patternMatch != null) return patternMatch;
-
-    return defaultColor == NAMED_COLOR_FALLBACK_MARKER || defaultColor == null ? calculateFallback(name) : defaultColor;
+    Color color = calculateColorOrNull(name);
+    if (color == null) {
+      return defaultColor == NAMED_COLOR_FALLBACK_MARKER || defaultColor == null ? Gray.TRANSPARENT : defaultColor;
+    }
+    return color;
   }
 
-  private static @NotNull Color calculateFallback(@NonNls @NotNull String propertyName) {
-    Color value = UIManager.getColor(propertyName);
-    Color color;
-    if (value == null) {
-      Color v = findPatternMatch(propertyName);
-      color = v == null ? Gray.TRANSPARENT : v;
-    }
-    else {
-      color = value;
+  private static Color calculateColorOrNull(@NonNls @NotNull String propertyName) {
+    Color color = UIManager.getColor(propertyName);
+    if (color == null) {
+      color = findPatternMatch(propertyName);
     }
     if (UIManager.get(propertyName) == null) {
       if (Registry.is("ide.save.missing.jb.colors", false)) {
-        return _saveAndReturnColor(propertyName, color);
+        return _saveAndReturnColor(propertyName, color == null ? Gray.TRANSPARENT : color);
       }
     }
     return color;
@@ -210,6 +210,17 @@ public class JBColor extends Color {
     }
     if (name != null) {
       return calculateColor(name, defaultColor);
+    }
+
+    return DARK.getValue() ? getDarkVariant() : this;
+  }
+
+  Color getColorOrNull() {
+    if (func != null) {
+      return func.get();
+    }
+    if (name != null) {
+      return calculateColorOrNull(name);
     }
 
     return DARK.getValue() ? getDarkVariant() : this;
