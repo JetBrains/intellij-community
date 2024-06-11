@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.remote.RemoteFile;
@@ -64,13 +62,11 @@ public final class PyCommandLineStateUtil {
       }
 
       int i = 0;
+      boolean isWin = RemoteFile.isWindowsPath(interpreterPath);
       for (String param : paramsGroup.getParameters()) {
         if (pathMapper.canReplaceLocal(param)) {
-          paramsGroup.getParametersList().set(i, RemoteFile.detectSystemByPath(interpreterPath).
-            createRemoteFile(pathMapper.convertToRemote(param)).getPath());
+          paramsGroup.getParametersList().set(i++, RemoteFile.createRemoteFile(pathMapper.convertToRemote(param), isWin).getPath());
         }
-
-        i++;
       }
     }
   }
@@ -112,12 +108,10 @@ public final class PyCommandLineStateUtil {
 
   public static @NotNull String remapStuffPathsList(@NotNull String pathsValue, @NotNull PathMapper pathMapper, @NotNull String interpreterPath) {
     boolean isWin = RemoteFile.isWindowsPath(interpreterPath);
-    List<String> paths = Lists.newArrayList(pathsValue.split(Pattern.quote("|")));
     List<String> mappedPaths = new ArrayList<>();
-
-    for (String path : paths) {
-      mappedPaths.add(new RemoteFile(pathMapper.convertToRemote(path), isWin).getPath());
+    for (String path : pathsValue.split(Pattern.quote("|"))) {
+      mappedPaths.add(RemoteFile.createRemoteFile(pathMapper.convertToRemote(path), isWin).getPath());
     }
-    return Joiner.on('|').join(mappedPaths);
+    return String.join("|", mappedPaths);
   }
 }

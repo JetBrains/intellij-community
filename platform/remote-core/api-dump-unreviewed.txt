@@ -232,21 +232,15 @@ c:com.intellij.remote.RemoteCredentialsHolder
 - setStorePassphrase(Z):V
 - setStorePassword(Z):V
 - setUserName(java.lang.String):V
-c:com.intellij.remote.RemoteFile
-- <init>(java.lang.String,java.lang.String):V
-- <init>(java.lang.String,java.lang.String,Z):V
-- <init>(java.lang.String,Z):V
+f:com.intellij.remote.RemoteFile
 - s:createRemoteFile(java.lang.String):com.intellij.remote.RemoteFile
 - s:createRemoteFile(java.lang.String,java.lang.String):com.intellij.remote.RemoteFile
 - s:createRemoteFile(java.lang.String,java.lang.String,Z):com.intellij.remote.RemoteFile
-- s:detectSystemByPath(java.lang.String):com.intellij.remote.RemoteFile$RemoteFileBuilder
+- s:createRemoteFile(java.lang.String,Z):com.intellij.remote.RemoteFile
 - getName():java.lang.String
 - getPath():java.lang.String
 - isWin():Z
 - s:isWindowsPath(java.lang.String):Z
-f:com.intellij.remote.RemoteFile$RemoteFileBuilder
-- createRemoteFile(java.lang.String):com.intellij.remote.RemoteFile
-- createRemoteFile(java.lang.String,java.lang.String):com.intellij.remote.RemoteFile
 a:com.intellij.remote.RemoteProcess
 - java.lang.Process
 - com.intellij.execution.process.ProcessTreeKiller

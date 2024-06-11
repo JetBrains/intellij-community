@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.google.common.base.Joiner;
@@ -17,10 +17,7 @@ import java.util.List;
 public final class RemoteProcessUtil {
   @Contract("null -> null")
   public static String toRemoteFileSystemStyle(@Nullable String path) {
-    if (path == null) {
-      return null;
-    }
-    return RemoteFile.detectSystemByPath(path).createRemoteFile(path).getPath();
+    return path == null ? null : RemoteFile.createRemoteFile(path).getPath();
   }
 
   public static String[] buildRemoteCommand(@NotNull AbstractPathMapper pathMapper, @NotNull Collection<String> commands) {
@@ -31,7 +28,7 @@ public final class RemoteProcessUtil {
     boolean isWin = RemoteFile.isWindowsPath(interpreterPath);
     List<String> mappedPaths = new ArrayList<>();
     for (String path : pathsValue.split(File.pathSeparator)) {
-      mappedPaths.add(new RemoteFile(pathMapper.convertToRemote(path), isWin).getPath());
+      mappedPaths.add(RemoteFile.createRemoteFile(pathMapper.convertToRemote(path), isWin).getPath());
     }
     return Joiner.on(isWin ? ';' : ':').join(mappedPaths);
   }
