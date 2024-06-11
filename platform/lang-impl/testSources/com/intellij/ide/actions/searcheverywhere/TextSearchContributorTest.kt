@@ -24,6 +24,7 @@ class TextSearchContributorTest : BasePlatformTestCase() {
     """.trimIndent())
 
       val contributor = TextSearchContributor(createEvent(project))
+      Disposer.register(testRootDisposable, contributor)
       val ui = SearchEverywhereUI(project, listOf(contributor))
       Disposer.register(testRootDisposable, ui)
       ui.switchToTab(contributor.searchProviderId)
