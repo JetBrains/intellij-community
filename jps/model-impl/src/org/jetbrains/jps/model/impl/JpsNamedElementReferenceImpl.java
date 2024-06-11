@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
@@ -23,6 +24,10 @@ import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsNamedElement;
 import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
 
+/**
+ * This class is for internal use only, override {@link JpsNamedElementReferenceBase} instead.
+ */
+@ApiStatus.Internal
 public abstract class JpsNamedElementReferenceImpl<T extends JpsNamedElement, Self extends JpsNamedElementReferenceImpl<T, Self>> extends JpsNamedElementReferenceBase<T, T, Self> {
   protected final JpsElementCollectionRole<? extends T> myCollectionRole;
 

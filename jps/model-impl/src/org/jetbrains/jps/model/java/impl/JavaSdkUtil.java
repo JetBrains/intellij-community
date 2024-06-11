@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Set;
 
 public final class JavaSdkUtil {
+  private JavaSdkUtil() {
+  }
+
   public static @NotNull List<Path> getJdkClassesRoots(@NotNull Path home, boolean isJre) {
     Path[] jarDirs;
     Path fileName = home.getFileName();
