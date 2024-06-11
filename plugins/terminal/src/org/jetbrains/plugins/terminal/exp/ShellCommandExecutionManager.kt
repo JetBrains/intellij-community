@@ -231,8 +231,12 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   }
 
   private fun doSendCommandToExecute(shellCommand: String, isGenerator: Boolean) {
+    var adjustedCommand = shellCommand;
+    if (session.model.isBracketedPasteMode && (adjustedCommand.contains("\n") || adjustedCommand.contains(System.lineSeparator()))) {
+      adjustedCommand = bracketed(adjustedCommand)
+    }
     // in the IDE we use '\n' line separator, but Windows requires '\r\n'
-    val adjustedCommand = shellCommand.replace("\n", System.lineSeparator())
+    adjustedCommand = adjustedCommand.replace("\n", System.lineSeparator())
     session.terminalStarterFuture.thenAccept { starter ->
       starter ?: return@thenAccept
       val clearPrompt = createClearPromptShortcut(starter.terminal)
@@ -363,6 +367,10 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
           append(pwshCharsToEscape[ch] ?: ch)
         }
       }
+    }
+
+    private fun bracketed(command: String): String {
+      return "\u001b[200~$command\u001b[201~"
     }
   }
 }

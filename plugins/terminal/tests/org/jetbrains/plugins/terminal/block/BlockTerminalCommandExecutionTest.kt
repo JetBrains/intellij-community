@@ -22,6 +22,7 @@ import org.jetbrains.plugins.terminal.exp.*
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil.toCommandLine
 import org.junit.Assert
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -60,6 +61,21 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
       session.commandExecutionManager.sendCommandToExecute(it.command)
     }
     awaitBlocksFinalized(view.outputView.controller.outputModel, count)
+    val actual = view.outputView.controller.outputModel.collectCommandResults()
+    Assert.assertEquals(expected, actual)
+  }
+
+  @Test
+  fun `multiline commands with bracketed mode`() {
+    val (session, view) = startSessionAndCreateView()
+    Assume.assumeTrue(session.model.isBracketedPasteMode)
+    val expected = listOf(
+      CommandResult("echo 1\necho 2", "1\n2")
+    )
+    expected.forEach {
+      session.commandExecutionManager.sendCommandToExecute(it.command)
+    }
+    awaitBlocksFinalized(view.outputView.controller.outputModel, expected.size)
     val actual = view.outputView.controller.outputModel.collectCommandResults()
     Assert.assertEquals(expected, actual)
   }
