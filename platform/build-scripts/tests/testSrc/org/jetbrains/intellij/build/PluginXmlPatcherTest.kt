@@ -176,7 +176,10 @@ class PluginXmlPatcherTest {
         <product-descriptor code="PDB" release-date="__DATE__" release-version="__VERSION__"/>
         <description>
             <![CDATA[
-              xxx for IntelliJ-based IDEs provides
+              The Database Tools and SQL plugin for IntelliJ-based IDEs allows you to query, create, and manage databases and provides full SQL language support.
+              <br><br>
+              The plugin provides all the same features as <a href="https://www.jetbrains.com/datagrip/">DataGrip</a>, the standalone JetBrains IDE for databases.
+              <br><br>
             ]]>
         </description>
       </idea-plugin>
@@ -190,7 +193,10 @@ class PluginXmlPatcherTest {
         <product-descriptor code="PDB" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X"/>
         <description>
             <![CDATA[
-              xxx for WebStorm and RustRover provides
+              The Database Tools and SQL plugin for WebStorm and RustRover allows you to query, create, and manage databases and provides full SQL language support.
+              <br><br>
+              The plugin provides all the same features as <a href="https://www.jetbrains.com/datagrip/">DataGrip</a>, the standalone JetBrains IDE for databases.
+              <br><br>
             ]]>
         </description>
       </idea-plugin>
@@ -208,7 +214,10 @@ class PluginXmlPatcherTest {
         <product-descriptor code="PDB" release-date="__DATE__" release-version="__VERSION__"/>
         <description>
             <![CDATA[
-              xxx for IntelliJ-based IDEs provides
+              The Database Tools and SQL plugin for IntelliJ-based IDEs allows you to query, create, and manage databases and provides full SQL language support.
+              <br><br>
+              The plugin provides all the same features as <a href="https://www.jetbrains.com/datagrip/">DataGrip</a>, the standalone JetBrains IDE for databases.
+              <br><br>
             ]]>
         </description>
       </idea-plugin>
@@ -221,7 +230,10 @@ class PluginXmlPatcherTest {
         <idea-version since-build="new-since" until-build="new-until"/>
         <description>
             <![CDATA[
-              xxx for IntelliJ-based IDEs provides
+              The Database Tools and SQL plugin for IntelliJ-based IDEs allows you to query, create, and manage databases and provides full SQL language support.
+              <br><br>
+              The plugin provides all the same features as <a href="https://www.jetbrains.com/datagrip/">DataGrip</a>, the standalone JetBrains IDE for databases.
+              <br><br>
             ]]>
         </description>
       </idea-plugin>
