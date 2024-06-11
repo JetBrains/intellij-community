@@ -2,19 +2,21 @@
 
 package org.jetbrains.kotlin.idea.core.script
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -93,6 +95,13 @@ suspend fun configureGradleScriptsK2(
     writeAction {
         project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
     }
-}
 
-val scriptingEnabled = Registry.`is`("kotlin.k2.scripting.enabled", false)
+    for (script in scripts) {
+        if (project.isOpen && !project.isDisposed) {
+            readAction {
+                val ktFile = script.virtualFile.toPsiFile(project) as? KtFile ?: error("Cannot convert to PSI file: ${script.virtualFile}")
+                DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+            }
+        }
+    }
+}

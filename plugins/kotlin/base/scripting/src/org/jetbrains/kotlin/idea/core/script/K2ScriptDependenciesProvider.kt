@@ -138,7 +138,9 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
                     ide.dependenciesSources(JvmDependency(script.sourcePath.map { File(it) }))
                 }.adjustByDefinition(definition)
 
-                val updatedConfiguration = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
+                val updatedConfiguration = project.runReadActionInSmartMode {
+                    refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
+                }
                 configurationsByFile[script.virtualFile] = updatedConfiguration
 
                 val configurationWrapper = updatedConfiguration.valueOrNull() ?: continue
