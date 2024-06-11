@@ -89,9 +89,15 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val command = expandedTokens.first()
     val arguments = expandedTokens.subList(1, expandedTokens.size)
     if (arguments.isEmpty()) {
-      val commands = context.generatorsExecutor.execute(runtimeContext, availableCommandsGenerator())
       val files = context.generatorsExecutor.execute(runtimeContext, fileSuggestionsGenerator())
-      return commands + files.filter { !it.isHidden }
+      val suggestions = if (files.firstOrNull()?.prefixReplacementIndex != 0) {
+        files  // Return only files if some file path prefix is already typed
+      }
+      else {
+        val commands = context.generatorsExecutor.execute(runtimeContext, availableCommandsGenerator())
+        commands + files
+      }
+      return suggestions.filter { !it.isHidden }
     }
     else {
       val commandVariants = if (command.endsWith(".exe")) listOf(command.removeSuffix(".exe"), command) else listOf(command)
