@@ -3963,7 +3963,6 @@ c:com.intellij.util.ui.JBDimension
 - height2d():D
 - newSize():com.intellij.util.ui.JBDimension
 - p:set(I,I):V
-- p:set(com.intellij.util.ui.JBDimension$Size2D):V
 - size():com.intellij.util.ui.JBDimension
 - s:size(java.awt.Dimension):com.intellij.util.ui.JBDimension
 - update():Z
