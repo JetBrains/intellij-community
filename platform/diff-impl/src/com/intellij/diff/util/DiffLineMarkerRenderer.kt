@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -21,7 +22,8 @@ open class DiffLineMarkerRenderer(
   val isEmptyRange: Boolean,
   val isFirstLine: Boolean,
   val isLastLine: Boolean,
-  val alignedSides: Boolean
+  val alignedSides: Boolean,
+  private val clearThinLineBetweenGutterAndEditor: Boolean
 ) : LineMarkerRendererEx {
 
   override fun paint(editor: Editor, g: Graphics, range: Rectangle) {
@@ -67,7 +69,8 @@ open class DiffLineMarkerRenderer(
     }
     else {
       val xOutline = gutter.whitespaceSeparatorOffset
-      drawMarker(editor, g, xOutline, x2, y1, y2, alignedSides, editorMode)
+      val thinLineForcedColor = if (clearThinLineBetweenGutterAndEditor) editor.backgroundColor else null
+      drawMarker(editor, g, xOutline, x2, y1, y2, alignedSides, editorMode, thinLineForcedColor)
       drawMarker(editor, g, x1, xOutline, y1, y2, alignedSides, gutterMode)
     }
   }
@@ -75,12 +78,13 @@ open class DiffLineMarkerRenderer(
   @ApiStatus.Internal
   fun drawMarker(editor: Editor, g: Graphics2D,
                  x1: Int, x2: Int, y1: Int, y2: Int,
-                 alignedSides: Boolean, mode: PaintMode) {
+                 alignedSides: Boolean, mode: PaintMode,
+                 forcedBackgroundColor: Color? = null) {
     if (x1 >= x2) return
 
     val dottedLine = mode.border == BorderType.DOTTED
     val color = diffType.getColor(editor)
-    val backgroundColor = when (mode.background) {
+    val backgroundColor = forcedBackgroundColor ?: when (mode.background) {
       BackgroundType.NONE -> null
       BackgroundType.DEFAULT -> color
       BackgroundType.IGNORED -> diffType.getIgnoredColor(editor)
