@@ -21,8 +21,10 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHandler {
   private static final int CLEAN_CACHE_TIME_MS = Integer.getInteger("jcef.remote.osr.clean_cache_time_ms", 10*1000); // 10 sec
   private static final boolean FORCE_USE_SOFTWARE_RENDERING = Boolean.getBoolean("jcef.remote.force_use_software_rendering");
@@ -37,16 +39,13 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
   }
 
   @Override
-  public void disposeNativeResources() {
+  synchronized public void disposeNativeResources() {
     if (myIsDisposed)
       return;
 
     myIsDisposed = true;
-    for (SharedMemory.WithRaster mem: mySharedMemCache.values())
-      mem.close();
     mySharedMemCache.clear();
   }
-
 
   private void cleanCacheIfNecessary() {
     final long timeMs = System.currentTimeMillis();
@@ -60,9 +59,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
       }
     }
     for (String name: toRemove) {
-      SharedMemory.WithRaster removed = mySharedMemCache.remove(name);
-      if (removed != null)
-        removed.close();
+      mySharedMemCache.remove(name);
     }
   }
 
@@ -79,7 +76,12 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
     if (mem == null) {
       cleanCacheIfNecessary();
       mem = new SharedMemory.WithRaster(sharedMemName, sharedMemHandle);
-      mySharedMemCache.put(sharedMemName, mem);
+      synchronized (this) {
+        // Use synchronization to avoid leak (when disposeNativeRes is called just before putting into cache).
+        if (myIsDisposed)
+          return;
+        mySharedMemCache.put(sharedMemName, mem);
+      }
     }
 
     mem.setWidth(width);
@@ -110,8 +112,6 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
 
     // Shared-memory frame presented, so draw it into volatile image.
     synchronized (frame) {
-      if (frame.isClosed())
-        return;
       try {
         frame.lock();
         if (!FORCE_USE_SOFTWARE_RENDERING && JBR.isNativeRasterLoaderSupported()) {
@@ -130,7 +130,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
             new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB_PRE),
             myScale.getJreBiased(), null);
         }
-        loadBuffered((BufferedImage)image.getDelegate(), frame);
+        loadBuffered((BufferedImage)Objects.requireNonNull(image.getDelegate()), frame);
         myImage = image;
       }
       finally {
@@ -161,7 +161,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
         r.x = rects.get(pos++);
         r.y = rects.get(pos++);
         r.width = rects.get(pos++);
-        r.height = rects.get(pos++);
+        r.height = rects.get(pos);
         dirtyRects[c] = r;
       }
     }
