@@ -2,10 +2,12 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Experimental
+@Experimental
+@Internal
 public final class FileTypeSpecificSubIndexer<SubIndexerType> {
   @NotNull
   private final SubIndexerType mySubIndexerType;

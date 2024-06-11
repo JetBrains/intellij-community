@@ -1,6 +1,5 @@
 f:com.intellij.find.ngrams.TrigramIndex
 - com.intellij.util.indexing.ScalarIndexExtension
-- com.intellij.util.indexing.CustomInputsIndexFileBasedIndexExtension
 - sf:INDEX_ID:com.intellij.util.indexing.ID
 - <init>():V
 - createExternalizer():com.intellij.util.io.DataExternalizer

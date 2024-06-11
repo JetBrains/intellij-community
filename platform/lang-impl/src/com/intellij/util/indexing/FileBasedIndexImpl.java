@@ -175,6 +175,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myRegisteredIndexes = null;
   }
 
+  @ApiStatus.Internal
   public FileBasedIndexImpl(@NotNull CoroutineScope coroutineScope) {
     this.coroutineScope = coroutineScope;
     ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -1720,6 +1721,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
+  @ApiStatus.Internal
   public @Nullable IndexWritingFile getFileWritingCurrentlyIndexes() {
     return ourWritingIndexFile.get();
   }

@@ -58,3 +58,4 @@ class SearchServiceImpl : SearchService {
     }
   }
 }
+

@@ -24113,14 +24113,12 @@ f:com.intellij.psi.impl.PsiDocumentManagerImpl
 - isDocumentBlockedByPsi(com.intellij.openapi.editor.Document):Z
 - reparseFiles(java.util.Collection,Z):V
 f:com.intellij.psi.impl.cache.impl.IndexTodoCacheManagerImpl
-- com.intellij.psi.impl.cache.TodoCacheManager
 - <init>(com.intellij.openapi.project.Project):V
 - getTodoCount(com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.search.IndexPattern):I
 - getTodoCount(com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.search.IndexPatternProvider):I
 - s:getTodoMap(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.Map
 - processFilesWithTodoItems(com.intellij.util.Processor):Z
 f:com.intellij.psi.impl.cache.impl.id.IdIndexImpl
-- com.intellij.util.indexing.CustomInputsIndexFileBasedIndexExtension
 - com.intellij.util.indexing.FileBasedIndexExtension
 - <init>():V
 - createExternalizer():com.intellij.util.io.DataExternalizer
@@ -28505,7 +28503,6 @@ a:com.intellij.util.indexing.BuildableRootsChangeRescanningInfoEx
 - a:addWorkspaceEntity(com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.util.indexing.BuildableRootsChangeRescanningInfoEx
 f:com.intellij.util.indexing.BuildableRootsChangeRescanningInfoImpl
 - com.intellij.util.indexing.BuildableRootsChangeRescanningInfoEx
-- <init>():V
 - addInheritedSdk():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - addLibrary(com.intellij.openapi.roots.libraries.Library):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - addModule(com.intellij.openapi.module.Module):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
@@ -28521,9 +28518,6 @@ f:com.intellij.util.indexing.BuildableRootsChangeRescanningInfoImpl
 *:com.intellij.util.indexing.CustomizingIndexingPresentationContributor
 - com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 - a:customizeIteratorPresentation(com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.util.indexing.roots.IndexableIteratorPresentation
-f:com.intellij.util.indexing.DirtyFilesOrigin
-- com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-- sf:INSTANCE:com.intellij.util.indexing.DirtyFilesOrigin
 a:com.intellij.util.indexing.DocumentContent
 - a:getModificationStamp():J
 - a:getText():java.lang.CharSequence
@@ -28534,7 +28528,6 @@ f:com.intellij.util.indexing.DumbModeWhileScanningSubscriber
 f:com.intellij.util.indexing.FileBasedIndexImpl
 - com.intellij.util.indexing.FileBasedIndex
 - f:myWriteLock:java.util.concurrent.locks.Lock
-- <init>(kotlinx.coroutines.CoroutineScope):V
 - belongsToIndexableFiles(com.intellij.openapi.vfs.VirtualFile):Z
 - belongsToProjectIndexableFiles(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 - cleanupForNextTest():V
@@ -28550,7 +28543,6 @@ f:com.intellij.util.indexing.FileBasedIndexImpl
 - getContainingProjects(com.intellij.openapi.vfs.VirtualFile):java.util.Set
 - getContentDependentIndexes():java.util.Collection
 - getFileBeingCurrentlyIndexed():com.intellij.openapi.vfs.VirtualFile
-- getFileWritingCurrentlyIndexes():com.intellij.util.indexing.FileBasedIndex$IndexWritingFile
 - getIndex(com.intellij.util.indexing.ID):com.intellij.util.indexing.UpdatableIndex
 - getIndexableFilesFilterHolder():com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder
 - getLogger():com.intellij.openapi.diagnostic.Logger
@@ -29204,23 +29196,6 @@ f:com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolderKt
 *f:com.intellij.util.indexing.roots.IndexingRootsCollectionUtil
 - sf:selectRootVirtualFileUrls(java.util.Collection):java.util.List
 - sf:selectRootVirtualFiles(java.util.Collection):java.util.List
-*f:com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
-- com.intellij.util.indexing.roots.LibraryIndexableFilesIterator
-- *sf:Companion:com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl$Companion
-- sf:createIterator(com.intellij.openapi.roots.libraries.Library,java.util.Collection,java.util.Collection):com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
-- sf:createIteratorList(com.intellij.openapi.roots.libraries.Library):java.util.List
-- getDebugName():java.lang.String
-- getIndexingProgressText():java.lang.String
-- getOrigin():com.intellij.util.indexing.roots.kind.LibraryOrigin
-- getRootUrls(com.intellij.openapi.project.Project):java.util.Set
-- getRootsScanningProgressText():java.lang.String
-- iterateFiles(com.intellij.openapi.project.Project,com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.vfs.VirtualFileFilter):Z
-*f:com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl$Companion
-- f:collectFiles(com.intellij.openapi.roots.libraries.Library,com.intellij.openapi.roots.OrderRootType,java.util.Collection):java.util.List
-- bs:collectFiles$default(com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl$Companion,com.intellij.openapi.roots.libraries.Library,com.intellij.openapi.roots.OrderRootType,java.util.Collection,I,java.lang.Object):java.util.List
-- f:createIterator(com.intellij.openapi.roots.libraries.Library,java.util.Collection,java.util.Collection):com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
-- bs:createIterator$default(com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl$Companion,com.intellij.openapi.roots.libraries.Library,java.util.Collection,java.util.Collection,I,java.lang.Object):com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
-- f:createIteratorList(com.intellij.openapi.roots.libraries.Library):java.util.List
 *f:com.intellij.util.indexing.roots.ModuleAwareContentEntityIteratorImpl
 - com.intellij.util.indexing.roots.RootHolderIteratorBase
 - <init>(com.intellij.openapi.module.Module,com.intellij.platform.workspace.storage.EntityPointer,com.intellij.util.indexing.roots.origin.IndexingRootHolder,com.intellij.util.indexing.roots.IndexableIteratorPresentation):V
@@ -29250,17 +29225,8 @@ f:com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolderKt
 - shouldIndexSeparateRoots():Z
 *f:com.intellij.util.indexing.roots.ModuleIndexableFilesPolicy$Companion
 - f:getInstance():com.intellij.util.indexing.roots.ModuleIndexableFilesPolicy
-*f:com.intellij.util.indexing.roots.PartialAdditionalLibraryIndexableSetOrigin
-- com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-- <init>(java.util.Collection):V
-- f:component1():java.util.Collection
-- f:copy(java.util.Collection):com.intellij.util.indexing.roots.PartialAdditionalLibraryIndexableSetOrigin
-- bs:copy$default(com.intellij.util.indexing.roots.PartialAdditionalLibraryIndexableSetOrigin,java.util.Collection,I,java.lang.Object):com.intellij.util.indexing.roots.PartialAdditionalLibraryIndexableSetOrigin
-- equals(java.lang.Object):Z
-- f:getRootsToIndex():java.util.Collection
-- hashCode():I
 *f:com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
-- com.intellij.util.indexing.roots.ProjectIndexableFilesIterator
+- com.intellij.util.indexing.roots.IndexableFilesIterator
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
 - getDebugName():java.lang.String
 - getIndexingProgressText():java.lang.String
@@ -29333,18 +29299,6 @@ f:com.intellij.util.indexing.roots.builders.SyntheticLibraryIndexableIteratorHan
 - <init>():V
 - accepts(com.intellij.util.indexing.roots.IndexableEntityProvider$IndexableIteratorBuilder):Z
 - instantiate(java.util.Collection,com.intellij.openapi.project.Project,com.intellij.platform.workspace.storage.EntityStorage):java.util.List
-com.intellij.util.indexing.roots.origin.CustomKindEntityOrigin
-- com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-- a:getReference():com.intellij.platform.workspace.storage.EntityPointer
-- a:getRootHolder():com.intellij.util.indexing.roots.origin.IndexingRootHolder
-com.intellij.util.indexing.roots.origin.ExternalEntityOrigin
-- com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-- a:getReference():com.intellij.platform.workspace.storage.EntityPointer
-- a:getRootHolder():com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
-com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin
-- com.intellij.util.indexing.roots.kind.ContentOrigin
-- a:getReference():com.intellij.platform.workspace.storage.EntityPointer
-- a:getRootHolder():com.intellij.util.indexing.roots.origin.IndexingRootHolder
 com.intellij.util.indexing.roots.origin.IndexingRootHolder
 - sf:Companion:com.intellij.util.indexing.roots.origin.IndexingRootHolder$Companion
 - a:getDebugDescription():java.lang.String
@@ -29393,10 +29347,6 @@ com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder
 f:com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder$Companion
 - f:fromUrls(java.util.List,java.util.List):com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder
 - f:fromUrls(java.util.List,java.util.List,java.util.List,java.util.List):com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder
-com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOrigin
-- com.intellij.util.indexing.roots.kind.ModuleContentOrigin
-- a:getReference():com.intellij.platform.workspace.storage.EntityPointer
-- a:getRootHolder():com.intellij.util.indexing.roots.origin.IndexingRootHolder
 f:com.intellij.util.indexing.snapshot.EmptyValueContainer
 - com.intellij.util.indexing.ValueContainer
 - sf:INSTANCE:com.intellij.util.indexing.snapshot.EmptyValueContainer

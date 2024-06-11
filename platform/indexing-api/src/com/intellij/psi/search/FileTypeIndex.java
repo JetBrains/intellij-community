@@ -11,6 +11,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ public final class FileTypeIndex {
    * {@link #processFiles(FileType, Processor, GlobalSearchScope)} instead
    */
   @Deprecated
-  @ApiStatus.Internal
+  @Internal
   public static final ID<FileType, Void> NAME = ID.create("filetypes");
 
   @Nullable

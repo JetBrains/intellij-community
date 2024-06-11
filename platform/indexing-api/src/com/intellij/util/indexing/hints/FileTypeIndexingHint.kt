@@ -3,11 +3,11 @@ package com.intellij.util.indexing.hints
 
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.util.ThreeState
-import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing.FileBasedIndex.ProjectSpecificInputFilter
 import com.intellij.util.indexing.IndexedFile
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 /**
  * **TL;DR;**
@@ -83,6 +83,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * @see com.intellij.psi.LanguageSubstitutor
  */
 @Experimental
+@OverrideOnly
 interface FileTypeIndexingHint {
   fun acceptsFileTypeFastPath(fileType: FileType): ThreeState
 

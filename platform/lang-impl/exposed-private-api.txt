@@ -85,6 +85,11 @@ com/intellij/util/indexing/diagnostic/dto/JsonIndexingActivityDiagnostic
 com/intellij/util/indexing/events/FileIndexingRequest
 com/intellij/util/indexing/projectFilter/ProjectIndexableFilesFilterHolder
 com/intellij/util/indexing/roots/IndexableEntityProvider$IndexableIteratorBuilder
+com/intellij/util/indexing/roots/IndexableIteratorPresentation
+com/intellij/util/indexing/roots/origin/CustomKindEntityOrigin
+com/intellij/util/indexing/roots/origin/ExternalEntityOrigin
+com/intellij/util/indexing/roots/origin/GenericContentEntityOrigin
+com/intellij/util/indexing/roots/origin/ModuleAwareContentEntityOrigin
 com/intellij/util/indexing/storage/VfsAwareIndexStorageLayout
 com/intellij/util/io/SimpleStringPersistentEnumerator
 com/intellij/util/io/StorageLockContext

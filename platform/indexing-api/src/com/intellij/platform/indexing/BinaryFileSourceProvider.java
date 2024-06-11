@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,9 @@ import org.jetbrains.annotations.Nullable;
  * In the situation when the identifiers are provided by the binary file (implemented {@link com.intellij.psi.impl.cache.impl.id.IdIndexer}
  * for binary file) which corresponds to some source file, this extension is used to find the original source file during the Find Usages.
  */
+@Internal
 public interface BinaryFileSourceProvider {
+  @Internal
   ExtensionPointName<BinaryFileSourceProvider> EP = new ExtensionPointName<>("com.intellij.binaryFileSourceProvider");
 
   /**
