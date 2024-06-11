@@ -123,15 +123,6 @@ class GradleIdeaModelHolder(
     return deserializedModel
   }
 
-  fun <T : Any> addModel(modelClass: Class<T>, model: T) {
-    addBuildModel(getRootBuild(), modelClass, model)
-  }
-
-  private fun <T : Any> addBuildModel(build: BuildModel, modelClass: Class<T>, model: T) {
-    val modelId = getBuildModelId(build, modelClass)
-    models[modelId] = model
-  }
-
   fun <T : Any> addProjectModel(project: ProjectModel, modelClass: Class<T>, model: T) {
     val modelId = getProjectModelId(project, modelClass)
     models[modelId] = model

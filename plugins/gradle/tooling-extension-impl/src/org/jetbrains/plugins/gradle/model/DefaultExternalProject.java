@@ -197,6 +197,10 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
     return childProjects;
   }
 
+  public void addChildProject(@NotNull DefaultExternalProject childProject) {
+    childProjects.put(childProject.getName(), childProject);
+  }
+
   public void setChildProjects(@NotNull Map<String, DefaultExternalProject> childProjects) {
     if (childProjects instanceof TreeMap) {
       this.childProjects = (TreeMap<String, DefaultExternalProject>)childProjects;

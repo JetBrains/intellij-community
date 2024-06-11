@@ -45,7 +45,6 @@ import org.gradle.tooling.BuildActionFailureException;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
-import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
@@ -366,6 +365,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .spanBuilder("GradleProjectResolverDataProcessing")
       .startSpan();
     try (Scope ignore = projectResolversSpan.makeCurrent()) {
+      extractExternalProjectModels(models);
       return convertData(executionSettings, resolverContext, projectResolverChain, isBuildSrcProject);
     }
     catch (Throwable t) {
@@ -393,8 +393,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     String projectPath = resolverContext.getProjectPath();
     String projectName = resolverContext.getRootBuild().getName();
-
-    extractExternalProjectModels(resolverContext.getModels());
 
     ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectName, projectPath, projectPath);
     DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
@@ -708,43 +706,45 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private static void extractExternalProjectModels(@NotNull GradleIdeaModelHolder models) {
-    final ExternalProject externalRootProject = models.getRootModel(ExternalProject.class);
-    if (externalRootProject == null) return;
+    associateProjectModelsWithExternalProjects(models);
+    replicateBuildModelHierarchyInExternalProjectHierarchy(models);
+  }
 
-    final DefaultExternalProject wrappedExternalRootProject = (DefaultExternalProject)externalRootProject;
-    models.addModel(ExternalProject.class, wrappedExternalRootProject);
-    final Map<String, DefaultExternalProject> externalProjectsMap = createExternalProjectsMap(wrappedExternalRootProject);
+  private static void associateProjectModelsWithExternalProjects(@NotNull GradleIdeaModelHolder models) {
+    for (var buildModel : models.getAllBuilds()) {
+      var rootExternalProject = (DefaultExternalProject)models.getBuildModel(buildModel, ExternalProject.class);
+      if (rootExternalProject == null) continue;
 
-    for (GradleLightProject project : models.getRootBuild().getProjects()) {
-      ExternalProject externalProject = externalProjectsMap.get(project.getProjectIdentifier().getProjectPath());
-      if (externalProject != null) {
-        models.addProjectModel(project, ExternalProject.class, externalProject);
-      }
-    }
-
-    for (GradleLightBuild nestedBuild : models.getNestedBuilds()) {
-      final ExternalProject externalIncludedRootProject = models.getBuildModel(nestedBuild, ExternalProject.class);
-      if (externalIncludedRootProject == null) continue;
-      final DefaultExternalProject wrappedExternalIncludedRootProject = (DefaultExternalProject)externalIncludedRootProject;
-      wrappedExternalRootProject.getChildProjects().put(wrappedExternalIncludedRootProject.getName(), wrappedExternalIncludedRootProject);
-      final Map<String, DefaultExternalProject> externalIncludedProjectsMap = createExternalProjectsMap(wrappedExternalIncludedRootProject);
-      for (ProjectModel project : nestedBuild.getProjects()) {
-        ExternalProject externalProject = externalIncludedProjectsMap.get(project.getProjectIdentifier().getProjectPath());
+      var externalProjectIndex = createExternalProjectIndex(rootExternalProject);
+      for (var projectModel : buildModel.getProjects()) {
+        var projectPath = projectModel.getProjectIdentifier().getProjectPath();
+        var externalProject = externalProjectIndex.get(projectPath);
         if (externalProject != null) {
-          models.addProjectModel(project, ExternalProject.class, externalProject);
+          models.addProjectModel(projectModel, ExternalProject.class, externalProject);
         }
       }
     }
   }
 
-  @NotNull
-  private static Map<String, DefaultExternalProject> createExternalProjectsMap(@Nullable DefaultExternalProject rootExternalProject) {
-    final Map<String, DefaultExternalProject> externalProjectMap = new HashMap<>();
-    if (rootExternalProject == null) return externalProjectMap;
-    ArrayDeque<DefaultExternalProject> queue = new ArrayDeque<>();
+  private static void replicateBuildModelHierarchyInExternalProjectHierarchy(@NotNull GradleIdeaModelHolder models) {
+    var rootBuildModel = models.getRootBuild();
+    var rootExternalProject = (DefaultExternalProject)models.getBuildModel(rootBuildModel, ExternalProject.class);
+    if (rootExternalProject == null) return;
+    for (var nestedBuildModel : models.getNestedBuilds()) {
+      var externalProject = (DefaultExternalProject)models.getBuildModel(nestedBuildModel, ExternalProject.class);
+      if (externalProject == null) continue;
+      rootExternalProject.addChildProject(externalProject);
+    }
+  }
+
+  private static @NotNull Map<String, DefaultExternalProject> createExternalProjectIndex(
+    @NotNull DefaultExternalProject rootExternalProject
+  ) {
+    var externalProjectMap = new HashMap<String, DefaultExternalProject>();
+    var queue = new ArrayDeque<DefaultExternalProject>();
     queue.add(rootExternalProject);
-    DefaultExternalProject externalProject;
-    while ((externalProject = queue.pollFirst()) != null) {
+    while (!queue.isEmpty()) {
+      var externalProject = queue.remove();
       queue.addAll(externalProject.getChildProjects().values());
       externalProjectMap.put(externalProject.getQName(), externalProject);
     }
