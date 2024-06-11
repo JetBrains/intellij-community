@@ -15,16 +15,29 @@ import java.util.concurrent.CompletableFuture
 private val LOG = EventBusLoggerFactory.getLogger(LocalEventBusServer::class.java)
 
 object LocalEventBusServer : EventBusServer {
-  override val port: Int = 45654
+  private val portsPool: MutableList<Int> = generateSequence(45654) { it + 10 }
+    .takeWhile { it <= 45654 + 100 }
+    .toMutableList()
+  private var currentPortIndex = 0
   private lateinit var eventsFlowService: EventsFlowService
   private val objectMapper = jacksonObjectMapper()
   private lateinit var server: HttpServer
 
+  override val port: Int
+    get() = portsPool[currentPortIndex]
+
   override fun endServer() {
     if (this::server.isInitialized) {
       server.stop(1)
+      currentPortIndex = 0
       LOG.info("Server stopped")
     }
+  }
+
+  override fun updatePort(): Boolean {
+    if (currentPortIndex == portsPool.size - 1) return false
+    currentPortIndex++
+    return true
   }
 
   private fun handleException(t: Throwable, exchange: HttpExchange) {
@@ -34,7 +47,7 @@ object LocalEventBusServer : EventBusServer {
     exchange.responseBody.bufferedWriter().use { writer -> writer.write(response) }
   }
 
-  override fun startServer(): Boolean {
+  override fun startServer() {
     return try {
       server = HttpServer.create(InetSocketAddress(port), 0)
       eventsFlowService = EventsFlowService()
@@ -122,11 +135,11 @@ object LocalEventBusServer : EventBusServer {
 
       server.start()
       LOG.info("Server started on port $port")
-      true
     }
     catch (bind: BindException) {
-      LOG.info("Server already running. ${bind.message}")
-      false
+      LOG.info("Port $port is busy. Trying use another")
+      if (!updatePort()) throw BindException("All ports from ports pool are busy")
+      startServer()
     }
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.tools.ide.starter.bus.logger.EventBusLoggerFactory
 import com.intellij.tools.ide.starter.bus.shared.dto.SharedEventDto
 import com.intellij.tools.ide.starter.bus.shared.dto.SubscriberDto
 import com.intellij.tools.ide.starter.bus.shared.server.LocalEventBusServer
+import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.rmi.ServerException
@@ -53,8 +54,9 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
         it.readText()
       }
     }
-    catch (e: Exception) {
-      throw e
+    catch (e: ConnectException) {
+      if (!server.updatePort()) throw e
+      sendRequest(method, endpoint, requestBody)
     }
     finally {
       connection.disconnect()
@@ -111,15 +113,6 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
   }
 
   override fun startServerProcess() {
-    if (!server.startServer()) {
-      try {
-        val onStartEvents = getEvents()
-        LOG.debug("Events on server start: $onStartEvents")
-      }
-      catch (t: Throwable) {
-        LOG.info("Server is running but we cannot get events")
-        throw t
-      }
-    }
+    server.startServer()
   }
 }
