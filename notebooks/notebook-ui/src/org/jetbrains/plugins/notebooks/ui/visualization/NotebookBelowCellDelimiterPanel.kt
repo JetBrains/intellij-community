@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.icons.ExpUiIcons
-import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.BorderFactory
@@ -12,7 +12,6 @@ import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JPanel
 import java.awt.*
-
 
 class NotebookBelowCellDelimiterPanel(
   val editor: EditorImpl,
@@ -53,18 +52,12 @@ class NotebookBelowCellDelimiterPanel(
     }
   }
 
-  private fun addTagsPanel() {
+  private fun addTagsPanel() {  // WIP
     if (!Registry.`is`("jupyter.cell.metadata.tags", false)) return
-    val tagsPanel = JPanel(FlowLayout(FlowLayout.RIGHT)).apply { isOpaque = false }
-
-    val actionManager = ActionManager.getInstance()
-    val group = DefaultActionGroup()
-    val action = ActionManager.getInstance().getAction("JupyterCellAddTagAction")
-    group.add(action)
-    val plusActionToolbar = actionManager.createActionToolbar(ActionPlaces.EDITOR_INLAY, group, true)
-    // todo: fix button and toolbar size
-    plusActionToolbar.targetComponent = this
-    tagsPanel.add(plusActionToolbar.component)
+    val tagsPanel = JPanel(FlowLayout(FlowLayout.RIGHT)).apply {
+      isOpaque = false
+      border = JBUI.Borders.empty()
+    }
     cellTags.forEach { tag -> tagsPanel.add(NotebookCellTagLabel(tag, cellNum)) }
     add(tagsPanel, BorderLayout.EAST)
   }
@@ -86,4 +79,5 @@ class NotebookBelowCellDelimiterPanel(
     setPanelBackground()
     super.updateUI()
   }
+
 }

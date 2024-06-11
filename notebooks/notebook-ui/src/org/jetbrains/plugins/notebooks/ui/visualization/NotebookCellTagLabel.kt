@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.ui.JBColor
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Graphics
@@ -21,7 +22,7 @@ class NotebookCellTagLabel(@Nls val tag: String, val cellNum: Int) : JLabel(tag)
     font = JBFont.small()
     foreground = foregroundColor
     isOpaque = false
-    border = BorderFactory.createEmptyBorder(0, 0, 0, 0)
+    border = BorderFactory.createEmptyBorder(TEXT_VERTICAL_PADDING, TEXT_HORIZONTAL_PADDING, TEXT_VERTICAL_PADDING, TEXT_HORIZONTAL_PADDING)
 
     addMouseListener(object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
@@ -37,7 +38,7 @@ class NotebookCellTagLabel(@Nls val tag: String, val cellNum: Int) : JLabel(tag)
 
   private fun createPopupGroup(): DefaultActionGroup {
     val group = DefaultActionGroup()
-    val action = ActionManager.getInstance().getAction("JupyterCellRemoveTagAction")
+    val action = ActionManager.getInstance().getAction(ACTION_ID)
     group.add(action)
     return group
   }
@@ -46,7 +47,7 @@ class NotebookCellTagLabel(@Nls val tag: String, val cellNum: Int) : JLabel(tag)
     (g as? Graphics2D)?.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
     g.color = backgroundColor
-    g.fillRoundRect(0, 0, width, height, 20 , 20)
+    g.fillRoundRect(0, 0, width, height, ARC_SIZE , ARC_SIZE)
 
     val fm = g.fontMetrics
     val textHeight = fm.height
@@ -55,5 +56,12 @@ class NotebookCellTagLabel(@Nls val tag: String, val cellNum: Int) : JLabel(tag)
     val textY = (height - textHeight) / 2 + fm.ascent
     g.color = foregroundColor
     g.drawString(text, textX, textY)
+  }
+
+  companion object {
+    private val TEXT_VERTICAL_PADDING = JBUI.scale(2)
+    private val TEXT_HORIZONTAL_PADDING = JBUI.scale(8)
+    private val ARC_SIZE = JBUI.scale(20)
+    private const val ACTION_ID = "JupyterCellRemoveTagAction"
   }
 }
