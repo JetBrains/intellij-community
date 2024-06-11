@@ -33,6 +33,10 @@ final class RemoveNewKeywordFix extends PsiUpdateModCommandAction<PsiNewExpressi
     if (parameterList != null) {
       ct.delete(parameterList);
     }
+    PsiReferenceParameterList outerParameterList = reference.getParameterList();
+    if (outerParameterList != null) {
+      ct.delete(outerParameterList);
+    }
 
     ct.markRangeUnchanged(reference, Objects.requireNonNullElse(newDeclaration.getArgumentList(), reference));
 
