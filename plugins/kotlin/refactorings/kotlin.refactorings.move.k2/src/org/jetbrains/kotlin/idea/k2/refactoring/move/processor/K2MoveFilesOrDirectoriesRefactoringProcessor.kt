@@ -40,14 +40,23 @@ class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveDescriptor.
     MoveCallback { },
     Runnable { }
 ) {
+    private fun PsiElement.allFiles(): List<KtFile> = when (this) {
+        is PsiDirectory -> children.flatMap { it.allFiles() }
+        is KtFile -> listOf(this)
+        else -> emptyList()
+    }
+
     override fun preprocessUsages(refUsages: Ref<Array<out UsageInfo?>?>): Boolean {
         val toContinue = super.preprocessUsages(refUsages)
         if (!toContinue) return false
         // after conflict checking, we don't need non-updatable usages anymore
-        val movedElements = myElementsToMove.filterIsInstance<KtNamedDeclaration>().flatMap { it.withChildDeclarations() }
-        unMarkNonUpdatableUsages(movedElements)
+        val declarationsToMove = myElementsToMove
+            .flatMap { elem -> elem.allFiles() }
+            .flatMap { file -> file.declarations }
+            .flatMap { declaration -> (declaration as? KtNamedDeclaration)?.withChildDeclarations() ?: emptyList() }
+        unMarkNonUpdatableUsages(declarationsToMove)
         val usages = refUsages.get()?.filterNotNull() ?: return false
-        refUsages.set(usages.filterUpdatable(movedElements).toTypedArray())
+        refUsages.set(usages.filterUpdatable(declarationsToMove).toTypedArray())
         return true
     }
 }

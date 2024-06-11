@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
 
 /**
  * A usage from the K2 move refactoring. Not all usages need to be updated, some are only used for conflict checking.
@@ -135,7 +134,7 @@ sealed class K2MoveRenameUsageInfo(
             if (refExpr.isSuperOrThisExpr()) return false
             if (refExpr.parentOfType<KtImportDirective>(withSelf = false) != null) return true
             if (refExpr.isUnqualifiable()) return true
-            val refChain = refExpr.getQualifiedElementOrCallableRef()
+            val refChain = (refExpr.getTopmostParentQualifiedExpressionForReceiver() ?: refExpr)
                 .collectDescendantsOfType<KtSimpleNameExpression>()
                 .filter { !it.isSuperOrThisExpr() }
             return if (isInternal) {
@@ -145,6 +144,12 @@ sealed class K2MoveRenameUsageInfo(
                 // for external usages, update the first reference to a moved element
                 refChain.firstOrNull { simpleNameExpr -> simpleNameExpr.mainReference.resolve() in movedElements } == refExpr
             }
+        }
+
+        private fun KtSimpleNameExpression.getTopmostParentQualifiedExpressionForReceiver(): KtExpression? {
+            return generateSequence<KtExpression>(this) {
+                it.parent as? KtQualifiedExpression ?: it.parent as? KtCallExpression
+            }.lastOrNull()
         }
 
         private fun KtSimpleNameExpression.isSuperOrThisExpr(): Boolean {
@@ -158,6 +163,7 @@ sealed class K2MoveRenameUsageInfo(
                 if (resolvedSymbol is KaClassOrObjectSymbol && resolvedSymbol.classKind == KaClassKind.COMPANION_OBJECT) return true
                 if (resolvedSymbol is KaConstructorSymbol) return true
                 val containingSymbol = resolvedSymbol?.getContainingSymbol()
+                if (resolvedSymbol is KaPackageSymbol) return false // ignore packages
                 if (containingSymbol == null) return true // top levels are static
                 if (containingSymbol is KaClassOrObjectSymbol) {
                     when (containingSymbol.classKind) {
@@ -236,6 +242,7 @@ sealed class K2MoveRenameUsageInfo(
          */
         fun markInternalUsages(containing: KtElement) {
             containing.forEachDescendantOfType<KtReferenceExpression> { refExpr ->
+                if (refExpr is KtEnumEntrySuperclassReferenceExpression) return@forEachDescendantOfType
                 val mainReference= refExpr.mainReference
                 if (mainReference is KtConstructorDelegationReference) return@forEachDescendantOfType
                 val resolved = mainReference.resolve() as? PsiNamedElement ?: return@forEachDescendantOfType
@@ -365,7 +372,7 @@ sealed class K2MoveRenameUsageInfo(
                     val qualifiedReference = if (retargetedReference is KtSimpleNameExpression) {
                         // get top most qualified for shortening if we don't have it already
                         generateSequence<KtElement>(retargetedReference) {
-                            it.parent as? KtQualifiedExpression ?: it.parent as? KtUserType
+                            it.parent as? KtQualifiedExpression ?: it.parent as? KtCallExpression ?: it.parent as? KtUserType
                         }.last()
                     } else retargetedReference
                     if (usageInfo is Source && qualifiedReference != null) {
