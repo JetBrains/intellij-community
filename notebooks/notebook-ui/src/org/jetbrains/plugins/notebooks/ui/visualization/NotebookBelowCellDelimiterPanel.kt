@@ -1,23 +1,27 @@
 package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.icons.ExpUiIcons
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
-import java.awt.Dimension
 import javax.swing.BorderFactory
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JPanel
+import java.awt.*
+
 
 class NotebookBelowCellDelimiterPanel(
   val editor: EditorImpl,
   @Nls private val tooltipText: String?,
   private val executionCount: Int?,
   private val statusIcon: Icon?,
-  private val isExecutable: Boolean
+  private val isExecutable: Boolean,
+  private val cellTags: List<String>,
+  val cellNum: Int
 ) : JPanel(BorderLayout()) {
   private val notebookAppearance = editor.notebookAppearance
   // same as in the [org.jetbrains.plugins.notebooks.ui.visualization.NotebookAboveCellDelimiterPanelNew]
@@ -38,6 +42,8 @@ class NotebookBelowCellDelimiterPanel(
       tooltipText?.let { executionLabel.toolTipText = it }
       add(executionLabel, BorderLayout.WEST)
     }
+
+    if (cellTags.isNotEmpty()) addTagsPanel() // PY-72712
   }
 
   private fun setPanelBackground() {
@@ -47,15 +53,29 @@ class NotebookBelowCellDelimiterPanel(
     }
   }
 
+  private fun addTagsPanel() {
+    if (!Registry.`is`("jupyter.cell.metadata.tags", false)) return
+    val tagsPanel = JPanel(FlowLayout(FlowLayout.RIGHT)).apply { isOpaque = false }
+
+    val actionManager = ActionManager.getInstance()
+    val group = DefaultActionGroup()
+    val action = ActionManager.getInstance().getAction("JupyterCellAddTagAction")
+    group.add(action)
+    val plusActionToolbar = actionManager.createActionToolbar(ActionPlaces.EDITOR_INLAY, group, true)
+    // todo: fix button and toolbar size
+    plusActionToolbar.targetComponent = this
+    tagsPanel.add(plusActionToolbar.component)
+    cellTags.forEach { tag -> tagsPanel.add(NotebookCellTagLabel(tag, cellNum)) }
+    add(tagsPanel, BorderLayout.EAST)
+  }
+
   private fun setBorder() {
-    val dimension = when (editor.editorKind.isDiff()) {
-      true -> Dimension(preferredSize.width, getJupyterCellSpacing(editor))
-      false -> Dimension(preferredSize.width, standardDelimiterHeight)
-    }
+    val dimension = Dimension(preferredSize.width, standardDelimiterHeight)
     border = BorderFactory.createEmptyBorder(dimension.height, 0, dimension.height, 0)
   }
 
-  private fun getCollapsed(): Boolean = !isExecutionCountDefined() && (tooltipText == null || statusIcon == ExpUiIcons.General.GreenCheckmark)
+  private fun getCollapsed(): Boolean =
+    !isExecutionCountDefined() && (tooltipText == null || statusIcon == ExpUiIcons.General.GreenCheckmark || cellTags.isEmpty())
 
   private fun isExecutionCountDefined(): Boolean = executionCount?.let { it > 0 } ?: false
 
