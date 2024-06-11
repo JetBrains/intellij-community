@@ -818,6 +818,9 @@ class InternalDecoratorImpl internal constructor(
     }
 
   override fun addNotify() {
+    if (log().isTraceEnabled) {
+      log().trace(Throwable("Tool window $toolWindowId shown"))
+    }
     super.addNotify()
     if (isSplitUnsplitInProgress()) {
       return
@@ -841,6 +844,9 @@ class InternalDecoratorImpl internal constructor(
   }
 
   override fun removeNotify() {
+    if (log().isTraceEnabled) {
+      log().trace(Throwable("Tool window $toolWindowId hidden"))
+    }
     super.removeNotify()
     if (isSplitUnsplitInProgress()) {
       return
