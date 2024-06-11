@@ -180,6 +180,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return text;
   }
 
+  @Nullable
   public Icon getIcon() {
     return icon;
   }
