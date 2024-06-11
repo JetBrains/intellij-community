@@ -296,11 +296,14 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     final PsiClass memberClass = myMember.getContainingClass();
     if (instanceRef == null || instanceRef instanceof PsiSuperExpression) {
       PsiClass contextClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
-      if (!InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
-        instanceRef = factory.createExpressionFromText(memberClass.getQualifiedName() + ".this", null);
-      } else {
-        instanceRef = factory.createExpressionFromText("this", null);
+      String qualifier = "";
+      if (memberClass != null && !InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
+        String name = memberClass.getQualifiedName();
+        if (name != null) {
+          qualifier = name + ".";
+        }
       }
+      instanceRef = factory.createExpressionFromText(qualifier + "this", null);
       newQualifier = null;
     }
     else {
