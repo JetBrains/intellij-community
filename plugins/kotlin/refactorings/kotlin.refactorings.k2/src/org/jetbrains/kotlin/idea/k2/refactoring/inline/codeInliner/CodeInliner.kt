@@ -317,6 +317,18 @@ class CodeInliner(
                     ?.let { functionText -> LambdaToAnonymousFunctionUtil.convertLambdaToFunction(expression, functionText) }
             } ?: expression
             resultExpression.putCopyableUserData(USER_CODE_KEY, Unit)
+
+            if (expressions.isEmpty() && callableDescriptor is KtFunction) {
+                //encode default value
+                val allParameters = callableDescriptor.valueParameters()
+                expression.forEachDescendantOfType<KtSimpleNameExpression> {
+                    val target = it.mainReference.resolve()
+                    if (target is KtParameter && target in allParameters) {
+                        it.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, target.nameAsSafeName)
+                    }
+                }
+            }
+
             return Argument(resultExpression, analyze(call) { resultExpression.getKtType() }, isNamed = isNamed, expressions.isEmpty())
         }
     }

@@ -784,6 +784,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameter.kt");
         }
 
+        @TestMetadata("defaultParameterSubstitution.kt")
+        public void testDefaultParameterSubstitution() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterSubstitution.kt");
+        }
+
         @TestMetadata("delegateToFunctionWithParameter.kt")
         public void testDelegateToFunctionWithParameter() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/delegateToFunctionWithParameter.kt");
