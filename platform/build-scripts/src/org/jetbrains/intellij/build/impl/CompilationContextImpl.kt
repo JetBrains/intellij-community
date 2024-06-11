@@ -219,11 +219,11 @@ class CompilationContextImpl private constructor(
     }
   }
 
-  internal fun createCopy(
+  override fun createCopy(
     messages: BuildMessages,
     options: BuildOptions,
     paths: BuildPaths,
-  ): CompilationContextImpl {
+  ): CompilationContext {
     val copy = CompilationContextImpl(
       model = projectModel,
       messages = messages,
@@ -234,7 +234,7 @@ class CompilationContextImpl private constructor(
     return copy
   }
 
-  internal fun prepareForBuild() {
+  override fun prepareForBuild() {
     CompiledClasses.checkOptions(this)
 
     val logDir = paths.logDir

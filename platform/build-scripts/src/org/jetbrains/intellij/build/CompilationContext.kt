@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
@@ -61,6 +62,12 @@ interface CompilationContext {
   fun findFileInModuleSources(module: JpsModule, relativePath: String): Path?
 
   fun notifyArtifactBuilt(artifactPath: Path)
+
+  @ApiStatus.Internal
+  fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext
+
+  @ApiStatus.Internal
+  fun prepareForBuild()
 }
 
 interface CompilationTasks {

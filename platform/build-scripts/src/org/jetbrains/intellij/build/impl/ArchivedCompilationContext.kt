@@ -4,6 +4,10 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.tool.mapConcurrently
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.ArchivedCompilationOutputsStorage
 import org.jetbrains.jps.model.module.JpsModule
@@ -11,13 +15,15 @@ import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.writeLines
 
-class ArchivedCompilationContext(private val delegate: CompilationContext) : CompilationContext by delegate {
-  private val storage = ArchivedCompilationOutputsStorage(paths = paths, classesOutputDirectory = classesOutputDirectory).apply {
-    options.pathToCompiledClassesArchivesMetadata?.let {
+@ApiStatus.Internal
+class ArchivedCompilationContext(
+  private val delegate: CompilationContext,
+  private val storage: ArchivedCompilationOutputsStorage = ArchivedCompilationOutputsStorage(paths = delegate.paths, classesOutputDirectory = delegate.classesOutputDirectory).apply {
+    delegate.options.pathToCompiledClassesArchivesMetadata?.let {
       this.loadMetadataFile(Path.of(it))
     }
   }
-
+) : CompilationContext by delegate {
   val archivesLocation get() = storage.archivedOutputDirectory
 
   override fun getModuleOutputDir(module: JpsModule): Path {
@@ -36,6 +42,10 @@ class ArchivedCompilationContext(private val delegate: CompilationContext) : Com
 
   override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
     return replaceWithCompressedIfNeededLS(delegate.getModuleRuntimeClasspath(module, forTests))
+  }
+
+  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
+    return ArchivedCompilationContext(delegate.createCopy(messages, options, paths), storage)
   }
 
   @Suppress("MemberVisibilityCanBePrivate")

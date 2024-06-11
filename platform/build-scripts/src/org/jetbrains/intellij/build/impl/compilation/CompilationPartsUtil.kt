@@ -15,6 +15,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildPaths
@@ -247,7 +248,8 @@ private fun getArchivesStorage(fallbackPersistentCacheRoot: Path): Path =
   (System.getProperty("agent.persistent.cache")?.let { Path.of(it) } ?: fallbackPersistentCacheRoot)
     .resolve("idea-compile-parts-v2")
 
-internal class ArchivedCompilationOutputsStorage(
+@ApiStatus.Internal
+class ArchivedCompilationOutputsStorage(
   private val paths: BuildPaths,
   private val classesOutputDirectory: Path,
   val archivedOutputDirectory: Path = getArchivesStorage(classesOutputDirectory.parent),

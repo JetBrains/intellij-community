@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
 
 class BuildContextImpl internal constructor(
-  private val compilationContext: CompilationContextImpl,
+  private val compilationContext: CompilationContext,
   override val productProperties: ProductProperties,
   override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
   override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
@@ -124,7 +124,7 @@ class BuildContextImpl internal constructor(
     }
 
     fun createContext(
-      compilationContext: CompilationContextImpl,
+      compilationContext: CompilationContext,
       projectHome: Path,
       productProperties: ProductProperties,
       proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
