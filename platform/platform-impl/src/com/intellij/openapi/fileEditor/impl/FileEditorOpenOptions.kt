@@ -15,6 +15,7 @@ data class FileEditorOpenOptions(
   @JvmField val index: Int = -1,
   @JvmField val isExactState: Boolean = false,
   @Experimental @JvmField val openMode: FileEditorManagerImpl.OpenMode? = null,
+  @Experimental @JvmField val waitForComposite: Boolean = true,
 ) {
   @Contract(pure = true)
   // no arg copying for Java

@@ -8,13 +8,15 @@ import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.IdeFingerprint
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
 private const val PINNED: @NonNls String = "pinned"
 private const val CURRENT_IN_TAB = "current-in-tab"
 
-internal class FileEntry(
+@Internal
+class FileEntry(
   @NlsSafe @JvmField val tabTitle: String?,
   @JvmField val tabIcon: ByteArray?,
   @JvmField val pinned: Boolean,

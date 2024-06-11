@@ -61,7 +61,11 @@ import kotlin.math.roundToInt
 
 private val LOG = logger<EditorWindow>()
 
-class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField internal val coroutineScope: CoroutineScope) {
+class EditorWindow internal constructor(
+  val owner: EditorsSplitters,
+  // not `internal` only as workaround for bad old impl for remote dev
+  @JvmField @Internal val coroutineScope: CoroutineScope,
+) {
   companion object {
     @JvmField
     val DATA_KEY: DataKey<EditorWindow> = DataKey.create("editorWindow")

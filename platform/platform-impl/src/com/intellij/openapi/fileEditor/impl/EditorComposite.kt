@@ -8,7 +8,6 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -111,30 +110,6 @@ open class EditorComposite internal constructor(
   @Internal
   val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = _selectedEditorWithProvider.asStateFlow()
 
-  // available doesn't mean that a file editor is fully loaded
-  @Internal
-  suspend fun waitForAvailable() {
-    // make sure that init is started
-    initDeferred.complete(Unit)
-
-    if (selectedEditorWithProvider.value != null || fileEditorWithProviderList.isNotEmpty()) {
-      return
-    }
-
-    // skip initial null value
-    flow {
-      var isInitialValue = true
-      selectedEditorWithProvider.collect { value ->
-        if (isInitialValue && value == null) {
-          isInitialValue = false
-        }
-        else {
-          emit(value)
-        }
-      }
-    }.first()
-  }
-
   private val topComponents = HashMap<FileEditor, JComponent>()
   private val bottomComponents = HashMap<FileEditor, JComponent>()
   private val displayNames = HashMap<FileEditor, String>()
@@ -158,7 +133,7 @@ open class EditorComposite internal constructor(
       blockingHandleModel(model.model)
     }
     else {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment) {
         initDeferred.complete(Unit)
       }
       else {
@@ -174,6 +149,30 @@ open class EditorComposite internal constructor(
         }
       }
     }
+  }
+
+  // available doesn't mean that a file editor is fully loaded
+  @Internal
+  suspend fun waitForAvailable() {
+    // make sure that init is started
+    initDeferred.complete(Unit)
+
+    if (selectedEditorWithProvider.value != null || fileEditorWithProviderList.isNotEmpty()) {
+      return
+    }
+
+    // skip initial null value
+    flow {
+      var isInitialValue = true
+      selectedEditorWithProvider.collect { value ->
+        if (isInitialValue && value == null) {
+          isInitialValue = false
+        }
+        else {
+          emit(value)
+        }
+      }
+    }.first()
   }
 
   private suspend fun handleModel(model: EditorCompositeModel) {
@@ -260,7 +259,7 @@ open class EditorComposite internal constructor(
 
   // for remote dev - we don't care about performance for now
   @RequiresEdt
-  private fun blockingHandleModel(model: EditorCompositeModel) {
+  private fun blockingHandleModel2(model: EditorCompositeModel) {
     val fileEditorWithProviders = model.fileEditorAndProviderList
 
     for (editorWithProvider in fileEditorWithProviders) {
@@ -329,6 +328,21 @@ open class EditorComposite internal constructor(
 
     val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
     publisher.fileOpened(fileEditorManager, file)
+  }
+
+  // for remote dev - we don't care about performance for now
+  @RequiresEdt
+  private fun blockingHandleModel(model: EditorCompositeModel) {
+    val fileEditorWithProviders = model.fileEditorAndProviderList
+    for (editorWithProvider in fileEditorWithProviders) {
+      val editor = editorWithProvider.fileEditor
+      FileEditor.FILE_KEY.set(editor, file)
+      if (!clientId.isLocal) {
+        assignClientId(editor, clientId)
+      }
+    }
+
+    applyFileEditorsInEdt(fileEditorWithProviders = fileEditorWithProviders, model = model, selectedFileEditorProvider = null)
   }
 
   @RequiresEdt
