@@ -19,7 +19,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.*;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -792,6 +791,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (Map.Entry<DerivedVariableDescriptor, DfType> entry : newType.getDerivedValues().entrySet()) {
       if (!meetDfType(entry.getKey().createValue(getFactory(), var), entry.getValue())) {
         return false;
+      }
+    }
+    for (Map.Entry<DfaVariableValue, DfType> entry : new ArrayList<>(myVariableTypes.entrySet())) {
+      DfaVariableValue knownVar = entry.getKey();
+      if (knownVar.getQualifier() == var) {
+        if (!meetDfType(knownVar, knownVar.getDescriptor().restrictFromState(var, this))) {
+          return false;
+        }
       }
     }
     if (!updateDependentVariables(var, newType)) return false;

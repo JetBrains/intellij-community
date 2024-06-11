@@ -2626,6 +2626,7 @@ com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 - isCall():Z
 - isImplicitReadPossible():Z
 - a:isStable():Z
+- restrictFromState(com.intellij.codeInspection.dataFlow.value.DfaVariableValue,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.types.DfType
 c:com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase
 - com.intellij.profile.codeInspection.BaseInspectionProfileManager
 - sf:Companion:com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase$Companion
