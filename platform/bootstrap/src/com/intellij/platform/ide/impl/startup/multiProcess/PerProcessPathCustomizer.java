@@ -131,17 +131,16 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
   }
 
   public static void prepareConfig(Path newConfig, Path oldConfigPath, boolean migratePlugins) {
-    if (isConfigImportNeeded(oldConfigPath)) {
-      customTargetDirectoryToImportConfig = oldConfigPath;
-    }
-    else if (migratePlugins) {
-      /* The config directory exists, but the plugins for the frontend process weren't migrated, so we trigger importing of config from the 
-         local IDE to migrate the plugins. */
-      customTargetDirectoryToImportConfig = newConfig;
-      new CustomConfigMigrationOption.MigrateFromCustomPlace(oldConfigPath).writeConfigMarkerFile(newConfig);
-    }
-    
     try {
+      if (isConfigImportNeeded(oldConfigPath)) {
+        customTargetDirectoryToImportConfig = oldConfigPath;
+      }
+      else if (migratePlugins) {
+        // The config directory exists, but the plugins for the frontend process weren't migrated,
+        // so we trigger importing of config from the local IDE to migrate the plugins.
+        customTargetDirectoryToImportConfig = newConfig;
+        new CustomConfigMigrationOption.MigrateFromCustomPlace(oldConfigPath).writeConfigMarkerFile(newConfig);
+      }
       CustomConfigFiles.prepareConfigDir(newConfig, oldConfigPath);
     }
     catch (IOException e) {

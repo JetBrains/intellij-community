@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -25,6 +26,7 @@ private val log = logger<CustomConfigMigrationOption>()
  */
 sealed class CustomConfigMigrationOption {
   @JvmOverloads
+  @Throws(IOException::class)
   fun writeConfigMarkerFile(configDir: Path = PathManager.getOriginalConfigDir()) {
     val markerFile = getCustomConfigMarkerFilePath(configDir)
     if (Files.exists(markerFile)) {

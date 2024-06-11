@@ -285,7 +285,12 @@ public final class ConfigImportHelper {
       }
 
       if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
-        new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
+        try {
+          new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
+        }
+        catch (IOException e) {
+          log.error("cannot write config migration marker file to " + newConfigDir, e);
+        }
         restart(args);
       }
     }
