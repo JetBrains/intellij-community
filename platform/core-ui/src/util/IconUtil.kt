@@ -616,6 +616,7 @@ private class IconSizeWrapper(private val icon: Icon?, private val width: Int, p
   override fun getIconHeight(): Int = height
 }
 
+@Internal
 class CropIcon internal constructor(val sourceIcon: Icon, val crop: Rectangle) : Icon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val customG = g.create()

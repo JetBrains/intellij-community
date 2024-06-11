@@ -453,15 +453,6 @@ f:com.intellij.ui.icons.TextIcon
 - f:getText():java.lang.String
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
-f:com.intellij.util.CropIcon
-- javax.swing.Icon
-- equals(java.lang.Object):Z
-- f:getCrop():java.awt.Rectangle
-- getIconHeight():I
-- getIconWidth():I
-- f:getSourceIcon():javax.swing.Icon
-- hashCode():I
-- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 f:com.intellij.util.IconUtil
 - sf:INSTANCE:com.intellij.util.IconUtil
 - sf:addText(javax.swing.Icon,java.lang.String):javax.swing.Icon
