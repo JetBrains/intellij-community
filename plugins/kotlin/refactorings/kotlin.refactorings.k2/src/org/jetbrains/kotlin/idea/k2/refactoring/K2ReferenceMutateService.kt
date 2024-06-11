@@ -122,7 +122,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     private fun KtUserType.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
         val replacedElement = if (qualifier == null) {
             val typeArgText = typeArgumentList?.text ?: ""
-            val newReference = KtPsiFactory(project).createType(fqName.asString() + typeArgText).typeElement as? KtUserType
+            val newReference = KtPsiFactory(project).createType(fqName.quoteIfNeeded().asString() + typeArgText).typeElement as? KtUserType
                 ?: error("Could not create type from $fqName")
             replaced(newReference)
         } else {
