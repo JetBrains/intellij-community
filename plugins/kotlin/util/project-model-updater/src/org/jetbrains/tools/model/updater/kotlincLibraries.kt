@@ -41,7 +41,6 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-impl-base", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-impl-base-tests", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-platform-interface", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-project-structure", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-build-common-tests", kotlincCoordinates)

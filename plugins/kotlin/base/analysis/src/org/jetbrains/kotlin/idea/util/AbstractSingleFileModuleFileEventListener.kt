@@ -6,11 +6,11 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 
@@ -58,7 +58,7 @@ sealed class AbstractSingleFileModuleFileEventListener(private val project: Proj
 
     private fun VirtualFile.getSingleFileModule(): KtModule? =
         toPsiFile(project)
-            ?.let { ProjectStructureProvider.getModule(project, it, contextualModule = null) }
+            ?.let { KotlinProjectStructureProvider.getModule(project, it, useSiteModule = null) }
             ?.takeIf { it is KtScriptModule || it is KtScriptDependencyModule || it is KtNotUnderContentRootModule }
 }
 

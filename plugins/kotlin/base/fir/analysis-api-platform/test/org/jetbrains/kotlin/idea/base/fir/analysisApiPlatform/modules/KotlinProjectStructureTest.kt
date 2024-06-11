@@ -17,6 +17,7 @@ import com.intellij.util.CommonProcessors.FindProcessor
 import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -489,16 +490,22 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
             val kotlinDecompiledClass = javaLightClass.kotlinOrigin!!
             assert(kotlinDecompiledClass.containingKtFile.isCompiled)
 
-            val actualLibraryKtModule = ProjectStructureProvider.getInstance(project)
-                .getModule(kotlinDecompiledClass, contextualModule = contextLibraryKtModule)
+            val actualLibraryKtModule = KotlinProjectStructureProvider.getModule(
+                project,
+                kotlinDecompiledClass,
+                useSiteModule = contextLibraryKtModule,
+            )
 
             assertEquals(expectedLibraryKtModule, actualLibraryKtModule)
 
             val kotlinSourceClass = service<KotlinDeclarationNavigationPolicy>().getNavigationElement(kotlinDecompiledClass)
             assertFalse(kotlinSourceClass.containingKtFile.isCompiled)
 
-            val actualLibrarySourceKtModule = ProjectStructureProvider.getInstance(project)
-                .getModule(kotlinSourceClass, contextualModule = contextLibrarySourceKtModule)
+            val actualLibrarySourceKtModule = KotlinProjectStructureProvider.getModule(
+                project,
+                kotlinSourceClass,
+                useSiteModule = contextLibrarySourceKtModule,
+            )
 
             assertEquals(expectedLibrarySourceKtModule, actualLibrarySourceKtModule)
         }
@@ -523,15 +530,15 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     private fun ktModule(
         element: PsiElement,
         contextualModule: KtModule? = null,
-    ): KtModule = ProjectStructureProvider.getModule(project, element, contextualModule = contextualModule)
+    ): KtModule = KotlinProjectStructureProvider.getModule(project, element, useSiteModule = contextualModule)
 
     private inline fun <reified T : KtModule> ktModuleWithAssertion(
         element: PsiElement,
         contextualModule: KtModule? = null
-    ): T = ProjectStructureProvider.getModule(
+    ): T = KotlinProjectStructureProvider.getModule(
         project,
         element,
-        contextualModule = contextualModule,
+        useSiteModule = contextualModule,
     ).requireIs<T>()
 
     private inline fun <reified T> assertKtModuleType(fileName: String) {

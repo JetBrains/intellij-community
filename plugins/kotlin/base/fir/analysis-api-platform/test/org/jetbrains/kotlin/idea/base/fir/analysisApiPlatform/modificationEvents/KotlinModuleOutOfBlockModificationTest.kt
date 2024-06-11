@@ -7,13 +7,13 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -456,7 +456,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             val codeFragment = KtExpressionCodeFragment(project, "fragment.kt", "secondary()", imports = null, contextCall)
             assert(codeFragment.viewProvider.isEventSystemEnabled)
 
-            val codeFragmentModule = ProjectStructureProvider.getModule(project, codeFragment, contextualModule = null)
+            val codeFragmentModule = KotlinProjectStructureProvider.getModule(project, codeFragment, useSiteModule = null)
             val codeFragmentTracker = createTracker(
                 codeFragmentModule,
                 "code fragment",

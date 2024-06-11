@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents
 
 import com.google.gson.JsonObject
-import org.jetbrains.kotlin.analysis.project.structure.KotlinModuleDependentsProvider
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule

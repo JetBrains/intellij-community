@@ -210,7 +210,6 @@ object KotlinPluginBuilder {
 
   private val LIBRARIES = java.util.List.of(
     "kotlinc.analysis-api-platform-interface",
-    "kotlinc.analysis-project-structure",
     "kotlinc.analysis-api",
     "kotlinc.analysis-api-fe10",
     "kotlinc.analysis-api-impl-base",

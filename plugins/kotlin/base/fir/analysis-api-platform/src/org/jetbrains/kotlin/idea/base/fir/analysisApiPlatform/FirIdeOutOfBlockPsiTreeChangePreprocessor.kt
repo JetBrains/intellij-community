@@ -13,10 +13,10 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService.ModificationType
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.util.publishGlobalSourceOutOfBlockModification
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
@@ -95,7 +95,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
 
     private fun invalidateCachesForInjectedKotlinCode(injectedDocument: DocumentWindow) {
         val ktFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument) as? KtFile ?: return
-        val ktModule = ProjectStructureProvider.getInstance(project).getModule(ktFile, contextualModule = null)
+        val ktModule = KotlinProjectStructureProvider.getModule(project, ktFile, useSiteModule = null)
         project.analysisMessageBus.syncPublisher(KotlinModificationTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(ktModule)
     }
 }

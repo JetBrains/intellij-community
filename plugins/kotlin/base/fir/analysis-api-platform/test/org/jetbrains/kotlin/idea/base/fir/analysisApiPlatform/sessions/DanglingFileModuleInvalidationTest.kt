@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.sessions
 
 import com.intellij.psi.PsiManager
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
@@ -146,7 +146,7 @@ class DanglingFileModuleInvalidationTest : AbstractMultiModuleTest() {
 
     @OptIn(LLFirInternals::class)
     private fun getSession(element: KtElement): LLFirSession {
-        val module = ProjectStructureProvider.getModule(project, element, contextualModule = null)
+        val module = KotlinProjectStructureProvider.getModule(project, element, useSiteModule = null)
         val resolveSession = LLFirResolveSessionService.getInstance(project).getFirResolveSession(module)
         return resolveSession.getSessionFor(module)
     }

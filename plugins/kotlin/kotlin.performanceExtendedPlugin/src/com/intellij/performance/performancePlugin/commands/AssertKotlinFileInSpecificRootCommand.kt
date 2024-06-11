@@ -10,8 +10,8 @@ import com.jetbrains.performancePlugin.commands.OpenFileCommand.Companion.findFi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 
 internal class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
     companion object {
@@ -24,7 +24,7 @@ internal class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : 
             val filePath = text.replace(PREFIX, "").trim()
             val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
             val psiFIle = file.findPsiFile(project) ?: error("Fail to find psi file $filePath")
-            val ktModule = ProjectStructureProvider.getModule(project, psiFIle , null)
+            val ktModule = KaModuleProvider.getModule(project, psiFIle, useSiteModule = null)
             if (ktModule !is KtSourceModule) {
                 throw IllegalStateException("File $file ($ktModule) not in kt source root module")
             }

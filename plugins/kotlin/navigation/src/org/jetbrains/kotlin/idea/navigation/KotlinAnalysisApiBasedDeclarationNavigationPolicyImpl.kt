@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
@@ -29,7 +30,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val ktFile = declaration.containingKtFile
         if (!ktFile.isCompiled) return declaration
         val project = ktFile.project
-        when (val ktModule = ProjectStructureProvider.getModule(project, ktFile, null)) {
+        when (val ktModule = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
             is KtLibraryModule -> {
                 val librarySource = ktModule.librarySources ?: return declaration
                 val scope = librarySource.getContentScopeWithCommonDependencies()
@@ -44,7 +45,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val ktFile = declaration.containingKtFile
         if (ktFile.isCompiled) return declaration
         val project = ktFile.project
-        when (val ktModule = ProjectStructureProvider.getModule(project, ktFile, null)) {
+        when (val ktModule = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
             is KtLibrarySourceModule -> {
                 val libraryBinary = ktModule.binaryLibrary
                 val scope = libraryBinary.getContentScopeWithCommonDependencies()

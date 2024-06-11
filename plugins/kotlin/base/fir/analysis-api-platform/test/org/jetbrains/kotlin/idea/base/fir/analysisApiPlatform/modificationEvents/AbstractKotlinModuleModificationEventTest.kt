@@ -5,8 +5,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
 import org.jetbrains.kotlin.analysis.api.platform.modification.isModuleLevel
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
@@ -58,7 +58,7 @@ abstract class AbstractKotlinModuleModificationEventTest : AbstractKotlinModific
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker =
         createTracker(
-            ProjectStructureProvider.getModule(project, file, contextualModule = null),
+            KotlinProjectStructureProvider.getModule(project, file, useSiteModule = null),
             label,
             additionalAllowedEventKinds,
         )

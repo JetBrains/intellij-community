@@ -19,6 +19,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.computeTransitiveDependsOnDependencies
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.KotlinSourceRootType

@@ -13,6 +13,8 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
@@ -52,7 +54,7 @@ inline fun <reified T : KtModule> IdeaModuleInfo.toKtModuleOfType(): @kotlin.int
     return toKtModule() as T
 }
 
-internal class ProjectStructureProviderIdeImpl(private val project: Project) : ProjectStructureProvider() {
+internal class ProjectStructureProviderIdeImpl(private val project: Project) : KotlinProjectStructureProviderBase() {
     override fun getModule(element: PsiElement, contextualModule: KtModule?): KtModule {
         if (contextualModule is KtSourceModuleByModuleInfoForOutsider || contextualModule is KtScriptDependencyModule) {
             val virtualFile = element.containingFile?.virtualFile
@@ -167,7 +169,7 @@ private fun <T> cachedKtModule(
         val project = anchorElement.project
         CachedValueProvider.Result.create(
             ConcurrentFactoryMap.createMap<T?, KtModule> { context ->
-                val projectStructureProvider = ProjectStructureProvider.getInstance(project) as ProjectStructureProviderIdeImpl
+                val projectStructureProvider = KotlinProjectStructureProvider.getInstance(project) as ProjectStructureProviderIdeImpl
                 projectStructureProvider.computeModule(anchorElement, context)
             },
             ProjectRootModificationTracker.getInstance(project),

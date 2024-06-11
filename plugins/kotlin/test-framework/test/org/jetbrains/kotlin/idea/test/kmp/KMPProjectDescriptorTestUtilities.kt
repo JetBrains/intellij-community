@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.test.kmp
 
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.platform.has
@@ -32,7 +32,7 @@ object KMPProjectDescriptorTestUtilities {
         if (platform == KMPTestPlatform.Unspecified) return
 
         for (file in files) {
-            val ktModule = ProjectStructureProvider.getModule(file.project, file, contextualModule = null)
+            val ktModule = KaModuleProvider.getModule(file.project, file, useSiteModule = null)
             check(ktModule is KtSourceModule)
             val targetPlatform = ktModule.platform
             when (platform) {

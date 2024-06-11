@@ -12,11 +12,11 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
@@ -49,7 +49,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
     @OptIn(KaAllowAnalysisOnEdt::class)
     fun findDeclaration(element: PsiElement, context: PsiElement, project: Project, editor: Editor?): PsiElement? {
         if (element !is KtElement) return element
-        val ktModule = ProjectStructureProvider.getInstance(project).getModule(context, null)
+        val ktModule = KaModuleProvider.getModule(project, context, useSiteModule = null)
         return allowAnalysisOnEdt {
             analyze(ktModule) {
                 val ktSymbol = when (element) {

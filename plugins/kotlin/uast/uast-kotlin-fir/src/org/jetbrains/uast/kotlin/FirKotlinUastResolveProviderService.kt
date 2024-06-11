@@ -10,6 +10,7 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -422,7 +422,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             }
 
             if (resolvedTargetElement != null) {
-                when (ProjectStructureProvider.getModule(project, resolvedTargetElement, null)) {
+                when (KaModuleProvider.getModule(project, resolvedTargetElement, useSiteModule = null)) {
                     is KtSourceModule -> {
                         // `getMaybeLightElement` tries light element conversion first, and then something else for local declarations.
                         resolvedTargetElement.getMaybeLightElement(ktExpression)?.let { return it }
