@@ -536,30 +536,38 @@ class J2KNullityInferrer {
                 return true;
             }
 
-            final PsiCall call = PsiTreeUtil.getParentOfType(expr, PsiCall.class);
-            if (call != null) {
-                final PsiExpressionList argumentList = call.getArgumentList();
-                if (argumentList != null) {
-                    final PsiExpression[] args = argumentList.getExpressions();
-                    int idx = ArrayUtil.find(args, expr);
-                    if (idx >= 0) {
-                        final PsiMethod resolvedMethod = call.resolveMethod();
-                        if (resolvedMethod != null) {
-                            final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
-                            if (idx < parameters.length) { //not vararg
-                                final PsiParameter resolvedToParam = parameters[idx];
-                                boolean isArray = variable.getType() instanceof PsiArrayType;
-                                boolean isVarArgs = variable instanceof PsiParameter parameter && parameter.isVarArgs();
+            if (processArgumentReference(variable, expr)) {
+                return true;
+            }
 
-                                if (isNotNull(resolvedToParam) || (isArray && !isVarArgs && resolvedToParam.isVarArgs())) {
-                                    // In the case of varargs in Kotlin, the spread operator needs to be applied to a not-null array
-                                    registerNotNullAnnotation(variable);
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                }
+            return false;
+        }
+
+        private boolean processArgumentReference(@NotNull PsiVariable variable, @NotNull PsiReferenceExpression expr) {
+            final PsiCall call = PsiTreeUtil.getParentOfType(expr, PsiCall.class);
+            if (call == null) return false;
+            final PsiExpressionList argumentList = call.getArgumentList();
+            if (argumentList == null) return false;
+
+            final PsiExpression[] args = argumentList.getExpressions();
+            int idx = ArrayUtil.find(args, expr);
+            if (idx < 0) return false;
+
+            final PsiMethod resolvedMethod = call.resolveMethod();
+            if (resolvedMethod == null) return false;
+
+            final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
+            //not vararg
+            if (idx >= parameters.length) return false;
+
+            final PsiParameter resolvedToParam = parameters[idx];
+            boolean isArray = variable.getType() instanceof PsiArrayType;
+            boolean isVarArgs = variable instanceof PsiParameter parameter && parameter.isVarArgs();
+
+            if (isNotNull(resolvedToParam) || (isArray && !isVarArgs && resolvedToParam.isVarArgs())) {
+                // In the case of varargs in Kotlin, the spread operator needs to be applied to a not-null array
+                registerNotNullAnnotation(variable);
+                return true;
             }
 
             return false;
