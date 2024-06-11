@@ -586,6 +586,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
       .withUsePreviewTab(info.isPreviewTab())
       .withRequestFocus(requestFocus)
+      .withReuseOpen()
       .withOpenMode(info.getOpenMode());
     var editorsWithProviders = editorManager.openFile(info.getFile(), info.getWindow(), openOptions);
 

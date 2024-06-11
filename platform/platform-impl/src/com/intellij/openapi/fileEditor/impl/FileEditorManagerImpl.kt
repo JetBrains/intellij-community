@@ -1081,7 +1081,9 @@ open class FileEditorManagerImpl(
 
     val file = getOriginalFile(_file)
     if (!ClientId.isCurrentlyUnderLocalId) {
-      return openFileUsingClient(file, options)
+      // it used to be passed as forceCreate=false there, so we need to pass it as reuseOpen=true
+      // otherwise, any navigation will open a new editor composite which is invisible in RD mode
+      return openFileUsingClient(file, options.copy(reuseOpen = true))
     }
 
     if (!file.isValid) {
