@@ -7,11 +7,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public final class IndexPatternUtil {
 
   public static IndexPattern @NotNull [] getIndexPatterns() {
-    ArrayList<IndexPattern> result = new ArrayList<>();
+    List<IndexPattern> result = new ArrayList<>();
     for (IndexPatternProvider provider : IndexPatternProvider.EP_NAME.getExtensionList()) {
       result.addAll(Arrays.asList(provider.getIndexPatterns()));
     }
