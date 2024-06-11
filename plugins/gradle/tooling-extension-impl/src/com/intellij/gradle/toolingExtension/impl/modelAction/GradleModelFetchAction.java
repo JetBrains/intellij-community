@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
+import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializerConverter;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import com.intellij.gradle.toolingExtension.impl.model.utilTurnOffDefaultTasksModel.TurnOffDefaultTasks;
-import com.intellij.gradle.toolingExtension.impl.modelSerialization.ModelConverter;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer;
 
 import java.io.Serializable;
@@ -92,11 +92,6 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
 
   public void setTracingContext(@NotNull GradleTracingContext tracingContext) {
     myTracingContext = tracingContext;
-  }
-
-  @NotNull
-  protected ModelConverter getToolingModelConverter(@NotNull BuildController controller, @NotNull GradleOpenTelemetry telemetry) {
-    return ModelConverter.NOP;
   }
 
   @Override
@@ -177,7 +172,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     }
   }
 
-  private @NotNull GradleDaemonModelHolder initAction(
+  private static @NotNull GradleDaemonModelHolder initAction(
     @NotNull BuildController controller,
     @NotNull ExecutorService converterExecutor,
     @NotNull GradleOpenTelemetry telemetry
@@ -191,11 +186,11 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     Collection<? extends GradleBuild> nestedGradleBuilds = telemetry.callWithSpan("GetNestedGradleBuilds", __ ->
       getNestedBuilds(buildEnvironment, mainGradleBuild)
     );
-    ModelConverter modelConverter = telemetry.callWithSpan("GetToolingModelConverter", __ ->
-      getToolingModelConverter(controller, telemetry)
+    ToolingSerializerConverter serializer = telemetry.callWithSpan("GetToolingModelConverter", __ ->
+      new ToolingSerializerConverter(controller, telemetry)
     );
     return telemetry.callWithSpan("InitModelConsumer", __ ->
-      new GradleDaemonModelHolder(converterExecutor, modelConverter, mainGradleBuild, nestedGradleBuilds, buildEnvironment)
+      new GradleDaemonModelHolder(converterExecutor, serializer, mainGradleBuild, nestedGradleBuilds, buildEnvironment)
     );
   }
 

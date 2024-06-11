@@ -20,7 +20,6 @@ import java.io.File
  */
 @ApiStatus.Internal
 class GradleIdeaModelHolder(
-  useCustomSerialization: Boolean = false,
   private val pathMapper: PathMapper? = null,
   private var buildEnvironment: BuildEnvironment? = null
 ) {
@@ -31,7 +30,7 @@ class GradleIdeaModelHolder(
   private val models: MutableMap<GradleModelId, Any> = LinkedHashMap()
   private val buildIdMapping: MutableMap<String, String> = LinkedHashMap()
 
-  private val serializer = if (useCustomSerialization) ToolingSerializer() else null
+  private val serializer = ToolingSerializer()
   private val modelPathConverter = GradleObjectTraverser(
     classesToSkip = setOf(String::class.java),
     classesToSkipChildren = setOf(Object::class.java, File::class.java)
@@ -108,7 +107,7 @@ class GradleIdeaModelHolder(
   }
 
   private fun <T : Any> deserializeModel(model: Any, modelId: GradleModelId, modelClass: Class<T>): T? {
-    if (serializer == null || model !is ByteArray) {
+    if (model !is ByteArray) {
       return null
     }
     val deserializedModel = try {

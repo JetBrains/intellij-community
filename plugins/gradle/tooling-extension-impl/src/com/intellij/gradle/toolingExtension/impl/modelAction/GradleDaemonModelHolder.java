@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
-import com.intellij.gradle.toolingExtension.impl.modelSerialization.ModelConverter;
+import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializerConverter;
 import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
@@ -34,12 +34,12 @@ import java.util.concurrent.*;
  *     <li>Using two-phased Gradle executor with {@link org.gradle.tooling.IntermediateResultHandler}.</li>
  *     <li>Using one-phased Gradle executor with {@link org.gradle.tooling.ResultHandler}.</li>
  *   </ul>
- *   <li>Consumes data on the Idea side into the {@link org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder}.
+ *   <li>Consumes data on the Idea side into the {@link org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder}.
  *   This data can be accessed by the {@link org.jetbrains.plugins.gradle.service.project.ProjectResolverContext}
  *   in the {@link org.jetbrains.plugins.gradle.service.project.GradleProjectResolver} and their extensions.</li>
  * </ul>
  *
- * @see org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder
+ * @see org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder
  * @see org.gradle.tooling.BuildActionExecuter.Builder#projectsLoaded
  * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
  * @see org.gradle.tooling.BuildActionExecuter#run
@@ -47,7 +47,7 @@ import java.util.concurrent.*;
 @ApiStatus.Internal
 public class GradleDaemonModelHolder {
 
-  private final @NotNull ModelConverter myModelConverter;
+  private final @NotNull ToolingSerializerConverter mySerializer;
 
   private final @NotNull GradleBuild myRootGradleBuild;
   private final @NotNull Collection<? extends GradleBuild> myNestedGradleBuilds;
@@ -61,12 +61,12 @@ public class GradleDaemonModelHolder {
 
   public GradleDaemonModelHolder(
     @NotNull ExecutorService converterExecutor,
-    @NotNull ModelConverter modelConverter,
+    @NotNull ToolingSerializerConverter serializer,
     @NotNull GradleBuild rootGradleBuild,
     @NotNull Collection<? extends GradleBuild> nestedGradleBuilds,
     @NotNull BuildEnvironment buildEnvironment
   ) {
-    myModelConverter = modelConverter;
+    mySerializer = serializer;
     myRootGradleBuild = rootGradleBuild;
     myNestedGradleBuilds = nestedGradleBuilds;
     myBuildEnvironment = buildEnvironment;
@@ -106,7 +106,7 @@ public class GradleDaemonModelHolder {
 
       private void consumeModel(@NotNull Object model, @NotNull GradleModelId modelId) {
         GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedModelQueue, () -> {
-          Object convertedModel = myModelConverter.convert(model);
+          Object convertedModel = mySerializer.convert(model);
           return new ConvertedModel(modelId, convertedModel);
         });
       }

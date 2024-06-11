@@ -196,8 +196,6 @@
                  key="gradle.compatibility.update.interval"/>
     <registryKey key="gradle.settings.showDeprecatedSettings" defaultValue="false"
                  description="Enables some deprecated setting in the Gradle settings dialog for troubleshooting"/>
-    <registryKey key="gradle.tooling.custom.serializer" defaultValue="true"
-                 description="Enable custom serialization of custom tooling objects"/>
     <registryKey key="gradle.tooling.use.external.process" defaultValue="false"
                  description="Enable running gradle tooling api out of IDE process"/>
     <registryKey key="gradle.testLauncherAPI.enabled" defaultValue="true"

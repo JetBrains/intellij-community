@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.Exceptions;
 
 @ApiStatus.Internal
-public class ToolingSerializerConverter implements ModelConverter {
+public class ToolingSerializerConverter {
 
   private final ToolingSerializer mySerializer;
   private final GradleOpenTelemetry myTelemetry;
@@ -28,7 +28,6 @@ public class ToolingSerializerConverter implements ModelConverter {
     mySerializer = new ToolingSerializer(modelBuildersClassLoader);
   }
 
-  @Override
   public Object convert(Object object) {
     return myTelemetry.callWithSpan("SerializeGradleModel", span -> {
       span.setAttribute("model.class", object.getClass().getName());

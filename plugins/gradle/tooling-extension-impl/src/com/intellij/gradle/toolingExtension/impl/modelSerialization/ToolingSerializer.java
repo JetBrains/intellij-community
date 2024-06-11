@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.modelSerialization;
 
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
@@ -18,6 +19,7 @@ import java.util.ServiceLoader;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public final class ToolingSerializer {
   private final DefaultSerializationService myDefaultSerializationService;
   private final ClassMap<SerializationService<?>> mySerializationServices;
