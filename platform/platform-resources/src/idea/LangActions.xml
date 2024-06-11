@@ -914,7 +914,7 @@
     </group>
 
     <group id="ProjectView.ToolWindow.SecondaryActions">
-      <group id="ProjectView.ToolWindow.Appearance.Actions" popup="true">
+      <group id="ProjectView.ToolWindow.Behavior.Actions" popup="true">
         <action id="ProjectView.OpenInPreviewTab"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenInPreviewTab"/>
         <action id="ProjectView.AutoscrollToSource"
@@ -925,28 +925,9 @@
         <action id="ProjectView.AutoscrollFromSource"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollFromSource"
                 icon="AllIcons.General.AutoscrollFromSource"/>
-        <separator/>
-        <action id="ProjectView.FlattenModules"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenModules"
-                icon="AllIcons.ObjectBrowser.FlattenModules"/>
-        <action id="ProjectView.FlattenPackages"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenPackages"
-                icon="AllIcons.ObjectBrowser.FlattenPackages"/>
-        <action id="ProjectView.AbbreviatePackageNames"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AbbreviatePackageNames"
-                icon="AllIcons.ObjectBrowser.AbbreviatePackageNames"/>
-        <action id="ProjectView.HideEmptyMiddlePackages"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$HideEmptyMiddlePackages"/>
-        <action id="ProjectView.CompactDirectories"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
-        <separator/>
-        <action id="ProjectView.FileNesting"
-                class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
-        <separator/>
-        <action id="ProjectView.CustomizeTrees"
-                class="com.intellij.ide.projectView.impl.CustomizeTreesAction"/>
       </group>
-      <group id="ProjectView.ToolWindow.Show.Actions" popup="true">
+      <group id="ProjectView.ToolWindow.Appearance.Actions" popup="true">
+        <separator key="group.ProjectView.ToolWindow.Appearance.Show.text"/>
         <action id="ProjectView.ShowModules"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowModules"
                 icon="AllIcons.Actions.GroupByModule">
@@ -975,6 +956,25 @@
           <override-text place="ToolwindowPopup"/>
         </action>
         <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
+        <separator/>
+        <action id="ProjectView.FlattenModules"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenModules"
+                icon="AllIcons.ObjectBrowser.FlattenModules"/>
+        <action id="ProjectView.FlattenPackages"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenPackages"
+                icon="AllIcons.ObjectBrowser.FlattenPackages"/>
+        <action id="ProjectView.AbbreviatePackageNames"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AbbreviatePackageNames"
+                icon="AllIcons.ObjectBrowser.AbbreviatePackageNames"/>
+        <action id="ProjectView.HideEmptyMiddlePackages"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$HideEmptyMiddlePackages"/>
+        <action id="ProjectView.CompactDirectories"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
+        <action id="ProjectView.FileNesting"
+                class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
+        <separator/>
+        <action id="ProjectView.CustomizeTrees"
+                class="com.intellij.ide.projectView.impl.CustomizeTreesAction"/>
       </group>
       <group id="ProjectView.ToolWindow.Sort.Actions" popup="true">
         <action id="ProjectView.ManualOrder"
