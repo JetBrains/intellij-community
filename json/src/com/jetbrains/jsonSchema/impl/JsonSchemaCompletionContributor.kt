@@ -434,7 +434,8 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         }
       }
 
-      return createDefaultPropertyInsertHandler(completionPath, !schemaObject.enum.isNullOrEmpty())
+      return createDefaultPropertyInsertHandler(completionPath, !schemaObject.enum.isNullOrEmpty(),
+                                                schemaObject.type)
     }
 
     private fun getDocumentationOrTypeName(schemaObject: JsonSchemaObject): String? {
@@ -448,7 +449,8 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
 
     private fun createDefaultPropertyInsertHandler(completionPath: SchemaPath? = null,
-                                                   hasEnumValues: Boolean = false): InsertHandler<LookupElement> {
+                                                   hasEnumValues: Boolean = false,
+                                                   valueType: JsonSchemaType? = null): InsertHandler<LookupElement> {
       return object : InsertHandler<LookupElement> {
         override fun handleInsert(context: InsertionContext, item: LookupElement) {
           ApplicationManager.getApplication().assertWriteAccessAllowed()
@@ -469,7 +471,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           while (offset < docChars.length && Character.isWhitespace(docChars[offset])) {
             offset++
           }
-          val propertyValueSeparator = psiWalker!!.getPropertyValueSeparator(null)
+          val propertyValueSeparator = psiWalker!!.getPropertyValueSeparator(valueType)
           if (hasValue) {
             // fix colon for YAML and alike
             if (offset < docChars.length && !isSeparatorAtOffset(docChars, offset, propertyValueSeparator)) {

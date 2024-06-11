@@ -14,6 +14,7 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver
+import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import com.jetbrains.jsonSchema.impl.light.nodes.isNotBlank
 
 /**
@@ -72,7 +73,9 @@ fun expandMissingPropertiesAndMoveCaret(context: InsertionContext, completionPat
   val walker = JsonLikePsiWalker.getWalker(element) ?: return
   val parentObject = getOrCreateParentObject(element, walker, context, path) ?: return
   val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
-  cleanupWhitespacesAndDelete(element)
+  cleanupWhitespacesAndDelete(walker.getParentPropertyAdapter(element)?.takeIf {
+    it.nameValueAdapter?.delegate == element
+  }?.delegate ?: element)
   // the inserted element might contain invalid psi and be re-invalidated after the document commit,
   // that's why we preserve the range instead and try restoring what was under
   val pointer = SmartPointerManager.getInstance(context.project).createSmartPsiFileRangePointer(newElement.containingFile, newElement.textRange)
@@ -148,12 +151,7 @@ private fun addNewPropertyWithObjectValue(parentObject: JsonObjectValueAdapter, 
   return syntaxAdapter.createProperty(propertyName, dummyString, project).also {
     walker.getParentPropertyAdapter(it)!!.values.single().delegate.replace(element.copy())
   }.let {
-    if (element.parent == parentObject.delegate) {
-      parentObject.delegate.addAfter(it, element.copy())
-    }
-    else {
-      addBeforeOrAfter(parentObject, it, element, fakeProperty)
-    }
+    addBeforeOrAfter(parentObject, it, element, fakeProperty)
   }.let { walker.getParentPropertyAdapter(it)!! }
 }
 
@@ -174,6 +172,7 @@ private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
     val project = parentObject.delegate.project
     val fake = walker.getSyntaxAdapter(project).createProperty(dummyString, dummyString, project)
     val newValue = if (value.isObject) value.delegate else value.delegate.replace(fake.parent)
+    switchToObjectSeparator(walker, property.delegate)
     val newValueAsObject = walker.createValueAdapter(newValue)!!.asObject!!
     return doExpand(newValueAsObject, completionPath, walker, element, index + 1,
                     if (value.isObject) null
@@ -182,17 +181,12 @@ private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
   else {
     val movedElement =
       if (value.isObject) {
-        val elementToAdd = if (walker.createValueAdapter(element)?.isStringLiteral == true) {
+        val elementToAdd = walker.getParentPropertyAdapter(element)?.takeIf {
+          it.nameValueAdapter?.delegate == element
+        }?.delegate ?: if (walker.createValueAdapter(element)?.isStringLiteral == true) {
           walker.getSyntaxAdapter(element.project).createProperty(
             StringUtil.unquoteString(element.text), dummyString, element.project
-          ).also {
-            walker.getParentPropertyAdapter(it)!!.values.singleOrNull()?.delegate?.delete()
-            it.childLeafs().firstOrNull { it.text == walker.getPropertyValueSeparator(null) }?.let {
-              it.prevSibling?.takeIf { it.text.isBlank() }?.delete()
-              it.nextSibling?.takeIf { it.text.isBlank() }?.delete()
-              it.delete()
-            }
-          }
+          ).also { removePropertyValue(walker, it) }
         } else element.copy()
         addBeforeOrAfter(value, elementToAdd, element, fakeProperty)
       }
@@ -201,10 +195,37 @@ private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
         if (walker.defaultObjectValue.isBlank()) {
           newElement.parent.addBefore(createLeaf("\n", newElement)!!, newElement)
         }
+        switchToObjectSeparator(walker, property.delegate)
         newElement
       }
     return movedElement
   }
+}
+
+private fun switchToObjectSeparator(walker: JsonLikePsiWalker, node: PsiElement) {
+  val nonObjectSeparator = walker.getPropertyValueSeparator(null).trim()
+  val objectSeparator = walker.getPropertyValueSeparator(JsonSchemaType._object).trim()
+  if (nonObjectSeparator != objectSeparator) {
+    node.childLeafs().filter { it.parent == node }.firstOrNull { it.text == nonObjectSeparator }?.let {
+      if (objectSeparator.isBlank()) {
+        deleteWithWsAround(it, deleteBefore = false)
+      }
+      else it.replace(createLeaf(objectSeparator, it)!!)
+    }
+  }
+}
+
+private fun removePropertyValue(walker: JsonLikePsiWalker, it: PsiElement) {
+  walker.getParentPropertyAdapter(it)!!.values.singleOrNull()?.delegate?.delete()
+  it.childLeafs().firstOrNull { it.text == walker.getPropertyValueSeparator(null).trim() }?.let {
+    deleteWithWsAround(it)
+  }
+}
+
+private fun deleteWithWsAround(it: PsiElement, deleteBefore: Boolean = true) {
+  if (deleteBefore) it.prevSibling?.takeIf { it.text.isBlank() }?.delete()
+  it.nextSibling?.takeIf { it.text.isBlank() }?.delete()
+  it.delete()
 }
 
 private fun addBeforeOrAfter(value: JsonValueAdapter,
@@ -243,7 +264,7 @@ private fun replaceValueForNesting(walker: JsonLikePsiWalker,
                                                                      value.delegate.project).parent.also {
         walker.createValueAdapter(it)!!.asObject!!.propertyList.single().let {
           it.nameValueAdapter!!.delegate.replace(element.copy())
-          it.values.forEach { it.delegate.delete() }
+          removePropertyValue(walker, it.delegate)
         }
       }
     ).let {
