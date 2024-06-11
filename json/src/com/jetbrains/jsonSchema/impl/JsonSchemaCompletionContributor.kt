@@ -122,7 +122,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         .resolve()
         .forEach { schema ->
           schema.collectNestedCompletions(myProject, nestedCompletionsNode, null) { path, subSchema ->
-            processSchema(subSchema, isName, checkable, knownNames, path)
+            processSchema(subSchema, isName, knownNames, path)
           }
         }
 
@@ -135,7 +135,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
      */
     fun processSchema(schema: JsonSchemaObject,
                       isName: ThreeState,
-                      checkable: PsiElement,
                       knownNames: MutableSet<String>,
                       completionPath: SchemaPath?) {
       if (isName != ThreeState.NO) {
@@ -485,7 +484,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           }
           else {
             // inserting longer string for proper formatting
-            val stringToInsert = propertyValueSeparator + " 1" + comma
+            val stringToInsert = "$propertyValueSeparator 1$comma"
             EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, propertyValueSeparator.length + 1)
             formatInsertedString(context, stringToInsert.length)
             offset = editor.caretModel.offset
@@ -591,6 +590,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
   }
 
+  @Suppress("CompanionObjectInExtension")
   companion object {
     @JvmStatic
     fun doCompletion(parameters: CompletionParameters,
