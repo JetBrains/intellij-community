@@ -306,6 +306,7 @@ function generateOptions(options, defaults) {
 
 function myDiff(oldCode, newCode) {
   const changes = diffLines(oldCode || "", newCode);
+  console.log("Diff changes:", changes);
 
   let oldIndex = -1;
   return changes.map(({ value, count, removed, added }) => {
@@ -519,6 +520,8 @@ function updatePopup(sessionDiv) {
 
 // Add the `addDiffView` function
 function addDiffView(sessionDiv, popup, lookup, originalText) {
+  sessionDiv.classList.add("diffView")
+  sessionDiv.classList.remove("features", "suggestions", "features")
   const diffDiv = document.createElement("DIV");
   diffDiv.setAttribute("class", "diffView");
 
@@ -559,7 +562,7 @@ function addDiffView(sessionDiv, popup, lookup, originalText) {
 
 function addCommonFeatures(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("features")
-  sessionDiv.classList.remove("contexts", "suggestions")
+  sessionDiv.classList.remove("contexts", "suggestions","diffView")
   const parts = sessionDiv.id.split(" ")
   const sessionId = parts[0]
   const lookupOrder = parts[1]
@@ -591,7 +594,7 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
 
 function addContexts(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("contexts")
-  sessionDiv.classList.remove("features", "suggestions")
+  sessionDiv.classList.remove("features", "suggestions", "diffView")
 
   if (!("cc_context" in lookup["additionalInfo"])) return
 
