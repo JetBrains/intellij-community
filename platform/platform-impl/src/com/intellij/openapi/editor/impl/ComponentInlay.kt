@@ -179,7 +179,8 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     val scrollPane = editor.scrollPane
     val viewportReservedWidth = if (!isVerticalScrollbarFlipped(scrollPane)) editor.scrollPane.verticalScrollBar.width + content.insets.left
     else content.insets.left
-    val visibleArea = scrollPane.viewport.visibleRect
+    val viewportWidth = scrollPane.viewport.width
+    val contentXInViewport = scrollPane.viewport.viewPosition.x
 
     // Step 1: Sync inlay size with preferred component size.
     // Step 1.1: Update inlay size, it may fail in batch mode so need to do it in separate loop
@@ -215,8 +216,8 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
 
     // Step 2: Way editor implemented now it will validate size after inlay update and set it to preferred size which may be less than viewport.
     // We ask parent to layout editor in that case to restore it's size.
-    if (content.width < initialContentWidth && content.width < visibleArea.width) {
-      content.size = Dimension(min(initialContentWidth, visibleArea.width), content.height)
+    if (content.width < initialContentWidth && content.width < viewportWidth) {
+      content.size = Dimension(min(initialContentWidth, viewportWidth), content.height)
     }
 
     // Step 3: Set bounds of container to bounds of inner area (without insets) of editor. It defines a viewport for inlay components.
@@ -238,13 +239,13 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
           val alignment = inlay.renderer.alignment
 
           // x in inlay bounds contains left gap of content, which we do not need
-          componentBounds.x = if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) visibleArea.x else 0
+          componentBounds.x = if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) contentXInViewport else 0
 
           if (alignment == ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH || alignment == ComponentInlayAlignment.FIT_CONTENT_WIDTH) {
             componentBounds.width = bounds.width
           }
           else if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_WIDTH || alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) {
-            componentBounds.width = max(component.minimumSize.width, visibleArea.width - viewportReservedWidth)
+            componentBounds.width = max(component.minimumSize.width, viewportWidth - viewportReservedWidth)
           }
 
           component.bounds = componentBounds

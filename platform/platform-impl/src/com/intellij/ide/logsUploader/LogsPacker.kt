@@ -110,11 +110,14 @@ object LogsPacker {
 
         if (SystemInfoRt.isMac) {
           for (reportDir in MacOSDiagnosticReportDirectories) {
-            Path.of(reportDir).forEachDirectoryEntry { path ->
-              coroutineContext.ensureActive()
-              val name = path.name
-              if (name.endsWith(".ips") && Files.isRegularFile(path) && doesMacOSDiagnosticReportBelongToThisApp(path)) {
-                zip.addFile("MacOS_DiagnosticReports/$name", path)
+            val dir = Path.of(reportDir)
+            if (dir.exists() && dir.isDirectory()) {
+              dir.forEachDirectoryEntry { path ->
+                coroutineContext.ensureActive()
+                val name = path.name
+                if (name.endsWith(".ips") && Files.isRegularFile(path) && doesMacOSDiagnosticReportBelongToThisApp(path)) {
+                  zip.addFile("MacOS_DiagnosticReports/$name", path)
+                }
               }
             }
           }

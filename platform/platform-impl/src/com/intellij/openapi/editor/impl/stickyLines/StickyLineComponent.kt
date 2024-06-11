@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.stickyLines
 
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger
+import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.command.CommandProcessor
@@ -8,10 +10,12 @@ import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUIUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
+import com.intellij.openapi.util.Key
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -91,9 +95,11 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     val lineHeight = lineHeight()
     val gutterWidth = editor.gutterComponentEx.width
     val textWidth = lineWidth() - gutterWidth
+    val editorBackground = editor.backgroundColor
+    var isBackgroundChanged = false
     (editor as EditorImpl).isStickyLinePainting = true
     try {
-      editor.isStickyLineHovered = isHovered
+      isBackgroundChanged = setStickyLineBackgroundColor()
       if (graphicsOrDumb != null) {
         val editorStartY = if (isLineOutOfPanel()) editorY + y else editorY
         graphicsOrDumb.translate(0, -editorStartY)
@@ -104,7 +110,24 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
       }
     } finally {
       editor.isStickyLinePainting = false
+      if (isBackgroundChanged) {
+        editor.backgroundColor = editorBackground
+      }
     }
+  }
+
+  private fun setStickyLineBackgroundColor(): Boolean {
+    val backgroundColorKey = if (isHovered) {
+      EditorColors.STICKY_LINES_HOVERED_COLOR
+    } else {
+      EditorColors.STICKY_LINES_BACKGROUND
+    }
+    val backgroundColor = editor.colorsScheme.getColor(backgroundColorKey)
+    if (backgroundColor != null) {
+      editor.backgroundColor = backgroundColor
+      return true
+    }
+    return false
   }
 
   private fun paintGutter(g: Graphics, editorY: Int, lineHeight: Int, gutterWidth: Int) {
@@ -319,6 +342,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
               UndoConfirmationPolicy.DEFAULT,
               editor.document
             )
+            UIEventLogger.StickyLineNavigate.log(editor.project, editor.getUserData(EDITOR_LANGUAGE))
           }
         }
         else -> throwUnhandledEvent(event)
@@ -343,5 +367,9 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     private fun throwUnhandledEvent(event: MouseEvent) {
       throw IllegalArgumentException("unhandled event $event")
     }
+  }
+
+  internal companion object {
+    val EDITOR_LANGUAGE: Key<Language> = Key("editor.settings.language")
   }
 }

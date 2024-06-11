@@ -27,6 +27,7 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallPackageQuickFix
 import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings
+import com.jetbrains.python.packaging.common.normalizePackageName
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.createSpecification
@@ -73,8 +74,8 @@ private class UnsatisfiedRequirementInspectionVisitor(holder: ProblemsHolder,
       val project = element.project
       val sdk = project.pythonSdk ?: return
       val packageManager = PythonPackageManager.forSdk(project, sdk)
-      val packages = packageManager.installedPackages.map { it.name }
-      val unsatisfiedRequirements = element.requirements().filter { requirement -> requirement.displayName !in packages }
+      val packages = packageManager.installedPackages.map { normalizePackageName(it.name) }
+      val unsatisfiedRequirements = element.requirements().filter { requirement -> normalizePackageName(requirement.displayName) !in packages }
       unsatisfiedRequirements.forEach { requirement ->
         holder.registerProblem(requirement,
                                PyBundle.message("INSP.requirements.package.not.installed", requirement.displayName),

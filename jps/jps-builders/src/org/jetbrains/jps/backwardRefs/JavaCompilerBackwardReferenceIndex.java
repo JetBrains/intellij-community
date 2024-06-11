@@ -12,4 +12,7 @@ public final class JavaCompilerBackwardReferenceIndex extends CompilerReferenceI
   public JavaCompilerBackwardReferenceIndex(File buildDir, PathRelativizerService relativizer, boolean readOnly) {
     super(JavaCompilerIndices.getIndices(), buildDir, relativizer, readOnly, JavaCompilerIndices.VERSION);
   }
+  public JavaCompilerBackwardReferenceIndex(File buildDir, PathRelativizerService relativizer, boolean readOnly, boolean isCaseSensitive) {
+    super(JavaCompilerIndices.getIndices(), buildDir, relativizer, readOnly, JavaCompilerIndices.VERSION, isCaseSensitive);
+  }
 }

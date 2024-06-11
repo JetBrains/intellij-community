@@ -11,6 +11,10 @@
     <a href="https://plugins.jetbrains.com/docs/intellij/?from=DevkitPluginDescription">IntelliJ Platform SDK Docs</a>
   ]]></description>
 
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
   <content>
     <module name="intellij.devkit.core"/>
     <module name="intellij.devkit.git"/>

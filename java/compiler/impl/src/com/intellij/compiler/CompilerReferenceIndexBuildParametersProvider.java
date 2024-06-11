@@ -3,18 +3,28 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase;
 import com.intellij.compiler.server.BuildProcessParametersProvider;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter;
 
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase.isCaseSensitiveFS;
+
 final class CompilerReferenceIndexBuildParametersProvider extends BuildProcessParametersProvider {
+  @NotNull
+  private final Project project;
+
+  CompilerReferenceIndexBuildParametersProvider(@NotNull Project project) { this.project = project; }
+
   @NotNull
   @Override
   public List<String> getVMArguments() {
-    return CompilerReferenceServiceBase.isEnabled()
-           ? List.of("-D" + JavaBackwardReferenceIndexWriter.PROP_KEY + "=true")
-           : Collections.emptyList();
+    boolean enabled = CompilerReferenceServiceBase.isEnabled();
+    if (!enabled) return Collections.emptyList();
+    boolean caseSensitiveFS = isCaseSensitiveFS(project);
+    return List.of("-D" + JavaBackwardReferenceIndexWriter.PROP_KEY + "=true",
+                   "-D" + JavaBackwardReferenceIndexWriter.FS_KEY + "=" + Boolean.valueOf(caseSensitiveFS));
   }
 }

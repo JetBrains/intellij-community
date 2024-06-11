@@ -20,10 +20,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +50,7 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import kotlin.collections.ArraysKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -149,6 +155,55 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   public static boolean isEnabled() {
     return RegistryManager.getInstance().is("compiler.ref.index");
+  }
+
+  @ApiStatus.Experimental
+  private enum FsCompilerReferenceType {
+    SENSITIVE,
+    INSENSITIVE,
+    BY_OS,
+    BY_ROOT;
+
+    @NotNull
+    static FsCompilerReferenceType from(@Nullable String text) {
+      for (FsCompilerReferenceType type : values()) {
+        if (type.name().equalsIgnoreCase(text)) {
+          return type;
+        }
+      }
+      return BY_ROOT;
+    }
+  }
+
+  @ApiStatus.Experimental
+  public static boolean isCaseSensitiveFS(@NotNull Project project) {
+    CompilerReferenceServiceBase.FsCompilerReferenceType fsCompilerReferenceType =  FsCompilerReferenceType.from(
+      Registry.stringValue("java.jps.backward.ref.index.builder.fs.case.sensitive"));
+    switch (fsCompilerReferenceType) {
+      case SENSITIVE -> {
+        return true;
+      }
+      case INSENSITIVE -> {
+        return false;
+      }
+      case BY_OS -> {
+        return SystemInfo.isFileSystemCaseSensitive;
+      }
+      case BY_ROOT -> {
+        VirtualFile guessedProjectDir = ProjectUtil.guessProjectDir(project);
+        String basePath = guessedProjectDir == null ? project.getBasePath() : guessedProjectDir.getCanonicalPath();
+        if (basePath != null) {
+          File file = new File(basePath);
+          FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
+          return switch (sensitivity) {
+            case UNKNOWN -> SystemInfo.isFileSystemCaseSensitive;
+            case SENSITIVE -> true;
+            case INSENSITIVE -> false;
+          };
+        }
+      }
+    }
+    return SystemInfo.isFileSystemCaseSensitive;
   }
 
   @Override

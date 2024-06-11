@@ -263,9 +263,6 @@ class GradleWarmupConfigurator : WarmupConfigurator {
     }
 
     private fun processMessage(gradleText: String): String? {
-      if (WarmupStatus.currentStatus(ApplicationManager.getApplication()) != WarmupStatus.InProgress) {
-        return gradleText
-      }
       val cropped = gradleText.trimStart('\r').trimEnd('\n')
       if (cropped.startsWith("Download")) {
         // we don't want to be flooded by a ton of download messages, so we'll print only final message

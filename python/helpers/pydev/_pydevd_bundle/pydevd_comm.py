@@ -1881,6 +1881,7 @@ class InternalLoadFullValue(InternalThreadCommand):
         self.thread_id = thread_id
         self.frame_id = frame_id
         self.vars = vars
+        self.py_db = GlobalDebuggerHolder.global_dbg
 
     def do_it(self, dbg):
         """Starts a thread that will load values asynchronously"""
@@ -1899,6 +1900,7 @@ class InternalLoadFullValue(InternalThreadCommand):
                     var_objects.append((var_obj, name))
 
             t = GetValueAsyncThreadDebug(dbg, self.sequence, var_objects, dbg.get_user_type_renderers())
+            self.py_db.value_resolve_thread_list.append(t)
             t.start()
         except:
             exc = get_exception_traceback_str()

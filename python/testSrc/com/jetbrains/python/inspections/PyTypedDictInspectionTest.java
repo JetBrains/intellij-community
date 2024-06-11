@@ -383,6 +383,21 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    group: Group[str] = {"key": 1, "group": ['one']}""");
   }
 
+  // PY-55044
+  public void testTypedDictKwargsParameter() {
+    doTestByText("""
+                   from typing import TypedDict, Unpack
+
+                   class Movie(TypedDict):
+                       title: str
+                       year: int
+
+                   def foo(**x: Unpack[Movie]):
+                       print(x[<warning descr="TypedDict \\"Movie\\" has no key 'nonexistent_key'">'nonexistent_key'</warning>])
+                       print(x['title'])
+                       print(x['year'])""");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

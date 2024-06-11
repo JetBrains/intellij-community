@@ -363,7 +363,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         return type;
       }
     }
-    return new PyFunctionTypeImpl(this);
+    return PyFunctionTypeImpl.create(this, context);
   }
 
   @Override

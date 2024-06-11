@@ -187,7 +187,7 @@ def _stop_on_unhandled_exception(exc_info, py_db, thread):
                                     exc_info)
 
 
-def enable_pep699_monitoring():
+def enable_pep669_monitoring():
     DEBUGGER_ID = monitoring.DEBUGGER_ID
     if not monitoring.get_tool(DEBUGGER_ID):
         monitoring.use_tool_id(DEBUGGER_ID, PYDEVD_TOOL_NAME)
@@ -204,6 +204,10 @@ def enable_pep699_monitoring():
             (monitoring.events.RAISE, py_raise_callback),
         ):
             monitoring.register_callback(DEBUGGER_ID, event_type, callback)
+
+    debugger = GlobalDebuggerHolder.global_dbg
+    if debugger:
+        debugger.is_pep669_monitoring_enabled = True
 
 
 def _enable_return_tracing(code):
@@ -407,7 +411,6 @@ def py_line_callback(code, line_number):
                             and not py_db.in_project_scope(filename)):
                         # ignore library files while stepping
                         return monitoring.DISABLE
-                    stop = step_cmd != CMD_STEP_OVER
 
             if stop:
                 py_db.set_suspend(

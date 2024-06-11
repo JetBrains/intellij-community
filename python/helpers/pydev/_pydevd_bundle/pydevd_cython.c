@@ -3536,7 +3536,7 @@ typedef struct {
   PyObject *__pyx_n_s_writer;
   PyObject *__pyx_int_0;
   PyObject *__pyx_int_1;
-  PyObject *__pyx_int_47;
+  PyObject *__pyx_int_49;
   PyObject *__pyx_int_160;
   PyObject *__pyx_int_18997755;
   PyObject *__pyx_int_19394913;
@@ -4079,7 +4079,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_writer);
   Py_CLEAR(clear_module_state->__pyx_int_0);
   Py_CLEAR(clear_module_state->__pyx_int_1);
-  Py_CLEAR(clear_module_state->__pyx_int_47);
+  Py_CLEAR(clear_module_state->__pyx_int_49);
   Py_CLEAR(clear_module_state->__pyx_int_160);
   Py_CLEAR(clear_module_state->__pyx_int_18997755);
   Py_CLEAR(clear_module_state->__pyx_int_19394913);
@@ -4600,7 +4600,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_writer);
   Py_VISIT(traverse_module_state->__pyx_int_0);
   Py_VISIT(traverse_module_state->__pyx_int_1);
-  Py_VISIT(traverse_module_state->__pyx_int_47);
+  Py_VISIT(traverse_module_state->__pyx_int_49);
   Py_VISIT(traverse_module_state->__pyx_int_160);
   Py_VISIT(traverse_module_state->__pyx_int_18997755);
   Py_VISIT(traverse_module_state->__pyx_int_19394913);
@@ -5145,7 +5145,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_writer __pyx_mstate_global->__pyx_n_s_writer
 #define __pyx_int_0 __pyx_mstate_global->__pyx_int_0
 #define __pyx_int_1 __pyx_mstate_global->__pyx_int_1
-#define __pyx_int_47 __pyx_mstate_global->__pyx_int_47
+#define __pyx_int_49 __pyx_mstate_global->__pyx_int_49
 #define __pyx_int_160 __pyx_mstate_global->__pyx_int_160
 #define __pyx_int_18997755 __pyx_mstate_global->__pyx_int_18997755
 #define __pyx_int_19394913 __pyx_mstate_global->__pyx_int_19394913
@@ -41792,7 +41792,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitConstants(void) {
   if (__Pyx_CreateStringTabAndInitStrings() < 0) __PYX_ERR(0, 1, __pyx_L1_error);
   __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_47 = PyInt_FromLong(47); if (unlikely(!__pyx_int_47)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_int_49 = PyInt_FromLong(49); if (unlikely(!__pyx_int_49)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_160 = PyInt_FromLong(160); if (unlikely(!__pyx_int_160)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_18997755 = PyInt_FromLong(18997755L); if (unlikely(!__pyx_int_18997755)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_19394913 = PyInt_FromLong(19394913L); if (unlikely(!__pyx_int_19394913)) __PYX_ERR(0, 1, __pyx_L1_error)
@@ -42480,14 +42480,14 @@ if (!__Pyx_RefNanny) {
   /* "_pydevd_bundle/pydevd_cython.pyx":16
  * # ENDIF
  * 
- * version = 47             # <<<<<<<<<<<<<<
+ * version = 49             # <<<<<<<<<<<<<<
  * 
  * if not hasattr(sys, '_current_frames'):
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_int_47) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_int_49) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
 
   /* "_pydevd_bundle/pydevd_cython.pyx":18
- * version = 47
+ * version = 49
  * 
  * if not hasattr(sys, '_current_frames'):             # <<<<<<<<<<<<<<
  * 
@@ -42790,7 +42790,7 @@ if (!__Pyx_RefNanny) {
     __pyx_L3:;
 
     /* "_pydevd_bundle/pydevd_cython.pyx":18
- * version = 47
+ * version = 49
  * 
  * if not hasattr(sys, '_current_frames'):             # <<<<<<<<<<<<<<
  * 

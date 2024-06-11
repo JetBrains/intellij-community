@@ -178,8 +178,15 @@ object StartupUiUtil {
   @JvmStatic
   fun isDialogFont(font: Font): Boolean = Font.DIALOG == font.getFamily(Locale.US)
 
+  @Deprecated("Use lambda-friendly overload instead", ReplaceWith("addAwtListener(mask, parent, listener)"))
   @JvmStatic
   fun addAwtListener(listener: AWTEventListener, mask: Long, parent: Disposable) {
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask)
+    Disposer.register(parent) { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
+  }
+
+  @JvmStatic
+  fun addAwtListener(mask: Long, parent: Disposable, listener: AWTEventListener) {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask)
     Disposer.register(parent) { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
   }

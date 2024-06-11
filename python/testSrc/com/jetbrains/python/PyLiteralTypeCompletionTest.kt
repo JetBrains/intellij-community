@@ -8,15 +8,19 @@ import com.jetbrains.python.fixtures.PyTestCase
 @TestDataPath("\$CONTENT_ROOT/../testData/completion/literalType")
 class PyLiteralTypeCompletionTest : PyTestCase() {
   fun testInCallExpression() {
-    doTestCompletionVariantsContains("inCallExpression.py", "1", "2", "3", "\"foo\"", "5", "None")
+    doTestCompletionVariantsContains("inCallExpression.py", "\"1\"", "\"2\"", "\"foo\"", "\"5\"")
   }
 
   fun testInKeywordArgument() {
-    doTestCompletionVariantsContains("inKeywordArgument.py", "1", "2", "3", "\"foo\"", "5", "None")
+    doTestCompletionVariantsContains("inKeywordArgument.py", "\"3\"", "\"foo\"", "\"5\"")
   }
 
   fun testInSubscriptionExpression() {
-    doTestCompletionVariantsContains("inSubscriptionExpression.py", "1", "2", "3", "\"foo\"", "5", "None")
+    doTestCompletionVariantsContains("inSubscriptionExpression.py", "\"1\"", "\"foo\"", "\"5\"")
+  }
+
+  fun testInAssigment() {
+    doTestCompletionVariantsContains("inAssignment.py", "\"1\"", "\"3\"", "\"foo\"", "\"5\"")
   }
 
   fun testInDoubleQuotedString() {
@@ -28,7 +32,7 @@ class PyLiteralTypeCompletionTest : PyTestCase() {
   }
 
   fun testLiteralWithSingleParameter() {
-    doTestCompletionVariantsContains("literalWithSingleParameter.py", "22")
+    doTestCompletionVariantsContains("literalWithSingleParameter.py", "\"zzz\"")
   }
 
   fun testLiteralWithDoubleQuotedStringParameter() {

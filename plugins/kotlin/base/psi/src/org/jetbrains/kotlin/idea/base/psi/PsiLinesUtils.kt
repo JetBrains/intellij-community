@@ -32,7 +32,10 @@ fun PsiFile.getLineStartOffset(line: Int, skipWhitespace: Boolean): Int? {
 
 fun PsiFile.getLineEndOffset(line: Int): Int? {
     val document = viewProvider.document ?: PsiDocumentManager.getInstance(project).getDocument(this)
-    return document?.getLineEndOffset(line)
+    if (document != null && line >= 0 && line < document.lineCount) {
+        return document.getLineEndOffset(line)
+    }
+    return null
 }
 
 fun PsiElement.getLineNumber(start: Boolean = true): Int {

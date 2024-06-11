@@ -23,7 +23,6 @@ internal val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<DelegatedSettingsCo
 class SettingsControllerMediator(
   private val controllers: List<DelegatedSettingsController> = SETTINGS_CONTROLLER_EP_NAME.extensionList,
   private val isPersistenceStateComponentProxy: Boolean = controllers.size > 1,
-  private val useEfficientStorageForCache: Boolean = true,
 ) : SettingsController {
   @TestOnly
   constructor(isPersistenceStateComponentProxy: Boolean)
@@ -63,11 +62,9 @@ class SettingsControllerMediator(
   }
 
   override fun createStateStorage(collapsedPath: String, file: Path): Any? {
-    if (useEfficientStorageForCache && collapsedPath == StoragePathMacros.CACHE_FILE) {
-      return StateStorageBackedByController(controller = this, tags = java.util.List.of(CacheTag))
-    }
-    else {
-      return null
+    return when (collapsedPath) {
+      StoragePathMacros.CACHE_FILE -> StateStorageBackedByController(controller = this, tags = java.util.List.of(CacheTag))
+      else -> null
     }
   }
 
@@ -91,7 +88,7 @@ class SettingsControllerMediator(
       return null
     }
     else {
-      return SettingsControllerMediator(controllers = java.util.List.copyOf(result), isPersistenceStateComponentProxy = true, useEfficientStorageForCache = false)
+      return SettingsControllerMediator(controllers = java.util.List.copyOf(result), isPersistenceStateComponentProxy = true)
     }
   }
 }

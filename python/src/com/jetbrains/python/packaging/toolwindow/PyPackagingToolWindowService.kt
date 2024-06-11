@@ -31,6 +31,8 @@ import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.normalizePackageName
+import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.*
@@ -47,7 +49,6 @@ import com.jetbrains.python.statistics.modules
 import kotlinx.coroutines.*
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import org.jetbrains.annotations.Nls
-import java.util.concurrent.locks.ReentrantLock
 
 @Service(Service.Level.PROJECT)
 class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
@@ -83,10 +84,16 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     if (query.isNotEmpty()) {
       searchJob?.cancel()
       searchJob = serviceScope.launch {
-        val installed = installedPackages.filter { StringUtil.containsIgnoreCase(it.name, query) }
 
-        val packagesFromRepos = manager.repositoryManager.packagesByRepository().map {
-          filterPackagesForRepo(it.second, query, it.first)
+        val installed = installedPackages.filter { pkg ->
+          when {
+            pkg.instance is CondaPackage && !pkg.instance.installedWithPip -> StringUtil.containsIgnoreCase(pkg.name, query)
+            else -> StringUtil.containsIgnoreCase(normalizePackageName(pkg.name), normalizePackageName(query))
+          }
+        }
+
+        val packagesFromRepos = manager.repositoryManager.searchPackages(query).map {
+          sortPackagesForRepo(it.value, query, it.key)
         }.toList()
 
         if (isActive) {
@@ -208,21 +215,18 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  private fun filterPackagesForRepo(packageNames: List<String>,
-                                    query: String,
-                                    repository: PyPackageRepository,
-                                    skipItems: Int = 0): PyPackagesViewData {
+  private fun sortPackagesForRepo(packageNames: List<String>,
+                                  query: String,
+                                  repository: PyPackageRepository,
+                                  skipItems: Int = 0): PyPackagesViewData {
 
     val comparator = createNameComparator(query, repository.repositoryUrl ?: "")
-    val searchResult = packageNames.asSequence()
-      .filter { StringUtil.containsIgnoreCase(it, query) }
-      .toList()
 
-    val shownPackages = searchResult.asSequence()
+    val shownPackages = packageNames.asSequence()
       .sortedWith(comparator)
       .limitDisplayableResult(repository, skipItems)
     val exactMatch = shownPackages.indexOfFirst { StringUtil.equalsIgnoreCase(it.name, query) }
-    return PyPackagesViewData(repository, shownPackages, exactMatch, searchResult.size - shownPackages.size)
+    return PyPackagesViewData(repository, shownPackages, exactMatch, packageNames.size - shownPackages.size)
   }
 
   suspend fun convertToHTML(contentType: String?, description: String): String {
@@ -333,14 +337,13 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   fun getMoreResultsForRepo(repository: PyPackageRepository, skipItems: Int): PyPackagesViewData {
-    val packagesFromRepository = manager.repositoryManager.packagesFromRepository(repository)
-
     if (currentQuery.isNotEmpty()) {
-      return filterPackagesForRepo(packagesFromRepository, currentQuery, repository, skipItems)
+      return sortPackagesForRepo(manager.repositoryManager.searchPackages(currentQuery, repository), currentQuery, repository, skipItems)
     }
     else {
-      val packagesFromRepo = packagesFromRepository.asSequence().limitDisplayableResult(repository, skipItems)
-      return PyPackagesViewData(repository, packagesFromRepo, moreItems = packagesFromRepository.size - (PACKAGES_LIMIT + skipItems))
+      val packagesFromRepo = manager.repositoryManager.packagesFromRepository(repository)
+      val page = packagesFromRepo.asSequence().limitDisplayableResult(repository, skipItems)
+      return PyPackagesViewData(repository, page, moreItems = packagesFromRepo.size - (PACKAGES_LIMIT + skipItems))
     }
   }
 

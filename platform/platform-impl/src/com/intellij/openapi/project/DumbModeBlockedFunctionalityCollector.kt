@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference
  * This case is not handled by this collector.
  */
 object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("dumb.mode.blocked.functionality", 5)
+  private val GROUP = EventLogGroup("dumb.mode.blocked.functionality", 8)
 
   private val FUNCTIONALITY_SOURCE = EventFields.Enum("functionality", DumbModeBlockedFunctionality::class.java)
   private val EXECUTED_WHEN_SMART = EventFields.Boolean("executed_when_smart")

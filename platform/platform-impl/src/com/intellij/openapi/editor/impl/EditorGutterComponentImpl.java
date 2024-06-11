@@ -430,7 +430,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       Color caretRowColor = getCaretRowColor();
       paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
       paintBackground(g, clip, gutterSeparatorX, getWidth() - gutterSeparatorX, myEditor.getBackgroundColor(), caretRowColor);
-      paintStickyLineBackground(g, clip);
       paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
       Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
@@ -492,16 +491,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           showToolTip(area.toString(), p, Balloon.Position.below); //NON-NLS
           break;
         }
-      }
-    }
-  }
-
-  private void paintStickyLineBackground(Graphics2D g, Rectangle clip) {
-    if (ExperimentalUI.isNewUI() && myEditor.isStickyLinePainting() && myEditor.isStickyLineHovered()) {
-      Color hoveredColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
-      if (hoveredColor != null) {
-        g.setColor(hoveredColor);
-        g.fillRect(0, clip.y, getWidth(), clip.height);
       }
     }
   }

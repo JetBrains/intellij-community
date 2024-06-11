@@ -27,4 +27,7 @@ abstract class PythonRepositoryManager(val project: Project, val sdk: Sdk) {
   abstract suspend fun initCaches()
 
   internal abstract fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails
+
+  abstract fun searchPackages(query: String, repository: PyPackageRepository): List<String>
+  abstract fun searchPackages(query: String): Map<PyPackageRepository, List<String>>
 }

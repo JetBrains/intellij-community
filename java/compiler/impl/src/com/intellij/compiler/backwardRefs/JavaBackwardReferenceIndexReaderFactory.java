@@ -28,6 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase.isCaseSensitiveFS;
+
 public final class JavaBackwardReferenceIndexReaderFactory implements CompilerReferenceReaderFactory<JavaBackwardReferenceIndexReaderFactory.BackwardReferenceReader> {
   public static final JavaBackwardReferenceIndexReaderFactory INSTANCE = new JavaBackwardReferenceIndexReaderFactory();
 
@@ -48,7 +50,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     }
 
     try {
-      return new BackwardReferenceReader(project, buildDir);
+      return new BackwardReferenceReader(project, buildDir, isCaseSensitiveFS(project));
     }
     catch (RuntimeException e) {
       LOG.error("An exception while initialization of compiler reference index.", e);
@@ -61,6 +63,11 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
 
     protected BackwardReferenceReader(Project project, File buildDir) {
       super(buildDir, new JavaCompilerBackwardReferenceIndex(buildDir, new PathRelativizerService(project.getBasePath()), true));
+      myProject = project;
+    }
+
+    protected BackwardReferenceReader(Project project, File buildDir, boolean isCaseSensitiveFS) {
+      super(buildDir, new JavaCompilerBackwardReferenceIndex(buildDir, new PathRelativizerService(project.getBasePath(), isCaseSensitiveFS), true, isCaseSensitiveFS));
       myProject = project;
     }
 

@@ -683,6 +683,31 @@ public class Py3CompletionTest extends PyTestCase {
     doTestVariants("x", "foo");
   }
 
+  // PY-55044
+  public void testTypedDictKwargsParameter() {
+    List<String> suggested = doTestByText("""
+      from typing import TypedDict, Unpack
+      class Movie(TypedDict):
+          name: str
+          year: int
+      def foo(**x: Unpack[Movie]):
+          x['<caret>']""");
+    assertSameElements(suggested, "name", "year");
+  }
+
+  // PY-55044
+  public void testTypedDictKwargsArgument() {
+    List<String> suggested = doTestByText("""
+      from typing import TypedDict, Unpack
+      class Movie(TypedDict):
+          name: str
+          year: int
+      def foo(**x: Unpack[Movie]):
+          pass
+      foo(<caret>)""");
+    assertContainsElements(suggested, "name=", "year=");
+  }
+
   private void doTestVariants(String @NotNull ... expected) {
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");

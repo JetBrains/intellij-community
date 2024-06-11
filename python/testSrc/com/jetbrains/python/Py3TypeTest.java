@@ -2168,6 +2168,31 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  // PY-55044
+  public void testTypedDictKwargs() {
+    doTest("Movie",
+           """
+             from typing import TypedDict, Unpack
+             class Movie(TypedDict):
+                 name: str
+                 year: int
+             def foo(**x: Unpack[Movie]):
+                 expr = x
+             """);
+  }
+
+  // PY-55044
+  public void testKwargsWithUnpackedClassTypeInAnnotation() {
+    doTest("dict[str, Any]",
+           """
+             from typing import Unpack
+             class Movie:
+                 pass
+             def foo(**x: Unpack[Movie]):
+                 expr = x
+             """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
