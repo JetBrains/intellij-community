@@ -49,7 +49,7 @@ public final class TipDialog extends DialogWrapper {
         adjustSizeToContent();
       }
     });
-    myShowActions = sortingResult.tips.size() > 1;
+    myShowActions = sortingResult.getTips().size() > 1;
     if (myShowActions) {
       setDoNotAskOption(myTipPanel);
     }
@@ -151,7 +151,7 @@ public final class TipDialog extends DialogWrapper {
           tips.add(tip);
           propertiesComponent.setValue(LAST_OPENED_TIP_PATH, file.getPath());
         }
-        myTipPanel.setTips(new TipsSortingResult(tips));
+        myTipPanel.setTips(TipsSortingResult.create(tips));
       }
     }
   }

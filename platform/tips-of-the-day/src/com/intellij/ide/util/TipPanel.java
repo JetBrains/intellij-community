@@ -238,9 +238,9 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   void setTips(@NotNull TipsSortingResult sortingResult) {
-    myTips = sortingResult.tips;
-    myAlgorithm = sortingResult.algorithm;
-    myAlgorithmVersion = sortingResult.version;
+    myTips = sortingResult.getTips();
+    myAlgorithm = sortingResult.getAlgorithm();
+    myAlgorithmVersion = sortingResult.getVersion();
     showNext(true);
   }
 
