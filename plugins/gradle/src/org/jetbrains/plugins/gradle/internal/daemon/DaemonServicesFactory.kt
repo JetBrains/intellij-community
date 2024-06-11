@@ -27,12 +27,27 @@ fun getDaemonServiceFactory(daemonClientFactory: DaemonClientFactory, myServiceD
   }
 }
 
-private fun getDaemonServicesBefore8Dot8(daemonClientFactory: DaemonClientFactory, parameters: DaemonParameters): ServiceRegistry {
-  return daemonClientFactory.createBuildClientServices(
-    OutputEventListener.NO_OP,
-    parameters,
-    ByteArrayInputStream(ByteArray(0))
-  )
+private fun getDaemonServicesBefore8Dot8(daemonClientFactory: DaemonClientFactory,
+                                         parameters: DaemonParameters): ServiceRegistry {
+  try {
+    val method: Method = DaemonClientFactory::class.java.getDeclaredMethod("createBuildClientServices",
+                                                                           OutputEventListener::class.java,
+                                                                           DaemonParameters::class.java,
+                                                                           InputStream::class.java
+    )
+    val invocationResult: Any = method.invoke(daemonClientFactory,
+                                              OutputEventListener.NO_OP,
+                                              parameters,
+                                              ByteArrayInputStream(ByteArray(0))
+    )
+    return invocationResult as ServiceRegistry
+  }
+  catch (e: ReflectiveOperationException) {
+    throw RuntimeException("Cannot resolve ServiceRegistry by reflection. Gradle version: " + GradleVersion.current(), e)
+  }
+  catch (e: ClassCastException) {
+    throw RuntimeException("Unable to cast the result of the invocation to ServiceRegistry. Gradle version: " + GradleVersion.current(), e)
+  }
 }
 
 private fun getDaemonServicesAfter8Dot8(daemonClientFactory: DaemonClientFactory, parameters: DaemonParameters): ServiceRegistry {
@@ -61,7 +76,7 @@ private fun getDaemonServicesAfter8Dot8(daemonClientFactory: DaemonClientFactory
     throw RuntimeException("Cannot resolve ServiceRegistry by reflection. Gradle version: " + GradleVersion.current(), e)
   }
   catch (e: ClassCastException) {
-    throw RuntimeException("Unable to cast ServiceRegistry to ServiceRegistry. Gradle version: " + GradleVersion.current(), e)
+    throw RuntimeException("Unable to cast the result of the invocation to ServiceRegistry. Gradle version: " + GradleVersion.current(), e)
   }
 }
 

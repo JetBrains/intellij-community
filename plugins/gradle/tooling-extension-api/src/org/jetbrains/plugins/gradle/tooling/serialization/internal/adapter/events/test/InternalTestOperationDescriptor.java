@@ -11,4 +11,9 @@ public class InternalTestOperationDescriptor extends InternalOperationDescriptor
   public InternalTestOperationDescriptor(Object id, String name, String displayName, OperationDescriptor parent) {
     super(id, name, displayName, parent);
   }
+
+  @Override
+  public String getTestDisplayName() {
+    return super.getDisplayName();
+  }
 }
