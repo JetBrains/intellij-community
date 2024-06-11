@@ -45,6 +45,34 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
+  fun `test nested completion between properties`() {
+    open1ThenOpen2Then3Schema
+      .appliedToJsonFile("""
+       {
+          "one": {
+            "four": 4
+          },
+          thr<caret>
+          "five": {
+            "six": 6
+          }
+       }
+      """.trimIndent())
+      .completesTo("""
+        {
+           "one": {
+             "four": 4,
+             "two": {
+               "three": <selection>false<caret></selection>
+             }
+           },
+          "five": {
+             "six": 6
+           }
+        }
+      """.trimIndent())
+  }
+
   fun `test nested completion into existing property`() {
     open1ThenOpen2Then3Schema
       .appliedToJsonFile("""

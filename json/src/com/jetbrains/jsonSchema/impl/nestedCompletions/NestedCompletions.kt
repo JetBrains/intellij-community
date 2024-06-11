@@ -75,7 +75,7 @@ fun expandMissingPropertiesAndMoveCaret(context: InsertionContext, completionPat
   val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
   cleanupWhitespacesAndDelete(walker.getParentPropertyAdapter(element)?.takeIf {
     it.nameValueAdapter?.delegate == element
-  }?.delegate ?: element)
+  }?.delegate ?: element, walker)
   // the inserted element might contain invalid psi and be re-invalidated after the document commit,
   // that's why we preserve the range instead and try restoring what was under
   val pointer = SmartPointerManager.getInstance(context.project).createSmartPsiFileRangePointer(newElement.containingFile, newElement.textRange)
@@ -128,7 +128,7 @@ private fun replaceAtCaretAndGetParentObject(element: PsiElement,
   return element.replace(newProperty.parent)
 }
 
-private fun cleanupWhitespacesAndDelete(it: PsiElement) {
+private fun cleanupWhitespacesAndDelete(it: PsiElement, walker: JsonLikePsiWalker) {
   // cleanup redundant whitespace
   var next = it.nextSibling
   while (next != null && next.text.isBlank()) {
@@ -140,7 +140,9 @@ private fun cleanupWhitespacesAndDelete(it: PsiElement) {
   while (prev != null && prev.text.isBlank()) {
     val n = prev
     prev = prev.prevSibling
-    n.delete()
+    if (walker.getParentPropertyAdapter(prev) == null || it.nextSibling == null) {
+      n.delete()
+    }
   }
   it.delete()
 }
@@ -164,7 +166,7 @@ private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
   val property = parentObject.propertyList.firstOrNull { it.name == completionPath[index] }
                   ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element, fakeProperty)
   fakeProperty?.let {
-    cleanupWhitespacesAndDelete(it)
+    cleanupWhitespacesAndDelete(it, walker)
   }
   val value = property.values.singleOrNull()
   if (value == null) return null
