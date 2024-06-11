@@ -947,8 +947,7 @@ open class FileEditorManagerImpl(
     return composite
   }
 
-  // protected only as workaround for bad old impl for remote dev
-  protected fun findWindowInAllSplitters(file: VirtualFile): EditorWindow? {
+  private fun findWindowInAllSplitters(file: VirtualFile): EditorWindow? {
     val activeCurrentWindow = getActiveSplitterSync().currentWindow
     if (activeCurrentWindow != null && isFileOpenInWindow(file, activeCurrentWindow)) {
       return activeCurrentWindow
@@ -968,9 +967,8 @@ open class FileEditorManagerImpl(
     return null
   }
 
-  // protected only as workaround for bad old impl for remote dev
   @RequiresEdt
-  protected fun getOrCreateCurrentWindow(file: VirtualFile): EditorWindow {
+  private fun getOrCreateCurrentWindow(file: VirtualFile): EditorWindow {
     val splitters = getActiveSplitterSync()
     val currentEditor = getSelectedEditor { splitters }
     val isSingletonEditor = isSingletonFileEditor(currentEditor)
@@ -1059,7 +1057,7 @@ open class FileEditorManagerImpl(
   }
 
   // protected only as workaround for bad old impl for remote dev
-  protected val clientFileEditorManager: ClientFileEditorManager?
+  private val clientFileEditorManager: ClientFileEditorManager?
     get() {
       // todo RDCT-78
       val session = ClientSessionsManager.getProjectSession(project) ?: return null
@@ -1103,7 +1101,7 @@ open class FileEditorManagerImpl(
 
     if (EDT.isCurrentThreadEdt()) {
       val composite = open()
-      if (options.waitForComposite && composite is EditorComposite) {
+      if (composite is EditorComposite) {
         blockingWaitForCompositeFileOpen(composite)
       }
       return composite
@@ -1113,7 +1111,7 @@ open class FileEditorManagerImpl(
         val composite = withContext(Dispatchers.EDT) {
           open()
         }
-        if (options.waitForComposite && composite is EditorComposite) {
+        if (composite is EditorComposite) {
           composite.waitForAvailable()
         }
         composite
@@ -1228,28 +1226,7 @@ open class FileEditorManagerImpl(
     return composite
   }
 
-  internal fun createCompositeAndModel(
-    fileProvider: () -> VirtualFile,
-    window: EditorWindow,
-    fileEntry: FileEntry?,
-    isLazy: Boolean,
-    fileName: String,
-  ): EditorComposite? {
-    val compositeCoroutineScope = window.coroutineScope.childScope("EditorComposite(file=$fileName)")
-    val model = createEditorCompositeModel(
-      compositeCoroutineScope = compositeCoroutineScope,
-      fileProvider = fileProvider,
-      fileEntry = fileEntry,
-      isLazy = isLazy,
-    )
-    return createCompositeByEditorWithModel(
-      file = fileProvider(),
-      model = model,
-      coroutineScope = compositeCoroutineScope,
-    )
-  }
-
-  internal fun createEditorCompositeModel(
+  internal fun createEditorCompositeModelOnStartup(
     compositeCoroutineScope: CoroutineScope,
     fileProvider: () -> VirtualFile,
     fileEntry: FileEntry?,
@@ -1273,24 +1250,6 @@ open class FileEditorManagerImpl(
       editorsWithProviders = editorsWithProviders,
     )
   }
-
-  //protected open fun createComposite(
-  //  file: VirtualFile,
-  //  coroutineScope: CoroutineScope,
-  //  model: Flow<EditorCompositeModel>,
-  //  isLazy: Boolean,
-  //): EditorComposite? {
-  //  if (forbidSplitFor(file) && openedComposites.any { it.file == file }) {
-  //    LOG.debug { "Cancelled 'createComposite' for $file - file is already opened" }
-  //    return null
-  //  }
-  //
-  //  return createCompositeByEditorWithModel(
-  //    file = file,
-  //    model = model,
-  //    coroutineScope = coroutineScope,
-  //  )
-  //}
 
   @RequiresEdt
   fun createCompositeByEditorWithModel(

@@ -63,8 +63,7 @@ private val LOG = logger<EditorWindow>()
 
 class EditorWindow internal constructor(
   val owner: EditorsSplitters,
-  // not `internal` only as workaround for bad old impl for remote dev
-  @JvmField @Internal val coroutineScope: CoroutineScope,
+  @JvmField internal val coroutineScope: CoroutineScope,
 ) {
   companion object {
     @JvmField
