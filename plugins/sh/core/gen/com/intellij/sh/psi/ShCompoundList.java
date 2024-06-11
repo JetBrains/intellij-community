@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface ShCompoundList extends ShCompositeElement {
 
   @NotNull
+  List<ShCommand> getCommandList();
+
+  @NotNull
   List<ShPipelineCommandList> getPipelineCommandListList();
 
 }

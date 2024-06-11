@@ -28,6 +28,12 @@ public class ShCompoundListImpl extends ShCompositeElementImpl implements ShComp
 
   @Override
   @NotNull
+  public List<ShCommand> getCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShCommand.class);
+  }
+
+  @Override
+  @NotNull
   public List<ShPipelineCommandList> getPipelineCommandListList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ShPipelineCommandList.class);
   }
