@@ -37,6 +37,7 @@ public class PyDebugValue extends XNamedValue {
     "ndarray", ARRAY,
     "EagerTensor", ARRAY,
     "ResourceVariable", ARRAY,
+    "SparseTensor", ARRAY,
     "Tensor", ARRAY,
     DATA_FRAME, DATA_FRAME,
     SERIES, SERIES,

@@ -27,6 +27,10 @@ public class ArrayViewStrategy extends DataViewStrategy {
     return new ArrayViewStrategy("ResourceVariable");
   }
 
+  public static @NotNull ArrayViewStrategy createInstanceForSparseTensor() {
+    return new ArrayViewStrategy("SparseTensor");
+  }
+
   public static @NotNull ArrayViewStrategy createInstanceForTensor() {
     return new ArrayViewStrategy("Tensor");
   }

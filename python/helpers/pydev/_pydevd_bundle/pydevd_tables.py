@@ -75,6 +75,7 @@ def __get_table_provider(output):
     elif type_qualified_name in ['numpy.ndarray',
                                  'tensorflow.python.framework.ops.EagerTensor',
                                  'tensorflow.python.ops.resource_variable_ops.ResourceVariable',
+                                 'tensorflow.python.framework.sparse_tensor.SparseTensor',
                                  'torch.Tensor',
                                  'builtins.dict']:
         import _pydevd_bundle.tables.pydevd_numpy as table_provider
