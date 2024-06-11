@@ -37,6 +37,35 @@ interface NotebookCellInlayController {
     }
   }
 
+  abstract class LazyFactory: Factory {
+    internal val cellOrdinalsInCreationBlock = hashSetOf<Int>()
+
+    abstract fun isAvailable(editor: EditorImpl): Boolean
+
+    abstract fun getControllerClass(): Class<out NotebookCellInlayController>
+
+    abstract fun getOldController(editor: EditorImpl, currentControllers: Collection<NotebookCellInlayController>, interval: NotebookCellLines.Interval): NotebookCellInlayController?
+
+    abstract fun getNewController(editor: EditorImpl, interval: NotebookCellLines.Interval): NotebookCellInlayController
+
+    override fun compute(editor: EditorImpl, currentControllers: Collection<NotebookCellInlayController>, intervalIterator: ListIterator<NotebookCellLines.Interval>): NotebookCellInlayController? {
+      if (!isAvailable(editor)) {
+        return null
+      }
+
+      val interval = intervalIterator.next()
+      val oldController = getOldController(editor, currentControllers, interval)
+      if (oldController != null) {
+        return oldController
+      }
+
+      if (!cellOrdinalsInCreationBlock.contains(interval.ordinal)) {
+        return null
+      }
+      return getNewController(editor, interval)
+    }
+  }
+
   /**
    * Marker interface for factories producing custom editors for cells
    */

@@ -7,8 +7,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
+import kotlin.reflect.KClass
 
 class EditorCell(
   private val editor: EditorEx,
@@ -87,8 +89,23 @@ class EditorCell(
     view?.setGutterAction(action)
   }
 
-  inline fun <reified T : Any> getExtension(): T? {
+  inline fun <reified T : NotebookCellInlayController> getController(): T? {
+    val lazyFactory = getLazyFactory(T::class)
+    if (lazyFactory != null) {
+      createLazyControllers(lazyFactory)
+    }
     return view?.getExtension<T>()
   }
 
+  @PublishedApi internal fun createLazyControllers(factory: NotebookCellInlayController.LazyFactory) {
+    factory.cellOrdinalsInCreationBlock.add(interval.ordinal)
+    update(true)
+    factory.cellOrdinalsInCreationBlock.remove(interval.ordinal)
+  }
+
+  @PublishedApi internal fun <T: NotebookCellInlayController> getLazyFactory(type: KClass<T>): NotebookCellInlayController.LazyFactory? {
+    return NotebookCellInlayController.Factory.EP_NAME.extensionList
+      .filterIsInstance<NotebookCellInlayController.LazyFactory>()
+      .firstOrNull { it.getControllerClass() == type.java }
+  }
 }
