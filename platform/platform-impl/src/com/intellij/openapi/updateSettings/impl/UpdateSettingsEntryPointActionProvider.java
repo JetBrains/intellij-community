@@ -123,7 +123,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     }
   }
 
-  private static void newPlatformUpdate() {
+  private static void clearUpdatesInfo() {
     setPlatformUpdateInfo(null);
     newPlatformUpdate(null, null, (String)null);
     updateState();
@@ -275,7 +275,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
               Messages.showInfoMessage(project,
                                        IdeBundle.message("updates.no.updates.notification"),
                                        IdeBundle.message("find.ide.update.title"));
-              newPlatformUpdate();
+              clearUpdatesInfo();
             }
           }
         }
@@ -354,7 +354,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
       UpdateInfoDialog dialog = new UpdateInfoDialog(e.getProject(), Objects.requireNonNull(myPlatformUpdateInfo),
                                                      true, myUpdatedPlugins, myIncompatiblePlugins);
       if (dialog.showAndGet()) {
-        newPlatformUpdate();
+        clearUpdatesInfo();
       }
     }
   }
