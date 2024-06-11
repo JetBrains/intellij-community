@@ -124,6 +124,7 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
 
     newFile = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(newFile);
     newFile = CodeStyleManager.getInstance(myProject).reformat(newFile);
+    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(newFile.getContainingFile().getFileDocument());
     PsiClass[] inner = ((PsiJavaFile)newFile).getClasses();
     for (PsiClass psiClass : inner) {
       var fix = new MoveClassToSeparateFileFix(psiClass).asIntention();
