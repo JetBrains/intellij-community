@@ -73,9 +73,8 @@ public final class IntegerMultiplicationImplicitCastToLongInspection extends Bas
   @SuppressWarnings("PublicField")
   public boolean ignoreNonOverflowingCompileTimeConstants = true;
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     return new IntegerMultiplicationImplicitCastToLongInspectionFix();
   }
 
@@ -180,13 +179,17 @@ public final class IntegerMultiplicationImplicitCastToLongInspection extends Bas
       else {
         exprToCast = Arrays.stream(operands)
           .map(operand -> PsiUtil.deparenthesizeExpression(operand))
-          .filter(operand -> operand instanceof PsiLiteralExpression ||
-                             operand instanceof PsiPrefixExpression && ((PsiPrefixExpression)operand).getOperand() instanceof PsiLiteral)
+          .filter(operand -> isIntegerLiteral(operand) ||
+                             operand instanceof PsiPrefixExpression prefixExpr && isIntegerLiteral(prefixExpr.getOperand()))
           .findFirst()
           .orElse(operands[0]);
       }
 
       addCast(exprToCast);
+    }
+
+    private static boolean isIntegerLiteral(@Nullable PsiExpression operand) {
+      return operand instanceof PsiLiteralExpression literal && literal.getValue() instanceof Integer;
     }
 
     private static void addCast(@NotNull PsiExpression expression) {
@@ -196,7 +199,7 @@ public final class IntegerMultiplicationImplicitCastToLongInspection extends Bas
       }
 
       final String replacementText;
-      if (expression instanceof PsiLiteralExpression) {
+      if (isIntegerLiteral(expression)) {
         replacementText = expression.getText() + "L";
       }
       else {
