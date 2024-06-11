@@ -365,7 +365,7 @@ public abstract class AbstractListBuilder implements Disposable {
       resultDescriptors.sort(myComparator);
     }
     else {
-      resultDescriptors.sort(IndexComparator.INSTANCE);
+      resultDescriptors.sort(IndexComparator.getInstance());
     }
 
     if (shouldAddTopElement()) {

@@ -310,7 +310,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     panel.getList().addKeyListener(new PsiCopyPasteManager.EscapeHandler());
 
     final ProjectAbstractTreeStructureBase treeStructure = createProjectTreeStructure();
-    panel.setBuilder(new ProjectListBuilder(project, panel, treeStructure, AlphaComparator.INSTANCE, true));
+    panel.setBuilder(new ProjectListBuilder(project, panel, treeStructure, AlphaComparator.getInstance(), true));
     panel.setProjectTreeStructure(treeStructure);
 
     final FocusAdapter focusListener = new FocusAdapter() {

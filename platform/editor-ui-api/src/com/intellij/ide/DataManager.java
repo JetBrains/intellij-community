@@ -32,6 +32,10 @@ public abstract class DataManager {
 
   private static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
 
+  @ApiStatus.Internal
+  protected DataManager() {
+  }
+
   /**
    * @return {@link DataContext} constructed by the currently focused component
    * @deprecated use either {@link #getDataContext(Component)} or {@link #getDataContextFromFocus()}

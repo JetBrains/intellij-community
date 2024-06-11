@@ -25,7 +25,6 @@ com.intellij.codeInsight.daemon.GutterMark
 com.intellij.codeInsight.daemon.NonHideableIconGutterMark
 - com.intellij.codeInsight.daemon.GutterMark
 a:com.intellij.ide.DataManager
-- <init>():V
 - a:getDataContext():com.intellij.openapi.actionSystem.DataContext
 - a:getDataContext(java.awt.Component):com.intellij.openapi.actionSystem.DataContext
 - a:getDataContext(java.awt.Component,I,I):com.intellij.openapi.actionSystem.DataContext
@@ -48,17 +47,6 @@ f:com.intellij.ide.highlighter.HighlighterFactory
 - s:createHighlighter(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.colors.EditorColorsScheme,com.intellij.openapi.project.Project):com.intellij.openapi.editor.highlighter.EditorHighlighter
 f:com.intellij.ide.lightEdit.LightEdit
 - s:owns(com.intellij.openapi.project.Project):Z
-c:com.intellij.ide.lightEdit.LightEditFilePatterns
-- sf:DEFAULT_PATTERNS:java.lang.String[]
-- sf:PATTERN_SEPARATOR:java.lang.String
-- <init>():V
-- equals(java.lang.Object):Z
-- getPatterns():java.util.List
-- hashCode():I
-- match(com.intellij.openapi.vfs.VirtualFile):Z
-- s:parse(java.lang.String):com.intellij.ide.lightEdit.LightEditFilePatterns
-- setPatterns(java.util.List):V
-- toSeparatedString():java.lang.String
 *:com.intellij.ide.lightEdit.LightEditService
 - sf:WINDOW_NAME:java.lang.String
 - a:closeEditorWindow():Z
@@ -86,7 +74,6 @@ c:com.intellij.ide.lightEdit.LightEditFilePatterns
 - lightEditWindowClosed(com.intellij.openapi.project.Project):V
 - lightEditWindowOpened(com.intellij.openapi.project.Project):V
 *:com.intellij.ide.lightEdit.LightEditTabAttributesProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:calcAttributes(com.intellij.ide.lightEdit.LightEditorInfo):com.intellij.openapi.editor.markup.TextAttributes
 *:com.intellij.ide.lightEdit.LightEditorInfo
 - a:getFile():com.intellij.openapi.vfs.VirtualFile
@@ -163,7 +150,6 @@ com.intellij.ide.projectView.SettingsProvider
 - a:getSettings():com.intellij.ide.projectView.ViewSettings
 com.intellij.ide.projectView.TreeStructureProvider
 - com.intellij.openapi.project.PossiblyDumbAware
-- sf:EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 - getData(java.util.Collection,java.lang.String):java.lang.Object
 - a:modify(com.intellij.ide.util.treeView.AbstractTreeNode,java.util.Collection,com.intellij.ide.projectView.ViewSettings):java.util.Collection
 com.intellij.ide.projectView.ViewSettings
@@ -206,13 +192,11 @@ com.intellij.ide.structureView.StructureView
 - a:restoreState():V
 - a:storeState():V
 com.intellij.ide.structureView.StructureViewBuilder
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:PROVIDER:com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:createStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureView
 com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:getStructureViewBuilder(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewBuilder
 a:com.intellij.ide.structureView.StructureViewFactory
-- <init>():V
 - a:createStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.ide.structureView.StructureViewModel,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureView
 - a:createStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.ide.structureView.StructureViewModel,com.intellij.openapi.project.Project,Z):com.intellij.ide.structureView.StructureView
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewFactory
@@ -310,10 +294,6 @@ c:com.intellij.ide.ui.ColorBlindnessSupport
 - <init>():V
 - s:get(com.intellij.ide.ui.ColorBlindness):com.intellij.ide.ui.ColorBlindnessSupport
 - getFilter():java.awt.image.ImageFilter
-f:com.intellij.ide.ui.FontSubpixelResolution
-- sf:ENABLED:Z
-- sf:RESOLUTION:java.awt.Dimension
-- <init>():V
 e:com.intellij.ide.ui.NavBarLocation
 - java.lang.Enum
 - sf:BOTTOM:com.intellij.ide.ui.NavBarLocation
@@ -333,8 +313,6 @@ f:com.intellij.ide.ui.NotRoamableUiOptions
 - f:overrideLafFontsWasMigrated:Z
 - f:presentationModeIdeScale:F
 - <init>():V
-- <init>(com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z):V
-- b:<init>(com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():com.intellij.ide.ui.AntialiasingType
 - f:component10():Z
 - f:component2():com.intellij.ide.ui.AntialiasingType
@@ -351,7 +329,6 @@ f:com.intellij.ide.ui.NotRoamableUiOptions
 - hashCode():I
 f:com.intellij.ide.ui.NotRoamableUiSettings
 - com.intellij.openapi.components.SerializablePersistentStateComponent
-- sf:COMPONENT_NAME:java.lang.String
 - sf:Companion:com.intellij.ide.ui.NotRoamableUiSettings$Companion
 - <init>():V
 - f:getEditorAAType():com.intellij.ide.ui.AntialiasingType
@@ -872,20 +849,21 @@ f:com.intellij.ide.util.treeView.AlphaComparator
 - java.util.Comparator
 - sf:INSTANCE:com.intellij.ide.util.treeView.AlphaComparator
 - compare(com.intellij.ide.util.treeView.NodeDescriptor,com.intellij.ide.util.treeView.NodeDescriptor):I
+- s:getInstance():com.intellij.ide.util.treeView.AlphaComparator
 c:com.intellij.ide.util.treeView.FileNameComparator
 - java.util.Comparator
 - sf:INSTANCE:java.util.Comparator
 - <init>():V
 - compare(java.lang.String,java.lang.String):I
+- s:getInstance():java.util.Comparator
 f:com.intellij.ide.util.treeView.IndexComparator
 - java.util.Comparator
 - sf:INSTANCE:com.intellij.ide.util.treeView.IndexComparator
 - compare(com.intellij.ide.util.treeView.NodeDescriptor,com.intellij.ide.util.treeView.NodeDescriptor):I
+- s:getInstance():com.intellij.ide.util.treeView.IndexComparator
 com.intellij.ide.util.treeView.InplaceCommentAppender
 - a:append(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 a:com.intellij.ide.util.treeView.NodeDescriptor
-- sf:DEFAULT_WEIGHT:I
-- sf:EMPTY_ARRAY:com.intellij.ide.util.treeView.NodeDescriptor[]
 - p:myClosedIcon:javax.swing.Icon
 - p:myColor:java.awt.Color
 - p:myName:java.lang.String
@@ -895,7 +873,9 @@ a:com.intellij.ide.util.treeView.NodeDescriptor
 - expandOnDoubleClick():Z
 - f:getChildrenSortingStamp():J
 - f:getColor():java.awt.Color
+- s:getDefaultWeight():I
 - a:getElement():java.lang.Object
+- s:getEmptyArray():com.intellij.ide.util.treeView.NodeDescriptor[]
 - f:getIcon():javax.swing.Icon
 - getIndex():I
 - getParentDescriptor():com.intellij.ide.util.treeView.NodeDescriptor
@@ -976,7 +956,6 @@ c:com.intellij.ide.util.treeView.PresentableNodeDescriptor$ColoredFragment
 - getToolTip():java.lang.String
 - hashCode():I
 c:com.intellij.ide.util.treeView.TreeAnchorizer
-- <init>():V
 - s:anchorizeList(java.util.Collection):java.util.List
 - createAnchor(java.lang.Object):java.lang.Object
 - freeAnchor(java.lang.Object):V

@@ -197,7 +197,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     });
 
     myTreeStructure = new ViewerTreeStructure(myProject);
-    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, IndexComparator.INSTANCE, getDisposable());
+    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, IndexComparator.getInstance(), getDisposable());
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myStructureTreeModel, getDisposable());
     myPsiTree.setModel(asyncTreeModel);
 

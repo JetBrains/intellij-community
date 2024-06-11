@@ -164,13 +164,13 @@ public class FileNameComparatorTest extends TestCase {
   public void testOrder() {
     ArrayList<String> shuffled = new ArrayList<>(PATHS);
     Collections.shuffle(shuffled);
-    List<String> sortedPaths = ContainerUtil.sorted(shuffled, FileNameComparator.INSTANCE);
+    List<String> sortedPaths = ContainerUtil.sorted(shuffled, FileNameComparator.getInstance());
     UsefulTestCase.assertOrderedEquals(sortedPaths, PATHS);
   }
 
   public void testTransitive1() {
     PlatformTestUtil.assertComparisonContractNotViolated(PATHS,
-                                                         FileNameComparator.INSTANCE,
+                                                         FileNameComparator.getInstance(),
                                                          (path1, path2) -> path1.equals(path2));
   }
 
@@ -194,7 +194,7 @@ public class FileNameComparatorTest extends TestCase {
     //System.out.println("Pairs to check: " + names.size() * names.size() * names.size());
 
     PlatformTestUtil.assertComparisonContractNotViolated(names,
-                                                         FileNameComparator.INSTANCE,
+                                                         FileNameComparator.getInstance(),
                                                          (path1, path2) -> path1.equals(path2));
   }
 }

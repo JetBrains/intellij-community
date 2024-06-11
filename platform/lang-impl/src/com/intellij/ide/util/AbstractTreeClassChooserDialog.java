@@ -111,7 +111,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     myScope = scope;
     myElementClass = elementClass;
     myClassFilter = classFilter == null ? allFilter() : classFilter;
-    myComparator = comparator == null ? AlphaComparator.INSTANCE : comparator;
+    myComparator = comparator == null ? AlphaComparator.getInstance() : comparator;
     myBaseClass = baseClass;
     myInitialClass = initialClass;
     myIsShowMembers = isShowMembers;
