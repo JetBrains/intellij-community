@@ -12,16 +12,18 @@ import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoTestCase
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.SeverityRenderingOption
 import org.jetbrains.kotlin.idea.test.Directives
 import java.io.File
 import java.util.*
 
+const val CHECK_SYMBOL_NAMES = "CHECK_SYMBOL_NAMES"
+const val HIGHLIGHT_SEVERITY = "HIGHLIGHT_SEVERITY"
+
 private const val ALLOW_ERRORS = "ALLOW_ERRORS"
 private const val HIGHLIGHT_WARNINGS = "HIGHLIGHT_WARNINGS"
 private const val HIGHLIGHTER_ATTRIBUTES_KEY = "HIGHLIGHTER_ATTRIBUTES_KEY"
-private const val CHECK_SYMBOL_NAMES = "CHECK_SYMBOL_NAMES"
 private const val DUMB_MODE = "DUMB_MODE"
-private const val HIGHLIGHT_SEVERITY = "HIGHLIGHT_SEVERITY"
 
 
 fun checkHighlighting(
@@ -29,7 +31,8 @@ fun checkHighlighting(
     expectedHighlightingFile: File,
     globalDirectives: Directives,
     project: Project,
-    highlightWarnings: Boolean? = false
+    highlightWarnings: Boolean? = false,
+    severityOption: SeverityRenderingOption = SeverityRenderingOption.ONLY_NON_INFO
 ) {
     val highlightSeverity = globalDirectives.highlightSeverity()
     // compatibility mode
@@ -37,7 +40,7 @@ fun checkHighlighting(
 
     val highlightingRenderConfiguration = HighlightingConfiguration(
         descriptionRenderingOption = HighlightingConfiguration.DescriptionRenderingOption.IF_NOT_NULL,
-        renderSeverityOption = HighlightingConfiguration.SeverityRenderingOption.ONLY_NON_INFO,
+        renderSeverityOption = severityOption,
         renderHighlightingAttributesKey = HIGHLIGHTER_ATTRIBUTES_KEY in globalDirectives,
         severityLevel = highlightSeverity
     )
