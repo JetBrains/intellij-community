@@ -2,7 +2,6 @@
 package git4idea.log.command
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
@@ -11,6 +10,7 @@ import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogProgress
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.graph.PermanentGraph
+import com.intellij.vcs.log.util.RevisionCollector
 import com.intellij.vcs.log.util.RevisionCollectorTask
 import com.intellij.vcs.log.visible.CommitCountStage
 import com.intellij.vcs.log.visible.VcsLogFilterer
@@ -25,7 +25,7 @@ class GitLogCommandFilterer(private val project: Project,
                             private val storage: VcsLogStorage,
                             private val progress: VcsLogProgress) : VcsLogFilterer, Disposable {
 
-  private var collectorTask: GitLogRevisionCollectorTask? = null
+  private var collectorTask: RevisionCollectorTask<Int>? = null
 
   override fun filter(dataPack: DataPack,
                       oldVisiblePack: VisiblePack,
@@ -62,11 +62,17 @@ class GitLogCommandFilterer(private val project: Project,
                         roots: Collection<VirtualFile>,
                         isInitial: Boolean): RevisionCollectorTask<Int> {
     val oldTask = collectorTask
-    if (oldTask != null && oldTask.commandFilter == commandFilter && !oldTask.isCancelled && !isInitial) return oldTask
+    val oldCollector = oldTask?.collector
+    if (!isInitial &&
+        oldTask != null && !oldTask.isCancelled && oldCollector is GitLogRevisionCollector &&
+        oldCollector.commandFilter == commandFilter) {
+      return oldTask
+    }
 
     cancelTask(false)
     val progressIndicator = progress.createProgressIndicator(VcsLogProgress.ProgressKey("git log for $commandFilter"))
-    val newTask = GitLogRevisionCollectorTask(project, progressIndicator, commandFilter, roots, storage)
+    val collector = GitLogRevisionCollector(project, commandFilter, roots, storage)
+    val newTask = RevisionCollectorTask(project, collector, progressIndicator, null)
     collectorTask = newTask
     return newTask
   }
@@ -76,16 +82,6 @@ class GitLogCommandFilterer(private val project: Project,
     collectorTask = null
   }
 
-  private class GitLogRevisionCollectorTask(project: Project, indicator: ProgressIndicator,
-                                            val commandFilter: GitLogCommandFilter,
-                                            val roots: Collection<VirtualFile>,
-                                            val storage: VcsLogStorage) :
-    RevisionCollectorTask<Int>(project, indicator, null) {
-
-    override fun collectRevisions(consumer: (Int) -> Unit) {
-      collectRevisions(project, storage, commandFilter, roots, CommitCountStage.ALL, consumer)
-    }
-  }
 
   companion object {
     fun collectRevisions(project: Project,
@@ -121,6 +117,16 @@ class GitLogCommandFilterer(private val project: Project,
 
   override fun dispose() {
     cancelTask(true)
+  }
+}
+
+private class GitLogRevisionCollector(val project: Project,
+                                      val commandFilter: GitLogCommandFilter,
+                                      val roots: Collection<VirtualFile>,
+                                      val storage: VcsLogStorage) : RevisionCollector<Int> {
+
+  override fun collectRevisions(consumer: (Int) -> Unit) {
+    GitLogCommandFilterer.collectRevisions(project, storage, commandFilter, roots, CommitCountStage.ALL, consumer)
   }
 }
 

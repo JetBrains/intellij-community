@@ -1969,13 +1969,14 @@ f:com.intellij.vcs.log.util.PersistentUtil
 - sf:calcLogId(com.intellij.openapi.project.Project,java.util.Map):java.lang.String
 - sf:getCorruptionMarkerFile():java.nio.file.Path
 - sf:getProjectLogDataDirectoryName(java.lang.String,java.lang.String):java.lang.String
-a:com.intellij.vcs.log.util.RevisionCollectorTask
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.progress.ProgressIndicator):V
-- f:cancel(Z):V
+com.intellij.vcs.log.util.RevisionCollector
 - a:collectRevisions(kotlin.jvm.functions.Function1):V
 - collectRevisionsFast(kotlin.jvm.functions.Function1):V
-- pf:getProject():com.intellij.openapi.project.Project
-- pf:getRevisionsCount():I
+f:com.intellij.vcs.log.util.RevisionCollectorTask
+- <init>(com.intellij.openapi.project.Project,com.intellij.vcs.log.util.RevisionCollector,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.progress.ProgressIndicator):V
+- f:cancel(Z):V
+- f:getCollector():com.intellij.vcs.log.util.RevisionCollector
+- f:getProject():com.intellij.openapi.project.Project
 - f:isCancelled():Z
 - f:waitForRevisions(J):kotlin.Pair
 c:com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
