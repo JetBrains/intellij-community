@@ -1,24 +1,36 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
 import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineAnonymousFunctionProcessor
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
 import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.idea.k2.refactoring.util.isRedundantUnit
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractInlinePostProcessor
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.DEFAULT_PARAMETER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
@@ -118,4 +130,80 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         }
     }
 
+    override fun dropArgumentsForDefaultValues(pointer: SmartPsiElementPointer<KtElement>) {
+        val result = pointer.element ?: return
+
+        val argumentsToDrop = ArrayList<KtValueArgument>()
+
+        result.forEachDescendantOfType<KtCallElement> { callExpression ->
+            analyze(callExpression) {
+                val functionCall = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return@forEachDescendantOfType
+
+                val arguments = functionCall.argumentMapping.entries.toList()
+                val valueParameters = functionCall.partiallyAppliedSymbol.symbol.valueParameters
+                for ((argument, param) in arguments.asReversed()) {
+                    val defaultValue = param.symbol.defaultValue
+
+                    fun substituteDefaultValueWithPassedArguments(): @NlsSafe String? {
+                        val key = Key<KtExpression>("SUBSTITUTION")
+                        var needToSubstitute = false
+                        defaultValue?.forEachDescendantOfType<KtSimpleNameExpression> {
+                            val symbol = it.mainReference.resolveToSymbol()
+                            if (symbol is KaValueParameterSymbol && symbol in valueParameters) {
+                                it.putCopyableUserData(
+                                    key,
+                                    functionCall.argumentMapping.entries.firstOrNull { it.value.symbol == symbol }?.key
+                                )
+                                needToSubstitute = true
+                            }
+                        }
+
+                        if (!needToSubstitute) return null
+
+                        val copy = defaultValue!!.copy()
+
+                        defaultValue.forEachDescendantOfType<KtSimpleNameExpression> {
+                            it.putCopyableUserData(key, null)
+                        }
+
+                        copy.getCopyableUserData(key)?.let {
+                            return it.text
+                        }
+
+                        copy.forEachDescendantOfType<KtSimpleNameExpression> { expr ->
+                            val replacement = expr.getCopyableUserData(key)
+                            if (replacement != null) {
+                                expr.replace(replacement)
+                            }
+                        }
+
+                        return copy.text
+                    }
+
+                    val substitutedValueText = substituteDefaultValueWithPassedArguments()
+
+                    val valueArgument = argument.parent as? KtValueArgument ?: break
+                    if (valueArgument.getCopyableUserData(DEFAULT_PARAMETER_VALUE_KEY) == null ||
+                        defaultValue == null ||
+                        !argument.isSemanticMatch(defaultValue) && (substitutedValueText == null || argument.text != substitutedValueText)) {
+                        // for a named argument, we can try to drop arguments before it as well
+                        if (!valueArgument.isNamed() && valueArgument !is KtLambdaArgument) break else continue
+                    }
+
+                    argumentsToDrop.add(valueArgument)
+                }
+            }
+        }
+
+        for (argument in argumentsToDrop) {
+            val argumentList = argument.parent as KtValueArgumentList
+            argumentList.removeArgument(argument)
+            if (argumentList.arguments.isEmpty()) {
+                val callExpression = argumentList.parent as KtCallElement
+                if (callExpression.lambdaArguments.isNotEmpty()) {
+                    argumentList.delete()
+                }
+            }
+        }
+    }
 }

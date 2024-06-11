@@ -2075,6 +2075,41 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/defaultParameter.kt");
             }
 
+            @TestMetadata("defaultParameterDiffers.kt")
+            public void testDefaultParameterDiffers() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/defaultParameterDiffers.kt");
+            }
+
+            @TestMetadata("defaultParameterDiffers1.kt")
+            public void testDefaultParameterDiffers1() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/defaultParameterDiffers1.kt");
+            }
+
+            @TestMetadata("defaultParameterImplicitlyUsed.kt")
+            public void testDefaultParameterImplicitlyUsed() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/defaultParameterImplicitlyUsed.kt");
+            }
+
+            @TestMetadata("defaultParameterImplicitlyUsed1.kt")
+            public void testDefaultParameterImplicitlyUsed1() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/defaultParameterImplicitlyUsed1.kt");
+            }
+
+            @TestMetadata("defaultParameterImplicitlyUsed2.kt")
+            public void testDefaultParameterImplicitlyUsed2() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/defaultParameterImplicitlyUsed2.kt");
+            }
+
+            @TestMetadata("defaultParameterImplicitlyUsed3.kt")
+            public void testDefaultParameterImplicitlyUsed3() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/defaultParameterImplicitlyUsed3.kt");
+            }
+
+            @TestMetadata("defaultParameterImplicitlyUsed4.kt")
+            public void testDefaultParameterImplicitlyUsed4() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/defaultParameterImplicitlyUsed4.kt");
+            }
+
             @TestMetadata("defaultParameterSubstitution.kt")
             public void testDefaultParameterSubstitution() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/defaultParameterSubstitution.kt");

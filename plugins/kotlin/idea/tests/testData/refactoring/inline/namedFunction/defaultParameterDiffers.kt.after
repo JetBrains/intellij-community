@@ -1,0 +1,5 @@
+fun newFun(p1: String = "", p2: Int = 42, p3: Int = -1) {}
+
+fun foo() {
+    newFun("", 0)
+}
