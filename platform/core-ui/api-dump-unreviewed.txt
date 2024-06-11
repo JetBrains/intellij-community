@@ -430,13 +430,6 @@ c:com.intellij.ui.icons.IconWrapperWithToolTip
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 - replaceBy(com.intellij.ui.icons.IconReplacer):com.intellij.ui.icons.IconWrapperWithToolTip
 - retrieveIcon():javax.swing.Icon
-f:com.intellij.ui.icons.TextHoledIcon
-- com.intellij.ui.icons.ReplaceableIcon
-- com.intellij.util.ui.JBScalableIcon
-- <init>(javax.swing.Icon,java.lang.String,F,java.awt.Color,com.intellij.ui.BadgeShapeProvider):V
-- f:getFontSize():F
-- f:getText():java.lang.String
-- replaceBy(com.intellij.ui.icons.IconReplacer):javax.swing.Icon
 f:com.intellij.ui.icons.TextIcon
 - com.intellij.util.ui.JBScalableIcon
 - <init>(java.lang.String,java.awt.Component,F):V
