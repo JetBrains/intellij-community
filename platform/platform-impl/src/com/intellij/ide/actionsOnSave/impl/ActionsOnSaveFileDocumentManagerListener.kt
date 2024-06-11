@@ -256,20 +256,19 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
     withBackgroundProgress(project, progressTitle) {
       reportProgress(size = documentsToModStamps.size) { progressReporter ->
         for (documentToModStamp in documentsToModStamps) {
+          // Not only does the `progressReporter.itemStep` call help with progress reporting,
+          // it also makes sure that the documents are processed one at a time, not in parallel.
+          // It's a safer path than parallel processing because there may be a lot of documents,
+          // and Actions on Save may perform heavy operations or start external processes.
           progressReporter.itemStep {
             // On manual document editing, we should cancel only Actions on Save for the edited document
             // but keep running Actions on Save for other documents.
             // So, a separate child coroutine for each document is needed.
-            val documentJob = launch(ActionOnSaveContextElement) {
+            launch(ActionOnSaveContextElement) {
               val document = documentToModStamp.key
               val modStamp = documentToModStamp.value
               runDocumentUpdatingActionsOnSaveAndSaveDocument(actionsOnSave, document, modStamp, documentScope = this)
             }
-
-            // Given that there may be a lot of documents
-            // and that Actions on Save may perform heavy operations or start external processes,
-            // the safer path is to run Actions on Save one by one, not in parallel.
-            documentJob.join()
           }
         }
       }
