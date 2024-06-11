@@ -28,37 +28,34 @@ SHELL_SCRIPT
         PsiElement(\n)('\n')
         PsiWhiteSpace('    ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                VARIABLE
-                  PsiElement(var)('$debug')
-              PsiWhiteSpace(' ')
-              STRING
-                PsiElement(OPEN_QUOTE)('"')
-                VARIABLE
-                  PsiElement(var)('$script')
-                PsiElement(CLOSE_QUOTE)('"')
-              PsiWhiteSpace(' ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
               VARIABLE
-                PsiElement(var)('$action')
+                PsiElement(var)('$debug')
+            PsiWhiteSpace(' ')
+            STRING
+              PsiElement(OPEN_QUOTE)('"')
+              VARIABLE
+                PsiElement(var)('$script')
+              PsiElement(CLOSE_QUOTE)('"')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$action')
           PsiWhiteSpace(' ')
           PsiElement(&)('&')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('startup_progress')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('startup_progress')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          PIPELINE_COMMAND_LIST
-            ASSIGNMENT_COMMAND
-              LITERAL
-                PsiElement(word)('backgrounded')
-              PsiElement(=)('=')
-              NUMBER
-                PsiElement(int)('1')
+          ASSIGNMENT_COMMAND
+            LITERAL
+              PsiElement(word)('backgrounded')
+            PsiElement(=)('=')
+            NUMBER
+              PsiElement(int)('1')
           PsiElement(\n)('\n')
       PsiWhiteSpace('    ')
       PsiElement(;;)(';;')

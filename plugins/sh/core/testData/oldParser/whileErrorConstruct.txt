@@ -9,26 +9,24 @@ SHELL_SCRIPT
         PsiElement({)('{')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            WHILE_COMMAND
-              PsiElement(while)('while')
+          WHILE_COMMAND
+            PsiElement(while)('while')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('a')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            DO_BLOCK
+              PsiElement(do)('do')
               PsiWhiteSpace(' ')
               COMPOUND_LIST
-                PIPELINE_COMMAND_LIST
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('a')
-                PsiElement(;)(';')
+                PsiErrorElement:<pipeline command> or '\n' expected, got ';'
+                  PsiElement(;)(';')
               PsiWhiteSpace(' ')
-              DO_BLOCK
-                PsiElement(do)('do')
-                PsiWhiteSpace(' ')
-                COMPOUND_LIST
-                  PsiErrorElement:<pipeline command> or '\n' expected, got ';'
-                    PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                PsiElement(done)('done')
-          PsiErrorElement:'&', '&&', ';', '\n', '|', '|&' or '||' expected, got '}'
+              PsiElement(done)('done')
+          PsiErrorElement:'&', ';' or '\n' expected, got '}'
             <empty list>
         PsiWhiteSpace(' ')
         PsiElement(})('}')
@@ -43,28 +41,25 @@ SHELL_SCRIPT
         PsiElement({)('{')
         COMPOUND_LIST
           PsiElement(\n)('\n')
-          PIPELINE_COMMAND_LIST
-            WHILE_COMMAND
-              PsiElement(while)('while')
-              PsiWhiteSpace(' ')
+          WHILE_COMMAND
+            PsiElement(while)('while')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('a')
+              PsiElement(;)(';')
+              PsiElement(\n)('\n')
+            DO_BLOCK
+              PsiElement(do)('do')
               COMPOUND_LIST
-                PIPELINE_COMMAND_LIST
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('a')
+                PsiElement(\n)('\n')
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('b')
                 PsiElement(;)(';')
                 PsiElement(\n)('\n')
-              DO_BLOCK
-                PsiElement(do)('do')
-                COMPOUND_LIST
-                  PsiElement(\n)('\n')
-                  PIPELINE_COMMAND_LIST
-                    GENERIC_COMMAND_DIRECTIVE
-                      LITERAL
-                        PsiElement(word)('b')
-                  PsiElement(;)(';')
-                  PsiElement(\n)('\n')
-                PsiElement(done)('done')
+              PsiElement(done)('done')
           PsiElement(\n)('\n')
         PsiElement(})('}')
   PsiElement(\n)('\n')
@@ -78,26 +73,24 @@ SHELL_SCRIPT
         PsiElement({)('{')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            WHILE_COMMAND
-              PsiElement(while)('while')
+          WHILE_COMMAND
+            PsiElement(while)('while')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PsiErrorElement:<pipeline command> or '\n' expected, got ';'
+                PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            DO_BLOCK
+              PsiElement(do)('do')
               PsiWhiteSpace(' ')
               COMPOUND_LIST
-                PsiErrorElement:<pipeline command> or '\n' expected, got ';'
-                  PsiElement(;)(';')
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('a')
+                PsiElement(;)(';')
               PsiWhiteSpace(' ')
-              DO_BLOCK
-                PsiElement(do)('do')
-                PsiWhiteSpace(' ')
-                COMPOUND_LIST
-                  PIPELINE_COMMAND_LIST
-                    GENERIC_COMMAND_DIRECTIVE
-                      LITERAL
-                        PsiElement(word)('a')
-                  PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                PsiElement(done)('done')
-          PsiErrorElement:'&', '&&', ';', '\n', '|', '|&' or '||' expected, got '}'
+              PsiElement(done)('done')
+          PsiErrorElement:'&', ';' or '\n' expected, got '}'
             <empty list>
         PsiWhiteSpace(' ')
         PsiElement(})('}')

@@ -6,44 +6,40 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('a')
+        GENERIC_COMMAND_DIRECTIVE
+          LITERAL
+            PsiElement(word)('a')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
         PsiElement(then)('then')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('b')
-              PsiWhiteSpace(' ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
               LITERAL
-                PsiElement(word)('c')
+                PsiElement(word)('b')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('c')
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
       ELIF_CLAUSE
         PsiElement(elif)('elif')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('d')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('d')
           PsiElement(;)(';')
         PsiWhiteSpace(' ')
         THEN_CLAUSE
           PsiElement(then)('then')
           PsiWhiteSpace(' ')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('e')
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('e')
             PsiWhiteSpace(' ')
             PsiElement(&)('&')
             PsiErrorElement:<pipeline command> or '\n' expected, got ';'
@@ -52,10 +48,9 @@ SHELL_SCRIPT
         PsiElement(else)('else')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('c')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('c')
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
       PsiErrorElement:<redirection>, HEREDOC_MARKER_TAG or fi expected, got 'elif'
@@ -93,26 +88,25 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          CONDITIONAL_COMMAND
-            PsiElement([)('[')
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          ASSIGNMENT_CONDITION
+            LITERAL_CONDITION
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('foo')
+                PsiElement(CLOSE_QUOTE)('"')
             PsiWhiteSpace(' ')
-            ASSIGNMENT_CONDITION
-              LITERAL_CONDITION
-                STRING
-                  PsiElement(OPEN_QUOTE)('"')
-                  PsiElement(STRING_CONTENT)('foo')
-                  PsiElement(CLOSE_QUOTE)('"')
-              PsiWhiteSpace(' ')
-              PsiElement(=)('=')
-              PsiWhiteSpace(' ')
-              LITERAL_CONDITION
-                STRING
-                  PsiElement(OPEN_QUOTE)('"')
-                  PsiElement(STRING_CONTENT)('foo')
-                  PsiElement(CLOSE_QUOTE)('"')
+            PsiElement(=)('=')
             PsiWhiteSpace(' ')
-            PsiElement(])(']')
+            LITERAL_CONDITION
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('foo')
+                PsiElement(CLOSE_QUOTE)('"')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
@@ -120,14 +114,13 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('echo')
-              PsiWhiteSpace(' ')
-              NUMBER
-                PsiElement(int)('1')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            NUMBER
+              PsiElement(int)('1')
           PsiElement(\n)('\n')
       PsiElement(fi)('fi')
     PsiElement(;)(';')

@@ -59,14 +59,13 @@ SHELL_SCRIPT
         PsiElement(do)('do')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('hey')
-              PsiWhiteSpace(' ')
-              VARIABLE
-                PsiElement(var)('$a')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('hey')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$a')
           PsiElement(;)(';')
         PsiWhiteSpace(' ')
         PsiElement(done)('done')
@@ -94,14 +93,13 @@ SHELL_SCRIPT
         PsiElement(do)('do')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('hey')
-              PsiWhiteSpace(' ')
-              VARIABLE
-                PsiElement(var)('$a')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('hey')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$a')
           PsiElement(;)(';')
         PsiWhiteSpace(' ')
         PsiElement(done)('done')
@@ -137,14 +135,13 @@ SHELL_SCRIPT
         PsiElement(do)('do')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('hey')
-              PsiWhiteSpace(' ')
-              VARIABLE
-                PsiElement(var)('$a')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('hey')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$a')
           PsiElement(;)(';')
         PsiWhiteSpace(' ')
         PsiElement(done)('done')

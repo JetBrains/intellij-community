@@ -15,14 +15,13 @@ SHELL_SCRIPT
         PsiElement(do)('do')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('echo')
-              PsiWhiteSpace(' ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
               LITERAL
-                PsiElement(word)('a')
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('a')
           PsiElement(;)(';')
         PsiWhiteSpace(' ')
         PsiElement(done)('done')
@@ -39,14 +38,13 @@ SHELL_SCRIPT
         PsiElement(do)('do')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('echo')
-              PsiWhiteSpace(' ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
               LITERAL
-                PsiElement(word)('a')
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('a')
           PsiElement(\n)('\n')
         PsiWhiteSpace('  ')
         PsiElement(done)('done')

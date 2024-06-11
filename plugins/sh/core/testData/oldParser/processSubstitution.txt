@@ -53,14 +53,13 @@ SHELL_SCRIPT
         PsiElement(while)('while')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('read')
-              PsiWhiteSpace(' ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
               LITERAL
-                PsiElement(word)('line')
+                PsiElement(word)('read')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('line')
           PsiWhiteSpace(' ')
           PsiElement(;)(';')
         PsiWhiteSpace(' ')
@@ -68,14 +67,13 @@ SHELL_SCRIPT
           PsiElement(do)('do')
           PsiWhiteSpace(' ')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('echo')
-                PsiWhiteSpace(' ')
-                VARIABLE
-                  PsiElement(var)('$line')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              VARIABLE
+                PsiElement(var)('$line')
             PsiWhiteSpace(' ')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
@@ -87,14 +85,13 @@ SHELL_SCRIPT
         PROCESS_SUBSTITUTION
           PsiElement(<()('<(')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('echo')
-                PsiWhiteSpace(' ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
                 LITERAL
-                  PsiElement(word)(':')
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)(':')
           PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -108,14 +105,13 @@ SHELL_SCRIPT
           PROCESS_SUBSTITUTION
             PsiElement(<()('<(')
             COMPOUND_LIST
-              PIPELINE_COMMAND_LIST
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
+              SIMPLE_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
                   LITERAL
-                    PsiElement(word)('a')
+                    PsiElement(word)('echo')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('a')
             PsiElement())(')')
       PsiWhiteSpace(' ')
       VARIABLE

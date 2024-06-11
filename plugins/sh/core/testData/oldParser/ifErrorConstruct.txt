@@ -9,31 +9,29 @@ SHELL_SCRIPT
         PsiElement({)('{')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            IF_COMMAND
-              PsiElement(if)('if')
+          IF_COMMAND
+            PsiElement(if)('if')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('k')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            THEN_CLAUSE
+              PsiElement(then)('then')
               PsiWhiteSpace(' ')
-              COMPOUND_LIST
-                PIPELINE_COMMAND_LIST
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('k')
+              PsiErrorElement:<compound list> expected, got ';'
                 PsiElement(;)(';')
               PsiWhiteSpace(' ')
-              THEN_CLAUSE
-                PsiElement(then)('then')
-                PsiWhiteSpace(' ')
-                PsiErrorElement:<compound list> expected, got ';'
-                  PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                PsiElement(done)('done')
-                PsiWhiteSpace(' ')
-                PsiElement(})('}')
-                PsiElement(\n)('\n')
-                PsiElement(word)('echo')
-                PsiWhiteSpace(' ')
-                PsiElement(OPEN_QUOTE)('"')
-                PsiElement(STRING_CONTENT)('abc')
-                PsiElement(CLOSE_QUOTE)('"')
-          PsiErrorElement:'&', '&&', ';', '\n', '|', '|&' or '||' expected
+              PsiElement(done)('done')
+              PsiWhiteSpace(' ')
+              PsiElement(})('}')
+              PsiElement(\n)('\n')
+              PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              PsiElement(OPEN_QUOTE)('"')
+              PsiElement(STRING_CONTENT)('abc')
+              PsiElement(CLOSE_QUOTE)('"')
+          PsiErrorElement:'&', ';' or '\n' expected
             <empty list>

@@ -4,15 +4,14 @@ SHELL_SCRIPT
       BLOCK
         PsiElement({)('{')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('echo')
-              PsiWhiteSpace(' ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
               LITERAL
-                PsiElement(word)('a')
-          PsiErrorElement:'&', '&&', ';', '\n', '|', '|&' or '||' expected, got '}'
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('a')
+          PsiErrorElement:'&', ';' or '\n' expected, got '}'
             <empty list>
         PsiElement(})('}')
   PsiElement(\n)('\n')
@@ -22,14 +21,13 @@ SHELL_SCRIPT
         PsiElement({)('{')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('echo')
-              PsiWhiteSpace(' ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
               LITERAL
-                PsiElement(word)('a')
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('a')
           PsiElement(;)(';')
         PsiElement(})('}')
   PsiElement(\n)('\n')

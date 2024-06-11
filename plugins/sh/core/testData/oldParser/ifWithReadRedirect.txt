@@ -4,20 +4,19 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('read')
-            PsiWhiteSpace(' ')
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             LITERAL
-              PsiElement(word)('pid')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              REDIRECTION
-                PsiElement(>)('>')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('c')
+              PsiElement(word)('read')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('pid')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(>)('>')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('c')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
@@ -25,10 +24,9 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('      ')
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('a')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('a')
           PsiElement(\n)('\n')
       PsiWhiteSpace('\t')
       PsiElement(fi)('fi')

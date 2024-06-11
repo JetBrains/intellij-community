@@ -10,21 +10,20 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('echo')
-                PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(OPEN_QUOTE)('"')
-                  PsiElement($)('$')
-                  SHELL_PARAMETER_EXPANSION
-                    PsiElement({)('{')
-                    PsiElement(word)('NAME_IN_CONTENT')
-                    PsiElement(param_separator)('%')
-                    PsiElement(word)('<')
-                    PsiElement(})('}')
-                  PsiElement(CLOSE_QUOTE)('"')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement($)('$')
+                SHELL_PARAMETER_EXPANSION
+                  PsiElement({)('{')
+                  PsiElement(word)('NAME_IN_CONTENT')
+                  PsiElement(param_separator)('%')
+                  PsiElement(word)('<')
+                  PsiElement(})('}')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement())(')')
         PsiElement(CLOSE_QUOTE)('"')

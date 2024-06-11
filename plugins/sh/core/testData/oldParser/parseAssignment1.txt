@@ -199,14 +199,13 @@ SHELL_SCRIPT
             SUBSHELL_COMMAND
               PsiElement(()('(')
               COMPOUND_LIST
-                PIPELINE_COMMAND_LIST
-                  SIMPLE_COMMAND
-                    GENERIC_COMMAND_DIRECTIVE
-                      LITERAL
-                        PsiElement(word)('echo')
-                    PsiWhiteSpace(' ')
-                    NUMBER
-                      PsiElement(int)('1')
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  NUMBER
+                    PsiElement(int)('1')
               PsiElement())(')')
           PsiElement(\n)('\n')
         PsiElement())(')')

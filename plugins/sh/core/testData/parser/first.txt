@@ -213,10 +213,9 @@ SHELL_SCRIPT
         COMMAND_SUBSTITUTION_COMMAND
           PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('date')
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('date')
           PsiElement(CLOSE_BACKQUOTE)('`')
         PsiElement(CLOSE_QUOTE)('"')
       PsiWhiteSpace(' ')
@@ -235,85 +234,80 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('local')
-              PsiWhiteSpace(' ')
-              SIMPLE_COMMAND_ELEMENT
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('FILE')
-                  PsiElement(=)('=')
-                  VARIABLE
-                    PsiElement(var)('$1')
-          PsiElement(\n)('\n')
-          PsiWhiteSpace('    ')
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('local')
-              PsiWhiteSpace(' ')
-              SIMPLE_COMMAND_ELEMENT
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('DIR')
-                  PsiElement(=)('=')
-                  VARIABLE
-                    PsiElement(var)('$2')
-          PsiElement(\n)('\n')
-          PsiElement(\n)('\n')
-          PsiWhiteSpace('    ')
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('mkdir')
-              PsiWhiteSpace(' ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
               LITERAL
-                PsiElement(word)('-p')
-              PsiWhiteSpace(' ')
-              VARIABLE
-                PsiElement(var)('$DIR')
+                PsiElement(word)('local')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              ASSIGNMENT_COMMAND
+                LITERAL
+                  PsiElement(word)('FILE')
+                PsiElement(=)('=')
+                VARIABLE
+                  PsiElement(var)('$1')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('local')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              ASSIGNMENT_COMMAND
                 LITERAL
-                  PsiElement(word)('tar')
-              PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('-xzf')
-              PsiWhiteSpace(' ')
-              VARIABLE
-                PsiElement(var)('$FILE')
-              PsiWhiteSpace(' ')
-              SIMPLE_COMMAND_ELEMENT
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('--strip-components')
-                  PsiElement(=)('=')
-                  NUMBER
-                    PsiElement(int)('1')
-              PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('-C')
-              PsiWhiteSpace(' ')
-              VARIABLE
-                PsiElement(var)('$DIR')
+                  PsiElement(word)('DIR')
+                PsiElement(=)('=')
+                VARIABLE
+                  PsiElement(var)('$2')
+          PsiElement(\n)('\n')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('mkdir')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('-p')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$DIR')
+          PsiElement(\n)('\n')
+          PsiWhiteSpace('    ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('tar')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('-xzf')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$FILE')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              ASSIGNMENT_COMMAND
                 LITERAL
-                  PsiElement(word)('rm')
-              PsiWhiteSpace(' ')
-              VARIABLE
-                PsiElement(var)('$FILE')
+                  PsiElement(word)('--strip-components')
+                PsiElement(=)('=')
+                NUMBER
+                  PsiElement(int)('1')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('-C')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$DIR')
+          PsiElement(\n)('\n')
+          PsiWhiteSpace('    ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('rm')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$FILE')
           PsiElement(\n)('\n')
         PsiElement(})('}')
   PsiElement(\n)('\n')
@@ -466,10 +460,9 @@ SHELL_SCRIPT
         COMMAND_SUBSTITUTION_COMMAND
           PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('hello')
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('hello')
           PsiElement(CLOSE_BACKQUOTE)('`')
       PsiWhiteSpace(' ')
       LITERAL
@@ -725,14 +718,13 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('echo')
-              PsiWhiteSpace(' ')
-              NUMBER
-                PsiElement(int)('1')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            NUMBER
+              PsiElement(int)('1')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -751,21 +743,20 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('wc')
-                PsiWhiteSpace(' ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
                 LITERAL
-                  PsiElement(word)('-l')
-                PsiWhiteSpace(' ')
-                SIMPLE_COMMAND_ELEMENT
-                  REDIRECTION
-                    PsiElement(<)('<')
-                    PsiWhiteSpace(' ')
-                    VARIABLE
-                      PsiElement(var)('$stats')
+                  PsiElement(word)('wc')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('-l')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(<)('<')
+                  PsiWhiteSpace(' ')
+                  VARIABLE
+                    PsiElement(var)('$stats')
           PsiElement())(')')
       PsiWhiteSpace(' ')
       LITERAL

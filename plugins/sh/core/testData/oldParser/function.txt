@@ -9,21 +9,20 @@ SHELL_SCRIPT
         PsiElement({)('{')
         COMPOUND_LIST
           PsiElement(\n)('\n')
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('export')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              ASSIGNMENT_COMMAND
                 LITERAL
-                  PsiElement(word)('export')
-              PsiWhiteSpace(' ')
-              SIMPLE_COMMAND_ELEMENT
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('PATH')
-                  PsiElement(=)('=')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('a')
-                    PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(word)('PATH')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(OPEN_QUOTE)('"')
+                  PsiElement(STRING_CONTENT)('a')
+                  PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
         PsiElement(})('}')

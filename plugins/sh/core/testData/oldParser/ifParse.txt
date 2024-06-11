@@ -4,20 +4,18 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('a')
+        GENERIC_COMMAND_DIRECTIVE
+          LITERAL
+            PsiElement(word)('a')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
         PsiElement(then)('then')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('b')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('b')
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
       PsiElement(fi)('fi')
@@ -27,20 +25,18 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('a')
+        GENERIC_COMMAND_DIRECTIVE
+          LITERAL
+            PsiElement(word)('a')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
         PsiElement(then)('then')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('b')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('b')
           PsiElement(\n)('\n')
       PsiElement(fi)('fi')
   PsiElement(\n)('\n')
@@ -49,30 +45,27 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('a')
+        GENERIC_COMMAND_DIRECTIVE
+          LITERAL
+            PsiElement(word)('a')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
         PsiElement(then)('then')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('b')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('b')
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
       ELSE_CLAUSE
         PsiElement(else)('else')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('c')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('c')
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
       PsiElement(fi)('fi')
@@ -82,29 +75,26 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('a')
+        GENERIC_COMMAND_DIRECTIVE
+          LITERAL
+            PsiElement(word)('a')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
         PsiElement(then)('then')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('b')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('b')
           PsiElement(\n)('\n')
       ELSE_CLAUSE
         PsiElement(else)('else')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('c')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('c')
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
       PsiElement(fi)('fi')
@@ -114,29 +104,26 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('a')
+        GENERIC_COMMAND_DIRECTIVE
+          LITERAL
+            PsiElement(word)('a')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
         PsiElement(then)('then')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('b')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('b')
           PsiElement(\n)('\n')
       ELSE_CLAUSE
         PsiElement(else)('else')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('c')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('c')
           PsiElement(;)(';')
           PsiElement(\n)('\n')
       PsiElement(fi)('fi')
@@ -150,37 +137,35 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             LITERAL
-              PsiElement(word)('a')
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('a')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
         PsiElement(then)('then')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('echo')
-              PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('b')
-              PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('else')
-              PsiWhiteSpace(' ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
               LITERAL
                 PsiElement(word)('echo')
-              PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('c')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('b')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('else')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('c')
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
       PsiElement(fi)('fi')

@@ -91,77 +91,73 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
-          PIPELINE_COMMAND_LIST
-            CASE_COMMAND
-              PsiElement(case)('case')
-              PsiWhiteSpace(' ')
-              VARIABLE
-                PsiElement(var)('$FILENAME')
-              PsiWhiteSpace(' ')
-              PsiElement(in)('in')
-              CASE_CLAUSE
-                PsiElement(\n)('\n')
-                PsiWhiteSpace('        ')
-                PATTERN
+          CASE_COMMAND
+            PsiElement(case)('case')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$FILENAME')
+            PsiWhiteSpace(' ')
+            PsiElement(in)('in')
+            CASE_CLAUSE
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('        ')
+              PATTERN
+                STRING
+                  PsiElement(OPEN_QUOTE)('"')
+                  VARIABLE
+                    PsiElement(var)('$QUIT')
+                  PsiElement(CLOSE_QUOTE)('"')
+              PsiElement())(')')
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('          ')
+              COMPOUND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
                   STRING
                     PsiElement(OPEN_QUOTE)('"')
-                    VARIABLE
-                      PsiElement(var)('$QUIT')
+                    PsiElement(STRING_CONTENT)('Exiting.')
                     PsiElement(CLOSE_QUOTE)('"')
-                PsiElement())(')')
                 PsiElement(\n)('\n')
                 PsiWhiteSpace('          ')
-                COMPOUND_LIST
-                  PIPELINE_COMMAND_LIST
-                    SIMPLE_COMMAND
-                      GENERIC_COMMAND_DIRECTIVE
-                        LITERAL
-                          PsiElement(word)('echo')
-                      PsiWhiteSpace(' ')
-                      STRING
-                        PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(STRING_CONTENT)('Exiting.')
-                        PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(\n)('\n')
-                  PsiWhiteSpace('          ')
-                  PIPELINE_COMMAND_LIST
-                    GENERIC_COMMAND_DIRECTIVE
-                      LITERAL
-                        PsiElement(word)('break')
-                  PsiElement(\n)('\n')
-              PsiWhiteSpace('          ')
-              PsiElement(;;)(';;')
-              CASE_CLAUSE
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('break')
                 PsiElement(\n)('\n')
-                PsiWhiteSpace('        ')
-                PATTERN
-                  PsiElement(word)('*')
-                PsiElement())(')')
-                PsiElement(\n)('\n')
-                PsiWhiteSpace('          ')
-                COMPOUND_LIST
-                  PIPELINE_COMMAND_LIST
-                    SIMPLE_COMMAND
-                      GENERIC_COMMAND_DIRECTIVE
-                        LITERAL
-                          PsiElement(word)('echo')
-                      PsiWhiteSpace(' ')
-                      STRING
-                        PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(STRING_CONTENT)('You picked ')
-                        VARIABLE
-                          PsiElement(var)('$FILENAME')
-                        PsiElement(STRING_CONTENT)(' (')
-                        VARIABLE
-                          PsiElement(var)('$REPLY')
-                        PsiElement(STRING_CONTENT)(')')
-                        PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(\n)('\n')
-              PsiWhiteSpace('          ')
-              PsiElement(;;)(';;')
+            PsiWhiteSpace('          ')
+            PsiElement(;;)(';;')
+            CASE_CLAUSE
               PsiElement(\n)('\n')
-              PsiWhiteSpace('  ')
-              PsiElement(esac)('esac')
+              PsiWhiteSpace('        ')
+              PATTERN
+                PsiElement(word)('*')
+              PsiElement())(')')
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('          ')
+              COMPOUND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(OPEN_QUOTE)('"')
+                    PsiElement(STRING_CONTENT)('You picked ')
+                    VARIABLE
+                      PsiElement(var)('$FILENAME')
+                    PsiElement(STRING_CONTENT)(' (')
+                    VARIABLE
+                      PsiElement(var)('$REPLY')
+                    PsiElement(STRING_CONTENT)(')')
+                    PsiElement(CLOSE_QUOTE)('"')
+                PsiElement(\n)('\n')
+            PsiWhiteSpace('          ')
+            PsiElement(;;)(';;')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('  ')
+            PsiElement(esac)('esac')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')

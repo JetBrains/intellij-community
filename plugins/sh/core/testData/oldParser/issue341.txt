@@ -5,47 +5,44 @@ SHELL_SCRIPT
       SUBSHELL_COMMAND
         PsiElement(()('(')
         COMPOUND_LIST
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('cd')
-              PsiWhiteSpace(' ')
-              STRING
-                PsiElement(OPEN_QUOTE)('"')
-                COMMAND_SUBSTITUTION_COMMAND
-                  PsiElement(OPEN_BACKQUOTE)('`')
-                  COMPOUND_LIST
-                    PIPELINE_COMMAND_LIST
-                      SIMPLE_COMMAND
-                        GENERIC_COMMAND_DIRECTIVE
-                          LITERAL
-                            PsiElement(word)('dirname')
-                        PsiWhiteSpace(' ')
-                        STRING
-                          PsiElement(OPEN_QUOTE)('"')
-                          VARIABLE
-                            PsiElement(var)('$0')
-                          PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(CLOSE_BACKQUOTE)('`')
-                PsiElement(CLOSE_QUOTE)('"')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('cd')
+            PsiWhiteSpace(' ')
+            STRING
+              PsiElement(OPEN_QUOTE)('"')
+              COMMAND_SUBSTITUTION_COMMAND
+                PsiElement(OPEN_BACKQUOTE)('`')
+                COMPOUND_LIST
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('dirname')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      VARIABLE
+                        PsiElement(var)('$0')
+                      PsiElement(CLOSE_QUOTE)('"')
+                PsiElement(CLOSE_BACKQUOTE)('`')
+              PsiElement(CLOSE_QUOTE)('"')
         PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     COMMAND_SUBSTITUTION_COMMAND
       PsiElement(OPEN_BACKQUOTE)('`')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              VARIABLE
-                PsiElement(var)('$0')
-              PsiElement(CLOSE_QUOTE)('"')
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            VARIABLE
+              PsiElement(var)('$0')
+            PsiElement(CLOSE_QUOTE)('"')
       PsiElement(CLOSE_BACKQUOTE)('`')
   PsiElement(\n)('\n')
   PsiWhiteSpace(' ')
@@ -56,17 +53,16 @@ SHELL_SCRIPT
         COMMAND_SUBSTITUTION_COMMAND
           PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('echo')
-                PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(OPEN_QUOTE)('"')
-                  VARIABLE
-                    PsiElement(var)('$0')
-                  PsiElement(CLOSE_QUOTE)('"')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                VARIABLE
+                  PsiElement(var)('$0')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(CLOSE_BACKQUOTE)('`')
         PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
@@ -88,17 +84,16 @@ SHELL_SCRIPT
                 COMMAND_SUBSTITUTION_COMMAND
                   PsiElement(OPEN_BACKQUOTE)('`')
                   COMPOUND_LIST
-                    PIPELINE_COMMAND_LIST
-                      SIMPLE_COMMAND
-                        GENERIC_COMMAND_DIRECTIVE
-                          LITERAL
-                            PsiElement(word)('dirname')
-                        PsiWhiteSpace(' ')
-                        STRING
-                          PsiElement(OPEN_QUOTE)('"')
-                          VARIABLE
-                            PsiElement(var)('$0')
-                          PsiElement(CLOSE_QUOTE)('"')
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('dirname')
+                      PsiWhiteSpace(' ')
+                      STRING
+                        PsiElement(OPEN_QUOTE)('"')
+                        VARIABLE
+                          PsiElement(var)('$0')
+                        PsiElement(CLOSE_QUOTE)('"')
                   PsiElement(CLOSE_BACKQUOTE)('`')
                 PsiElement(CLOSE_QUOTE)('"')
               LITERAL
@@ -130,17 +125,16 @@ SHELL_SCRIPT
                   COMMAND_SUBSTITUTION_COMMAND
                     PsiElement(OPEN_BACKQUOTE)('`')
                     COMPOUND_LIST
-                      PIPELINE_COMMAND_LIST
-                        SIMPLE_COMMAND
-                          GENERIC_COMMAND_DIRECTIVE
-                            LITERAL
-                              PsiElement(word)('dirname')
-                          PsiWhiteSpace(' ')
-                          STRING
-                            PsiElement(OPEN_QUOTE)('"')
-                            VARIABLE
-                              PsiElement(var)('$0')
-                            PsiElement(CLOSE_QUOTE)('"')
+                      SIMPLE_COMMAND
+                        GENERIC_COMMAND_DIRECTIVE
+                          LITERAL
+                            PsiElement(word)('dirname')
+                        PsiWhiteSpace(' ')
+                        STRING
+                          PsiElement(OPEN_QUOTE)('"')
+                          VARIABLE
+                            PsiElement(var)('$0')
+                          PsiElement(CLOSE_QUOTE)('"')
                     PsiElement(CLOSE_BACKQUOTE)('`')
                   PsiElement(CLOSE_QUOTE)('"')
                 LITERAL

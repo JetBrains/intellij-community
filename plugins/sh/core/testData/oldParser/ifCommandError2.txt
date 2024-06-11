@@ -4,17 +4,16 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('a')
-            PsiWhiteSpace(' ')
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
             LITERAL
-              PsiElement(word)('then')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('b')
+              PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('then')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('b')
         PsiElement(;)(';')
       PsiErrorElement:then expected, got 'fi'
         <empty list>

@@ -24,10 +24,9 @@ SHELL_SCRIPT
           SUBSHELL_COMMAND
             PsiElement(()('(')
             COMPOUND_LIST
-              PIPELINE_COMMAND_LIST
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('break_request')
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('break_request')
             PsiElement())(')')
         PsiWhiteSpace(' ')
         PsiElement(=~)('=~')

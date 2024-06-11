@@ -104,20 +104,19 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              EVAL_COMMAND
-                PsiElement(eval)('eval')
-                PsiWhiteSpace(' ')
-                PsiElement(EVAL_CONTENT)('printf')
-                PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(RAW_STRING)(''%s\\n'')
-                PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(OPEN_QUOTE)('"')
-                  PsiElement(STRING_CONTENT)('\$')
-                  VARIABLE
-                    PsiElement(var)('$varname')
-                  PsiElement(CLOSE_QUOTE)('"')
+            EVAL_COMMAND
+              PsiElement(eval)('eval')
+              PsiWhiteSpace(' ')
+              PsiElement(EVAL_CONTENT)('printf')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(RAW_STRING)(''%s\\n'')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('\$')
+                VARIABLE
+                  PsiElement(var)('$varname')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement())(')')
         PsiElement(CLOSE_QUOTE)('"')

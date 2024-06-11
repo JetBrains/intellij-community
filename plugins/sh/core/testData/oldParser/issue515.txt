@@ -32,10 +32,9 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('a')
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('a')
           PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -89,26 +88,25 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('cut')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                ASSIGNMENT_COMMAND
                   LITERAL
-                    PsiElement(word)('cut')
-                PsiWhiteSpace(' ')
-                SIMPLE_COMMAND_ELEMENT
-                  ASSIGNMENT_COMMAND
-                    LITERAL
-                      PsiElement(word)('-d')
-                    PsiElement(=)('=')
-                    PsiWhiteSpace(' ')
-                    LITERAL
-                      PsiElement(word)('-f1')
-                PsiWhiteSpace(' ')
-                SIMPLE_COMMAND_ELEMENT
-                  PsiElement($)('$')
-                  SHELL_PARAMETER_EXPANSION
-                    PsiElement({)('{')
-                    PsiElement(word)('ENV_FILE')
-                    PsiElement(})('}')
+                    PsiElement(word)('-d')
+                  PsiElement(=)('=')
+                  PsiWhiteSpace(' ')
+                  LITERAL
+                    PsiElement(word)('-f1')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                PsiElement($)('$')
+                SHELL_PARAMETER_EXPANSION
+                  PsiElement({)('{')
+                  PsiElement(word)('ENV_FILE')
+                  PsiElement(})('}')
           PsiElement())(')')
     PsiElement(;)(';')

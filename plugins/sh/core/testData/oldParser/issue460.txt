@@ -71,29 +71,27 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('show_help')
-              PsiWhiteSpace(' ')
-              STRING
-                PsiElement(OPEN_QUOTE)('"')
-                VARIABLE
-                  PsiElement(var)('$ACTION')
-                PsiElement(STRING_CONTENT)(' is not a valid command')
-                PsiElement(CLOSE_QUOTE)('"')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('show_help')
+            PsiWhiteSpace(' ')
+            STRING
+              PsiElement(OPEN_QUOTE)('"')
+              VARIABLE
+                PsiElement(var)('$ACTION')
+              PsiElement(STRING_CONTENT)(' is not a valid command')
+              PsiElement(CLOSE_QUOTE)('"')
           PsiElement(;)(';')
           PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
-          PIPELINE_COMMAND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('exit')
-              PsiWhiteSpace(' ')
-              NUMBER
-                PsiElement(int)('1')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('exit')
+            PsiWhiteSpace(' ')
+            NUMBER
+              PsiElement(int)('1')
           PsiElement(;)(';')
           PsiElement(\n)('\n')
         PsiElement(})('}')

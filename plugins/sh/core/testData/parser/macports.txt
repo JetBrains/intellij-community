@@ -16,24 +16,23 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND_LIST
-          CONDITIONAL_COMMAND
-            PsiElement([)('[')
-            PsiWhiteSpace(' ')
-            LITERAL_CONDITION
-              PsiElement(word)('-z')
-            PsiWhiteSpace(' ')
-            LITERAL_CONDITION
-              STRING
-                PsiElement(OPEN_QUOTE)('"')
-                PsiElement($)('$')
-                SHELL_PARAMETER_EXPANSION
-                  PsiElement({)('{')
-                  PsiElement(word)('MACPORTS')
-                  PsiElement(})('}')
-                PsiElement(CLOSE_QUOTE)('"')
-            PsiWhiteSpace(' ')
-            PsiElement(])(']')
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            PsiElement(word)('-z')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            STRING
+              PsiElement(OPEN_QUOTE)('"')
+              PsiElement($)('$')
+              SHELL_PARAMETER_EXPANSION
+                PsiElement({)('{')
+                PsiElement(word)('MACPORTS')
+                PsiElement(})('}')
+              PsiElement(CLOSE_QUOTE)('"')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
@@ -41,10 +40,9 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
-          PIPELINE_COMMAND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('exit')
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('exit')
           PsiElement(\n)('\n')
       PsiElement(fi)('fi')
   PsiElement(\n)('\n')
@@ -59,23 +57,22 @@ SHELL_SCRIPT
         COMMAND_SUBSTITUTION_COMMAND
           PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('sed')
-                PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(OPEN_QUOTE)('"')
-                  PsiElement(STRING_CONTENT)('s/MacPorts-\(.*\)-.*-.*.pkg/\1/')
-                  PsiElement(CLOSE_QUOTE)('"')
-                PsiWhiteSpace(' ')
-                SIMPLE_COMMAND_ELEMENT
-                  REDIRECTION
-                    PsiElement(<<<)('<<<')
-                    PsiWhiteSpace(' ')
-                    VARIABLE
-                      PsiElement(var)('$MACPORTS')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('sed')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('s/MacPorts-\(.*\)-.*-.*.pkg/\1/')
+                PsiElement(CLOSE_QUOTE)('"')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(<<<)('<<<')
+                  PsiWhiteSpace(' ')
+                  VARIABLE
+                    PsiElement(var)('$MACPORTS')
           PsiElement(CLOSE_BACKQUOTE)('`')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -169,21 +166,20 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
-            PIPELINE_COMMAND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('alsactlrestore')
-                VARIABLE
-                  PsiElement(var)('$CARD2')
-                SIMPLE_COMMAND_ELEMENT
-                  REDIRECTION
-                    PsiElement(>&)('>&')
-                    NUMBER
-                      PsiElement(int)('1')
-                SIMPLE_COMMAND_ELEMENT
-                  REDIRECTION
-                    PsiElement(>)('>')
-                    PsiElement(word)('/dev/null')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('alsactlrestore')
+              VARIABLE
+                PsiElement(var)('$CARD2')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(>&)('>&')
+                  NUMBER
+                    PsiElement(int)('1')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(>)('>')
+                  PsiElement(word)('/dev/null')
           PsiElement())(')')
         PsiElement(CLOSE_QUOTE)('"')
