@@ -52,35 +52,6 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
     sourceSetModel = new DefaultGradleSourceSetModel();
   }
 
-  public DefaultExternalProject(@NotNull ExternalProject externalProject) {
-    id = externalProject.getId();
-    path = externalProject.getPath();
-    identityPath = externalProject.getIdentityPath();
-    name = externalProject.getName();
-    qName = externalProject.getQName();
-    version = externalProject.getVersion();
-    group = externalProject.getGroup();
-    description = externalProject.getDescription();
-    projectDir = externalProject.getProjectDir();
-    buildDir = externalProject.getBuildDir();
-    buildFile = externalProject.getBuildFile();
-    externalSystemId = externalProject.getExternalSystemId();
-
-    Map<String, ? extends ExternalProject> externalProjectChildProjects = externalProject.getChildProjects();
-    childProjects = new TreeMap<>();
-    for (Map.Entry<String, ? extends ExternalProject> entry : externalProjectChildProjects.entrySet()) {
-      childProjects.put(entry.getKey(), new DefaultExternalProject(entry.getValue()));
-    }
-
-    Map<String, ? extends ExternalTask> externalProjectTasks = externalProject.getTasks();
-    tasks = new HashMap<>(externalProjectTasks.size());
-    for (Map.Entry<String, ? extends ExternalTask> entry : externalProjectTasks.entrySet()) {
-      this.tasks.put(entry.getKey(), new DefaultExternalTask(entry.getValue()));
-    }
-
-    sourceSetModel = new DefaultGradleSourceSetModel(externalProject.getSourceSetModel());
-  }
-
   @NotNull
   @Override
   public String getExternalSystemId() {
@@ -177,18 +148,10 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
     return sourceSetModel.getSourceCompatibility();
   }
 
-  public void setSourceCompatibility(@Nullable String sourceCompatibility) {
-    sourceSetModel.setSourceCompatibility(sourceCompatibility);
-  }
-
   @Override
   @Nullable
   public String getTargetCompatibility() {
     return sourceSetModel.getTargetCompatibility();
-  }
-
-  public void setTargetCompatibility(@Nullable String targetCompatibility) {
-    sourceSetModel.setTargetCompatibility(targetCompatibility);
   }
 
   @NotNull
@@ -273,14 +236,6 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
   @Override
   public List<File> getArtifacts() {
     return sourceSetModel.getTaskArtifacts();
-  }
-
-  public void setArtifacts(@NotNull List<File> artifacts) {
-    sourceSetModel.setTaskArtifacts(artifacts);
-  }
-
-  public void setArtifactsByConfiguration(@NotNull Map<String, Set<File>> artifactsByConfiguration) {
-    sourceSetModel.setConfigurationArtifacts(artifactsByConfiguration);
   }
 
   @NotNull

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
-import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,17 +31,6 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
     sources = new HashMap<>(0);
     dependencies = new LinkedHashSet<>(0);
     artifacts = new ArrayList<>(0);
-  }
-
-  public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
-    name = sourceSet.getName();
-    isPreview = sourceSet.isPreview();
-    javaToolchainHome = sourceSet.getJavaToolchainHome();
-    sourceCompatibility = sourceSet.getSourceCompatibility();
-    targetCompatibility = sourceSet.getTargetCompatibility();
-    artifacts = copyArtifacts(sourceSet.getArtifacts());
-    dependencies = ModelFactory.createCopy(sourceSet.getDependencies());
-    sources = copySources(sourceSet.getSources());
   }
 
   @Override
@@ -131,27 +119,4 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
     return "sourceSet '" + name + '\'' ;
   }
 
-  private static @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> copySources(
-    @Nullable Map<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> sources
-  ) {
-    if (sources == null) {
-      // Collection can be modified outside by mutation methods
-      return new LinkedHashMap<>(0);
-    }
-    Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> result = new LinkedHashMap<>(sources.size());
-    for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> entry : sources.entrySet()) {
-      ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(entry.getKey());
-      DefaultExternalSourceDirectorySet directorySet = new DefaultExternalSourceDirectorySet(entry.getValue());
-      result.put(sourceType, directorySet);
-    }
-    return result;
-  }
-
-  private static @NotNull Collection<File> copyArtifacts(@Nullable Collection<File> artifacts) {
-    if (artifacts == null) {
-      // Collection can be modified outside by mutation methods
-      return new ArrayList<>(0);
-    }
-    return new ArrayList<>(artifacts);
-  }
 }

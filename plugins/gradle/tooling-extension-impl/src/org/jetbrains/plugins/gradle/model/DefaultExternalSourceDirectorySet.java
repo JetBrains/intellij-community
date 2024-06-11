@@ -28,22 +28,6 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     patterns = new FilePatternSetImpl();
   }
 
-  public DefaultExternalSourceDirectorySet(ExternalSourceDirectorySet sourceDirectorySet) {
-    name = sourceDirectorySet.getName();
-    srcDirs = new HashSet<>(sourceDirectorySet.getSrcDirs());
-    outputDir = sourceDirectorySet.getOutputDir();
-    gradleOutputDirs = new ArrayList<>(sourceDirectorySet.getGradleOutputDirs());
-
-    patterns = new FilePatternSetImpl(sourceDirectorySet.getIncludes(),
-                                      sourceDirectorySet.getExcludes());
-
-    filters = new ArrayList<>(sourceDirectorySet.getFilters().size());
-    for (ExternalFilter filter : sourceDirectorySet.getFilters()) {
-      filters.add(new DefaultExternalFilter(filter));
-    }
-    inheritedCompilerOutput = sourceDirectorySet.isCompilerOutputPathInherited();
-  }
-
   @NotNull
   @Override
   public String getName() {
