@@ -151,7 +151,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition) {
-    final JsonObject object = PsiTreeUtil.getParentOfType(originalPosition, JsonObject.class);
+    final JsonObject object = PsiTreeUtil.getParentOfType(computedPosition, JsonObject.class, false);
     if (object != null) {
       return object.getPropertyList().stream()
         .filter(p -> !requiresNameQuotes() || p.getNameElement() instanceof JsonStringLiteral)
