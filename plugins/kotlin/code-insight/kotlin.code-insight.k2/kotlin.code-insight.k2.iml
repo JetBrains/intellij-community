@@ -59,5 +59,7 @@
     <orderEntry type="library" name="kotlinc.analysis-api-k2" level="project" />
     <orderEntry type="module" module-name="kotlin.formatter.minimal" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="kotlin.searching.base" />
   </component>
 </module>

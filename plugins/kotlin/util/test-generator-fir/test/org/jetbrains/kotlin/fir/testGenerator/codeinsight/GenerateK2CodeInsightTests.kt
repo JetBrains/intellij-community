@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.idea.k2.AbstractK2ExpressionTypeTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirJoinLinesTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirPairMatcherTest
+import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProvider
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtParameterHintsProviderTest
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.idea.k2.surroundWith.AbstractKotlinFirSurroundWithTe
 import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirUnwrapRemoveTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
@@ -112,6 +114,12 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
         testClass<AbstractFirRenderingKDocTest> {
             model("../../../idea/tests/testData/codeInsight/renderingKDoc")
+        }
+
+        testClass<AbstractFirHierarchyTest> {
+            model("../../../idea/tests/testData/hierarchy/calls/callers", pattern = DIRECTORY, isRecursive = false, testMethodName = "doCallerHierarchyTest")
+            model("../../../idea/tests/testData/hierarchy/calls/callersJava", pattern = DIRECTORY, isRecursive = false, testMethodName = "doCallerJavaHierarchyTest")
+            model("../../../idea/tests/testData/hierarchy/calls/callees", pattern = DIRECTORY, isRecursive = false, testMethodName = "doCalleeHierarchyTest")
         }
 
         testClass<AbstractKotlinFirJoinLinesTest> {
