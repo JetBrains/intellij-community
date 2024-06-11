@@ -12,3 +12,5 @@ repositories {
 dependencies {
     testImplementation(libs.some.test.library)
 }
+
+// FILE: settings.gradle.kts
