@@ -430,12 +430,6 @@ c:com.intellij.ui.icons.IconWrapperWithToolTip
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 - replaceBy(com.intellij.ui.icons.IconReplacer):com.intellij.ui.icons.IconWrapperWithToolTip
 - retrieveIcon():javax.swing.Icon
-f:com.intellij.ui.icons.ScalingDeferredSquareImageIcon
-- javax.swing.Icon
-- <init>(I,javax.swing.Icon,java.lang.Object,kotlin.jvm.functions.Function1):V
-- getIconHeight():I
-- getIconWidth():I
-- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 f:com.intellij.ui.icons.TextHoledIcon
 - com.intellij.ui.icons.ReplaceableIcon
 - com.intellij.util.ui.JBScalableIcon
