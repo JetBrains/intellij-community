@@ -50,7 +50,6 @@ import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_LANGUAGE_INJECTION
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
 import com.jetbrains.jsonSchema.impl.nestedCompletions.*
 import one.util.streamex.StreamEx
-import java.util.*
 import javax.swing.Icon
 
 private const val BUILTIN_USAGE_KEY = "builtin"
@@ -400,13 +399,18 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         .withPresentableText(completionPath?.let { it.prefix() + "." + key }
                              ?: key.takeIf { psiWalker?.requiresNameQuotes() == false }
                              ?: propertyKey)
-        .withLookupStrings(listOf(propertyKey) + completionPath?.accessor().orEmpty())
+        .withLookupStrings(listOfNotNull(completionPath?.let { it.prefix() + "." + key }, propertyKey) + completionPath?.accessor().orEmpty())
         .withTypeText(getDocumentationOrTypeName(schemaObject), true)
         .withIcon(getIcon(JsonSchemaObjectReadingUtils.guessType(schemaObject)))
         .withInsertHandler(choosePropertyInsertHandler(completionPath, variants, schemaObject))
         .withDeprecation(schemaObject.deprecationMessage != null)
 
-      completionVariants.add(builder)
+      if (completionPath != null) {
+        completionVariants.add(PrioritizedLookupElement.withPriority(builder, -completionPath.accessor().size.toDouble()))
+      }
+      else {
+        completionVariants.add(builder)
+      }
     }
 
     private fun LookupElementBuilder.withDeprecation(deprecated: Boolean): LookupElementBuilder {
@@ -697,9 +701,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
         val propertyValueSeparator = walker.getPropertyValueSeparator(finalType)
 
-        val leafAtCaret = context.file.findElementAt(editor.caretModel.offset)?.let {
-          rewindToMeaningfulLeaf(it, walker)
-        }
+        val leafAtCaret = findLeafAtCaret(context, editor, walker)
         val insertComma = leafAtCaret?.let { walker.hasMissingCommaAfter(it) } == true
         val comma = if (insertComma) "," else ""
         val insertColon = propertyValueSeparator != leafAtCaret?.text
@@ -767,7 +769,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
               else {
                 EditorModificationUtilEx.insertStringAtCaret(editor, " ", false, true, 1)
               }
-              if (insertColon || leafAtCaret?.text == walker.getPropertyValueSeparator(null)) {
+              if (insertColon || findLeafAtCaret(context, editor, walker)?.text == walker.getPropertyValueSeparator(null)) {
                 stringToInsert = walker.defaultArrayValue + comma
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
                                                            false, true,
@@ -795,6 +797,13 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         }
       }
     }
+
+    private fun findLeafAtCaret(context: InsertionContext,
+                               editor: Editor,
+                               walker: JsonLikePsiWalker) =
+      context.file.findElementAt(editor.caretModel.offset)?.let {
+        rewindToMeaningfulLeaf(it, walker)
+      }
 
     private fun insertPropertyWithEnum(context: InsertionContext,
                                        editor: Editor,
