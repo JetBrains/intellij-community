@@ -1059,7 +1059,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           cmp.setBorder(border);
 
           Font font = cmp.getFont();
-          cmp.setFont(getHeaderFont().fromResource("Table.Header.fontSizeOffset", 0).derive(font));
+          cmp.setFont(RelativeFont.NORMAL.fromResource("Table.Header.fontSizeOffset", 0).derive(font));
           return cmp;
         }
       };
@@ -1145,10 +1145,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       JBTable.this.setSize(tableSize);
       // let the table update it's layout with resizing column set
       ApplicationManager.getApplication().invokeLater(() -> setResizingColumn(null));
-    }
-
-    protected RelativeFont getHeaderFont() {
-      return RelativeFont.NORMAL;
     }
 
     private int getColumnToPack(Point p) {
