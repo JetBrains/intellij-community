@@ -223,7 +223,7 @@ public final class InspectionEngine {
           LOG.error(message);
         }
         else {
-          LOG.error(new PluginException(message, extension.getPluginDescriptor().getPluginId()));
+          LOG.warn(new PluginException(message, extension.getPluginDescriptor().getPluginId()));
         }
       }
       return true;
