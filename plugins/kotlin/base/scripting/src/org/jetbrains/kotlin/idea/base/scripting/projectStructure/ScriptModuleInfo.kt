@@ -12,6 +12,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
@@ -49,17 +50,17 @@ data class ScriptModuleInfo(
     override val displayedName: String
         get() = KotlinBaseProjectStructureBundle.message("script.0.1", scriptFile.presentableName, scriptDefinition.name)
 
-    override val contentScope: GlobalSearchScope
-        get() {
-            val basicScriptScope = GlobalSearchScope.fileScope(project, scriptFile)
+    private val _contentScope: GlobalSearchScope by lazy {
+        val basicScriptScope = GlobalSearchScope.fileScope(project, scriptFile)
 
-            return if (KotlinPluginModeProvider.isK1Mode()) {
-                basicScriptScope
-            } else {
-                val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
+        if (KotlinPluginModeProvider.isK1Mode()) {
+            basicScriptScope
+        } else {
+            val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
 
-                scriptFile.workspaceEntities(project, snapshot).filterIsInstance<ModuleEntity>().firstOrNull()?.let {
-                    it.findModule(snapshot)?.let { module ->
+            scriptFile.workspaceEntities(project, snapshot).filterIsInstance<ModuleEntity>().firstOrNull()
+                ?.let<ModuleEntity, GlobalSearchScope?> {
+                    it.findModule(snapshot)?.let<ModuleBridge, GlobalSearchScope> { module ->
                         val scope = KotlinResolveScopeEnlarger.enlargeScope(
                             module.getModuleWithDependenciesAndLibrariesScope(false),
                             module,
@@ -68,39 +69,46 @@ data class ScriptModuleInfo(
                         basicScriptScope.union(scope)
                     }
                 } ?: GlobalSearchScope.EMPTY_SCOPE
-            }
         }
+    }
+
+    override val contentScope: GlobalSearchScope
+        get() = _contentScope
 
     override val moduleContentScope: GlobalSearchScope
         get() = KotlinScriptSearchScope(project, contentScope)
 
-    override fun dependencies(): List<IdeaModuleInfo> = mutableSetOf<IdeaModuleInfo>(this).apply {
-        if (KotlinPluginModeProvider.isK1Mode()) {
-            val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
-            scriptDependentModules.forEach {
-                addAll(it.sourceModuleInfos)
+    private val _dependencies: List<IdeaModuleInfo> by lazy {
+        mutableSetOf<IdeaModuleInfo>(this).apply {
+            if (KotlinPluginModeProvider.isK1Mode()) {
+                val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
+                scriptDependentModules.forEach {
+                    addAll(it.sourceModuleInfos)
+                }
+
+                val scriptDependentLibraries = ScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project)
+                val libraryInfoCache = LibraryInfoCache.getInstance(project)
+                scriptDependentLibraries.forEach {
+                    addAll(libraryInfoCache[it])
+                }
+
+                val dependenciesInfo = ScriptDependenciesInfo.ForFile(project, scriptFile, scriptDefinition)
+                add(dependenciesInfo)
+            } else {
+                val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
+                scriptDependentModules.forEach {
+                    addAll(it.sourceModuleInfos)
+                }
+
+                scriptFile.scriptLibraryDependencies(project).forEach(::add)
             }
 
-            val scriptDependentLibraries = ScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project)
-            val libraryInfoCache = LibraryInfoCache.getInstance(project)
-            scriptDependentLibraries.forEach {
-                addAll(libraryInfoCache[it])
-            }
+            val sdk = ScriptDependencyAware.getInstance(project).getScriptSdk(scriptFile)
+            sdk?.let { add(SdkInfo(project, it)) }
+        }.toList()
+    }
 
-            val dependenciesInfo = ScriptDependenciesInfo.ForFile(project, scriptFile, scriptDefinition)
-            add(dependenciesInfo)
-        } else {
-            val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
-            scriptDependentModules.forEach {
-                addAll(it.sourceModuleInfos)
-            }
-
-            scriptFile.scriptLibraryDependencies(project).forEach(::add)
-        }
-
-        val sdk = ScriptDependencyAware.getInstance(project).getScriptSdk(scriptFile)
-        sdk?.let { add(SdkInfo(project, it)) }
-    }.toList()
+    override fun dependencies(): List<IdeaModuleInfo> = _dependencies
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
