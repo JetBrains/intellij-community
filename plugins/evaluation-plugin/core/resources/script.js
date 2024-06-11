@@ -253,8 +253,6 @@ lineDiff.tokenize = function(value, options) {
     linesAndNewlines.pop();
   }
 
-  console.log("Original Lines and Newlines:", linesAndNewlines);
-
   for (let i = 0; i < linesAndNewlines.length; i++) {
     let line = linesAndNewlines[i];
 
@@ -264,8 +262,6 @@ lineDiff.tokenize = function(value, options) {
       retLines.push(line);
     }
   }
-
-  console.log("Tokenized Lines:", retLines);
 
   return retLines;
 };
@@ -306,7 +302,6 @@ function generateOptions(options, defaults) {
 
 function myDiff(oldCode, newCode) {
   const changes = diffLines(oldCode || "", newCode);
-  console.log("Diff changes:", changes);
 
   let oldIndex = -1;
   return changes.map(({ value, count, removed, added }) => {
@@ -330,10 +325,6 @@ function myDiff(oldCode, newCode) {
 }
 
 function unifiedSlideDiff(prevCode, currCode, slideIndex) {
-  console.log("prevCode:");
-  console.log(prevCode);
-  console.log("currCode:");
-  console.log(currCode);
 
   const changes = myDiff(prevCode, currCode);
   const unifiedDiff = [];
