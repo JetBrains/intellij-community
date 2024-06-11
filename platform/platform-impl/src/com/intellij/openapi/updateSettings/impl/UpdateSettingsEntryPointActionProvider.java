@@ -42,7 +42,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   private static @Nullable PlatformUpdates.Loaded myPlatformUpdateInfo;
   private static @Nullable Collection<? extends IdeaPluginDescriptor> myIncompatiblePlugins;
 
-  private static Set<String> myAlreadyShownPluginUpdates;
+  private static @Nullable Set<String> myAlreadyShownPluginUpdates;
   private static @Nullable Collection<PluginDownloader> myUpdatedPlugins;
   private static @Nullable Collection<PluginNode> myCustomRepositoryPlugins;
 
@@ -243,30 +243,25 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
               @Override
               protected @NotNull Pair<@NotNull PlatformUpdates, @Nullable InternalPluginResults> compute(@NotNull ProgressIndicator indicator) {
                 PlatformUpdates platformUpdates = UpdateChecker.getPlatformUpdates(UpdateSettings.getInstance(), indicator);
-
                 InternalPluginResults pluginResults = platformUpdates instanceof PlatformUpdates.Loaded ?
                                                       getInternalPluginUpdates((PlatformUpdates.Loaded)platformUpdates, indicator) :
                                                       null;
-                return Pair.create(platformUpdates,
-                                   pluginResults);
+                return Pair.create(platformUpdates, pluginResults);
               }
 
               private static @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
                                                                                      @NotNull ProgressIndicator indicator) {
-                return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(),
-                                                              indicator);
+                return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(), indicator);
               }
             });
 
           PlatformUpdates platformUpdateInfo = result.getFirst();
           InternalPluginResults pluginResults = result.getSecond();
-          if (platformUpdateInfo instanceof PlatformUpdates.Loaded &&
-              pluginResults != null) {
+          if (platformUpdateInfo instanceof PlatformUpdates.Loaded && pluginResults != null) {
             setPlatformUpdateInfo((PlatformUpdates.Loaded)platformUpdateInfo);
             newPlatformUpdate(pluginResults.getPluginUpdates().getAllEnabled().stream().toList(),
                               pluginResults.getPluginNods(),
                               null);
-
             super.actionPerformed(e);
           }
           else {
