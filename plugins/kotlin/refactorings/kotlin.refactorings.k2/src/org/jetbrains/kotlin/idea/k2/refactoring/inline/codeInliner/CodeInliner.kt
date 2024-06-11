@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -312,9 +313,14 @@ class CodeInliner(
                     expression.putCopyableUserData(WAS_FUNCTION_LITERAL_ARGUMENT_KEY, Unit)
                 }
 
-                //if (!parameter.getReturnKtType().isExtensionFunctionType) return@run null
-                analyze(call) { LambdaToAnonymousFunctionUtil.prepareFunctionText(expression) }
-                    ?.let { functionText -> LambdaToAnonymousFunctionUtil.convertLambdaToFunction(expression, functionText) }
+                analyze(call) {
+                    if ((expression.getKtType() as? KtFunctionalType)?.hasReceiver == true) {
+                        //expand to function only for types with an extension
+                        LambdaToAnonymousFunctionUtil.prepareFunctionText(expression)
+                    } else {
+                        null
+                    }
+                }?.let { functionText -> LambdaToAnonymousFunctionUtil.convertLambdaToFunction(expression, functionText) }
             } ?: expression
             resultExpression.putCopyableUserData(USER_CODE_KEY, Unit)
 

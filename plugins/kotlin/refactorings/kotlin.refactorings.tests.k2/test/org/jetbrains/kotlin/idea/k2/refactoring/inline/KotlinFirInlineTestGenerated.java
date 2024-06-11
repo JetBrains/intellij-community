@@ -899,6 +899,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/lambdaInsideParentheses2.kt");
         }
 
+        @TestMetadata("lambdaNotCollapsed.kt")
+        public void testLambdaNotCollapsed() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/lambdaNotCollapsed.kt");
+        }
+
         @TestMetadata("let.kt")
         public void testLet() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/let.kt");

@@ -102,7 +102,7 @@ fun fullyExpandCall(
                         val parameterString = analyze(lambdaExpression) {
                             getExplicitLambdaSignature(lambdaExpression)
                         }
-                        if (parameterString != null) {
+                        if (!parameterString.isNullOrEmpty()) {
                             specifyExplicitLambdaSignature(lambdaExpression, parameterString)
                         }
                     }
