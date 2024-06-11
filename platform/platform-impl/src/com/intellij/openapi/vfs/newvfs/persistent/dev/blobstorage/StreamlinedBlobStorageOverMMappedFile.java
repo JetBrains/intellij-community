@@ -117,6 +117,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
     }
 
     putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_OPENED);
+    storage.fsync();//ensure status is persisted
 
     openTelemetryCallback = setupReportingToOpenTelemetry(storage.storagePath().getFileName(), this);
   }

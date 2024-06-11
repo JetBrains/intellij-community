@@ -645,7 +645,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
    */
   public @NotNull OwnershipInfo tryAcquireExclusiveAccess(int acquiringProcessId,
                                                           long acquiringTimestampMs,
-                                                          boolean forcibly) {
+                                                          boolean forcibly) throws IOException {
     if (acquiringProcessId == NULL_OWNER_PID) {
       throw new IllegalArgumentException("acquiringPid(=" + acquiringProcessId + ") must be !=0");
     }
@@ -666,6 +666,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
       if (INT_HANDLE.compareAndSet(headerPageBuffer, FileHeader.OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, acquiringProcessId)) {
         owningProcessId = acquiringProcessId;
         LONG_HANDLE.setVolatile(headerPageBuffer, FileHeader.OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET, acquiringTimestampMs);
+        storage.fsync();//ensure status is persisted
         return new OwnershipInfo(acquiringProcessId, acquiringTimestampMs);
       }
     }
