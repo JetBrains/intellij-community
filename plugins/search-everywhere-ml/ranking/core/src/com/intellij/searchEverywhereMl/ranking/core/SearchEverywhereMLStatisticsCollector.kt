@@ -270,7 +270,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                           idProvider: SearchEverywhereMlItemIdProvider): List<Int> {
     return ReadAction.compute<List<Int>, Nothing> {
       selectedIndices.map { index ->
-        if (index >= elements.lastIndex) return@map -1
+        if (index > elements.lastIndex) return@map -1
 
         val element = elements[index].element
         return@map idProvider.getId(element) ?: -1
@@ -292,7 +292,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     return true
   }
 
-  private val GROUP = EventLogGroup("mlse.log", 101, MLSE_RECORDER_ID)
+  private val GROUP = EventLogGroup("mlse.log", 102, MLSE_RECORDER_ID)
 
   private val IS_INTERNAL = EventFields.Boolean("isInternal")
   private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
