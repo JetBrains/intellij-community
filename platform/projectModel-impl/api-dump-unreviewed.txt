@@ -88,7 +88,7 @@ c:com.intellij.configurationStore.JbXmlOutputter
 - f:output(org.jdom.Document,java.io.Writer):V
 - f:output(org.jdom.Element,java.io.Writer):V
 - f:printElement(java.io.Writer,org.jdom.Element,I):V
-- p:writeContent(java.io.Writer,org.jdom.Element,I):Z
+- p:writeContent(java.io.Writer,org.jdom.Element,I,Z):Z
 f:com.intellij.configurationStore.JbXmlOutputter$Companion
 - f:collapseMacrosAndWrite(org.jdom.Element,com.intellij.openapi.components.ComponentManager):java.lang.String
 - f:collapseMacrosAndWrite(org.jdom.Element,com.intellij.openapi.components.ComponentManager,java.io.Writer):V

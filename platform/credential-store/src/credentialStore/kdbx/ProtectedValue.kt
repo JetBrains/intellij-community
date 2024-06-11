@@ -58,9 +58,9 @@ internal class UnsavedProtectedValue(val secureString: StringProtectedByStreamCi
 }
 
 internal class ProtectedXmlWriter(private val streamCipher: SkippingStreamCipher) : JbXmlOutputter(isForbidSensitiveData = false) {
-  override fun writeContent(out: Writer, element: Element, level: Int): Boolean {
+  override fun writeContent(out: Writer, element: Element, level: Int, substituteMacro: Boolean): Boolean {
     if (element.name != KdbxEntryElementNames.value) {
-      return super.writeContent(out, element, level)
+      return super.writeContent(out, element, level, substituteMacro)
     }
 
     val value = element.content.firstOrNull()
@@ -85,7 +85,7 @@ internal class ProtectedXmlWriter(private val streamCipher: SkippingStreamCipher
       return true
     }
 
-    return super.writeContent(out, element, level)
+    return super.writeContent(out, element, level, substituteMacro)
   }
 }
 
