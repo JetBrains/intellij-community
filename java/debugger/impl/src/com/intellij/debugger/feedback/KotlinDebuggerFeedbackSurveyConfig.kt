@@ -9,14 +9,14 @@ import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
+import java.time.Month
 
 class KotlinDebuggerFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
   override val surveyId: String = "kotlin_debugger_feedback_survey"
-  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 5, 6)
+  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, Month.JULY, 1)
   override val requireIdeEAP: Boolean = false
 
-  private val suitableIdeVersion = "2024.1.2"
   private val minimalNumberOfDebuggerUsage = 5
 
   override fun checkIdeIsSuitable(): Boolean {
@@ -24,7 +24,8 @@ class KotlinDebuggerFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
-    return suitableIdeVersion == ApplicationInfo.getInstance().fullVersion && UsageTracker.kotlinDebuggedTimes() >= minimalNumberOfDebuggerUsage
+    return ApplicationInfo.getInstance().fullVersion.startsWith("2024.1") &&
+           UsageTracker.kotlinDebuggedTimes() >= minimalNumberOfDebuggerUsage
   }
 
   override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
