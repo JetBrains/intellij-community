@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateManagerUtilBase;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
@@ -179,6 +180,9 @@ final class BackgroundHighlighter {
       for (RangeHighlighter highlighter : oldHighlighters) {
         markupModel.removeHighlighter(highlighter);
       }
+    }
+    if (TemplateManagerUtilBase.getTemplateState(editor) != null) {
+      return; // don't highlight selected text when template is active
     }
     CaretModel caretModel = editor.getCaretModel();
     if (caretModel.getCaretCount() > 1) {
