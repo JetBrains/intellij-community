@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.l10n.LocalizationOrder;
@@ -302,7 +302,7 @@ public class DynamicBundle extends AbstractBundle {
       protected Object handleGetObject(@NotNull String key) {
         Object get = rb.getObject(key);
         assert get instanceof String : "Language bundles should contain only strings";
-        return BundleBase.appendLocalizationSuffix((String)get, BundleBase.L10N_MARKER);
+        return BundleBase.INSTANCE.appendLocalizationSuffix((String)get, BundleBase.L10N_MARKER);
       }
 
       @Override

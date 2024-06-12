@@ -30,7 +30,7 @@ public class AbstractBundle {
   private final @NonNls String myPathToBundle;
 
   /**
-   * @param bundleClass a class to obtain the classloader, usually a class which declared the field which references the bundle instance
+   * @param bundleClass a class to get the classloader, usually a class which declared the field which references the bundle instance
    */
   public AbstractBundle(@NotNull Class<?> bundleClass, @NonNls @NotNull String pathToBundle) {
     myPathToBundle = pathToBundle;
@@ -60,7 +60,7 @@ public class AbstractBundle {
   /**
    * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
    * It's expected that the message contains {@code params.length + unassignedParams} placeholders. Parameters
-   * {@code {0}..{params.length-1}} will be substituted using passed params array. The remaining parameters
+   * {@code {0}..{params.length-1}} will be substituted using a passed params array. The remaining parameters
    * will be renumbered: {@code {params.length}} will become {@code {0}} and so on, so the resulting template
    * could be applied once more.
    *
@@ -99,7 +99,7 @@ public class AbstractBundle {
       return defaultValue;
     }
     else if (!bundle.containsKey(key)) {
-      return BundleBase.postprocessValue(bundle, BundleBase.useDefaultValue(bundle, key, defaultValue), params);
+      return BundleBaseKt.postprocessValue(bundle, BundleBase.useDefaultValue(bundle, key, defaultValue), params);
     }
     else {
       return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
