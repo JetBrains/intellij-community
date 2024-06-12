@@ -63,7 +63,10 @@ class NotebookBelowCellDelimiterPanel(
   }
 
   private fun setBorder() {
-    val dimension = Dimension(preferredSize.width, standardDelimiterHeight)
+    val dimension = when (editor.editorKind.isDiff()) {
+      true -> Dimension(preferredSize.width, getJupyterCellSpacing(editor) / 2)
+      false -> Dimension(preferredSize.width, standardDelimiterHeight)
+    }
     border = BorderFactory.createEmptyBorder(dimension.height, 0, dimension.height, 0)
   }
 
