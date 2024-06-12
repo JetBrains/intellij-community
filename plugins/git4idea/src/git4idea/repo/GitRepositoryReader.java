@@ -75,7 +75,7 @@ public class GitRepositoryReader {
       currentRevision = null;
     }
     if (currentBranch == null && currentRevision == null) {
-      LOG.warn("Couldn't identify neither current branch nor current revision. .git/HEAD content: [" + headInfo.content + "]");
+      LOG.warn("Couldn't identify neither current branch nor current revision. Ref specified in .git/HEAD: [" + headInfo.content + "]");
       LOG.debug("Dumping files in .git/refs/, and the content of .git/packed-refs. Debug enabled: " + LOG.isDebugEnabled());
       logDebugAllRefsFiles(myGitFiles);
     }
@@ -124,7 +124,9 @@ public class GitRepositoryReader {
     if (currentBranchName == null) {
       return null;
     }
-    return ContainerUtil.find(localBranches, branch -> BRANCH_NAME_HASHING_STRATEGY.equals(branch.getFullName(), currentBranchName));
+    final GitLocalBranch currentBranch =
+      ContainerUtil.find(localBranches, branch -> BRANCH_NAME_HASHING_STRATEGY.equals(branch.getFullName(), currentBranchName));
+    return currentBranch == null ? new GitLocalBranch(currentBranchName) : currentBranch;
   }
 
   private @NotNull Repository.State readRepositoryState(@NotNull HeadInfo headInfo) {
@@ -287,7 +289,7 @@ public class GitRepositoryReader {
   }
 
   /**
-   * Container to hold two information items: current .git/HEAD value and is Git on branch.
+   * Container to hold two information items: refname from .git/HEAD and is Git on branch.
    */
   private static class HeadInfo {
     private final @Nullable String content;
