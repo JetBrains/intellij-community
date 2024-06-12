@@ -1461,7 +1461,6 @@ f:com.intellij.execution.lineMarker.ExecutorAction
 - hashCode():I
 - isDumbAware():Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-- sf:wrap(com.intellij.execution.actions.RunContextAction,I):com.intellij.openapi.actionSystem.AnAction
 f:com.intellij.execution.lineMarker.ExecutorAction$Companion
 - f:getActionList():java.util.List
 - f:getActionList(I):java.util.List
@@ -1470,7 +1469,6 @@ f:com.intellij.execution.lineMarker.ExecutorAction$Companion
 - f:getActions(I):com.intellij.openapi.actionSystem.AnAction[]
 - bs:getActions$default(com.intellij.execution.lineMarker.ExecutorAction$Companion,I,I,java.lang.Object):com.intellij.openapi.actionSystem.AnAction[]
 - f:getOrderKey():com.intellij.openapi.actionSystem.DataKey
-- f:wrap(com.intellij.execution.actions.RunContextAction,I):com.intellij.openapi.actionSystem.AnAction
 c:com.intellij.execution.lineMarker.LineMarkerActionWrapper
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.codeInsight.intention.PriorityAction
@@ -1504,6 +1502,7 @@ c:com.intellij.execution.lineMarker.RunLineMarkerContributor$Info
 - f:tooltipProvider:java.util.function.Function
 - <init>(com.intellij.openapi.actionSystem.AnAction):V
 - <init>(javax.swing.Icon,com.intellij.util.Function,com.intellij.openapi.actionSystem.AnAction[]):V
+- <init>(javax.swing.Icon,com.intellij.openapi.actionSystem.AnAction[]):V
 - <init>(javax.swing.Icon,com.intellij.openapi.actionSystem.AnAction[],java.util.function.Function):V
 - equals(java.lang.Object):Z
 - hashCode():I

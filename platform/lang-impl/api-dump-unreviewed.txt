@@ -27748,16 +27748,13 @@ a:com.intellij.tools.AbstractToolBeforeRunTaskProvider
 - getIcon():javax.swing.Icon
 - isConfigurable():Z
 a:com.intellij.tools.BaseExternalToolsGroup
-- com.intellij.openapi.actionSystem.DefaultActionGroup
+- com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.openapi.project.DumbAware
 - p:<init>():V
-- pa:createToolAction(com.intellij.tools.Tool):com.intellij.tools.ToolAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- pa:getGroupIdPrefix():java.lang.String
-- pa:getToolsByGroupName(java.lang.String):java.util.List
-- pa:getToolsGroups():java.util.List
+- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
+- a:getDelegateGroupId():java.lang.String
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:updateGroups(Z):V
 a:com.intellij.tools.BaseToolKeymapExtension
 - com.intellij.openapi.keymap.KeymapExtension
 - <init>():V
@@ -27776,6 +27773,7 @@ a:com.intellij.tools.BaseToolManager
 - dispose():V
 - pa:getActionIdPrefix():java.lang.String
 - p:getActionManager():com.intellij.openapi.actionSystem.ex.ActionManagerEx
+- p:getGroupIdPrefix():java.lang.String
 - getGroups():java.util.List
 - getTools():java.util.List
 - getTools(java.lang.String):java.util.List
@@ -27808,14 +27806,6 @@ pc:com.intellij.tools.BaseToolsPanel$MyCheckboxTreeCellRenderer
 - com.intellij.ui.CheckboxTree$CheckboxTreeCellRenderer
 - p:<init>():V
 - customizeRenderer(javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):V
-c:com.intellij.tools.ExternalToolsGroup
-- com.intellij.tools.BaseExternalToolsGroup
-- sf:GROUP_ID_PREFIX:java.lang.String
-- <init>():V
-- p:createToolAction(com.intellij.tools.Tool):com.intellij.tools.ToolAction
-- p:getGroupIdPrefix():java.lang.String
-- p:getToolsByGroupName(java.lang.String):java.util.List
-- p:getToolsGroups():java.util.List
 f:com.intellij.tools.FilterInfo
 - com.intellij.openapi.util.JDOMExternalizable
 - <init>():V
