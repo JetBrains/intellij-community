@@ -31,6 +31,6 @@ internal class KotlinRunLineMarkerContributor : RunLineMarkerContributor() {
         if (!module.platform.idePlatformKind.tooling.acceptsAsEntryPoint(function)) return null
 
         val icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.TestStateRun)
-        return Info(icon, null, *ExecutorAction.getActions(Int.MAX_VALUE))
+        return Info(icon, ExecutorAction.getActions(Int.MAX_VALUE), null)
     }
 }
