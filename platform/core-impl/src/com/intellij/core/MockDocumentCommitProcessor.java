@@ -10,6 +10,8 @@ import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 final class MockDocumentCommitProcessor implements DocumentCommitProcessor {
   @Override
   public void commitSynchronously(@NotNull Document document, @NotNull Project project, @NotNull PsiFile psiFile) {
@@ -21,7 +23,7 @@ final class MockDocumentCommitProcessor implements DocumentCommitProcessor {
                                    @NotNull Document document,
                                    @NotNull Object reason,
                                    @NotNull ModalityState modality,
-                                   @NotNull FileViewProvider cachedViewProvider) {
+                                   @NotNull List<FileViewProvider> cachedViewProviders) {
 
   }
 }

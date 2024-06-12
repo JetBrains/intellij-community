@@ -152,27 +152,42 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @Override
   public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
-    final FileViewProvider viewProvider = getCachedViewProvider(doc);
-    return viewProvider != null && PostprocessReformattingAspect.getInstance(myProject).isViewProviderLocked(viewProvider);
+    final List<FileViewProvider> viewProviders = getCachedViewProviders(doc);
+    if (viewProviders.isEmpty()) return false;
+
+    PostprocessReformattingAspect aspect = PostprocessReformattingAspect.getInstance(myProject);
+    for (FileViewProvider viewProvider : viewProviders) {
+      if (aspect.isViewProviderLocked(viewProvider)) {
+        return true;
+      }
+    }
+    return false;
+    // todo ijpl-339 is it correct?
   }
 
   @Override
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
     PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(myProject);
-    FileViewProvider viewProvider;
+    if (component == null) return;
+
+    List<FileViewProvider> viewProviders;
     if (doc instanceof DocumentWindow) {
+      // todo ijpl-339 implement it
       Document topDoc = ((DocumentWindow)doc).getDelegate();
-      FileViewProvider topViewProvider = getCachedViewProvider(topDoc);
-      if (topViewProvider != null && InjectionUtils.shouldFormatOnlyInjectedCode(topViewProvider)) {
-        viewProvider = getCachedViewProvider(doc);
-      } else {
-        viewProvider = topViewProvider;
+      List<FileViewProvider> topViewProviders = getCachedViewProviders(topDoc);
+      if (ContainerUtil.exists(topViewProviders, topViewProvider -> InjectionUtils.shouldFormatOnlyInjectedCode(topViewProvider))) { // todo is it correct?
+        viewProviders = getCachedViewProviders(doc);
       }
-    } else {
-      viewProvider = getCachedViewProvider(doc);
+      else {
+        viewProviders = topViewProviders;
+      }
+    }
+    else {
+      viewProviders = getCachedViewProviders(doc);
     }
 
-    if (viewProvider != null && component != null) {
+    // todo ijpl-339 is it correct?
+    for (FileViewProvider viewProvider : viewProviders) {
       component.doPostponedFormatting(viewProvider);
     }
   }
