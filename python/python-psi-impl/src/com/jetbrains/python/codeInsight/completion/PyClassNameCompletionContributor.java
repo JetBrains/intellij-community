@@ -132,7 +132,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
                   presentation.setTypeText(importPath.toString());
                 }
               })
-              .withInsertHandler(getInsertHandler(exported, position));
+              .withInsertHandler(getInsertHandler(exported, position, typeEvalContext));
             result.addElement(PrioritizedLookupElement.withPriority(lookupElement, PythonCompletionWeigher.NOT_IMPORTED_MODULE_WEIGHT));
             counters.totalVariants++;
             if (counters.totalVariants >= maxVariants) return false;
@@ -211,9 +211,14 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
   }
 
   private @NotNull InsertHandler<LookupElement> getInsertHandler(@NotNull PyElement exported,
-                                                                 @NotNull PsiElement position) {
+                                                                 @NotNull PsiElement position,
+                                                                 @NotNull TypeEvalContext typeEvalContext) {
     if (position.getParent() instanceof PyStringLiteralExpression) {
       return getStringLiteralInsertHandler();
+    }
+    // Some names in typing are defined as functions, this rule needs to have priority
+    else if (PyParameterizedTypeInsertHandler.isCompletingParameterizedType(exported, position, typeEvalContext)) {
+      return getGenericTypeInsertHandler();
     }
     else if (exported instanceof PyFunction && !(position.getParent().getParent() instanceof PyDecorator)) {
       return getFunctionInsertHandler();
