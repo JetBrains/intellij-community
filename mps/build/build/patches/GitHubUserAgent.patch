@@ -1,0 +1,65 @@
+Index: plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutor.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutor.kt b/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutor.kt
+--- a/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutor.kt	(revision 21912d9e5cd23f4f37927b781411fb69a1141a93)
++++ b/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutor.kt	(date 1718201805755)
+@@ -1,6 +1,7 @@
+ // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ package org.jetbrains.plugins.github.api
+
++import com.intellij.collaboration.api.httpclient.HttpClientUtil
+ import com.intellij.openapi.Disposable
+ import com.intellij.openapi.components.service
+ import com.intellij.openapi.diagnostic.logger
+@@ -141,7 +142,7 @@
+         else -> throw UnsupportedOperationException("${request.javaClass} is not supported")
+       }
+         .connectTimeout(githubSettings.connectionTimeout)
+-        .userAgent("Intellij IDEA Github Plugin")
++        .userAgent(HttpClientUtil.getUserAgentValue("IntelliJ-GitHub-Plugin"))
+         .throwStatusCodeException(false)
+         .forceHttps(false)
+         .accept(request.acceptMimeType)
+Index: platform/collaboration-tools/src/com/intellij/collaboration/api/httpclient/HttpClientUtil.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/collaboration-tools/src/com/intellij/collaboration/api/httpclient/HttpClientUtil.kt b/platform/collaboration-tools/src/com/intellij/collaboration/api/httpclient/HttpClientUtil.kt
+--- a/platform/collaboration-tools/src/com/intellij/collaboration/api/httpclient/HttpClientUtil.kt	(revision 21912d9e5cd23f4f37927b781411fb69a1141a93)
++++ b/platform/collaboration-tools/src/com/intellij/collaboration/api/httpclient/HttpClientUtil.kt	(date 1718202117425)
+@@ -4,7 +4,10 @@
+ import com.intellij.collaboration.api.HttpApiClient
+ import com.intellij.collaboration.api.HttpApiClient.Companion.logName
+ import com.intellij.collaboration.api.httpclient.HttpClientUtil.imageBodyHandler
++import com.intellij.openapi.application.ApplicationInfo
++import com.intellij.openapi.application.ApplicationNamesInfo
+ import com.intellij.openapi.diagnostic.Logger
++import com.intellij.openapi.util.SystemInfo
+ import java.awt.Image
+ import java.io.InputStream
+ import java.net.http.HttpRequest
+@@ -50,6 +53,20 @@
+       super.handleError(statusCode, errorBody)
+     }
+   }
++
++  /**
++   * Build the User-Agent header value for the [agentName]
++   * Append product, java and OS data
++   */
++  fun getUserAgentValue(agentName: String): String {
++    val ideName = ApplicationNamesInfo.getInstance().fullProductName.replace(' ', '-')
++    val ideBuild = ApplicationInfo.getInstance().build.asStringWithoutProductCode()
++    val java = "JRE " + SystemInfo.JAVA_RUNTIME_VERSION
++    val os = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
++    val arch = SystemInfo.OS_ARCH
++
++    return "$agentName $ideName/$ideBuild ($java; $os; $arch)"
++  }
+ }
+
+ suspend fun HttpApiClient.loadImage(request: HttpRequest): HttpResponse<Image> =
