@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 public class A {
     void foo() {
         invokeLater(new Runnable() {
@@ -13,4 +11,3 @@ public class A {
     public static void invokeLater(Runnable doRun) {
     }
 }
-

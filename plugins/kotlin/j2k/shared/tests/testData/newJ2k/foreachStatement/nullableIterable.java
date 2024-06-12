@@ -1,8 +1,7 @@
-// IGNORE_K2
-import java.util.List;
+import java.util.ArrayList;
 
 class A {
-    List<String> list = null;
+    ArrayList<String> list = null;
 
     void foo() {
         for (String e : list) {

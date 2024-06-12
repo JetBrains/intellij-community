@@ -1,4 +1,3 @@
-// IGNORE_K2
 class Stage {
     public void context(Acceptor acceptor) {
         acceptor.acceptFace(new Face() {

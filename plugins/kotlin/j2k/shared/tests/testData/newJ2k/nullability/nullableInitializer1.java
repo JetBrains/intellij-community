@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class Test {
     public String nullableString(int p) {
         return p > 0 ? "response" : null;
