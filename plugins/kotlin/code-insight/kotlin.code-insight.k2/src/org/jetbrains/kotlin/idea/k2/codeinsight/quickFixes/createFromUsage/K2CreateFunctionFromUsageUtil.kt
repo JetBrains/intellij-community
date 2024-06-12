@@ -47,7 +47,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 
-object K2CreateFromUsageUtil {
+object K2CreateFunctionFromUsageUtil {
     fun PsiElement.isPartOfImportDirectiveOrAnnotation(): Boolean = PsiTreeUtil.getParentOfType(
         this,
         KtTypeReference::class.java, KtAnnotationEntry::class.java, KtImportDirective::class.java

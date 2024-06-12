@@ -10,7 +10,7 @@ import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUtil.getExpectedParameterInfo
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedParameterInfo
 import org.jetbrains.kotlin.psi.KtCallElement
 
 internal abstract class CreateExecutableFromKotlinUsageRequest<out T : KtCallElement>(
