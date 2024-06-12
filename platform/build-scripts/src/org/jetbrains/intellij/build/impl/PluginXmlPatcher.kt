@@ -109,7 +109,11 @@ fun doPatchPluginXml(document: Document,
       Span.current().addEvent("patch $pluginModuleName <product-descriptor/>")
 
       setProductDescriptorEapAttribute(productDescriptor, isEap)
-      productDescriptor.setAttribute("release-date", releaseDate)
+      val overriddenReleaseDate = productDescriptor.getAttribute("release-date")
+        ?.value?.takeUnless { it.startsWith("__") }
+      if (overriddenReleaseDate == null) {
+        productDescriptor.setAttribute("release-date", releaseDate)
+      }
       productDescriptor.setAttribute("release-version", releaseVersion)
     }
   }
