@@ -4031,11 +4031,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         public void testQualifyStatic() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/issues/qualifyStatic.java");
         }
-
-        @TestMetadata("spaceBeforeAssignment.java")
-        public void testSpaceBeforeAssignment() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/issues/spaceBeforeAssignment.java");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
