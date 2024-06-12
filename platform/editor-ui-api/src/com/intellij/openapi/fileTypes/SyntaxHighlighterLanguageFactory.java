@@ -8,11 +8,14 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointPriorityListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.KeyedLazyInstance;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public final class SyntaxHighlighterLanguageFactory extends LanguageExtension<SyntaxHighlighterFactory> {
+
+  @ApiStatus.Internal
   public static final ExtensionPointName<KeyedLazyInstance<SyntaxHighlighterFactory>> EP_NAME = new ExtensionPointName<>("com.intellij.lang.syntaxHighlighterFactory");
 
   private boolean myEpListenerAdded = false;
@@ -28,7 +31,7 @@ public final class SyntaxHighlighterLanguageFactory extends LanguageExtension<Sy
       return fromEp;
     }
 
-    SyntaxHighlighter highlighter = LanguageSyntaxHighlighters.INSTANCE.forLanguage(key);
+    SyntaxHighlighter highlighter = LanguageSyntaxHighlighters.getInstance().forLanguage(key);
     if (highlighter != null) {
       checkAddEPListener();
       return List.of(new SingleLazyInstanceSyntaxHighlighterFactory() {

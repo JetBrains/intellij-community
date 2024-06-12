@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.ui.Gray;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,10 @@ public abstract class CopyPasteManager {
 
   public static CopyPasteManager getInstance() {
     return ApplicationManager.getApplication().getService(CopyPasteManager.class);
+  }
+
+  @ApiStatus.Internal
+  protected CopyPasteManager() {
   }
 
   /**

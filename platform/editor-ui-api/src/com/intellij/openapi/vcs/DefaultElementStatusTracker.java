@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultElementStatusTracker implements ElementStatusTracker {
+final class DefaultElementStatusTracker implements ElementStatusTracker {
   @Override
   public @NotNull FileStatus getElementStatus(@NotNull PsiElement element) {
     return FileStatus.NOT_CHANGED;

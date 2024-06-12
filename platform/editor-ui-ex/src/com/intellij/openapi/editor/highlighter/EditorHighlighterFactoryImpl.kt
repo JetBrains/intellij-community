@@ -20,7 +20,7 @@ class EditorHighlighterFactoryImpl : EditorHighlighterFactory() {
 
   override fun createEditorHighlighter(fileType: FileType, settings: EditorColorsScheme, project: Project?): EditorHighlighter {
     if (fileType is LanguageFileType) {
-      return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, null, settings)
+      return FileTypeEditorHighlighterProviders.getInstance().forFileType(fileType).getEditorHighlighter(project, fileType, null, settings)
     }
 
     val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, null)
@@ -37,7 +37,7 @@ class EditorHighlighterFactoryImpl : EditorHighlighterFactory() {
       val substLang = if (project == null) null else LanguageUtil.getLanguageForPsi(project, file, fileType)
       val substFileType = if (substLang != null && substLang !== fileType.language) substLang.associatedFileType else null
       if (substFileType != null) {
-        val provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(substFileType)
+        val provider = FileTypeEditorHighlighterProviders.getInstance().forFileType(substFileType)
         val editorHighlighter = provider.getEditorHighlighter(project, substFileType, file, editorColorScheme)
         val isPlain = editorHighlighter.javaClass == LexerEditorHighlighter::class.java &&
                       (editorHighlighter as LexerEditorHighlighter).isPlain
@@ -48,7 +48,7 @@ class EditorHighlighterFactoryImpl : EditorHighlighterFactory() {
 
       try {
         SlowOperations.knownIssue("IDEA-333907, EA-821093").use {
-          return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType)
+          return FileTypeEditorHighlighterProviders.getInstance().forFileType(fileType)
             .getEditorHighlighter(project, fileType, file, editorColorScheme)
         }
       }

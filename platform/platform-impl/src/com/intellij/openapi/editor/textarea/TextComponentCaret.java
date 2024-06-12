@@ -245,7 +245,7 @@ final class TextComponentCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public @NotNull CaretVisualAttributes getVisualAttributes() {
-    return CaretVisualAttributes.DEFAULT;
+    return CaretVisualAttributes.getDefault();
   }
 
   @Override

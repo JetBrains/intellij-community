@@ -9,4 +9,6 @@ public final class InjectionMeta {
 
   public static final Key<String> INJECTION_INDENT = Key.create("INJECTION_INDENT");
 
+  private InjectionMeta() {
+  }
 }

@@ -1044,11 +1044,9 @@ com.intellij.injected.editor.InjectedFileChangesHandler
 - a:isValid():Z
 - a:tryReuse(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):Z
 com.intellij.injected.editor.InjectedFileChangesHandlerProvider
-- sf:EP:com.intellij.lang.LanguageExtension
 - a:createFileChangesHandler(java.util.List,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):com.intellij.injected.editor.InjectedFileChangesHandler
 *f:com.intellij.injected.editor.InjectionMeta
 - sf:INJECTION_INDENT:com.intellij.openapi.util.Key
-- <init>():V
 f:com.intellij.lang.LanguageStructureViewBuilder
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.lang.LanguageStructureViewBuilder
@@ -1574,6 +1572,7 @@ f:com.intellij.openapi.editor.CaretVisualAttributes
 - <init>(java.awt.Color,com.intellij.openapi.editor.CaretVisualAttributes$Weight):V
 - <init>(java.awt.Color,com.intellij.openapi.editor.CaretVisualAttributes$Weight,com.intellij.openapi.editor.CaretVisualAttributes$Shape,F):V
 - getColor():java.awt.Color
+- s:getDefault():com.intellij.openapi.editor.CaretVisualAttributes
 - getShape():com.intellij.openapi.editor.CaretVisualAttributes$Shape
 - getThickness():F
 - getWeight():com.intellij.openapi.editor.CaretVisualAttributes$Weight
@@ -1746,7 +1745,6 @@ com.intellij.openapi.editor.EditorCustomElementRenderer
 - paint(com.intellij.openapi.editor.Inlay,java.awt.Graphics2D,java.awt.geom.Rectangle2D,com.intellij.openapi.editor.markup.TextAttributes):V
 - paint(com.intellij.openapi.editor.Inlay,java.awt.Graphics,java.awt.Rectangle,com.intellij.openapi.editor.markup.TextAttributes):V
 a:com.intellij.openapi.editor.EditorFactory
-- <init>():V
 - a:addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener):V
 - a:addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener,com.intellij.openapi.Disposable):V
 - a:createDocument(java.lang.CharSequence):com.intellij.openapi.editor.Document
@@ -1934,7 +1932,6 @@ com.intellij.openapi.editor.FoldingModel
 - a:runBatchFoldingOperation(java.lang.Runnable,Z,Z):V
 - runBatchFoldingOperationDoNotCollapseCaret(java.lang.Runnable):V
 com.intellij.openapi.editor.GutterMarkPreprocessor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:processMarkers(java.util.List):java.util.List
 com.intellij.openapi.editor.HighlighterColors
 - sf:BAD_CHARACTER:com.intellij.openapi.editor.colors.TextAttributesKey
@@ -2201,7 +2198,7 @@ a:com.intellij.openapi.editor.bidi.BidiRegionsSeparator
 - a:createBorderBetweenTokens(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):Z
 f:com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator
 - com.intellij.lang.LanguageExtension
-- sf:INSTANCE:com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator
+- s:getInstance():com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator
 f:com.intellij.openapi.editor.colors.DelegatingFontPreferences
 - com.intellij.openapi.editor.colors.FontPreferences
 - <init>(java.util.function.Supplier):V
@@ -2310,7 +2307,6 @@ a:com.intellij.openapi.editor.colors.EditorColorsManager
 - sf:COLOR_SCHEME_FILE_EXTENSION:java.lang.String
 - sf:DEFAULT_SCHEME_NAME:java.lang.String
 - sf:TOPIC:com.intellij.util.messages.Topic
-- <init>():V
 - a:addColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
 - a:getActiveVisibleScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - a:getAllSchemes():com.intellij.openapi.editor.colors.EditorColorsScheme[]
@@ -2380,7 +2376,6 @@ f:com.intellij.openapi.editor.colors.EditorColorsUtil
 - s:getGlobalOrDefaultColorScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - s:updateNotInHierarchyComponentUIAndColors(java.awt.Component):V
 a:com.intellij.openapi.editor.colors.EditorFontCache
-- <init>():V
 - a:getFont(com.intellij.openapi.editor.colors.EditorFontType):java.awt.Font
 - s:getInstance():com.intellij.openapi.editor.colors.EditorFontCache
 - a:reset():V
@@ -2432,7 +2427,6 @@ c:com.intellij.openapi.editor.colors.FontPreferences
 - hasSize(java.lang.String):Z
 - useLigatures():Z
 f:com.intellij.openapi.editor.colors.GlobalEditorScheme
-- <init>():V
 - s:getBackground(com.intellij.openapi.editor.colors.TextAttributesKey):java.awt.Color
 - s:getColor(com.intellij.openapi.editor.colors.ColorKey):java.awt.Color
 - s:getDefaultBackground():java.awt.Color
@@ -2785,16 +2779,15 @@ com.intellij.openapi.fileTypes.EditorHighlighterProvider
 - a:getEditorHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.highlighter.EditorHighlighter
 f:com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders
 - com.intellij.openapi.fileTypes.FileTypeExtension
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:INSTANCE:com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders
-c:com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider
+- s:getInstance():com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders
+f:com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider
 - com.intellij.openapi.fileTypes.SyntaxHighlighterProvider
 - <init>():V
 - create(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
 f:com.intellij.openapi.fileTypes.LanguageSyntaxHighlighters
 - com.intellij.lang.LanguageExtension
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- sf:INSTANCE:com.intellij.openapi.fileTypes.LanguageSyntaxHighlighters
+- s:getInstance():com.intellij.openapi.fileTypes.LanguageSyntaxHighlighters
 c:com.intellij.openapi.fileTypes.PlainSyntaxHighlighter
 - com.intellij.openapi.fileTypes.SyntaxHighlighter
 - <init>():V
@@ -2810,7 +2803,6 @@ a:com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory
 - pa:createHighlighter():com.intellij.openapi.fileTypes.SyntaxHighlighter
 - f:getSyntaxHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
 com.intellij.openapi.fileTypes.SyntaxHighlighter
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:PROVIDER:com.intellij.openapi.fileTypes.SyntaxHighlighterProvider
 - a:getHighlightingLexer():com.intellij.lexer.Lexer
 - a:getTokenHighlights(com.intellij.psi.tree.IElementType):com.intellij.openapi.editor.colors.TextAttributesKey[]
@@ -2830,17 +2822,16 @@ a:com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 a:com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 - sf:LANGUAGE_FACTORY:com.intellij.openapi.fileTypes.SyntaxHighlighterLanguageFactory
 - <init>():V
+- s:getLanguageFactory():com.intellij.openapi.fileTypes.SyntaxHighlighterLanguageFactory
 - s:getSyntaxHighlighter(com.intellij.lang.Language,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
 - s:getSyntaxHighlighter(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
 - a:getSyntaxHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
 f:com.intellij.openapi.fileTypes.SyntaxHighlighterLanguageFactory
 - com.intellij.lang.LanguageExtension
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.openapi.fileTypes.SyntaxHighlighterProvider
 - a:create(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
 a:com.intellij.openapi.ide.CopyPasteManager
 - sf:CUT_COLOR:java.awt.Color
-- <init>():V
 - a:addContentChangedListener(com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener):V
 - a:addContentChangedListener(com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener,com.intellij.openapi.Disposable):V
 - a:areDataFlavorsAvailable(java.awt.datatransfer.DataFlavor[]):Z
@@ -2922,18 +2913,13 @@ com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:advancedSettingChanged(java.lang.String,java.lang.Object,java.lang.Object):V
 f:com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener$Companion
-c:com.intellij.openapi.util.NlsActions
-- <init>():V
+f:com.intellij.openapi.util.NlsActions
 @:com.intellij.openapi.util.NlsActions$ActionDescription
 - java.lang.annotation.Annotation
 @:com.intellij.openapi.util.NlsActions$ActionText
 - java.lang.annotation.Annotation
 com.intellij.openapi.util.PropertyOwner
 - a:getPropertyName():java.lang.String
-c:com.intellij.openapi.vcs.DefaultElementStatusTracker
-- com.intellij.openapi.vcs.ElementStatusTracker
-- <init>():V
-- getElementStatus(com.intellij.psi.PsiElement):com.intellij.openapi.vcs.FileStatus
 com.intellij.openapi.vcs.ElementStatusTracker
 - a:getElementStatus(com.intellij.psi.PsiElement):com.intellij.openapi.vcs.FileStatus
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.ElementStatusTracker
@@ -2992,7 +2978,6 @@ com.intellij.presentation.FilePresentationService
 - a:getFileBackgroundColor(com.intellij.psi.PsiElement):java.awt.Color
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.presentation.FilePresentationService
 f:com.intellij.psi.search.TodoAttributesUtil
-- <init>():V
 - s:createDefault():com.intellij.psi.search.TodoAttributes
 - s:getDefaultColorSchemeTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
 com.intellij.psi.util.PsiEditorUtil
@@ -3009,7 +2994,6 @@ com.intellij.ui.PlaceHolder
 com.intellij.ui.PlaceProvider
 - a:getPlace():java.lang.String
 com.intellij.ui.breadcrumbs.BreadcrumbsProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:acceptElement(com.intellij.psi.PsiElement):Z
 - *:acceptStickyElement(com.intellij.psi.PsiElement):Z
 - getChildren(com.intellij.psi.PsiElement):java.util.List
@@ -3021,7 +3005,6 @@ com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 - getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - isShownByDefault():Z
 f:com.intellij.ui.breadcrumbs.BreadcrumbsUtil
-- <init>():V
 - s:getInfoProvider(com.intellij.lang.Language):com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 com.intellij.ui.list.ListCellBackgroundSupplier
 - a:getCellBackground(java.lang.Object,I):java.awt.Color

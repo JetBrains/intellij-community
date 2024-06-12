@@ -1375,12 +1375,12 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   @Override
   public @NotNull CaretVisualAttributes getVisualAttributes() {
     CaretVisualAttributes attrs = getUserData(VISUAL_ATTRIBUTES_KEY);
-    return attrs == null ? CaretVisualAttributes.DEFAULT : attrs;
+    return attrs == null ? CaretVisualAttributes.getDefault() : attrs;
   }
 
   @Override
   public void setVisualAttributes(@NotNull CaretVisualAttributes attributes) {
-    putUserData(VISUAL_ATTRIBUTES_KEY, attributes == CaretVisualAttributes.DEFAULT ? null : attributes);
+    putUserData(VISUAL_ATTRIBUTES_KEY, attributes == CaretVisualAttributes.getDefault() ? null : attributes);
     requestRepaint(myVerticalInfo);
   }
 

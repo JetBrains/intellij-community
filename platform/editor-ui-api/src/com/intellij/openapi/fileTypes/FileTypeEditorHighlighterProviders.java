@@ -8,14 +8,26 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.KeyedLazyInstance;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<EditorHighlighterProvider> {
+
+  @ApiStatus.Internal
   public static final ExtensionPointName<KeyedLazyInstance<EditorHighlighterProvider>> EP_NAME = ExtensionPointName.create("com.intellij.editorHighlighterProvider");
+
+  /**
+   * @deprecated use {@link #getInstance()} instead
+   */
+  @Deprecated
   public static final FileTypeEditorHighlighterProviders INSTANCE = new FileTypeEditorHighlighterProviders();
+
+  public static FileTypeEditorHighlighterProviders getInstance() {
+    return INSTANCE;
+  }
 
   private boolean myEPListenerAdded = false;
 
