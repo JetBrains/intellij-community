@@ -1237,6 +1237,7 @@
       <action id="ToggleIncompleteMode" internal="true" class="com.intellij.internal.ToggleIncompleteDependenciesModeAction">
         <synonym text="Exit Incomplete Dependencies Mode"/>
       </action>
+      <action id="TriggerProjectIndexableFilesFilterHealthCheckAction" internal="true" class="com.intellij.util.indexing.projectFilter.TriggerProjectIndexableFilesFilterHealthCheckAction"/>
       <action id="DumbModeTremble" class="com.intellij.internal.DumbModeTrembleAction">
         <synonym text="Exit Tremble Dumb Mode"/>
         <synonym text="Enter Tremble Dumb Mode"/>
