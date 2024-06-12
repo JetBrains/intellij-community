@@ -2395,6 +2395,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/println.kt");
             }
 
+            @TestMetadata("qualifiedThis.kt")
+            public void testQualifiedThis() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/qualifiedThis.kt");
+            }
+
             @TestMetadata("RecursiveFunctionOnDeclaration.kt")
             public void testRecursiveFunctionOnDeclaration() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/RecursiveFunctionOnDeclaration.kt");
