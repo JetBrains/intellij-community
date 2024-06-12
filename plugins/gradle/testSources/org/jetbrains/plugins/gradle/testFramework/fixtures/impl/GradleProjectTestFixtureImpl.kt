@@ -9,7 +9,6 @@ import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.testFramework.common.runAll
@@ -55,7 +54,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
     configureProject: FileTestFixture.Builder.() -> Unit
   ) : this(
     projectName, gradleVersion,
-    GradleTestFixtureFactory.getFixtureFactory().createGradleJvmTestFixture(gradleVersion),
+    GradleJvmTestFixture(gradleVersion),
     GradleTestFixtureFactory.getFixtureFactory().createFileTestFixture("GradleTestFixture/$gradleVersion/$projectName") {
       configureProject()
       excludeFiles(".gradle", "build")
