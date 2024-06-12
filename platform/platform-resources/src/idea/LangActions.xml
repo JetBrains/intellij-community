@@ -970,6 +970,7 @@
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$HideEmptyMiddlePackages"/>
         <action id="ProjectView.CompactDirectories"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
+        <separator/>
         <action id="ProjectView.FileNesting"
                 class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
         <separator/>
