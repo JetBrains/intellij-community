@@ -238,14 +238,13 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     val state = super<TextEditorProvider>.readState(element, project, file) as TextEditorState
 
     // foldings
-    val child = element.getChild(FOLDING_ELEMENT)
-    if (child != null) {
+    element.getChild(FOLDING_ELEMENT)?.let { foldingState ->
       val document = FileDocumentManager.getInstance().getCachedDocument(file)
       if (document == null) {
-        state.setDelayedFoldState(PsiAwareTextEditorDelayedFoldingState(project = project, file = file, state = child))
+        state.setDelayedFoldState(PsiAwareTextEditorDelayedFoldingState(project = project, file = file, state = foldingState))
       }
       else {
-        state.foldingState = CodeFoldingManager.getInstance(project).readFoldingState(child, document)
+        state.foldingState = CodeFoldingManager.getInstance(project).readFoldingState(foldingState, document)
       }
     }
     return state

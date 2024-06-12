@@ -698,12 +698,7 @@ open class FileEditorManagerImpl(
 
   override fun createSplitter(orientation: Int, window: EditorWindow?) {
     // the window was available from action event, for example, when invoked from the tab menu of an editor that is not the 'current'
-    if (window == null) {
-      splitters.currentWindow?.split(orientation = orientation, forceSplit = true, virtualFile = null, focusNew = false)
-    }
-    else {
-      window.split(orientation = orientation, forceSplit = true, virtualFile = null, focusNew = false)
-    }
+    (window ?: splitters.currentWindow)?.split(orientation = orientation, forceSplit = true, virtualFile = null, focusNew = false)
   }
 
   override fun changeSplitterOrientation() {
@@ -1133,7 +1128,7 @@ open class FileEditorManagerImpl(
 
     val effectiveFile = getOriginalFile(file)
     if (!ClientId.isCurrentlyUnderLocalId) {
-      return openFileUsingClient(file = effectiveFile, options = options)
+      return clientFileEditorManager?.openFile(file = file, options) ?: return FileEditorComposite.EMPTY
     }
 
     return runBulkTabChangeInEdt(window.owner) {
@@ -1183,7 +1178,6 @@ open class FileEditorManagerImpl(
         restoreEditorState(
           file = file,
           fileEditorWithProvider = editorWithProvider,
-          storedState = null,
           isNewEditor = false,
           exactState = options.isExactState,
           project = project,

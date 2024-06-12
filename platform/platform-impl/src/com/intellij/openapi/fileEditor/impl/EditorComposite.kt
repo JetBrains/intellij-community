@@ -162,8 +162,8 @@ open class EditorComposite internal constructor(
       return
     }
 
-    // skip initial null value
     flow {
+      // skip initial null value
       var isInitialValue = true
       selectedEditorWithProvider.collect { value ->
         if (isInitialValue && value == null) {
@@ -218,8 +218,27 @@ open class EditorComposite internal constructor(
         }
       }
 
-      val fileEditorManager = project.serviceAsync<FileEditorManager>()
+      // read not in EDT
+      val isNewEditor = true
+      val states = fileEditorWithProviders.map { (_, provider) ->
+        if (model.state == null) {
+          if (isNewEditor) {
+            // We have to try to get state from the history only in case of the editor is not opened.
+            // Otherwise, history entry might have a state out of sync with the current editor state.
+            project.serviceAsync<EditorHistoryManager>().getState(file, provider)
+          }
+          else {
+            null
+          }
+        }
+        else {
+          model.state.providers.get(provider.editorTypeId)?.let { provider.readState(it, project, file) }
+        }
+      }
 
+      val fileEditorManager = project.serviceAsync<FileEditorManager>()
+      // cannot be before use as fileOpenedSync by contract should be called in the same EDT event
+      val (goodPublisher, deprecatedPublisher) = deferredPublishers.await()
       span("file opening in EDT and repaint", Dispatchers.EDT) {
         span("beforeFileOpened event executing") {
           blockingContext {
@@ -228,12 +247,11 @@ open class EditorComposite internal constructor(
         }
 
         applyFileEditorsInEdt(
+          states = states,
           fileEditorWithProviders = fileEditorWithProviders,
-          model = model,
           selectedFileEditorProvider = selectedFileEditor,
         )
 
-        val (goodPublisher, deprecatedPublisher) = deferredPublishers.await()
         blockingContext {
           goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
           @Suppress("DEPRECATION")
@@ -270,15 +288,35 @@ open class EditorComposite internal constructor(
       }
     }
 
-    applyFileEditorsInEdt(fileEditorWithProviders = fileEditorWithProviders, model = model, selectedFileEditorProvider = null)
+    val states = fileEditorWithProviders.map { (_, provider) ->
+      if (model.state == null) {
+        // We have to try to get state from the history only in case of the editor is not opened.
+        // Otherwise, history entry might have a state out of sync with the current editor state.
+        EditorHistoryManager.getInstance(project).getState(file, provider)
+      }
+      else {
+        model.state.providers.get(provider.editorTypeId)?.let { provider.readState(it, project, file) }
+      }
+    }
+
+    applyFileEditorsInEdt(fileEditorWithProviders = fileEditorWithProviders, selectedFileEditorProvider = null, states = states)
   }
 
   @RequiresEdt
   private fun applyFileEditorsInEdt(
     fileEditorWithProviders: List<FileEditorWithProvider>,
-    model: EditorCompositeModel,
+    states: List<FileEditorState?>,
     selectedFileEditorProvider: FileEditorProvider?,
   ) {
+    for ((index, fileEditorWithProvider) in fileEditorWithProviders.withIndex()) {
+      restoreEditorState(
+        fileEditorWithProvider = fileEditorWithProvider,
+        state = states.get(index) ?: continue,
+        exactState = false,
+        project = project,
+      )
+    }
+
     var fileEditorWithProviderToSelect = fileEditorWithProviders.firstOrNull()
     if (fileEditorWithProviders.size == 1) {
       setEditorComponent(fileEditorWithProviderToSelect!!.fileEditor)
@@ -294,21 +332,6 @@ open class EditorComposite internal constructor(
           fileEditorWithProviderToSelect = fileEditorWithProviders.get(index)
         }
       }
-    }
-
-    for (fileEditorWithProvider in fileEditorWithProviders) {
-      val provider = fileEditorWithProvider.provider
-      val stateData = model.state?.providers?.get(provider.editorTypeId)
-      val state = stateData?.let { provider.readState(stateData, project, file) }
-
-      restoreEditorState(
-        file = file,
-        fileEditorWithProvider = fileEditorWithProvider,
-        storedState = state,
-        isNewEditor = true,
-        exactState = false,
-        project = project,
-      )
     }
 
     fileEditorWithProviderToSelect?.fileEditor?.selectNotify()
@@ -869,22 +892,27 @@ internal fun restoreEditorState(
   file: VirtualFile,
   fileEditorWithProvider: FileEditorWithProvider,
   isNewEditor: Boolean,
-  storedState: FileEditorState?,
   exactState: Boolean,
   project: Project,
 ) {
-  var state = storedState
-  if (state == null) {
-    if (isNewEditor) {
-      // We have to try to get state from the history only in case of the editor is not opened.
-      // Otherwise, history entry might have a state out of sync with the current editor state.
-      state = EditorHistoryManager.getInstance(project).getState(file, fileEditorWithProvider.provider)
-    }
-    if (state == null) {
-      return
-    }
+  val state = if (isNewEditor) {
+    // We have to try to get state from the history only in case of the editor is not opened.
+    // Otherwise, history entry might have a state out of sync with the current editor state.
+    EditorHistoryManager.getInstance(project).getState(file, fileEditorWithProvider.provider) ?: return
+  }
+  else {
+    return
   }
 
+  restoreEditorState(fileEditorWithProvider = fileEditorWithProvider, state = state, exactState = exactState, project = project)
+}
+
+internal fun restoreEditorState(
+  fileEditorWithProvider: FileEditorWithProvider,
+  state: FileEditorState,
+  exactState: Boolean,
+  project: Project,
+) {
   val editor = fileEditorWithProvider.fileEditor
   if (isDumbAware(editor)) {
     editor.setState(state, exactState)
