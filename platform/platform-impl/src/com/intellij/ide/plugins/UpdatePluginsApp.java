@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.updateSettings.impl.InternalPluginResults;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
@@ -48,26 +49,29 @@ final class UpdatePluginsApp implements ApplicationStarter {
       System.exit(0);
     }
 
+    final InternalPluginResults updateCheckResult;
     final Collection<PluginDownloader> availableUpdates;
     try {
-      availableUpdates = ApplicationManager.getApplication().executeOnPooledThread(
+      updateCheckResult = ApplicationManager.getApplication().executeOnPooledThread(
           () -> UpdateChecker.getInternalPluginUpdates()
-        ).get()
-        .getPluginUpdates()
-        .getAllEnabled();
+        ).get();
     }
     catch (InterruptedException | ExecutionException e) {
       LOG.error("Failed to check plugin updates", e);
       System.exit(1);
       return;
     }
+    if (!updateCheckResult.getErrors().isEmpty()) {
+      LOG.warn("Errors occurred during the update check: " +
+               ContainerUtil.map(updateCheckResult.getErrors().entrySet(), entry -> "host=" + entry.getKey() + ": " + entry.getValue().getMessage()));
+    }
 
+    availableUpdates = updateCheckResult.getPluginUpdates().getAllEnabled();
     if (availableUpdates.isEmpty()) {
       logInfo("all plugins up to date");
       System.exit(0);
       return;
     }
-
     Collection<PluginDownloader> pluginsToUpdate;
     if (args.size() > 1) {
       Set<String> filter = new HashSet<>(args.subList(1, args.size()));
@@ -79,7 +83,8 @@ final class UpdatePluginsApp implements ApplicationStarter {
       pluginsToUpdate = availableUpdates;
     }
 
-    logInfo("Plugins to update: " + ContainerUtil.map(pluginsToUpdate, downloader -> downloader.getPluginName() + " version " + downloader.getPluginVersion()));
+    logInfo("Plugins to update: " +
+            ContainerUtil.map(pluginsToUpdate, downloader -> downloader.getPluginName() + " version " + downloader.getPluginVersion()));
 
     final boolean installed;
     try {
