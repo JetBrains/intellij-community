@@ -1108,7 +1108,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
   }
 
-  void uninstallAndUpdateUi(@NotNull IdeaPluginDescriptor descriptor) {
+  @ApiStatus.Internal
+  public void uninstallAndUpdateUi(@NotNull IdeaPluginDescriptor descriptor) {
     boolean needRestartForUninstall = performUninstall((IdeaPluginDescriptorImpl)descriptor);
     needRestart |= descriptor.isEnabled() && needRestartForUninstall;
 
