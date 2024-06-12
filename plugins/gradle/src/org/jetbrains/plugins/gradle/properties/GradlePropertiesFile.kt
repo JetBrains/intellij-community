@@ -19,6 +19,7 @@ const val GRADLE_JAVA_HOME_PROPERTY = "org.gradle.java.home"
 const val GRADLE_LOGGING_LEVEL_PROPERTY = "org.gradle.logging.level"
 const val GRADLE_PARALLEL_PROPERTY = "org.gradle.parallel"
 const val GRADLE_JVM_OPTIONS_PROPERTY = "org.gradle.jvmargs"
+const val GRADLE_ISOLATED_PROJECTS_PROPERTY = "org.gradle.unsafe.isolated-projects"
 
 object GradlePropertiesFile {
 
@@ -82,6 +83,7 @@ object GradlePropertiesFile {
       javaHomeProperty = properties.getStringProperty(GRADLE_JAVA_HOME_PROPERTY, propertiesPath),
       gradleLoggingLevel = properties.getStringProperty(GRADLE_LOGGING_LEVEL_PROPERTY, propertiesPath),
       parallel = properties.getBooleanProperty(GRADLE_PARALLEL_PROPERTY, propertiesPath),
+      isolatedProjects = properties.getBooleanProperty(GRADLE_ISOLATED_PROJECTS_PROPERTY, propertiesPath),
       jvmOptions = properties.getStringProperty(GRADLE_JVM_OPTIONS_PROPERTY, propertiesPath)
     )
   }
@@ -94,6 +96,7 @@ object GradlePropertiesFile {
         most.javaHomeProperty ?: other.javaHomeProperty,
         most.gradleLoggingLevel ?: other.gradleLoggingLevel,
         most.parallel ?: other.parallel,
+        most.isolatedProjects ?: other.isolatedProjects,
         most.jvmOptions ?: other.jvmOptions
       )
     }

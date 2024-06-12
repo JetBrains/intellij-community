@@ -7,5 +7,6 @@ data class GradlePropertiesImpl(
   override val javaHomeProperty: Property<String>?,
   override val gradleLoggingLevel: Property<String>?,
   override val parallel: Property<Boolean>?,
+  override val isolatedProjects: Property<Boolean>?,
   override val jvmOptions: Property<String>?
 ) : GradleProperties
