@@ -84,17 +84,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
 
   private val combinedViewer get() = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
-  //
-  // Global, shortcuts only navigation actions
-  //
-
-  private val openInEditorAction = object : OpenInEditorAction() {
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      e.presentation.isVisible = false
-    }
-  }
-
   private var searchController: CombinedDiffSearchController? = null
 
   init {
