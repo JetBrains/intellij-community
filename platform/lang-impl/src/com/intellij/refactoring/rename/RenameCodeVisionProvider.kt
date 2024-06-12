@@ -7,6 +7,7 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEn
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector
+import com.intellij.core.CoreFileTypeRegistry
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.command.CommandProcessor
@@ -111,4 +112,10 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
     get() = ID
   override val groupId: String
     get() = PlatformCodeVisionIds.RENAME.key
+
+  override fun isAvailableFor(project: Project): Boolean {
+    return CoreFileTypeRegistry.getInstance().registeredFileTypes.any {
+      RefactoringCodeVisionSupport.isRenameCodeVisionEnabled(it)
+    }
+  }
 }

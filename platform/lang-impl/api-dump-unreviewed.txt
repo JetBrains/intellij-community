@@ -26237,6 +26237,7 @@ f:com.intellij.refactoring.rename.RenameCodeVisionProvider
 - getId():java.lang.String
 - getName():java.lang.String
 - getRelativeOrderings():java.util.List
+- isAvailableFor(com.intellij.openapi.project.Project):Z
 - precomputeOnUiThread(com.intellij.openapi.editor.Editor):V
 - preparePreview(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 f:com.intellij.refactoring.rename.RenameCodeVisionProvider$Companion
