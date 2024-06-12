@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi;
 
@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.WalkingState;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PsiWalkingState extends WalkingState<PsiElement> {
@@ -43,8 +42,7 @@ public abstract class PsiWalkingState extends WalkingState<PsiElement> {
       return element.getParent();
     }
 
-    @ApiStatus.Internal
-    public static final PsiTreeGuide instance = new PsiTreeGuide();
+    private static final PsiTreeGuide instance = new PsiTreeGuide();
   }
 
   protected PsiWalkingState(@NotNull PsiElementVisitor delegate) {
