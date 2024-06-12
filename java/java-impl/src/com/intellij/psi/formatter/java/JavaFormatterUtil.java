@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.formatter.java.TypeAnnotationUtil.isTypeAnnotation;
+
 public final class JavaFormatterUtil {
   /**
    * Holds type of AST elements that are considered to be assignments.
@@ -36,10 +38,6 @@ public final class JavaFormatterUtil {
 
   private static final int CALL_EXPRESSION_DEPTH = 500;
 
-  private static final Set<String> KNOWN_TYPE_ANNOTATIONS = Set.of(
-    "org.jetbrains.annotations.NotNull",
-    "org.jetbrains.annotations.Nullable"
-  );
 
   private JavaFormatterUtil() { }
 
@@ -443,41 +441,8 @@ public final class JavaFormatterUtil {
     return prev != null && prev.getElementType() != JavaElementType.BLOCK_STATEMENT;
   }
 
-  private static boolean isTypeAnnotation(@NotNull ASTNode child) {
-    PsiElement node = child.getPsi();
-    PsiElement next = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class, PsiAnnotation.class);
-    if (next instanceof PsiKeyword) return false;
-    if (!(node instanceof PsiAnnotation psiAnnotation)) return false;
 
-    PsiJavaCodeReferenceElement psiReference = psiAnnotation.getNameReferenceElement();
-    if (psiReference == null) return false;
 
-    if (psiReference.isQualified()) {
-      return KNOWN_TYPE_ANNOTATIONS.contains(psiReference.getText());
-    }
-    else {
-      PsiElement referenceName = psiReference.getReferenceNameElement();
-      if (referenceName == null) return false;
-      if (!(psiReference.getContainingFile() instanceof PsiJavaFile javaFile)) return false;
-      PsiImportList importList = javaFile.getImportList();
-      if (importList == null) return false;
-      String referenceNameText = referenceName.getText();
-      return ContainerUtil.or(KNOWN_TYPE_ANNOTATIONS, fqn -> {
-        if (!fqn.endsWith(referenceNameText)) return false;
-        return isAnnotationInImportList(fqn, importList);
-      });
-    }
-  }
-
-  private static boolean isAnnotationInImportList(String annotationFqn, PsiImportList importList) {
-    String packageName = StringUtil.getPackageName(annotationFqn);
-    return ContainerUtil.or(importList.getImportStatements(), statement -> {
-      PsiJavaCodeReferenceElement referenceElement = statement.getImportReference();
-      if (referenceElement == null) return false;
-      String referenceElementText = referenceElement.getText();
-      return referenceElementText.equals(annotationFqn) || statement.isOnDemand() && referenceElementText.startsWith(packageName);
-    });
-  }
 
   private static void putPreferredWrapInParentBlock(@NotNull AbstractJavaBlock block, @NotNull Wrap preferredWrap) {
     AbstractJavaBlock parentBlock = block.getParentBlock();
