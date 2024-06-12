@@ -59,7 +59,8 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate imp
   @Override
   public void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     if (expression instanceof PsiReferenceExpression ref) {
-      JavaResolveResult result = ref.advancedResolve(true);
+      JavaResolveResult result = DumbService.getInstance(expression.getProject())
+        .withAlternativeResolveEnabled(() -> ref.advancedResolve(true));
       PsiElement element = result.getElement();
       
       if (element == null) {
