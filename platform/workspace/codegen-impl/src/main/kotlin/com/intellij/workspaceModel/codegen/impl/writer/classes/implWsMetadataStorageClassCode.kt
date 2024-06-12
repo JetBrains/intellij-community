@@ -62,7 +62,7 @@ internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<Ob
 
 
 internal fun CompiledObjModule.implWsMetadataStorageBridgeCode(metadataStorageImpl: QualifiedName): String = lines {
-  line("package $name")
+  line("package ${this@implWsMetadataStorageBridgeCode.implPackage}")
   line()
   line("$generatedCodeVisibilityModifier object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.bridge}($metadataStorageImpl)")
 }
