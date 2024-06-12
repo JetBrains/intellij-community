@@ -22,10 +22,10 @@ open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: Corou
    * Updates icons for open files when project roots change
    */
   init {
-    // reinit syntax highlighter for Groovy. In power save mode keywords are highlighted by GroovySyntaxHighlighter insteadof
-    // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types of attributes in LayeredLexerEditorHighlighter
-    @Suppress("LeakingThis")
-    val connection = project.messageBus.connect(this)
+    // Reinit syntax highlighter for Groovy.
+    // In power save mode, keywords are highlighted by GroovySyntaxHighlighter instead of GrKeywordAndDeclarationHighlighter.
+    // So we need to drop caches for token types of attributes in LayeredLexerEditorHighlighter
+    val connection = project.messageBus.connect(coroutineScope)
     connection.subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener {
       EdtInvocationManager.invokeLaterIfNeeded {
         for (editor in EditorFactory.getInstance().allEditors) {

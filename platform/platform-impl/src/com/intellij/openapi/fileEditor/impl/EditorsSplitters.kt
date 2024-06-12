@@ -20,7 +20,9 @@ import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileEditor
@@ -35,6 +37,7 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -66,6 +69,7 @@ import com.intellij.util.computeFileIconImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jdom.Element
@@ -397,12 +401,12 @@ open class EditorsSplitters internal constructor(
 
   internal fun scheduleUpdateFileColor(file: VirtualFile) {
     coroutineScope.launch {
-      updateFileColor(file, compositeAndTab = null)
+      updateFileColor(file)
     }
   }
 
-  internal suspend fun updateFileColor(file: VirtualFile, compositeAndTab: Pair<EditorComposite, TabInfo>?) {
-    if (compositeAndTab == null && windows.isEmpty()) {
+  internal suspend fun updateFileColor(file: VirtualFile) {
+    if (windows.isEmpty()) {
       return
     }
 
@@ -413,25 +417,14 @@ open class EditorsSplitters internal constructor(
     val colorScheme = serviceAsync<EditorColorsManager>().schemeForCurrentUITheme
     val attributes = if (manager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
     withContext(Dispatchers.EDT) {
-      for ((composite, tab) in (if (compositeAndTab == null) {
-        windows().mapNotNull { it.findCompositeAndTab(file) }
-      }
-      else {
-        sequenceOf(compositeAndTab)
-      })) {
-        val effectiveAttributes = if (composite.isPreview) {
-          val italic = TextAttributes(null, null, null, null, Font.ITALIC)
-          if (attributes == null) italic else TextAttributes.merge(italic, attributes)
-        }
-        else {
-          attributes
-        }
-
-        tab.setDefaultForegroundAndAttributes(
-          foregroundColor = fileColor,
-          attributes = TextAttributes.merge(TextAttributes(), effectiveAttributes).apply {
-            this.foregroundColor = colorScheme.getColor(foregroundFileColor)
-          },
+      for ((composite, tab) in windows().mapNotNull { it.findCompositeAndTab(file) }) {
+        applyTabColor(
+          composite = composite,
+          attributes = attributes,
+          tab = tab,
+          fileColor = fileColor,
+          colorScheme = colorScheme,
+          foregroundFileColor = foregroundFileColor,
         )
       }
     }
@@ -984,6 +977,14 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
             null
           }
 
+          val tabFileColorTask = compositeCoroutineScope.async {
+            val fileStatusManager = fileEditorManager.project.serviceAsync<FileStatusManager>()
+            readAction {
+              (fileStatusManager.getStatus(file).color ?: UIUtil.getLabelForeground()) to
+                getForegroundColorForFile(fileEditorManager.project, file)
+            }
+          }
+
           val initialTabTitle = if (!fileEntry.tabTitle.isNullOrEmpty() && fileEntry.ideFingerprint == ideFingerprint()) {
             delayedTasks.add(tabTitleTask)
             fileEntry.tabTitle
@@ -1026,6 +1027,23 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
                   tab.setTooltipText(if (UISettings.getInstance().showTabsTooltips) fileEditorManager.getFileTooltipText(file, tab.composite) else null)
                 }
               }
+
+              compositeCoroutineScope.launch {
+                val colorScheme = serviceAsync<EditorColorsManager>().schemeForCurrentUITheme
+                val attributes = if (fileEditorManager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
+                val colors = tabFileColorTask.await()
+                withContext(Dispatchers.EDT) {
+                  applyTabColor(
+                    composite = tab.composite,
+                    attributes = attributes,
+                    tab = tab,
+                    fileColor = colors.first,
+                    colorScheme = colorScheme,
+                    foregroundFileColor = colors.second,
+                  )
+                }
+              }
+
               if (tabIconTask != null) {
                 compositeCoroutineScope.launch {
                   val icon = tabIconTask.await()
@@ -1209,4 +1227,28 @@ internal fun decorateFileIcon(composite: EditorComposite, baseIcon: Icon, uiSett
     result.setIcon(modifiedIcon, 1, 0, 0)
   }
   return JBUIScale.scaleIcon(result)
+}
+
+internal fun applyTabColor(
+  composite: EditorComposite,
+  attributes: TextAttributes?,
+  tab: TabInfo,
+  fileColor: Color,
+  colorScheme: EditorColorsScheme,
+  foregroundFileColor: ColorKey?,
+) {
+  val effectiveAttributes = if (composite.isPreview) {
+    val italic = TextAttributes(null, null, null, null, Font.ITALIC)
+    if (attributes == null) italic else TextAttributes.merge(italic, attributes)
+  }
+  else {
+    attributes
+  }
+
+  tab.setDefaultForegroundAndAttributes(
+    foregroundColor = fileColor,
+    attributes = TextAttributes.merge(TextAttributes(), effectiveAttributes).apply {
+      this.foregroundColor = colorScheme.getColor(foregroundFileColor)
+    },
+  )
 }

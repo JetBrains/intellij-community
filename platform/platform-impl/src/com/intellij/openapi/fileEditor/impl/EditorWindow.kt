@@ -13,10 +13,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -426,10 +423,26 @@ class EditorWindow internal constructor(
   }
 
   @RequiresEdt
-  internal fun selectTabOnStartup(composite: EditorComposite, tabToSelect: TabInfo) {
-    tabbedPane.editorTabs.selectTabSilently(tabToSelect)
+  internal fun selectTabOnStartup(tab: TabInfo, requestFocus: Boolean, windowAdded: suspend () -> Unit) {
+    val composite = tab.composite
+    tabbedPane.editorTabs.selectTabSilently(tab)
     _currentCompositeFlow.value = composite
     owner.setCurrentWindow(window = this)
+
+    if (requestFocus) {
+      composite.coroutineScope.launch {
+        // well, we cannot focus if component is not added
+        windowAdded()
+        // wait for the file editor
+        composite.waitForAvailable()
+        if (withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            focusEditorOnComposite(composite = composite, splitters = owner, toFront = false)
+          }) {
+          // update frame title only when the first file editor is ready to load (editor is not yet fully loaded at this moment)
+          owner.updateFrameTitle()
+        }
+      }
+    }
   }
 
   @JvmOverloads

@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -165,7 +166,7 @@ open class FileEditorManagerImpl(
 
       for (splitters in allSplitters) {
         splitters.updateFileIcon(file)
-        splitters.updateFileColor(file = file, compositeAndTab = null)
+        splitters.updateFileColor(file = file)
         splitters.updateFileBackgroundColor(file)
       }
     }
@@ -174,7 +175,7 @@ open class FileEditorManagerImpl(
   private val fileTitleUpdateChannel: MergingUpdateChannel<VirtualFile?> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
     val allSplitters = getAllSplitters()
     for (file in toUpdate) {
-      updateFileNames(allSplitters, file = file)
+      updateFileNames(allSplitters = allSplitters, file = file)
     }
   }
 
@@ -404,8 +405,7 @@ open class FileEditorManagerImpl(
     @JvmStatic
     fun forbidSplitFor(file: VirtualFile): Boolean = file.getUserData(SplitAction.FORBID_TAB_SPLIT) == true
 
-    // not-internal only as workaround for bad old impl for remote dev
-    fun getOriginalFile(file: VirtualFile): VirtualFile {
+    internal fun getOriginalFile(file: VirtualFile): VirtualFile {
       return BackedVirtualFile.getOriginFileIfBacked(if (file is VirtualFileWindow) file.delegate else file)
     }
   }
@@ -1051,7 +1051,6 @@ open class FileEditorManagerImpl(
     }
   }
 
-  // protected only as workaround for bad old impl for remote dev
   private val clientFileEditorManager: ClientFileEditorManager?
     get() {
       // todo RDCT-78
@@ -2091,7 +2090,7 @@ open class FileEditorManagerImpl(
         file = file,
         model = item.model,
         coroutineScope = item.scope,
-      ) ?: return
+      ) ?: continue
 
       if (fileEntry.currentInTab || !isLazyComposite) {
         composite.initDeferred.complete(Unit)
@@ -2111,28 +2110,14 @@ open class FileEditorManagerImpl(
         }
       }
 
-      val tab = createTabInfo(
+      tabs.add(createTabInfo(
         component = composite.component,
         file = file,
         parentDisposable = composite,
         window = window,
         editorActionGroup = editorActionGroup,
         customizer = item.customizer,
-      )
-
-      val project = window.manager.project
-      composite.coroutineScope.launch {
-        val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          tab.setTabColor(color)
-        }
-      }
-
-      composite.coroutineScope.launch(ModalityState.any().asContextElement()) {
-        splitters.updateFileColor(file = file, compositeAndTab = composite to tab)
-      }
-
-      tabs.add(tab)
+      ))
 
       val editorCompositeEntry = EditorCompositeEntry(composite = composite, delayedState = fileEntry)
       openedCompositeEntries.add(editorCompositeEntry)
@@ -2147,27 +2132,26 @@ open class FileEditorManagerImpl(
 
     window.tabbedPane.setTabs(tabs)
 
-    val tab = tabs.get(max(items.indexOfFirst { it.fileEntry.currentInTab }, 0))
-    val composite = tab.composite
-    window.selectTabOnStartup(tabToSelect = tab, composite = composite)
-
-    if (requestFocus) {
-      composite.coroutineScope.launch {
-        // well, we cannot focus if component is not added
-        windowAdded()
-        // wait for the file editor
-        composite.waitForAvailable()
-        if (withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            focusEditorOnComposite(composite = composite, splitters = splitters, toFront = false)
-          }) {
-          // update frame title only when the first file editor is ready to load (editor is not yet fully loaded at this moment)
-          splitters.updateFrameTitle()
-        }
-      }
+    if (tabs.isEmpty()) {
+      return
     }
 
-    for (item in items) {
-      splitters.afterFileOpen(file = item.file)
+    window.selectTabOnStartup(
+      tab = tabs.get(max(items.indexOfFirst { it.fileEntry.currentInTab }, 0)),
+      requestFocus = requestFocus,
+      windowAdded = windowAdded,
+    )
+
+    for (tab in tabs) {
+      val composite = tab.composite
+      splitters.afterFileOpen(file = composite.file)
+
+      composite.coroutineScope.launch {
+        val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(composite.project, composite.file) }
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          tab.setTabColor(color)
+        }
+      }
 
       composite.coroutineScope.launch {
         composite.selectedEditorWithProvider.drop(1).collect {
@@ -2408,3 +2392,10 @@ private suspend fun updateFileNames(allSplitters: Set<EditorsSplitters>, file: V
 }
 
 internal fun isSingletonFileEditor(fileEditor: FileEditor?): Boolean = SINGLETON_EDITOR_IN_WINDOW.get(fileEditor, false)
+
+@Internal
+fun getForegroundColorForFile(project: Project, file: VirtualFile): ColorKey? {
+  return EditorTabColorProvider.EP_NAME.extensionList.firstNotNullOfOrNull {
+    it.getEditorTabForegroundColor(project, file)
+  }
+}

@@ -2922,7 +2922,6 @@ c:com.intellij.ui.components.JBPanel
 - f:withPreferredSize(I,I):com.intellij.ui.components.JBPanel
 - f:withPreferredWidth(I):com.intellij.ui.components.JBPanel
 f:com.intellij.ui.icons.CachedImageIconKt
-- sf:decodeCachedImageIconFromByteArray(B[]):javax.swing.Icon
 - sf:getEMPTY_ICON():javax.swing.ImageIcon
 com.intellij.ui.icons.CopyableIcon
 - javax.swing.Icon
