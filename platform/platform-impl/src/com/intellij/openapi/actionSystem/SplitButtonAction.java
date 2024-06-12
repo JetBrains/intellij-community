@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -122,6 +123,14 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
       myPresentation.copyFrom(presentation, this);
       actionEnabled = presentation.isEnabled();
       myPresentation.setEnabled(true);
+    }
+
+    @Override
+    protected @Nullable String getShortcutText() {
+      if (selectedAction != null && !myUpdateSelectedActionAfterExecution) {
+        return KeymapUtil.getFirstKeyboardShortcutText(selectedAction);
+      }
+      return super.getShortcutText();
     }
 
     @Override
