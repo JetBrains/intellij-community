@@ -627,7 +627,26 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
           }
       }
       interface Abba {}
-      record Rec(String s, int i) {}""";
+      record Rec(String s, int i) {}
+      
+      class SimpleClass {
+        class EmptyClass{}
+      
+        void emptyMethod() {}
+      
+        void ComplexMethodWithEmptyCodeBlocks() {
+            try {} catch (Exception e) {}
+            Runnable r = () -> {};
+        }
+      
+        void oneLineMethod() {int x = 10;}
+      
+        void ComplexMethodWithOneLineCodeBlocks() {
+            try {int x = 10;} catch (Exception e) {int y = 10;}
+      
+            Runnable r = () -> {int z = 30;};
+        }
+      }""";
 
   @SuppressWarnings({"UnusedLabel", "InnerClassMayBeStatic"})
   @org.intellij.lang.annotations.Language("JAVA") private static final String WRAPPING_CODE_SAMPLE =
