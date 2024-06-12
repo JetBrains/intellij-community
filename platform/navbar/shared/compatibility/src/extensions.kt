@@ -3,9 +3,17 @@ package com.intellij.platform.navbar.compatibility
 
 import com.intellij.ide.impl.DataValidators
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
+import com.intellij.openapi.actionSystem.CompositeDataProvider
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 
 fun extensionData(dataId: String, provider: DataProvider): Any? {
+  if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId)) {
+    val bgtProviders = NavBarModelExtension.EP_NAME.extensionList.mapNotNull {
+      it.getData(dataId, provider) as? DataProvider
+    }
+    return CompositeDataProvider.compose(bgtProviders);
+  }
   for (modelExtension in NavBarModelExtension.EP_NAME.extensionList) {
     val data = modelExtension.getData(dataId, provider)
     if (data != null) {
