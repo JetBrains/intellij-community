@@ -8,12 +8,14 @@ import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.HintHint
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.Topic.AppLevel
@@ -25,7 +27,10 @@ private val logger = fileLogger()
 @Internal
 interface ClientLookupManager {
   companion object {
+    @RequiresBlockingContext
     fun getInstance(session: ClientProjectSession): ClientLookupManager = session.service()
+
+    @RequiresBlockingContext
     fun getCurrentInstance(project: Project): ClientLookupManager = project.currentSession.service()
   }
 
