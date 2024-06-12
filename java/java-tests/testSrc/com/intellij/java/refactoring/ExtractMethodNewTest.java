@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.registry.Registry;
@@ -1932,11 +1933,18 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK()) {
-      @Override
-      protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-        DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model);
-      }
-    };
+    return new SimpleLightProjectDescriptorWithAnnotations(getModuleTypeId(), getProjectJDK());
+  }
+
+  static class SimpleLightProjectDescriptorWithAnnotations extends SimpleLightProjectDescriptor{
+
+    protected SimpleLightProjectDescriptorWithAnnotations(@NotNull String moduleTypeId, @Nullable Sdk sdk) {
+      super(moduleTypeId, sdk);
+    }
+
+    @Override
+    protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model);
+    }
   }
 }

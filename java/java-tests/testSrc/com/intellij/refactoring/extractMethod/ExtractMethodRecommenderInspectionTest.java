@@ -16,6 +16,15 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.pom.java.LanguageLevel.JDK_21_PREVIEW;
 
 public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+
+  private static final ProjectDescriptor JDK_21_PREVIEW_WITH_ANNOTATIONS = new ProjectDescriptor(JDK_21_PREVIEW) {
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
+      addJetBrainsAnnotationsWithTypeUse(model);
+    }
+  };
+
   public void testExtractMethodRecommender() {
     ExtractMethodRecommenderInspection inspection = new ExtractMethodRecommenderInspection();
     inspection.minLength = 10;
@@ -73,13 +82,7 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new ProjectDescriptor(JDK_21_PREVIEW){
-      @Override
-      public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-        model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
-        addJetBrainsAnnotationsWithTypeUse(model);
-      }
-    };
+    return JDK_21_PREVIEW_WITH_ANNOTATIONS;
   }
 
   @Override

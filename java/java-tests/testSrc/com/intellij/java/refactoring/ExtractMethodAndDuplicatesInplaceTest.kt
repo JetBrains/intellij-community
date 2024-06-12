@@ -10,9 +10,6 @@ import com.intellij.ide.IdePopupManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
@@ -26,7 +23,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintE
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.ui.ChooserInterceptor
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ui.UIUtil
@@ -574,11 +570,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
-    return object : SimpleLightProjectDescriptor(moduleTypeId, projectJDK) {
-      override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-        DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model)
-      }
-    }
+    return ExtractMethodNewTest.SimpleLightProjectDescriptorWithAnnotations(moduleTypeId, projectJDK)
   }
 
   override fun setUp() {

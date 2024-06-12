@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.refactoring;
+package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.psi.*;
@@ -29,7 +29,7 @@ public final class ModifierListUtil {
    * {@link ModifierComparator}) list as a PsiModifierList object
    */
   public static @Nullable PsiModifierList createSortedModifierList(@NotNull PsiModifierList modifierList,
-                                                                   @Nullable Comparator<PsiElement> customAnnotationComparator,
+                                                                   @Nullable Comparator<? super PsiAnnotation> customAnnotationComparator,
                                                                    boolean allowAnnotationTypeBeInAnyAllowedPlace) {
     @NonNls final String text = String.join(" ", getSortedModifiers(modifierList, customAnnotationComparator, allowAnnotationTypeBeInAnyAllowedPlace));
     return createNewModifierList(modifierList, text);
@@ -74,7 +74,7 @@ public final class ModifierListUtil {
    * @see ModifierListUtil#createSortedModifierList(PsiModifierList, Comparator, boolean)
    */
   public static List<String> getSortedModifiers(@NotNull PsiModifierList modifierList,
-                                                @Nullable Comparator<PsiElement> customAnnotationComparator,
+                                                @Nullable Comparator<? super PsiAnnotation> customAnnotationComparator,
                                                 boolean allowAnnotationTypeBeInAnyAllowedPlace) {
     final List<String> modifiers = new SmartList<>();
     final List<PsiAnnotation> typeAnnotations = new SmartList<>();

@@ -29,7 +29,7 @@ import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.ModifierListUtil;
+import com.intellij.refactoring.util.ModifierListUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -377,10 +377,7 @@ public final class GenerateMembersUtil {
         }
       }
     }
-    Comparator<PsiElement> comparator = (o1, o2) -> {
-      if (!(o1 instanceof PsiAnnotation a1) || !(o2 instanceof PsiAnnotation a2)) {
-        return 0;
-      }
+    Comparator<PsiAnnotation> comparator = (a1, a2) -> {
       String q1 = a1.getQualifiedName();
       String q2 = a2.getQualifiedName();
       if (q1 == null || q2 == null) return 0;
