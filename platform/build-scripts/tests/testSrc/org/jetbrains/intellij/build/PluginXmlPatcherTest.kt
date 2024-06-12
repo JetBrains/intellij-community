@@ -199,7 +199,6 @@ class PluginXmlPatcherTest {
             &lt;br&gt;&lt;br&gt;</description>
     </idea-plugin>
     """.trimIndent(),
-    productName = "WebStorm",
     toPublish = true,
   )
 
@@ -258,7 +257,6 @@ class PluginXmlPatcherTest {
   private fun assertTransform(
     @Language("XML") before: String,
     @Language("XML") after: String,
-    productName: String = "UnExistent",
     toPublish: Boolean = false,
     isEap: Boolean = false,
     retainProductDescriptorForBundledPlugin: Boolean = false,
@@ -273,7 +271,6 @@ class PluginXmlPatcherTest {
       toPublish = toPublish,
       retainProductDescriptorForBundledPlugin = retainProductDescriptorForBundledPlugin,
       isEap = isEap,
-      productName = productName,
     )
     assertThat(JDOMUtil.write(result)).isEqualTo(after)
   }

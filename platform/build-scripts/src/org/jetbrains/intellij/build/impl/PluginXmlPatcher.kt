@@ -72,7 +72,6 @@ internal fun patchPluginXml(
       toPublish = pluginsToPublish.contains(plugin),
       retainProductDescriptorForBundledPlugin = plugin.retainProductDescriptorForBundledPlugin,
       isEap = context.applicationInfo.isEAP,
-      productName = context.applicationInfo.fullProductName,
     )
 
     embedContentModules(
@@ -103,7 +102,6 @@ fun doPatchPluginXml(
   toPublish: Boolean,
   retainProductDescriptorForBundledPlugin: Boolean,
   isEap: Boolean,
-  productName: String,
 ): Element {
   val ideaVersionElement = getOrCreateTopElement(rootElement, "idea-version", listOf("id", "name"))
   ideaVersionElement.setAttribute("since-build", compatibleSinceUntil.first)
@@ -120,7 +118,11 @@ fun doPatchPluginXml(
       Span.current().addEvent("patch $pluginModuleName <product-descriptor/>")
 
       setProductDescriptorEapAttribute(productDescriptor, isEap)
-      productDescriptor.setAttribute("release-date", releaseDate)
+      val overriddenReleaseDate = productDescriptor.getAttribute("release-date")
+        ?.value?.takeUnless { it.startsWith("__") }
+      if (overriddenReleaseDate == null) {
+        productDescriptor.setAttribute("release-date", releaseDate)
+      }
       productDescriptor.setAttribute("release-version", releaseVersion)
     }
   }
