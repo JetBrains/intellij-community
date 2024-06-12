@@ -507,6 +507,7 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - isFoldingOutlineShown():Z
 - isFoldingOutlineShownOnlyOnHover():Z
 - isFullLineHeightCursor():Z
+- isHighlightSelectionOccurrences():Z
 - isIndentGuidesShown():Z
 - isInnerWhitespacesShown():Z
 - isInsertParenthesesAutomatically():Z
@@ -565,6 +566,7 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - setFoldingOutlineShownOnlyOnHover(Z):V
 - setFullLineHeightCursor(Z):V
 - setGutterIconsShown(Z):V
+- setHighlightSelectionOccurrences(Z):V
 - setHorizontalScrollJump(I):V
 - setHorizontalScrollOffset(I):V
 - setIndentGuidesShown(Z):V
@@ -631,6 +633,7 @@ f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
 - IS_FOLDING_OUTLINE_SHOWN:Z
 - IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER:Z
 - IS_FULL_LINE_HEIGHT_CURSOR:Z
+- IS_HIGHLIGHT_SELECTION_OCCURRENCES:Z
 - IS_INDENT_GUIDES_SHOWN:Z
 - IS_INNER_WHITESPACES_SHOWN:Z
 - IS_LEADING_WHITESPACES_SHOWN:Z
@@ -706,6 +709,7 @@ f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$PropNames
 - sf:PROP_IS_FOLDING_OUTLINE_SHOWN:java.lang.String
 - sf:PROP_IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER:java.lang.String
 - sf:PROP_IS_FULL_LINE_HEIGHT_CURSOR:java.lang.String
+- sf:PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES:java.lang.String
 - sf:PROP_IS_INDENT_GUIDES_SHOWN:java.lang.String
 - sf:PROP_IS_INNER_WHITESPACES_SHOWN:java.lang.String
 - sf:PROP_IS_LEADING_WHITESPACES_SHOWN:java.lang.String

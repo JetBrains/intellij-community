@@ -95,6 +95,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_FULL_LINE_HEIGHT_CURSOR = false;
+    public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = true;
     public boolean IS_WHITESPACES_SHOWN = false;
     public boolean IS_LEADING_WHITESPACES_SHOWN = true;
     public boolean IS_INNER_WHITESPACES_SHOWN = true;
@@ -528,6 +529,17 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     if (old == val) return;
     myOptions.IS_FULL_LINE_HEIGHT_CURSOR = val;
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FULL_LINE_HEIGHT_CURSOR, old, val);
+  }
+  
+  public boolean isHighlightSelectionOccurrences() {
+    return myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES;
+  }
+  
+  public void setHighlightSelectionOccurrences(boolean val) {
+    boolean old = myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES;
+    if (old == val) return;
+    myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES, old, val);
   }
 
   public boolean isCaretRowShown() {
@@ -1131,6 +1143,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public static final @NonNls String PROP_SMART_HOME = "smartHome";
     public static final @NonNls String PROP_IS_BLOCK_CURSOR = "isBlockCursor";
     public static final @NonNls String PROP_IS_FULL_LINE_HEIGHT_CURSOR = "isFullLineHeightCursor";
+    public static final @NonNls String PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES = "isHighlightSelectionOccurrences";
     public static final @NonNls String PROP_IS_WHITESPACES_SHOWN = "isWhitespacesShown";
     public static final @NonNls String PROP_IS_LEADING_WHITESPACES_SHOWN = "isLeadingWhitespacesShown";
     public static final @NonNls String PROP_IS_INNER_WHITESPACES_SHOWN = "isInnerWhitespacesShown";

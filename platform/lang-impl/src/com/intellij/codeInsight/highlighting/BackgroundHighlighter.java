@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -132,8 +131,9 @@ final class BackgroundHighlighter {
           clearBraces(project, ((TextEditor)oldEditor).getEditor(), alarm);
         }
         FileEditor newEditor = e.getNewEditor();
-        if (newEditor instanceof TextEditor) {
-          updateHighlighted(project, ((TextEditor)newEditor).getEditor(), alarm);
+        if (newEditor instanceof TextEditor textEditor) {
+          updateHighlighted(project, textEditor.getEditor(), alarm);
+          highlightSelection(project, textEditor.getEditor());
         }
       }
     });
@@ -161,9 +161,6 @@ final class BackgroundHighlighter {
   }
 
   private static void highlightSelection(@NotNull Project project, @NotNull Editor editor) {
-    if (!Registry.is("editor.highlight.selected.text.occurrences") || !CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
-      return;
-    }
     ThreadingAssertions.assertEventDispatchThread();
     Document document = editor.getDocument();
     long stamp = document.getModificationStamp();
@@ -180,6 +177,9 @@ final class BackgroundHighlighter {
       for (RangeHighlighter highlighter : oldHighlighters) {
         markupModel.removeHighlighter(highlighter);
       }
+    }
+    if (!editor.getSettings().isHighlightSelectionOccurrences()) {
+      return;
     }
     if (TemplateManagerUtilBase.getTemplateState(editor) != null) {
       return; // don't highlight selected text when template is active

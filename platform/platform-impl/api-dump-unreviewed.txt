@@ -14647,6 +14647,7 @@ f:com.intellij.openapi.editor.impl.SettingsImpl
 - isDndEnabled():Z
 - isFoldingOutlineShown():Z
 - isFullLineHeightCursor():Z
+- isHighlightSelectionOccurrences():Z
 - isIndentGuidesShown():Z
 - isInnerWhitespaceShown():Z
 - isInsertParenthesesAutomatically():Z
@@ -14691,6 +14692,7 @@ f:com.intellij.openapi.editor.impl.SettingsImpl
 - setFoldingOutlineShown(Z):V
 - setFullLineHeightCursor(Z):V
 - setGutterIconsShown(Z):V
+- setHighlightSelectionOccurrences(Z):V
 - setHorizontalScrollJump(I):V
 - setHorizontalScrollOffset(I):V
 - setIndentGuidesShown(Z):V

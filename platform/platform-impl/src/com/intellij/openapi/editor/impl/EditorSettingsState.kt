@@ -128,6 +128,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
     if (editor != null && rightMargin == CodeStyleConstraints.MAX_RIGHT_MARGIN) false
     else EditorSettingsExternalizable.getInstance().isRightMarginShown
   }
+  var myIsHighlightSelectionOccurrences: Boolean by property { EditorSettingsExternalizable.getInstance().isHighlightSelectionOccurrences }
   var myVerticalScrollOffset: Int by property { EditorSettingsExternalizable.getInstance().verticalScrollOffset }
 
 
