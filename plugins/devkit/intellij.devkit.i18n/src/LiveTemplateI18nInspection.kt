@@ -10,14 +10,14 @@ import org.jetbrains.idea.devkit.dom.templates.Template
 import org.jetbrains.idea.devkit.dom.templates.TemplateSet
 import org.jetbrains.idea.devkit.i18n.PluginXmlI18nInspection.highlightNonLocalizableElement
 
-class LiveTemplateI18nInspection: BasicDomElementsInspection<TemplateSet>(TemplateSet::class.java) {
+internal class LiveTemplateI18nInspection : BasicDomElementsInspection<TemplateSet>(TemplateSet::class.java) {
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     if (element is Template) {
       highlightNonLocalizableElement(holder, element.description, "description", Fix())
     }
   }
 
-  private class Fix: PluginXmlI18nInspection.InspectionI18NQuickFix("description", "live.template") {
+  private class Fix : PluginXmlI18nInspection.InspectionI18NQuickFix("description", "live.template") {
     override fun getName(xml: XmlTag): String? {
       return xml.getAttributeValue("name")
     }

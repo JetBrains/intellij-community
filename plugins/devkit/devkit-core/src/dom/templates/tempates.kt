@@ -6,7 +6,7 @@ package org.jetbrains.idea.devkit.dom.templates
 import com.intellij.util.xml.*
 import org.jetbrains.idea.devkit.dom.Option
 
-class TemplateSetDescription: DomFileDescription<TemplateSet>(TemplateSet::class.java, "templateSet")
+internal class TemplateSetDescription: DomFileDescription<TemplateSet>(TemplateSet::class.java, "templateSet")
 
 @DefinesXml
 interface TemplateSet: DomElement {

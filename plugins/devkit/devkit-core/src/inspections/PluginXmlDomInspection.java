@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
@@ -77,6 +77,7 @@ import java.util.regex.Pattern;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
+@VisibleForTesting
 public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase {
   @NonNls
   private static final String PLUGIN_ICON_SVG_FILENAME = "pluginIcon.svg";

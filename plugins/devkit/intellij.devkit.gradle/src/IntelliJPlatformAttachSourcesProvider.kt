@@ -22,7 +22,7 @@ import java.io.File
  * Some IDEs, like IntelliJ IDEA Ultimate or PhpStorm, don't provide sources for artifacts published to IntelliJ Repository.
  * To handle such a case, IntelliJ IDEA Community sources are attached.
  */
-class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
+internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
   override fun getActions(orderEntries: MutableList<out LibraryOrderEntry>, psiFile: PsiFile): List<AttachSourcesAction> {
     // Search for a product that matches any of the entry coordinates. Return both product and coordinates, to refer to the same version.
