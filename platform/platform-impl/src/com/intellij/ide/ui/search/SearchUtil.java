@@ -164,8 +164,7 @@ public final class SearchUtil {
 
   private static String getLabelFromComponent(@NotNull JLabel label) {
     String text = getLabelFromTextView(label);
-    if (text == null) text = label.getText();
-    return text;
+    return text == null ? label.getText() : text;
   }
 
   private static String getLabelFromComponent(@NotNull AbstractButton button) {
@@ -192,7 +191,7 @@ public final class SearchUtil {
 
     List<String> labels = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY);
     if (labels != null) {
-      ArrayList<String> al = new ArrayList<>(labels);
+      List<String> al = new ArrayList<>(labels);
       if (label != null) {
         al.add(label);
       }
