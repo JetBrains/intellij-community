@@ -11,11 +11,17 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 
 fun ObjClass<*>.implWsEntityCode(): String {
+  val inheritanceModifier = when {
+    openness.extendable && !openness.instantiatable -> "abstract"
+    openness.extendable && openness.instantiatable -> "open"
+    else -> ""
+  }
+
   return """
 package ${module.implPackage}    
 
 ${implWsEntityAnnotations}
-internal ${if (openness.extendable && !openness.instantiatable) "abstract" else "" } class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
+internal $inheritanceModifier class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
     ${
     """
     private companion object {
