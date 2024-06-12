@@ -3,11 +3,12 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.refactoring.RefactoringCodeVisionSupport;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaRenameCodeVisionSupport extends RenameCodeVisionSupport {
+public class JavaRefactoringCodeVisionSupport extends RefactoringCodeVisionSupport {
   @Override
-  public boolean supports(@NotNull FileType fileType) {
+  public boolean supportsRename(@NotNull FileType fileType) {
     return fileType == JavaFileType.INSTANCE;
   }
 }

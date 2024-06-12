@@ -24894,6 +24894,11 @@ f:com.intellij.refactoring.IntroduceTargetChooser
 - s:showChooser(com.intellij.openapi.editor.Editor,java.util.List,com.intellij.openapi.util.Pass,com.intellij.util.Function,java.lang.String,com.intellij.util.NotNullFunction):V
 - s:showIntroduceTargetChooser(com.intellij.openapi.editor.Editor,java.util.List,java.util.function.Consumer,java.lang.String,I):V
 - s:showIntroduceTargetChooser(com.intellij.openapi.editor.Editor,java.util.List,java.util.function.Consumer,java.lang.String,javax.swing.JComponent,I):V
+a:com.intellij.refactoring.RefactoringCodeVisionSupport
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- s:isRenameCodeVisionEnabled(com.intellij.openapi.fileTypes.FileType):Z
+- a:supportsRename(com.intellij.openapi.fileTypes.FileType):Z
 a:com.intellij.refactoring.RefactoringImpl
 - com.intellij.refactoring.Refactoring
 - pf:myProcessor:com.intellij.refactoring.BaseRefactoringProcessor
@@ -26245,11 +26250,6 @@ f:com.intellij.refactoring.rename.RenameCodeVisionSettingProvider
 - com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
 - <init>():V
 - getGroupId():java.lang.String
-a:com.intellij.refactoring.rename.RenameCodeVisionSupport
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- <init>():V
-- s:isEnabledFor(com.intellij.openapi.fileTypes.FileType):Z
-- a:supports(com.intellij.openapi.fileTypes.FileType):Z
 c:com.intellij.refactoring.rename.RenameDialog
 - com.intellij.refactoring.ui.RefactoringDialog
 - com.intellij.refactoring.rename.RenameRefactoringDialog

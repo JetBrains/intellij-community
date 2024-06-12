@@ -414,8 +414,8 @@
                     beanClass="com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsPreviewLanguage"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.refactoring.renameCodeVisionSupport"
-                    interface="com.intellij.refactoring.rename.RenameCodeVisionSupport"
+    <extensionPoint qualifiedName="com.intellij.refactoring.codeVisionSupport"
+                    interface="com.intellij.refactoring.RefactoringCodeVisionSupport"
                     dynamic="true" />
 
     <extensionPoint name="lang.floatingToolbarCustomizer" beanClass="com.intellij.lang.LanguageExtensionPoint"

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.RefactoringCodeVisionSupport
 import com.intellij.refactoring.suggested.REFACTORING_DATA_KEY
 import com.intellij.refactoring.suggested.SuggestedRenameData
 import com.intellij.refactoring.suggested.performSuggestedRefactoring
@@ -68,7 +69,7 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
   private fun getCodeVisionState(editor: Editor, project: Project): CodeVisionState {
     val file = editor.virtualFile?.findPsiFile(project)
 
-    if (file != null && !RenameCodeVisionSupport.isEnabledFor(file.fileType)) {
+    if (file != null && !RefactoringCodeVisionSupport.isRenameCodeVisionEnabled(file.fileType)) {
       return CodeVisionState.READY_EMPTY
     }
 

@@ -19,7 +19,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.rename.RenameCodeVisionSupport
+import com.intellij.refactoring.RefactoringCodeVisionSupport
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
@@ -218,7 +218,7 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
 
   when {
     // The gutter icon should be hidden when the rename inlay is shown
-    refactoringData is SuggestedRenameData && RenameCodeVisionSupport.isEnabledFor(psiFile.fileType) -> {
+    refactoringData is SuggestedRenameData && RefactoringCodeVisionSupport.isRenameCodeVisionEnabled(psiFile.fileType) -> {
       refactoringAvailable = false
       tooltip = ""
       markerRange = TextRange.EMPTY_RANGE
