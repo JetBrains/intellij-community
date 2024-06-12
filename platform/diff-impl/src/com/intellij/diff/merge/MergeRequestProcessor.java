@@ -222,10 +222,10 @@ public abstract class MergeRequestProcessor implements Disposable {
     JPanel buttonsPanel = new NonOpaquePanel(new BorderLayout());
     buttonsPanel.setBorder(new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
 
-    if (leftActions.size() > 0) {
+    if (!leftActions.isEmpty()) {
       buttonsPanel.add(createButtonsPanel(leftActions, rootPane), BorderLayout.WEST);
     }
-    if (rightActions.size() > 0) {
+    if (!rightActions.isEmpty()) {
       buttonsPanel.add(createButtonsPanel(rightActions, rootPane), BorderLayout.EAST);
     }
 
