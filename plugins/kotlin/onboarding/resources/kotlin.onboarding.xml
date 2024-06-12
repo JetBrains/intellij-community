@@ -14,7 +14,7 @@
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.OnboardingFeedbackSurvey"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.K2FeedbackSurvey"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurvey"/>
-    <postStartupActivity implementation="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.ShowK2SurveyNotificationAfterRestartPostStartupActivity"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.CheckKotlinPluginModeWasSwitchedOnRestartPostStartupActivity"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionExternalSystemListener"/>
   </extensions>
   <actions resource-bundle="messages.FeedbackBundle">
