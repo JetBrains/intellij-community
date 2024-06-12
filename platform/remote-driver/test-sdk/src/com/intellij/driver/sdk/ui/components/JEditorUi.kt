@@ -14,7 +14,6 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import org.intellij.lang.annotations.Language
 import java.awt.Point
-import java.awt.event.KeyEvent
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
   return x(xpath ?: "//div[@class='EditorComponentImpl']",
@@ -90,8 +89,10 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun clickOnPosition(line: Int, column: Int) {
     setFocus()
-    click(interact { val lowerPoint = editor.logicalPositionToXY(driver.logicalPosition(line-1, column-1))
-      Point(lowerPoint.getX().toInt(), lowerPoint.getY().toInt()+editor.getLineHeight()/2)})
+    click(interact {
+      val lowerPoint = editor.logicalPositionToXY(driver.logicalPosition(line - 1, column - 1))
+      Point(lowerPoint.getX().toInt(), lowerPoint.getY().toInt() + editor.getLineHeight() / 2)
+    })
   }
 
   fun getLineText(line: Int) = editor.getDocument().getText().split("\n").let {
@@ -109,6 +110,15 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 @BeControlClass(EditorComponentImplBeControlBuilder::class)
 interface EditorComponentImpl : Component {
   fun getEditor(): Editor
+}
+
+class EditorTextFieldUiComponent(data: ComponentData) : UiComponent(data) {
+  val text: String by lazy { driver.cast(component, EditorTextField::class).getText() }
+}
+
+@Remote("com.intellij.ui.EditorTextField")
+interface EditorTextField : Component {
+  fun getText(): String
 }
 
 fun Finder.gutter(@Language("xpath") xpath: String = "//div[@class='EditorGutterComponentImpl']") = x(xpath, GutterUiComponent::class.java)
@@ -145,11 +155,6 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
     fun click() {
       click(location)
     }
-
-
-
-
-
   }
 }
 
