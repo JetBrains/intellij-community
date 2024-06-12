@@ -595,18 +595,21 @@ internal class ActionUpdater @JvmOverloads constructor(
             supplier()
           }
         }
-      } as Deferred<T>
+      }
     }
     else {
       // not a good branch to be in, seek ways to get bgtScope
-      CompletableDeferred<T>().apply {
-        completeWith(runCatching {
-          runBlockingForActionExpand {
-            supplier()
-          }
-        })
+      val deferred = CompletableDeferred<T>()
+      sessionData.computeIfAbsent(key) { deferred }.also {
+        if (it == deferred) {
+          deferred.completeWith(runCatching {
+            runBlockingForActionExpand {
+              supplier()
+            }
+          })
+        }
       }
-    }
+    } as Deferred<T>
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
