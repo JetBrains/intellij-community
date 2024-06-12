@@ -354,6 +354,14 @@
                      groupPath="Kotlin" groupKey="group.names.redundant.constructs" groupBundle="messages.KotlinBundle"
                      level="WEAK WARNING" enabledByDefault="true"
                      key="inspection.complex.redundant.let.display.name" bundle="messages.KotlinBundle"/>
-
+    <globalInspection groupPath="Kotlin" language="kotlin"
+                      groupBundle="messages.KotlinBundle"
+                      groupKey="group.names.coroutine"
+                      bundle="messages.KotlinBundle"
+                      key="inspection.runblocking.presentation.display.name"
+                      enabledByDefault="true"
+                      level="WARNING"
+                      implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.RunBlockingInspection"
+                      presentation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.RunBlockingInspectionPresentation"/>
   </extensions>
 </idea-plugin>

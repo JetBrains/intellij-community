@@ -1737,6 +1737,8 @@ f:com.intellij.codeInspection.DeprecationUtil
 - <init>():V
 - s:getDeprecationDisplayName():java.lang.String
 - s:getForRemovalDisplayName():java.lang.String
+com.intellij.codeInspection.ExportedInspectionsResultModifier
+- a:modifyResult(org.jdom.Element):V
 c:com.intellij.codeInspection.ExternalAnnotatorInspectionVisitor
 - com.intellij.psi.PsiElementVisitor
 - <init>(com.intellij.codeInspection.ProblemsHolder,com.intellij.lang.annotation.ExternalAnnotator,Z):V
