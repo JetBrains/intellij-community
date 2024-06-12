@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.impl.LightFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import kotlinx.collections.immutable.persistentListOf
@@ -39,44 +38,6 @@ internal class HistoryEntry(
   companion object {
     const val TAG: @NonNls String = "entry"
     const val FILE_ATTRIBUTE: String = "file"
-
-    fun createHeavy(
-      project: Project,
-      file: VirtualFile,
-      providers: List<FileEditorProvider?>,
-      states: List<FileEditorState?>,
-      selectedProvider: FileEditorProvider,
-      preview: Boolean,
-    ): HistoryEntry {
-      if (project.isDisposed) {
-        val pointer = LightFilePointer(file = file)
-        val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
-        for ((index, provider) in providers.withIndex()) {
-          stateMap.put(provider ?: continue, states.get(index) ?: continue)
-        }
-        return HistoryEntry(
-          filePointer = pointer,
-          selectedProvider = selectedProvider,
-          isPreview = preview,
-          disposable = null,
-          providerToState = stateMap,
-        )
-      }
-
-      val disposable = Disposer.newDisposable()
-      val pointer = VirtualFilePointerManager.getInstance().create(file, disposable, null)
-      val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
-      for (i in providers.indices) {
-        stateMap.put(providers.get(i) ?: continue, states.get(i) ?: continue)
-      }
-      return HistoryEntry(
-        filePointer = pointer,
-        selectedProvider = selectedProvider,
-        isPreview = preview,
-        disposable = disposable,
-        providerToState = stateMap,
-      )
-    }
 
     fun createHeavy(project: Project, e: Element): HistoryEntry {
       val fileEditorProviderManager = FileEditorProviderManager.getInstance()

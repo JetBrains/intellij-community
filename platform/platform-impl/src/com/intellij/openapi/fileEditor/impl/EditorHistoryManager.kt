@@ -15,9 +15,11 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -125,20 +127,20 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       return
     }
 
-    val states = arrayOfNulls<FileEditorState>(list.size)
-    for ((index, item) in list.reversed().withIndex()) {
-      val editor = item.fileEditor
-      if (editor.isValid) {
-        states[index] = editor.getState(FileEditorStateLevel.FULL)
-      }
+    val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>(list.size)
+    for (item in list) {
+      val state = item.fileEditor.takeIf { it.isValid }?.getState(FileEditorStateLevel.FULL) ?: continue
+      stateMap.put(item.provider, state)
     }
-    val entry = HistoryEntry.createHeavy(
-      project = project,
-      file = file,
-      providers = list.map { it.provider },
-      states = states.asList(),
+
+    val disposable = Disposer.newDisposable()
+    val pointer = VirtualFilePointerManager.getInstance().create(file, disposable, null)
+    val entry = HistoryEntry(
+      filePointer = pointer,
       selectedProvider = selected.provider,
-      preview = editorComposite != null && editorComposite.isPreview,
+      isPreview = editorComposite != null && editorComposite.isPreview,
+      disposable = disposable,
+      providerToState = stateMap,
     )
     synchronized(this) {
       entries.add(entry)
