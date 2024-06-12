@@ -21,5 +21,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" exported="" />
     <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
   </component>
 </module>

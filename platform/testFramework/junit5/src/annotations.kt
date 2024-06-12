@@ -1,7 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5
 
-import com.intellij.testFramework.junit5.impl.*
+import com.intellij.testFramework.junit5.RunMethodInEdt.WriteIntentMode
+import com.intellij.testFramework.junit5.fixture.TestFixtureExtension
+import com.intellij.testFramework.junit5.impl.EdtInterceptorExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationLeakTrackerExtension
+import com.intellij.testFramework.junit5.impl.TestDisposableExtension
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.ExtendWith
 import java.lang.annotation.Inherited
@@ -92,5 +97,6 @@ annotation class TestDisposable
 @ExtendWith(
   TestApplicationExtension::class,
   TestApplicationLeakTrackerExtension::class,
+  TestFixtureExtension::class,
 )
 annotation class TestApplication
