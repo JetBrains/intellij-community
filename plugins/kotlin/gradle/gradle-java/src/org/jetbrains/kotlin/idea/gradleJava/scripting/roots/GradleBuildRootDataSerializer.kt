@@ -21,17 +21,16 @@ internal object GradleBuildRootDataSerializer {
 
     private val currentBuildRoot: ThreadLocal<VirtualFile> = ThreadLocal()
 
-    private val buildRootDataGist =
-        GistStorage.getInstance().newGist("GradleBuildRootData", BINARY_FORMAT_VERSION, Externalizer)
+    private fun newGist() = GistStorage.getInstance().newGist("GradleBuildRootData", BINARY_FORMAT_VERSION, Externalizer)
 
     fun read(buildRoot: VirtualFile): GradleBuildRootData? {
         currentBuildRoot.set(buildRoot)
-        return buildRootDataGist.getGlobalData(buildRoot, NO_TRACK_GIST_STAMP).data()
+        return newGist().getGlobalData(buildRoot, NO_TRACK_GIST_STAMP).data()
     }
 
     fun write(buildRoot: VirtualFile, data: GradleBuildRootData?) {
         currentBuildRoot.set(buildRoot) // putGlobalData calls  Externalizer.read
-        buildRootDataGist.putGlobalData(buildRoot, data, NO_TRACK_GIST_STAMP)
+        newGist().putGlobalData(buildRoot, data, NO_TRACK_GIST_STAMP)
     }
 
     fun remove(buildRoot: VirtualFile) {
