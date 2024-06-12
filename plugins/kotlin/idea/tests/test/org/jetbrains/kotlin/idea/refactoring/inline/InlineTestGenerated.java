@@ -1014,6 +1014,26 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/noUsages.kt");
             }
 
+            @TestMetadata("ObjectQualificationByLabeledThis.kt")
+            public void testObjectQualificationByLabeledThis() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/ObjectQualificationByLabeledThis.kt");
+            }
+
+            @TestMetadata("ObjectQualificationByName.kt")
+            public void testObjectQualificationByName() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/ObjectQualificationByName.kt");
+            }
+
+            @TestMetadata("ObjectQualificationByThis.kt")
+            public void testObjectQualificationByThis() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/ObjectQualificationByThis.kt");
+            }
+
+            @TestMetadata("ObjectQualificationImplicit.kt")
+            public void testObjectQualificationImplicit() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/ObjectQualificationImplicit.kt");
+            }
+
             @TestMetadata("Parameter.kt")
             public void testParameter() throws Exception {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/Parameter.kt");

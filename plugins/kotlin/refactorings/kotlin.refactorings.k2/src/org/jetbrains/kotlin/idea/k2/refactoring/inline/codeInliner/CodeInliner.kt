@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -98,10 +99,10 @@ class CodeInliner(
                 val receiverValue = partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver
                 if (receiverValue is KtImplicitReceiverValue) {
                     val symbol = receiverValue.symbol
-                    val thisText = if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
-                        "this@" + symbol.name!!.asString()
-                    } else {
-                        "this"
+                    val thisText = when {
+                        symbol is KaClassOrObjectSymbol && symbol.classKind.isObject && symbol.name != null -> symbol.name!!.asString()
+                        symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol -> "this@" + symbol.name!!.asString()
+                        else -> "this"
                     }
                     receiver = psiFactory.createExpression(thisText)
                     val type = receiverValue.type
@@ -114,8 +115,7 @@ class CodeInliner(
 
         receiver?.let { r ->
             for (instanceExpression in codeToInline.collectDescendantsOfType<KtInstanceExpressionWithLabel> {
-                // for this@ClassName we have only option to keep it as is (although it's sometimes incorrect but we have no other options)
-                it is KtThisExpression && it.getCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY) == null && it.labelQualifier == null
+                it is KtThisExpression && it.getCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY) == null
             }) {
                 codeToInline.replaceExpression(instanceExpression, r)
             }
