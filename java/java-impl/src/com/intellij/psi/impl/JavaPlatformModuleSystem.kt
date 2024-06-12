@@ -245,7 +245,8 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun isPatchedModule(targetModuleName: String, module: Module, place: PsiFileSystemItem): Boolean {
-    val rootForFile = ProjectRootManager.getInstance(place.project).fileIndex.getSourceRootForFile(place.virtualFile) ?: return false
+    val virtualFile = place.virtualFile ?: return false
+    val rootForFile = ProjectRootManager.getInstance(place.project).fileIndex.getSourceRootForFile(virtualFile) ?: return false
     return JavaCompilerConfigurationProxy.isPatchedModuleRoot(targetModuleName, module, rootForFile)
   }
 
