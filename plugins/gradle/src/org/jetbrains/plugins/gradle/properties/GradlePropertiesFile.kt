@@ -23,11 +23,12 @@ const val GRADLE_ISOLATED_PROJECTS_PROPERTY = "org.gradle.unsafe.isolated-projec
 
 object GradlePropertiesFile {
 
-  fun getProperties(project: Project, externalProjectPath: Path) =
-    findAndMergeProperties(getPossiblePropertiesFiles(project, externalProjectPath))
+  @JvmStatic
+  fun getProperties(project: Project, projectPath: Path) =
+    findAndMergeProperties(getPossiblePropertiesFiles(project, projectPath))
 
-  fun getProperties(serviceDirectoryStr: String?, externalProjectPath: Path) =
-    findAndMergeProperties(getPossiblePropertiesFiles(serviceDirectoryStr, externalProjectPath))
+  fun getProperties(serviceDirectoryStr: String?, projectPath: Path) =
+    findAndMergeProperties(getPossiblePropertiesFiles(serviceDirectoryStr, projectPath))
 
   private fun findAndMergeProperties(possiblePropertiesFiles: List<Path>): GradleProperties {
     return possiblePropertiesFiles
@@ -37,19 +38,19 @@ object GradlePropertiesFile {
       .reduce(::mergeGradleProperties)
   }
 
-  private fun getPossiblePropertiesFiles(project: Project, externalProjectPath: Path): List<Path> {
+  private fun getPossiblePropertiesFiles(project: Project, projectPath: Path): List<Path> {
     return listOfNotNull(
       getGradleServiceDirectoryPath(project),
       getGradleHomePropertiesPath(),
-      getGradleProjectPropertiesPath(externalProjectPath)
+      getGradleProjectPropertiesPath(projectPath)
     )
   }
 
-  private fun getPossiblePropertiesFiles(serviceDirectoryStr: String?, externalProjectPath: Path): List<Path> {
+  private fun getPossiblePropertiesFiles(serviceDirectoryStr: String?, projectPath: Path): List<Path> {
     return listOfNotNull(
       getGradleServiceDirectoryPath(serviceDirectoryStr),
       getGradleHomePropertiesPath(),
-      getGradleProjectPropertiesPath(externalProjectPath)
+      getGradleProjectPropertiesPath(projectPath)
     )
   }
 
@@ -74,8 +75,8 @@ object GradlePropertiesFile {
     return null
   }
 
-  private fun getGradleProjectPropertiesPath(externalProjectPath: Path) =
-    externalProjectPath.resolve(GRADLE_PROPERTIES_FILE_NAME)
+  private fun getGradleProjectPropertiesPath(projectPath: Path) =
+    projectPath.resolve(GRADLE_PROPERTIES_FILE_NAME)
 
   private fun loadGradleProperties(propertiesPath: Path): GradleProperties {
     val properties = GradleUtil.readGradleProperties(propertiesPath) ?: return EMPTY
