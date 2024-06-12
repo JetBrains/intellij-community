@@ -61,10 +61,6 @@ public class GradleExternalProjectModelBuilder extends AbstractModelBuilderServi
     externalProject.setGroup(wrap(project.getGroup()));
     externalProject.setProjectDir(project.getProjectDir());
     externalProject.setTasks(getTasks(project, context));
-    externalProject.setChildProjects(getChildProjects(project, context));
-
-    GradleExternalProjectCache.getInstance(context)
-      .setProjectModel(project, externalProject);
 
     return externalProject;
   }
@@ -103,19 +99,6 @@ public class GradleExternalProjectModelBuilder extends AbstractModelBuilderServi
     return result;
   }
 
-  private static @NotNull Map<String, DefaultExternalProject> getChildProjects(
-    @NotNull Project project,
-    @NotNull ModelBuilderContext context
-  ) {
-    GradleExternalProjectCache projectCache = GradleExternalProjectCache.getInstance(context);
-    Map<String, DefaultExternalProject> result = new TreeMap<>();
-    for (Map.Entry<String, Project> entry : project.getChildProjects().entrySet()) {
-      DefaultExternalProject childProject = projectCache.getProjectModel(entry.getValue());
-      result.put(entry.getKey(), childProject);
-    }
-    return result;
-  }
-
   private static @NotNull String wrap(@Nullable Object o) {
     return o instanceof CharSequence ? o.toString() : "";
   }
@@ -127,9 +110,6 @@ public class GradleExternalProjectModelBuilder extends AbstractModelBuilderServi
     @NotNull ModelBuilderContext context,
     @NotNull Exception exception
   ) {
-    GradleExternalProjectCache.getInstance(context)
-      .markProjectModelAsError(project);
-
     context.getMessageReporter().createMessage()
       .withGroup(Messages.PROJECT_MODEL_GROUP)
       .withKind(Message.Kind.ERROR)

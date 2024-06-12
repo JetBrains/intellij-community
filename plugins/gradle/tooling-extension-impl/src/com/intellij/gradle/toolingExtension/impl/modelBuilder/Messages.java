@@ -9,8 +9,6 @@ public final class Messages {
 
   // @formatter:off
   public final static @NotNull String PROJECT_MODEL_GROUP = "gradle.projectModel.group";
-  public final static @NotNull String PROJECT_MODEL_CACHE_GET_GROUP = "gradle.projectModel.cacheGet.group";
-  public final static @NotNull String PROJECT_MODEL_CACHE_SET_GROUP = "gradle.projectModel.cacheSet.group";
 
   public final static @NotNull String SCALA_PROJECT_MODEL_GROUP = "gradle.scalaProjectModel.group";
 

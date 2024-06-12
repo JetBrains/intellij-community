@@ -22,13 +22,16 @@ public interface GradleLightBuild extends BuildModel {
   @NotNull
   String getName();
 
-  @NotNull
-  Collection<? extends GradleLightProject> getProjects();
-
   @Override
   @NotNull
   BuildIdentifier getBuildIdentifier();
 
   @Nullable
   BuildIdentifier getParentBuildIdentifier();
+
+  @NotNull
+  GradleLightProject getRootProject();
+
+  @NotNull
+  Collection<? extends GradleLightProject> getProjects();
 }

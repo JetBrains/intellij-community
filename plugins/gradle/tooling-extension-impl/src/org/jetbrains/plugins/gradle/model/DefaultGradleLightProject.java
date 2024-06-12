@@ -3,22 +3,24 @@ package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier;
 import org.gradle.tooling.model.ProjectIdentifier;
-import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 @ApiStatus.Internal
-class DefaultGradleLightProject implements GradleLightProject, Serializable {
+public final class DefaultGradleLightProject implements GradleLightProject, Serializable {
 
   private final @NotNull String myName;
   private final @NotNull String myPath;
   private final @NotNull File myProjectDirectory;
   private final @NotNull DefaultProjectIdentifier myProjectIdentifier;
+  private final @NotNull List<DefaultGradleLightProject> myChildren = new ArrayList<>();
 
-  private DefaultGradleLightProject(
+  public DefaultGradleLightProject(
     @NotNull String name,
     @NotNull String path,
     @NotNull File projectDirectory,
@@ -51,26 +53,19 @@ class DefaultGradleLightProject implements GradleLightProject, Serializable {
   }
 
   @Override
+  public @NotNull List<DefaultGradleLightProject> getChildProjects() {
+    return myChildren;
+  }
+
+  public void addChildProject(@NotNull DefaultGradleLightProject childProject) {
+    myChildren.add(childProject);
+  }
+
+  @Override
   public String toString() {
     return "ProjectModel{" +
            "name='" + myName + '\'' +
            ", id=" + myProjectIdentifier +
            '}';
-  }
-
-  public static @NotNull DefaultGradleLightProject convertGradleProject(@NotNull BasicGradleProject gradleProject) {
-    return new DefaultGradleLightProject(
-      gradleProject.getName(),
-      gradleProject.getPath(),
-      gradleProject.getProjectDirectory(),
-      convertGradleProjectIdentifier(gradleProject.getProjectIdentifier())
-    );
-  }
-
-  private static @NotNull DefaultProjectIdentifier convertGradleProjectIdentifier(@NotNull ProjectIdentifier projectIdentifier) {
-    return new DefaultProjectIdentifier(
-      projectIdentifier.getBuildIdentifier().getRootDir(),
-      projectIdentifier.getProjectPath()
-    );
   }
 }

@@ -6,6 +6,7 @@ import org.gradle.tooling.model.ProjectModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Collection;
 
 /**
  * {@link GradleLightProject} is a "lightweight" model represents a {@link org.gradle.tooling.model.GradleProject}.
@@ -31,4 +32,7 @@ public interface GradleLightProject extends ProjectModel {
   @Override
   @NotNull
   ProjectIdentifier getProjectIdentifier();
+
+  @NotNull
+  Collection<? extends GradleLightProject> getChildProjects();
 }

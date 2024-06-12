@@ -43,10 +43,7 @@ import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.ProjectConfigurationException;
-import org.gradle.tooling.BuildActionFailureException;
-import org.gradle.tooling.CancellationTokenSource;
-import org.gradle.tooling.GradleConnector;
-import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.*;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
@@ -708,36 +705,33 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private static void extractExternalProjectModels(@NotNull GradleIdeaModelHolder models) {
-    associateProjectModelsWithExternalProjects(models);
     replicateBuildModelHierarchyInExternalProjectHierarchy(models);
+    replicateProjectModelHierarchyInExternalProjectHierarchy(models);
     associateSourceSetModelsWithExternalProjects(models);
     associateSourceSetDependencyModelsWithSourceSetModels(models);
   }
 
-  private static void associateProjectModelsWithExternalProjects(@NotNull GradleIdeaModelHolder models) {
-    for (var buildModel : models.getAllBuilds()) {
-      var rootExternalProject = (DefaultExternalProject)models.getBuildModel(buildModel, ExternalProject.class);
-      if (rootExternalProject == null) continue;
-
-      var externalProjectIndex = createExternalProjectIndex(rootExternalProject);
-      for (var projectModel : buildModel.getProjects()) {
-        var projectPath = projectModel.getProjectIdentifier().getProjectPath();
-        var externalProject = externalProjectIndex.get(projectPath);
-        if (externalProject != null) {
-          models.addProjectModel(projectModel, ExternalProject.class, externalProject);
-        }
-      }
+  private static void replicateBuildModelHierarchyInExternalProjectHierarchy(@NotNull GradleIdeaModelHolder models) {
+    var rootBuildModel = models.getRootBuild();
+    var rootProjectModel = rootBuildModel.getRootProject();
+    var rootExternalProject = (DefaultExternalProject)models.getProjectModel(rootProjectModel, ExternalProject.class);
+    if (rootExternalProject == null) return;
+    for (var nestedBuildModel : models.getNestedBuilds()) {
+      var projectModel = nestedBuildModel.getRootProject();
+      var externalProject = (DefaultExternalProject)models.getProjectModel(projectModel, ExternalProject.class);
+      if (externalProject == null) continue;
+      rootExternalProject.addChildProject(externalProject);
     }
   }
 
-  private static void replicateBuildModelHierarchyInExternalProjectHierarchy(@NotNull GradleIdeaModelHolder models) {
-    var rootBuildModel = models.getRootBuild();
-    var rootExternalProject = (DefaultExternalProject)models.getBuildModel(rootBuildModel, ExternalProject.class);
-    if (rootExternalProject == null) return;
-    for (var nestedBuildModel : models.getNestedBuilds()) {
-      var externalProject = (DefaultExternalProject)models.getBuildModel(nestedBuildModel, ExternalProject.class);
-      if (externalProject == null) continue;
-      rootExternalProject.addChildProject(externalProject);
+  private static void replicateProjectModelHierarchyInExternalProjectHierarchy(@NotNull GradleIdeaModelHolder models) {
+    for (var buildModel : models.getAllBuilds()) {
+      DefaultGradleLightBuild.replicateModelHierarchy(
+        buildModel.getRootProject(),
+        it -> (DefaultExternalProject)models.getProjectModel(it, ExternalProject.class),
+        GradleLightProject::getChildProjects,
+        DefaultExternalProject::addChildProject
+      );
     }
   }
 
@@ -771,20 +765,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
       }
     }
-  }
-
-  private static @NotNull Map<String, DefaultExternalProject> createExternalProjectIndex(
-    @NotNull DefaultExternalProject rootExternalProject
-  ) {
-    var externalProjectMap = new HashMap<String, DefaultExternalProject>();
-    var queue = new ArrayDeque<DefaultExternalProject>();
-    queue.add(rootExternalProject);
-    while (!queue.isEmpty()) {
-      var externalProject = queue.remove();
-      queue.addAll(externalProject.getChildProjects().values());
-      externalProjectMap.put(externalProject.getQName(), externalProject);
-    }
-    return externalProjectMap;
   }
 
   private static class Counter {

@@ -104,19 +104,4 @@ public final class GradleModelProviderUtil {
       return gradleProject.getChildren();
     });
   }
-
-  public static <M> void buildModelsBackwardRecursively(
-    @NotNull BuildController controller,
-    @NotNull GradleBuild buildModel,
-    @NotNull Class<M> modelClass,
-    @NotNull GradleModelConsumer consumer
-  ) {
-    @NotNull BasicGradleProject root = buildModel.getRootProject();
-    GradleTreeTraverserUtil.backwardTraverseTree(root, BasicGradleProject::getChildren, (gradleProject) -> {
-      M model = controller.findModel(gradleProject, modelClass);
-      if (model != null) {
-        consumer.consumeProjectModel(gradleProject, model, modelClass);
-      }
-    });
-  }
 }
