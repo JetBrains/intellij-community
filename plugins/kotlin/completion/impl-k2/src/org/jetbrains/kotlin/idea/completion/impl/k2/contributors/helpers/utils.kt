@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
-import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -44,7 +43,7 @@ context(KaSession)
 internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
     scopeContext: KtScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
-    scopeNameFilter: KtScopeNameFilter,
+    scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = sequence {
@@ -78,7 +77,7 @@ context(KaSession)
 internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
     scopeContext: KtScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
-    scopeNameFilter: KtScopeNameFilter,
+    scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = scopeContext.scopes.asSequence()
@@ -95,7 +94,7 @@ context(KaSession)
 internal fun collectNonExtensionsForType(
     type: KtType,
     visibilityChecker: CompletionVisibilityChecker,
-    scopeNameFilter: KtScopeNameFilter,
+    scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
     indexInTower: Int? = null,
     symbolFilter: (KaCallableSymbol) -> Boolean,
@@ -149,7 +148,7 @@ context(KaSession)
 internal fun collectNonExtensionsFromScope(
     scope: KtScope,
     visibilityChecker: CompletionVisibilityChecker,
-    scopeNameFilter: KtScopeNameFilter,
+    scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignature<*>> = scope.getCallableSymbols(scopeNameFilter.getAndSetAware())
@@ -170,7 +169,7 @@ private fun Sequence<KtCallableSignature<*>>.filterNonExtensions(
  * Returns a filter aware of prefixes. For example, a variable with the name `prop` satisfies the filter for all the following prefixes:
  * "p", "getP", "setP"
  */
-private fun KtScopeNameFilter.getAndSetAware(): KtScopeNameFilter = { name ->
+private fun ((Name) -> Boolean).getAndSetAware(): (Name) -> Boolean = { name ->
     listOfNotNull(name, name.toJavaGetterName(), name.toJavaSetterName()).any(this)
 }
 

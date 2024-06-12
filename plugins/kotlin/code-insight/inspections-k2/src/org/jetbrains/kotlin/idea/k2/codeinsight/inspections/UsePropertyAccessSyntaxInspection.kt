@@ -26,7 +26,6 @@ import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
@@ -675,7 +674,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
 }
 
-internal val SCOPE_NAME_FILTER: KtScopeNameFilter = { name -> !name.isSpecial }
+internal val SCOPE_NAME_FILTER: (Name) -> Boolean = { name -> !name.isSpecial }
 
 class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesService {
     override fun getNotProperties(element: PsiElement): Set<FqNameUnsafe> {
