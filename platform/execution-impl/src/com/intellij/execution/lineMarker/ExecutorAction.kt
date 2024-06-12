@@ -2,12 +2,13 @@
 package com.intellij.execution.lineMarker
 
 import com.intellij.execution.Executor
-import com.intellij.execution.actions.RunContextAction
 import com.intellij.openapi.actionSystem.*
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
- * @param order corresponding sorting happens here: [com.intellij.execution.actions.BaseRunConfigurationAction.getOrderedConfiguration]
+ * @param order corresponding sorting happens here:
+ * [com.intellij.execution.actions.BaseRunConfigurationAction.getOrderedConfiguration]
  */
 class ExecutorAction private constructor(val origin: AnAction,
                                          val executor: Executor,
@@ -23,9 +24,17 @@ class ExecutorAction private constructor(val origin: AnAction,
 
   override fun getActionUpdateThread() = origin.actionUpdateThread
 
+  override fun getDelegate(): AnAction {
+    return origin
+  }
+
+  override fun isDumbAware() = origin.isDumbAware
+
   companion object {
+
     @JvmStatic
     val orderKey: DataKey<Int> = DataKey.create("Order")
+
     @JvmStatic
     @JvmOverloads
     fun getActions(order: Int = 0) = getActionList(order).toTypedArray()
@@ -54,7 +63,7 @@ class ExecutorAction private constructor(val origin: AnAction,
           }
 
           override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-            return super.getChildren(e?.let { wrapEvent(e, order)})
+            return super.getChildren(e?.let { wrapEvent(e, order) })
           }
 
           override fun equals(other: Any?): Boolean {
@@ -76,27 +85,26 @@ class ExecutorAction private constructor(val origin: AnAction,
       })
     }
 
+    @ApiStatus.Internal
     @JvmStatic
-    fun wrap(runContextAction: RunContextAction, order: Int): AnAction {
-      return ExecutorAction(runContextAction, runContextAction.executor, order)
+    fun wrap(runContextAction: AnAction, executor: Executor, order: Int): AnAction {
+      return ExecutorAction(runContextAction, executor, order)
     }
-  }
-
-  override fun getDelegate(): AnAction {
-    return origin
   }
 
   override fun update(e: AnActionEvent) {
     origin.update(wrapEvent(e, order))
   }
 
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    if (origin !is ActionGroup) return EMPTY_ARRAY
+    if (e == null) return origin.getChildren(null)
+    return origin.getChildren(wrapEvent(e, order))
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     origin.actionPerformed(wrapEvent(e, order))
   }
-
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> = (origin as? ActionGroup)?.getChildren(e?.let { wrapEvent(it, order) }) ?: AnAction.EMPTY_ARRAY
-
-  override fun isDumbAware() = origin.isDumbAware
 
   override fun equals(other: Any?): Boolean {
     if (this === other) {
@@ -119,4 +127,4 @@ class ExecutorAction private constructor(val origin: AnAction,
     result = 31 * result + order
     return result
   }
-  }
+}
