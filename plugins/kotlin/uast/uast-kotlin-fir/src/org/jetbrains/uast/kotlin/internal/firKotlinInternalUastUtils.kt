@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin.internal
 
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.*
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.api.platform.DecompiledPsiDeclarationProvider.findPsi
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -105,7 +103,7 @@ internal fun toPsiMethod(
                 }
         }
     }
-    return when (val psi = psiForUast(functionSymbol, context.project)) {
+    return when (val psi = psiForUast(functionSymbol)) {
         null -> {
             // Lint/UAST CLI: try `fake` creation for a deserialized declaration
             toPsiMethodForDeserialized(functionSymbol, context, psi)
@@ -382,19 +380,17 @@ internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
  * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KtLibraryModule].
  */
 context(KaSession)
-internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement? {
+internal tailrec fun psiForUast(symbol: KtSymbol): PsiElement? {
     if (symbol.origin == KtSymbolOrigin.LIBRARY) {
-        // UAST/Lint CLI: use [DecompiledPsiDeclarationProvider] / [KotlinStaticPsiDeclarationFromBinaryModuleProvider]
-        return findPsi(symbol, project)
-            // UAST/Lint IDE: decompiled PSI
-            ?: symbol.psi
+        val psiProvider = FirKotlinUastLibraryPsiProviderService.getInstance()
+        return with(psiProvider) { provide(symbol) }
     }
 
     if (symbol is KaCallableSymbol) {
         if (symbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KtSymbolOrigin.SUBSTITUTION_OVERRIDE) {
             val originalSymbol = symbol.unwrapFakeOverrides
             if (originalSymbol !== symbol) {
-                return psiForUast(originalSymbol, project)
+                return psiForUast(originalSymbol)
             }
         }
     }

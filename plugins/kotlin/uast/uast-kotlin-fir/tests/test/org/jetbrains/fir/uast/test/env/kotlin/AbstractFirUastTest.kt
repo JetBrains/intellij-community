@@ -28,6 +28,7 @@ import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension
 import org.jetbrains.uast.kotlin.internal.FirCliKotlinUastResolveProviderService
+import org.jetbrains.uast.kotlin.internal.FirKotlinUastLibraryPsiProviderService
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -61,6 +62,11 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase() {
         application.registerServiceInstance(
             FirKotlinUastResolveProviderService::class.java,
             service
+        )
+
+        application.registerServiceInstance(
+            FirKotlinUastLibraryPsiProviderService::class.java,
+            FirKotlinUastLibraryPsiProviderService.Default(),
         )
     }
 

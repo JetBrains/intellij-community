@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -224,7 +224,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 analyzeForUast(ktExpression) {
                     val candidate = candidatePointer.restoreSymbol() ?: return@forEach
                     val psi = when (candidate) {
-                        is KtVariableLikeSymbol -> psiForUast(candidate, ktExpression.project)
+                        is KtVariableLikeSymbol -> psiForUast(candidate)
                         is KaFunctionLikeSymbol -> toPsiMethod(candidate, ktExpression)
                     }?: return@forEach
                     yield(psi)
@@ -408,7 +408,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         resolvedTargetSymbol.owningProperty.psi
                     }
                     else -> {
-                        psiForUast(resolvedTargetSymbol, project)
+                        psiForUast(resolvedTargetSymbol)
                     }
                 }
 
