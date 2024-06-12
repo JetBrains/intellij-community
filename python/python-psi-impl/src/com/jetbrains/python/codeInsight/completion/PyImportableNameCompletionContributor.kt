@@ -30,6 +30,13 @@ abstract class PyImportableNameCompletionContributor : CompletionContributor(), 
       addImportForLookupElement(context, item, tailOffset)
     }
   }
+  
+  protected val genericTypeInsertHandler: InsertHandler<LookupElement> = InsertHandler<LookupElement> { context, item ->
+    val tailOffset = context.tailOffset - 1
+    PyParameterizedTypeInsertHandler.INSTANCE.handleInsert(context, item)
+    context.commitDocument()
+    addImportForLookupElement(context, item, tailOffset)
+  } 
 
   protected val stringLiteralInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
     val element = item.psiElement

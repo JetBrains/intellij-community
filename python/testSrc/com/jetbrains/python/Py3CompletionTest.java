@@ -708,6 +708,41 @@ public class Py3CompletionTest extends PyTestCase {
     assertContainsElements(suggested, "name=", "year=");
   }
 
+  // PY-73246
+  public void testSquareBracketsInsertedAfterImportedParameterizedTypesFromTypingInsideTypeHints() {
+    doMultiFileTest();
+  }
+  
+  // PY-73246
+  public void testSquareBracketsInsertedAfterImportedGenericClassesInsideTypeHints() {
+    doMultiFileTest();
+  }
+
+  // PY-73246
+  public void testSquareBracketsNotInsertedAfterImportedGenericClassesOutsideTypeHints() {
+    doMultiFileTest();
+  }
+
+  // PY-73246
+  public void testSquareBracketsInsertedAfterBuiltinGenericTypesInsideTypeHints() {
+    doMultiFileTest();
+  }
+
+  // PY-73246
+  public void testSquareBracketsInsertedAfterBuiltinGenericTypesInsideTypeComments() {
+    doMultiFileTest();
+  }
+  
+  // PY-73246
+  public void testSquareBracketsInsertedAfterBuiltinGenericTypesInsideOldStyleTypeAliases() {
+    doMultiFileTest();
+  }
+
+  // PY-73246
+  public void testSquareBracketsInsertedAfterBuiltinGenericTypesInsideNewStyleTypeAliases() {
+    doMultiFileTest();
+  }
+
   private void doTestVariants(String @NotNull ... expected) {
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");

@@ -1,0 +1,1 @@
+xs = []  # type: list[<caret>]
