@@ -420,11 +420,21 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
 
           final var target = findTargetRecursively(containingClass, method, docTag, explicitSuper, false);
           if (target != null) {
-            return List.of(new SnippetRegionSymbol(target.getContainingFile(), target.getTextRange()));
+            return List.of(new SnippetRegionSymbol(target.getContainingFile(), getSnippetRange(target)));
           }
         }
 
         return List.of();
+      }
+
+      private static TextRange getSnippetRange(PsiElement target) {
+        if (target instanceof PsiDocTag) {
+          final var lines = target.getText().split("\n");
+          if (lines.length > 1 && lines[lines.length - 1].matches("\\s*\\*\\s*")) {
+            return target.getTextRange().grown(-lines[lines.length - 1].length());
+          }
+        }
+        return target.getTextRange();
       }
 
       /**
