@@ -57,7 +57,6 @@ object JavaPluginLayout {
 
       spec.withModules(listOf(
         "intellij.java.compiler.impl",
-        //"intellij.java.compiler.charts.jps",
         "intellij.java.debugger.impl",
         "intellij.java.debugger.memory.agent",
         "intellij.java.execution.impl",

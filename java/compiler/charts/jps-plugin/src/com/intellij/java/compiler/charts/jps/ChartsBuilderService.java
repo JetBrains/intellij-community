@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.jps;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -30,11 +31,14 @@ public class ChartsBuilderService extends BuilderService {
   }
 
   private static class ChartsModuleLevelBuilder extends ModuleLevelBuilder {
+    private static final Logger LOG = Logger.getInstance(ChartsModuleLevelBuilder.class);
+
     private ScheduledFuture<?> myStatisticsReporter = null;
     private Runnable myStatisticsRunnable = null;
 
     protected ChartsModuleLevelBuilder() {
       super(BuilderCategory.TRANSLATOR);
+      LOG.debug(CompilationChartsJpsBundle.message("compilation.charts.jps.registered"));
     }
 
     @Override

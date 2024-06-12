@@ -8507,6 +8507,7 @@ c:com.intellij.ui.components.JBViewport
 - <init>():V
 - p:computeBlit(I,I,java.awt.Point,java.awt.Point,java.awt.Dimension,java.awt.Rectangle):Z
 - p:createLayoutManager():java.awt.LayoutManager
+- p:createZooming():com.intellij.ui.components.ZoomingDelegate
 - getBackground():java.awt.Color
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getMagnificator():com.intellij.ui.components.Magnificator
