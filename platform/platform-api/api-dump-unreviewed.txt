@@ -6468,6 +6468,7 @@ c:com.intellij.ui.EditorNotificationPanel
 - updateUI():V
 - s:wrapPanels(java.util.List,javax.swing.JPanel,com.intellij.ui.EditorNotificationPanel$Status):V
 com.intellij.ui.EditorNotificationPanel$ActionHandler
+- generatePreview(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - a:handlePanelActionClick(com.intellij.ui.EditorNotificationPanel,javax.swing.event.HyperlinkEvent):V
 - a:handleQuickFixClick(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 e:com.intellij.ui.EditorNotificationPanel$Status
