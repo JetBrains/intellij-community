@@ -9,6 +9,7 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -42,7 +43,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
   @Override
   public void main(@NotNull List<String> args) {
     if (Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
-      LOG.info("updates applied");
+      logInfo("updates applied");
       System.exit(0);
     }
 
@@ -50,7 +51,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
       .getPluginUpdates()
       .getAllEnabled();
     if (availableUpdates.isEmpty()) {
-      LOG.info("all plugins up to date");
+      logInfo("all plugins up to date");
       System.exit(0);
       return;
     }
@@ -66,7 +67,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
       pluginsToUpdate = availableUpdates;
     }
 
-    LOG.info("Plugins to update: " + pluginsToUpdate);
+    logInfo("Plugins to update: " + ContainerUtil.map(pluginsToUpdate, downloader -> downloader.getPluginName() + " version " + downloader.getPluginVersion()));
 
     Ref<Boolean> installed = Ref.create();
     PluginDownloader.runSynchronouslyInBackground(() -> {
@@ -81,5 +82,12 @@ final class UpdatePluginsApp implements ApplicationStarter {
       LOG.warn("Update failed");
       System.exit(1);
     }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static void logInfo(String msg) {
+    // INFO level messages are not printed to stdout/stderr and toolbox does not include stdout/stderr by default in logs
+    System.out.println(msg);
+    LOG.info(msg);
   }
 }
