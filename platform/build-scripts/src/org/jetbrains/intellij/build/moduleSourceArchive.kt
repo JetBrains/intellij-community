@@ -55,7 +55,10 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
         val module = context.findRequiredModule(moduleName)
         // We pack sources of libraries which are included in compilation classpath for platform API modules.
         // This way we'll get source files of all libraries useful for plugin developers, and the size of the archive will be reasonable.
+/* Android Studio: include sources for Kotlin dependencies too (especially the Kotlin compiler).
         if (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null) {
+ */     if (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null ||
+            moduleName.startsWith("kotlin.")) {
           val libraries = JpsJavaExtensionService.dependencies(module).productionOnly().compileOnly().recursivelyExportedOnly().libraries
           includedLibraries.addAll(libraries)
           libraries.mapTo(debugMapping) { "${it.name} for $moduleName" }
