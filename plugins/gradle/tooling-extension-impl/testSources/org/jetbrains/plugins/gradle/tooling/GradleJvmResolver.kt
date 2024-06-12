@@ -127,15 +127,15 @@ class GradleJvmResolver(
   }
 
   companion object {
+
     @JvmStatic
-    fun resolveGradleJvm(gradleVersion: GradleVersion, parentDisposable: Disposable): Sdk {
-      return GradleJvmResolver(gradleVersion, JavaVersionRestriction.NO)
+    fun resolveGradleJvm(gradleVersion: GradleVersion, parentDisposable: Disposable, javaVersionRestriction: JavaVersionRestriction): Sdk {
+      return GradleJvmResolver(gradleVersion, javaVersionRestriction)
         .resolveGradleJvmImpl(parentDisposable)
     }
 
     @JvmStatic
-    @JvmOverloads
-    fun resolveGradleJvmHomePath(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction = JavaVersionRestriction.NO): String {
+    fun resolveGradleJvmHomePath(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction): String {
       return GradleJvmResolver(gradleVersion, javaVersionRestriction)
         .resolveGradleJvmHomePathImpl()
     }

@@ -12,9 +12,13 @@ import com.intellij.testFramework.fixtures.SdkTestFixture
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 
 
-class GradleJvmTestFixture(private val gradleVersion: GradleVersion) : SdkTestFixture {
+class GradleJvmTestFixture(
+  private val gradleVersion: GradleVersion,
+  private val javaVersionRestriction: JavaVersionRestriction
+) : SdkTestFixture {
 
   private lateinit var fixtureDisposable: Disposable
 
@@ -26,7 +30,7 @@ class GradleJvmTestFixture(private val gradleVersion: GradleVersion) : SdkTestFi
 
   override fun setUp() {
     fixtureDisposable = Disposer.newDisposable()
-    sdk = GradleJvmResolver.resolveGradleJvm(gradleVersion, fixtureDisposable)
+    sdk = GradleJvmResolver.resolveGradleJvm(gradleVersion, fixtureDisposable, javaVersionRestriction)
     installLinkedSettingsWatcher()
   }
 

@@ -24,6 +24,7 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFact
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleProjectReload
 import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 
 internal class GradleProjectTestFixtureImpl private constructor(
@@ -54,7 +55,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
     configureProject: FileTestFixture.Builder.() -> Unit
   ) : this(
     projectName, gradleVersion,
-    GradleJvmTestFixture(gradleVersion),
+    GradleJvmTestFixture(gradleVersion, JavaVersionRestriction.NO),
     GradleTestFixtureFactory.getFixtureFactory().createFileTestFixture("GradleTestFixture/$gradleVersion/$projectName") {
       configureProject()
       excludeFiles(".gradle", "build")

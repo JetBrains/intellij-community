@@ -25,6 +25,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleProjectRelo
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 
 abstract class GradleProjectSdkResolverTestCase : GradleImportingTestCase() {
 
@@ -67,7 +68,7 @@ abstract class GradleProjectSdkResolverTestCase : GradleImportingTestCase() {
   }
 
   fun resolveRealTestSdk(): Sdk {
-    val homePath = GradleJvmResolver.resolveGradleJvmHomePath(currentGradleVersion)
+    val homePath = GradleJvmResolver.resolveGradleJvmHomePath(currentGradleVersion, JavaVersionRestriction.NO)
     val sdkInfo = createSdkInfo(JavaSdk.getInstance(), homePath)
     return TestSdkGenerator.createTestSdk(sdkInfo)
   }

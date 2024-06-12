@@ -23,6 +23,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.junit.jupiter.api.Assertions
@@ -50,7 +51,7 @@ class GradleTestFixtureImpl(
 
     testDisposable = Disposer.newDisposable()
 
-    sdkFixture = GradleJvmTestFixture(gradleVersion)
+    sdkFixture = GradleJvmTestFixture(gradleVersion, JavaVersionRestriction.NO)
     sdkFixture.setUp()
     gradleJvm = sdkFixture.getSdk().name
 
