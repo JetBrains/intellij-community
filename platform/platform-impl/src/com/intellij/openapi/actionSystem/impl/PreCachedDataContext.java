@@ -37,10 +37,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -58,6 +56,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
   private static int ourPrevMapEventCount;
   private static final Map<Component, FList<ProviderData>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
+  private static final Set<Component> ourComponents = ContainerUtil.createWeakSet();
   private static final Collection<PreCachedDataContext> ourInstances = new UnsafeWeakList<>();
   private static final Map<String, Integer> ourDataKeysIndices = new ConcurrentHashMap<>();
   private static final AtomicInteger ourDataKeysCount = new AtomicInteger();
@@ -86,9 +85,15 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
           ourDataKeysIndices.size() != DataKey.allKeysCount() ||
           ApplicationManager.getApplication().isUnitTestMode()) {
         ourPrevMaps.clear();
+        ourComponents.clear();
       }
       List<Component> components = FList.createFromReversed(
-        JBIterable.generate(component, UIUtil::getParent).takeWhile(o -> ourPrevMaps.get(o) == null));
+        JBIterable.generate(component, UIUtil::getParent).takeWhile(o -> {
+          FList<ProviderData> list = ourPrevMaps.get(o);
+          if (list == null) return true;
+          // make sure we run edt rules on the current component
+          return o == component && !ourComponents.contains(o);
+        }));
       Component topParent = components.isEmpty() ? component : UIUtil.getParent(components.get(0));
       FList<ProviderData> initial = topParent == null ? FList.emptyList() : ourPrevMaps.get(topParent);
 
@@ -113,6 +118,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         myDataKeysCount = keyCount;
         myCachedData = cachedData;
         ourInstances.add(this);
+        ourComponents.add(component);
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourPrevMapEventCount = count;
@@ -297,6 +303,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       }
     }
     ourPrevMaps.clear();
+    ourComponents.clear();
     for (PreCachedDataContext context : ourInstances) {
       for (ProviderData map : context.myCachedData) {
         map.uiSnapshot.clear();
@@ -367,9 +374,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
   }
 
-  private static FList<ProviderData> runSnapshotRules(@NotNull MySink sink,
-                                                      @Nullable Component component,
-                                                      @NotNull FList<ProviderData> cachedData) {
+  private static @NotNull FList<ProviderData> runSnapshotRules(@NotNull MySink sink,
+                                                               @Nullable Component component,
+                                                               @NotNull FList<ProviderData> cachedData) {
     boolean noMap = sink.map == null;
     DataSnapshot snapshot = new DataSnapshot() {
       /** @noinspection unchecked */
