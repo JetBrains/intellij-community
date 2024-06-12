@@ -172,16 +172,8 @@ private class LanguageComboBoxRenderer(private val locales: Pair<kotlin.collecti
 }
 
 private class RegionComboBoxRenderer : GroupedComboBoxRenderer<Region>() {
-  override fun getText(item: Region): @NlsSafe String {
-    when (item) {
-      Region.NOT_SET -> return "Not specified"
-      Region.AFRICA -> return "Africa"
-      Region.AMERICA -> return "America"
-      Region.ASIA -> return "Asia"
-      Region.CHINA -> return "China Mainland"
-      Region.EUROPE -> return "Europe"
-      Region.OTHER -> return "Rest of the world"
-    }
+  override fun getText(item: Region): String {
+    return IdeBundle.message("title.region.${item.name.lowercase(Locale.getDefault())}")
   }
 
   override fun separatorFor(value: Region): ListSeparator? {
