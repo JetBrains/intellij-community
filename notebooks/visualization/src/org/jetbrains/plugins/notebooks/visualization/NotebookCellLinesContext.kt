@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.util.asSafely
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
@@ -31,72 +30,69 @@ private class NotebookCellLinesIntervalDataRule : GetDataRule {
       }
 }
 
-@ApiStatus.Internal
-object EditorsWithOffsetsUtils {
-  fun getEditorsWithOffsets(editor: Editor?, contextComponent: Component?): List<Pair<Editor, Int>> {
-
-    val result = mutableListOf<Pair<Editor, Int>>()
-
-    // If the focused component is the editor, it's assumed that the current cell is the cell under the caret.
-    result.addIfNotNull(
-      contextComponent
-        ?.asSafely<EditorComponentImpl>()
-        ?.editor
-        ?.let { contextEditor ->
-          if (NotebookCellLinesProvider.get(contextEditor.document) != null) contextEditor to contextEditor.getOffsetFromCaretImpl()
-          else null
-        })
-
-    // Otherwise, some component inside an editor can be focused. In that case it's assumed that the current cell is the cell closest
-    // to the focused component.
-    result.addIfNotNull(getOffsetInEditorByComponentHierarchy(contextComponent))
-
-    // When a user clicks on a gutter, it's the only focused component, and it's not connected to the editor. However, vertical offsets
-    // in the gutter can be juxtaposed to the editor.
-    if (contextComponent is EditorGutterComponentEx && editor != null) {
-      val mouseEvent = IdeEventQueue.getInstance().trueCurrentEvent as? MouseEvent
-      if (mouseEvent != null) {
-        val point = SwingUtilities.convertMouseEvent(mouseEvent.component, mouseEvent, contextComponent).point
-        result += editor to editor.logicalPositionToOffset(editor.xyToLogicalPosition(point))
-      }
-    }
-
-    // If the focused component is out of the notebook editor, there still can be other editors inside the required one.
-    // If some of such editors is treated as the current editor, the current cell is the cell closest to the current editor.
-    result.addIfNotNull(getOffsetInEditorByComponentHierarchy(editor?.contentComponent))
-
-    // When a user clicks on some toolbar on some menu component, it becomes the focused components. Usually, such components have an
-    // assigned editor. In that case it's assumed that the current cell is the cell under the caret.
-    if (editor != null && NotebookCellLinesProvider.get(editor.document) != null) {
-      result += editor to editor.getOffsetFromCaretImpl()
-    }
-
-    return result
-  }
-
-  private fun Editor.getOffsetFromCaretImpl(): Int =
-    caretModel.offset.coerceAtMost(document.textLength - 1).coerceAtLeast(0)
-
-  private fun getOffsetInEditorByComponentHierarchy(component: Component?): Pair<Editor, Int>? =
-    generateSequence(component, Component::getParent)
-      .zipWithNext()
-      .mapNotNull { (child, parent) ->
-        if (parent is EditorComponentImpl) child to parent.editor
-        else null
-      }
-      .firstOrNull()
-      ?.let { (child, editor) ->
-        val point = SwingUtilities.convertPoint(child, 0, 0, editor.contentComponent)
-        editor to editor.logicalPositionToOffset(editor.xyToLogicalPosition(point))
-      }
-}
-
 private class EditorsWithOffsetsDataRule : EdtDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
-    // TODO Simplify. The code below is overcomplicated
     val contextComponent = snapshot[PlatformCoreDataKeys.CONTEXT_COMPONENT]
     val editor = snapshot[PlatformDataKeys.EDITOR]
-    val result = EditorsWithOffsetsUtils.getEditorsWithOffsets(editor, contextComponent)
+    val result = getEditorsWithOffsets(editor, contextComponent)
     sink[EDITORS_WITH_OFFSETS_DATA_KEY] = result.takeIf(List<*>::isNotEmpty)
   }
 }
+
+private fun getEditorsWithOffsets(editor: Editor?, contextComponent: Component?): List<Pair<Editor, Int>> {
+  // TODO Simplify. The code below is overcomplicated
+  val result = mutableListOf<Pair<Editor, Int>>()
+
+  // If the focused component is the editor, it's assumed that the current cell is the cell under the caret.
+  result.addIfNotNull(
+    contextComponent
+      ?.asSafely<EditorComponentImpl>()
+      ?.editor
+      ?.let { contextEditor ->
+        if (NotebookCellLinesProvider.get(contextEditor.document) != null) contextEditor to contextEditor.getOffsetFromCaretImpl()
+        else null
+      })
+
+  // Otherwise, some component inside an editor can be focused. In that case it's assumed that the current cell is the cell closest
+  // to the focused component.
+  result.addIfNotNull(getOffsetInEditorByComponentHierarchy(contextComponent))
+
+  // When a user clicks on a gutter, it's the only focused component, and it's not connected to the editor. However, vertical offsets
+  // in the gutter can be juxtaposed to the editor.
+  if (contextComponent is EditorGutterComponentEx && editor != null) {
+    val mouseEvent = IdeEventQueue.getInstance().trueCurrentEvent as? MouseEvent
+    if (mouseEvent != null) {
+      val point = SwingUtilities.convertMouseEvent(mouseEvent.component, mouseEvent, contextComponent).point
+      result += editor to editor.logicalPositionToOffset(editor.xyToLogicalPosition(point))
+    }
+  }
+
+  // If the focused component is out of the notebook editor, there still can be other editors inside the required one.
+  // If some of such editors is treated as the current editor, the current cell is the cell closest to the current editor.
+  result.addIfNotNull(getOffsetInEditorByComponentHierarchy(editor?.contentComponent))
+
+  // When a user clicks on some toolbar on some menu component, it becomes the focused components. Usually, such components have an
+  // assigned editor. In that case it's assumed that the current cell is the cell under the caret.
+  if (editor != null && NotebookCellLinesProvider.get(editor.document) != null) {
+    result += editor to editor.getOffsetFromCaretImpl()
+  }
+
+  return result
+}
+
+private fun Editor.getOffsetFromCaretImpl(): Int =
+  caretModel.offset.coerceAtMost(document.textLength - 1).coerceAtLeast(0)
+
+private fun getOffsetInEditorByComponentHierarchy(component: Component?): Pair<Editor, Int>? =
+  generateSequence(component, Component::getParent)
+    .zipWithNext()
+    .mapNotNull { (child, parent) ->
+      if (parent is EditorComponentImpl) child to parent.editor
+      else null
+    }
+    .firstOrNull()
+    ?.let { (child, editor) ->
+      val point = SwingUtilities.convertPoint(child, 0, 0, editor.contentComponent)
+      editor to editor.logicalPositionToOffset(editor.xyToLogicalPosition(point))
+    }
+
