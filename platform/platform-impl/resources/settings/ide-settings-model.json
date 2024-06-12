@@ -693,6 +693,7 @@
         },
         {
           "name": "provider",
+          "mapTo": "PROVIDER",
           "type": "Enum",
           "javaType": "com.intellij.credentialStore.ProviderType",
           "variants": [
@@ -779,62 +780,74 @@
       "storage": "diff.xml",
       "properties": [
         {
-          "name": "defaultToolConfiguration",
+          "name": "default_tool_configuration",
+          "mapTo": "DEFAULT_TOOL_CONFIGURATION",
           "type": "Unsupported",
           "javaType": "com.intellij.diff.tools.external.ExternalDiffSettings$ExternalToolConfiguration"
         },
         {
-          "name": "diffEnabled",
+          "name": "diff_enabled",
+          "mapTo": "DIFF_ENABLED",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "diffExePath",
+          "name": "diff_exe_path",
+          "mapTo": "DIFF_EXE_PATH",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "diffParameters",
+          "name": "diff_parameters",
+          "mapTo": "DIFF_PARAMETERS",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "externalTools",
+          "name": "external_tools",
+          "mapTo": "EXTERNAL_TOOLS",
           "type": "Unsupported",
           "javaType": "java.util.Map"
         },
         {
-          "name": "externalToolsConfiguration",
+          "name": "external_tools_configuration",
+          "mapTo": "EXTERNAL_TOOLS_CONFIGURATION",
           "type": "Unsupported",
           "javaType": "java.util.List"
         },
         {
-          "name": "externalToolsEnabled",
+          "name": "external_tools_enabled",
+          "mapTo": "EXTERNAL_TOOLS_ENABLED",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "mergeEnabled",
+          "name": "merge_enabled",
+          "mapTo": "MERGE_ENABLED",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "mergeExePath",
+          "name": "merge_exe_path",
+          "mapTo": "MERGE_EXE_PATH",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "mergeParameters",
+          "name": "merge_parameters",
+          "mapTo": "MERGE_PARAMETERS",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "mergeTrustExitCode",
+          "name": "merge_trust_exit_code",
+          "mapTo": "MERGE_TRUST_EXIT_CODE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "settingsMigrated",
+          "name": "migrate_old_settings",
+          "mapTo": "MIGRATE_OLD_SETTINGS",
           "type": "Boolean",
           "javaType": "boolean"
         }
@@ -1056,8 +1069,7 @@
       "name": null,
       "scope": "app",
       "pluginId": "com.intellij",
-      "classFqn": "com.intellij.find.impl.LangFindSettingsImpl",
-      "storage": null
+      "classFqn": "com.intellij.find.impl.LangFindSettingsImpl"
     },
     {
       "name": "GeneralSettings",
@@ -1067,7 +1079,7 @@
       "storage": "ide.general.xml",
       "properties": [
         {
-          "name": "defaultProjectDirectory",
+          "name": "myDefaultProjectDirectory",
           "type": "String",
           "javaType": "java.lang.String"
         },
@@ -1268,7 +1280,8 @@
       "storage": "trusted-paths.xml",
       "properties": [
         {
-          "name": "trustedPaths",
+          "name": "trusted_project_paths",
+          "mapTo": "TRUSTED_PROJECT_PATHS",
           "type": "Unsupported",
           "javaType": "java.util.Map"
         }
@@ -1282,7 +1295,8 @@
       "storage": "trusted-paths.xml",
       "properties": [
         {
-          "name": "trustedPaths",
+          "name": "trusted_paths",
+          "mapTo": "TRUSTED_PATHS",
           "type": "StringList",
           "javaType": "java.util.List"
         }
@@ -1299,8 +1313,7 @@
       "name": null,
       "scope": "app",
       "pluginId": "com.intellij",
-      "classFqn": "com.intellij.ide.macro.IdePathMacros",
-      "storage": null
+      "classFqn": "com.intellij.ide.macro.IdePathMacros"
     },
     {
       "name": "Minimap",
@@ -1598,32 +1611,38 @@
       "storage": "ui.lnf.xml",
       "properties": [
         {
-          "name": "activeMruEditorOnClose",
+          "name": "activate_mru_editor_on_close",
+          "mapTo": "ACTIVATE_MRU_EDITOR_ON_CLOSE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "activeRightEditorOnClose",
+          "name": "activate_right_editor_on_close",
+          "mapTo": "ACTIVATE_RIGHT_EDITOR_ON_CLOSE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "allowMergeButtons",
+          "name": "allow_merge_buttons",
+          "mapTo": "ALLOW_MERGE_BUTTONS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "alphaModeDelay",
+          "name": "alpha_mode_delay",
+          "mapTo": "ALPHA_MODE_DELAY",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "alphaModeRatio",
+          "name": "alpha_mode_ratio",
+          "mapTo": "ALPHA_MODE_RATIO",
           "type": "Unsupported",
           "javaType": "float"
         },
         {
-          "name": "alwaysKeepTabsAlphabeticallySorted",
+          "name": "keep_tabs_alphabetically_sorted",
+          "mapTo": "KEEP_TABS_ALPHABETICALLY_SORTED",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -1643,17 +1662,20 @@
           "javaType": "int"
         },
         {
-          "name": "closeNonModifiedFilesFirst",
+          "name": "close_non_modified_files_first",
+          "mapTo": "CLOSE_NON_MODIFIED_FILES_FIRST",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "closeTabButtonOnTheRight",
+          "name": "close_tab_button_on_the_right",
+          "mapTo": "CLOSE_TAB_BUTTON_ON_THE_RIGHT",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "colorBlindness",
+          "name": "color_blindness",
+          "mapTo": "COLOR_BLINDNESS",
           "type": "Enum",
           "javaType": "com.intellij.ide.ui.ColorBlindness",
           "variants": [
@@ -1681,42 +1703,50 @@
           "javaType": "boolean"
         },
         {
-          "name": "consoleCommandHistoryLimit",
+          "name": "console_command_history_limit",
+          "mapTo": "CONSOLE_COMMAND_HISTORY_LIMIT",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "consoleCycleBufferSizeKb",
+          "name": "console_cycle_buffer_size_kb",
+          "mapTo": "CONSOLE_CYCLE_BUFFER_SIZE_KB",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "defaultAutoScrollToSource",
+          "name": "default_autoscroll_to_source",
+          "mapTo": "DEFAULT_AUTOSCROLL_TO_SOURCE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "differentiateProjects",
+          "name": "differentiate_projects",
+          "mapTo": "DIFFERENTIATE_PROJECTS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "disableMnemonics",
+          "name": "disable_mnemonics",
+          "mapTo": "DISABLE_MNEMONICS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "disableMnemonicsInControls",
+          "name": "disable_mnemonics_in_controls",
+          "mapTo": "DISABLE_MNEMONICS_IN_CONTROLS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "dndWithPressedAltOnly",
+          "name": "dnd_with_pressed_alt_only",
+          "mapTo": "DND_WITH_PRESSED_ALT_ONLY",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "editorAAType",
+          "name": "editor_aa_type",
+          "mapTo": "EDITOR_AA_TYPE",
           "type": "Enum",
           "javaType": "com.intellij.ide.ui.AntialiasingType",
           "variants": [
@@ -1735,57 +1765,73 @@
           ]
         },
         {
-          "name": "editorTabLimit",
+          "name": "editor_tab_limit",
+          "mapTo": "EDITOR_TAB_LIMIT",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "editorTabPlacement",
+          "name": "editor_tab_placement",
+          "mapTo": "EDITOR_TAB_PLACEMENT",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "enableAlphaMode",
+          "name": "enable_alpha_mode",
+          "mapTo": "ENABLE_ALPHA_MODE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "fontFace",
+          "name": "expandNodesWithSingleClick",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "font_face",
+          "mapTo": "FONT_FACE",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "fontScale",
+          "name": "font_scale",
+          "mapTo": "FONT_SCALE",
           "type": "Unsupported",
           "javaType": "float"
         },
         {
-          "name": "fontSize",
+          "name": "font_size",
+          "mapTo": "FONT_SIZE",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "fullPathsInWindowHeader",
+          "name": "full_paths_in_title_bar",
+          "mapTo": "FULL_PATHS_IN_TITLE_BAR",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "hideKnownExtensionInTabs",
+          "name": "hide_known_extension_in_tabs",
+          "mapTo": "HIDE_KNOWN_EXTENSION_IN_TABS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "hideTabsIfNeeded",
+          "name": "hide_tabs_if_need",
+          "mapTo": "HIDE_TABS_IF_NEED",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "hideToolStripes",
+          "name": "hide_tool_stripes",
+          "mapTo": "HIDE_TOOL_STRIPES",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "ideAAType",
+          "name": "ide_aa_type",
+          "mapTo": "IDE_AA_TYPE",
           "type": "Enum",
           "javaType": "com.intellij.ide.ui.AntialiasingType",
           "variants": [
@@ -1804,47 +1850,56 @@
           ]
         },
         {
-          "name": "leftHorizontalSplit",
+          "name": "left_horizontal_split",
+          "mapTo": "LEFT_HORIZONTAL_SPLIT",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "markModifiedTabsWithAsterisk",
+          "name": "mark_modified_tabs_with_asterisk",
+          "mapTo": "MARK_MODIFIED_TABS_WITH_ASTERISK",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "maxLookupListHeight",
+          "name": "max_lookup_list_height",
+          "mapTo": "MAX_LOOKUP_LIST_HEIGHT",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "maxLookupWidth",
+          "name": "max_lookup_width2",
+          "mapTo": "MAX_LOOKUP_WIDTH2",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "mergeEqualStackTraces",
+          "name": "merge_equal_stacktraces",
+          "mapTo": "MERGE_EQUAL_STACKTRACES",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "mergeMainMenuWithWindowTitle",
+          "name": "borderless_mode",
+          "mapTo": "BORDERLESS_MODE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "moveMouseOnDefaultButton",
+          "name": "move_mouse_on_default_button",
+          "mapTo": "MOVE_MOUSE_ON_DEFAULT_BUTTON",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "navigateToPreview",
+          "name": "navigate_to_preview",
+          "mapTo": "NAVIGATE_TO_PREVIEW",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "navigationBarLocation",
+          "name": "navigation_bar_location",
+          "mapTo": "NAVIGATION_BAR_LOCATION",
           "type": "Enum",
           "javaType": "com.intellij.ide.ui.NavBarLocation",
           "variants": [
@@ -1859,157 +1914,194 @@
           ]
         },
         {
-          "name": "openInPreviewTabIfPossible",
+          "name": "open_in_preview_tab_if_possible",
+          "mapTo": "OPEN_IN_PREVIEW_TAB_IF_POSSIBLE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "openTabsAtTheEnd",
+          "name": "open_tabs_at_the_end",
+          "mapTo": "OPEN_TABS_AT_THE_END",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "openTabsInMainWindow",
+          "name": "open_tabs_in_main_window",
+          "mapTo": "OPEN_TABS_IN_MAIN_WINDOW",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "overrideConsoleCycleBufferSize",
+          "name": "override_console_cycle_buffer_size",
+          "mapTo": "OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "pinFindInPath",
+          "name": "pin_find_in_path_popup",
+          "mapTo": "PIN_FIND_IN_PATH_POPUP",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "presentationModeFontSize",
+          "name": "presentation_mode_font_size",
+          "mapTo": "PRESENTATION_MODE_FONT_SIZE",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "recentFilesLimit",
+          "name": "recent_files_limit",
+          "mapTo": "RECENT_FILES_LIMIT",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "recentLocationsLimit",
+          "name": "recent_locations_limit",
+          "mapTo": "RECENT_LOCATIONS_LIMIT",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "rememberSizeForEachToolWindowNewUI",
+          "name": "remember_size_for_each_tool_window_new_ui",
+          "mapTo": "REMEMBER_SIZE_FOR_EACH_TOOL_WINDOW_NEW_UI",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "rememberSizeForEachToolWindowOldUI",
+          "name": "remember_size_for_each_tool_window_old_ui",
+          "mapTo": "REMEMBER_SIZE_FOR_EACH_TOOL_WINDOW_OLD_UI",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "reuseNotModifiedTabs",
+          "name": "reuse_not_modified_tabs",
+          "mapTo": "REUSE_NOT_MODIFIED_TABS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "rightHorizontalSplit",
+          "name": "right_horizontal_split",
+          "mapTo": "RIGHT_HORIZONTAL_SPLIT",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "scrollTabLayoutInEditor",
+          "name": "scroll_tab_layout_in_editor",
+          "mapTo": "SCROLL_TAB_LAYOUT_IN_EDITOR",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "separateMainMenu",
+          "name": "separate_main_menu",
+          "mapTo": "SEPARATE_MAIN_MENU",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showBreakpointsOverLineNumbers",
+          "name": "show_breakpoints_over_line_numbers",
+          "mapTo": "SHOW_BREAKPOINTS_OVER_LINE_NUMBERS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showCloseButton",
+          "name": "show_close_button",
+          "mapTo": "SHOW_CLOSE_BUTTON",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showDirectoryForNonUniqueFilenames",
+          "name": "show_directory_for_non_unique_filenames",
+          "mapTo": "SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showEditorToolTip",
+          "name": "show_editor_tooltip",
+          "mapTo": "SHOW_EDITOR_TOOLTIP",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showFileIconInTabs",
+          "name": "show_file_icons_in_tabs",
+          "mapTo": "SHOW_FILE_ICONS_IN_TABS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showIconsInMenus",
+          "name": "show_icons_in_menus",
+          "mapTo": "SHOW_ICONS_IN_MENUS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showInplaceComments",
+          "name": "show_inplace_comments",
+          "mapTo": "SHOW_INPLACE_COMMENTS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showMainMenu",
+          "name": "show_inplace_comments_internal",
+          "mapTo": "SHOW_INPLACE_COMMENTS_INTERNAL",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showMainToolbar",
+          "name": "show_main_menu",
+          "mapTo": "SHOW_MAIN_MENU",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showMembersInNavigationBar",
+          "name": "show_main_toolbar",
+          "mapTo": "SHOW_MAIN_TOOLBAR",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showNavigationBar",
+          "name": "show_navigation_bar_members",
+          "mapTo": "SHOW_NAVIGATION_BAR_MEMBERS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showNewMainToolbar",
+          "name": "show_navigation_bar",
+          "mapTo": "SHOW_NAVIGATION_BAR",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showPinnedTabsInASeparateRow",
+          "name": "show_new_main_toolbar",
+          "mapTo": "SHOW_NEW_MAIN_TOOLBAR",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showStatusBar",
+          "name": "show_pinned_tabs_in_a_separate_row",
+          "mapTo": "SHOW_PINNED_TABS_IN_A_SEPARATE_ROW",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showTabsTooltips",
+          "name": "show_status_bar",
+          "mapTo": "SHOW_STATUS_BAR",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showToolWindowsNames",
+          "name": "show_tabs_tooltips",
+          "mapTo": "SHOW_TABS_TOOLTIPS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showToolWindowsNumbers",
+          "name": "show_tool_window_names",
+          "mapTo": "SHOW_TOOL_WINDOW_NAMES",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "show_tool_window_numbers",
+          "mapTo": "SHOW_TOOL_WINDOW_NUMBERS",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -2019,12 +2111,14 @@
           "javaType": "boolean"
         },
         {
-          "name": "showVisualFormattingLayer",
+          "name": "show_visual_formatting_layer",
+          "mapTo": "SHOW_VISUAL_FORMATTING_LAYER",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showWriteThreadIndicator",
+          "name": "show_write_thread_indicator",
+          "mapTo": "SHOW_WRITE_THREAD_INDICATOR",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -2034,32 +2128,38 @@
           "javaType": "boolean"
         },
         {
-          "name": "sortBookmarks",
+          "name": "sort_bookmarks",
+          "mapTo": "SORT_BOOKMARKS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "sortLookupElementsLexicographically",
+          "name": "sort_lookup_elements_lexicographically",
+          "mapTo": "SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "sortTabsAlphabetically",
+          "name": "sort_tabs_alphabetically",
+          "mapTo": "SORT_TABS_ALPHABETICALLY",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "toolWindowLeftSideCustomWidth",
+          "name": "tool_window_left_side_custom_width",
+          "mapTo": "TOOL_WINDOW_LEFT_SIDE_CUSTOM_WIDTH",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "toolWindowRightSideCustomWidth",
+          "name": "tool_window_right_side_custom_width",
+          "mapTo": "TOOL_WINDOW_RIGHT_SIDE_CUSTOM_WIDTH",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "uiDensity",
+          "name": "ui_density",
+          "mapTo": "UI_DENSITY",
           "type": "Enum",
           "javaType": "com.intellij.ide.ui.UIDensity",
           "variants": [
@@ -2074,17 +2174,20 @@
           ]
         },
         {
-          "name": "useContrastScrollBars",
+          "name": "contrast_scrollbars",
+          "mapTo": "CONTRAST_SCROLLBARS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "useSmallLabelsOnTabs",
+          "name": "use_small_labels_on_tabs",
+          "mapTo": "USE_SMALL_LABELS_ON_TABS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "wideScreenSupport",
+          "name": "widescreen_support",
+          "mapTo": "WIDESCREEN_SUPPORT",
           "type": "Boolean",
           "javaType": "boolean"
         }
@@ -2260,6 +2363,13 @@
           "javaType": "boolean"
         }
       ]
+    },
+    {
+      "name": "LocalizationStateService",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.lang.LocalizationStateServiceImpl",
+      "storage": "ide.general.xml"
     },
     {
       "name": "NotificationConfiguration",
@@ -2605,7 +2715,8 @@
       "storage": "updates.xml",
       "properties": [
         {
-          "name": "checkNeeded",
+          "name": "check_needed",
+          "mapTo": "CHECK_NEEDED",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -2615,17 +2726,20 @@
           "javaType": "java.util.List"
         },
         {
-          "name": "lastBuildChecked",
+          "name": "last_build_checked",
+          "mapTo": "LAST_BUILD_CHECKED",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "lastTimeChecked",
+          "name": "last_time_checked",
+          "mapTo": "LAST_TIME_CHECKED",
           "type": "Unsupported",
           "javaType": "long"
         },
         {
-          "name": "obsoleteCustomRepositoriesCleanNeeded",
+          "name": "obsolete_custom_repositories_clean_needed",
+          "mapTo": "OBSOLETE_CUSTOM_REPOSITORIES_CLEAN_NEEDED",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -2635,27 +2749,32 @@
           "javaType": "java.util.List"
         },
         {
-          "name": "pluginsCheckNeeded",
+          "name": "plugins_check_needed",
+          "mapTo": "PLUGINS_CHECK_NEEDED",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showWhatsNewEditor",
+          "name": "show_whats_new_editor",
+          "mapTo": "SHOW_WHATS_NEW_EDITOR",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "thirdPartyPluginsAllowed",
+          "name": "third_party_plugins_allowed",
+          "mapTo": "THIRD_PARTY_PLUGINS_ALLOWED",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "updateChannelType",
+          "name": "update_channel_type",
+          "mapTo": "UPDATE_CHANNEL_TYPE",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "whatsNewShownFor",
+          "name": "whats_new_shown_for",
+          "mapTo": "WHATS_NEW_SHOWN_FOR",
           "type": "Integer",
           "javaType": "int"
         }
@@ -2866,42 +2985,6 @@
           "javaType": "java.lang.String"
         }
       ]
-    },
-    {
-      "name": "AquaOldUserFeedbackInfoState",
-      "scope": "app",
-      "pluginId": "com.intellij",
-      "classFqn": "com.intellij.platform.feedback.aqua.state.AquaOldUserFeedbackService",
-      "storage": "AquaOldUserFeedbackService.xml",
-      "properties": [
-        {
-          "name": "feedbackSent",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "firstUsageTime",
-          "type": "Unsupported",
-          "javaType": "kotlinx.datetime.LocalDateTime"
-        },
-        {
-          "name": "numberNotificationShowed",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "userTypedInEditor",
-          "type": "Boolean",
-          "javaType": "boolean"
-        }
-      ]
-    },
-    {
-      "name": "CommonFeedbackSurveyService",
-      "scope": "app",
-      "pluginId": "com.intellij",
-      "classFqn": "com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService",
-      "storage": "CommonFeedbackSurveyService.xml"
     },
     {
       "name": "DontShowAgainFeedbackService",
@@ -3237,27 +3320,32 @@
           "javaType": "java.lang.String"
         },
         {
-          "name": "autoScrollToSource",
+          "name": "is_autoscroll_to_source",
+          "mapTo": "IS_AUTOSCROLL_TO_SOURCE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "compactMiddleDirectories",
+          "name": "compact_middle_directories",
+          "mapTo": "COMPACT_MIDDLE_DIRECTORIES",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "expanded",
+          "name": "is_expanded",
+          "mapTo": "IS_EXPANDED",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "filterDuplicatedLine",
+          "name": "is_filter_duplicated_line",
+          "mapTo": "IS_FILTER_DUPLICATED_LINE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "flattenModules",
+          "name": "flatten_modules",
+          "mapTo": "FLATTEN_MODULES",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -3267,7 +3355,8 @@
           "javaType": "boolean"
         },
         {
-          "name": "groupByFileStructure",
+          "name": "group_by_file_structure",
+          "mapTo": "GROUP_BY_FILE_STRUCTURE",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -3292,27 +3381,32 @@
           "javaType": "boolean"
         },
         {
-          "name": "previewUsages",
+          "name": "is_preview_usages",
+          "mapTo": "IS_PREVIEW_USAGES",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "previewUsagesSplitterProportion",
+          "name": "preview_usages_splitter_proportions",
+          "mapTo": "PREVIEW_USAGES_SPLITTER_PROPORTIONS",
           "type": "Unsupported",
           "javaType": "float"
         },
         {
-          "name": "replacePreviewUsages",
+          "name": "is_replace_preview_usages",
+          "mapTo": "IS_REPLACE_PREVIEW_USAGES",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showModules",
+          "name": "is_show_methods",
+          "mapTo": "IS_SHOW_METHODS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "sortAlphabetically",
+          "name": "is_sort_members_alphabetically",
+          "mapTo": "IS_SORT_MEMBERS_ALPHABETICALLY",
           "type": "Boolean",
           "javaType": "boolean"
         }
@@ -3332,82 +3426,98 @@
           "javaType": "java.lang.String"
         },
         {
-          "name": "autoScrollToSource",
+          "name": "is_autoscroll_to_source",
+          "mapTo": "IS_AUTOSCROLL_TO_SOURCE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "compactMiddleDirectories",
+          "name": "compact_middle_directories",
+          "mapTo": "COMPACT_MIDDLE_DIRECTORIES",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "expanded",
+          "name": "is_expanded",
+          "mapTo": "IS_EXPANDED",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "filterDuplicatedLine",
+          "name": "is_filter_duplicated_line",
+          "mapTo": "IS_FILTER_DUPLICATED_LINE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "flattenModules",
+          "name": "flatten_modules",
+          "mapTo": "FLATTEN_MODULES",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "groupByDirectoryStructure",
+          "name": "group_by_directory_structure",
+          "mapTo": "GROUP_BY_DIRECTORY_STRUCTURE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "groupByFileStructure",
+          "name": "group_by_file_structure",
+          "mapTo": "GROUP_BY_FILE_STRUCTURE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "groupByModule",
+          "name": "group_by_module",
+          "mapTo": "GROUP_BY_MODULE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "groupByPackage",
+          "name": "group_by_package",
+          "mapTo": "GROUP_BY_PACKAGE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "groupByScope",
+          "name": "group_by_scope",
+          "mapTo": "GROUP_BY_SCOPE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "groupByUsageType",
+          "name": "group_by_usage_type",
+          "mapTo": "GROUP_BY_USAGE_TYPE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "previewUsages",
+          "name": "is_preview_usages",
+          "mapTo": "IS_PREVIEW_USAGES",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "previewUsagesSplitterProportion",
+          "name": "preview_usages_splitter_proportions",
+          "mapTo": "PREVIEW_USAGES_SPLITTER_PROPORTIONS",
           "type": "Unsupported",
           "javaType": "float"
         },
         {
-          "name": "replacePreviewUsages",
+          "name": "is_replace_preview_usages",
+          "mapTo": "IS_REPLACE_PREVIEW_USAGES",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showModules",
+          "name": "is_show_methods",
+          "mapTo": "IS_SHOW_METHODS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "sortAlphabetically",
+          "name": "is_sort_members_alphabetically",
+          "mapTo": "IS_SORT_MEMBERS_ALPHABETICALLY",
           "type": "Boolean",
           "javaType": "boolean"
         }
@@ -3421,12 +3531,6 @@
       "storage": "proxy.settings.xml",
       "properties": [
         {
-          "name": "proxy_type_is_socks",
-          "mapTo": "PROXY_TYPE_IS_SOCKS",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
           "name": "use_http_proxy",
           "mapTo": "USE_HTTP_PROXY",
           "type": "Boolean",
@@ -3435,6 +3539,12 @@
         {
           "name": "use_proxy_pac",
           "mapTo": "USE_PROXY_PAC",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "proxy_type_is_socks",
+          "mapTo": "PROXY_TYPE_IS_SOCKS",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -3449,18 +3559,6 @@
           "mapTo": "PROXY_PORT",
           "type": "Integer",
           "javaType": "int"
-        },
-        {
-          "name": "proxy_authentication",
-          "mapTo": "PROXY_AUTHENTICATION",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "keep_proxy_password",
-          "mapTo": "KEEP_PROXY_PASSWORD",
-          "type": "Boolean",
-          "javaType": "boolean"
         },
         {
           "name": "proxy_exceptions",
@@ -3479,6 +3577,18 @@
           "mapTo": "PAC_URL",
           "type": "String",
           "javaType": "java.lang.String"
+        },
+        {
+          "name": "proxy_authentication",
+          "mapTo": "PROXY_AUTHENTICATION",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "keep_proxy_password",
+          "mapTo": "KEEP_PROXY_PASSWORD",
+          "type": "Boolean",
+          "javaType": "boolean"
         }
       ]
     },
@@ -3659,15 +3769,13 @@
       "name": null,
       "scope": "app",
       "pluginId": "com.jetbrains.codeWithMe",
-      "classFqn": "com.jetbrains.rdserver.codeInsight.BackendCodeInsightSettings",
-      "storage": null
+      "classFqn": "com.jetbrains.rdserver.codeInsight.BackendCodeInsightSettings"
     },
     {
       "name": null,
       "scope": "app",
       "pluginId": "com.jetbrains.codeWithMe",
-      "classFqn": "com.jetbrains.rdserver.codeInsight.BackendEditorSettingsExternalizable",
-      "storage": null
+      "classFqn": "com.jetbrains.rdserver.codeInsight.BackendEditorSettingsExternalizable"
     },
     {
       "name": "screen.forwarding.settings",
@@ -3694,16 +3802,16 @@
       ]
     },
     {
-      "name": "HostVcsAppSettings",
+      "name": "ScriptedLoadersAssociations",
       "scope": "app",
-      "pluginId": "com.jetbrains.codeWithMe",
-      "classFqn": "com.jetbrains.rdserver.vcs.HostVcsAppSettings",
-      "storage": "vcs.xml",
+      "pluginId": "intellij.grid.impl",
+      "classFqn": "com.intellij.database.loaders.DataLoaderManager$Associations",
+      "storage": "csvSettings.xml",
       "properties": [
         {
-          "name": "createChangeListsForGuestChanges",
-          "type": "Boolean",
-          "javaType": "boolean"
+          "name": "extensions",
+          "type": "StringSet",
+          "javaType": "java.util.Set"
         }
       ]
     },
@@ -3739,32 +3847,32 @@
           "javaType": "int"
         },
         {
-          "name": "stripedTable",
+          "name": "striped-table",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "useGridCustomFont",
+          "name": "use-custom-font",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "gridFontFamily",
+          "name": "grid-font-family",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "gridFontSize",
+          "name": "grid-font-size",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "gridLineSpacing",
+          "name": "grid-line-spacing",
           "type": "Unsupported",
           "javaType": "float"
         },
         {
-          "name": "booleanMode",
+          "name": "boolean-mode",
           "type": "Enum",
           "javaType": "com.intellij.database.settings.DataGridAppearanceSettings$BooleanMode",
           "variants": [
@@ -3775,6 +3883,34 @@
             {
               "value": "checkbox",
               "mapTo": "CHECKBOX"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "DSTablesSettingsState",
+      "scope": "app",
+      "pluginId": "intellij.scientific.tables",
+      "classFqn": "com.intellij.scientific.tables.settings.DSTablesSettingsState",
+      "storage": "ds-tables-settings-state.xml",
+      "properties": [
+        {
+          "name": "statisticsPanelsDefaultMode",
+          "type": "Enum",
+          "javaType": "com.intellij.database.run.ui.table.statisticsPanel.StatisticsPanelMode",
+          "variants": [
+            {
+              "value": "off",
+              "mapTo": "OFF"
+            },
+            {
+              "value": "compact",
+              "mapTo": "COMPACT"
+            },
+            {
+              "value": "detailed",
+              "mapTo": "DETAILED"
             }
           ]
         }
@@ -3855,42 +3991,42 @@
           "javaType": "int"
         },
         {
-          "name": "resultsTitlePrefix",
+          "name": "results-title-prefix",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "resultsTitlePrefixEnabled",
+          "name": "results-title-prefix-enabled",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "submitImmediately",
+          "name": "submit-immediately",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "pageSize",
+          "name": "page-size",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "pageSizeUpdatedTimestamp",
+          "name": "page-size-updated-timestamp",
           "type": "Unsupported",
           "javaType": "long"
         },
         {
-          "name": "limitPageSize",
+          "name": "limit-page-size",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "autoTranspose",
+          "name": "auto-transpose",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "autoTransposeMode",
+          "name": "auto-transpose-mode",
           "type": "Enum",
           "javaType": "com.intellij.database.settings.DataGridSettings$AutoTransposeMode",
           "variants": [
@@ -3909,17 +4045,17 @@
           ]
         },
         {
-          "name": "enableLocalFilterByDefault",
+          "name": "enable-local-filter-by-default",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "enablePagingInInEditorResultsByDefault",
+          "name": "enable-paging-in-in-editor-result-by-default",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "booleanMode",
+          "name": "boolean-mode",
           "type": "Enum",
           "javaType": "com.intellij.database.settings.DataGridAppearanceSettings$BooleanMode",
           "variants": [
@@ -3934,22 +4070,22 @@
           ]
         },
         {
-          "name": "detectTextInBinaryColumns",
+          "name": "detect-text-in-binary-columns",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "detectUUIDInBinaryColumns",
+          "name": "detect-uuid-in-binary-columns",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "stripedTable",
+          "name": "striped-table",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "defaultTableOrdering",
+          "name": "default-ordering",
           "type": "Enum",
           "javaType": "com.intellij.database.datagrid.RowSortOrder$Type",
           "variants": [
@@ -3968,27 +4104,27 @@
           ]
         },
         {
-          "name": "sortTables",
+          "name": "sort-tables",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "tableOrderingAsc",
+          "name": "table-ordering-asc",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "sortViaOrderBy",
+          "name": "sort-via-order-by",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "alwaysReviewParameters",
+          "name": "always-review-parameters",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "splitScriptMode",
+          "name": "split-statements-mode",
           "type": "Enum",
           "javaType": "com.intellij.database.settings.DatabaseSettings$SplitScriptMode",
           "variants": [
@@ -4007,72 +4143,72 @@
           ]
         },
         {
-          "name": "loadSlowDocumentation",
+          "name": "load-slow-documentation",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "previewRows",
+          "name": "preview-rows",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "filtersHistorySize",
+          "name": "filters-history-size",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "prefetchSize",
+          "name": "prefetch-size",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "bytesLimitPerValue",
+          "name": "lob-length",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "warnAboutUnsafeQuery",
+          "name": "warn-unsafe-query",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showQueryOutputTimestamp",
+          "name": "show-query-output-timestamp",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "ddlConfirmLoss",
+          "name": "ddl-editor-confirm-loss",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "skipRefactoringPreview",
+          "name": "skip-refactoring-preview",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "notebookMode",
+          "name": "notebook-mode",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "focusOnServicesInWindowMode",
+          "name": "focus-on-services-in-window-mode",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showOutputInTab",
+          "name": "show-output-in-tab",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showOnlySelectedClientOutput",
+          "name": "ignore-hidden-clients-output",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "contextTemplateTarget",
+          "name": "context-tempate-target",
           "type": "Enum",
           "javaType": "com.intellij.database.settings.DatabaseSettings$ContextTemplateTarget",
           "variants": [
@@ -4087,7 +4223,7 @@
           ]
         },
         {
-          "name": "showServicesMode",
+          "name": "show-services-mode",
           "type": "Enum",
           "javaType": "com.intellij.database.settings.DatabaseSettings$ShowServicesMode",
           "variants": [
@@ -4114,57 +4250,57 @@
           ]
         },
         {
-          "name": "addToSortViaAltClick",
+          "name": "add-to-sort-via-alt-click",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "useGridCustomFont",
+          "name": "use-custom-font",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "gridFontFamily",
+          "name": "grid-font-family",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "gridFontSize",
+          "name": "grid-font-size",
           "type": "Integer",
           "javaType": "int"
         },
         {
-          "name": "gridLineSpacing",
+          "name": "grid-line-spacing",
           "type": "Unsupported",
           "javaType": "float"
         },
         {
-          "name": "samplingSize",
+          "name": "sampling-size",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "disabledAggregators",
+          "name": "disabled-aggregators",
           "type": "StringList",
           "javaType": "java.util.List"
         },
         {
-          "name": "widgetAggregator",
+          "name": "widget-aggregator",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "suggestMappingDumping",
+          "name": "suggest-mapping-dumping",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "treeFilterIsSticky",
+          "name": "tree-filter-is-sticky",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "defaultConsoleResolveMode",
+          "name": "default-console-resolve-mode",
           "type": "Enum",
           "javaType": "com.intellij.sql.psi.SqlFileResolveMode",
           "variants": [
@@ -4179,7 +4315,7 @@
           ]
         },
         {
-          "name": "statementDelimiter",
+          "name": "statement-delimiter",
           "type": "String",
           "javaType": "java.lang.String"
         },
@@ -4199,17 +4335,17 @@
           "javaType": "java.util.List"
         },
         {
-          "name": "numberGroupingEnabled",
+          "name": "number-grouping-enabled",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "numberGroupingSeparator",
+          "name": "number-grouping-separator",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "decimalSeparator",
+          "name": "decimal-separator",
           "type": "String",
           "javaType": "java.lang.String"
         },
@@ -4224,7 +4360,7 @@
           "javaType": "java.lang.String"
         },
         {
-          "name": "numberPatternEnabled",
+          "name": "number-pattern-enabled",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -4234,59 +4370,79 @@
           "javaType": "java.lang.String"
         },
         {
-          "name": "dateTimePatternEnabled",
+          "name": "date-time-pattern-enabled",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "dateTimePattern",
+          "name": "date-time-pattern",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "zonedDateTimePatternEnabled",
+          "name": "zoned-date-time-pattern-enabled",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "zonedDateTimePattern",
+          "name": "zoned-date-time-pattern",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "timePatternEnabled",
+          "name": "time-pattern-enabled",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "timePattern",
+          "name": "time-pattern",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "zonedTimePatternEnabled",
+          "name": "zoned-time-pattern-enabled",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "zonedTimePattern",
+          "name": "zoned-time-pattern",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "datePatternEnabled",
+          "name": "date-pattern-enabled",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "datePattern",
+          "name": "date-pattern",
           "type": "String",
           "javaType": "java.lang.String"
         },
         {
-          "name": "formattingTimeZone",
+          "name": "formatting-time-zone",
           "type": "String",
           "javaType": "java.lang.String"
+        },
+        {
+          "name": "open-https-enabled",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "open-http-enabled",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "open-local-file-enabled",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "open-as-http",
+          "type": "Boolean",
+          "javaType": "boolean"
         }
       ]
     },
@@ -5034,33 +5190,14 @@
       "scope": "app",
       "pluginId": "Docker",
       "classFqn": "com.intellij.docker.view.DockerTreeFilter",
-      "storage": "docker.xml",
-      "properties": [
-        {
-          "name": "myStoppedContainersHidden",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "myUntaggedImagesHidden",
-          "type": "Boolean",
-          "javaType": "boolean"
-        }
-      ]
+      "storage": "docker.xml"
     },
     {
       "name": "webServersAuthStorage",
       "scope": "app",
       "pluginId": "com.jetbrains.plugins.webDeployment",
       "classFqn": "com.jetbrains.plugins.webDeployment.config.WebServersAuthStorage$AppInstance",
-      "storage": "webServersAuth.xml",
-      "properties": [
-        {
-          "name": "value",
-          "type": "String",
-          "javaType": "java.lang.String"
-        }
-      ]
+      "storage": "webServersAuth.xml"
     },
     {
       "name": "WebServers",
@@ -5163,20 +5300,6 @@
       ]
     },
     {
-      "name": "Full Line Inline Third Parties",
-      "scope": "app",
-      "pluginId": "org.jetbrains.completion.full.line",
-      "classFqn": "org.jetbrains.completion.full.line.thirdparty.FullLineThirdPartiesStateComponent",
-      "storage": "full.line.xml",
-      "properties": [
-        {
-          "name": "thirdParties",
-          "type": "Unsupported",
-          "javaType": "java.util.Map"
-        }
-      ]
-    },
-    {
       "name": "Git.Application.Settings",
       "scope": "app",
       "pluginId": "Git4Idea",
@@ -5235,6 +5358,12 @@
         {
           "name": "compare_with_local_in_stashes_enabled",
           "mapTo": "COMPARE_WITH_LOCAL_IN_STASHES_ENABLED",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "split_diff_preview_in_stashes_enabled",
+          "mapTo": "SPLIT_DIFF_PREVIEW_IN_STASHES_ENABLED",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -5774,6 +5903,30 @@
       ]
     },
     {
+      "name": "Lvcs.Activity.App.Settings",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings",
+      "storage": "lvcs.xml",
+      "properties": [
+        {
+          "name": "diffMode",
+          "type": "Enum",
+          "javaType": "com.intellij.platform.lvcs.impl.DirectoryDiffMode",
+          "variants": [
+            {
+              "value": "withlocal",
+              "mapTo": "WithLocal"
+            },
+            {
+              "value": "withnext",
+              "mapTo": "WithNext"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "CommonProfilerUISettings",
       "scope": "app",
       "pluginId": "com.intellij",
@@ -5906,52 +6059,62 @@
       "storage": "vcs.xml",
       "properties": [
         {
-          "name": "columnIdOrder",
+          "name": "column_id_order",
+          "mapTo": "COLUMN_ID_ORDER",
           "type": "StringList",
           "javaType": "java.util.List"
         },
         {
-          "name": "columnIdVisibility",
+          "name": "column_id_visibility",
+          "mapTo": "COLUMN_ID_VISIBILITY",
           "type": "Unsupported",
           "javaType": "java.util.Map"
         },
         {
-          "name": "compactReferenceView",
+          "name": "compact_references_view",
+          "mapTo": "COMPACT_REFERENCES_VIEW",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "customBooleanProperties",
+          "name": "custom_boolean_properties",
+          "mapTo": "CUSTOM_BOOLEAN_PROPERTIES",
           "type": "Unsupported",
           "javaType": "java.util.Map"
         },
         {
-          "name": "diffPreviewVerticalSplit",
+          "name": "diff_preview_vertical_split",
+          "mapTo": "DIFF_PREVIEW_VERTICAL_SPLIT",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "labelsLeftAligned",
+          "name": "labels_left_aligned",
+          "mapTo": "LABELS_LEFT_ALIGNED",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "preferCommitDate",
+          "name": "prefer_commit_date",
+          "mapTo": "PREFER_COMMIT_DATE",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showChangesFromParents",
+          "name": "show_changes_from_parents",
+          "mapTo": "SHOW_CHANGES_FROM_PARENTS",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showDiffPreview",
+          "name": "show_diff_preview",
+          "mapTo": "SHOW_DIFF_PREVIEW",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "showTagNames",
+          "name": "show_tag_names",
+          "mapTo": "SHOW_TAG_NAMES",
           "type": "Boolean",
           "javaType": "boolean"
         }
@@ -5993,125 +6156,6 @@
       "storage": "javaeeAppServers.xml"
     },
     {
-      "name": "PersistenceGenerationSettings",
-      "scope": "app",
-      "pluginId": "com.intellij.javaee.jpa",
-      "classFqn": "com.intellij.jpa.generation.GenerationSettings",
-      "storage": "other.xml",
-      "properties": [
-        {
-          "name": "addToUnit",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "annotateFields",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "entityPrefix",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "entitySuffix",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "generateAnnotations",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "generateColumnProperties",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "generateDefaultRelationships",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "generateSeparateXml",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "generateSingleXml",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "preferPrimitiveTypes",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "entity_prefix",
-          "mapTo": "ENTITY_PREFIX",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "entity_suffix",
-          "mapTo": "ENTITY_SUFFIX",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "generate_annotations",
-          "mapTo": "GENERATE_ANNOTATIONS",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "generate_xml",
-          "mapTo": "GENERATE_XML",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "generate_separate_xml",
-          "mapTo": "GENERATE_SEPARATE_XML",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "generate_column_properties",
-          "mapTo": "GENERATE_COLUMN_PROPERTIES",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "add_to_unit",
-          "mapTo": "ADD_TO_UNIT",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "prefer_primitive_types",
-          "mapTo": "PREFER_PRIMITIVE_TYPES",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "generate_default_relationships",
-          "mapTo": "GENERATE_DEFAULT_RELATIONSHIPS",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "annotate_fields",
-          "mapTo": "ANNOTATE_FIELDS",
-          "type": "Boolean",
-          "javaType": "boolean"
-        }
-      ]
-    },
-    {
       "name": "JpaQlFoldingSettings",
       "scope": "app",
       "pluginId": "com.intellij.javaee.jpa",
@@ -6141,7 +6185,7 @@
       "storage": "equalsHashCodeTemplates.xml",
       "properties": [
         {
-          "name": "oldDefaultTemplateName",
+          "name": "defaultTempalteName",
           "type": "String",
           "javaType": "java.lang.String"
         },
@@ -6165,7 +6209,7 @@
       "storage": "getterTemplates.xml",
       "properties": [
         {
-          "name": "oldDefaultTemplateName",
+          "name": "defaultTempalteName",
           "type": "String",
           "javaType": "java.lang.String"
         },
@@ -6189,7 +6233,7 @@
       "storage": "setterTemplates.xml",
       "properties": [
         {
-          "name": "oldDefaultTemplateName",
+          "name": "defaultTempalteName",
           "type": "String",
           "javaType": "java.lang.String"
         },
@@ -6897,7 +6941,7 @@
       "storage": "toStringTemplates.xml",
       "properties": [
         {
-          "name": "oldDefaultTemplateName",
+          "name": "defaultTempalteName",
           "type": "String",
           "javaType": "java.lang.String"
         },
@@ -7441,6 +7485,40 @@
       ]
     },
     {
+      "name": "BuildProcessSatisfactionSurveyStore",
+      "scope": "app",
+      "pluginId": "org.jetbrains.kotlin",
+      "classFqn": "org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurveyStore",
+      "storage": "kotlin-onboarding.xml",
+      "properties": [
+        {
+          "name": "daysWithGradleBuilds",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "firstKotlinGradleBuildTime",
+          "type": "Unsupported",
+          "javaType": "long"
+        },
+        {
+          "name": "lastKotlinGradleBuildTime",
+          "type": "Unsupported",
+          "javaType": "long"
+        },
+        {
+          "name": "nextCountedGradleBuild",
+          "type": "Unsupported",
+          "javaType": "long"
+        },
+        {
+          "name": "userSawSurvey",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
       "name": "K2NewUserTracker",
       "scope": "app",
       "pluginId": "org.jetbrains.kotlin",
@@ -7653,6 +7731,11 @@
           "javaType": "java.util.List"
         },
         {
+          "name": "connectedClusters",
+          "type": "StringList",
+          "javaType": "java.util.List"
+        },
+        {
           "name": "helmPath",
           "type": "String",
           "javaType": "java.lang.String"
@@ -7671,6 +7754,11 @@
           "name": "namespaces",
           "type": "StringList",
           "javaType": "java.util.List"
+        },
+        {
+          "name": "refreshResourcesAfterAction",
+          "type": "Boolean",
+          "javaType": "boolean"
         },
         {
           "name": "shellCommand",
@@ -7727,6 +7815,20 @@
           "name": "specSources",
           "type": "Unsupported",
           "javaType": "java.util.List"
+        }
+      ]
+    },
+    {
+      "name": "Inline Third Parties",
+      "scope": "app",
+      "pluginId": "com.intellij.ml.inline.completion",
+      "classFqn": "com.intellij.ml.inline.completion.impl.thirdparty.ThirdPartiesStateComponent",
+      "storage": "ml.completion.xml",
+      "properties": [
+        {
+          "name": "thirdParties",
+          "type": "Unsupported",
+          "javaType": "java.util.Map"
         }
       ]
     },
@@ -7791,91 +7893,42 @@
       "storage": "semantic-search-settings.xml",
       "properties": [
         {
-          "name": "actionsTabManuallySet",
+          "name": "actions_tab_manually_set",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "classesTabManuallySet",
+          "name": "classes_tab_manually_set",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "filesTabManuallySet",
+          "name": "files_tab_manually_set",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "manualEnabledInActionsTab",
+          "name": "manual_enabled_in_actions_tab",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "manualEnabledInClassesTab",
+          "name": "manual_enabled_in_classes_tab",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "manualEnabledInFilesTab",
+          "name": "manual_enabled_in_files_tab",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "manualEnabledInSymbolsTab",
+          "name": "manual_enabled_in_symbols_tab",
           "type": "Boolean",
           "javaType": "boolean"
         },
         {
-          "name": "symbolsTabManuallySet",
-          "type": "Boolean",
-          "javaType": "boolean"
-        }
-      ]
-    },
-    {
-      "name": "SemanticSearchSettings",
-      "scope": "app",
-      "pluginId": "com.intellij.searcheverywhere.ml",
-      "classFqn": "com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettingsImpl",
-      "storage": "semantic-search-settings.xml",
-      "properties": [
-        {
-          "name": "actionsTabManuallySet",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "classesTabManuallySet",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "filesTabManuallySet",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "manualEnabledInActionsTab",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "manualEnabledInClassesTab",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "manualEnabledInFilesTab",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "manualEnabledInSymbolsTab",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "symbolsTabManuallySet",
+          "name": "symbols_tab_manually_set",
           "type": "Boolean",
           "javaType": "boolean"
         }
@@ -8093,30 +8146,6 @@
       ]
     },
     {
-      "name": "NodeJSRemoteInterpreters",
-      "scope": "app",
-      "pluginId": "org.jetbrains.plugins.node-remote-interpreter",
-      "classFqn": "com.jetbrains.nodejs.remote.NodeRemoteInterpreters$OldNodeRemoteInterpreters",
-      "storage": "nodeJsRemoteInterpreters.xml",
-      "properties": [
-        {
-          "name": "name",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "namespace",
-          "type": "Unsupported",
-          "javaType": "org.jdom.Namespace"
-        },
-        {
-          "name": "text",
-          "type": "String",
-          "javaType": "java.lang.String"
-        }
-      ]
-    },
-    {
       "name": "LastSelectedPropertiesFileStore",
       "scope": "app",
       "pluginId": "com.intellij.properties",
@@ -8236,30 +8265,6 @@
           "name": "connections",
           "type": "Unsupported",
           "javaType": "java.util.List"
-        }
-      ]
-    },
-    {
-      "name": "SettingsSyncLocalSettings",
-      "scope": "app",
-      "pluginId": "com.intellij.settingsSync",
-      "classFqn": "com.intellij.settingsSync.SettingsSyncLocalSettings",
-      "storage": "settingsSyncLocal.xml",
-      "properties": [
-        {
-          "name": "applicationId",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "crossIdeSyncEnabled",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "knownAndAppliedServerId",
-          "type": "String",
-          "javaType": "java.lang.String"
         }
       ]
     },

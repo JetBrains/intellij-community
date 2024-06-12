@@ -7,6 +7,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.serialization.MutableAccessor
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.getBeanAccessors
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -110,9 +111,10 @@ internal data class ComponentDescriptor(
       component.state?.let { componentState ->
         val accessors = getBeanAccessors(componentState::class.java)
         accessors.forEach {
-          val jsonName = JsonSettingsModel.toJsonName(it.name)
+          val internalName = it.getInternalName()
+          val jsonName = JsonSettingsModel.toJsonName(internalName)
           infoList += JsonSettingsModel.ComponentPropertyInfo(jsonName,
-                                                              if (it.name == jsonName) null else it.name,
+                                                              if (internalName == jsonName) null else internalName,
                                                               toModelType(it),
                                                               it.valueClass.typeName,
                                                               getVariants(it.valueClass))
@@ -120,6 +122,15 @@ internal data class ComponentDescriptor(
       }
     }
     return infoList
+  }
+
+  private fun MutableAccessor.getInternalName(): String {
+    this.getAnnotation(OptionTag::class.java)?.let {
+      if (it.value.isNotEmpty()) {
+        return it.value
+      }
+    }
+    return this.name
   }
 
 

@@ -68,7 +68,7 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
   data class ComponentPropertyInfo (
     val name: String,
     val mapTo: String? = null,
-    val type: PropertyType = PropertyType.Unsupported,
+    val type: PropertyType,
     val javaType: String? = null,
     val variants: List<VariantInfo> = emptyList()
   )
@@ -184,7 +184,7 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
       if (chunks.size < 3) logger.error("Invalid name: ${jsonName}")
       val propertyParts = chunks[2].split(".")
       if (propertyParts.size < 2) logger.error("Invalid property: ${chunks[3]}")
-      val propertyInfo = ComponentPropertyInfo(name = propertyParts[1])
+      val propertyInfo = ComponentPropertyInfo(name = propertyParts[1], type = PropertyType.Unsupported)
       return ComponentInfo(
         name = propertyParts[0],
         pluginId = chunks[0],
