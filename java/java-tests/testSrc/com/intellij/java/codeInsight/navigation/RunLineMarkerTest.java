@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.navigation;
 import com.intellij.application.options.editor.GutterIconsConfigurable;
 import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -13,13 +14,19 @@ import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationProducer;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.lineMarker.LineMarkerActionWrapper;
 import com.intellij.execution.lineMarker.RunLineMarkerProvider;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -222,5 +229,25 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
                                        Run 'Main.main()'
                                        Debug 'Main.main()'
                                        Run 'Main.main()' with Coverage"""));
+  }
+
+  public void testConfigurationContextCache() {
+    myFixture.configureByText("Main.java", """
+      public class Main {
+          public static void ma<caret>in(String[] args) {}
+      }""");
+    PsiElement element = ((PsiMethod)myFixture.getElementAtCaret()).getNameIdentifier();
+    LineMarkerInfo<?> info = new RunLineMarkerProvider().getLineMarkerInfo(element);
+    assertNotNull(info);
+    ActionGroup group = info.createGutterRenderer().getPopupMenuActions();
+    assertNotNull(group);
+    DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
+    AnAction action = group.getChildren(null)[0];
+    assertInstanceOf(action, LineMarkerActionWrapper.class);
+
+    action.update(TestActionEvent.createTestEvent(dataContext));
+    ConfigurationContext sharedContext = DataManager.getInstance().loadFromDataContext(dataContext, ConfigurationContext.SHARED_CONTEXT);
+    PsiElement locationElement = sharedContext.getLocation().getPsiElement();
+    assertEquals("main", locationElement.getText());
   }
 }
