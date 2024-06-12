@@ -26,7 +26,7 @@ class K2MoveHandler : MoveHandlerDelegate() {
     override fun canMove(elements: Array<out PsiElement>, targetContainer: PsiElement?, reference: PsiReference?): Boolean {
         if (!Registry.`is`("kotlin.k2.smart.move")) return false
         if (elements.any { it !is KtElement && it !is PsiFile && it !is PsiClass && it !is PsiDirectory }) return false
-
+        if (elements.all {it is PsiDirectory }) return false // handled by Java plugin
         (elements.firstOrNull()?.containingFile as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return false }
 
         return targetContainer?.isValidTarget() != false
