@@ -13,10 +13,10 @@ import org.junit.runner.Description;
 public class TargetJavaVersionWatcher extends TestWatcher {
 
   @Nullable
-  private GradleJvmResolver.VersionRestriction myRestriction;
+  private JavaVersionRestriction myRestriction;
 
-  public @NotNull GradleJvmResolver.VersionRestriction getRestriction() {
-    return myRestriction != null ? myRestriction : GradleJvmResolver.VersionRestriction.NO;
+  public @NotNull JavaVersionRestriction getRestriction() {
+    return myRestriction != null ? myRestriction : JavaVersionRestriction.NO;
   }
 
   @Override
@@ -25,7 +25,7 @@ public class TargetJavaVersionWatcher extends TestWatcher {
     if (targetJavaVersion == null) {
       return;
     }
-    myRestriction = new GradleJvmResolver.VersionRestriction() {
+    myRestriction = new JavaVersionRestriction() {
       @Override
       public boolean isRestricted(@NotNull GradleVersion gradleVersion, @NotNull JavaVersion source) {
         return !JavaVersionMatcher.isVersionMatch(source, targetJavaVersion.value());
