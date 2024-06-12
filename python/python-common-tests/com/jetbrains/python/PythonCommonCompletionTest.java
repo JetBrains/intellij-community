@@ -2250,8 +2250,15 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   // PY-62208
-  public void testTooCommonImportableNamesNotSuggested() {
-    doMultiFileTest();
+  public void testTooShortImportableNamesSuggestedOnlyInExtendedCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 1);
+    List<String> basicCompletionVariants = myFixture.getLookupElementStrings();
+    assertDoesntContain(basicCompletionVariants, "c1", "c2");
+    myFixture.complete(CompletionType.BASIC, 2);
+    List<String> extendedCompletionVariants = myFixture.getLookupElementStrings();
+    assertContainsElements(extendedCompletionVariants, "c1", "c2");
   }
 
   private static void runWithImportableNamesInBasicCompletionDisabled(@NotNull Runnable action) {
