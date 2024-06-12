@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.test.api
+package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -18,7 +18,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-open class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : EntityWithUrls, WorkspaceEntityBase(dataSource) {
+internal class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : EntityWithUrls, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -63,9 +63,9 @@ open class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : Enti
   }
 
 
-  class Builder(result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(result),
-                                               EntityWithUrls.Builder {
-    constructor() : this(EntityWithUrlsData())
+  internal class Builder(result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(result),
+                                                        EntityWithUrls.Builder {
+    internal constructor() : this(EntityWithUrlsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -197,7 +197,7 @@ open class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : Enti
   }
 }
 
-class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
+internal class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
   lateinit var simpleUrl: VirtualFileUrl
   var nullableUrl: VirtualFileUrl? = null
   lateinit var listOfUrls: MutableList<VirtualFileUrl>

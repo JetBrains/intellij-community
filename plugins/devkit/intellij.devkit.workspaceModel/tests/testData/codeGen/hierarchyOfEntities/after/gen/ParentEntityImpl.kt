@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.test.api
+package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -17,7 +17,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-open class ParentEntityImpl(private val dataSource: ParentEntityData) : ParentEntity, WorkspaceEntityBase(dataSource) {
+internal open class ParentEntityImpl(private val dataSource: ParentEntityData) : ParentEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -50,8 +50,9 @@ open class ParentEntityImpl(private val dataSource: ParentEntityData) : ParentEn
   }
 
 
-  class Builder(result: ParentEntityData?) : ModifiableWorkspaceEntityBase<ParentEntity, ParentEntityData>(result), ParentEntity.Builder {
-    constructor() : this(ParentEntityData())
+  internal class Builder(result: ParentEntityData?) : ModifiableWorkspaceEntityBase<ParentEntity, ParentEntityData>(result),
+                                                      ParentEntity.Builder {
+    internal constructor() : this(ParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -132,7 +133,7 @@ open class ParentEntityImpl(private val dataSource: ParentEntityData) : ParentEn
   }
 }
 
-class ParentEntityData : WorkspaceEntityData<ParentEntity>() {
+internal class ParentEntityData : WorkspaceEntityData<ParentEntity>() {
   lateinit var data1: String
   lateinit var data2: String
 

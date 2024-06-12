@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.test.api
+package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -16,8 +16,8 @@ import java.util.Date
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-open class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownPropertyTypeEntityData) : UnknownPropertyTypeEntity,
-                                                                                                  WorkspaceEntityBase(dataSource) {
+internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownPropertyTypeEntityData) : UnknownPropertyTypeEntity,
+                                                                                                      WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -44,9 +44,9 @@ open class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownProperty
   }
 
 
-  class Builder(result: UnknownPropertyTypeEntityData?) :
+  internal class Builder(result: UnknownPropertyTypeEntityData?) :
     ModifiableWorkspaceEntityBase<UnknownPropertyTypeEntity, UnknownPropertyTypeEntityData>(result), UnknownPropertyTypeEntity.Builder {
-    constructor() : this(UnknownPropertyTypeEntityData())
+    internal constructor() : this(UnknownPropertyTypeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -116,7 +116,7 @@ open class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownProperty
   }
 }
 
-class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEntity>() {
+internal class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEntity>() {
   lateinit var date: Date
 
   internal fun isDateInitialized(): Boolean = ::date.isInitialized

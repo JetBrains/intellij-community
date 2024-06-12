@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.test.api
+package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -18,8 +18,8 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-open class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity,
-                                                                                            WorkspaceEntityBase(dataSource) {
+internal class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity,
+                                                                                                WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -65,9 +65,9 @@ open class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEn
   }
 
 
-  class Builder(result: SimpleSymbolicIdEntityData?) :
+  internal class Builder(result: SimpleSymbolicIdEntityData?) :
     ModifiableWorkspaceEntityBase<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityData>(result), SimpleSymbolicIdEntity.Builder {
-    constructor() : this(SimpleSymbolicIdEntityData())
+    internal constructor() : this(SimpleSymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -171,7 +171,7 @@ open class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEn
   }
 }
 
-class SimpleSymbolicIdEntityData : WorkspaceEntityData<SimpleSymbolicIdEntity>() {
+internal class SimpleSymbolicIdEntityData : WorkspaceEntityData<SimpleSymbolicIdEntity>() {
   var version: Int = 0
   lateinit var name: String
   lateinit var related: SimpleId

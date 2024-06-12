@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.test.api
+package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.storage.EntitySource
@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-open class ReferredEntityImpl(private val dataSource: ReferredEntityData) : ReferredEntity, WorkspaceEntityBase(dataSource) {
+internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : ReferredEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
     internal val CONTENTROOT_CONNECTION_ID: ConnectionId =
@@ -58,9 +58,9 @@ open class ReferredEntityImpl(private val dataSource: ReferredEntityData) : Refe
   }
 
 
-  class Builder(result: ReferredEntityData?) : ModifiableWorkspaceEntityBase<ReferredEntity, ReferredEntityData>(result),
-                                               ReferredEntity.Builder {
-    constructor() : this(ReferredEntityData())
+  internal class Builder(result: ReferredEntityData?) : ModifiableWorkspaceEntityBase<ReferredEntity, ReferredEntityData>(result),
+                                                        ReferredEntity.Builder {
+    internal constructor() : this(ReferredEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -174,7 +174,7 @@ open class ReferredEntityImpl(private val dataSource: ReferredEntityData) : Refe
   }
 }
 
-class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
+internal class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
   var version: Int = 0
   lateinit var name: String
 

@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.test.api
+package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -16,7 +16,8 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-open class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData) : DefaultFieldEntity, WorkspaceEntityBase(dataSource) {
+internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData) : DefaultFieldEntity,
+                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -52,9 +53,9 @@ open class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData
   }
 
 
-  class Builder(result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(result),
-                                                   DefaultFieldEntity.Builder {
-    constructor() : this(DefaultFieldEntityData())
+  internal class Builder(result: DefaultFieldEntityData?) :
+    ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(result), DefaultFieldEntity.Builder {
+    internal constructor() : this(DefaultFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -151,7 +152,7 @@ open class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData
   }
 }
 
-class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
+internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
   var version: Int = 0
   lateinit var data: TestData
   var anotherVersion: Int = 0

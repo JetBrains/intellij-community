@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.test.api
+package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -15,7 +15,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-open class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase(dataSource) {
+internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -53,8 +53,9 @@ open class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEn
   }
 
 
-  class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result), SimpleEntity.Builder {
-    constructor() : this(SimpleEntityData())
+  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result),
+                                                      SimpleEntity.Builder {
+    internal constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -141,7 +142,7 @@ open class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEn
   }
 }
 
-class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
+internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
   var version: Int = 0
   lateinit var name: String
   var isSimple: Boolean = false

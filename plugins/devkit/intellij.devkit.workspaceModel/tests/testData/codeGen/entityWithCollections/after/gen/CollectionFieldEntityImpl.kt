@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.test.api
+package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -19,8 +19,8 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-open class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEntityData) : CollectionFieldEntity,
-                                                                                          WorkspaceEntityBase(dataSource) {
+internal class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEntityData) : CollectionFieldEntity,
+                                                                                              WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -53,9 +53,9 @@ open class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEnti
   }
 
 
-  class Builder(result: CollectionFieldEntityData?) :
+  internal class Builder(result: CollectionFieldEntityData?) :
     ModifiableWorkspaceEntityBase<CollectionFieldEntity, CollectionFieldEntityData>(result), CollectionFieldEntity.Builder {
-    constructor() : this(CollectionFieldEntityData())
+    internal constructor() : this(CollectionFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -175,7 +175,7 @@ open class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEnti
   }
 }
 
-class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
+internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
   lateinit var versions: MutableSet<Int>
   lateinit var names: MutableList<String>
 

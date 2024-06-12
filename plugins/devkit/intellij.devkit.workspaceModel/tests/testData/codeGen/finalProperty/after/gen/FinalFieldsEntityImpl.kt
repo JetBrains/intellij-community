@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.test.api
+package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -17,7 +17,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-open class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityData) : FinalFieldsEntity, WorkspaceEntityBase(dataSource) {
+internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityData) : FinalFieldsEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -44,9 +44,9 @@ open class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityData) 
   }
 
 
-  class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(result),
-                                                  FinalFieldsEntity.Builder {
-    constructor() : this(FinalFieldsEntityData())
+  internal class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(result),
+                                                           FinalFieldsEntity.Builder {
+    internal constructor() : this(FinalFieldsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -116,7 +116,7 @@ open class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityData) 
   }
 }
 
-class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
+internal class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
   lateinit var descriptor: AnotherDataClass
 
   internal fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
