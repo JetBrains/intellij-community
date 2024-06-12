@@ -1,5 +1,3 @@
-package test;
-
 public class Some {
     @SomeAnnotation(some = "Foo", same = 0)
     public void foo() {

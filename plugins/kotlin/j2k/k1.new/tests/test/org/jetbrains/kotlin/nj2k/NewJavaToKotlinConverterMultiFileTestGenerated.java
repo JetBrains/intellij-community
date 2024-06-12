@@ -35,19 +35,9 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         runTest("../../shared/tests/testData/multiFile/AnnotationDoesNotLoseImport/");
     }
 
-    @TestMetadata("AnnotationWithArrayParameter")
-    public void testAnnotationWithArrayParameter() throws Exception {
-        runTest("../../shared/tests/testData/multiFile/AnnotationWithArrayParameter/");
-    }
-
     @TestMetadata("DetectPropertiesMultipleFiles")
     public void testDetectPropertiesMultipleFiles() throws Exception {
         runTest("../../shared/tests/testData/multiFile/DetectPropertiesMultipleFiles/");
-    }
-
-    @TestMetadata("EnumValues")
-    public void testEnumValues() throws Exception {
-        runTest("../../shared/tests/testData/multiFile/EnumValues/");
     }
 
     @TestMetadata("FieldToPrimaryConstructorProperty")
@@ -58,11 +48,6 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
     @TestMetadata("FieldToProperty")
     public void testFieldToProperty() throws Exception {
         runTest("../../shared/tests/testData/multiFile/FieldToProperty/");
-    }
-
-    @TestMetadata("FunctionalInterfaceAcceptor")
-    public void testFunctionalInterfaceAcceptor() throws Exception {
-        runTest("../../shared/tests/testData/multiFile/FunctionalInterfaceAcceptor/");
     }
 
     @TestMetadata("GetterAndSetterUsages")
@@ -93,16 +78,6 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
     @TestMetadata("KT11952")
     public void testKT11952() throws Exception {
         runTest("../../shared/tests/testData/multiFile/KT11952/");
-    }
-
-    @TestMetadata("NoDestructuringForPlainVariables")
-    public void testNoDestructuringForPlainVariables() throws Exception {
-        runTest("../../shared/tests/testData/multiFile/NoDestructuringForPlainVariables/");
-    }
-
-    @TestMetadata("NullabilityByDFa")
-    public void testNullabilityByDFa() throws Exception {
-        runTest("../../shared/tests/testData/multiFile/NullabilityByDFa/");
     }
 
     @TestMetadata("OverrideFieldToPrimaryConstructorProperty")

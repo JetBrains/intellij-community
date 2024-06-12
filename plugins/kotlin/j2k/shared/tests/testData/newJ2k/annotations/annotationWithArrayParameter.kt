@@ -1,5 +1,3 @@
-package test
-
 class Some {
     @SomeAnnotation(some = ["Foo"], same = [0])
     fun foo() {

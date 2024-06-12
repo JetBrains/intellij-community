@@ -1,6 +1,4 @@
-
 public class SomeService {
-
     public static SomeService getInstanceNotNull() {
         return new SomeService();
     }

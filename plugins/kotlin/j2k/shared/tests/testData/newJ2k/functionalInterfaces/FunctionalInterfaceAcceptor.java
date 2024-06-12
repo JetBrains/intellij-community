@@ -1,7 +1,5 @@
 // IGNORE_K2
-package test;
-
-public class Stage {
+class Stage {
     public void context(Acceptor acceptor) {
         acceptor.acceptFace(new Face() {
             @Override

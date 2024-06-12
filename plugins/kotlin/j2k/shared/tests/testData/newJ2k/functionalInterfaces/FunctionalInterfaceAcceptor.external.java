@@ -1,6 +1,4 @@
-package test;
-
-public class Acceptor {
+class Acceptor {
     private Face face;
 
     public Face getFace() {
@@ -13,4 +11,8 @@ public class Acceptor {
 
     public void acceptFace(Face face) {
     }
+}
+
+interface Face {
+    void subject(String p);
 }
