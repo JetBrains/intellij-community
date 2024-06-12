@@ -64,7 +64,23 @@ fun <T> waitFor(
   }
 }
 
+fun <T> withRetries(times: Int, onError: () -> Unit = {}, f: () -> T): T {
+  require(times > 0)
+  var lastException: Exception? = null
+  for (i in 0 until times) {
+    try {
+      return f()
+    }
+    catch (e: Exception) {
+      onError()
+      lastException = e
+    }
+  }
+  throw RetryException(lastException!!)
+}
+
 class WaitForException(val duration: Duration, val errorMessage: String, cause: Throwable? = null) : IllegalStateException("Timeout($duration): $errorMessage", cause)
+class RetryException(cause: Exception): RuntimeException(cause)
 
 fun <T : UiComponent> T.wait(duration: Duration): T {
   Thread.sleep(duration.inWholeMilliseconds)
