@@ -3,7 +3,6 @@ package com.intellij.debugger.feedback
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
@@ -25,8 +24,7 @@ class KotlinDebuggerFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
-    val versionPrefix = Registry.stringValue("debugger.kotlin.survey.version.prefix")
-    return ApplicationInfo.getInstance().fullVersion.startsWith(versionPrefix) &&
+    return ApplicationInfo.getInstance().fullVersion.startsWith("2024.1") &&
            UsageTracker.kotlinDebuggedTimes() >= minimalNumberOfDebuggerUsage
   }
 
