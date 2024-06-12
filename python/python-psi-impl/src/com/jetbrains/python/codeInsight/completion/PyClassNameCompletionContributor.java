@@ -52,7 +52,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
   // See https://plugins.jetbrains.com/plugin/18465-sputnik
   private static final boolean TRACING_WITH_SPUTNIK_ENABLED = false;
   private static final Logger LOG = Logger.getInstance(PyClassNameCompletionContributor.class);
-  private static final Set<String> TOO_COMMON_NAMES = Set.of("main", "test");
+  private static final int NAME_TOO_SHORT_FOR_BASIC_COMPLETION_THRESHOLD = 5;
 
   public PyClassNameCompletionContributor() {
     if (TRACING_WITH_SPUTNIK_ENABLED) {
@@ -63,7 +63,8 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
 
   @Override
   protected void doFillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    if (!PyCodeInsightSettings.getInstance().INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION && !parameters.isExtendedCompletion()) {
+    boolean isExtendedCompletion = parameters.isExtendedCompletion();
+    if (!PyCodeInsightSettings.getInstance().INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION && !isExtendedCompletion) {
       return;
     }
     PsiFile originalFile = parameters.getOriginalFile();
@@ -72,7 +73,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
     PyTargetExpression targetExpr = as(position.getParent(), PyTargetExpression.class);
     boolean insideUnqualifiedReference = refExpr != null && !refExpr.isQualified();
     boolean insidePattern = targetExpr != null && position.getParent().getParent() instanceof PyCapturePattern;
-    boolean insideStringLiteralInExtendedCompletion = position instanceof PyStringElement && parameters.isExtendedCompletion();
+    boolean insideStringLiteralInExtendedCompletion = position instanceof PyStringElement && isExtendedCompletion;
     if (!(insideUnqualifiedReference || insidePattern || insideStringLiteralInExtendedCompletion)) {
       return;
     }
@@ -103,7 +104,10 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
       StubIndex.getInstance().processAllKeys(PyExportedModuleAttributeIndex.KEY, elementName -> {
         ProgressManager.checkCanceled();
         counters.scannedNames++;
-        if (TOO_COMMON_NAMES.contains(elementName)) return true;
+        if (elementName.length() < NAME_TOO_SHORT_FOR_BASIC_COMPLETION_THRESHOLD && !isExtendedCompletion) {
+          counters.tooShortNames++;
+          return true;
+        }
         if (!result.getPrefixMatcher().isStartMatch(elementName)) return true;
         return stubIndex.processElements(PyExportedModuleAttributeIndex.KEY, elementName, project, scope, PyElement.class, exported -> {
           ProgressManager.checkCanceled();
@@ -111,7 +115,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
           if (name == null || namesInScope.contains(name)) return true;
           QualifiedName fqn = getFullyQualifiedName(exported);
           if (!isApplicableInInsertionContext(exported, fqn, position, typeEvalContext)) {
-            counters.notApplicableInContext++;
+            counters.notApplicableInContextNames++;
             return true;
           }
           if (alreadySuggested.add(fqn)) {
@@ -141,7 +145,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
         });
       }, scope);
     }, duration -> {
-      LOG.debug(counters + " computed in " + duration + " ms");
+      LOG.debug(counters + " computed for prefix '" + result.getPrefixMatcher().getPrefix() + "' in " + duration + " ms");
       if (TRACING_WITH_SPUTNIK_ENABLED) {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("\1h('Importable names completion','%d')".formatted((duration / 10) * 10));
@@ -229,16 +233,18 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
   private static class Counters {
     int scannedNames;
     int privateNames;
+    int tooShortNames;
+    int notApplicableInContextNames;
     int totalVariants;
-    int notApplicableInContext;
 
     @Override
     public String toString() {
       return "Counters{" +
              "scannedNames=" + scannedNames +
              ", privateNames=" + privateNames +
+             ", tooShortNames=" + tooShortNames +
+             ", notApplicableInContextNames=" + notApplicableInContextNames +
              ", totalVariants=" + totalVariants +
-             ", notApplicableInContext=" + notApplicableInContext +
              '}';
     }
   }
