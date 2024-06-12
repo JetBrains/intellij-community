@@ -396,7 +396,7 @@ public final class HighlightClassUtil {
       info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(textRange)
         .descriptionAndTooltip(message);
-      IntentionAction action = QuickFixFactory.getInstance().createRenameFix(aClass);
+      IntentionAction action = QuickFixFactory.getInstance().createRenameFix(identifier);
       if (action != null) {
         info.registerFix(action, null, null, null, null);
       }
