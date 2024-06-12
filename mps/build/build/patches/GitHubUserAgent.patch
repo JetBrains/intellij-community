@@ -1,0 +1,66 @@
+Index: platform/collaboration-tools/src/com/intellij/collaboration/api/httpclient/HttpClientUtil.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/collaboration-tools/src/com/intellij/collaboration/api/httpclient/HttpClientUtil.kt b/platform/collaboration-tools/src/com/intellij/collaboration/api/httpclient/HttpClientUtil.kt
+--- a/platform/collaboration-tools/src/com/intellij/collaboration/api/httpclient/HttpClientUtil.kt	(revision 7ff5c6541b265b30d4ecd702dccd8005502d3a74)
++++ b/platform/collaboration-tools/src/com/intellij/collaboration/api/httpclient/HttpClientUtil.kt	(date 1718197414257)
+@@ -5,7 +5,10 @@
+ import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_GZIP
+ import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_HEADER
+ import com.intellij.collaboration.api.logName
++import com.intellij.openapi.application.ApplicationInfo
++import com.intellij.openapi.application.ApplicationNamesInfo
+ import com.intellij.openapi.diagnostic.Logger
++import com.intellij.openapi.util.SystemInfo
+ import java.io.InputStream
+ import java.io.Reader
+ import java.io.StringReader
+@@ -67,6 +70,21 @@
+     checkStatusCodeWithLogging(logger, request.logName(), responseInfo.statusCode(), bodyStream)
+     return responseReaderWithLogging(logger, request.logName(), bodyStream).use(reader)
+   }
++
++  /**
++   * Build the User-Agent header value for the [agentName]
++   * Append product, java and OS data
++   */
++  fun getUserAgentValue(agentName: String): String {
++    val ideName = ApplicationNamesInfo.getInstance().fullProductName.replace(' ', '-')
++    val ideBuild = ApplicationInfo.getInstance().build.asStringWithoutProductCode()
++    val java = "JRE " + SystemInfo.JAVA_RUNTIME_VERSION
++    val os = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
++    val arch = SystemInfo.OS_ARCH
++
++    return "$agentName $ideName/$ideBuild ($java; $os; $arch)"
++  }
++
+ }
+
+
+Index: plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutor.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutor.kt b/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutor.kt
+--- a/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutor.kt	(revision 7ff5c6541b265b30d4ecd702dccd8005502d3a74)
++++ b/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutor.kt	(date 1718197290878)
+@@ -1,6 +1,7 @@
+ // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ package org.jetbrains.plugins.github.api
+
++import com.intellij.collaboration.api.httpclient.HttpClientUtil
+ import com.intellij.collaboration.ui.SimpleEventListener
+ import com.intellij.openapi.Disposable
+ import com.intellij.openapi.application.ModalityState
+@@ -133,7 +134,7 @@
+         else -> throw UnsupportedOperationException("${request.javaClass} is not supported")
+       }
+         .connectTimeout(githubSettings.connectionTimeout)
+-        .userAgent("Intellij IDEA Github Plugin")
++        .userAgent(HttpClientUtil.getUserAgentValue("IntelliJ-GitHub-Plugin"))
+         .throwStatusCodeException(false)
+         .forceHttps(false)
+         .accept(request.acceptMimeType)
