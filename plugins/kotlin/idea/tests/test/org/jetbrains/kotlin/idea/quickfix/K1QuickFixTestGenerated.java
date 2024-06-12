@@ -3738,6 +3738,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeToUseSpreadOperator/differentTypeParameter.kt");
         }
 
+        @TestMetadata("differentTypeParameterGeneric.kt")
+        public void testDifferentTypeParameterGeneric() throws Exception {
+            runTest("testData/quickfix/changeToUseSpreadOperator/differentTypeParameterGeneric.kt");
+        }
+
         @TestMetadata("mapOf.kt")
         public void testMapOf() throws Exception {
             runTest("testData/quickfix/changeToUseSpreadOperator/mapOf.kt");
@@ -3746,6 +3751,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("multipleParams.kt")
         public void testMultipleParams() throws Exception {
             runTest("testData/quickfix/changeToUseSpreadOperator/multipleParams.kt");
+        }
+
+        @TestMetadata("nestedGeneric.kt")
+        public void testNestedGeneric() throws Exception {
+            runTest("testData/quickfix/changeToUseSpreadOperator/nestedGeneric.kt");
         }
 
         @TestMetadata("nonArray.kt")

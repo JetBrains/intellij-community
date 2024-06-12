@@ -6093,7 +6093,69 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator")
+    public static class ChangeToUseSpreadOperator extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("differentTypeParameter.kt")
+        public void testDifferentTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/differentTypeParameter.kt");
+        }
+
+        @TestMetadata("differentTypeParameterGeneric.kt")
+        public void testDifferentTypeParameterGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/differentTypeParameterGeneric.kt");
+        }
+
+        @TestMetadata("mapOf.kt")
+        public void testMapOf() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/mapOf.kt");
+        }
+
+        @TestMetadata("multipleParams.kt")
+        public void testMultipleParams() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/multipleParams.kt");
+        }
+
+        @TestMetadata("nestedGeneric.kt")
+        public void testNestedGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/nestedGeneric.kt");
+        }
+
+        @TestMetadata("nonArray.kt")
+        public void testNonArray() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/nonArray.kt");
+        }
+
+        @TestMetadata("nonVarArg.kt")
+        public void testNonVarArg() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/nonVarArg.kt");
+        }
+
+        @TestMetadata("normal.kt")
+        public void testNormal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/normal.kt");
+        }
+
+        @TestMetadata("stdlibMapOf.kt")
+        public void testStdlibMapOf() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/stdlibMapOf.kt");
+        }
+
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/vararg.kt");
+        }
+    }
 
 
 
