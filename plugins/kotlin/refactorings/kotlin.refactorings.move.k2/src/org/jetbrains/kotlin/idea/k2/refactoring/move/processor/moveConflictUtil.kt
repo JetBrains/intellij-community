@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiDirectory
@@ -18,8 +19,6 @@ import com.intellij.util.containers.toMultiMap
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.asJava.toLightElements
@@ -166,8 +165,13 @@ private fun PsiElement.containingModule(): Module? {
  * If visibility isn't there before the refactoring starts, we don't report it as a conflict.
  */
 private fun MoveRenameUsageInfo.isVisibleBeforeMove(): Boolean {
-    val declaration = upToDateReferencedElement as? PsiNamedElement ?: return false
-    return declaration.isVisibleTo(element ?: return false)
+    return try {
+        val declaration = upToDateReferencedElement as? PsiNamedElement ?: return false
+        declaration.isVisibleTo(element ?: return false)
+    } catch (e: Exception) {
+        fileLogger().error(e)
+        return true
+    }
 }
 
 private fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
@@ -200,6 +204,15 @@ private fun PsiNamedElement.lightIsVisibleTo(usage: PsiElement): Boolean {
     }
 }
 
+private fun tryFindConflict(findConflict: () -> Pair<PsiElement, String>?): Pair<PsiElement, String>? {
+    return try {
+        findConflict()
+    } catch (e: Exception) {
+        fileLogger().error(e)
+        null
+    }
+}
+
 /**
  * Check whether the moved external usages are still visible towards their non-physical declaration.
  */
@@ -211,12 +224,14 @@ private fun checkVisibilityConflictForNonMovedUsages(
     return usages
         .filter { usage -> usage.willNotBeMoved(allDeclarationsToMove) && usage.isVisibleBeforeMove() }
         .mapNotNull { usage ->
-            val usageElement = usage.element ?: return@mapNotNull null
-            val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@mapNotNull null
-            if (referencedDeclaration.isMemberThatCanBeSkipped()) return@mapNotNull null
-            val declarationCopy = containingCopyDecl(referencedDeclaration, oldToNewMap) ?: return@mapNotNull null
-            val isVisible = declarationCopy.isVisibleTo(usageElement)
-            if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
+            tryFindConflict {
+                val usageElement = usage.element ?: return@tryFindConflict null
+                val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
+                if (referencedDeclaration.isMemberThatCanBeSkipped()) return@tryFindConflict null
+                val declarationCopy = containingCopyDecl(referencedDeclaration, oldToNewMap) ?: return@tryFindConflict null
+                val isVisible = declarationCopy.isVisibleTo(usageElement)
+                if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
+            }
         }
         .toMultiMap()
 }
@@ -256,12 +271,14 @@ fun checkVisibilityConflictsForInternalUsages(
         .mapNotNull { refExprCopy -> (refExprCopy.internalUsageInfo ?: return@mapNotNull null) to refExprCopy }
         .filter { (usageInfo, _) -> !usageInfo.referencedElement.willBeMoved(allDeclarationsToMove) && usageInfo.isVisibleBeforeMove() }
         .mapNotNull { (usageInfo, refExprCopy) ->
-            val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@mapNotNull null
-            val isVisible = referencedDeclaration.isVisibleTo(refExprCopy)
-            if (!isVisible) {
-                val usageElement = usageInfo.element as? KtElement ?: return@mapNotNull null
-                usageElement.createVisibilityConflict(referencedDeclaration)
-            } else null
+            tryFindConflict {
+                val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
+                val isVisible = referencedDeclaration.isVisibleTo(refExprCopy)
+                if (!isVisible) {
+                    val usageElement = usageInfo.element as? KtElement ?: return@tryFindConflict null
+                    usageElement.createVisibilityConflict(referencedDeclaration)
+                } else null
+            }
         }.toMultiMap()
 }
 
@@ -303,13 +320,15 @@ private fun checkModuleDependencyConflictsForNonMovedUsages(
     return usages
         .filter { usage -> usage.willNotBeMoved(allDeclarationsToMove) }
         .mapNotNull { usage ->
-            val usageElement = usage.element ?: return@mapNotNull null
-            val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@mapNotNull null
-            val declarationCopy = containingCopyDecl(referencedDeclaration, oldToNewMap) ?: return@mapNotNull null
-            val targetModule = declarationCopy.containingModule() ?: return@mapNotNull null
-            val resolveScope = usageElement.resolveScope
-            if (resolveScope.isSearchInModuleContent(targetModule, false)) return@mapNotNull null
-            usageElement.createAccessibilityConflictUnMoved(referencedDeclaration)
+            tryFindConflict {
+                val usageElement = usage.element ?: return@tryFindConflict null
+                val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
+                val declarationCopy = containingCopyDecl(referencedDeclaration, oldToNewMap) ?: return@tryFindConflict null
+                val targetModule = declarationCopy.containingModule() ?: return@tryFindConflict null
+                val resolveScope = usageElement.resolveScope
+                if (resolveScope.isSearchInModuleContent(targetModule, false)) return@tryFindConflict null
+                usageElement.createAccessibilityConflictUnMoved(referencedDeclaration)
+            }
         }.toMultiMap()
 }
 
@@ -322,13 +341,15 @@ fun checkModuleDependencyConflictsForInternalUsages(
         .mapNotNull { refExprCopy -> (refExprCopy.internalUsageInfo ?: return@mapNotNull null) to refExprCopy }
         .filter { (usageInfo, _) -> !usageInfo.referencedElement.willBeMoved(allDeclarationsToMove) }
         .mapNotNull { (usageInfo, refExprCopy) ->
-            val usageElement = usageInfo.element ?: return@mapNotNull null
-            val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@mapNotNull null
-            analyzeCopy(refExprCopy, DanglingFileResolutionMode.PREFER_SELF) {
-                if (refExprCopy.mainReference.resolveToSymbol() == null) {
-                    val module = refExprCopy.containingModule() ?: return@analyzeCopy null
-                    usageElement.createAccessibilityConflictInternal(referencedDeclaration, module)
-                } else null
+            tryFindConflict {
+                val usageElement = usageInfo.element ?: return@tryFindConflict null
+                val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
+                analyzeCopy(refExprCopy, DanglingFileResolutionMode.PREFER_SELF) {
+                    if (refExprCopy.mainReference.resolveToSymbol() == null) {
+                        val module = refExprCopy.containingModule() ?: return@analyzeCopy null
+                        usageElement.createAccessibilityConflictInternal(referencedDeclaration, module)
+                    } else null
+                }
             }
         }.toMultiMap()
 }
