@@ -26,7 +26,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.concurrency.FutureResult
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
@@ -36,7 +35,6 @@ import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progres
 import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.util.concurrent.Future
 import kotlin.math.max
 import kotlin.math.min
 
@@ -128,13 +126,10 @@ class EditorInlaysManager(val project: Project, private val editor: EditorImpl, 
     }
   }
 
-  fun updateInlayProgressStatus(psi: PsiElement, progressStatus: InlayProgressStatus): Future<Unit> {
-    val result = FutureResult<Unit>()
+  fun updateInlayProgressStatus(psi: PsiElement, progressStatus: InlayProgressStatus) {
     ApplicationManager.getApplication().invokeLater {
       getInlayComponent(psi)?.updateProgressStatus(progressStatus)
-      result.set(Unit)
     }
-    return result
   }
 
   private fun updateInlaysForViewport() {
