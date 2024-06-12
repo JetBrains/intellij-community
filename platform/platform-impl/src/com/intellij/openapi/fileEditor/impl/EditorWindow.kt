@@ -13,13 +13,13 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -447,14 +447,13 @@ class EditorWindow internal constructor(
 
     if (!forceSplit && inSplitter()) {
       val target = getSiblings()[0]
-      if (virtualFile != null) {
-        syncCaretIfPossible(
-          owner.manager.openFileImpl(
-            window = target,
-            _file = virtualFile,
-            entry = null,
-            options = FileEditorOpenOptions(requestFocus = focusNew),
-          ).allEditors,
+      val selectedComposite = selectedComposite
+      if (virtualFile != null && selectedComposite != null) {
+        owner.manager.openFileImpl(
+          window = target,
+          _file = virtualFile,
+          entry = selectedComposite.takeIf { it.file == virtualFile }?.currentStateAsFileEntry(),
+          options = FileEditorOpenOptions(requestFocus = focusNew),
         )
       }
       return target
@@ -496,14 +495,6 @@ class EditorWindow internal constructor(
         selectAsCurrent = focusNew,
       ),
     ) ?: return newWindow
-    if (composite is EditorComposite) {
-      composite.coroutineScope.launch {
-        composite.waitForAvailable()
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          syncCaretIfPossible(composite.allEditors)
-        }
-      }
-    }
     if (!focusNew) {
       LOG.assertTrue(currentCompositeFlow.value == selectedComposite)
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
@@ -553,39 +544,6 @@ class EditorWindow internal constructor(
     for ((key, value) in hierarchyStack) {
       key.proportion = if (value) 1 - 1f / (2 + i) else 1f / (2 + i)
       i++
-    }
-  }
-
-  /**
-   * Tries to set up caret and viewport for the given editor from the selected one.
-   */
-  private fun syncCaretIfPossible(toSync: List<FileEditor>) {
-    val from = selectedComposite ?: return
-    val caretSource = from.selectedEditor as? TextEditor ?: return
-    val editorFrom = caretSource.editor
-    val offset = editorFrom.caretModel.offset
-    if (offset <= 0) {
-      return
-    }
-
-    val scrollOffset = editorFrom.scrollingModel.verticalScrollOffset
-    @Suppress("DuplicatedCode")
-    for (fileEditor in toSync) {
-      if (fileEditor !is TextEditor) {
-        continue
-      }
-
-      val editor = fileEditor.editor
-      if (editorFrom.document === editor.document) {
-        editor.caretModel.moveToOffset(offset)
-        val scrollingModel = editor.scrollingModel
-        scrollingModel.scrollVertically(scrollOffset)
-        SwingUtilities.invokeLater {
-          if (!editor.isDisposed) {
-            scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
-          }
-        }
-      }
     }
   }
 
