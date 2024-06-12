@@ -83,6 +83,10 @@ internal object Completions {
                 complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
+            is KotlinLabelReferencePositionContext -> {
+                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
+            }
+
             is KotlinUnknownPositionContext -> {
                 complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
             }

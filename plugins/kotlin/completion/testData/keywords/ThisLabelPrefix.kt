@@ -16,7 +16,6 @@ fun takeHandler1(handler: Int.() -> Unit){}
 fun takeHandler2(handler: Char.() -> Unit){}
 fun takeHandler3(handler: Char.() -> Unit){}
 
-// IGNORE_K2
 // INVOCATION_COUNT: 1
 // ABSENT: "this"
 // EXIST: { lookupString: "this@takeHandler3", itemText: "this", tailText: "@takeHandler3", typeText: "Char", attributes: "bold" }

@@ -238,6 +238,7 @@ class ImportQuickFix(
                     is KotlinImportDirectivePositionContext,
                     is KotlinPackageDirectivePositionContext,
                     is KotlinSuperReceiverNameReferencePositionContext,
+                    is KotlinLabelReferencePositionContext,
                     is KDocParameterNamePositionContext -> {
                     }
                 }

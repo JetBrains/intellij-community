@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
@@ -27,8 +28,6 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
-import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.util.match
 
 internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
@@ -47,10 +46,11 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
         sessionParameters: FirCompletionSessionParameters,
     ) {
         val expression = when (positionContext) {
-            is KotlinSimpleNameReferencePositionContext -> positionContext.reference.expression.let {
-                it.parentsWithSelf.match(KtLabelReferenceExpression::class, KtContainerNode::class, last = KtExpressionWithLabel::class)
-                    ?: it
+            is KotlinLabelReferencePositionContext -> positionContext.nameExpression.let { label ->
+                label.parents(withSelf = false).match(KtContainerNode::class, last = KtExpressionWithLabel::class) ?: label
             }
+
+            is KotlinSimpleNameReferencePositionContext -> positionContext.reference.expression
 
             is KotlinTypeConstraintNameInWhereClausePositionContext, is KotlinIncorrectPositionContext, is KotlinClassifierNamePositionContext ->
                 error("keyword completion should not be called for ${positionContext::class.simpleName}")

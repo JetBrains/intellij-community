@@ -615,6 +615,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("../testData/keywords/ReturnSet.kt");
     }
 
+    @TestMetadata("ReturnWithLabelPrefix.kt")
+    public void testReturnWithLabelPrefix() throws Exception {
+        runTest("../testData/keywords/ReturnWithLabelPrefix.kt");
+    }
+
     @TestMetadata("SealedForAlreadySealed.kt")
     public void testSealedForAlreadySealed() throws Exception {
         runTest("../testData/keywords/SealedForAlreadySealed.kt");
