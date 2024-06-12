@@ -7325,12 +7325,13 @@ f:com.intellij.ide.plugins.DynamicPlugins$UnloadPluginOptions
 - f:withUnloadWaitTimeout(I):com.intellij.ide.plugins.DynamicPlugins$UnloadPluginOptions
 - f:withUpdate(Z):com.intellij.ide.plugins.DynamicPlugins$UnloadPluginOptions
 - f:withWaitForClassloaderUnload(Z):com.intellij.ide.plugins.DynamicPlugins$UnloadPluginOptions
-f:com.intellij.ide.plugins.HeadlessPluginsInstaller
+c:com.intellij.ide.plugins.HeadlessPluginsInstaller
 - com.intellij.openapi.application.ApplicationStarter
 - <init>():V
 - getRequiredModality():I
 - s:installPlugins(java.util.Set):java.util.Collection
 - main(java.util.List):V
+- p:printUsageHint():V
 f:com.intellij.ide.plugins.InstalledPluginsState
 - sf:RESTART_REQUIRED_MESSAGE:java.lang.String
 - <init>():V

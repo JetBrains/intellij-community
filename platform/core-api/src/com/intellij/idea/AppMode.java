@@ -137,7 +137,7 @@ public final class AppMode {
 
     List<String> headlessCommands = Arrays.asList(
       "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format",
-      "keymap", "update", "inspections", "intentions", "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions",
+      "keymap", "update", "inspections", "intentions", "rdserver-headless", "thinClient-headless", "installFrontendPlugins", "installPlugins", "dumpActions",
       "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "buildEventsScheme", "inspectopedia-generator", "remoteDevShowHelp",
       "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit",
       "qodanaExcludedPlugins", "project-with-shared-caches", "registerBackendLocationForGateway");

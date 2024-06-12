@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public final class HeadlessPluginsInstaller implements ApplicationStarter {
+public class HeadlessPluginsInstaller implements ApplicationStarter {
   private static final Logger LOG = Logger.getInstance(HeadlessPluginsInstaller.class);
 
   @Override
@@ -72,7 +72,7 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
     }
   }
 
-  private static void printUsageHint() {
+  protected void printUsageHint() {
     System.out.println(
       """
         Usage: installPlugins pluginId* repository* (--for-project=<project-path>)*
