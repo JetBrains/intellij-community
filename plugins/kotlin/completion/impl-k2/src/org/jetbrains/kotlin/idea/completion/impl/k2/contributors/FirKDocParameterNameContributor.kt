@@ -67,7 +67,7 @@ internal open class FirKDocParameterNameContributor(
             is KaFunctionLikeSymbol -> ownerDeclarationSymbol.valueParameters
 
             is KaNamedClassOrObjectSymbol -> {
-                val primaryConstructor = ownerDeclarationSymbol.getDeclaredMemberScope().getConstructors().firstOrNull { it.isPrimary }
+                val primaryConstructor = ownerDeclarationSymbol.getDeclaredMemberScope().constructors.firstOrNull { it.isPrimary }
                 primaryConstructor?.valueParameters.orEmpty()
             }
 

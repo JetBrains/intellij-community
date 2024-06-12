@@ -35,7 +35,7 @@ private fun getParameterNames(type: KtNonErrorClassType): List<String>? {
 
     return if (classSymbol is KaNamedClassOrObjectSymbol && classSymbol.isData) {
         val constructorSymbol = classSymbol.getDeclaredMemberScope()
-            .getConstructors()
+            .constructors
             .find { it.isPrimary }
             ?: return null
 

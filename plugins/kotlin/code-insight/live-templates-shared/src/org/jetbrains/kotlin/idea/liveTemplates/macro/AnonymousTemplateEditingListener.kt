@@ -71,7 +71,7 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
 
         val hasZeroParameterConstructors = referencedClass
             .getDeclaredMemberScope()
-            .getConstructors()
+            .constructors
             .any { ctor ->
                 val parameters = ctor.valueParameters
                 parameters.isEmpty() || parameters.all { it.hasDefaultValue }

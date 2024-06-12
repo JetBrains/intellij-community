@@ -707,7 +707,7 @@ internal class KotlinIdeDeclarationRenderer(
                 })
 
                 if (symbol is KaNamedClassOrObjectSymbol && symbol.isData) {
-                    val primaryConstructor = symbol.getDeclaredMemberScope().getConstructors().firstOrNull { it.isPrimary }
+                    val primaryConstructor = symbol.getDeclaredMemberScope().constructors.firstOrNull { it.isPrimary }
                     if (primaryConstructor != null) {
                         declarationRenderer.valueParametersRenderer.renderValueParameters(
                             analysisSession,

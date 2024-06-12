@@ -54,7 +54,7 @@ fun KtScope.findSiblingsByName(
     containingSymbol: KaDeclarationSymbol? = symbol.getContainingSymbol()
 ): Sequence<KaDeclarationSymbol> {
     if (symbol is KaConstructorSymbol) {
-        return getConstructors().filter { symbol != it }
+        return constructors.filter { symbol != it }
     }
     val callables = getCallableSymbols(newName).filter { callable ->
         symbol != callable &&
@@ -63,7 +63,7 @@ fun KtScope.findSiblingsByName(
 
     val classifierSymbols = getClassifierSymbols(newName)
     if (symbol is KaFunctionLikeSymbol) {
-        return (classifierSymbols.flatMap { (it as? KaClassOrObjectSymbol)?.getDeclaredMemberScope()?.getConstructors() ?: emptySequence() } + callables)
+        return (classifierSymbols.flatMap { (it as? KaClassOrObjectSymbol)?.getDeclaredMemberScope()?.constructors ?: emptySequence() } + callables)
     }
 
     return (classifierSymbols + callables)
@@ -75,7 +75,7 @@ fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclaration
         val skipCandidate = when (symbol) {
             is KaFunctionLikeSymbol -> !areSameSignatures(candidateSymbol, symbol)
             is KtPropertySymbol -> !areSameSignatures(symbol, candidateSymbol)
-            is KaClassOrObjectSymbol -> symbol.getDeclaredMemberScope().getConstructors().none { areSameSignatures(it, candidateSymbol) }
+            is KaClassOrObjectSymbol -> symbol.getDeclaredMemberScope().constructors.none { areSameSignatures(it, candidateSymbol) }
             else -> false
         }
 
@@ -87,7 +87,7 @@ fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclaration
     }
 
     if (candidateSymbol is KaClassOrObjectSymbol && symbol is KaFunctionLikeSymbol) {
-        if (candidateSymbol.getDeclaredMemberScope().getConstructors().none { areSameSignatures(it, symbol) }) {
+        if (candidateSymbol.getDeclaredMemberScope().constructors.none { areSameSignatures(it, symbol) }) {
             return false
         }
     }

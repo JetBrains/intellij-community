@@ -134,7 +134,7 @@ internal class CallExpressionImportWeigher(
             symbol is KaCallableSymbol -> calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
             // TODO: some constructors could be not visible
             symbol is KaClassOrObjectSymbol && presentReceiverTypes.isEmpty() -> {
-                val constructors = symbol.getDeclaredMemberScope().getConstructors()
+                val constructors = symbol.getDeclaredMemberScope().constructors
                 constructors.maxOfOrNull { calculateWeight(it, presentReceiverTypes = emptyList(), valueArgumentTypes) } ?: 0
             }
 

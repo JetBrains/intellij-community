@@ -273,12 +273,12 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KaNamedClassOrObjectSy
     override fun getOriginal(): ClassDescriptor = this
 
     override fun getUnsubstitutedPrimaryConstructor(): ClassConstructorDescriptor? = context.withAnalysisSession {
-        ktSymbol.getDeclaredMemberScope().getConstructors().firstOrNull { it.isPrimary }
+        ktSymbol.getDeclaredMemberScope().constructors.firstOrNull { it.isPrimary }
             ?.let { KtSymbolBasedConstructorDescriptor(it, this@KtSymbolBasedClassDescriptor) }
     }
 
     override fun getConstructors(): Collection<ClassConstructorDescriptor> = context.withAnalysisSession {
-        ktSymbol.getDeclaredMemberScope().getConstructors().map {
+        ktSymbol.getDeclaredMemberScope().constructors.map {
             KtSymbolBasedConstructorDescriptor(it, this@KtSymbolBasedClassDescriptor)
         }.toList()
     }

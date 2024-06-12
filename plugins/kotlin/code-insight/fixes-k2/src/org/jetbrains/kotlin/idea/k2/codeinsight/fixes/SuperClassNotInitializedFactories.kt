@@ -32,7 +32,7 @@ internal object SuperClassNotInitializedFactories {
             return@ModCommandBased emptyList()
         }
 
-        val constructors = superClassSymbol.getDeclaredMemberScope().getConstructors()
+        val constructors = superClassSymbol.getDeclaredMemberScope().constructors
         buildList {
             add(AddParenthesisFix(superTypeEntry, moveCaretIntoParenthesis = constructors.any { it.valueParameters.isNotEmpty() }))
         }

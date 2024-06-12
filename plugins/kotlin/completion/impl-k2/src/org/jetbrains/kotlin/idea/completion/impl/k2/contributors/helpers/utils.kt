@@ -108,7 +108,7 @@ internal fun collectNonExtensionsForType(
         }
 
     val innerClasses = typeScope.getClassifierSymbols(scopeNameFilter).filterIsInstance<KaNamedClassOrObjectSymbol>().filter { it.isInner }
-    val innerClassesConstructors = innerClasses.flatMap { it.getDeclaredMemberScope().getConstructors() }.map { it.asSignature() }
+    val innerClassesConstructors = innerClasses.flatMap { it.getDeclaredMemberScope().constructors }.map { it.asSignature() }
 
     val nonExtensionsFromType = (callables + innerClassesConstructors).filterNonExtensions(visibilityChecker, symbolFilter)
 
