@@ -1541,8 +1541,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public PsiFile configureByText(@NotNull String fileName, @NotNull String text) {
     assertInitialized();
     VirtualFile vFile = createFile(fileName, text);
-    configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile));
-    return getFile();
+    return configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile));
   }
 
   @Override

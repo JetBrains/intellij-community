@@ -13,7 +13,7 @@ object CreateParameterUtil {
         return Pair(psiElement.parents.firstIsInstanceOrNull<KtClassOrObject>() as? KtClass, if (varExpected) ValVar.VAR else ValVar.VAL)
     }
     enum class ValVar { VAL, VAR, NONE }
-    val toxicPill = Pair(null, ValVar.NONE) // means do not check above this psi element, it's no use
+    private val toxicPill: Pair<Nothing?, ValVar> = Pair(null, ValVar.NONE) // means do not check above this psi element, it's no use
     // todo: skip lambdas for now because Change Signature doesn't apply to them yet
     fun chooseContainerPreferringClass(element: PsiElement, varExpected: Boolean): Pair<PsiElement?, ValVar> {
         return element.parents
