@@ -117,8 +117,8 @@ class QuickFixRegistrar : QuickFixContributor {
 
         USELESS_IS_CHECK.registerFactory(RemoveUselessIsCheckFix, RemoveUselessIsCheckFixForWhen)
 
-        WRONG_SETTER_PARAMETER_TYPE.registerFactory(ChangeAccessorTypeFix)
-        WRONG_GETTER_RETURN_TYPE.registerFactory(ChangeAccessorTypeFix)
+        WRONG_SETTER_PARAMETER_TYPE.registerFactory(ChangeAccessorTypeFixFactory)
+        WRONG_GETTER_RETURN_TYPE.registerFactory(ChangeAccessorTypeFixFactory)
 
         USELESS_ELVIS.registerFactory(RemoveUselessElvisFix)
         USELESS_ELVIS_RIGHT_IS_NULL.registerFactory(RemoveUselessElvisFix)
