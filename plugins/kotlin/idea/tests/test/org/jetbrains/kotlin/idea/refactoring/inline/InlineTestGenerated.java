@@ -2340,6 +2340,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/nameConflictTwice2.kt");
             }
 
+            @TestMetadata("namedArguments.kt")
+            public void testNamedArguments() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/namedArguments.kt");
+            }
+
             @TestMetadata("nested.kt")
             public void testNested() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/nested.kt");

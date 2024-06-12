@@ -31,7 +31,7 @@ abstract class AbstractInlinePostProcessor {
     protected abstract fun removeExplicitTypeArguments(pointer: SmartPsiElementPointer<KtElement>)
     protected abstract fun shortenReferences(pointers: List<SmartPsiElementPointer<KtElement>>): List<KtElement>
 
-    protected open fun introduceNamedArguments(pointer: SmartPsiElementPointer<KtElement>) {}
+    protected abstract fun introduceNamedArguments(pointer: SmartPsiElementPointer<KtElement>)
     protected abstract fun dropArgumentsForDefaultValues(pointer: SmartPsiElementPointer<KtElement>)
 
     fun postProcessInsertedCode(

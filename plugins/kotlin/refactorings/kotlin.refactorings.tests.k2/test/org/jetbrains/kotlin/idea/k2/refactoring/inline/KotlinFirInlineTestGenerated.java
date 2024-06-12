@@ -1049,6 +1049,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/nameConflictTwice2.kt");
         }
 
+        @TestMetadata("namedArguments.kt")
+        public void testNamedArguments() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/namedArguments.kt");
+        }
+
         @TestMetadata("nested.kt")
         public void testNested() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/nested.kt");

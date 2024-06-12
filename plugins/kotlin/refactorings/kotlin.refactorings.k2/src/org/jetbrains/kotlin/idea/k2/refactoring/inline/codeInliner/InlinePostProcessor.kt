@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.idea.k2.refactoring.util.isRedundantUnit
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractInlinePostProcessor
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.DEFAULT_PARAMETER_VALUE_KEY
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.MAKE_ARGUMENT_NAMED_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -29,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
@@ -38,6 +41,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.ArrayFqNames.ARRAY_CALL_FQ_NAMES
+import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.ArrayList
 import kotlin.collections.asReversed
 import kotlin.collections.contains
@@ -202,6 +206,40 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
                 val callExpression = argumentList.parent as KtCallElement
                 if (callExpression.lambdaArguments.isNotEmpty()) {
                     argumentList.delete()
+                }
+            }
+        }
+    }
+
+    override fun introduceNamedArguments(pointer: SmartPsiElementPointer<KtElement>) {
+        val element = pointer.element ?: return
+        val psiFactory = KtPsiFactory.contextual(element)
+        val callsToProcess = LinkedHashSet<KtCallExpression>()
+        element.forEachDescendantOfType<KtValueArgument> {
+            if (it.getCopyableUserData(MAKE_ARGUMENT_NAMED_KEY) != null && !it.isNamed()) {
+                val callExpression = (it.parent as? KtValueArgumentList)?.parent as? KtCallExpression
+                callsToProcess.addIfNotNull(callExpression)
+            }
+        }
+
+        analyze(element) {
+            for (callExpression in callsToProcess) {
+                val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return
+
+                val argumentsToMakeNamed = callExpression.valueArguments.dropWhile { it.getCopyableUserData(MAKE_ARGUMENT_NAMED_KEY) == null }
+                for (argument in argumentsToMakeNamed) {
+                    if (argument.isNamed()) continue
+                    if (argument is KtLambdaArgument) continue
+                    val argumentExpression = argument.getArgumentExpression() ?: continue
+                    val name = resolvedCall.argumentMapping[argumentExpression]?.symbol?.name
+                    //TODO: not always correct for vararg's
+                    val newArgument = psiFactory.createArgument(argument.getArgumentExpression()!!, name, argument.getSpreadElement() != null)
+
+                    if (argument.getCopyableUserData(DEFAULT_PARAMETER_VALUE_KEY) != null) {
+                        newArgument.putCopyableUserData(DEFAULT_PARAMETER_VALUE_KEY, Unit)
+                    }
+
+                    argument.replace(newArgument)
                 }
             }
         }
