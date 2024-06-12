@@ -73,6 +73,23 @@ class CodeInliner(
             originalDeclaration)
         val elementToBeReplaced = assignment.takeIf { callableForParameters is KtPropertyAccessor } ?: qualifiedElement
         val commentSaver = CommentSaver(elementToBeReplaced, saveLineBreaks = true)
+
+        // if the value to be inlined is not used and has no side effects we may drop it
+        if (codeToInline.mainExpression != null
+            && !codeToInline.alwaysKeepMainExpression
+            && assignment == null
+            && elementToBeReplaced is KtExpression
+            && !analyze(elementToBeReplaced) { elementToBeReplaced.isUsedAsExpression() }
+            && !codeToInline.mainExpression.shouldKeepValue(usageCount = 0)
+            && elementToBeReplaced.getStrictParentOfType<KtAnnotationEntry>() == null
+        ) {
+            codeToInline.mainExpression?.getCopyableUserData(CommentHolder.COMMENTS_TO_RESTORE_KEY)?.let { commentHolder ->
+                codeToInline.addExtraComments(CommentHolder(emptyList(), commentHolder.leadingComments + commentHolder.trailingComments))
+            }
+
+            codeToInline.mainExpression = null
+        }
+
         val ktFile = elementToBeReplaced.containingKtFile
         for ((fqName, allUnder, alias) in codeToInline.fqNamesToImport) {
             if (fqName.startsWith(FqName.fromSegments(listOf("kotlin")))) {
@@ -125,44 +142,8 @@ class CodeInliner(
             }
         }
 
-        val importDeclarations = codeToInline.fqNamesToImport.mapNotNull { importPath ->
-            val target =
-                psiFactory.createImportDirective(importPath).mainReference?.resolve() as? KtNamedDeclaration ?: return@mapNotNull null
-            importPath to target
-        }
-
-        if (elementToBeReplaced is KtSafeQualifiedExpression && receiverType?.second == true) {
-            wrapCodeForSafeCall(receiver!!, receiverType?.first, elementToBeReplaced)
-        } else if (call is KtBinaryExpression && call.operationToken == KtTokens.IDENTIFIER) {
-            keepInfixFormIfPossible(importDeclarations.map { it.second })
-        }
-
-        // if the value to be inlined is not used and has no side effects we may drop it
-        if (codeToInline.mainExpression != null
-            && !codeToInline.alwaysKeepMainExpression
-            && assignment == null
-            && elementToBeReplaced is KtExpression
-            && !analyze(elementToBeReplaced) { elementToBeReplaced.isUsedAsExpression() }
-            && !codeToInline.mainExpression.shouldKeepValue(usageCount = 0)
-            && elementToBeReplaced.getStrictParentOfType<KtAnnotationEntry>() == null
-        ) {
-            codeToInline.mainExpression?.getCopyableUserData(CommentHolder.COMMENTS_TO_RESTORE_KEY)?.let { commentHolder ->
-                codeToInline.addExtraComments(CommentHolder(emptyList(), commentHolder.leadingComments + commentHolder.trailingComments))
-            }
-
-            codeToInline.mainExpression = null
-        }
-
-        val lexicalScopeElement = call.parentsWithSelf
-            .takeWhile { it !is KtBlockExpression && it !is KtFunction && it !is KtClass && !(it is KtCallableDeclaration && it.parent is KtFile) }
-            .last() as KtElement
-        val names = mutableSetOf<String>()
-        lexicalScopeElement.parent.collectDescendantsOfType<KtProperty>().forEach {
-            names.addIfNotNull(it.name)
-        }
-
         val introduceValueForParameters = processValueParameterUsages(callableForParameters)
-        introduceVariablesForParameters(elementToBeReplaced, receiver, receiverType?.first, introduceValueForParameters)
+
         processTypeParameterUsages(
             callElement = call as? KtCallElement,
             typeParameters = (originalDeclaration as? KtCallableDeclaration)?.typeParameters ?: emptyList(),
@@ -188,6 +169,28 @@ class CodeInliner(
                 }
             }
         )
+
+        val lexicalScopeElement = call.parentsWithSelf
+            .takeWhile { it !is KtBlockExpression && it !is KtFunction && it !is KtClass && !(it is KtCallableDeclaration && it.parent is KtFile) }
+            .last() as KtElement
+        val names = mutableSetOf<String>()
+        lexicalScopeElement.parent.collectDescendantsOfType<KtProperty>().forEach {
+            names.addIfNotNull(it.name)
+        }
+
+        val importDeclarations = codeToInline.fqNamesToImport.mapNotNull { importPath ->
+            val target =
+                psiFactory.createImportDirective(importPath).mainReference?.resolve() as? KtNamedDeclaration ?: return@mapNotNull null
+            importPath to target
+        }
+
+        if (elementToBeReplaced is KtSafeQualifiedExpression && receiverType?.second == true) {
+            wrapCodeForSafeCall(receiver!!, receiverType?.first, elementToBeReplaced)
+        } else if (call is KtBinaryExpression && call.operationToken == KtTokens.IDENTIFIER) {
+            keepInfixFormIfPossible(importDeclarations.map { it.second })
+        }
+
+        introduceVariablesForParameters(elementToBeReplaced, receiver, receiverType?.first, introduceValueForParameters)
 
         codeToInline.extraComments?.restoreComments(elementToBeReplaced)
         findAndMarkNewDeclarations()

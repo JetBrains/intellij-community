@@ -2450,6 +2450,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/runWithComment.kt");
             }
 
+            @TestMetadata("SafeCallWrap.kt")
+            public void testSafeCallWrap() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/SafeCallWrap.kt");
+            }
+
             @TestMetadata("sameNameInThisAndParameter.kt")
             public void testSameNameInThisAndParameter() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/sameNameInThisAndParameter.kt");

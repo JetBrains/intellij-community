@@ -1159,6 +1159,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/runWithComment.kt");
         }
 
+        @TestMetadata("SafeCallWrap.kt")
+        public void testSafeCallWrap() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/SafeCallWrap.kt");
+        }
+
         @TestMetadata("sameNameInThisAndParameter.kt")
         public void testSameNameInThisAndParameter() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/sameNameInThisAndParameter.kt");
