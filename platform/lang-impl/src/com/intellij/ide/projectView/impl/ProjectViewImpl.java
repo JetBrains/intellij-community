@@ -1397,16 +1397,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
-      AbstractProjectViewPane selectedPane = getCurrentProjectViewPane();
-      if (selectedPane != null) {
-        DataSink.uiDataSnapshot(sink, selectedPane);
-      }
       sink.set(PlatformDataKeys.CUT_PROVIDER, copyPasteDelegator.getCutProvider());
       sink.set(PlatformDataKeys.COPY_PROVIDER, copyPasteDelegator.getCopyProvider());
       sink.set(PlatformDataKeys.PASTE_PROVIDER, copyPasteDelegator.getPasteProvider());
       sink.set(LangDataKeys.IDE_VIEW, myIdeView);
       sink.set(PlatformCoreDataKeys.HELP_ID, HelpID.PROJECT_VIEWS);
       sink.set(QuickActionProvider.KEY, ProjectViewImpl.this);
+      AbstractProjectViewPane selectedPane = getCurrentProjectViewPane();
+      if (selectedPane != null) {
+        DataSink.uiDataSnapshot(sink, selectedPane);
+      }
     }
   }
 
