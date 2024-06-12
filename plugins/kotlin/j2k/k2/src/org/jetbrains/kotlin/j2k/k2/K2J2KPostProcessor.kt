@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.j2k
+package org.jetbrains.kotlin.j2k.k2
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -11,6 +11,10 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
+import org.jetbrains.kotlin.j2k.*
+import org.jetbrains.kotlin.j2k.k2.postProcessings.K2ShortenReferenceProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.smartcastImpossibleProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.uselessCastProcessing
 import org.jetbrains.kotlin.j2k.postProcessings.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
