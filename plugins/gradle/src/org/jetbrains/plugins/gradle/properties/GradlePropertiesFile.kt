@@ -4,10 +4,11 @@ package org.jetbrains.plugins.gradle.properties
 import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.properties.GradleProperties.EMPTY
-import org.jetbrains.plugins.gradle.properties.base.BasePropertiesFile
-import org.jetbrains.plugins.gradle.properties.models.Property
+import org.jetbrains.plugins.gradle.properties.models.getBooleanProperty
+import org.jetbrains.plugins.gradle.properties.models.getStringProperty
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -19,11 +20,9 @@ const val GRADLE_LOGGING_LEVEL_PROPERTY = "org.gradle.logging.level"
 const val GRADLE_PARALLEL_PROPERTY = "org.gradle.parallel"
 const val GRADLE_JVM_OPTIONS_PROPERTY = "org.gradle.jvmargs"
 
-object GradlePropertiesFile : BasePropertiesFile<GradleProperties>() {
+object GradlePropertiesFile {
 
-  override val propertiesFileName = GRADLE_PROPERTIES_FILE_NAME
-
-  override fun getProperties(project: Project, externalProjectPath: Path) =
+  fun getProperties(project: Project, externalProjectPath: Path) =
     findAndMergeProperties(getPossiblePropertiesFiles(project, externalProjectPath))
 
   fun getProperties(serviceDirectoryStr: String?, externalProjectPath: Path) =
@@ -55,39 +54,36 @@ object GradlePropertiesFile : BasePropertiesFile<GradleProperties>() {
 
   private fun getGradleServiceDirectoryPath(project: Project): Path? {
     val gradleUserHome = GradleLocalSettings.getInstance(project).gradleUserHome ?: return null
-    return Paths.get(gradleUserHome, propertiesFileName)
+    return Paths.get(gradleUserHome, GRADLE_PROPERTIES_FILE_NAME)
   }
 
   private fun getGradleServiceDirectoryPath(serviceDirectoryStr: String?) =
-    serviceDirectoryStr?.let { Paths.get(serviceDirectoryStr, propertiesFileName) }
+    serviceDirectoryStr?.let { Paths.get(serviceDirectoryStr, GRADLE_PROPERTIES_FILE_NAME) }
 
   fun getGradleHomePropertiesPath(): Path? {
     val gradleUserHome = Environment.getVariable(GradleConstants.SYSTEM_DIRECTORY_PATH_KEY)
     if (gradleUserHome != null) {
-      return Paths.get(gradleUserHome, propertiesFileName)
+      return Paths.get(gradleUserHome, GRADLE_PROPERTIES_FILE_NAME)
     }
 
     val userHome = Environment.getProperty(USER_HOME)
     if (userHome != null) {
-      return Paths.get(userHome, GRADLE_CACHE_DIR_NAME, propertiesFileName)
+      return Paths.get(userHome, GRADLE_CACHE_DIR_NAME, GRADLE_PROPERTIES_FILE_NAME)
     }
     return null
   }
 
   private fun getGradleProjectPropertiesPath(externalProjectPath: Path) =
-    externalProjectPath.resolve(propertiesFileName)
+    externalProjectPath.resolve(GRADLE_PROPERTIES_FILE_NAME)
 
   private fun loadGradleProperties(propertiesPath: Path): GradleProperties {
-    val properties = loadProperties(propertiesPath) ?: return EMPTY
-    val javaHome = properties.getProperty(GRADLE_JAVA_HOME_PROPERTY)
-    val javaHomeProperty = javaHome?.let { Property(it, propertiesPath.toString()) }
-    val logLevel = properties.getProperty(GRADLE_LOGGING_LEVEL_PROPERTY)
-    val logLevelProperty = logLevel?.let { Property(it, propertiesPath.toString()) }
-    val parallel = properties.getProperty(GRADLE_PARALLEL_PROPERTY)?.toBoolean()
-    val parallelProperty = parallel?.let { Property(it, propertiesPath.toString()) }
-    val jvmOptions = properties.getProperty(GRADLE_JVM_OPTIONS_PROPERTY)?.toString()
-    val jvmOptionsProperty = jvmOptions?.let { Property(it, propertiesPath.toString()) }
-    return GradlePropertiesImpl(javaHomeProperty, logLevelProperty, parallelProperty, jvmOptionsProperty)
+    val properties = GradleUtil.readGradleProperties(propertiesPath) ?: return EMPTY
+    return GradlePropertiesImpl(
+      javaHomeProperty = properties.getStringProperty(GRADLE_JAVA_HOME_PROPERTY, propertiesPath),
+      gradleLoggingLevel = properties.getStringProperty(GRADLE_LOGGING_LEVEL_PROPERTY, propertiesPath),
+      parallel = properties.getBooleanProperty(GRADLE_PARALLEL_PROPERTY, propertiesPath),
+      jvmOptions = properties.getStringProperty(GRADLE_JVM_OPTIONS_PROPERTY, propertiesPath)
+    )
   }
 
   private fun mergeGradleProperties(most: GradleProperties, other: GradleProperties): GradleProperties {
