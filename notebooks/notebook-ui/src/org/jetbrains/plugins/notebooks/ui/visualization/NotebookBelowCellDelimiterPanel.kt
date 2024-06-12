@@ -7,11 +7,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import javax.swing.BorderFactory
-import javax.swing.Icon
-import javax.swing.JLabel
-import javax.swing.JPanel
 import java.awt.*
+import javax.swing.*
 
 class NotebookBelowCellDelimiterPanel(
   val editor: EditorImpl,
@@ -23,51 +20,50 @@ class NotebookBelowCellDelimiterPanel(
   val cellNum: Int
 ) : JPanel(BorderLayout()) {
   private val notebookAppearance = editor.notebookAppearance
-  // same as in the [org.jetbrains.plugins.notebooks.ui.visualization.NotebookAboveCellDelimiterPanelNew]
-  private val standardDelimiterHeight = editor.notebookAppearance.cellBorderHeight / 4
   private var isCollapsed = getCollapsed()
-
-  init {
-    setPanelBackground()
-    setBorder()
-
-    if (!editor.editorKind.isDiff() && isExecutable && !isCollapsed) {
-      val executionCountText = executionCount?.let { if (it > 0) "[$it]" else "" } ?: ""
-      val executionLabel = JLabel(executionCountText)
-
-      executionLabel.icon = statusIcon
-      executionLabel.font = EditorUtil.getEditorFont()
-      executionLabel.foreground = UIUtil.getLabelInfoForeground()
-      tooltipText?.let { executionLabel.toolTipText = it }
-      add(executionLabel, BorderLayout.WEST)
-    }
-
-    if (cellTags.isNotEmpty()) addTagsPanel() // PY-72712
+  private val tagsSpacing = JBUI.scale(6)
+  private val delimiterHeight =   when (editor.editorKind.isDiff()) {
+    true -> getJupyterCellSpacing(editor) / 2
+    false -> editor.notebookAppearance.cellBorderHeight / 4
   }
 
-  private fun setPanelBackground() {
+  init {
+    updateBackgroundColor()
+    border = BorderFactory.createEmptyBorder(delimiterHeight, 0, delimiterHeight, 0)
+
+    val addingExecutionLabel = (!editor.editorKind.isDiff() && isExecutable && !isCollapsed)
+    val addingTagsRow = (cellTags.isNotEmpty() && isExecutable && Registry.`is`("jupyter.cell.metadata.tags", false))
+
+    if (addingExecutionLabel) add(createExecutionLabel(), BorderLayout.WEST)
+    if (addingTagsRow) add(createTagsRow(), BorderLayout.EAST)  // // PY-72712
+  }
+
+  private fun createExecutionLabel(): JLabel {
+    val executionCountText = executionCount?.let { if (it > 0) "[$it]" else "" } ?: ""
+    return JLabel(executionCountText).apply {
+      icon = statusIcon
+      font = EditorUtil.getEditorFont()
+      foreground = UIUtil.getLabelInfoForeground()
+      toolTipText = tooltipText
+    }
+  }
+
+  @Suppress("HardCodedStringLiteral")
+  private fun createTagsRow(): Box {
+    val tagsRow = Box.createHorizontalBox()
+    cellTags.forEach { tag ->
+      val tagLabel = NotebookCellTagLabel(tag, cellNum)
+      tagsRow.add(tagLabel)
+      tagsRow.add(Box.createHorizontalStrut(tagsSpacing))
+    }
+    return tagsRow
+  }
+
+  private fun updateBackgroundColor() {
     background = when (isExecutable) {
       true -> notebookAppearance.getCodeCellBackground(editor.colorsScheme) ?: editor.colorsScheme.defaultBackground
       false -> editor.colorsScheme.defaultBackground
     }
-  }
-
-  private fun addTagsPanel() {  // WIP
-    if (!Registry.`is`("jupyter.cell.metadata.tags", false)) return
-    val tagsPanel = JPanel(FlowLayout(FlowLayout.RIGHT)).apply {
-      isOpaque = false
-      border = JBUI.Borders.empty()
-    }
-    cellTags.forEach { tag -> tagsPanel.add(NotebookCellTagLabel(tag, cellNum)) }
-    add(tagsPanel, BorderLayout.EAST)
-  }
-
-  private fun setBorder() {
-    val dimension = when (editor.editorKind.isDiff()) {
-      true -> Dimension(preferredSize.width, getJupyterCellSpacing(editor) / 2)
-      false -> Dimension(preferredSize.width, standardDelimiterHeight)
-    }
-    border = BorderFactory.createEmptyBorder(dimension.height, 0, dimension.height, 0)
   }
 
   private fun getCollapsed(): Boolean {
@@ -81,7 +77,7 @@ class NotebookBelowCellDelimiterPanel(
   override fun updateUI() {
     // This method is called within constructor of JPanel, at this time state is not yet initialized, reference is null.
     editor ?: return
-    setPanelBackground()
+    updateBackgroundColor()
     super.updateUI()
   }
 

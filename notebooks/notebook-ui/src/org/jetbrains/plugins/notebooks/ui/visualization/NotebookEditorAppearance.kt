@@ -113,7 +113,7 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val CODE_AND_CODE_TOP_GRAY_HEIGHT = JBUI.scale(6)
   override val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT = JBUI.scale(6)
   override val INNER_CELL_TOOLBAR_HEIGHT = JBUI.scale(24)
-  override val cellBorderHeight = JBUI.scale(20)
+  override val cellBorderHeight = JBUI.scale(16)
   override val aboveFirstCellDelimiterHeight = JBUI.scale(24)
   override val SPACER_HEIGHT = JBUI.scale(cellBorderHeight / 2)
   override val EXECUTION_TIME_HEIGHT = JBUI.scale(SPACER_HEIGHT + 14)

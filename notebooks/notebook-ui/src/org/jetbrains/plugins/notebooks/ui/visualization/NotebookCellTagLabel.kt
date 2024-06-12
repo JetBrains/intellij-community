@@ -5,6 +5,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Graphics
@@ -13,7 +14,7 @@ import java.awt.RenderingHints
 import javax.swing.BorderFactory
 import javax.swing.JLabel
 
-class NotebookCellTagLabel(@Nls val tag: String, val cellNum: Int) : JLabel(tag) {  // PY-72712 WIP
+class NotebookCellTagLabel(@Nls val tag: String, val cellNum: Int) : JLabel(tag) {  // PY-72712
 
   private var backgroundColor = JBColor.LIGHT_GRAY
   private var foregroundColor = JBColor.BLACK
@@ -25,9 +26,7 @@ class NotebookCellTagLabel(@Nls val tag: String, val cellNum: Int) : JLabel(tag)
     border = BorderFactory.createEmptyBorder(TEXT_VERTICAL_PADDING, TEXT_HORIZONTAL_PADDING, TEXT_VERTICAL_PADDING, TEXT_HORIZONTAL_PADDING)
 
     addMouseListener(object : PopupHandler() {
-      override fun invokePopup(comp: Component, x: Int, y: Int) {
-        showPopup( { createPopupGroup() }, comp, x, y)
-      }
+      override fun invokePopup(comp: Component, x: Int, y: Int) = showPopup( { createPopupGroup() }, comp, x, y)
     })
   }
 
