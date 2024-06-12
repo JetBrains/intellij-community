@@ -70,8 +70,10 @@ class NotebookBelowCellDelimiterPanel(
     border = BorderFactory.createEmptyBorder(dimension.height, 0, dimension.height, 0)
   }
 
-  private fun getCollapsed(): Boolean =
-    !isExecutionCountDefined() && (tooltipText == null || statusIcon == ExpUiIcons.General.GreenCheckmark || cellTags.isEmpty())
+  private fun getCollapsed(): Boolean {
+    if (cellTags.isNotEmpty()) return false
+    return !isExecutionCountDefined() && (tooltipText == null || statusIcon == ExpUiIcons.General.GreenCheckmark)
+  }
 
   private fun isExecutionCountDefined(): Boolean = executionCount?.let { it > 0 } ?: false
 
