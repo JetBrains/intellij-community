@@ -2227,6 +2227,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           }
         }
         mySuspendManager.myExplicitlyResumedThreads.remove(myThread);
+        SuspendManagerUtil.switchToThreadInSuspendAllContext(pausedSuspendAllContexts.get(0), myThread);
         return;
       }
 

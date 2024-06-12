@@ -841,16 +841,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
         suspendManager.myExplicitlyResumedThreads.remove(threadProxy);
         suspendManager.voteResume(suspendContext);
-        SuspendContextImpl suspendAllContext = suspendAllContexts.get(0);
-        debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendAllContext) {
-          @Override
-          public void contextAction(@NotNull SuspendContextImpl c) {
-            DebuggerSession session = debugProcess.getSession();
-            DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(session, suspendAllContext, threadProxy, null);
-            DebuggerInvocationUtil.invokeLater(debugProcess.getProject(),
-                                               () -> session.getContextManager().setState(debuggerContext, DebuggerSession.State.PAUSED, DebuggerSession.Event.CONTEXT, null));
-          }
-        });
+        SuspendManagerUtil.switchToThreadInSuspendAllContext(suspendAllContexts.get(0), threadProxy);
       }
       else {
         // Already stopped, so this is "remaining" event. Need to resume the event.

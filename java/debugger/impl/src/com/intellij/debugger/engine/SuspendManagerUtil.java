@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
@@ -79,6 +82,20 @@ public final class SuspendManagerUtil {
       return context;
     }
     return ContainerUtil.find(pausedContexts, suspendContext -> suspendContext.suspends(thread));
+  }
+
+  public static void switchToThreadInSuspendAllContext(@NotNull SuspendContextImpl suspendAllContext, @NotNull ThreadReferenceProxyImpl threadProxy) {
+    assert suspendAllContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL;
+    DebugProcessImpl debugProcess = suspendAllContext.getDebugProcess();
+    debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendAllContext) {
+      @Override
+      public void contextAction(@NotNull SuspendContextImpl c) {
+        DebuggerSession session = debugProcess.getSession();
+        DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(session, suspendAllContext, threadProxy, null);
+        DebuggerInvocationUtil.invokeLater(debugProcess.getProject(),
+                                           () -> session.getContextManager().setState(debuggerContext, DebuggerSession.State.PAUSED, DebuggerSession.Event.CONTEXT, null));
+      }
+    });
   }
 
   public static void restoreAfterResume(SuspendContextImpl context, Object resumeData) {
