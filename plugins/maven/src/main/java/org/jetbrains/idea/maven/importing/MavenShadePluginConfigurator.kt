@@ -33,9 +33,15 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     if (!Registry.`is`("maven.shade.plugin.create.uber.jar.dependency")) return
 
-    // find all poms with maven-shade-plugin
-    val shadeProjectsWithModules = context.mavenProjectsWithModules.filter {
-      it.mavenProject.findPlugin("org.apache.maven.plugins", "maven-shade-plugin") != null
+    // find all poms with maven-shade-plugin that use class relocation
+    val shadeProjectsWithModules = context.mavenProjectsWithModules.filter { p ->
+      p.mavenProject
+        .findPlugin("org.apache.maven.plugins", "maven-shade-plugin")
+        ?.executions
+        ?.asSequence()
+        ?.mapNotNull { it.configurationElement?.getChild("relocations") }
+        ?.flatMap { it.getChildren("relocation").asSequence() }
+        ?.any { it.getChild("shadedPattern") != null } ?: false
     }.toList()
 
     if (shadeProjectsWithModules.isEmpty()) return

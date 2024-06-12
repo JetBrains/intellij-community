@@ -44,6 +44,22 @@ class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCase() {
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>shade</goal>
+                </goals>
+                <configuration>
+                  <relocations>
+                    <relocation>
+                      <pattern>org.example</pattern>
+                      <shadedPattern>shaded.org.example</shadedPattern>
+                    </relocation>
+                  </relocations>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>                  
         </plugins>    
       </build>  
