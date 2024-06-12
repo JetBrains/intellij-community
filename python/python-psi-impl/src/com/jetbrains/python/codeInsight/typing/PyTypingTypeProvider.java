@@ -2021,6 +2021,11 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       return true;
     }
 
+    PyTypeAliasStatement typeAlias = PsiTreeUtil.getParentOfType(realContext, PyTypeAliasStatement.class, false, PyStatement.class);
+    if (typeAlias != null && PsiTreeUtil.isAncestor(typeAlias.getTypeExpression(), realContext, false)) {
+      return true;
+    }
+
     return false;
   }
 

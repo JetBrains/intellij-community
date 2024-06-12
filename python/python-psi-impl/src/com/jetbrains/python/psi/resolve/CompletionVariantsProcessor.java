@@ -16,6 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.completion.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PyFunctionInsertHandler;
+import com.jetbrains.python.codeInsight.completion.PyParameterizedTypeInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -67,10 +68,13 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
       final Project project = element.getProject();
       final TypeEvalContext context = TypeEvalContext.codeCompletion(project, myContext != null ? myContext.getContainingFile() : null);
 
-      if (!mySuppressParentheses &&
-          element instanceof PyFunction && ((PyFunction)element).getProperty() == null &&
-          !PyKnownDecoratorUtil.hasUnknownDecorator((PyFunction)element, context) &&
-          !isSingleArgDecoratorCall(myContext, (PyFunction)element)) {
+      if (myContext != null && PyParameterizedTypeInsertHandler.isCompletingParameterizedType(element, myContext, context)) {
+        item = item.withInsertHandler(PyParameterizedTypeInsertHandler.INSTANCE);        
+      }
+      else if (!mySuppressParentheses &&
+               element instanceof PyFunction && ((PyFunction)element).getProperty() == null &&
+               !PyKnownDecoratorUtil.hasUnknownDecorator((PyFunction)element, context) &&
+               !isSingleArgDecoratorCall(myContext, (PyFunction)element)) {
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
         final List<PyCallableParameter> parameters = ((PyFunction)element).getParameters(context);
         final String params = StringUtil.join(parameters, PyCallableParameter::getName, ", ");

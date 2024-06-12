@@ -1,3 +1,3 @@
 from typing import List
 
-xs = []  # type: List
+xs = []  # type: List[]
