@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.j2k.k2.postProcessings
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.SmartcastImpossible
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UselessCast
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.*
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExclExclCallFixFactories
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.TypeMismatchFactories
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
 import org.jetbrains.kotlin.j2k.k2.K2AddExclExclDiagnosticBasedProcessing
@@ -12,10 +12,58 @@ import org.jetbrains.kotlin.j2k.k2.K2CustomDiagnosticBasedProcessing
 import org.jetbrains.kotlin.j2k.k2.K2DiagnosticFix
 import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
 
+internal val argumentTypeMismatchProcessing: K2AddExclExclDiagnosticBasedProcessing<ArgumentTypeMismatch> =
+    K2AddExclExclDiagnosticBasedProcessing(
+        ArgumentTypeMismatch::class,
+        TypeMismatchFactories.argumentTypeMismatchFactory
+    )
+
+internal val returnTypeMismatchProcessing: K2AddExclExclDiagnosticBasedProcessing<ReturnTypeMismatch> =
+    K2AddExclExclDiagnosticBasedProcessing(
+        ReturnTypeMismatch::class,
+        TypeMismatchFactories.returnTypeMismatchFactory
+    )
+
+internal val assignmentTypeMismatchProcessing: K2AddExclExclDiagnosticBasedProcessing<AssignmentTypeMismatch> =
+    K2AddExclExclDiagnosticBasedProcessing(
+        AssignmentTypeMismatch::class,
+        TypeMismatchFactories.assignmentTypeMismatch
+    )
+
+internal val initializerTypeMismatchProcessing: K2AddExclExclDiagnosticBasedProcessing<InitializerTypeMismatch> =
+    K2AddExclExclDiagnosticBasedProcessing(
+        InitializerTypeMismatch::class,
+        TypeMismatchFactories.initializerTypeMismatch
+    )
+
 internal val smartcastImpossibleProcessing: K2AddExclExclDiagnosticBasedProcessing<SmartcastImpossible> =
     K2AddExclExclDiagnosticBasedProcessing(
         SmartcastImpossible::class,
         TypeMismatchFactories.smartcastImpossibleFactory
+    )
+
+internal val unsafeCallProcessing: K2AddExclExclDiagnosticBasedProcessing<UnsafeCall> =
+    K2AddExclExclDiagnosticBasedProcessing(
+        UnsafeCall::class,
+        AddExclExclCallFixFactories.unsafeCallFactory
+    )
+
+internal val unsafeInfixCallProcessing: K2AddExclExclDiagnosticBasedProcessing<UnsafeInfixCall> =
+    K2AddExclExclDiagnosticBasedProcessing(
+        UnsafeInfixCall::class,
+        AddExclExclCallFixFactories.unsafeInfixCallFactory
+    )
+
+internal val unsafeOperatorCallProcessing: K2AddExclExclDiagnosticBasedProcessing<UnsafeOperatorCall> =
+    K2AddExclExclDiagnosticBasedProcessing(
+        UnsafeOperatorCall::class,
+        AddExclExclCallFixFactories.unsafeOperatorCallFactory
+    )
+
+internal val iteratorOnNullableProcessing: K2AddExclExclDiagnosticBasedProcessing<IteratorOnNullable> =
+    K2AddExclExclDiagnosticBasedProcessing(
+        IteratorOnNullable::class,
+        AddExclExclCallFixFactories.iteratorOnNullableFactory
     )
 
 internal val uselessCastProcessing: K2CustomDiagnosticBasedProcessing<UselessCast> =

@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.j2k.*
+import org.jetbrains.kotlin.j2k.k2.postProcessings.*
 import org.jetbrains.kotlin.j2k.k2.postProcessings.K2ShortenReferenceProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.initializerTypeMismatchProcessing
 import org.jetbrains.kotlin.j2k.k2.postProcessings.smartcastImpossibleProcessing
 import org.jetbrains.kotlin.j2k.k2.postProcessings.uselessCastProcessing
 import org.jetbrains.kotlin.j2k.postProcessings.*
@@ -92,7 +94,15 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
             @Suppress("UNCHECKED_CAST") // fighting with generics :(
             K2DiagnosticBasedPostProcessingGroup(
                 uselessCastProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
-                smartcastImpossibleProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>
+                smartcastImpossibleProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
+                argumentTypeMismatchProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
+                returnTypeMismatchProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
+                assignmentTypeMismatchProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
+                initializerTypeMismatchProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
+                unsafeCallProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
+                unsafeInfixCallProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
+                unsafeOperatorCallProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
+                iteratorOnNullableProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
             ),
             InspectionLikeProcessingGroup(
                 VarToValProcessing(),
