@@ -10,7 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.ExperimentalUI
-import org.jetbrains.plugins.terminal.exp.*
+import org.jetbrains.plugins.terminal.block.output.*
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.junit.Assert
 
 internal class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) {

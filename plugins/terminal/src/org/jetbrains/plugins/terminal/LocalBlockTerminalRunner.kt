@@ -8,7 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl
+import org.jetbrains.plugins.terminal.block.TerminalWidgetImpl
 
 /**
  * Terminal runner that runs the terminal with the new block UI if [isBlockTerminalEnabled] is true.

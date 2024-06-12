@@ -5,9 +5,9 @@ import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Scheduler
 import com.intellij.terminal.completion.spec.ShellCommandResult
-import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
-import org.jetbrains.plugins.terminal.exp.CommandFinishedEvent
-import org.jetbrains.plugins.terminal.exp.ShellCommandListener
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
+import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import java.time.Duration
 
 internal class ShellCachingGeneratorCommandsRunner(private val session: BlockTerminalSession) : ShellGeneratorCommandsRunner {

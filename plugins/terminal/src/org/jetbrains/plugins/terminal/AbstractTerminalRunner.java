@@ -28,8 +28,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.exp.TerminalUiUtils;
-import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl;
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils;
+import org.jetbrains.plugins.terminal.block.TerminalWidgetImpl;
 
 import java.awt.*;
 import java.util.Objects;

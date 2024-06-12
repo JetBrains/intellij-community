@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCommandSpecImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandSpecsManagerImpl
+import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import java.io.File
 
 @ApiStatus.Experimental

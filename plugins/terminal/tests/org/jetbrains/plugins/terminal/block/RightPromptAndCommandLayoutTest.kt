@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.editor.markup.TextAttributes
 import junit.framework.TestCase.assertEquals
-import org.jetbrains.plugins.terminal.exp.*
-import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptRenderingInfo
+import org.jetbrains.plugins.terminal.block.output.*
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

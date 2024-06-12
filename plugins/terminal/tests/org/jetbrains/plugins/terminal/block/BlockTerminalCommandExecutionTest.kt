@@ -18,9 +18,10 @@ import com.jediterm.terminal.TerminalCustomCommandListener
 import junit.framework.TestCase.failNotEquals
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
-import org.jetbrains.plugins.terminal.exp.*
-import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
-import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil.toCommandLine
+import org.jetbrains.plugins.terminal.block.output.*
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil
+import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil.toCommandLine
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.Rule
