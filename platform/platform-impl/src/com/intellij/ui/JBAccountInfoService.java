@@ -2,9 +2,11 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EventListener;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
@@ -40,5 +42,11 @@ public interface JBAccountInfoService {
 
   static @Nullable JBAccountInfoService getInstance() {
     return JBAccountInfoServiceHolder.INSTANCE;
+  }
+
+  interface AuthStateListener extends EventListener {
+    @NotNull Topic<AuthStateListener> TOPIC = new Topic<>(AuthStateListener.class);
+
+    void authStateChanged(@Nullable JBAData newState);
   }
 }
