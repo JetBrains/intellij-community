@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.idea.AppMode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -17,6 +18,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Works in two stages.
@@ -47,9 +49,20 @@ final class UpdatePluginsApp implements ApplicationStarter {
       System.exit(0);
     }
 
-    Collection<PluginDownloader> availableUpdates = UpdateChecker.getInternalPluginUpdates()
-      .getPluginUpdates()
-      .getAllEnabled();
+    final Collection<PluginDownloader> availableUpdates;
+    try {
+      availableUpdates = ApplicationManager.getApplication().executeOnPooledThread(
+          () -> UpdateChecker.getInternalPluginUpdates()
+        ).get()
+        .getPluginUpdates()
+        .getAllEnabled();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      LOG.error("Failed to check plugin updates", e);
+      System.exit(1);
+      return;
+    }
+
     if (availableUpdates.isEmpty()) {
       logInfo("all plugins up to date");
       System.exit(0);
