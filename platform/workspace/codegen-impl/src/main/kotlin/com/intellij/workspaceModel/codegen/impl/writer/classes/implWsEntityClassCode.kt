@@ -12,10 +12,10 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 
 fun ObjClass<*>.implWsEntityCode(): String {
   return """
-package ${module.name}    
+package ${module.implPackage}    
 
 ${implWsEntityAnnotations}
-$generatedCodeVisibilityModifier ${if (openness.instantiatable) "open" else "abstract"} class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
+internal ${if (openness.extendable && !openness.instantiatable) "abstract" else "" } class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
     ${
     """
     private companion object {
