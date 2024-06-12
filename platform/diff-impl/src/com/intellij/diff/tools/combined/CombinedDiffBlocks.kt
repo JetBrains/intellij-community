@@ -6,6 +6,7 @@ import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector
@@ -16,6 +17,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
@@ -125,7 +127,8 @@ private class CombinedSimpleDiffHeader(project: Project,
     return toolbar
   }
 
-  fun setToolbarTargetComponent(component: JComponent) {
+  fun setToolbarTargetComponent(component: JComponent, componentCanBeHidden: Boolean) {
+    ClientProperty.put(component, ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN, componentCanBeHidden)
     toolbar?.setTargetComponent(component)
   }
 
@@ -272,8 +275,8 @@ internal class CombinedSimpleDiffBlock(project: Project,
   }
 
   private fun setHeaderToolbarTargetComponent(component: JComponent) {
-    headerWithToolbar.setToolbarTargetComponent(component)
-    stickyHeader.setToolbarTargetComponent(component)
+    headerWithToolbar.setToolbarTargetComponent(component, true)
+    stickyHeader.setToolbarTargetComponent(component, true)
   }
 
   private val focusListener = object : FocusAdapter() {
