@@ -1621,6 +1621,7 @@ f:com.intellij.codeInspection.ex.QuickFixWrapper
 - com.intellij.codeInsight.intention.IntentionAction
 - com.intellij.codeInsight.intention.PriorityAction
 - com.intellij.openapi.diagnostic.ReportingClassSubstitutor
+- com.intellij.openapi.project.PossiblyDumbAware
 - generatePreview(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - getElementToMakeWritable(com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 - getFamilyName():java.lang.String
@@ -1633,6 +1634,7 @@ f:com.intellij.codeInspection.ex.QuickFixWrapper
 - getText():java.lang.String
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
+- isDumbAware():Z
 - startInWriteAction():Z
 - s:unwrap(com.intellij.codeInsight.intention.CommonIntentionAction):com.intellij.codeInspection.LocalQuickFix
 - s:unwrapFile(com.intellij.codeInsight.intention.IntentionAction):com.intellij.psi.PsiFile
