@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -84,6 +85,7 @@ internal interface K2DiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWithPsi<
     fun createFix(diagnostic: DIAGNOSTIC) : K2DiagnosticFix?
 }
 
+@Suppress("unused") // TODO will probably be used later for diagnostics that produce a single quickfix
 internal class K2QuickFixDiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWithPsi<*>>(
     override val diagnosticClass: KClass<DIAGNOSTIC>,
     private val fixFactory: KotlinQuickFixFactory.IntentionBased<DIAGNOSTIC>
@@ -95,6 +97,22 @@ internal class K2QuickFixDiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWith
         return object : K2DiagnosticFix {
             override fun apply(element: PsiElement) {
                 quickfix.invoke(element.project, null, element.containingFile)
+            }
+        }
+    }
+}
+
+internal class K2AddExclExclDiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWithPsi<*>>(
+    override val diagnosticClass: KClass<DIAGNOSTIC>,
+    private val fixFactory: KotlinQuickFixFactory.IntentionBased<DIAGNOSTIC>
+) : K2DiagnosticBasedProcessing<DIAGNOSTIC> {
+
+    context(KaSession)
+    override fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix? {
+        val addExclExclCallFix = fixFactory.createQuickFixes(diagnostic).firstOrNull { it is AddExclExclCallFix } ?: return null
+        return object : K2DiagnosticFix {
+            override fun apply(element: PsiElement) {
+                addExclExclCallFix.invoke(element.project, null, element.containingFile)
             }
         }
     }

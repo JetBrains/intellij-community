@@ -4,41 +4,18 @@ package org.jetbrains.kotlin.j2k.k2.postProcessings
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.SmartcastImpossible
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UselessCast
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.TypeMismatchFactories
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
+import org.jetbrains.kotlin.j2k.k2.K2AddExclExclDiagnosticBasedProcessing
 import org.jetbrains.kotlin.j2k.k2.K2CustomDiagnosticBasedProcessing
 import org.jetbrains.kotlin.j2k.k2.K2DiagnosticFix
-import org.jetbrains.kotlin.j2k.k2.K2QuickFixDiagnosticBasedProcessing
 import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-// Adapted from org.jetbrains.kotlin.idea.k2.codeinsight.fixes.TypeMismatchFactories.getSmartcastImpossibleFactory
-// to avoid dependency on v2 module
-// TODO try to refactor this code after the K1 J2K is dropped and the single j2k module itself becomes a v2 module
-private val smartcastImpossibleFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: SmartcastImpossible ->
-    val psi = diagnostic.psi
-    val actualType = psi.getKtType() ?: return@IntentionBased emptyList()
-    val expectedType = diagnostic.desiredType
-
-    if (expectedType.canBeNull || !actualType.canBeNull) return@IntentionBased emptyList()
-    if (psi.safeAs<KtExpression>()?.isDefinitelyNull() == true) {
-        return@IntentionBased emptyList()
-    }
-    val nullableExpectedType = expectedType.withNullability(KtTypeNullability.NULLABLE)
-    if (actualType.isSubTypeOf(nullableExpectedType)) {
-        return@IntentionBased listOf(AddExclExclCallFix(psi))
-    }
-    return@IntentionBased emptyList()
-}
-
-internal val smartcastImpossibleProcessing: K2QuickFixDiagnosticBasedProcessing<SmartcastImpossible> =
-    K2QuickFixDiagnosticBasedProcessing(
+internal val smartcastImpossibleProcessing: K2AddExclExclDiagnosticBasedProcessing<SmartcastImpossible> =
+    K2AddExclExclDiagnosticBasedProcessing(
         SmartcastImpossible::class,
-        smartcastImpossibleFactory
+        TypeMismatchFactories.smartcastImpossibleFactory
     )
 
 internal val uselessCastProcessing: K2CustomDiagnosticBasedProcessing<UselessCast> =

@@ -4,4 +4,8 @@
     <j2kConverterExtension implementation="org.jetbrains.kotlin.j2k.k2.K2J2KConverterExtension"/>
   </extensions>
 
+  <dependencies>
+    <module name="kotlin.code-insight.fixes.k2"/>
+  </dependencies>
+
 </idea-plugin>
