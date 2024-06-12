@@ -13,7 +13,9 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
@@ -308,6 +310,6 @@ internal fun getThisQualifier(receiverValue: KtImplicitReceiverValue): String {
         (symbol.getContainingSymbol() as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
     }
     else {
-        "this"
+        "this" + ((((symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol ?: symbol) as? KaNamedSymbol)?.name?.let { "@$it" } ?: "")
     }
 }

@@ -909,6 +909,16 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("accessToPropertyOfClass.kt")
+            public void testAccessToPropertyOfClass() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/accessToPropertyOfClass.kt");
+            }
+
+            @TestMetadata("accessToPropertyOfClassViaReceiver.kt")
+            public void testAccessToPropertyOfClassViaReceiver() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/accessToPropertyOfClassViaReceiver.kt");
+            }
+
             @TestMetadata("AppendToCollection.kt")
             public void testAppendToCollection() throws Exception {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/AppendToCollection.kt");
