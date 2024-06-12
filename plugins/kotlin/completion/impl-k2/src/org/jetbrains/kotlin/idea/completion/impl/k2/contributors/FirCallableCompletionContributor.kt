@@ -8,6 +8,7 @@ import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.util.parents
 import com.intellij.util.applyIf
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
@@ -756,6 +757,7 @@ internal class FirKDocCallableCompletionContributor(
     ): CallableInsertionStrategy = CallableInsertionStrategy.AsIdentifier
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     override fun collectDotCompletion(
         scopeContext: KtScopeContext,
         explicitReceiver: KtElement,

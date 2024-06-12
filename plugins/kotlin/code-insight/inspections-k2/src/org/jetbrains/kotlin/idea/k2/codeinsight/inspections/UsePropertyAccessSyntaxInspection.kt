@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.startOffset
 import org.jdom.Element
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
@@ -420,6 +421,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
      * Fixes the case from KTIJ-21051
      */
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KtType, propertyName: String): Boolean {
         val fieldWithSameName = receiverType.getTypeScope()?.getDeclarationScope()?.getCallableSymbols()
             ?.filter { it is KtJavaFieldSymbol && it.name.toString() == propertyName && !it.visibility.isPrivateOrPrivateToThis() }
@@ -428,6 +430,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun getSyntheticProperty(
         propertyNames: List<String>,
         receiverType: KtType

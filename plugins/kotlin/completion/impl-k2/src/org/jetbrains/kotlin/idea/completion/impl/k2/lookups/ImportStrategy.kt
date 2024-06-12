@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.lookups
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -24,6 +25,7 @@ internal fun addImportIfRequired(targetFile: KtFile, nameToImport: FqName) {
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
     if (file.importDirectives.any { it.importPath?.fqName == nameToImport }) return true
 

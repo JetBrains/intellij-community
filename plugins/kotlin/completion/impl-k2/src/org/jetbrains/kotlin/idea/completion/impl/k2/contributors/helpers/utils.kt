@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import com.intellij.util.applyIf
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
@@ -91,6 +92,7 @@ internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
  * @param indexInTower index of implicit receiver's scope in scope tower if it is known, otherwise null.
  */
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 internal fun collectNonExtensionsForType(
     type: KtType,
     visibilityChecker: CompletionVisibilityChecker,
@@ -124,6 +126,7 @@ private val KtSyntheticJavaPropertySymbol.getterAndUnitSetter: List<KaCallableSy
     get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol?.takeIf { it.returnType.isUnit })
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
     type: KtType,
     visibilityChecker: CompletionVisibilityChecker,
