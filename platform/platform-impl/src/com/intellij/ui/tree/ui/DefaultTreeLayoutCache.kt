@@ -930,6 +930,10 @@ class DefaultTreeLayoutCache(
       else if (node.row != -1 && node.row != row) {
         messages += "Row inconsistency: node ${node.path} should be at ${row}, but is at ${node.row}"
       }
+      val rowForPath = getRowForPath(node.path)
+      if (rowForPath != node.row) {
+        messages += "Row inconsistency: row for path ${node.path} is $rowForPath, but the node's row is ${node.row}"
+      }
       var count = if (node.row == -1) 0 else 1 // This may be the invisible root, but it may still have visible children!
       row += count
       val children = node.children
