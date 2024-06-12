@@ -40,6 +40,15 @@ import java.util.function.Supplier;
 
 public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
 
+  private static final List<String> UNIX_BINARIES_DIRECTORIES = List.of(
+    "/bin",
+    "/usr/bin",
+    "/usr/local/bin",
+    "/opt/homebrew/bin"
+  );
+
+  private static final List<String> UNIX_SHELL_NAMES = List.of("bash", "zsh", "fish", "pwsh");
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -103,22 +112,25 @@ public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
   private static @NotNull List<OpenShellAction> detectShells() {
     List<OpenShellAction> actions = new ArrayList<>();
     if (SystemInfo.isUnix) {
-      ContainerUtil.addIfNotNull(actions, create("/bin/bash", List.of(), "bash (/bin)"));
-      ContainerUtil.addIfNotNull(actions, create("/usr/bin/bash", List.of(), "bash (/usr/bin)"));
-      ContainerUtil.addIfNotNull(actions, create("/usr/local/bin/bash", List.of(), "bash (/usr/local/bin)"));
-      ContainerUtil.addIfNotNull(actions, create("/opt/homebrew/bin/bash", List.of(), "bash (/opt/homebrew/bin)"));
-
-      ContainerUtil.addIfNotNull(actions, create("/bin/zsh", List.of(), "zsh (/bin)"));
-      ContainerUtil.addIfNotNull(actions, create("/usr/bin/zsh", List.of(), "zsh (/usr/bin)"));
-      ContainerUtil.addIfNotNull(actions, create("/usr/local/bin/zsh", List.of(), "zsh (/usr/local/bin)"));
-      ContainerUtil.addIfNotNull(actions, create("/opt/homebrew/bin/zsh", List.of(), "zsh (/opt/homebrew/bin)"));
-
-      ContainerUtil.addIfNotNull(actions, create("/bin/fish", List.of(), "fish (/bin)"));
-      ContainerUtil.addIfNotNull(actions, create("/usr/bin/fish", List.of(), "fish (/usr/bin)"));
-      ContainerUtil.addIfNotNull(actions, create("/usr/local/bin/fish", List.of(), "fish (/usr/local/bin)"));
-      ContainerUtil.addIfNotNull(actions, create("/opt/homebrew/bin/fish", List.of(), "fish (/opt/homebrew/bin)"));
-
-      ContainerUtil.addIfNotNull(actions, create("/opt/homebrew/bin/pwsh", List.of(), "pwsh (/opt/homebrew/bin)"));
+      // Iterate over all combinations of path+shell to find executables.
+      for (String unixShellName : UNIX_SHELL_NAMES) {
+        List<String> validExecutablesDirectories = new ArrayList<>();
+        for (String executablesDirectory : UNIX_BINARIES_DIRECTORIES) {
+          var shellPath = executablesDirectory + "/" + unixShellName;
+          if (Files.exists(Path.of(shellPath))) {
+            validExecutablesDirectories.add(executablesDirectory);
+          }
+        }
+        if (validExecutablesDirectories.size() > 1) {
+          for (String executablesDirectory : validExecutablesDirectories) {
+            // i.e. /bin/zsh -> zsh (/bin)
+            ContainerUtil.addIfNotNull(actions, create(executablesDirectory + "/" + unixShellName, List.of(), unixShellName + " (" + executablesDirectory + ")"));
+          }
+        } else if (validExecutablesDirectories.size() == 1) {
+          // If only 1 shell of type fount - then there is no need to specify path.
+          ContainerUtil.addIfNotNull(actions, create(validExecutablesDirectories.get(0) + "/" + unixShellName, List.of(), unixShellName));
+        }
+      }
     }
     else if (SystemInfo.isWindows) {
       File powershell = PathEnvironmentVariableUtil.findInPath("powershell.exe");
