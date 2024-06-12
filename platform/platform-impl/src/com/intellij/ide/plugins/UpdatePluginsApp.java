@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +44,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
   @Override
   public void main(@NotNull List<String> args) {
     if (Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
-      logInfo("updates applied");
+      logInfo("Plugin updates are applied");
       System.exit(0);
     }
 
@@ -82,13 +81,20 @@ final class UpdatePluginsApp implements ApplicationStarter {
 
     logInfo("Plugins to update: " + ContainerUtil.map(pluginsToUpdate, downloader -> downloader.getPluginName() + " version " + downloader.getPluginVersion()));
 
-    Ref<Boolean> installed = Ref.create();
-    PluginDownloader.runSynchronouslyInBackground(() -> {
-      //noinspection UsagesOfObsoleteApi
-      installed.set(UpdateInstaller.installPluginUpdates(pluginsToUpdate, new EmptyProgressIndicator()));
-    });
+    final boolean installed;
+    try {
+      installed = ApplicationManager.getApplication().executeOnPooledThread(
+          () -> UpdateInstaller.installPluginUpdates(pluginsToUpdate, new EmptyProgressIndicator())
+        ).get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      LOG.error("Failed to install plugin updates", e);
+      System.exit(1);
+      return;
+    }
 
-    if (installed.get()) {
+    if (installed) {
+      logInfo("Plugin updates are prepared to be installed");
       System.exit(0);
     }
     else {
