@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.icons.ExpUiIcons
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.registry.Registry
@@ -21,6 +22,7 @@ class NotebookBelowCellDelimiterPanel(
 ) : JPanel(BorderLayout()) {
   private val notebookAppearance = editor.notebookAppearance
   private var isCollapsed = getCollapsed()
+  private val plusTagButtonSize = JBUI.scale(18)
   private val tagsSpacing = JBUI.scale(6)
   private val delimiterHeight =   when (editor.editorKind.isDiff()) {
     true -> getJupyterCellSpacing(editor) / 2
@@ -51,12 +53,45 @@ class NotebookBelowCellDelimiterPanel(
   @Suppress("HardCodedStringLiteral")
   private fun createTagsRow(): Box {
     val tagsRow = Box.createHorizontalBox()
+    val plusActionToolbar = createAddTagButton()
+    tagsRow.add(plusActionToolbar)
+    tagsRow.add(Box.createHorizontalStrut(tagsSpacing))
+
     cellTags.forEach { tag ->
       val tagLabel = NotebookCellTagLabel(tag, cellNum)
       tagsRow.add(tagLabel)
       tagsRow.add(Box.createHorizontalStrut(tagsSpacing))
     }
     return tagsRow
+  }
+
+  private fun createAddTagButton(): JButton? {
+    // todo: refactor
+    // ideally, a toolbar with a single action and targetComponent this should've done that
+    // however, the toolbar max height must be not greater than 18, which seemed to be untrivial
+    val action = ActionManager.getInstance().getAction("JupyterCellAddTagInlayAction") ?: return null
+
+    return JButton().apply {
+      icon = ExpUiIcons.General.Add
+      preferredSize = Dimension(plusTagButtonSize, plusTagButtonSize)
+      isContentAreaFilled = false
+      isFocusPainted = false
+      isBorderPainted = false
+      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+
+      addActionListener {
+        val dataContext = DataContext { dataId ->
+          when(dataId) {
+            CommonDataKeys.EDITOR.name -> editor
+            PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> this@NotebookBelowCellDelimiterPanel
+            CommonDataKeys.PROJECT.name -> editor.project
+            else -> null
+          }
+        }
+        val event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.EDITOR_INLAY, dataContext)
+        action.actionPerformed(event)
+      }
+    }
   }
 
   private fun updateBackgroundColor() {

@@ -5,7 +5,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Graphics
