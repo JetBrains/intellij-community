@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -32,35 +32,40 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
 public final class UIFormEditor extends UserDataHolderBase implements FileEditor, PossiblyDumbAware {
-  private final VirtualFile myFile;
-  private final GuiEditor myEditor;
+  private final VirtualFile file;
+  private final GuiEditor editor;
   private UIFormEditor.MyBackgroundEditorHighlighter myBackgroundEditorHighlighter;
 
-  public UIFormEditor(final @NotNull Project project, final @NotNull VirtualFile file){
+  public UIFormEditor(@NotNull Project project, @NotNull VirtualFile file){
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701")) {
-      final VirtualFile vf = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : file;
-      final Module module = ModuleUtilCore.findModuleForFile(vf, project);
+      VirtualFile vf = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : file;
+      Module module = ModuleUtilCore.findModuleForFile(vf, project);
       if (module == null) {
         throw new IllegalArgumentException("No module for file " + file + " in project " + project);
       }
-      myFile = file;
-      myEditor = new GuiEditor(this, project, module, file);
+      this.file = file;
+      editor = new GuiEditor(this, project, module, file);
     }
+  }
+
+  UIFormEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull Module module) {
+    this.file = file;
+    editor = new GuiEditor(this, project, module, file);
   }
 
   @Override
   public @NotNull JComponent getComponent(){
-    return myEditor;
+    return editor;
   }
 
   @Override
   public void dispose() {
-    Disposer.dispose(myEditor);
+    Disposer.dispose(editor);
   }
 
   @Override
   public JComponent getPreferredFocusedComponent(){
-    return myEditor.getPreferredFocusedComponent();
+    return editor.getPreferredFocusedComponent();
   }
 
   @Override
@@ -69,12 +74,12 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   }
 
   public @NotNull GuiEditor getEditor() {
-    return myEditor;
+    return editor;
   }
 
   @Override
   public @NotNull VirtualFile getFile() {
-    return myFile;
+    return file;
   }
 
   @Override
@@ -86,8 +91,8 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   public boolean isValid(){
     //TODO[anton,vova] fire when changed
     return
-      FileDocumentManager.getInstance().getDocument(myFile) != null &&
-      FileTypeRegistry.getInstance().isFileOfType(myFile, GuiFormFileType.INSTANCE);
+      FileDocumentManager.getInstance().getDocument(file) != null &&
+      FileTypeRegistry.getInstance().isFileOfType(file, GuiFormFileType.INSTANCE);
   }
 
   @Override
@@ -103,16 +108,16 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     if (myBackgroundEditorHighlighter == null) {
-      myBackgroundEditorHighlighter = new MyBackgroundEditorHighlighter(myEditor);
+      myBackgroundEditorHighlighter = new MyBackgroundEditorHighlighter(editor);
     }
     return myBackgroundEditorHighlighter;
   }
 
   @Override
   public @NotNull FileEditorState getState(final @NotNull FileEditorStateLevel ignored) {
-    final Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
-    long modificationStamp = document != null ? document.getModificationStamp() : myFile.getModificationStamp();
-    final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);
+    final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    long modificationStamp = document != null ? document.getModificationStamp() : file.getModificationStamp();
+    final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
     final String[] ids = new String[selection.size()];
     for (int i = ids.length - 1; i >= 0; i--) {
       ids[i] = selection.get(i).getId();
@@ -122,10 +127,10 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
 
   @Override
   public void setState(final @NotNull FileEditorState state){
-    FormEditingUtil.clearSelection(myEditor.getRootContainer());
+    FormEditingUtil.clearSelection(editor.getRootContainer());
     final String[] ids = ((MyEditorState)state).getSelectedComponentIds();
     for (final String id : ids) {
-      final RadComponent component = (RadComponent)FormEditingUtil.findComponent(myEditor.getRootContainer(), id);
+      final RadComponent component = (RadComponent)FormEditingUtil.findComponent(editor.getRootContainer(), id);
       if (component != null) {
         component.setSelected(true);
       }
@@ -133,14 +138,14 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   }
 
   public void selectComponent(final @NotNull String binding) {
-    final RadComponent component = (RadComponent) FormEditingUtil.findComponentWithBinding(myEditor.getRootContainer(), binding);
+    final RadComponent component = (RadComponent) FormEditingUtil.findComponentWithBinding(editor.getRootContainer(), binding);
     if (component != null) {
       FormEditingUtil.selectSingleComponent(getEditor(), component);
     }
   }
 
   public void selectComponentById(final @NotNull String id) {
-    final RadComponent component = (RadComponent)FormEditingUtil.findComponent(myEditor.getRootContainer(), id);
+    final RadComponent component = (RadComponent)FormEditingUtil.findComponent(editor.getRootContainer(), id);
     if (component != null) {
       FormEditingUtil.selectSingleComponent(getEditor(), component);
     }

@@ -114,7 +114,7 @@ internal class EditorCompositeModelManager(
   ) {
     val editorsWithProviders = coroutineScope {
       providers.map { provider ->
-        async {
+        async(ModalityState.any().asContextElement()) {
           try {
             val editor = if (provider is AsyncFileEditorProvider) {
               provider.createFileEditor(
@@ -125,19 +125,12 @@ internal class EditorCompositeModelManager(
               )
             }
             else {
-              withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+              withContext(Dispatchers.EDT) {
                 provider.createEditor(project, file)
               }
             }
 
-            if (editor.isValid) {
-              FileEditorWithProvider(editor, provider)
-            }
-            else {
-              val pluginDescriptor = PluginManager.getPluginByClass(provider.javaClass)
-              LOG.error(PluginException("Invalid editor created by provider ${provider.javaClass.name}", pluginDescriptor?.pluginId))
-              null
-            }
+            FileEditorWithProvider(editor, provider)
           }
           catch (e: CancellationException) {
             throw e

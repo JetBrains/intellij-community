@@ -2,8 +2,6 @@
 package com.intellij.openapi.fileEditor
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
@@ -36,7 +34,7 @@ interface AsyncFileEditorProvider : FileEditorProvider {
     editorCoroutineScope: CoroutineScope,
   ): FileEditor {
     val builder = createEditorBuilder(project = project, file = file, document = document)
-    return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    return withContext(Dispatchers.EDT) {
       builder.build()
     }
   }

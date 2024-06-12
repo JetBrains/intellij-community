@@ -6,8 +6,6 @@ import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -91,7 +89,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val factory = serviceAsync<EditorFactory>() as EditorFactoryImpl
       val highlighter = highlighterDeferred.await()
 
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.EDT) {
         val editor = factory.createMainEditor(
           document = effectiveDocument,
           project = project,
