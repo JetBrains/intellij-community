@@ -429,18 +429,18 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       effectiveSettings.withVmOption(jvmOpt);
     }
     if (effectiveSettings.isDebugAllEnabled()) {
-      effectiveSettings.withVmOption("-Didea.gradle.debug.all=true");
+      effectiveSettings.withArgument("-Didea.gradle.debug.all=true");
     }
   }
 
   public static void setupDebuggerDispatchPort(@NotNull GradleExecutionSettings effectiveSettings) {
     Integer dispatchPort = effectiveSettings.getUserData(DEBUGGER_DISPATCH_PORT_KEY);
     if (dispatchPort != null) {
-      effectiveSettings.withVmOption(String.format("-D%s=%d", DISPATCH_PORT_SYS_PROP, dispatchPort));
+      effectiveSettings.withArgument(String.format("-D%s=%d", DISPATCH_PORT_SYS_PROP, dispatchPort));
     }
     String dispatchAddr = effectiveSettings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
     if (dispatchAddr != null) {
-      effectiveSettings.withVmOption(String.format("-D%s=%s", DISPATCH_ADDR_SYS_PROP, dispatchAddr));
+      effectiveSettings.withArgument(String.format("-D%s=%s", DISPATCH_ADDR_SYS_PROP, dispatchAddr));
     }
   }
 
