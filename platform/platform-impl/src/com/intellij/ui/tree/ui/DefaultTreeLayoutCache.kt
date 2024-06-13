@@ -6,7 +6,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Rectangle
 import java.util.*
@@ -222,9 +221,17 @@ class DefaultTreeLayoutCache(
     val changedValue = changedNode.userObject
     val changedChildIndexes = e?.childIndices ?: return
     val model = this.model ?: return
+    // We must do it in two passes: first remove all path mappings, then add the new ones.
+    // If we do it in one loop, we may end up in an inconsistent state
+    // if the new path of some child is equal to the old path of some other child.
+    // For example, when the children were sorted by the model.
     for (i in changedChildIndexes) {
       val changedChildNode = changedNode.getChildAt(i)
-      changedChildNode.userObject = model.getChild(changedValue, i)
+      changedChildNode.removePathsRecursively()
+    }
+    for (i in changedChildIndexes) {
+      val changedChildNode = changedNode.getChildAt(i)
+      changedChildNode.addPathsRecursively(changedNode.path, model.getChild(changedValue, i))
       changedChildNode.invalidateSize()
     }
     checkInvariants(Location("treeNodesChanged(value=%s, indices=%s)", changedValue, changedChildIndexes))
@@ -449,18 +456,21 @@ class DefaultTreeLayoutCache(
     val visibleChildCount: Int
       get() = if (isChildrenVisible) childCount else 0
 
-    var userObject: Any
+    val userObject: Any
       get() = path.lastPathComponent
-      set(value) {
-        updatePathsRecursively(parent?.path, value)
-      }
 
-    private fun updatePathsRecursively(newParent: TreePath?, newUserObject: Any) {
+    fun removePathsRecursively() {
       nodeByPath.remove(path)
-      path = newParent?.pathByAddingChild(newUserObject) ?: CachingTreePath(newUserObject)
+      children?.forEach { child ->
+        child.removePathsRecursively()
+      }
+    }
+
+    fun addPathsRecursively(newParent: TreePath, newUserObject: Any) {
+      path = newParent.pathByAddingChild(newUserObject)
       nodeByPath[path] = this
       children?.forEach { child ->
-        child.updatePathsRecursively(path, child.userObject)
+        child.addPathsRecursively(path, child.userObject)
       }
     }
 
