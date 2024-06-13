@@ -358,7 +358,10 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
 private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, @Nls defaultName: String): String {
   try {
     return AbstractBundle.messageOrDefault(
-      DynamicBundle.getResourceBundle(classLoader, bundleName), "exportable.$defaultName.presentable.name", defaultName)
+      bundle = DynamicBundle.getResourceBundle(classLoader, bundleName),
+      key = "exportable.$defaultName.presentable.name",
+      defaultValue = defaultName,
+    )!!
   }
   catch (e: MissingResourceException) {
     LOG.warn("Missing bundle ${bundleName} at ${classLoader}: ${e.message}")

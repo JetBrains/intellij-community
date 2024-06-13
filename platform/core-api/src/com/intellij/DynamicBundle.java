@@ -63,8 +63,13 @@ public class DynamicBundle extends AbstractBundle {
   protected @NotNull ResourceBundle findBundle(@NotNull String pathToBundle,
                                                @NotNull ClassLoader baseLoader,
                                                @NotNull ResourceBundle.Control control) {
-    return resolveResourceBundle(getBundleClassLoader(), baseLoader, pathToBundle, getResolveLocale(),
-                                 (loader, locale) -> super.findBundle(pathToBundle, loader, control, locale));
+    return resolveResourceBundle(
+      getBundleClassLoader(),
+      baseLoader,
+      pathToBundle,
+      getResolveLocale(),
+      (loader, locale) -> super.findBundle(pathToBundle, loader, control, locale)
+    );
   }
 
   private static @NotNull ResourceBundle resolveResourceBundle(@NotNull ClassLoader bundleClassLoader,
@@ -95,7 +100,7 @@ public class DynamicBundle extends AbstractBundle {
     List<ResourceBundle> resourceBundles = new ArrayList<>();
     for (Path path : paths) {
       try {
-        ResourceBundle resourceBundle = resolveBundle(loader, locale, FileUtil.toSystemIndependentName(path.toString()));
+        ResourceBundle resourceBundle = Companion.resolveBundle(loader, locale, FileUtil.toSystemIndependentName(path.toString()));
         resourceBundles.add(resourceBundle);
       }
       catch (MissingResourceException ignored) { }
@@ -269,13 +274,13 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   private static @NotNull ResourceBundle resolveResourceBundle(@NotNull ClassLoader loader, @NonNls @NotNull String pathToBundle, @NotNull Locale locale) {
-    return resolveResourceBundleWithFallback(loader, pathToBundle, () -> resolveResourceBundle(DynamicBundle.class.getClassLoader(),
+    return Companion.resolveResourceBundleWithFallback(loader, pathToBundle, () -> resolveResourceBundle(DynamicBundle.class.getClassLoader(),
                                                                                                loader, pathToBundle, locale,
                                                                                                bundleResolver(pathToBundle)));
   }
 
   private static @NotNull BiFunction<@NotNull ClassLoader, @NotNull Locale, @NotNull ResourceBundle> bundleResolver(@NonNls @NotNull String pathToBundle) {
-    return (loader, locale) -> resolveBundle(loader, locale, pathToBundle);
+    return (loader, locale) -> Companion.resolveBundle(loader, locale, pathToBundle);
   }
 
   /**

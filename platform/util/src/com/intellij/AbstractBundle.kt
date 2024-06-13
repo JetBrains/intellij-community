@@ -1,238 +1,208 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij;
+@file:Suppress("KDocUnresolvedReference")
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.DefaultBundleService;
-import org.jetbrains.annotations.*;
+package com.intellij
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.function.Supplier;
+import com.intellij.BundleBase.partialMessage
+import com.intellij.BundleBase.useDefaultValue
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.DefaultBundleService
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import java.io.InputStreamReader
+import java.lang.ref.Reference
+import java.lang.ref.SoftReference
+import java.nio.charset.StandardCharsets
+import java.util.*
+import java.util.function.Supplier
 
 /**
- * Base class for particular scoped bundles (e.g. {@code 'vcs'} bundles, {@code 'aop'} bundles etc).
- * <br/>
- * <b>This class is not supposed to be extended directly. Use {@link com.intellij.DynamicBundle} or {@link org.jetbrains.jps.api.JpsDynamicBundle} instead.</b>
+ * Base class for particular scoped bundles (e.g. `'vcs'` bundles, `'aop'` bundles etc.).
+ * **This class is not supposed to be extended directly. Use [com.intellij.DynamicBundle] or [org.jetbrains.jps.api.JpsDynamicBundle] instead.**
  */
-public class AbstractBundle {
-  private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
+open class AbstractBundle {
+  private var bundle: Reference<ResourceBundle>? = null
+  private var defaultBundle: Reference<ResourceBundle>? = null
 
-  private Reference<ResourceBundle> myBundle;
-  private Reference<ResourceBundle> myDefaultBundle;
-  private final @NotNull ClassLoader myBundleClassLoader;
-  private final @NonNls String myPathToBundle;
+  @get:ApiStatus.Internal
+  protected val bundleClassLoader: ClassLoader
+  private val pathToBundle: @NonNls String
 
   /**
    * @param bundleClass a class to get the classloader, usually a class which declared the field which references the bundle instance
    */
-  public AbstractBundle(@NotNull Class<?> bundleClass, @NonNls @NotNull String pathToBundle) {
-    myPathToBundle = pathToBundle;
-    myBundleClassLoader = bundleClass.getClassLoader();
+  constructor(bundleClass: Class<*>, pathToBundle: @NonNls String) {
+    this.pathToBundle = pathToBundle
+    bundleClassLoader = bundleClass.classLoader
   }
 
-  protected AbstractBundle(@NonNls @NotNull String pathToBundle) {
-    myPathToBundle = pathToBundle;
-    myBundleClassLoader = getClass().getClassLoader();
+  protected constructor(pathToBundle: @NonNls String) {
+    this.pathToBundle = pathToBundle
+    bundleClassLoader = javaClass.classLoader
   }
 
-  @ApiStatus.Internal
-  protected final @NotNull ClassLoader getBundleClassLoader() {
-    return myBundleClassLoader;
-  }
+  companion object {
+    @get:ApiStatus.Internal
+    val control: ResourceBundle.Control
+      get() = IntelliJResourceControl
 
-  @ApiStatus.Internal
-  public static @NotNull ResourceBundle.Control getControl() {
-    return MyResourceControl.INSTANCE;
+    @Contract("null, _, _, _ -> param3")
+    @JvmStatic
+    fun messageOrDefault(bundle: ResourceBundle?, key: @NonNls String, defaultValue: @Nls String?, vararg params: Any?): @Nls String? {
+      return when {
+        bundle == null -> defaultValue
+        !bundle.containsKey(key) -> postprocessValue(bundle = bundle, value = useDefaultValue(bundle, key, defaultValue), params = params)
+        else -> BundleBase.messageOrDefault(bundle = bundle, key = key, defaultValue = defaultValue, params = params)
+      }
+    }
+
+    @JvmStatic
+    fun message(bundle: ResourceBundle, key: @NonNls String, vararg params: Any?): @Nls String {
+      return BundleBase.messageOrDefault(bundle = bundle, key = key, defaultValue = null, params = params)
+    }
+
+    @Suppress("HardCodedStringLiteral")
+    @JvmStatic
+    fun messageOrNull(bundle: ResourceBundle, key: @NonNls String, vararg params: Any): @Nls String? {
+      val value = messageOrDefault(bundle = bundle, key = key, defaultValue = key, params = params)
+      return if (key == value) null else value
+    }
+
+    @ApiStatus.Internal
+    inline fun resolveResourceBundleWithFallback(
+      loader: ClassLoader,
+      pathToBundle: String,
+      firstTry: () -> ResourceBundle
+    ): ResourceBundle {
+      try {
+        return firstTry()
+      }
+      catch (e: MissingResourceException) {
+        logger<AbstractBundle>().info("Cannot load resource bundle from *.properties file, falling back to slow class loading: $pathToBundle")
+        ResourceBundle.clearCache(loader)
+        return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader)
+      }
+    }
+
+    @ApiStatus.Internal
+    fun resolveBundle(loader: ClassLoader, locale: @NonNls Locale, pathToBundle: @NonNls String): ResourceBundle {
+      return ResourceBundle.getBundle(pathToBundle, locale, loader, IntelliJResourceControl)
+    }
   }
 
   @Contract(pure = true)
-  public @NotNull @Nls String getMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    return BundleBase.messageOrDefault(getResourceBundle(), key, null, params);
+  // open only to preserve compatibility
+  open fun getMessage(key: @NonNls String, vararg params: Any?): @Nls String {
+    return BundleBase.messageOrDefault(bundle = resourceBundle, key = key, defaultValue = null, params = params)
   }
 
   /**
    * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
-   * It's expected that the message contains {@code params.length + unassignedParams} placeholders. Parameters
-   * {@code {0}..{params.length-1}} will be substituted using a passed params array. The remaining parameters
-   * will be renumbered: {@code {params.length}} will become {@code {0}} and so on, so the resulting template
+   * It's expected that the message contains `params.length + unassignedParams` placeholders. Parameters
+   * `{0}..{params.length-1}` will be substituted using a passed params array. The remaining parameters
+   * will be renumbered: `{params.length}` will become `{0}` and so on, so the resulting template
    * could be applied once more.
    *
    * @param key resource key
    * @param unassignedParams number of unassigned parameters
    * @param params assigned parameters
-   * @return a template suitable to pass to {@link MessageFormat#format(Object)} having the specified number of placeholders left
+   * @return a template suitable to pass to [MessageFormat.format] having the specified number of placeholders left
    */
   @Contract(pure = true)
-  public @NotNull @Nls String getPartialMessage(@NotNull @NonNls String key, int unassignedParams, Object @NotNull ... params) {
-    return BundleBase.partialMessage(getResourceBundle(), key, unassignedParams, params);
+  fun getPartialMessage(key: @NonNls String, unassignedParams: Int, vararg params: Any?): @Nls String {
+    @Suppress("UNCHECKED_CAST")
+    return partialMessage(bundle = resourceBundle, key = key, unassignedParams = unassignedParams, params = params as Array<Any?>)
   }
 
-  public @NotNull Supplier<@Nls String> getLazyMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
+  // open only to preserve compatibility
+  open fun getLazyMessage(key: @NonNls String, vararg params: Any?): Supplier<String> {
     // do not capture new empty Object[] arrays here
-    Object[] actualParams = params.length == 0 ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : params;
-    return () -> getMessage(key, actualParams);
-  }
-
-  public @Nullable @Nls String messageOrNull(@NotNull @NonNls String key, Object @NotNull ... params) {
-    return messageOrNull(getResourceBundle(), key, params);
-  }
-
-  public @Nls String messageOrDefault(@NotNull @NonNls String key,
-                                      @Nullable @Nls String defaultValue,
-                                      Object @NotNull ... params) {
-    return messageOrDefault(getResourceBundle(), key, defaultValue, params);
-  }
-
-  @Contract("null, _, _, _ -> param3")
-  public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
-                                             @NotNull @NonNls String key,
-                                             @Nullable @Nls String defaultValue,
-                                             Object @NotNull ... params) {
-    if (bundle == null) {
-      return defaultValue;
-    }
-    else if (!bundle.containsKey(key)) {
-      return BundleBaseKt.postprocessValue(bundle, BundleBase.useDefaultValue(bundle, key, defaultValue), params);
-    }
-    else {
-      return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
+    val actualParams = if (params.isEmpty()) ArrayUtilRt.EMPTY_OBJECT_ARRAY else params
+    return Supplier {
+      getMessage(key = key, params = actualParams)
     }
   }
 
-  public static @Nls @NotNull String message(@NotNull ResourceBundle bundle, @NotNull @NonNls String key, Object @NotNull ... params) {
-    return BundleBase.messageOrDefault(bundle, key, null, params);
+  open fun messageOrNull(key: @NonNls String, vararg params: Any): @Nls String? {
+    return messageOrNull(bundle = resourceBundle, key = key, params = params)
   }
 
-  public static @Nullable @Nls String messageOrNull(@NotNull ResourceBundle bundle, @NotNull @NonNls String key, Object @NotNull ... params) {
-    @SuppressWarnings("HardCodedStringLiteral")
-    String value = messageOrDefault(bundle, key, key, params);
-    return key.equals(value) ? null : value;
+  // open only to preserve compatibility
+  open fun messageOrDefault(key: @NonNls String, defaultValue: @Nls String?, vararg params: Any?): @Nls String? {
+    return messageOrDefault(bundle = resourceBundle, key = key, defaultValue = defaultValue, params = params)
   }
 
-  public boolean containsKey(@NotNull @NonNls String key) {
-    return getResourceBundle().containsKey(key);
-  }
+  fun containsKey(key: @NonNls String): Boolean = resourceBundle.containsKey(key)
 
-  public ResourceBundle getResourceBundle() {
-    return getResourceBundle(myBundleClassLoader);
-  }
+  val resourceBundle: ResourceBundle
+    get() = getResourceBundle(bundleClassLoader)
 
   @ApiStatus.Internal
-  public final @NotNull ResourceBundle getResourceBundle(@NotNull ClassLoader classLoader) {
-    boolean isDefault = DefaultBundleService.isDefaultBundle();
-    ResourceBundle bundle = getBundle(isDefault);
+  fun getResourceBundle(classLoader: ClassLoader): ResourceBundle {
+    val isDefault = DefaultBundleService.isDefaultBundle()
+    var bundle = getBundle(isDefault)
     if (bundle == null) {
-      bundle = resolveResourceBundle(myPathToBundle, classLoader);
-      SoftReference<ResourceBundle> ref = new SoftReference<>(bundle);
+      bundle = resolveResourceBundle(pathToBundle, classLoader)
+      val ref = SoftReference(bundle)
       if (isDefault) {
-        myDefaultBundle = ref;
+        defaultBundle = ref
       }
       else {
-        myBundle = ref;
+        this.bundle = ref
       }
     }
-    return bundle;
+    return bundle
   }
 
   @ApiStatus.Internal
-  protected ResourceBundle getBundle(boolean isDefault) {
-    return com.intellij.reference.SoftReference.dereference(isDefault ? myDefaultBundle : myBundle);
+  protected open fun getBundle(isDefault: Boolean): ResourceBundle? = (if (isDefault) defaultBundle else bundle)?.get()
+
+  private fun resolveResourceBundle(pathToBundle: String, loader: ClassLoader): ResourceBundle {
+    return resolveResourceBundleWithFallback(loader = loader, pathToBundle = pathToBundle) {
+      findBundle(pathToBundle = pathToBundle, loader = loader, control = IntelliJResourceControl)
+    }
   }
 
-  private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
-    return resolveResourceBundleWithFallback(
-      loader, pathToBundle, () -> findBundle(pathToBundle, loader, MyResourceControl.INSTANCE)
-    );
+  protected open fun findBundle(pathToBundle: @NonNls String, loader: ClassLoader, control: ResourceBundle.Control): ResourceBundle {
+    return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control)
   }
 
   @ApiStatus.Internal
-  protected static @NotNull ResourceBundle resolveResourceBundleWithFallback(
-    @NotNull ClassLoader loader,
-    @NotNull String pathToBundle,
-    @NotNull Supplier<? extends @NotNull ResourceBundle> firstTry
-  ) {
-    try {
-      return firstTry.get();
-    }
-    catch (MissingResourceException e) {
-      LOG.info("Cannot load resource bundle from *.properties file, falling back to slow class loading: " + pathToBundle);
-      ResourceBundle.clearCache(loader);
-      return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader);
-    }
+  protected fun findBundle(
+    pathToBundle: @NonNls String,
+    loader: ClassLoader,
+    control: ResourceBundle.Control,
+    locale: Locale,
+  ): ResourceBundle {
+    return ResourceBundle.getBundle(pathToBundle, locale, loader, control)
   }
 
-  protected @NotNull ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
-    return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
+  @Deprecated(
+    """This method is no longer required.
+    The Locale cache now gets cleared automatically after the initialization of the language plugin.""")
+  fun clearLocaleCache() {
+    bundle?.clear()
   }
+}
 
-  @ApiStatus.Internal
-  protected @NotNull ResourceBundle findBundle(@NotNull @NonNls String pathToBundle,
-                                               @NotNull ClassLoader loader,
-                                               @NotNull ResourceBundle.Control control,
-                                               @NotNull Locale locale) {
-    return ResourceBundle.getBundle(pathToBundle, locale, loader, control);
-  }
+// UTF-8 control for Java <= 1.8.
+// Before java9 ISO-8859-1 was used, in java 9 and above UTF-8.
+// See https://docs.oracle.com/javase/9/docs/api/java/util/PropertyResourceBundle.html and
+// https://docs.oracle.com/javase/8/docs/api/java/util/PropertyResourceBundle.html for more details
+// For all Java version - use getResourceAsStream instead of "getResource -> openConnection" for performance reasons
+private object IntelliJResourceControl : ResourceBundle.Control() {
+  override fun getFormats(baseName: String): List<String> = FORMAT_PROPERTIES
 
-  /**
-   * @deprecated This method is no longer required.
-   * The Locale cache now gets cleared automatically after the initialization of the language plugin.
-   */
-  @Deprecated
-  public void clearLocaleCache() {
-    if (myBundle != null) {
-      myBundle.clear();
-    }
-  }
-
-  @ApiStatus.Internal
-  protected static @NotNull ResourceBundle resolveBundle(@NotNull ClassLoader loader,
-                                                         @NonNls @NotNull Locale locale,
-                                                         @NonNls @NotNull String pathToBundle) {
-    return ResourceBundle.getBundle(pathToBundle, locale, loader, MyResourceControl.INSTANCE);
-  }
-
-  // UTF-8 control for Java <= 1.8.
-  // Before java9 ISO-8859-1 was used, in java 9 and above UTF-8.
-  // See https://docs.oracle.com/javase/9/docs/api/java/util/PropertyResourceBundle.html and
-  // https://docs.oracle.com/javase/8/docs/api/java/util/PropertyResourceBundle.html for more details
-
-  // For all Java version - use getResourceAsStream instead of "getResource -> openConnection" for performance reasons
-  private static final class MyResourceControl extends ResourceBundle.Control {
-    static final MyResourceControl INSTANCE = new MyResourceControl();
-
-    @Override
-    public List<String> getFormats(String baseName) {
-      return FORMAT_PROPERTIES;
-    }
-
-    @Override
-    public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload)
-      throws IOException {
-      String bundleName = toBundleName(baseName, locale);
-      // application protocol check
-      String resourceName = bundleName.contains("://") ? null : toResourceName(bundleName, "properties");
-      if (resourceName == null) {
-        return null;
-      }
-
-      InputStream stream = loader.getResourceAsStream(resourceName);
-      if (stream == null) {
-        return null;
-      }
-
-      try {
-        return new PropertyResourceBundle(new InputStreamReader(stream, StandardCharsets.UTF_8));
-      }
-      finally {
-        stream.close();
-      }
+  override fun newBundle(baseName: String, locale: Locale, format: String, loader: ClassLoader, reload: Boolean): ResourceBundle? {
+    val bundleName = toBundleName(baseName, locale)
+    // application protocol check
+    val resourceName = (if (bundleName.contains("://")) null else toResourceName(bundleName, "properties")) ?: return null
+    val stream = loader.getResourceAsStream(resourceName) ?: return null
+    return stream.use {
+      PropertyResourceBundle(InputStreamReader(it, StandardCharsets.UTF_8))
     }
   }
 }

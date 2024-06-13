@@ -25,7 +25,14 @@ private val SUFFIXES = arrayOf("</body></html>", "</html>")
 private var translationConsumer: BiConsumer<String, String>? = null
 
 private val SHOW_DEFAULT_MESSAGES: Boolean = java.lang.Boolean.getBoolean("idea.l10n.english")
-private val SHOW_KEYS: Boolean = java.lang.Boolean.getBoolean("idea.l10n.keys")
+// 0: no, 1: show key, 2: only keys
+private val SHOW_KEYS: Int = System.getProperty("idea.l10n.keys").let {
+  when (it) {
+    "true" -> 1
+    "only" -> 2
+    else -> 0
+  }
+}
 
 object BundleBase {
   const val MNEMONIC: Char = 0x1B.toChar()
@@ -54,7 +61,7 @@ object BundleBase {
    * @return a template suitable to pass to [MessageFormat.format] having the specified number of placeholders left
    */
   @JvmStatic
-  fun partialMessage(bundle: ResourceBundle, key: String, unassignedParams: Int, params: Array<Any>): @Nls String {
+  fun partialMessage(bundle: ResourceBundle, key: String, unassignedParams: Int, params: Array<Any?>): @Nls String {
     require(unassignedParams > 0)
 
     val newParams = params.copyOf(params.size + unassignedParams)
@@ -90,14 +97,19 @@ object BundleBase {
       useDefaultValue(bundle = bundle, key = key, defaultValue = defaultValue)
     }
 
+    if (SHOW_KEYS == 2) {
+      @Suppress("HardCodedStringLiteral")
+      return key
+    }
+
     val result = postprocessValue(bundle = bundle, value = value, params = params)
     translationConsumer?.accept(key, result)
     return when {
       !resourceFound -> result
-      SHOW_KEYS && SHOW_DEFAULT_MESSAGES -> {
+      SHOW_KEYS == 1 && SHOW_DEFAULT_MESSAGES -> {
         appendLocalizationSuffix(result = result, suffixToAppend = " ($key=${getDefaultMessage(bundle, key)})")
       }
-      SHOW_KEYS -> appendLocalizationSuffix(result = result, suffixToAppend = " ($key)")
+      SHOW_KEYS == 1 -> appendLocalizationSuffix(result = result, suffixToAppend = " ($key)")
       SHOW_DEFAULT_MESSAGES -> {
         appendLocalizationSuffix(result = result, suffixToAppend = " (${getDefaultMessage(bundle, key)})")
       }
@@ -148,7 +160,7 @@ object BundleBase {
   @JvmStatic
   @Contract(pure = true)
   fun format(value: String, vararg params: Any): String {
-    return if (params.isNotEmpty() && value.indexOf('{') >= 0) MessageFormat.format(value, *params) else value
+    return if (params.isNotEmpty() && value.contains('{')) MessageFormat.format(value, *params) else value
   }
 
   @JvmStatic

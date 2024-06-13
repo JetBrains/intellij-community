@@ -1,18 +1,23 @@
 c:com.intellij.AbstractBundle
+- sf:Companion:com.intellij.AbstractBundle$Companion
 - <init>(java.lang.Class,java.lang.String):V
 - p:<init>(java.lang.String):V
-- clearLocaleCache():V
-- containsKey(java.lang.String):Z
+- f:clearLocaleCache():V
+- f:containsKey(java.lang.String):Z
 - p:findBundle(java.lang.String,java.lang.ClassLoader,java.util.ResourceBundle$Control):java.util.ResourceBundle
 - getLazyMessage(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 - getMessage(java.lang.String,java.lang.Object[]):java.lang.String
-- getPartialMessage(java.lang.String,I,java.lang.Object[]):java.lang.String
-- getResourceBundle():java.util.ResourceBundle
-- s:message(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
+- f:getPartialMessage(java.lang.String,I,java.lang.Object[]):java.lang.String
+- f:getResourceBundle():java.util.ResourceBundle
+- sf:message(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
 - messageOrDefault(java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
-- s:messageOrDefault(java.util.ResourceBundle,java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
+- sf:messageOrDefault(java.util.ResourceBundle,java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
 - messageOrNull(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messageOrNull(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
+- sf:messageOrNull(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
+f:com.intellij.AbstractBundle$Companion
+- f:message(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
+- f:messageOrDefault(java.util.ResourceBundle,java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
+- f:messageOrNull(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
 f:com.intellij.BundleBase
 - sf:INSTANCE:com.intellij.BundleBase
 - sf:L10N_MARKER:java.lang.String
