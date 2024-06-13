@@ -15,7 +15,7 @@ class GroovyResolveResultLookupElementDecorator(private val typeText: String?, p
   fun withIcon(icon: Icon): GroovyResolveResultLookupElementDecorator = GroovyResolveResultLookupElementDecorator(typeText, tailText, delegate.withIcon(icon))
 
   override fun hashCode(): Int {
-    var result = super.hashCode()
+    var result = delegate.lookupString.hashCode()
     result = 31 * result + (typeText?.hashCode() ?: 0)
     result = 31 * result + (tailText?.hashCode() ?: 0)
     return result
