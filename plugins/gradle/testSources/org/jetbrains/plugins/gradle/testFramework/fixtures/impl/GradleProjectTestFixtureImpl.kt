@@ -50,10 +50,11 @@ internal class GradleProjectTestFixtureImpl private constructor(
   constructor(
     projectName: String,
     gradleVersion: GradleVersion,
+    javaVersionRestriction: JavaVersionRestriction,
     configureProject: FileTestFixture.Builder.() -> Unit
   ) : this(
     projectName, gradleVersion,
-    GradleJvmTestFixture(gradleVersion, JavaVersionRestriction.NO),
+    GradleJvmTestFixture(gradleVersion, javaVersionRestriction),
     FileTestFixtureImpl("GradleTestFixture/$gradleVersion/$projectName") {
       configureProject()
       excludeFiles(".gradle", "build")
