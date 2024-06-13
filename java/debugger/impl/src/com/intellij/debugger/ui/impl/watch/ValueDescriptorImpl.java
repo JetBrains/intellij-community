@@ -527,11 +527,13 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       customCheck = myRenderer.isApplicableAsync(type);
     }
     return customCheck.thenCompose(custom -> {
+      DebuggerManagerThreadImpl.assertIsManagerThread();
       if (custom) {
         return CompletableFuture.completedFuture(myRenderer);
       }
       else {
-        return debugProcess.getAutoRendererAsync(type).thenApply(r -> myAutoRenderer = r);
+        return DebuggerUtilsAsync.reschedule(debugProcess.getAutoRendererAsync(type))
+          .thenApply(r -> myAutoRenderer = r);
       }
     });
   }
