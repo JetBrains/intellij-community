@@ -254,7 +254,9 @@ private class MyInlayFilter(linkText: String) : MyFilter(linkText) {
 
   private class MyInlay(highlightStartOffset: Int, highlightEndOffset: Int) : ResultItem(highlightStartOffset, highlightEndOffset, null),
                                                                               InlayProvider {
-    override fun createInlayRenderer(editor: Editor?): EditorCustomElementRenderer = createEmptyInlayRenderer()
+    override fun createInlayRenderer(editor: Editor, inlayModel: InlayModel, offset: Int): Inlay<*>? {
+      return inlayModel.addInlineElement(offset, createEmptyInlayRenderer())
+    }
   }
 }
 

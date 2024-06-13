@@ -385,8 +385,10 @@ public final class EditorHyperlinkSupport {
   }
 
   private void addInlay(int offset, @NotNull InlayProvider inlayProvider) {
-    Inlay<?> inlay = myEditor.getInlayModel().addInlineElement(offset, inlayProvider.createInlayRenderer(myEditor));
-    INLAY.set(inlay, Unit.INSTANCE);
+    Inlay<?> inlay = inlayProvider.createInlayRenderer(myEditor, myEditor.getInlayModel(), offset);
+    if (inlay != null) {
+      INLAY.set(inlay, Unit.INSTANCE);
+    }
   }
 
   private static @NotNull TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighter range) {
