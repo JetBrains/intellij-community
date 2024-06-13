@@ -15,7 +15,7 @@ import externalApp.nativessh.NativeSshAskPassAppHandler
 import org.jetbrains.annotations.Nls
 
 class NativeSshGuiAuthenticator(
-  private val project: Project,
+  private val project: Project?,
   private val authenticationGate: AuthenticationGate,
   private val authenticationMode: AuthenticationMode,
   private val doNotRememberPasswords: Boolean
