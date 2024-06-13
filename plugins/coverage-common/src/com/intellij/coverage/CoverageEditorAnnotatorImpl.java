@@ -226,8 +226,10 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
       }
     };
     synchronized (myLock) {
-      myListenerDisposable = Disposer.newDisposable(this);
-      document.addDocumentListener(documentListener, myListenerDisposable);
+      if (myDocument != null) {
+        myListenerDisposable = Disposer.newDisposable(this);
+        document.addDocumentListener(documentListener, myListenerDisposable);
+      }
     }
   }
 
