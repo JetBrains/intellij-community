@@ -31,6 +31,8 @@ jobs:
         env:
           MAVEN_SPACE_USERNAME: ${{secrets.MAVEN_SPACE_USERNAME}}
           MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}
+          PGP_PASSWORD: ${{secrets.PGP_PASSWORD}}
+          PGP_PRIVATE_KEY: ${{secrets.PGP_PRIVATE_KEY}}
 
   publish-older:
     name: Publish older IJP version(s)
