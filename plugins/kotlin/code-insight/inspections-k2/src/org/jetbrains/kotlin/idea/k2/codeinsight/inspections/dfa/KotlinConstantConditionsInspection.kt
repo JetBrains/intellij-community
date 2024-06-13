@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -427,6 +428,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             FirErrors.USELESS_IS_CHECK
         ).map { it.name }
 
+        @OptIn(KaExperimentalApi::class)
         private fun isCompilationWarning(anchor: KtElement): Boolean {
             val hasWarning = analyze(anchor) {
                 anchor.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)

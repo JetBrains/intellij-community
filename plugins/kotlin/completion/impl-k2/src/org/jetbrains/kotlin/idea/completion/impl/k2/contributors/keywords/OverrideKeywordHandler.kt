@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.createSmartPointer
 import com.intellij.ui.RowIcon
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -144,6 +145,7 @@ internal class OverrideKeywordHandler(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun getSymbolTextForLookupElement(memberSymbol: KaCallableSymbol): String = buildString {
         append(KtTokens.OVERRIDE_KEYWORD.value)
             .append(" ")
@@ -153,6 +155,7 @@ internal class OverrideKeywordHandler(
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun generateMemberInNewAnalysisSession(
         classOrObject: KtClassOrObject,
         member: KtClassMember,
@@ -174,6 +177,7 @@ internal class OverrideKeywordHandler(
     }
 
     companion object {
+        @KaExperimentalApi
         private val renderingOptionsForLookupElementRendering =
             KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
                 annotationRenderer = annotationRenderer.with {

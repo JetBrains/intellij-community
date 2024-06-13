@@ -8,10 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KtAnalysisNonPublicApi
-import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
@@ -202,6 +199,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun createDescriptor(
         suggestedFunctionNames: List<String>,
         defaultVisibility: KtModifierKeywordToken?,
@@ -356,6 +354,7 @@ fun ExtractableCodeDescriptor.validate(target: ExtractionTarget = ExtractionTarg
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun ExtractableCodeDescriptor.validateTempResult(
     result: ExtractionResult,
 ): ExtractableCodeDescriptorWithConflicts {

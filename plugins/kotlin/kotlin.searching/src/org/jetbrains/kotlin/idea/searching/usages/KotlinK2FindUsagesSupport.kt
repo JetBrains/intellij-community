@@ -8,6 +8,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -68,6 +69,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         return companionObjectSymbol in implicitReceivers.map { it.symbol }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
         return KotlinPsiDeclarationRenderer.render(declaration) ?: analyzeInModalWindow(declaration, KotlinBundle.message(
           "find.usages.prepare.dialog.progress")) {
@@ -75,6 +77,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         }
     }
 
+    @KaExperimentalApi
     private fun noAnnotationsShortNameRenderer(): KtDeclarationRenderer {
         return KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
             annotationRenderer = annotationRenderer.with {
@@ -83,12 +86,14 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun renderDeclaration(method: KtDeclaration): String {
         return KotlinPsiDeclarationRenderer.render(method) ?: analyzeInModalWindow(method, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             method.symbol.render(noAnnotationsShortNameRenderer())
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean {
         val element = psiReference.element
         if (element !is KtElement) return false

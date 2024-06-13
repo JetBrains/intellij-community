@@ -9,6 +9,7 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.serialization.deserialization.METADATA_FILE_EXTENSION
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 
+@OptIn(KaExperimentalApi::class)
 class KtSymbolFromIndexProvider private constructor(
     private val useSiteFile: KtFile,
     private val scope: GlobalSearchScope,

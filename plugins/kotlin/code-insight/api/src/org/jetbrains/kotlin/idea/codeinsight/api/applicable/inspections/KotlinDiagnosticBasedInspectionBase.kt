@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
@@ -33,6 +34,7 @@ abstract class KotlinDiagnosticBasedInspectionBase<
     ): C?
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     final override fun prepareContext(element: E): C? =
         element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
             .firstNotNullOfOrNull { diagnosticType.safeCast(it) }

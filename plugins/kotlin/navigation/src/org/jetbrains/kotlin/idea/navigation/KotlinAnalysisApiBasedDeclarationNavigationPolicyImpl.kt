@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -226,7 +227,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     }
 
     // Maybe called from EDT by IJ Platfrom :(
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     private fun renderTypesForComparasion(declaration: KtCallableDeclaration) = allowAnalysisOnEdt {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
@@ -270,6 +271,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     }
 
     companion object {
+        @KaExperimentalApi
         private val renderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES
     }
 }

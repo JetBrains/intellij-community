@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import com.intellij.openapi.application.runReadAction
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 
 class KotlinK2ExpectActualSupport: ExpectActualSupport {
 
@@ -23,6 +24,7 @@ class KotlinK2ExpectActualSupport: ExpectActualSupport {
         return declaration.findAllActualForExpect( runReadAction { module?.moduleTestsWithDependentsScope ?: declaration.useScope } ).mapNotNull { it.element }.toSet()
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? {
         if (declaration.isExpectDeclaration()) return declaration
         if (!declaration.isEffectivelyActual()) return null

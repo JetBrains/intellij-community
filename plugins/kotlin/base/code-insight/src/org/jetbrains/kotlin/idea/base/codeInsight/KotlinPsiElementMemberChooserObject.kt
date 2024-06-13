@@ -10,6 +10,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
@@ -40,6 +41,7 @@ class KotlinPsiElementMemberChooserObject(
     override fun getElement(): KtElement = psiElement as KtElement
 
     companion object {
+        @KaExperimentalApi
         private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
             modifiersRenderer = modifiersRenderer.with {
                 keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
@@ -75,6 +77,7 @@ class KotlinPsiElementMemberChooserObject(
         }
 
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         private fun getChooserText(symbol: KtSymbol): @NlsSafe String {
             if (symbol is KaClassOrObjectSymbol) {
                 val classId = symbol.classId

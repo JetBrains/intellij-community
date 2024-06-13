@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.psi.statistics.StatisticsInfo
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -22,6 +23,7 @@ object K2StatisticsInfoProvider {
     /**
      * The renderer skips some features of a declaration to provide concise (but still unambiguous) description of the declaration.
      */
+    @KaExperimentalApi
     private val renderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
         annotationRenderer = annotationRenderer.with { annotationFilter = KaRendererAnnotationsFilter.NONE }
         modifiersRenderer = modifiersRenderer.with { keywordsRenderer = KtKeywordsRenderer.NONE }
@@ -54,6 +56,7 @@ object K2StatisticsInfoProvider {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun forDeclarationSymbol(symbol: KaDeclarationSymbol, context: String = ""): StatisticsInfo = when (symbol) {
         is KaClassLikeSymbol -> symbol.classId?.asFqNameString()?.let { StatisticsInfo(context, it) }
         is KaCallableSymbol -> symbol.callableId?.let { callableId ->

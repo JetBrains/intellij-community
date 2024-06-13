@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
@@ -21,6 +22,7 @@ internal object CompletionShortNamesRenderer {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun renderFunctionalTypeParameters(functionalType: KtFunctionalType): String =
         functionalType.parameterTypes.joinToString(separator = ", ", prefix = "(", postfix = ")") {
             it.render(rendererVerbose, position = Variance.INVARIANT)
@@ -32,24 +34,30 @@ internal object CompletionShortNamesRenderer {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun renderReceiver(variable: KtVariableLikeSignature<*>): String {
         val receiverType = variable.receiverType ?: return ""
         return receiverType.render(rendererVerbose, position = Variance.INVARIANT) + "."
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun renderFunctionParameter(parameter: KtVariableLikeSignature<KaValueParameterSymbol>): String =
         "${if (parameter.symbol.isVararg) "vararg " else ""}${parameter.name.asString()}: ${
             parameter.returnType.renderNonErrorOrUnsubstituted(parameter.symbol.returnType)
         }${if (parameter.symbol.hasDefaultValue) " = ..." else ""}"
 
+    @KaExperimentalApi
     val renderer = KtTypeRendererForSource.WITH_SHORT_NAMES
+
+    @KaExperimentalApi
     val rendererVerbose = renderer.with {
         expandedTypeRenderingMode = KtExpandedTypeRenderingMode.RENDER_ABBREVIATED_TYPE_WITH_EXPANDED_TYPE_COMMENT
     }
 }
 
 context(KaSession)
+@KaExperimentalApi
 internal fun KtType.renderNonErrorOrUnsubstituted(
     unsubstituted: KtType,
     renderer: KtTypeRenderer = CompletionShortNamesRenderer.rendererVerbose

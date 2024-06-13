@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -98,6 +99,7 @@ class KtClassDef(
             list.stream()
         }
 
+    @OptIn(KaExperimentalApi::class)
     override fun toPsiType(project: Project): PsiType? =
         analyze(module) {
             val classLikeSymbol = cls.restoreSymbol() ?: return@analyze null

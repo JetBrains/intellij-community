@@ -5,6 +5,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.types.Variance
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 fun getRenderedTypeArguments(element: KtCallElement): String? {
     val resolvedCall = element.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
     val typeParameterSymbols = resolvedCall.partiallyAppliedSymbol.symbol.typeParameters

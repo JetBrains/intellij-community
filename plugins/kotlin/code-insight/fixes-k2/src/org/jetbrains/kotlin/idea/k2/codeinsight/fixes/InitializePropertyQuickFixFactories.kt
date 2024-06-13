@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -81,6 +82,7 @@ object InitializePropertyQuickFixFactories {
         }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun createFixes(
         element: KtProperty,
     ): List<KotlinPsiUpdateModCommandAction<KtProperty, *>> {

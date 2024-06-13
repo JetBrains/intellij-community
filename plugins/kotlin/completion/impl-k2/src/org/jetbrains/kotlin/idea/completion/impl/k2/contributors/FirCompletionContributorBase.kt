@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -99,6 +100,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     protected fun addCallableSymbolToCompletion(
         context: WeighingContext,
         signature: KtCallableSignature<*>,

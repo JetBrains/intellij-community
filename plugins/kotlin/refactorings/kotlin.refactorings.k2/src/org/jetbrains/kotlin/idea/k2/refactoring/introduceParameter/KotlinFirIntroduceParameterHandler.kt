@@ -13,6 +13,7 @@ import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -145,6 +146,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
      * run change signature refactoring, just like [invoke], but with configurable expression type, and name
      * (to be reused in "create parameter from usage" where both type and name are fixed, and computed a bit differently from the regular "introduce parameter")
      */
+    @OptIn(KaExperimentalApi::class)
     fun addParameter(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration, expressionTypeEvaluator: KaSession.()->KtType?, nameSuggester:  KaSession.(KtType)->List<String>) {
         val physicalExpression = expression.substringContextOrThis
         if (physicalExpression is KtProperty && physicalExpression.isLocal && physicalExpression.nameIdentifier == null) {
@@ -267,6 +269,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         )
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun showDialog(
         project: Project,
         editor: Editor,
@@ -293,6 +296,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         ).show()
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun introduceParameterDescriptor(
         originalExpression: KtExpression,
         targetParent: KtNamedDeclaration,

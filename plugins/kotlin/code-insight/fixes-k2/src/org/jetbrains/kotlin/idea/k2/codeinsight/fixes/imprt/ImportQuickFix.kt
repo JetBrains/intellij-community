@@ -15,6 +15,7 @@ import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -250,6 +251,7 @@ class ImportQuickFix(
             return listOfNotNull(quickFix)
         }
 
+        @KaExperimentalApi
         private val renderer: KtDeclarationRenderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
             modifiersRenderer = modifiersRenderer.with {
                 visibilityProvider = KaRendererVisibilityModifierProvider.WITH_IMPLICIT_VISIBILITY
@@ -262,6 +264,7 @@ class ImportQuickFix(
 
 
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         private fun renderSymbol(symbol: KaDeclarationSymbol): String = prettyPrint {
             val fqName = symbol.getFqName()
             if (symbol is KaNamedClassOrObjectSymbol) {
@@ -377,6 +380,7 @@ class ImportQuickFix(
             getFqNameIfPackageOrNonLocal() ?: error("Unexpected null for fully-qualified name of importable symbol")
 
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         private fun createPriorityForImportableSymbol(
             prioritizer: ImportPrioritizer,
             expressionImportWeigher: ExpressionImportWeigher,

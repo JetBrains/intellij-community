@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
@@ -80,6 +81,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
             ktExpression.expectedType
         }?.toKotlinType(context)
 
+    @OptIn(KaIdeApi::class)
     private fun getLabelTarget(ktExpression: KtReferenceExpression): PsiElement? {
         val potentiallyParentReturn = ktExpression.parent.parent
         if (potentiallyParentReturn is KtReturnExpression) {

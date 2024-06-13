@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.lookups
 
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
@@ -69,6 +70,7 @@ internal object TailTextProvider {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun StringBuilder.renderReceiverType(receiverType: KtType) {
         val renderedType = receiverType.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT)
         append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))

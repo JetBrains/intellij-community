@@ -4,6 +4,7 @@ package org.jetbrains.uast.kotlin.psi
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.light.LightParameterListBuilder
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
@@ -87,6 +88,7 @@ internal class UastFakeDeserializedSymbolLightMethod(
 
     private val parameterListPart = UastLazyPart<PsiParameterList>()
 
+    @OptIn(KaExperimentalApi::class)
     override fun getParameterList(): PsiParameterList =
         parameterListPart.getOrBuild {
             object : LightParameterListBuilder(context.manager, context.language) {

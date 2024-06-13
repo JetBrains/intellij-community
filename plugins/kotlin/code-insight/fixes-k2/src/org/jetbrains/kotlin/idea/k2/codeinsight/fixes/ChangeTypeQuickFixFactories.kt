@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -69,6 +70,7 @@ object ChangeTypeQuickFixFactories {
     )
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun getActualType(ktType: KtType): KtType {
         val typeKind = ktType.functionTypeKind
         when (typeKind) {

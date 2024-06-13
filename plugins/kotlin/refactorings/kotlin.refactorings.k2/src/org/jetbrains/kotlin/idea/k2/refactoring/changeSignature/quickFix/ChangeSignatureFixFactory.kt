@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
@@ -138,6 +139,7 @@ object ChangeSignatureFixFactory {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun prepareChangeInfo(psi: PsiElement, input: Input): KotlinChangeInfo? {
         if (input.type == ChangeType.CHANGE_FUNCTIONAL) {
             return prepareFunctionalLiteralChangeInfo(psi as KtLambdaExpression, input)
@@ -256,6 +258,7 @@ object ChangeSignatureFixFactory {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun getKtType(argumentExpression: KtExpression?): KtType? {
         var ktType = argumentExpression?.getKtType()
         val typeKind = ktType?.functionTypeKind
@@ -362,6 +365,7 @@ object ChangeSignatureFixFactory {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun createMismatchParameterTypeFix(
         element: PsiElement,
         expectedType: KtType

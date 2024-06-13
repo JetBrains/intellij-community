@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
 import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
@@ -93,6 +94,7 @@ internal class KotlinIdeDeclarationRenderer(
     private val rootSymbol: KaDeclarationSymbol? = null
 ) {
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     internal fun renderFunctionTypeParameter(parameter: KtParameter): String? = prettyPrint {
         parameter.nameAsName?.let { name -> withSuffix(highlight(": ") { asColon }) { append(highlight(name.renderName()) { asParameter }) } }
         parameter.typeReference?.getKtType()?.let { type ->
@@ -101,6 +103,7 @@ internal class KotlinIdeDeclarationRenderer(
 
     }
 
+    @KaExperimentalApi
     internal val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
         nameRenderer = createNameRenderer()
         superTypesArgumentRenderer = KaSuperTypesCallArgumentsRenderer.NO_ARGS
@@ -171,6 +174,7 @@ internal class KotlinIdeDeclarationRenderer(
         return with(highlightingManager) { buildString { appendHighlighted(value, attributesBuilder()) } }
     }
 
+    @KaExperimentalApi
     private fun KtKeywordsRenderer.keywordsRenderer(): KtKeywordsRenderer = with {
         keywordRenderer = object : KtKeywordRenderer {
             override fun renderKeyword(
@@ -187,6 +191,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     private fun KtAnnotationRenderer.annotationRenderer(): KtAnnotationRenderer = with {
         annotationListRenderer = object : KtAnnotationListRenderer {
             override fun renderAnnotations(
@@ -261,6 +266,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     private fun KtDeclarationModifiersRenderer.modifiersRenderer(): KtDeclarationModifiersRenderer = with {
         visibilityProvider = KaRendererVisibilityModifierProvider.WITH_IMPLICIT_VISIBILITY
         modalityProvider = KaRendererModalityModifierProvider.WITH_IMPLICIT_MODALITY.onlyIf { symbol ->
@@ -298,6 +304,7 @@ internal class KotlinIdeDeclarationRenderer(
         keywordsRenderer = keywordsRenderer.keywordsRenderer()
     }
 
+    @KaExperimentalApi
     private fun createFunctionalTypeRenderer(): KtFunctionalTypeRenderer {
         return object : KtFunctionalTypeRenderer {
             override fun renderType(
@@ -356,6 +363,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     fun createTypeParameterTypeRenderer(): KtTypeParameterTypeRenderer {
         return object : KtTypeParameterTypeRenderer {
             override fun renderType(
@@ -375,6 +383,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     fun createUsualClassTypeRenderer(): KtUsualClassTypeRenderer {
         return object : KtUsualClassTypeRenderer {
             override fun renderType(
@@ -396,6 +405,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     fun createClassIdRenderer(): KtClassTypeQualifierRenderer {
         return object : KtClassTypeQualifierRenderer {
             override fun renderClassTypeQualifier(
@@ -417,6 +427,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     fun createTypeNameRenderer(): KtTypeNameRenderer {
         return object : KtTypeNameRenderer {
             override fun renderName(
@@ -456,6 +467,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     fun createCallableSignatureRenderer(): KtCallableSignatureRenderer {
         return object : KtCallableSignatureRenderer {
             override fun renderCallableSignature(
@@ -536,6 +548,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     fun createSingleTypeParameterRenderer(): KtSingleTypeParameterSymbolRenderer {
         return object : KtSingleTypeParameterSymbolRenderer {
             override fun renderSymbol(
@@ -568,6 +581,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     fun createTypeParametersRenderer(): KtTypeParametersRenderer {
         return object : KtTypeParametersRenderer {
             override fun renderTypeParameters(
@@ -639,6 +653,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     fun createValueParametersRenderer(): KtCallableParameterRenderer {
         return object : KtCallableParameterRenderer {
             override fun renderValueParameters(
@@ -664,6 +679,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     fun createNameRenderer(): KtDeclarationNameRenderer {
         return object : KtDeclarationNameRenderer {
             override fun renderName(
@@ -721,6 +737,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     fun createReturnTypeRenderer(): KtCallableReturnTypeRenderer {
         return object : KtCallableReturnTypeRenderer {
             override fun renderReturnType(

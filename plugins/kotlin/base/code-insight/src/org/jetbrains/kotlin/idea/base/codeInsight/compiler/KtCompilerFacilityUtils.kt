@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.base.codeInsight.compiler
 
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
@@ -22,6 +23,7 @@ interface KotlinCompilerIdeAllowedErrorFilter : (KtDiagnostic) -> Boolean {
     }
 }
 
+@KaExperimentalApi
 @ApiStatus.Internal
 fun KaSession.compileToDirectory(
     file: KtFile,
@@ -41,6 +43,7 @@ fun KaSession.compileToDirectory(
     return result
 }
 
+@KaExperimentalApi
 @ApiStatus.Internal
 fun KaSession.compileToJar(
     file: KtFile,

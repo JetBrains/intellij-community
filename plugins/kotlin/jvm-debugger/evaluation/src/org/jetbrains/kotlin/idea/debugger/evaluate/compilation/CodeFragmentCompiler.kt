@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
@@ -334,6 +335,7 @@ private class EvaluatorModuleDescriptor(
 internal val OutputFile.internalClassName: String
     get() = computeInternalClassName(relativePath)
 
+@KaExperimentalApi
 internal val KtCompiledFile.internalClassName: String
     get() = computeInternalClassName(path)
 

@@ -6,6 +6,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
@@ -136,6 +137,7 @@ private fun KaFunctionLikeSymbol.getJvmSignature(): String? {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun KtType.jvmName(element: PsiElement): String? {
     if (this !is KtNonErrorClassType) return null
     val psiType = asPsiType(element, allowErrorTypes = false) ?: return null

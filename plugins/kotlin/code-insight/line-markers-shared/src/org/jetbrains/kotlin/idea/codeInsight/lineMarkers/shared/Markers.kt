@@ -12,6 +12,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -206,6 +207,7 @@ fun KtDeclaration.isExpectDeclaration(): Boolean {
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 fun hasExpectForActual(declaration: KtDeclaration): Boolean {
     return analyze(declaration) {
         val symbol: KaDeclarationSymbol = declaration.symbol
@@ -217,6 +219,7 @@ fun KtDeclaration.allNavigatableExpectedDeclarations(): List<SmartPsiElementPoin
     return expectedDeclarationIfAny() + findMarkerBoundDeclarations().flatMap { it.expectedDeclarationIfAny() }
 }
 
+@OptIn(KaExperimentalApi::class)
 internal fun KtDeclaration.expectedDeclarationIfAny(): List<SmartPsiElementPointer<KtDeclaration>> {
     val declaration = this
     return analyze(this) {

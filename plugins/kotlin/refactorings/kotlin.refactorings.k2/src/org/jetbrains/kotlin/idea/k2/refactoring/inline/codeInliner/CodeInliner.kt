@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -57,6 +58,7 @@ class CodeInliner(
         call.resolveCallOld()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
     }
 
+    @OptIn(KaExperimentalApi::class)
     fun doInline(): KtElement? {
         val qualifiedElement = if (call is KtExpression) {
             call.getQualifiedExpressionForSelector()
@@ -258,6 +260,7 @@ class CodeInliner(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun arrayOfFunctionName(elementType: KtType): String {
         return when {
             elementType.isInt -> "kotlin.intArrayOf"

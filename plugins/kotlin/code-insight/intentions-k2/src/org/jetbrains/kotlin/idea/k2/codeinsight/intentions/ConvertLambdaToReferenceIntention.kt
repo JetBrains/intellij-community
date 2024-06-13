@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -64,6 +65,7 @@ internal class ConvertLambdaToReferenceIntention :
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     override fun prepareContext(element: KtLambdaExpression): Context? {
         val singleStatement = element.singleStatementOrNull() ?: return null
         when (singleStatement) {
@@ -187,6 +189,7 @@ internal class ConvertLambdaToReferenceIntention :
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
     val lambdaParameterType = lambdaExpression.lambdaParameterType()
     return when (val singleStatement = lambdaExpression.singleStatementOrNull()) {
@@ -281,6 +284,7 @@ private fun KtLambdaExpression.parentValueArgument(): KtValueArgument? {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun KtNameReferenceExpression.renderTargetReceiverType(): String {
     val partiallyAppliedSymbol = this.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
     val receiverType = (partiallyAppliedSymbol?.dispatchReceiver ?: partiallyAppliedSymbol?.extensionReceiver)?.type ?: return ""

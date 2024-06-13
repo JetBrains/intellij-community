@@ -16,6 +16,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -292,6 +293,7 @@ private fun renderKDoc(
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun findKDoc(symbol: KtSymbol): KDocContent? {
     val ktElement = symbol.psi?.navigationElement as? KtElement
     ktElement?.findKDocByPsi()?.let {
@@ -320,6 +322,7 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun @receiver:Nls StringBuilder.renderKotlinSymbol(symbol: KaDeclarationSymbol,
                                                            declaration: KtDeclaration,
                                                            onlyDefinition: Boolean,

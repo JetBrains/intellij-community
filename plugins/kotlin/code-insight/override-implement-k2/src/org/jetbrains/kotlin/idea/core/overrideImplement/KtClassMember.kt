@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
@@ -96,6 +97,7 @@ internal fun createKtClassMember(
 ): KtClassMember = KtClassMember(memberInfo, bodyType, preferConstructorParameter)
 
 context(KaSession)
+@KaExperimentalApi
 @ApiStatus.Internal
 fun generateMember(
     project: Project,
@@ -254,6 +256,7 @@ private fun KaClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annota
 }
 
 context(KaSession)
+@KaExperimentalApi
 private fun generateConstructorParameter(
     project: Project,
     symbol: KaCallableSymbol,
@@ -263,6 +266,7 @@ private fun generateConstructorParameter(
 }
 
 context(KaSession)
+@KaExperimentalApi
 private fun generateFunction(
     project: Project,
     symbol: KaFunctionSymbol,
@@ -285,6 +289,7 @@ private fun generateFunction(
 }
 
 context(KaSession)
+@KaExperimentalApi
 private fun generateProperty(
     project: Project,
     symbol: KtPropertySymbol,
@@ -307,6 +312,7 @@ private fun generateProperty(
     return KtPsiFactory(project).createProperty(symbol.render(renderer) + body)
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun <T> KaSession.generateUnsupportedOrSuperCall(
     project: Project, symbol: T, bodyType: BodyType, canBeEmpty: Boolean = true
 ): String where T : KaNamedSymbol, T : KaCallableSymbol {

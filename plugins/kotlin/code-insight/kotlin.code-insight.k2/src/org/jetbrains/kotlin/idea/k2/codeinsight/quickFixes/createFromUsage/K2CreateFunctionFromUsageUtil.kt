@@ -15,6 +15,7 @@ import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
@@ -144,6 +145,7 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     context (KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun KtType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
 
     context (KaSession)
@@ -202,6 +204,7 @@ object K2CreateFunctionFromUsageUtil {
 
     private val NAME_SUGGESTER = KotlinNameSuggester()
 
+    @KaExperimentalApi
     val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
         // Without this, it will render `kotlin.String!` for `kotlin.String`, which causes a syntax error.
         flexibleTypeRenderer = object : KtFlexibleTypeRenderer {
@@ -230,6 +233,7 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     context (KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun JvmType.toKtType(useSitePosition: PsiElement): KtType? = when (this) {
         is PsiType -> if (isValid) {
             try {

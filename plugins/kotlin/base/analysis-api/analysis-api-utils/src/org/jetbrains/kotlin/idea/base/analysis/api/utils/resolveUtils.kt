@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
@@ -70,6 +71,7 @@ private fun filterCandidate(
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 fun filterCandidateByReceiverTypeAndVisibility(
     signature: KtFunctionLikeSignature<KaFunctionLikeSymbol>,
     callElement: KtElement,

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
@@ -52,6 +53,7 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun getTypeName(type: KtType): String {
         val typeName = type.render(
             KtTypeRendererForSource.WITH_SHORT_NAMES,

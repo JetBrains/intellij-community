@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
@@ -32,6 +33,7 @@ internal abstract class ImportCandidatesProvider(
     protected abstract val positionContext: KotlinNameReferencePositionContext
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     protected fun KtSymbol.isVisible(fileSymbol: KtFileSymbol): Boolean =
         this is KaSymbolWithVisibility && isVisible(this, fileSymbol, receiverExpression = null, positionContext.position)
 

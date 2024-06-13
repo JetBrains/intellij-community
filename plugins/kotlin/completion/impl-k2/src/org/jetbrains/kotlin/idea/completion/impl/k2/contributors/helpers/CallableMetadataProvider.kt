@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import com.intellij.util.applyIf
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
@@ -73,6 +74,7 @@ internal object CallableMetadataProvider {
         }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun getCallableMetadata(
         context: WeighingContext,
         signature: KtCallableSignature<*>,
@@ -134,6 +136,7 @@ internal object CallableMetadataProvider {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun extensionWeight(
         signature: KtCallableSignature<*>,
         context: WeighingContext,

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -17,6 +18,7 @@ import java.util.*
 
 internal object ArgumentTypeMismatchFactory {
 
+    @OptIn(KaExperimentalApi::class)
     val addArrayOfTypeFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
         if (!isQuickFixAvailable(diagnostic)) return@ModCommandBased emptyList()
@@ -54,6 +56,7 @@ internal object ArgumentTypeMismatchFactory {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private val KaType.isPrimitiveArray: Boolean
         get() {
             val name = render(

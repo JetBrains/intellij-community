@@ -145,6 +145,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
      * dontReplaceSetterIfSameIdentifierExistsInScope
      * replaceGetterInBlockExpression
      */
+    @OptIn(KaExperimentalApi::class)
     private fun checkCallExpression(callExpression: KtCallExpression, holder: ProblemsHolder) {
 
         val expressionParent = callExpression.parent

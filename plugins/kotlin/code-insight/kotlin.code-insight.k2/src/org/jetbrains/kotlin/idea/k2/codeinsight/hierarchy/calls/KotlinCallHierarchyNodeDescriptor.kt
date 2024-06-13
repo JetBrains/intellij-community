@@ -15,6 +15,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.ui.LayeredIcon
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -194,6 +195,7 @@ class KotlinCallHierarchyNodeDescriptor(
         }
 
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         fun renderNamedFunction(symbol: KaFunctionLikeSymbol): String? {
             val name = ((symbol as? KaFunctionSymbol)?.name ?: ((symbol as? KaConstructorSymbol)?.containingSymbol as? KaClassOrObjectSymbol)?.name)?.asString() ?: return null
             val paramTypes =

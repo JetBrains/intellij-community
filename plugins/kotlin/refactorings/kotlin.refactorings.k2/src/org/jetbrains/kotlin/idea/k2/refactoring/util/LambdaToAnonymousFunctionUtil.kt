@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -30,6 +31,7 @@ object LambdaToAnonymousFunctionUtil {
      * So it should not be used during highlighting or other non-explicitly started activities
      */
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun prepareFunctionText(lambda: KtLambdaExpression, functionName: String = "") : String? {
         val functionLiteral = lambda.functionLiteral
         val psiFactory = KtPsiFactory.contextual(lambda)

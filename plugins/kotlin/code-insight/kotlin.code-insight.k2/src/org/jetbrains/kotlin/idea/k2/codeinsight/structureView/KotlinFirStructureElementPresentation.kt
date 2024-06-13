@@ -11,6 +11,7 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.PsiIconUtil
 import com.intellij.util.ui.StartupUiUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -43,6 +44,7 @@ internal class KotlinFirStructureElementPresentation(
     pointer: KaSymbolPointer<*>?
 ) : ColoredItemPresentation, LocationPresentation {
     companion object {
+        @KaExperimentalApi
         private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
             annotationRenderer = annotationRenderer.with {
                 annotationFilter = KaRendererAnnotationsFilter.NONE
@@ -121,6 +123,7 @@ internal class KotlinFirStructureElementPresentation(
         return PsiIconUtil.getProvidersIcon(navigatablePsiElement, Iconable.ICON_FLAG_VISIBILITY)
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun getElementText(navigatablePsiElement: NavigatablePsiElement, ktElement : KtElement, pointer: KaSymbolPointer<*>?): String? {
         if (navigatablePsiElement is KtObjectDeclaration && navigatablePsiElement.isObjectLiteral()) {
             return KotlinCodeInsightBundle.message("object.0", (navigatablePsiElement.getSuperTypeList()?.text?.let { " : $it" } ?: ""))

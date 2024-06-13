@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa
 
 import com.intellij.psi.SyntaxTraverser
+import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 context(KaSession)
+@OptIn(KaNonPublicApi::class)
 internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
     val values = getValuesInExpression(expr)
     if (values.isEmpty()) return false

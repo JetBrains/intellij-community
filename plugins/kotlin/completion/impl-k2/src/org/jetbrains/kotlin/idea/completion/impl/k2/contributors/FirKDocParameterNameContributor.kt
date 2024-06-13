@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.contributors
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -43,6 +44,7 @@ internal open class FirKDocParameterNameContributor(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun addSymbolToCompletion(weighingContext: WeighingContext, symbolWithOrigin: KtSymbolWithOrigin) {
         val symbol = symbolWithOrigin.symbol
         val origin = symbolWithOrigin.origin

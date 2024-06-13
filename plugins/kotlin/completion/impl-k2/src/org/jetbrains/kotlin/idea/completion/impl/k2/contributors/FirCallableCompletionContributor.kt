@@ -74,6 +74,7 @@ internal open class FirCallableCompletionContributor(
         }
 
     context(KaSession)
+    @KaExperimentalApi
     protected open fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
@@ -93,6 +94,7 @@ internal open class FirCallableCompletionContributor(
     )
 
     context(KaSession)
+    @KaExperimentalApi
     private fun getExtensionOptions(
         signature: KtCallableSignature<*>,
         applicability: KaExtensionApplicabilityResult?
@@ -164,6 +166,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun completeWithoutReceiver(
         scopeContext: KtScopeContext,
         extensionChecker: KtCompletionExtensionCandidateChecker?,
@@ -277,6 +280,7 @@ internal open class FirCallableCompletionContributor(
         get() = classKind.isObject || companionObject != null
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun collectDotCompletionForPackageReceiver(
         packageSymbol: KtPackageSymbol,
         visibilityChecker: CompletionVisibilityChecker,
@@ -298,6 +302,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     protected fun collectDotCompletionForCallableReceiver(
         scopeContext: KtScopeContext,
         explicitReceiver: KtExpression,
@@ -478,6 +483,7 @@ internal open class FirCallableCompletionContributor(
      * When [extensionChecker] is null, no check is carried and applicability result is null.
      */
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun checkApplicabilityAndSubstitute(
         callableSymbol: KaCallableSymbol,
         extensionChecker: KtCompletionExtensionCandidateChecker?
@@ -643,6 +649,7 @@ internal class FirCallableReferenceCompletionContributor(
         CallableInsertionStrategy.AsIdentifier
 
     context(KaSession)
+    @KaExperimentalApi
     override fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
@@ -717,6 +724,7 @@ internal class FirInfixCallableCompletionContributor(
         infixCallableInsertionStrategy
 
     context(KaSession)
+    @KaExperimentalApi
     override fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
@@ -751,6 +759,7 @@ internal class FirKDocCallableCompletionContributor(
         CallableInsertionStrategy.AsIdentifier
 
     context(KaSession)
+    @KaExperimentalApi
     override fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
@@ -822,8 +831,10 @@ private class CachingKtCompletionExtensionCandidateChecker(
      * The cache also helps to avoid recalculation of applicability for extensions which are suggested twice:
      * the first time while processing the scope context and the second time while processing callables from indexes.
      */
+    @OptIn(KaExperimentalApi::class)
     private val cache: MutableMap<KaCallableSymbol, KaExtensionApplicabilityResult> = mutableMapOf()
 
+    @KaExperimentalApi
     override fun computeApplicability(candidate: KaCallableSymbol): KaExtensionApplicabilityResult {
         return cache.computeIfAbsent(candidate) {
             delegate.computeApplicability(candidate)

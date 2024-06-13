@@ -6,6 +6,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -413,6 +414,7 @@ private fun getReferencedClassifierSymbol(
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun createOriginalType(
     extractFunctionRef: Boolean,
     originalDeclaration: PsiNamedElement,
@@ -446,6 +448,7 @@ private fun createOriginalType(
 }) ?: builtinTypes.NULLABLE_ANY
 
 
+@OptIn(KaExperimentalApi::class)
 private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): List<ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KtType>> {
     val newReferences = body.collectDescendantsOfType<KtReferenceExpression> { it.resolveResult != null }
 

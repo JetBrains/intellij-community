@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
@@ -137,6 +138,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         return PsiTreeUtil.getParentOfType(element, argumentListClass.java)
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun updateParameterInfo(argumentList: TArgumentList, context: UpdateParameterInfoContext) {
         if (context.parameterOwner !== argumentList) {
             context.removeHint()
@@ -250,6 +252,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun renderParameter(
         parameter: KtVariableLikeSignature<KaValueParameterSymbol>,
         includeName: Boolean

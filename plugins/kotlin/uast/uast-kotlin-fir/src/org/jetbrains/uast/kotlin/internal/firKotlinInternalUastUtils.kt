@@ -79,6 +79,7 @@ internal fun toPsiClass(
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 internal fun toPsiMethod(
     functionSymbol: KaFunctionLikeSymbol,
     context: KtElement,
@@ -146,6 +147,7 @@ internal fun toPsiMethod(
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun toPsiMethodForDeserialized(
     functionSymbol: KaFunctionLikeSymbol,
     context: KtElement,
@@ -290,6 +292,7 @@ internal fun toPsiType(
     )
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 internal fun toPsiType(
     ktType: KtType,
     containingLightDeclaration: PsiModifierListOwner?,

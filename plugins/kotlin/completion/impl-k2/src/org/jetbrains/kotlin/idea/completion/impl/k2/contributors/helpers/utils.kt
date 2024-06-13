@@ -148,6 +148,7 @@ private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
  * To get them use [collectNonExtensionsForType].
  */
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 internal fun collectNonExtensionsFromScope(
     scope: KtScope,
     visibilityChecker: CompletionVisibilityChecker,

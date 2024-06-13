@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -289,6 +290,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
 /**
  * If function consists of single `null`, insert cast to ensure the type
  */
+@OptIn(KaExperimentalApi::class)
 internal fun specifyNullTypeExplicitly(codeToInline: MutableCodeToInline, originalDeclaration: KtDeclaration) {
     val mainExpression = codeToInline.mainExpression
     if (mainExpression?.isNull() == true) {

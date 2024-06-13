@@ -10,6 +10,7 @@ import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
@@ -86,6 +87,7 @@ class SmartStepTargetVisitor(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun recordProperty(expression: KtExpression, symbol: KtPropertySymbol): Boolean {
         val targetType = (expression as? KtNameReferenceExpression)?.computeTargetType()
         if (symbol is KtSyntheticJavaPropertySymbol) {

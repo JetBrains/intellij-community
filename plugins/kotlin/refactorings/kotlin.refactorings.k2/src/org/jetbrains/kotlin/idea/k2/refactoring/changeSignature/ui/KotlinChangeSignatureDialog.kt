@@ -16,6 +16,7 @@ import com.intellij.refactoring.ui.VisibilityPanelBase
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -273,6 +274,7 @@ internal class KotlinChangeSignatureDialog(
     )
 }
 
+@OptIn(KaExperimentalApi::class)
 internal fun KtTypeCodeFragment.getCanonicalText(forPreview: Boolean): String {
     val contextElement = getContentElement()
     if (contextElement != null && !forPreview) {
@@ -285,4 +287,5 @@ internal fun KtTypeCodeFragment.getCanonicalText(forPreview: Boolean): String {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun KtType.getPresentableText(): String = render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)

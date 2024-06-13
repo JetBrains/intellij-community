@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -40,6 +41,7 @@ sealed interface MovePropertyToConstructorInfo {
 
     companion object {
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         fun create(element: KtProperty, initializer: KtExpression? = element.initializer): MovePropertyToConstructorInfo? {
             if (initializer != null && !initializer.isValidInConstructor()) return null
 
@@ -85,6 +87,7 @@ sealed interface MovePropertyToConstructorInfo {
         }
 
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         private fun KtAnnotationEntry.getTextWithUseSite(): String {
             if (useSiteTarget != null) return text
             val typeReference = typeReference ?: return text

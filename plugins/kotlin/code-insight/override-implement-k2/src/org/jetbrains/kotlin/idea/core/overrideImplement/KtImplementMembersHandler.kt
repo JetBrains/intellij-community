@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -43,6 +44,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                 .mapToKtClassMemberInfo()
 
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassOrObjectSymbol): List<KaCallableSymbol> {
             return buildList {
                 classWithUnimplementedMembers.memberScope.getCallableSymbols().forEach { symbol ->
@@ -150,6 +152,7 @@ object MemberNotImplementedQuickfixFactories {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun List<KaCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberInfo> {
     return map { unimplementedMemberSymbol ->
         val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride

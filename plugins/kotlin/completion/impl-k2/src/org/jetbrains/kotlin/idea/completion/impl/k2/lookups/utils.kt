@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.*
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -50,6 +51,7 @@ internal fun withCallableSignatureInfo(
     .withStrikeoutness(signature.symbol.requireStrikeoutness())
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun KaDeclarationSymbol.requireStrikeoutness(): Boolean = when {
     deprecationStatus != null -> true
     this is KaPropertySymbol -> getterDeprecationStatus != null && (isVal || setterDeprecationStatus != null)

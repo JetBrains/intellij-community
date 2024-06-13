@@ -5,6 +5,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.endOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -32,6 +33,7 @@ data class FoldInitializerAndIfExpressionData(
 )
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 fun prepareData(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
     if (element.`else` != null) return null
 

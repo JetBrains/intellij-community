@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.k2.injection
 
 import com.intellij.patterns.StandardPatterns
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
@@ -32,6 +33,7 @@ internal object KotlinPatterns : StandardPatterns() {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun KtType.renderFullyQualifiedName() = render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
 
 // Methods in this class are used through reflection during pattern construction

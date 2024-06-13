@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.GeneratedSourcesFilter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.project.structure.KtModuleStructureInternals
 import org.jetbrains.kotlin.analysis.project.structure.analysisExtensionFileContextModule
@@ -23,6 +24,7 @@ class KotlinResolveExtensionGeneratedSourcesFilter : GeneratedSourcesFilter() {
     private val KtElement.hasAnalysisExtensionContext: Boolean
         get() = containingKtFile.virtualFile?.let { isGeneratedSource(it, project) } == true
 
+    @OptIn(KaExperimentalApi::class)
     override fun getOriginalElements(element: PsiElement): List<PsiElement> {
         if (element !is KtElement || !element.hasAnalysisExtensionContext) return emptyList()
         return analyze(element) {

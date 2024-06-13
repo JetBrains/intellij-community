@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch
 import com.intellij.psi.PsiComment
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -27,6 +28,7 @@ internal fun getCommentText(comment: PsiComment): String {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 internal fun KtType.renderNames(): Array<String> = arrayOf(
     render(KtTypeRendererForSource.WITH_SHORT_NAMES.with {
         classIdRenderer = KaClassTypeQualifierRenderer.WITH_SHORT_NAMES

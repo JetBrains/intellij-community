@@ -10,6 +10,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
@@ -45,6 +46,7 @@ class KotlinMethodSmartStepTarget(
     val methodInfo: CallableMemberInfo
 ) : KotlinSmartStepTarget(label, highlightElement, false, lines), ForceSmartStepIntoSource {
     companion object {
+        @KaExperimentalApi
         private val renderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
             annotationRenderer = annotationRenderer.with {
                 annotationFilter = KaRendererAnnotationsFilter.NONE
@@ -66,6 +68,7 @@ class KotlinMethodSmartStepTarget(
         }
 
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         fun calcLabel(symbol: KaDeclarationSymbol): String {
             return symbol.render(renderer)
         }
@@ -115,10 +118,12 @@ internal fun <T : PsiElement> SmartPsiElementPointer<T>?.getElementInReadAction(
     this?.let { runReadAction { element } }
 
 
+@KaExperimentalApi
 private val NO_RETURN_TYPE = object : KaCallableReturnTypeFilter {
     override fun shouldRenderReturnType(analysisSession: KaSession, type: KtType, symbol: KaCallableSymbol): Boolean = false
 }
 
+@KaExperimentalApi
 private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
     override fun renderReceiver(
         analysisSession: KaSession,
@@ -128,6 +133,7 @@ private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
     ) {}
 }
 
+@KaExperimentalApi
 private val NO_MODIFIER_LIST = object : KtModifierListRenderer {
     override fun renderModifiers(
         analysisSession: KaSession,

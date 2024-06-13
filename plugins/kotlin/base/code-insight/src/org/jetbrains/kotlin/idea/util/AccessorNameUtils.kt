@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.util
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -12,6 +13,7 @@ import java.util.*
 /**
  * Takes getter and setter names for a property. If there are no getters/setters, returns an empty list.
  */
+@OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
 fun KtCallableDeclaration.getAccessorNames(): List<String> {
 
