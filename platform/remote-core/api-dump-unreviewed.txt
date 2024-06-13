@@ -303,8 +303,6 @@ c:com.intellij.remote.RemoteSdkException
 - <init>(java.lang.String,java.lang.Throwable,java.lang.String,java.lang.String):V
 - s:cantObtainRemoteCredentials(java.lang.Throwable):com.intellij.remote.RemoteSdkException
 - getMessage():java.lang.String
-- isAuthFailed():Z
-- isNoRouteToHost():Z
 com.intellij.remote.RemoteSdkProperties
 - com.intellij.remote.RemoteSdkPropertiesPaths
 - a:getDefaultHelpersName():java.lang.String
