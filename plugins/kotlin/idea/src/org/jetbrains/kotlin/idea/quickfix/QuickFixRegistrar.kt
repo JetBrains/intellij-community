@@ -627,7 +627,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT.registerFactory(ActualAnnotationsNotMatchExpectFixFactory)
 
-        CAST_NEVER_SUCCEEDS.registerFactory(ReplacePrimitiveCastWithNumberConversionFix)
+        CAST_NEVER_SUCCEEDS.registerFactory(ReplacePrimitiveCastWithNumberConversionFixFactory)
 
         WRONG_EXTERNAL_DECLARATION.registerFactory(MigrateExternalExtensionFix)
 

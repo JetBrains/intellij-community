@@ -3,54 +3,31 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.CAST_NEVER_SUCCEEDS
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.typeBinding.createTypeBinding
 import org.jetbrains.kotlin.types.typeUtil.isPrimitiveNumberType
 
-class ReplacePrimitiveCastWithNumberConversionFix(
-    element: KtBinaryExpressionWithTypeRHS,
-    private val targetShortType: String
-) : KotlinQuickFixAction<KtBinaryExpressionWithTypeRHS>(element) {
+internal object ReplacePrimitiveCastWithNumberConversionFixFactory : KotlinSingleIntentionActionFactory() {
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+        val element = CAST_NEVER_SUCCEEDS.cast(diagnostic).psiElement as? KtOperationReferenceExpression ?: return null
+        val binaryExpression = element.parent as? KtBinaryExpressionWithTypeRHS ?: return null
 
-    override fun getText() = KotlinBundle.message("replace.cast.with.call.to.to.0", targetShortType)
-    override fun getFamilyName() = KotlinBundle.message("replace.cast.with.primitive.conversion.method")
+        val context = binaryExpression.analyze()
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        val psiFactory = KtPsiFactory(project)
-        val replaced = element.replaced(psiFactory.createExpressionByPattern("$0.to$1()", element.left, targetShortType))
+        val expressionType = binaryExpression.left.getType(context) ?: return null
+        if (!expressionType.isPrimitiveNumberType()) return null
 
-        editor?.caretModel?.moveToOffset(replaced.endOffset)
-    }
+        val castType = binaryExpression.right?.createTypeBinding(context)?.type ?: return null
+        if (!castType.isPrimitiveNumberType()) return null
 
-    companion object Factory : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val element = CAST_NEVER_SUCCEEDS.cast(diagnostic).psiElement as? KtOperationReferenceExpression ?: return null
-            val binaryExpression = element.parent as? KtBinaryExpressionWithTypeRHS ?: return null
-
-            val context = binaryExpression.analyze()
-
-            val expressionType = binaryExpression.left.getType(context) ?: return null
-            if (!expressionType.isPrimitiveNumberType()) return null
-
-            val castType = binaryExpression.right?.createTypeBinding(context)?.type ?: return null
-            if (!castType.isPrimitiveNumberType()) return null
-
-            return ReplacePrimitiveCastWithNumberConversionFix(
-                binaryExpression,
-                SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(castType)
-            )
-        }
+        return ReplacePrimitiveCastWithNumberConversionFix(
+            binaryExpression,
+            SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(castType)
+        ).asIntention()
     }
 }
