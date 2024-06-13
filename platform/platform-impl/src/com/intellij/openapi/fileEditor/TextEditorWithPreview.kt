@@ -31,6 +31,7 @@ import com.intellij.ui.JBSplitter
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.Alarm
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.ui.UIUtil
@@ -220,9 +221,18 @@ open class TextEditorWithPreview @JvmOverloads constructor(
       if (state.secondState != null) {
         myPreview.setState(state.secondState)
       }
-      if (state.splitLayout != null) {
+      state.splitLayout?.let { splitLayout ->
         layout = state.splitLayout
-        invalidateLayout()
+        adjustEditorsVisibility(splitLayout)
+        toolbarWrapper?.refresh()
+        if (EDT.isCurrentThreadEdt()) {
+          component?.repaint()
+        }
+        val focusComponent = preferredFocusedComponent
+        val focusOwner = IdeFocusManager.findInstance().focusOwner
+        if (focusComponent != null && focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, getComponent())) {
+          IdeFocusManager.findInstanceByComponent(focusComponent).requestFocus(focusComponent, true)
+        }
       }
       setVerticalSplit(state.isVerticalSplit)
     }
@@ -243,20 +253,6 @@ open class TextEditorWithPreview @JvmOverloads constructor(
     PropertiesComponent.getInstance().setValue(layoutPropertyName, layout.id, defaultLayout.id)
     adjustEditorsVisibility(layout)
     onLayoutChange(oldLayout, layout)
-  }
-
-  private fun invalidateLayout() {
-    layout?.let {
-      adjustEditorsVisibility(it)
-    }
-    toolbarWrapper?.refresh()
-    component?.repaint()
-
-    val focusComponent = preferredFocusedComponent
-    val focusOwner = IdeFocusManager.findInstance().focusOwner
-    if (focusComponent != null && focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, getComponent())) {
-      IdeFocusManager.findInstanceByComponent(focusComponent).requestFocus(focusComponent, true)
-    }
   }
 
   /**
