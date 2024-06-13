@@ -56,7 +56,8 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
     open val directFriendDependencies: List<KtModule>
         get() = ideaModuleInfo.modulesWhoseInternalsAreVisible().mapNotNull { (it as? IdeaModuleInfo)?.toKtModule() }
 
-    val platform: TargetPlatform get() = ideaModuleInfo.platform
+    val targetPlatform: TargetPlatform get() = ideaModuleInfo.platform
+
     val analyzerServices: PlatformDependentAnalyzerServices get() = ideaModuleInfo.analyzerServices
 
     override fun equals(other: Any?): Boolean {
