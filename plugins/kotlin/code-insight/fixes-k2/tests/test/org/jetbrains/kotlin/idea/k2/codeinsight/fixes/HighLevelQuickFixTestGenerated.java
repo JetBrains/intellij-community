@@ -3798,6 +3798,55 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/incompatibleTypes")
+    public static class IncompatibleTypes extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("byte.kt")
+        public void testByte() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/incompatibleTypes/byte.kt");
+        }
+
+        @TestMetadata("changeReturnType.kt")
+        public void testChangeReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/incompatibleTypes/changeReturnType.kt");
+        }
+
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/incompatibleTypes/char.kt");
+        }
+
+        @TestMetadata("char2.kt")
+        public void testChar2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/incompatibleTypes/char2.kt");
+        }
+
+        @TestMetadata("int.kt")
+        public void testInt() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/incompatibleTypes/int.kt");
+        }
+
+        @TestMetadata("toString.kt")
+        public void testToString() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/incompatibleTypes/toString.kt");
+        }
+
+        @TestMetadata("wrapWithCollectionLiteral.kt")
+        public void testWrapWithCollectionLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/incompatibleTypes/wrapWithCollectionLiteral.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/numberConversion")
     public abstract static class NumberConversion extends AbstractHighLevelQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -4077,6 +4126,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("changePrimaryConstructorParameterTypeOnPropertyDelegate.kt")
         public void testChangePrimaryConstructorParameterTypeOnPropertyDelegate() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeOnPropertyDelegate.kt");
+        }
+
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/char.kt");
         }
 
         @TestMetadata("convertKClassToJavaClass.kt")
@@ -4484,6 +4538,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/anyInReturn.kt");
         }
 
+        @TestMetadata("cannotConvertStringToCharLiteral.kt")
+        public void testCannotConvertStringToCharLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/cannotConvertStringToCharLiteral.kt");
+        }
+
         @TestMetadata("changeFunctionLiteralParameterTypeToFunctionType.kt")
         public void testChangeFunctionLiteralParameterTypeToFunctionType() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/changeFunctionLiteralParameterTypeToFunctionType.kt");
@@ -4564,9 +4623,19 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/constantTypeMismatch.kt");
         }
 
-        @TestMetadata("convertStringToCharLiteral.kt")
-        public void testConvertStringToCharLiteral() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertStringToCharLiteral.kt");
+        @TestMetadata("convertAssignedStringToCharLiteral.kt")
+        public void testConvertAssignedStringToCharLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertAssignedStringToCharLiteral.kt");
+        }
+
+        @TestMetadata("convertReturnStringToCharLiteral.kt")
+        public void testConvertReturnStringToCharLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertReturnStringToCharLiteral.kt");
+        }
+
+        @TestMetadata("convertStringInitializerToCharLiteral.kt")
+        public void testConvertStringInitializerToCharLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertStringInitializerToCharLiteral.kt");
         }
 
         @TestMetadata("dontChangeOverriddenPropertyTypeToErrorType.kt")

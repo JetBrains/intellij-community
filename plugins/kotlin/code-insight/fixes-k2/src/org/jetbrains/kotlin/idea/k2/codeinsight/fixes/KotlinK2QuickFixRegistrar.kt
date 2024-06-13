@@ -145,6 +145,15 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeToLabeledReturnFixFactory.returnTypeMismatch)
     }
 
+    private val convertStringToCharLiteral = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerFactory(ConvertStringToCharLiteralFixFactory.argumentTypeMismatchFactory)
+        registerFactory(ConvertStringToCharLiteralFixFactory.assignmentTypeMismatchFactory)
+        registerFactory(ConvertStringToCharLiteralFixFactory.equalityNotApplicableFactory)
+        registerFactory(ConvertStringToCharLiteralFixFactory.incompatibleTypesFactory)
+        registerFactory(ConvertStringToCharLiteralFixFactory.initializerTypeMismatchFactory)
+        registerFactory(ConvertStringToCharLiteralFixFactory.returnTypeMismatchFactory)
+    }
+
     private val insertDelegationCall = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(InsertDelegationCallFixFactory.primaryConstructorDelegationCallExpected)
         registerFactory(InsertDelegationCallFixFactory.explicitDelegationCallRequiredSuper)
@@ -407,6 +416,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         addFinal,
         addInline,
         changeToLabeledReturn,
+        convertStringToCharLiteral,
         insertDelegationCall,
         propertyInitialization,
         overrides,

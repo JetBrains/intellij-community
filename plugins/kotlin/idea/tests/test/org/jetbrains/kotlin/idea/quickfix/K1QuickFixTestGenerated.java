@@ -18136,6 +18136,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeOnPropertyDelegate.kt");
             }
 
+            @TestMetadata("char.kt")
+            public void testChar() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/char.kt");
+            }
+
             @TestMetadata("convertKClassToJavaClass.kt")
             public void testConvertKClassToJavaClass() throws Exception {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClass.kt");
@@ -18501,6 +18506,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/anyInReturn.kt");
             }
 
+            @TestMetadata("cannotConvertStringToCharLiteral.kt")
+            public void testCannotConvertStringToCharLiteral() throws Exception {
+                runTest("testData/quickfix/typeMismatch/cannotConvertStringToCharLiteral.kt");
+            }
+
             @TestMetadata("changeFunctionLiteralParameterTypeToFunctionType.kt")
             public void testChangeFunctionLiteralParameterTypeToFunctionType() throws Exception {
                 runTest("testData/quickfix/typeMismatch/changeFunctionLiteralParameterTypeToFunctionType.kt");
@@ -18581,9 +18591,19 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/constantTypeMismatch.kt");
             }
 
-            @TestMetadata("convertStringToCharLiteral.kt")
-            public void testConvertStringToCharLiteral() throws Exception {
-                runTest("testData/quickfix/typeMismatch/convertStringToCharLiteral.kt");
+            @TestMetadata("convertAssignedStringToCharLiteral.kt")
+            public void testConvertAssignedStringToCharLiteral() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertAssignedStringToCharLiteral.kt");
+            }
+
+            @TestMetadata("convertReturnStringToCharLiteral.kt")
+            public void testConvertReturnStringToCharLiteral() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertReturnStringToCharLiteral.kt");
+            }
+
+            @TestMetadata("convertStringInitializerToCharLiteral.kt")
+            public void testConvertStringInitializerToCharLiteral() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertStringInitializerToCharLiteral.kt");
             }
 
             @TestMetadata("dontChangeOverriddenPropertyTypeToErrorType.kt")
