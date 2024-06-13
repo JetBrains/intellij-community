@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.util.ThrowableRunnable
@@ -11,6 +13,7 @@ import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.psi.KtFile
@@ -22,6 +25,8 @@ private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statemen
 private const val JPA_ANNOTATIONS_DIRECTIVE = "ADD_JPA_ANNOTATIONS"
 private const val KOTLIN_API_DIRECTIVE = "ADD_KOTLIN_API"
 private const val JAVA_API_DIRECTIVE = "ADD_JAVA_API"
+private const val PREPROCESSOR_EXTENSIONS_DIRECTIVE = "INCLUDE_J2K_PREPROCESSOR_EXTENSIONS"
+private const val POSTPROCESSOR_EXTENSIONS_DIRECTIVE = "INCLUDE_J2K_POSTPROCESSOR_EXTENSIONS"
 
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
     override fun setUp() {
@@ -55,7 +60,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         addDependencies(directives)
 
         val settings = configureSettings(directives)
-        val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
+        val convertedText = convertJavaToKotlin(prefix, javaCode, settings, directives)
         val expectedFile = getExpectedFile(javaFile)
 
         val actualText = if (prefix == "file") {
@@ -138,22 +143,46 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             }
         }
 
-    private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings): String =
-        when (prefix) {
+    private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings, directives: Directives): String {
+        val preprocessorExtensions =
+            if (directives.contains(PREPROCESSOR_EXTENSIONS_DIRECTIVE)) listOf(J2kTestPreprocessorExtension) else emptyList()
+        val postprocessorExtensions =
+            if (directives.contains(POSTPROCESSOR_EXTENSIONS_DIRECTIVE)) listOf(J2kTestPostprocessorExtension) else emptyList()
+
+        return when (prefix) {
             "expression" -> expressionToKotlin(javaCode, settings)
             "statement" -> statementToKotlin(javaCode, settings)
             "method" -> methodToKotlin(javaCode, settings)
-            "file" -> fileToKotlin(javaCode, settings)
+            "file" -> fileToKotlin(javaCode, settings, preprocessorExtensions, postprocessorExtensions)
             else -> error("Specify what it is: method, statement or expression using the first line of test data file")
         }
+    }
 
-    open fun fileToKotlin(text: String, settings: ConverterSettings): String {
+    open fun fileToKotlin(
+        text: String,
+        settings: ConverterSettings,
+        preprocessorExtensions: List<J2kPreprocessorExtension> = emptyList(),
+        postprocessorExtensions: List<J2kPostprocessorExtension> = emptyList()
+    ): String {
         val file = createJavaFile(text)
         val j2kKind = if (isFirPlugin) K2 else K1_NEW
         val extension = J2kConverterExtension.extension(j2kKind)
         val converter = extension.createJavaToKotlinConverter(project, module, settings)
         val postProcessor = extension.createPostProcessor()
-        return converter.filesToKotlin(listOf(file), postProcessor).results.single()
+        var converterResult: FilesResult? = null
+        val process = {
+            converterResult = converter.filesToKotlin(
+                listOf(file),
+                postProcessor,
+                EmptyProgressIndicator(),
+                preprocessorExtensions,
+                postprocessorExtensions
+            )
+        }
+        project.executeCommand("J2K") {
+            ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Testing J2K", /* canBeCanceled = */ true, project)
+        }
+        return checkNotNull(converterResult).results.single()
     }
 
     private fun methodToKotlin(text: String, settings: ConverterSettings): String {
