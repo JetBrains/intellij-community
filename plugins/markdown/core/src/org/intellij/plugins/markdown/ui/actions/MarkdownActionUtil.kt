@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -45,7 +45,7 @@ object MarkdownActionUtil {
   @JvmStatic
   fun findMarkdownPreviewEditor(event: AnActionEvent): MarkdownPreviewFileEditor? {
     val splitEditor = findSplitEditor(event) ?: return null
-    val editor = splitEditor.previewEditor
+    val editor = splitEditor.getPreviewEditor()
     return when {
       editor !is MarkdownPreviewFileEditor || !editor.getComponent().isVisible -> null
       else -> editor

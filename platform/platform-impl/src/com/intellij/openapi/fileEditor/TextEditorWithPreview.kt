@@ -1,266 +1,261 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.fileEditor;
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.icons.AllIcons;
-import com.intellij.icons.ExpUiIcons;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.pom.Navigatable;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.JBSplitter;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.util.Alarm;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.fileEditor
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Supplier;
+import com.intellij.codeHighlighting.BackgroundEditorHighlighter
+import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.structureView.StructureViewBuilder
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettings.Companion.getInstance
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil.getAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.pom.Navigatable
+import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.ui.JBColor
+import com.intellij.ui.JBSplitter
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.components.JBLayeredPane
+import com.intellij.util.Alarm
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil.addAwtListener
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
+import java.awt.AWTEvent
+import java.awt.Dimension
+import java.awt.event.AWTEventListener
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
+import java.util.function.Supplier
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLayeredPane
+import javax.swing.SwingUtilities
 
-import static com.intellij.openapi.actionSystem.ActionPlaces.TEXT_EDITOR_WITH_PREVIEW;
+private val PARENT_SPLIT_EDITOR_KEY = Key.create<TextEditorWithPreview>("parentSplit")
 
 /**
  * Two-panel editor with three states: Editor, Preview and Editor with Preview.
  */
-public class TextEditorWithPreview extends UserDataHolderBase implements TextEditor {
-  private static final Key<TextEditorWithPreview> PARENT_SPLIT_EDITOR_KEY = Key.create("parentSplit");
-  protected final TextEditor myEditor;
-  protected final FileEditor myPreview;
-  private final @NotNull MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
-  private final Layout defaultLayout;
-  private Layout layout;
-  private boolean isVerticalSplit;
-  private JComponent component;
-  private JBSplitter mySplitter;
-  private SplitEditorToolbar toolbarWrapper;
-  private final @Nls String name;
-  public static final Key<Layout> DEFAULT_LAYOUT_FOR_FILE = Key.create("TextEditorWithPreview.DefaultLayout");
+@Suppress("LeakingThis")
+open class TextEditorWithPreview @JvmOverloads constructor(
+  @JvmField protected val myEditor: TextEditor,
+  @JvmField protected val myPreview: FileEditor,
+  private val name: @Nls String = "TextEditorWithPreview",
+  defaultLayout: Layout = Layout.SHOW_EDITOR_AND_PREVIEW,
+  private var isVerticalSplit: Boolean = false,
+) : UserDataHolderBase(), TextEditor {
+  @Suppress("LeakingThis")
+  private val listenerGenerator = MyListenersMultimap(this)
+  private val defaultLayout: Layout = myEditor.file?.getUserData(DEFAULT_LAYOUT_FOR_FILE) ?: defaultLayout
 
-  public TextEditorWithPreview(@NotNull TextEditor editor,
-                               @NotNull FileEditor preview,
-                               @NotNull @Nls String editorName,
-                               @NotNull Layout defaultLayout,
-                               boolean isVerticalSplit) {
-    myEditor = editor;
-    myPreview = preview;
-    name = editorName;
-    TextEditorWithPreview.Layout value = getLayoutForFile(myEditor.getFile());
-    this.defaultLayout = value == null ? defaultLayout : value;
-    this.isVerticalSplit = isVerticalSplit;
-    editor.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
-    preview.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
+  private var layout: Layout? = null
+
+  private var component: JComponent? = null
+  private var splitter: JBSplitter? = null
+  private var toolbarWrapper: SplitEditorToolbar? = null
+
+  init {
+    myEditor.putUserData(PARENT_SPLIT_EDITOR_KEY, this)
+    myPreview.putUserData(PARENT_SPLIT_EDITOR_KEY, this)
   }
 
-  public TextEditorWithPreview(@NotNull TextEditor editor,
-                               @NotNull FileEditor preview,
-                               @NotNull @Nls String editorName,
-                               @NotNull Layout defaultLayout) {
-    this(editor, preview, editorName, defaultLayout, false);
-  }
+  companion object {
+    @JvmField
+    internal val DEFAULT_LAYOUT_FOR_FILE: Key<Layout> = Key.create("TextEditorWithPreview.DefaultLayout")
 
-  public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull @Nls String editorName) {
-    this(editor, preview, editorName, Layout.SHOW_EDITOR_AND_PREVIEW);
-  }
-
-  public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview) {
-    this(editor, preview, "TextEditorWithPreview");
-  }
-
-  @Override
-  public @Nullable BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return myEditor.getBackgroundHighlighter();
-  }
-
-  @Override
-  public @Nullable FileEditorLocation getCurrentLocation() {
-    return myEditor.getCurrentLocation();
-  }
-
-  @Override
-  public @Nullable StructureViewBuilder getStructureViewBuilder() {
-    return myEditor.getStructureViewBuilder();
-  }
-
-  @Override
-  public void dispose() {
-    Disposer.dispose(myEditor);
-    Disposer.dispose(myPreview);
-  }
-
-  @Override
-  public void selectNotify() {
-    myEditor.selectNotify();
-    myPreview.selectNotify();
-  }
-
-  @Override
-  public void deselectNotify() {
-    myEditor.deselectNotify();
-    myPreview.deselectNotify();
-  }
-
-  protected @NotNull JBSplitter createSplitter() {
-      return new OnePixelSplitter();
-  }
-
-  @Override
-  public @NotNull JComponent getComponent() {
-    if (component != null) {
-      return component;
+    fun getEditorWithPreviewIcon(isVerticalSplit: Boolean): Icon {
+      return if (isNewUI()) {
+        if (isVerticalSplit) ExpUiIcons.General.EditorPreviewVertical else ExpUiIcons.General.EditorPreview
+      }
+      else {
+        if (isVerticalSplit) AllIcons.Actions.PreviewDetailsVertically else AllIcons.Actions.PreviewDetails
+      }
     }
-    mySplitter = createSplitter();
-    mySplitter.setSplitterProportionKey(getSplitterProportionKey());
-    mySplitter.setFirstComponent(myEditor.getComponent());
-    mySplitter.setSecondComponent(myPreview.getComponent());
-    mySplitter.setDividerWidth(ExperimentalUI.isNewUI() ? 1 : 2); // We're using OnePixelSplitter, but it actually supports wider dividers.
-    mySplitter.getDivider().setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.PREVIEW_BORDER_COLOR), UIUtil.getPanelBackground())));
 
-    toolbarWrapper = createSplitEditorToolbar(mySplitter);
+    fun openPreviewForFile(project: Project, file: VirtualFile): Array<FileEditor> {
+      file.putUserData(DEFAULT_LAYOUT_FOR_FILE, Layout.SHOW_PREVIEW)
+      return FileEditorManager.getInstance(project).openFile(file, true)
+    }
 
+    fun getParentSplitEditor(fileEditor: FileEditor?): TextEditorWithPreview? {
+      return if (fileEditor is TextEditorWithPreview) fileEditor else PARENT_SPLIT_EDITOR_KEY.get(fileEditor)
+    }
+  }
+
+  open val textEditor: TextEditor
+    get() = myEditor
+
+  open val previewEditor: FileEditor
+    get() = myPreview
+
+  override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? = myEditor.backgroundHighlighter
+
+  override fun getCurrentLocation(): FileEditorLocation? = myEditor.currentLocation
+
+  override fun getStructureViewBuilder(): StructureViewBuilder? = myEditor.structureViewBuilder
+
+  override fun dispose() {
+    Disposer.dispose(myEditor)
+    Disposer.dispose(myPreview)
+  }
+
+  override fun selectNotify() {
+    myEditor.selectNotify()
+    myPreview.selectNotify()
+  }
+
+  override fun deselectNotify() {
+    myEditor.deselectNotify()
+    myPreview.deselectNotify()
+  }
+
+  protected open fun createSplitter(): JBSplitter = OnePixelSplitter()
+
+  override fun getComponent(): JComponent {
+    component?.let {
+      return it
+    }
+
+    val splitter = createSplitter()
+    this.splitter = splitter
+    splitter.splitterProportionKey = splitterProportionKey
+    splitter.firstComponent = myEditor.component
+    splitter.secondComponent = myPreview.component
+    splitter.dividerWidth = if (isNewUI()) 1 else 2 // we're using OnePixelSplitter, but it actually supports wider dividers
+    splitter.divider.background = JBColor.lazy(Supplier {
+      EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.PREVIEW_BORDER_COLOR) ?: UIUtil.getPanelBackground()
+    })
+
+    val toolbarWrapper = createSplitEditorToolbar(splitter)
+    this.toolbarWrapper = toolbarWrapper
+
+    var layout = layout
     if (layout == null) {
-      String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
-      layout = Layout.fromId(lastUsed, defaultLayout);
+      val lastUsed = PropertiesComponent.getInstance().getValue(layoutPropertyName)
+      layout = Layout.fromId(id = lastUsed, defaultValue = defaultLayout)
+      this.layout = layout
     }
-    adjustEditorsVisibility();
+    adjustEditorsVisibility(layout)
 
-    BorderLayoutPanel panel = JBUI.Panels.simplePanel(mySplitter).addToTop(toolbarWrapper);
-    if (!isShowFloatingToolbar()) {
-      component = panel;
-      return component;
+    val panel = JBUI.Panels.simplePanel(splitter).addToTop(toolbarWrapper)
+    if (!isShowFloatingToolbar) {
+      component = panel
+      return panel
     }
 
-    toolbarWrapper.setVisible(false);
-    MyEditorLayeredComponentWrapper layeredPane = new MyEditorLayeredComponentWrapper(panel);
-    component = layeredPane;
-    ActionGroup toolbarGroup = toolbarWrapper.getRightToolbar().getActionGroup();
-    LayoutActionsFloatingToolbar toolbar = new LayoutActionsFloatingToolbar(component, toolbarGroup, this);
-    layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER);
-    component.add(toolbar, JLayeredPane.POPUP_LAYER);
-    registerToolbarListeners(panel, toolbar);
-    return component;
+    toolbarWrapper.isVisible = false
+    val layeredPane = MyEditorLayeredComponentWrapper(panel)
+    component = layeredPane
+    val toolbarGroup = toolbarWrapper.rightToolbar.actionGroup
+    val toolbar = LayoutActionsFloatingToolbar(parentComponent = layeredPane, actionGroup = toolbarGroup, parentDisposable = this)
+    layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER)
+    layeredPane.add(toolbar, JLayeredPane.POPUP_LAYER)
+    registerToolbarListeners(panel, toolbar)
+    return layeredPane
   }
 
-  protected boolean isShowFloatingToolbar() {
-    return Registry.is("ide.text.editor.with.preview.show.floating.toolbar") && toolbarWrapper.isLeftToolbarEmpty();
-  }
+  protected open val isShowFloatingToolbar: Boolean
+    get() = Registry.`is`("ide.text.editor.with.preview.show.floating.toolbar") && toolbarWrapper!!.isLeftToolbarEmpty
 
-  protected boolean isShowActionsInTabs() {
-    return ExperimentalUI.isNewUI() && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE;
-  }
+  protected open val isShowActionsInTabs: Boolean
+    get() = isNewUI() && getInstance().editorTabPlacement != UISettings.TABS_NONE
 
-  private void registerToolbarListeners(JComponent actualComponent, LayoutActionsFloatingToolbar toolbar) {
-    StartupUiUtil.addAwtListener(AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar, new MyMouseListener(toolbar));
-    final var actualEditor = UIUtil.findComponentOfType(actualComponent, EditorComponentImpl.class);
-    if (actualEditor != null) {
-      final var editorKeyListener = new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent event) {
-          toolbar.scheduleHide();
-        }
-      };
-      actualEditor.getEditor().getContentComponent().addKeyListener(editorKeyListener);
-      Disposer.register(toolbar, () -> {
-        actualEditor.getEditor().getContentComponent().removeKeyListener(editorKeyListener);
-      });
+  private fun registerToolbarListeners(actualComponent: JComponent, toolbar: LayoutActionsFloatingToolbar) {
+    addAwtListener(AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar, MyMouseListener(toolbar))
+    val actualEditor = UIUtil.findComponentOfType(actualComponent, EditorComponentImpl::class.java) ?: return
+    val editorKeyListener = object : KeyAdapter() {
+      override fun keyPressed(event: KeyEvent) {
+        toolbar.scheduleHide()
+      }
+    }
+    actualEditor.editor.contentComponent.addKeyListener(editorKeyListener)
+    Disposer.register(toolbar) {
+      actualEditor.editor.contentComponent.removeKeyListener(editorKeyListener)
     }
   }
 
-  public boolean isVerticalSplit() {
-    return isVerticalSplit;
+  open fun isVerticalSplit(): Boolean = isVerticalSplit
+
+  open fun setVerticalSplit(verticalSplit: Boolean) {
+    isVerticalSplit = verticalSplit
+    splitter!!.orientation = verticalSplit
   }
 
-  public void setVerticalSplit(boolean verticalSplit) {
-    isVerticalSplit = verticalSplit;
-    mySplitter.setOrientation(verticalSplit);
-  }
-
-  private @NotNull SplitEditorToolbar createSplitEditorToolbar(@NotNull JComponent targetComponentForActions) {
-    final ActionToolbar leftToolbar = createToolbar();
+  private fun createSplitEditorToolbar(targetComponentForActions: JComponent): SplitEditorToolbar {
+    val leftToolbar = createToolbar()
     if (leftToolbar != null) {
-      leftToolbar.setTargetComponent(targetComponentForActions);
-      leftToolbar.setReservePlaceAutoPopupIcon(false);
+      leftToolbar.targetComponent = targetComponentForActions
+      leftToolbar.isReservePlaceAutoPopupIcon = false
     }
 
-    final ActionToolbar rightToolbar = createRightToolbar();
-    rightToolbar.setTargetComponent(targetComponentForActions);
-    rightToolbar.setReservePlaceAutoPopupIcon(false);
+    val rightToolbar = createRightToolbar()
+    rightToolbar.targetComponent = targetComponentForActions
+    rightToolbar.isReservePlaceAutoPopupIcon = false
 
-    return new SplitEditorToolbar(leftToolbar, rightToolbar);
+    return SplitEditorToolbar(leftToolbar, rightToolbar)
   }
 
-  @Override
-  public void setState(@NotNull FileEditorState state) {
-    if (state instanceof MyFileEditorState compositeState) {
-      if (compositeState.getFirstState() != null) {
-        myEditor.setState(compositeState.getFirstState());
+  override fun setState(state: FileEditorState) {
+    if (state is MyFileEditorState) {
+      if (state.firstState != null) {
+        myEditor.setState(state.firstState)
       }
-      if (compositeState.getSecondState() != null) {
-        myPreview.setState(compositeState.getSecondState());
+      if (state.secondState != null) {
+        myPreview.setState(state.secondState)
       }
-      if (compositeState.getSplitLayout() != null) {
-        layout = compositeState.getSplitLayout();
-        invalidateLayout();
+      if (state.splitLayout != null) {
+        layout = state.splitLayout
+        invalidateLayout()
       }
-      setVerticalSplit(compositeState.isVerticalSplit());
+      setVerticalSplit(state.isVerticalSplit)
     }
   }
 
-  protected void onLayoutChange(Layout oldValue, Layout newValue) { }
+  protected open fun onLayoutChange(oldValue: Layout?, newValue: Layout?) {}
 
-  private void adjustEditorsVisibility() {
-    myEditor.getComponent().setVisible(layout == Layout.SHOW_EDITOR || layout == Layout.SHOW_EDITOR_AND_PREVIEW);
-    myPreview.getComponent().setVisible(layout == Layout.SHOW_PREVIEW || layout == Layout.SHOW_EDITOR_AND_PREVIEW);
+  private fun adjustEditorsVisibility(layout: Layout) {
+    myEditor.component.isVisible = layout == Layout.SHOW_EDITOR || layout == Layout.SHOW_EDITOR_AND_PREVIEW
+    myPreview.component.isVisible = layout == Layout.SHOW_PREVIEW || layout == Layout.SHOW_EDITOR_AND_PREVIEW
   }
 
-  protected void setLayout(@NotNull Layout layout) {
-    Layout oldLayout = this.layout;
-    this.layout = layout;
-    PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), this.layout.myId, defaultLayout.myId);
-    adjustEditorsVisibility();
-    onLayoutChange(oldLayout, this.layout);
+  fun getLayout(): Layout? = layout
+
+  open fun setLayout(layout: Layout) {
+    val oldLayout = this.layout
+    this.layout = layout
+    PropertiesComponent.getInstance().setValue(layoutPropertyName, layout.id, defaultLayout.id)
+    adjustEditorsVisibility(layout)
+    onLayoutChange(oldLayout, layout)
   }
 
-  private void invalidateLayout() {
-    adjustEditorsVisibility();
-    toolbarWrapper.refresh();
-    component.repaint();
+  private fun invalidateLayout() {
+    layout?.let {
+      adjustEditorsVisibility(it)
+    }
+    toolbarWrapper?.refresh()
+    component?.repaint()
 
-    final JComponent focusComponent = getPreferredFocusedComponent();
-    Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+    val focusComponent = preferredFocusedComponent
+    val focusOwner = IdeFocusManager.findInstance().focusOwner
     if (focusComponent != null && focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, getComponent())) {
-      IdeFocusManager.findInstanceByComponent(focusComponent).requestFocus(focusComponent, true);
+      IdeFocusManager.findInstanceByComponent(focusComponent).requestFocus(focusComponent, true)
     }
   }
 
@@ -269,402 +264,263 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
    * override this method to generate a unique key.
    * From all the text editors that don't override this method, only a single proportion is stored.
    */
-  protected @NotNull String getSplitterProportionKey() {
-    return "TextEditorWithPreview.SplitterProportionKey";
+  protected open val splitterProportionKey: String
+    get() = "TextEditorWithPreview.SplitterProportionKey"
+
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return when (layout) {
+      Layout.SHOW_EDITOR_AND_PREVIEW, Layout.SHOW_EDITOR -> myEditor.preferredFocusedComponent
+      Layout.SHOW_PREVIEW -> myPreview.preferredFocusedComponent
+      null -> null
+    }
   }
 
-  @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
-    return switch (layout) {
-      case SHOW_EDITOR_AND_PREVIEW, SHOW_EDITOR -> myEditor.getPreferredFocusedComponent();
-      case SHOW_PREVIEW -> myPreview.getPreferredFocusedComponent();
-    };
+  override fun getName(): String = name
+
+  override fun getState(level: FileEditorStateLevel): FileEditorState {
+    return MyFileEditorState(
+      splitLayout = layout,
+      firstState = myEditor.getState(level),
+      secondState = myPreview.getState(level),
+      isVerticalSplit = isVerticalSplit(),
+    )
   }
 
-  @Override
-  public @NotNull String getName() {
-    return name;
+  override fun addPropertyChangeListener(listener: PropertyChangeListener) {
+    myEditor.addPropertyChangeListener(listener)
+    myPreview.addPropertyChangeListener(listener)
+
+    val delegate = listenerGenerator.addListenerAndGetDelegate(listener)
+    myEditor.addPropertyChangeListener(delegate)
+    myPreview.addPropertyChangeListener(delegate)
   }
 
-  @Override
-  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    return new MyFileEditorState(layout, myEditor.getState(level), myPreview.getState(level), isVerticalSplit());
-  }
+  override fun removePropertyChangeListener(listener: PropertyChangeListener) {
+    myEditor.removePropertyChangeListener(listener)
+    myPreview.removePropertyChangeListener(listener)
 
-  @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    myEditor.addPropertyChangeListener(listener);
-    myPreview.addPropertyChangeListener(listener);
-
-    final DoublingEventListenerDelegate delegate = myListenersGenerator.addListenerAndGetDelegate(listener);
-    myEditor.addPropertyChangeListener(delegate);
-    myPreview.addPropertyChangeListener(delegate);
-  }
-
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    myEditor.removePropertyChangeListener(listener);
-    myPreview.removePropertyChangeListener(listener);
-
-    final DoublingEventListenerDelegate delegate = myListenersGenerator.removeListenerAndGetDelegate(listener);
+    val delegate = listenerGenerator.removeListenerAndGetDelegate(listener)
     if (delegate != null) {
-      myEditor.removePropertyChangeListener(delegate);
-      myPreview.removePropertyChangeListener(delegate);
+      myEditor.removePropertyChangeListener(delegate)
+      myPreview.removePropertyChangeListener(delegate)
     }
   }
 
-  public @NotNull TextEditor getTextEditor() {
-    return myEditor;
-  }
+  class MyFileEditorState(
+    val splitLayout: Layout?,
+    val firstState: FileEditorState?,
+    val secondState: FileEditorState?,
+    val isVerticalSplit: Boolean,
+  ) : FileEditorState {
+    @Deprecated("Use {@link #MyFileEditorState(Layout, FileEditorState, FileEditorState, boolean)}")
+    constructor(layout: Layout?, firstState: FileEditorState?, secondState: FileEditorState?) : this(layout, firstState, secondState, false)
 
-  public @NotNull FileEditor getPreviewEditor() {
-    return myPreview;
-  }
-
-  public Layout getLayout() {
-    return layout;
-  }
-
-  public static final class MyFileEditorState implements FileEditorState {
-    private final Layout splitLayout;
-    private final FileEditorState firstState;
-    private final FileEditorState secondState;
-    private final boolean verticalSplit;
-
-    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState, boolean verticalSplit) {
-      splitLayout = layout;
-      this.firstState = firstState;
-      this.secondState = secondState;
-      this.verticalSplit = verticalSplit;
+    override fun canBeMergedWith(otherState: FileEditorState, level: FileEditorStateLevel): Boolean {
+      return otherState is MyFileEditorState
+             && (firstState == null || firstState.canBeMergedWith(otherState.firstState!!, level))
+             && (secondState == null || secondState.canBeMergedWith(otherState.secondState!!, level))
     }
 
-    /**
-     * @deprecated Use {@link #MyFileEditorState(Layout, FileEditorState, FileEditorState, boolean)}
-     */
-    @Deprecated
-    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
-      this(layout, firstState, secondState, false);
-    }
-
-    public @Nullable Layout getSplitLayout() {
-      return splitLayout;
-    }
-
-    public @Nullable FileEditorState getFirstState() {
-      return firstState;
-    }
-
-    public @Nullable FileEditorState getSecondState() {
-      return secondState;
-    }
-
-    public boolean isVerticalSplit() {
-      return verticalSplit;
-    }
-
-    @Override
-    public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
-      return otherState instanceof MyFileEditorState
-             && (firstState == null || firstState.canBeMergedWith(((MyFileEditorState)otherState).firstState, level))
-             && (secondState == null || secondState.canBeMergedWith(((MyFileEditorState)otherState).secondState, level));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      MyFileEditorState state = (MyFileEditorState)o;
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other == null || javaClass != other.javaClass) return false
+      val state = other as MyFileEditorState
       return splitLayout == state.splitLayout &&
-             Objects.equals(firstState, state.firstState) &&
-             Objects.equals(secondState, state.secondState);
+             firstState == state.firstState &&
+             secondState == state.secondState
+    }
+
+    override fun hashCode(): Int {
+      var result = splitLayout?.hashCode() ?: 0
+      result = 31 * result + (firstState?.hashCode() ?: 0)
+      result = 31 * result + (secondState?.hashCode() ?: 0)
+      result = 31 * result + isVerticalSplit.hashCode()
+      return result
     }
   }
 
-  @Override
-  public boolean isModified() {
-    return myEditor.isModified() || myPreview.isModified();
+  override fun isModified(): Boolean = myEditor.isModified || myPreview.isModified
+
+  override fun isValid(): Boolean = myEditor.isValid && myPreview.isValid
+
+  protected open fun createToolbar(): ActionToolbar? {
+    val actionGroup = createLeftToolbarActionGroup() ?: return null
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.TEXT_EDITOR_WITH_PREVIEW, actionGroup, true)
   }
 
-  @Override
-  public boolean isValid() {
-    return myEditor.isValid() && myPreview.isValid();
-  }
+  protected open fun createLeftToolbarActionGroup(): ActionGroup? = null
 
-  private final class DoublingEventListenerDelegate implements PropertyChangeListener {
-    private final @NotNull PropertyChangeListener myDelegate;
-
-    private DoublingEventListenerDelegate(@NotNull PropertyChangeListener delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-      myDelegate.propertyChange(
-        new PropertyChangeEvent(TextEditorWithPreview.this, evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
-    }
-  }
-
-  private final class MyListenersMultimap {
-    private final Map<PropertyChangeListener, Pair<Integer, DoublingEventListenerDelegate>> map = new HashMap<>();
-
-    public @NotNull DoublingEventListenerDelegate addListenerAndGetDelegate(@NotNull PropertyChangeListener listener) {
-      if (!map.containsKey(listener)) {
-        map.put(listener, Pair.create(1, new DoublingEventListenerDelegate(listener)));
-      }
-      else {
-        final Pair<Integer, DoublingEventListenerDelegate> oldPair = map.get(listener);
-        map.put(listener, Pair.create(oldPair.getFirst() + 1, oldPair.getSecond()));
-      }
-
-      return map.get(listener).getSecond();
-    }
-
-    public @Nullable DoublingEventListenerDelegate removeListenerAndGetDelegate(@NotNull PropertyChangeListener listener) {
-      final Pair<Integer, DoublingEventListenerDelegate> oldPair = map.get(listener);
-      if (oldPair == null) {
-        return null;
-      }
-
-      if (oldPair.getFirst() == 1) {
-        map.remove(listener);
-      }
-      else {
-        map.put(listener, Pair.create(oldPair.getFirst() - 1, oldPair.getSecond()));
-      }
-      return oldPair.getSecond();
-    }
-  }
-
-  protected @Nullable ActionToolbar createToolbar() {
-    ActionGroup actionGroup = createLeftToolbarActionGroup();
-    if (actionGroup != null) {
-      return ActionManager.getInstance().createActionToolbar(TEXT_EDITOR_WITH_PREVIEW, actionGroup, true);
+  protected open fun createRightToolbar(): ActionToolbar {
+    val viewActions = createViewActionGroup().getChildren(null)
+    val viewActionsGroup: ActionGroup = ConditionalActionGroup(viewActions) { !isShowActionsInTabs }
+    val group = createRightToolbarActionGroup()
+    val rightToolbarActions = if (group == null) {
+      viewActionsGroup
     }
     else {
-      return null;
+      DefaultActionGroup(group, Separator.create(), viewActionsGroup)
     }
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.TEXT_EDITOR_WITH_PREVIEW, rightToolbarActions, true)
   }
 
-  protected @Nullable ActionGroup createLeftToolbarActionGroup() {
-    return null;
+  protected open fun createViewActionGroup(): ActionGroup {
+    return DefaultActionGroup(listOf(
+      showEditorAction,
+      showEditorAndPreviewAction,
+      showPreviewAction,
+    ))
   }
 
-  protected @NotNull ActionToolbar createRightToolbar() {
-    final AnAction[] viewActions = createViewActionGroup().getChildren(null);
-    final ActionGroup viewActionsGroup = new ConditionalActionGroup(viewActions, () -> !isShowActionsInTabs());
-    final ActionGroup group = createRightToolbarActionGroup();
-    final ActionGroup rightToolbarActions = group == null
-                                            ? viewActionsGroup
-                                            : new DefaultActionGroup(group, Separator.create(), viewActionsGroup);
-    return ActionManager.getInstance().createActionToolbar(TEXT_EDITOR_WITH_PREVIEW, rightToolbarActions, true);
-  }
+  protected open fun createRightToolbarActionGroup(): ActionGroup? = null
 
-  protected @NotNull ActionGroup createViewActionGroup() {
-    return new DefaultActionGroup(
-      getShowEditorAction(),
-      getShowEditorAndPreviewAction(),
-      getShowPreviewAction()
-    );
-  }
+  override fun getTabActions(): ActionGroup = ConditionalActionGroup(createTabActions()) { isShowActionsInTabs }
 
-  protected @Nullable ActionGroup createRightToolbarActionGroup() {
-    return null;
-  }
+  protected open fun createTabActions(): Array<AnAction> = createViewActionGroup().getChildren(null)
 
-  @Override
-  public final @NotNull ActionGroup getTabActions() {
-    AnAction[] actions = createTabActions();
-    return new ConditionalActionGroup(actions, () -> isShowActionsInTabs());
-  }
+  protected open val showEditorAction: ToggleAction
+    get() = getAction("TextEditorWithPreview.Layout.EditorOnly")!! as ToggleAction
 
-  protected AnAction @NotNull [] createTabActions() {
-    return createViewActionGroup().getChildren(null);
-  }
+  protected open val showEditorAndPreviewAction: ToggleAction
+    get() = getAction("TextEditorWithPreview.Layout.EditorAndPreview")!! as ToggleAction
 
-  protected @NotNull ToggleAction getShowEditorAction() {
-    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("TextEditorWithPreview.Layout.EditorOnly"));
-  }
+  protected open val showPreviewAction: ToggleAction
+    get() = getAction("TextEditorWithPreview.Layout.PreviewOnly")!! as ToggleAction
 
-  protected @NotNull ToggleAction getShowEditorAndPreviewAction() {
-    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("TextEditorWithPreview.Layout.EditorAndPreview"));
-  }
-
-  protected @NotNull ToggleAction getShowPreviewAction() {
-    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("TextEditorWithPreview.Layout.PreviewOnly"));
-  }
-
-  public enum Layout {
+  enum class Layout(val id: String, private val myName: Supplier<@Nls String>) {
     SHOW_EDITOR("Editor only", IdeBundle.messagePointer("tab.title.editor.only")),
     SHOW_PREVIEW("Preview only", IdeBundle.messagePointer("tab.title.preview.only")),
     SHOW_EDITOR_AND_PREVIEW("Editor and Preview", IdeBundle.messagePointer("tab.title.editor.and.preview"));
 
-    private final @NotNull Supplier<@Nls String> myName;
-    private final String myId;
+    fun getName(): @Nls String = myName.get()
 
-    Layout(String id, @NotNull Supplier<String> name) {
-      myId = id;
-      myName = name;
+    fun getIcon(editor: TextEditorWithPreview?): Icon {
+      return when {
+        this == SHOW_EDITOR -> AllIcons.General.LayoutEditorOnly
+        this == SHOW_PREVIEW -> AllIcons.General.LayoutPreviewOnly
+        else -> getEditorWithPreviewIcon(isVerticalSplit = editor != null && editor.isVerticalSplit)
+      }
     }
 
-    public static Layout fromId(String id, Layout defaultValue) {
-      for (Layout layout : values()) {
-        if (layout.myId.equals(id)) {
-          return layout;
-        }
-      }
-      return defaultValue;
-    }
-
-    public @Nls String getName() {
-      return myName.get();
-    }
-
-    public Icon getIcon(@Nullable TextEditorWithPreview editor) {
-      if (this == SHOW_EDITOR) {
-        return AllIcons.General.LayoutEditorOnly;
-      }
-      if (this == SHOW_PREVIEW) {
-        return AllIcons.General.LayoutPreviewOnly;
-      }
-      boolean isVerticalSplit = editor != null && editor.isVerticalSplit;
-      return getEditorWithPreviewIcon(isVerticalSplit);
+    companion object {
+      @JvmStatic
+      fun fromId(id: String?, defaultValue: Layout): Layout = entries.firstOrNull { it.id == id } ?: defaultValue
     }
   }
 
-  public static Icon getEditorWithPreviewIcon(boolean isVerticalSplit) {
-    if (ExperimentalUI.isNewUI()) {
-      return isVerticalSplit ? ExpUiIcons.General.EditorPreviewVertical : ExpUiIcons.General.EditorPreview;
+  private val layoutPropertyName: String
+    get() = "${name}Layout"
+
+  override fun getFile(): VirtualFile? = myEditor.file
+
+  override fun getEditor(): Editor = myEditor.editor
+
+  override fun canNavigateTo(navigatable: Navigatable): Boolean = myEditor.canNavigateTo(navigatable)
+
+  override fun navigateTo(navigatable: Navigatable) {
+    myEditor.navigateTo(navigatable)
+  }
+
+  protected fun handleLayoutChange(isVerticalSplit: Boolean) {
+    if (this.isVerticalSplit == isVerticalSplit) {
+      return
+    }
+
+    this.isVerticalSplit = isVerticalSplit
+
+    toolbarWrapper?.refresh()
+    splitter?.orientation = this.isVerticalSplit
+    component?.repaint()
+  }
+
+  private inner class MyMouseListener(private val toolbar: LayoutActionsFloatingToolbar) : AWTEventListener {
+    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, toolbar)
+
+    override fun eventDispatched(event: AWTEvent) {
+      val isMouseOutsideToolbar = toolbar.mousePosition == null
+      if ((component ?: return).mousePosition != null) {
+        alarm.cancelAllRequests()
+        toolbar.scheduleShow()
+        if (isMouseOutsideToolbar) {
+          alarm.addRequest({ toolbar.scheduleHide() }, 1400)
+        }
+      }
+      else if (isMouseOutsideToolbar) {
+        toolbar.scheduleHide()
+      }
+    }
+  }
+}
+
+private class MyEditorLayeredComponentWrapper(private val editorComponent: JComponent) : JBLayeredPane() {
+  @Suppress("ConstPropertyName")
+  companion object {
+    const val toolbarTopPadding: Int = 25
+    const val toolbarRightPadding: Int = 20
+  }
+
+  override fun doLayout() {
+    val components = components
+    val bounds = bounds
+    for (component in components) {
+      if (component === editorComponent) {
+        component.setBounds(0, 0, bounds.width, bounds.height)
+      }
+      else {
+        val preferredComponentSize = component.preferredSize
+        var x = 0
+        var y = 0
+        if (component is LayoutActionsFloatingToolbar) {
+          x = bounds.width - preferredComponentSize.width - toolbarRightPadding
+          y = toolbarTopPadding
+        }
+        component.setBounds(x, y, preferredComponentSize.width, preferredComponentSize.height)
+      }
+    }
+  }
+
+  override fun getPreferredSize(): Dimension = editorComponent.preferredSize
+}
+
+private class ConditionalActionGroup(private val myActions: Array<AnAction>, private val condition: () -> Boolean) : ActionGroup() {
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = if (condition()) myActions else EMPTY_ARRAY
+}
+
+private class MyListenersMultimap(
+  private val textEditorWithPreview: TextEditorWithPreview,
+) {
+  private val map = HashMap<PropertyChangeListener, Pair<Int, DoublingEventListenerDelegate>>()
+
+  fun addListenerAndGetDelegate(listener: PropertyChangeListener): DoublingEventListenerDelegate {
+    val oldPair = map.get(listener)
+    if (oldPair == null) {
+      val v = DoublingEventListenerDelegate(listener, textEditorWithPreview)
+      map.put(listener, 1 to v)
+      return v
     }
     else {
-      return isVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
+      val v = oldPair.second
+      map.put(listener, oldPair.first + 1 to v)
+      return v
     }
   }
 
-  private static final class ConditionalActionGroup extends ActionGroup {
-    private final AnAction[] myActions;
-    private final Supplier<Boolean> myCondition;
-
-    ConditionalActionGroup(AnAction[] actions, Supplier<Boolean> condition) {
-      myActions = actions;
-      myCondition = condition;
+  fun removeListenerAndGetDelegate(listener: PropertyChangeListener): DoublingEventListenerDelegate? {
+    val oldPair = map.get(listener) ?: return null
+    if (oldPair.first == 1) {
+      map.remove(listener)
     }
-
-    @Override
-    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      return myCondition.get() ? myActions : EMPTY_ARRAY;
+    else {
+      map.put(listener, oldPair.first - 1 to oldPair.second)
     }
+    return oldPair.second
   }
+}
 
-  private @NotNull String getLayoutPropertyName() {
-    return name + "Layout";
-  }
-
-  @Override
-  public @Nullable VirtualFile getFile() {
-    return getTextEditor().getFile();
-  }
-
-  @Override
-  public @NotNull Editor getEditor() {
-    return getTextEditor().getEditor();
-  }
-
-  @Override
-  public boolean canNavigateTo(@NotNull Navigatable navigatable) {
-    return getTextEditor().canNavigateTo(navigatable);
-  }
-
-  @Override
-  public void navigateTo(@NotNull Navigatable navigatable) {
-    getTextEditor().navigateTo(navigatable);
-  }
-
-  protected void handleLayoutChange(boolean isVerticalSplit) {
-    if (this.isVerticalSplit == isVerticalSplit) return;
-    this.isVerticalSplit = isVerticalSplit;
-
-    toolbarWrapper.refresh();
-    mySplitter.setOrientation(this.isVerticalSplit);
-    component.repaint();
-  }
-
-  private static @Nullable Layout getLayoutForFile(@Nullable VirtualFile file) {
-    return file == null ? null : file.getUserData(DEFAULT_LAYOUT_FOR_FILE);
-  }
-
-  public static FileEditor @NotNull [] openPreviewForFile(@NotNull Project project, @NotNull VirtualFile file) {
-    file.putUserData(DEFAULT_LAYOUT_FOR_FILE, Layout.SHOW_PREVIEW);
-    return FileEditorManager.getInstance(project).openFile(file, true);
-  }
-
-  public static TextEditorWithPreview getParentSplitEditor(@Nullable FileEditor fileEditor) {
-    return fileEditor instanceof TextEditorWithPreview ? (TextEditorWithPreview)fileEditor : PARENT_SPLIT_EDITOR_KEY.get(fileEditor);
-  }
-
-  private static final class MyEditorLayeredComponentWrapper extends JBLayeredPane {
-    private final JComponent editorComponent;
-
-    static final int toolbarTopPadding = 25;
-    static final int toolbarRightPadding = 20;
-
-    private MyEditorLayeredComponentWrapper(JComponent component) {
-      editorComponent = component;
-    }
-
-    @Override
-    public void doLayout() {
-      final var components = getComponents();
-      final var bounds = getBounds();
-      for (Component component : components) {
-        if (component == editorComponent) {
-          component.setBounds(0, 0, bounds.width, bounds.height);
-        }
-        else {
-          final var preferredComponentSize = component.getPreferredSize();
-          var x = 0;
-          var y = 0;
-          if (component instanceof LayoutActionsFloatingToolbar) {
-            x = bounds.width - preferredComponentSize.width - toolbarRightPadding;
-            y = toolbarTopPadding;
-          }
-          component.setBounds(x, y, preferredComponentSize.width, preferredComponentSize.height);
-        }
-      }
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return editorComponent.getPreferredSize();
-    }
-  }
-
-  private final class MyMouseListener implements AWTEventListener {
-    private final LayoutActionsFloatingToolbar toolbar;
-    private final Alarm alarm;
-
-    MyMouseListener(LayoutActionsFloatingToolbar toolbar) {
-      this.toolbar = toolbar;
-      alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, toolbar);
-    }
-
-    @Override
-    public void eventDispatched(AWTEvent event) {
-      try {
-        var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
-        if (component.getMousePosition() != null) {
-          alarm.cancelAllRequests();
-          toolbar.scheduleShow();
-          if (isMouseOutsideToolbar) {
-            alarm.addRequest(() -> {
-              toolbar.scheduleHide();
-            }, 1400);
-          }
-        }
-        else if (isMouseOutsideToolbar) {
-          toolbar.scheduleHide();
-        }
-      } catch (NullPointerException ignore) { //EA-356093 problem inside OpenJDK
-      }
-    }
+private class DoublingEventListenerDelegate(
+  private val delegate: PropertyChangeListener,
+  private val textEditorWithPreview: TextEditorWithPreview,
+) : PropertyChangeListener {
+  override fun propertyChange(event: PropertyChangeEvent) {
+    delegate.propertyChange(PropertyChangeEvent(textEditorWithPreview, event.propertyName, event.oldValue, event.newValue))
   }
 }

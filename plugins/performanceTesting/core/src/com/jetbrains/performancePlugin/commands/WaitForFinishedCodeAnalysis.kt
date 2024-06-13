@@ -6,12 +6,10 @@ import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
@@ -42,7 +40,7 @@ private val FileEditor.description: String
 private fun Collection<FileEditor>.getWorthy(): List<TextEditor> =
   mapNotNull {
     if (it !is TextEditor || it.editor.editorKind != EditorKind.MAIN_EDITOR) null
-    else if (it is TextEditorWithPreview) it.textEditor
+    else if (it is TextEditorWithPreview) it.getTextEditor()
     else it
   }
 
@@ -240,10 +238,10 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  internal fun printCodeAnalyzerStatistis(editor: Editor) {
+  private fun printCodeAnalyzerStatistis(editor: Editor) {
     try {
       ReadAction.run<Throwable> {
-        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor.document).daemonCodeAnalyzerStatus.toString()}")
+        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor.document).daemonCodeAnalyzerStatus}")
       }
     }
     catch (throwable: Throwable) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.scratch.ui
 
@@ -64,8 +64,8 @@ class KtScratchFileEditorWithPreview private constructor(
 ) : TextEditorWithPreview(sourceTextEditor, previewTextEditor), TextEditor, ScratchEditorLinesTranslator {
 
     private val sourceEditor = sourceTextEditor.editor as EditorEx
-    private val previewEditor = previewTextEditor.editor as EditorEx
-    private val previewOutputManager: PreviewOutputBlocksManager = PreviewOutputBlocksManager(previewEditor)
+    private val _previewEditor = previewTextEditor.editor as EditorEx
+    private val previewOutputManager: PreviewOutputBlocksManager = PreviewOutputBlocksManager(_previewEditor)
 
     private val toolWindowHandler: ScratchOutputHandler = requestToolWindowHandler()
     private val inlayScratchOutputHandler = InlayScratchOutputHandler(sourceTextEditor, toolWindowHandler)
@@ -77,7 +77,7 @@ class KtScratchFileEditorWithPreview private constructor(
     private val commonPreviewOutputHandler = LayoutDependantOutputHandler(
         noPreviewOutputHandler = inlayScratchOutputHandler,
         previewOutputHandler = previewEditorScratchOutputHandler,
-        layoutProvider = ::getLayout
+        layoutProvider = { getLayout()!! }
     )
 
     private val scratchTopPanel = ScratchTopPanel(scratchFile)
@@ -90,7 +90,7 @@ class KtScratchFileEditorWithPreview private constructor(
         scratchFile.replScratchExecutor?.addOutputHandler(commonPreviewOutputHandler)
 
         configureSyncScrollForSourceAndPreview()
-        configureSyncHighlighting(sourceEditor, previewEditor, translator = this)
+        configureSyncHighlighting(sourceEditor, _previewEditor, translator = this)
 
         ScratchFileAutoRunner.addListener(scratchFile.project, sourceTextEditor)
     }
@@ -125,17 +125,17 @@ class KtScratchFileEditorWithPreview private constructor(
                     if (!helper.process(fromSource, fromPreview)) return
                 }
 
-                helper.process(sourceEditor.document.lineCount, previewEditor.document.lineCount)
+                helper.process(sourceEditor.document.lineCount, _previewEditor.document.lineCount)
             }
 
             override fun isSyncScrollEnabled(): Boolean = true
         }
 
-        val scrollSupport = TwosideSyncScrollSupport(listOf(sourceEditor, previewEditor), scrollable)
+        val scrollSupport = TwosideSyncScrollSupport(listOf(sourceEditor, _previewEditor), scrollable)
         val listener = VisibleAreaListener { e -> scrollSupport.visibleAreaChanged(e) }
 
         sourceEditor.scrollingModel.addVisibleAreaListener(listener)
-        previewEditor.scrollingModel.addVisibleAreaListener(listener)
+        _previewEditor.scrollingModel.addVisibleAreaListener(listener)
     }
 
     override fun dispose() {
@@ -165,7 +165,8 @@ class KtScratchFileEditorWithPreview private constructor(
         commonPreviewOutputHandler.clear(scratchFile)
     }
 
-    override fun isShowActionsInTabs(): Boolean = false
+    override val isShowActionsInTabs: Boolean
+        get() = false
 
     override fun createViewActionGroup(): ActionGroup {
         return DefaultActionGroup(showEditorAction, showEditorAndPreviewAction)
@@ -178,15 +179,22 @@ class KtScratchFileEditorWithPreview private constructor(
      *
      * That's why we set long and descriptive [Presentation.getText], but short [Presentation.getDescription].
      */
-    override fun getShowEditorAction(): ToggleAction = super.getShowEditorAction().apply {
-        templatePresentation.text = KotlinJvmBundle.message("scratch.inlay.output.mode.title")
-        templatePresentation.description = KotlinJvmBundle.message("scratch.inlay.output.mode.description")
-    }
 
-    override fun getShowEditorAndPreviewAction(): ToggleAction = super.getShowEditorAndPreviewAction().apply {
-        templatePresentation.text = KotlinJvmBundle.message("scratch.side.panel.output.mode.title")
-        templatePresentation.description = KotlinJvmBundle.message("scratch.side.panel.output.mode.description")
-    }
+    override val showEditorAction: ToggleAction
+        get() {
+            return super.showEditorAction.apply {
+                templatePresentation.text = KotlinJvmBundle.message("scratch.inlay.output.mode.title")
+                templatePresentation.description = KotlinJvmBundle.message("scratch.inlay.output.mode.description")
+            }
+        }
+
+    override val showEditorAndPreviewAction: ToggleAction
+        get() {
+            return super.showEditorAndPreviewAction.apply {
+                templatePresentation.text = KotlinJvmBundle.message("scratch.side.panel.output.mode.title")
+                templatePresentation.description = KotlinJvmBundle.message("scratch.side.panel.output.mode.description")
+            }
+        }
 
     override fun onLayoutChange(oldValue: Layout?, newValue: Layout?) {
         when {
@@ -196,7 +204,7 @@ class KtScratchFileEditorWithPreview private constructor(
 
     @TestOnly
     fun setPreviewEnabled(isPreviewEnabled: Boolean) {
-        layout = if (isPreviewEnabled) Layout.SHOW_EDITOR_AND_PREVIEW else Layout.SHOW_EDITOR
+        setLayout(if (isPreviewEnabled) Layout.SHOW_EDITOR_AND_PREVIEW else Layout.SHOW_EDITOR)
     }
 
     companion object {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
-  private boolean myAutoScrollPreview;
+  private boolean autoScrollPreview;
 
   public MarkdownEditorWithPreview(@NotNull TextEditor editor, @NotNull MarkdownPreviewFileEditor preview) {
     super(
@@ -36,7 +36,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
 
     final var project = ProjectUtil.currentOrDefaultProject(editor.getEditor().getProject());
     final var settings = MarkdownSettings.getInstance(project);
-    myAutoScrollPreview = settings.isAutoScrollEnabled();
+    autoScrollPreview = settings.isAutoScrollEnabled();
 
     final var settingsChangedListener = new MarkdownSettings.ChangeListener() {
       private boolean wasVerticalSplitBefore = settings.isVerticalSplit();
@@ -78,11 +78,11 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   }
 
   public boolean isAutoScrollPreview() {
-    return myAutoScrollPreview;
+    return autoScrollPreview;
   }
 
   public void setAutoScrollPreview(boolean autoScrollPreview) {
-    myAutoScrollPreview = autoScrollPreview;
+    this.autoScrollPreview = autoScrollPreview;
   }
 
   @Override
@@ -90,7 +90,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
     super.setLayout(layout);
   }
 
-  private class MyVisibleAreaListener implements VisibleAreaListener {
+  private final class MyVisibleAreaListener implements VisibleAreaListener {
     private int previousLine = 0;
 
     @Override
@@ -98,14 +98,16 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
       if (!isAutoScrollPreview()) {
         return;
       }
+
       final Editor editor = event.getEditor();
       int y = editor.getScrollingModel().getVerticalScrollOffset();
       int currentLine = editor instanceof EditorImpl ? editor.yToVisualLine(y) : y / editor.getLineHeight();
       if (currentLine == previousLine) {
         return;
       }
+
       previousLine = currentLine;
-      ((MarkdownPreviewFileEditor)getPreviewEditor()).scrollToSrcOffset(EditorUtil.getVisualLineEndOffset(editor, currentLine));
+      ((MarkdownPreviewFileEditor)myPreview).scrollToSrcOffset(EditorUtil.getVisualLineEndOffset(editor, currentLine));
     }
   }
 }
