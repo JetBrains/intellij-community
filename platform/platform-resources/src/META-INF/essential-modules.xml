@@ -9,7 +9,7 @@
     <module name="intellij.platform.navbar.compatibility"/>
     <module name="intellij.platform.navbar.backend.compatibility"/>
     <module name="intellij.platform.navbar.frontend.compatibility"/>
-    <module name="intellij.platform.navbar.monolith.compatibility"/>
+    <module name="intellij.platform.navbar.monolith"/>
     <module name="intellij.platform.clouds"/>
     <module name="intellij.platform.execution.dashboard"/>
     <module name="intellij.platform.execution.serviceView"/>
