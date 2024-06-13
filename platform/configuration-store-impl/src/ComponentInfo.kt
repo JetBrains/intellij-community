@@ -125,16 +125,18 @@ private class ComponentWithModificationTrackerInfo(
 }
 
 internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
-  if (roamingType != RoamingType.DISABLED &&
-      (collapsedPath == StoragePathMacros.WORKSPACE_FILE ||
-       collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE ||
-       isSpecialStorage(collapsedPath))) {
+  if (isSpecialOrNonRoamableStorage(collapsedPath)) {
     return RoamingType.DISABLED
   }
   else {
     return roamingType
   }
 }
+
+internal fun isSpecialOrNonRoamableStorage(collapsedPath: String): Boolean =
+  collapsedPath == StoragePathMacros.WORKSPACE_FILE ||
+  collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE ||
+  isSpecialStorage(collapsedPath)
 
 internal fun isSpecialStorage(collapsedPath: String): Boolean {
   return collapsedPath == StoragePathMacros.CACHE_FILE || collapsedPath == StoragePathMacros.PRODUCT_WORKSPACE_FILE

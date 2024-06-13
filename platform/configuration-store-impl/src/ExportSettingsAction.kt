@@ -233,6 +233,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
     for (storage in storages) {
       val isRoamable = getEffectiveRoamingType(storage.roamingType, storage.path).isRoamable
       val exportable = isStorageExportable(storage, isRoamable, withExportable)
+                       || (stateAnnotation.exportable && !isSpecialOrNonRoamableStorage(storage.path))
       LOG.debug("Storage for class ${aClass.simpleName} is ${stringify(isRoamable, "roamable")}, ${stringify(exportable, "exportable")}: $storage")
       if (exportable) {
         thereIsExportableStorage = true
