@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
@@ -29,7 +28,7 @@ import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 internal class GradleProjectTestFixtureImpl private constructor(
   override val projectName: String,
   override val gradleVersion: GradleVersion,
-  private val sdkFixture: SdkTestFixture,
+  private val gradleJvmFixture: GradleJvmTestFixture,
   override val fileFixture: FileTestFixture
 ) : GradleProjectTestFixture {
 
@@ -67,7 +66,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
     _testDisposable = Disposer.newDisposable()
 
     WorkspaceModelCacheImpl.forceEnableCaching(testDisposable)
-    sdkFixture.setUp()
+    gradleJvmFixture.setUp()
     fileFixture.setUp()
 
     installGradleProjectReloadWatcher()
@@ -83,7 +82,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
       { runBlocking { _project?.closeProjectAsync() } },
       { _testDisposable?.let { Disposer.dispose(it) } },
       { fileFixture.tearDown() },
-      { sdkFixture.tearDown() }
+      { gradleJvmFixture.tearDown() }
     )
   }
 

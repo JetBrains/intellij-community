@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.utils.vfs.getDirectory
@@ -38,7 +37,7 @@ class GradleTestFixtureImpl(
 
   private lateinit var testDisposable: Disposable
 
-  private lateinit var sdkFixture: SdkTestFixture
+  private lateinit var gradleJvmFixture: GradleJvmTestFixture
   private lateinit var fileFixture: TempDirTestFixture
 
   override lateinit var testRoot: VirtualFile
@@ -51,9 +50,9 @@ class GradleTestFixtureImpl(
 
     testDisposable = Disposer.newDisposable()
 
-    sdkFixture = GradleJvmTestFixture(gradleVersion, JavaVersionRestriction.NO)
-    sdkFixture.setUp()
-    gradleJvm = sdkFixture.getSdk().name
+    gradleJvmFixture = GradleJvmTestFixture(gradleVersion, JavaVersionRestriction.NO)
+    gradleJvmFixture.setUp()
+    gradleJvm = gradleJvmFixture.gradleJvm
 
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     fileFixture.setUp()
@@ -69,7 +68,7 @@ class GradleTestFixtureImpl(
   override fun tearDown() {
     runAll(
       { fileFixture.tearDown() },
-      { sdkFixture.tearDown() },
+      { gradleJvmFixture.tearDown() },
       { Disposer.dispose(testDisposable) },
       { reloadLeakTracker.tearDown() }
     )
