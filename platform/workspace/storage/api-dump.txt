@@ -80,9 +80,6 @@
 - *sf:Companion:com.intellij.platform.workspace.storage.ImmutableEntityStorage$Companion
 *f:com.intellij.platform.workspace.storage.ImmutableEntityStorage$Companion
 - f:empty():com.intellij.platform.workspace.storage.ImmutableEntityStorage
-*f:com.intellij.platform.workspace.storage.MetadataStorageImpl
-- com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
-- sf:INSTANCE:com.intellij.platform.workspace.storage.MetadataStorageImpl
 *:com.intellij.platform.workspace.storage.MutableEntityStorage
 - com.intellij.platform.workspace.storage.EntityStorage
 - *sf:Companion:com.intellij.platform.workspace.storage.MutableEntityStorage$Companion

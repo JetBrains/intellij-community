@@ -1051,9 +1051,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryStateSnapshot
 - f:isJarDirectory(java.lang.String,com.intellij.openapi.roots.OrderRootType):Z
 - f:isValid(java.lang.String,com.intellij.openapi.roots.OrderRootType):Z
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryStateSnapshot$Companion
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.MetadataStorageImpl
-- com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
-- sf:INSTANCE:com.intellij.workspaceModel.ide.impl.legacyBridge.library.MetadataStorageImpl
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.roots.libraries.LibraryTable
