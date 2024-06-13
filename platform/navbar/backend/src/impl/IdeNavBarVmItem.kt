@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.navbar.backend.compatibility
+package com.intellij.platform.navbar.backend.impl
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
@@ -7,7 +7,6 @@ import com.intellij.platform.navbar.NavBarItemExpandResult
 import com.intellij.platform.navbar.NavBarItemPresentationData
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.backend.NavBarItem
-import com.intellij.platform.navbar.backend.impl.children
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 

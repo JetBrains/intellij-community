@@ -671,7 +671,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/main/intellij.platform.monolith.main/intellij.platform.monolith.main.iml" filepath="$PROJECT_DIR$/platform/main/intellij.platform.monolith.main/intellij.platform.monolith.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/shared/intellij.platform.navbar.iml" filepath="$PROJECT_DIR$/platform/navbar/shared/intellij.platform.navbar.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/backend/intellij.platform.navbar.backend.iml" filepath="$PROJECT_DIR$/platform/navbar/backend/intellij.platform.navbar.backend.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/navbar/backend/compatibility/intellij.platform.navbar.backend.compatibility.iml" filepath="$PROJECT_DIR$/platform/navbar/backend/compatibility/intellij.platform.navbar.backend.compatibility.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/shared/compatibility/intellij.platform.navbar.compatibility.iml" filepath="$PROJECT_DIR$/platform/navbar/shared/compatibility/intellij.platform.navbar.compatibility.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/frontend/intellij.platform.navbar.frontend.iml" filepath="$PROJECT_DIR$/platform/navbar/frontend/intellij.platform.navbar.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/frontend/compatibility/intellij.platform.navbar.frontend.compatibility.iml" filepath="$PROJECT_DIR$/platform/navbar/frontend/compatibility/intellij.platform.navbar.frontend.compatibility.iml" />

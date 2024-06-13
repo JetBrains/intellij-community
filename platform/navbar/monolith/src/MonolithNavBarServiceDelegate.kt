@@ -8,11 +8,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.backend.NavBarItem
-import com.intellij.platform.navbar.backend.compatibility.IdeNavBarVmItem
-import com.intellij.platform.navbar.backend.compatibility.ProjectNavBarItem
-import com.intellij.platform.navbar.backend.compatibility.fireOnFileChanges
-import com.intellij.platform.navbar.backend.compatibility.toVmItems
-import com.intellij.platform.navbar.backend.impl.pathToItem
+import com.intellij.platform.navbar.backend.impl.*
 import com.intellij.platform.navbar.frontend.NavBarServiceDelegate
 import com.intellij.platform.navbar.frontend.fireOnIdeActivity
 import kotlinx.coroutines.Dispatchers
