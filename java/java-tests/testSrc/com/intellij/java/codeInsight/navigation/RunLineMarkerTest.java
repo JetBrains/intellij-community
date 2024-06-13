@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Location;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -35,6 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static junit.framework.TestCase.assertSame;
 
 /**
  * @author Dmitry Avdeev
@@ -249,5 +252,39 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     ConfigurationContext sharedContext = DataManager.getInstance().loadFromDataContext(dataContext, ConfigurationContext.SHARED_CONTEXT);
     PsiElement locationElement = sharedContext.getLocation().getPsiElement();
     assertEquals("main", locationElement.getText());
+  }
+
+  public void testLineMarkerActionWrapper() {
+    myFixture.configureByText("Main.java", """
+      public class Main {
+          public static void ma<caret>in(String[] args) {}
+      }""");
+    PsiElement element = ((PsiMethod)myFixture.getElementAtCaret()).getNameIdentifier();
+    Ref<Boolean> updated = Ref.create();
+    Ref<Boolean> performed = Ref.create();
+    Ref<ConfigurationContext> context = Ref.create();
+    LineMarkerActionWrapper wrapper = new LineMarkerActionWrapper(element, new AnAction() {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        Location<?> location = e.getData(Location.DATA_KEY);
+        assertSame(element, location.getPsiElement());
+        context.set(ConfigurationContext.getFromContext(e.getDataContext(), e.getPlace()));
+        updated.set(true);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        Location<?> location = e.getData(Location.DATA_KEY);
+        assertSame(element, location.getPsiElement());
+        assertSame(context.get(), ConfigurationContext.getFromContext(e.getDataContext(), e.getPlace()));
+        performed.set(true);
+      }
+    });
+    DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
+    wrapper.update(TestActionEvent.createTestEvent(dataContext));
+    assertTrue(updated.get());
+
+    wrapper.actionPerformed(TestActionEvent.createTestEvent(dataContext));
+    assertTrue(performed.get());
   }
 }
