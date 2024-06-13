@@ -26764,6 +26764,7 @@ c:com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - p:shouldSelectAll():Z
 - p:startsOnTheSameElement(com.intellij.refactoring.RefactoringActionHandler,com.intellij.psi.PsiElement):Z
 - p:stopDumbLaterIfPossible():V
+- pf:tryRollback():V
 *:com.intellij.refactoring.rename.inplace.VirtualTemplateElement
 - *sf:Companion:com.intellij.refactoring.rename.inplace.VirtualTemplateElement$Companion
 - s:findInTemplate(com.intellij.codeInsight.template.impl.TemplateState):com.intellij.refactoring.rename.inplace.VirtualTemplateElement

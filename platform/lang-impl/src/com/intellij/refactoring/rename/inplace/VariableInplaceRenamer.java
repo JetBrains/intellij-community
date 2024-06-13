@@ -380,7 +380,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
-  final void tryRollback() {
+  protected final void tryRollback() {
     if (myRevertCommand == null) return;
     Document document = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getDocument();
     PsiFile psiFile = Objects.requireNonNull(PsiDocumentManager.getInstance(myProject).getPsiFile(document));
