@@ -11847,8 +11847,10 @@ c:com.intellij.openapi.actionSystem.SplitButtonAction
 - <init>(com.intellij.openapi.actionSystem.ActionGroup):V
 - createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
 - getActionGroup():com.intellij.openapi.actionSystem.ActionGroup
+- p:isGroupPresentationDependsOnSelectedAction():Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 - updateCustomComponent(javax.swing.JComponent,com.intellij.openapi.actionSystem.Presentation):V
+- p:useDynamicSplitButton():Z
 a:com.intellij.openapi.actionSystem.ex.ActionButtonLook
 - sf:INPLACE_LOOK:com.intellij.openapi.actionSystem.ex.ActionButtonLook
 - sf:SYSTEM_LOOK:com.intellij.openapi.actionSystem.ex.ActionButtonLook
