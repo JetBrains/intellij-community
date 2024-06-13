@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.base.codeInsight.compiler
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
-import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KtCompilerFacilityMixIn
 import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
@@ -30,7 +29,7 @@ fun KtCompilerFacilityMixIn.compileToDirectory(
     target: KtCompilerTarget,
     allowedErrorFilter: (KtDiagnostic) -> Boolean,
     destination: File
-): KtCompilationResult {
+): KaCompilationResult {
     val result = compile(file, configuration, target, allowedErrorFilter)
     if (result is KaCompilationResult.Success) {
         for (outputFile in result.output) {
@@ -49,7 +48,7 @@ fun KtCompilerFacilityMixIn.compileToJar(
     target: KtCompilerTarget,
     allowedErrorFilter: (KtDiagnostic) -> Boolean,
     destination: File
-): KtCompilationResult {
+): KaCompilationResult {
     val result = compile(file, configuration, target, allowedErrorFilter)
     if (result is KaCompilationResult.Success) {
         destination.outputStream().buffered().use { os ->
