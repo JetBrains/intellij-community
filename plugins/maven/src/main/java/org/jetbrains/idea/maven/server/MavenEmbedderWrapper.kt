@@ -21,7 +21,6 @@ import org.jetbrains.idea.maven.telemetry.getCurrentTelemetryIds
 import org.jetbrains.idea.maven.telemetry.scheduleExportTelemetryTrace
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
 import java.io.Serializable
@@ -93,20 +92,17 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return results
   }
 
-  @Throws(MavenProcessCanceledException::class)
   fun evaluateEffectivePom(file: VirtualFile, activeProfiles: Collection<String>, inactiveProfiles: Collection<String>): String? {
     return runBlockingMaybeCancellable {
       evaluateEffectivePom(File(file.getPath()), ArrayList(activeProfiles), ArrayList(inactiveProfiles))
     }
   }
 
-  @Throws(MavenProcessCanceledException::class)
   suspend fun evaluateEffectivePom(file: File, activeProfiles: Collection<String>, inactiveProfiles: Collection<String>): String? {
     return getOrCreateWrappee().evaluateEffectivePom(file, ArrayList(activeProfiles), ArrayList(inactiveProfiles), ourToken)
   }
 
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifacts()}")
-  @Throws(MavenProcessCanceledException::class)
   fun resolve(info: MavenArtifactInfo, remoteRepositories: List<MavenRemoteRepository>): MavenArtifact {
     val requests = listOf(MavenArtifactResolutionRequest(info, ArrayList(remoteRepositories)))
     return runBlockingMaybeCancellable { resolveArtifacts(requests, null, MavenLogEventHandler)[0] }
@@ -114,7 +110,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifacts(requests, indicator, syncConsole)}",
               ReplaceWith("resolveArtifacts(requests, indicator, syncConsole)"))
-  @Throws(MavenProcessCanceledException::class)
   fun resolveArtifacts(requests: Collection<MavenArtifactResolutionRequest>,
                        indicator: ProgressIndicator?,
                        syncConsole: MavenSyncConsole?,
@@ -122,7 +117,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return runBlockingMaybeCancellable { resolveArtifacts(requests, null, syncConsole ?: MavenLogEventHandler) }
   }
 
-  @Throws(MavenProcessCanceledException::class)
   suspend fun resolveArtifacts(requests: Collection<MavenArtifactResolutionRequest>,
                                progressReporter: RawProgressReporter?,
                                eventHandler: MavenEventHandler): List<MavenArtifact> {
@@ -132,7 +126,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifactsTransitively()}")
-  @Throws(MavenProcessCanceledException::class)
   fun resolveArtifactTransitively(artifacts: List<MavenArtifactInfo>,
                                   remoteRepositories: List<MavenRemoteRepository>): MavenArtifactResolveResult {
     return runBlockingMaybeCancellable {
@@ -145,7 +138,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
   }
 
-  @Throws(MavenProcessCanceledException::class)
   suspend fun resolvePlugins(mavenPluginRequests: Collection<Pair<MavenId, NativeMavenProjectHolder>>,
                              progressReporter: RawProgressReporter?,
                              eventHandler: MavenEventHandler,
@@ -169,7 +161,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       progressReporter, eventHandler)
   }
 
-  @Throws(MavenProcessCanceledException::class)
   fun resolvePlugin(plugin: MavenPlugin,
                     nativeMavenProject: NativeMavenProjectHolder,
                     forceUpdateSnapshots: Boolean): Collection<MavenArtifact> {
@@ -180,13 +171,11 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     }
   }
 
-  @Throws(MavenProcessCanceledException::class)
   suspend fun readModel(file: File?): MavenModel? {
     return getOrCreateWrappee().readModel(file, ourToken)
   }
 
   @Deprecated("use suspend method")
-  @Throws(MavenProcessCanceledException::class)
   fun executeGoal(requests: Collection<MavenGoalExecutionRequest>,
                   goal: String,
                   progressIndicator: MavenProgressIndicator?,
@@ -199,7 +188,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return runBlockingMaybeCancellable { executeGoal(requests, goal, progressReporter, console) }
   }
 
-  @Throws(MavenProcessCanceledException::class)
   suspend fun executeGoal(requests: Collection<MavenGoalExecutionRequest>,
                           goal: String,
                           progressReporter: RawProgressReporter,
@@ -273,7 +261,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
             }
             catch (e: Throwable) {
               if (isActive) {
-                throw e;
+                throw e
               }
             }
           }
