@@ -34,15 +34,10 @@ interface AsyncFileEditorProvider : FileEditorProvider, DumbAware {
     document: Document?,
     editorCoroutineScope: CoroutineScope,
   ): FileEditor {
-    val builder = createEditorBuilder(project = project, file = file, document = document)
+    val builder = readAction { createEditorAsync(project = project, file = file) }
     return withContext(Dispatchers.EDT) {
       builder.build()
     }
-  }
-
-  @Experimental
-  suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): Builder {
-    return readAction { createEditorAsync(project, file) }
   }
 
   abstract class Builder {

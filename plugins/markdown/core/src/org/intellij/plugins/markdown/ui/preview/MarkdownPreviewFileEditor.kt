@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
@@ -31,6 +31,7 @@ import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil.generateMarkdownHtml
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -39,9 +40,12 @@ import java.lang.ref.WeakReference
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class MarkdownPreviewFileEditor(private val project: Project, private val file: VirtualFile) : UserDataHolder by UserDataHolderBase(), FileEditor {
-  private val document = checkNotNull(FileDocumentManager.getInstance().getDocument(file))
-
+@Internal
+class MarkdownPreviewFileEditor(
+  private val project: Project,
+  private val file: VirtualFile,
+  private val document: Document,
+) : UserDataHolder by UserDataHolderBase(), FileEditor {
   private val htmlPanelWrapper: JPanel = JPanel(BorderLayout()).apply { addComponentListener(AttachPanelOnVisibilityChangeListener()) }
   private var panel: MarkdownHtmlPanel? = null
   var lastPanelProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo? = null
