@@ -47,32 +47,38 @@ enum class ActionRemoteBehavior {
 @ApiStatus.Internal
 @ApiStatus.Experimental
 interface ActionRemoteBehaviorSpecification {
+  fun getBehavior(useDeclaredBehaviour: Boolean = false): ActionRemoteBehavior = getBehavior()
   fun getBehavior(): ActionRemoteBehavior
 
   interface Frontend : ActionRemoteBehaviorSpecification {
-    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendOnly
+    override fun getBehavior(useDeclaredBehaviour: Boolean): ActionRemoteBehavior = ActionRemoteBehavior.FrontendOnly
+    override fun getBehavior(): ActionRemoteBehavior = getBehavior(useDeclaredBehaviour = false)
   }
 
   interface FrontendThenBackend : ActionRemoteBehaviorSpecification {
-    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
+    override fun getBehavior(useDeclaredBehaviour: Boolean): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
+    override fun getBehavior(): ActionRemoteBehavior = getBehavior(useDeclaredBehaviour = false)
   }
 
   interface BackendOnly : ActionRemoteBehaviorSpecification {
-    override fun getBehavior(): ActionRemoteBehavior {
-      if (PlatformUtils.isRider() || PlatformUtils.isCLion()) return ActionRemoteBehavior.FrontendThenBackend
+    override fun getBehavior(useDeclaredBehaviour: Boolean): ActionRemoteBehavior {
+      if (!useDeclaredBehaviour && (PlatformUtils.isRider() || PlatformUtils.isCLion())) return ActionRemoteBehavior.FrontendThenBackend
       return ActionRemoteBehavior.BackendOnly
     }
+    override fun getBehavior(): ActionRemoteBehavior = getBehavior(useDeclaredBehaviour = false)
   }
 
   interface Duplicated : ActionRemoteBehaviorSpecification {
-    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.Duplicated
+    override fun getBehavior(useDeclaredBehaviour: Boolean): ActionRemoteBehavior = ActionRemoteBehavior.Duplicated
+    override fun getBehavior(): ActionRemoteBehavior = getBehavior(useDeclaredBehaviour = false)
   }
 
   interface Disabled : ActionRemoteBehaviorSpecification {
-    override fun getBehavior(): ActionRemoteBehavior {
-      if (PlatformUtils.isRider() || PlatformUtils.isCLion()) return ActionRemoteBehavior.FrontendThenBackend
+    override fun getBehavior(useDeclaredBehaviour: Boolean): ActionRemoteBehavior {
+      if (!useDeclaredBehaviour && (PlatformUtils.isRider() || PlatformUtils.isCLion())) return ActionRemoteBehavior.FrontendThenBackend
       return ActionRemoteBehavior.Disabled
     }
+    override fun getBehavior(): ActionRemoteBehavior = getBehavior(useDeclaredBehaviour = false)
   }
 }
 

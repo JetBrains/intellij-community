@@ -10,7 +10,6 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -54,7 +53,7 @@ import static java.util.Objects.requireNonNullElseGet;
  *
  * @see ShowFilePathAction
  */
-public class RevealFileAction extends DumbAwareAction implements LightEditCompatible, ActionRemoteBehaviorSpecification {
+public class RevealFileAction extends DumbAwareAction implements LightEditCompatible, ActionRemoteBehaviorSpecification.Disabled {
   private static final Logger LOG = Logger.getInstance(RevealFileAction.class);
 
   public static final NotificationListener FILE_SELECTING_LISTENER = new NotificationListener.Adapter() {
@@ -101,12 +100,6 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     if (file != null) {
       openFile(file.toNioPath());
     }
-  }
-
-  @NotNull
-  @Override
-  public ActionRemoteBehavior getBehavior() {
-    return ActionRemoteBehavior.Disabled;
   }
 
   private static @Nullable VirtualFile getFile(AnActionEvent e) {

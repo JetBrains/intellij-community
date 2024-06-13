@@ -41,7 +41,6 @@ com/intellij/internal/statistic/eventLog/events/VarargEventId
 com/intellij/internal/statistic/utils/PluginInfo
 com/intellij/openapi/actionSystem/ex/ActionRuntimeRegistrar
 com/intellij/openapi/actionSystem/impl/SuspendingUpdateSession
-com/intellij/openapi/actionSystem/remoting/ActionRemoteBehavior
 com/intellij/openapi/application/ConfigImportProgressDialog$ProgressIndicatorAdapter
 com/intellij/openapi/application/constraints/ConstrainedExecutionScheduler
 com/intellij/openapi/application/impl/ApplicationImpl

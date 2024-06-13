@@ -4888,7 +4888,6 @@ f:com.intellij.ide.actions.RecentProjectsGroup
 - com.intellij.openapi.project.DumbAware
 - <init>():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getBehavior():com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
 - s:removeCurrentProject(com.intellij.openapi.project.Project,java.util.List):com.intellij.openapi.actionSystem.AnAction[]
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -4990,7 +4989,6 @@ c:com.intellij.ide.actions.RevealFileAction
 - s:getActionName():java.lang.String
 - s:getActionName(java.lang.String):java.lang.String
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getBehavior():com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 - s:getFileManagerName():java.lang.String
 - s:getFileManagerName(Z):java.lang.String
 - s:isSupported():Z
