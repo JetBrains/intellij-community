@@ -292,13 +292,9 @@ c:com.intellij.remote.RemoteSdkCredentialsHolder
 - setSdkId(java.lang.String):V
 - setValid(Z):V
 com.intellij.remote.RemoteSdkCredentialsProducer
-- a:getRemoteSdkCredentials():com.intellij.remote.RemoteSdkCredentials
 - a:getRemoteSdkCredentials(com.intellij.openapi.project.Project,Z):com.intellij.remote.RemoteSdkCredentials
-- a:getRemoteSdkCredentials(Z):com.intellij.remote.RemoteSdkCredentials
 - a:getRemoteSdkDataKey():java.lang.Object
-- a:produceRemoteSdkCredentials(com.intellij.openapi.project.Project,Z,com.intellij.util.Consumer):V
-- a:produceRemoteSdkCredentials(com.intellij.util.Consumer):V
-- a:produceRemoteSdkCredentials(Z,com.intellij.util.Consumer):V
+- a:produceRemoteSdkCredentials(com.intellij.openapi.project.Project,Z,java.util.function.Consumer):V
 c:com.intellij.remote.RemoteSdkException
 - com.intellij.execution.ExecutionExceptionWithAttachments
 - <init>(java.lang.String):V
