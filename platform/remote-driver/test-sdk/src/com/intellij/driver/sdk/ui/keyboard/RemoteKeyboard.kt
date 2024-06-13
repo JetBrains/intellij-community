@@ -42,9 +42,7 @@ class RemoteKeyboard(private val robot: Robot) {
 
   fun doublePressing(key: Int, doWhilePress: RemoteKeyboard.() -> Unit) {
     try {
-      robot.pressKey(key)
-      robot.releaseKey(key)
-      robot.pressKey(key)
+      robot.doublePressKeyAndHold(key)
       this.doWhilePress()
     } finally {
       robot.releaseKey(key)

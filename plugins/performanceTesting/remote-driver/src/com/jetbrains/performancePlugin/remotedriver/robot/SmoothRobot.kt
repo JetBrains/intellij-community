@@ -261,6 +261,13 @@ internal class SmoothRobot : Robot {
     fastRobot.keyRelease(p0)
   }
 
+  fun doublePressKeyAndHold(key: Int) {
+    fastRobot.keyPress(key)
+    fastRobot.keyRelease(key)
+    Thread.sleep(10)
+    fastRobot.keyPress(key)
+  }
+
   override fun settings(): Settings = basicRobot.settings()
 
   override fun enterText(text: String) {
