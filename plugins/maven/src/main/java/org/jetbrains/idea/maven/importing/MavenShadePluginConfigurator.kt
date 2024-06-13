@@ -17,6 +17,7 @@ import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
@@ -47,7 +48,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
 
     if (shadeProjectsWithModules.isEmpty()) return
 
-    val shadedMavenProjectsToBuildUberJar = mutableSetOf<MavenProject>()
+    val shadedMavenProjectsToBuildUberJar = mutableMapOf<MavenProject, String>()
 
     val shadeModuleIdToMavenProject = HashMap<ModuleId, MavenProject>()
     for (shadeProjectWithModules in shadeProjectsWithModules) {
@@ -63,8 +64,9 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
         val dependencyModuleId = dependency.module
         if (shadeModuleIds.contains(dependencyModuleId)) {
           val mavenProject = shadeModuleIdToMavenProject[dependencyModuleId]!!
-          addJarDependency(context.storage, context.project, module, mavenProject)
-          shadedMavenProjectsToBuildUberJar.add(mavenProject)
+          val uberJarPath = getUberJarPath(mavenProject)
+          addJarDependency(context.storage, context.project, module, mavenProject.mavenId, uberJarPath)
+          shadedMavenProjectsToBuildUberJar[mavenProject] = uberJarPath
         }
       }
     }
@@ -72,17 +74,21 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
     context.putUserDataIfAbsent(SHADED_MAVEN_PROJECTS, shadedMavenProjectsToBuildUberJar)
   }
 
+  private fun getUberJarPath(mavenProject: MavenProject): String {
+    val mavenId = mavenProject.mavenId
+    val fileName = "${mavenId.artifactId}-${mavenId.version}.jar"
+    return Path.of(mavenProject.buildDirectory, fileName).pathString
+  }
+
   private fun addJarDependency(builder: MutableEntityStorage,
                                project: Project,
                                module: ModuleEntity,
-                               dependencyMavenProject: MavenProject) {
-    val libraryName = "Maven Shade: ${dependencyMavenProject.mavenId.displayString}"
+                               dependencyMavenId: MavenId,
+                               dependencyJarPath: String) {
+    val libraryName = "Maven Shade: ${dependencyMavenId.displayString}"
     val libraryId = LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId)
 
-    val mavenId = dependencyMavenProject.mavenId
-    val fileName = "${mavenId.artifactId}-${mavenId.version}.jar"
-    val jarPath = Path.of(dependencyMavenProject.buildDirectory, fileName).pathString
-    val jarUrl = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl("jar://$jarPath!/")
+    val jarUrl = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl("jar://$dependencyJarPath!/")
 
     addLibraryEntity(
       builder,
@@ -114,13 +120,13 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
   }
 }
 
-private val SHADED_MAVEN_PROJECTS = Key.create<Set<MavenProject>>("SHADED_MAVEN_PROJECTS")
+private val SHADED_MAVEN_PROJECTS = Key.create<Map<MavenProject, String>>("SHADED_MAVEN_PROJECTS")
 
 internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurator {
   override fun afterImport(context: MavenAfterImportConfigurator.Context) {
     if (!Registry.`is`("maven.shade.plugin.generate.uber.jar")) return
 
-    val shadedMavenProjects = context.getUserData(SHADED_MAVEN_PROJECTS)
+    val shadedMavenProjects = context.getUserData(SHADED_MAVEN_PROJECTS)?.keys
     if (shadedMavenProjects.isNullOrEmpty()) return
 
     val project = context.project
