@@ -118,7 +118,6 @@ private class ValuesCache {
   }
 }
 
-@ApiStatus.Internal
 public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityStorage) : VersionedEntityStorage {
   private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
   private val valuesCache: ValuesCache
@@ -155,7 +154,6 @@ public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityS
   }
 }
 
-@ApiStatus.Internal
 public class VersionedEntityStorageOnSnapshot(private val storage: ImmutableEntityStorage) : VersionedEntityStorage {
   private val valuesCache = ValuesCache()
 
@@ -178,7 +176,6 @@ public class VersionedEntityStorageOnSnapshot(private val storage: ImmutableEnti
     valuesCache.clearCachedValue(value, parameter)
 }
 
-@ApiStatus.Internal
 public class DummyVersionedEntityStorage(private val builder: MutableEntityStorage) : VersionedEntityStorage {
   @OptIn(EntityStorageInstrumentationApi::class)
   override val version: Long
@@ -196,7 +193,6 @@ public class DummyVersionedEntityStorage(private val builder: MutableEntityStora
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {}
 }
 
-@ApiStatus.Internal
 public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStorage) : VersionedEntityStorage {
   private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
   private val valuesCache: ValuesCache

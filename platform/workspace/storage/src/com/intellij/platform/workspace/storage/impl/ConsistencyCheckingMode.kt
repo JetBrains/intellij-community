@@ -1,14 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
  * Defines how consistency checks after modifications of [com.intellij.platform.workspace.storage.MutableEntityStorage]
  * will be performed.
  */
-@ApiStatus.Internal
 public enum class ConsistencyCheckingMode {
   DISABLED,
   ENABLED;
@@ -25,13 +23,11 @@ public enum class ConsistencyCheckingMode {
  * Register implementation of this class in META-INF/services/com.intellij.platform.workspace.storage.impl.ConsistencyCheckingModeProvider.
  * The strictest mode from available providers will be used.
  */
-@ApiStatus.Internal
 public interface ConsistencyCheckingModeProvider {
   public val mode: ConsistencyCheckingMode
 }
 
 /** Only for limited usages in the platform */
-@ApiStatus.Internal
 public object ConsistencyCheckingDisabler {
   public val forceDisableConsistencyCheck: ThreadLocal<Boolean> = ThreadLocal<Boolean>().also { it.set(false) }
 

@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -40,6 +41,7 @@ internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl,
 internal typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
 
 @Suppress("UNCHECKED_CAST")
+@ApiStatus.Internal
 public open class VirtualFileIndex internal constructor(
   internal open val entityId2VirtualFileUrl: EntityId2Vfu,
   internal open val vfu2EntityId: Vfu2EntityId,

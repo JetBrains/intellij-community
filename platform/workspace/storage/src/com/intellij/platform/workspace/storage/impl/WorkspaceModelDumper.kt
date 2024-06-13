@@ -5,7 +5,6 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import org.jetbrains.annotations.ApiStatus
 
 @Suppress("unused")
-@ApiStatus.Internal
 public object WorkspaceModelDumper {
   public fun simpleEntities(store: EntityStorage): String {
     return buildString {

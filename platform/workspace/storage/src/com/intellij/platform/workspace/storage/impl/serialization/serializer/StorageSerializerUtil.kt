@@ -340,7 +340,7 @@ internal class StorageSerializerUtil(
 
 }
 
-public class UnsupportedClassException(
+internal class UnsupportedClassException(
   pluginId: PluginId, entityClassFqn: String, unsupportedClassFqn: String
 ): Exception(
   "Unsupported class $unsupportedClassFqn in the entity $entityClassFqn with $pluginId plugin." +

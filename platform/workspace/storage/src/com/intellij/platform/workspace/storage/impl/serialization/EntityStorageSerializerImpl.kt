@@ -311,4 +311,4 @@ public class EntityStorageSerializerImpl(
   }
 }
 
-public class UnsupportedEntitiesVersionException: Exception("Version of the entities in cache is not supported")
+internal class UnsupportedEntitiesVersionException: Exception("Version of the entities in cache is not supported")

@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 public fun EntityStorage.assertConsistency() {
   (this as AbstractEntityStorage).assertConsistency()
 }
