@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.statistics.Engine
 import com.intellij.debugger.statistics.StatisticsStorage.Companion.createSteppingToken
@@ -12,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
+import org.jetbrains.kotlin.idea.debugger.core.getLocationOfCoroutineSuspendReturn
 import org.jetbrains.kotlin.idea.debugger.core.isInSuspendMethod
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineJobInfo.Companion.extractJobInfo
 
@@ -35,7 +35,8 @@ object KotlinStepActionFactory {
 
                 override fun contextAction(suspendContext: SuspendContextImpl) {
                     if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
-                        CoroutineBreakpointFacility.installCoroutineResumedBreakpoint(suspendContext)
+                        CoroutineBreakpointFacility.installResumeBreakpointInCurrentMethod(suspendContext)
+                        applyThreadFilter(getThreadFilterFromContext(suspendContext))
                     }
                     super.contextAction(suspendContext)
                 }
@@ -120,15 +121,9 @@ object KotlinStepActionFactory {
         return with(debugProcess) {
             object : DebugProcessImpl.StepOutCommand(suspendContext, StepRequest.STEP_LINE) {
                 override fun contextAction(suspendContext: SuspendContextImpl) {
-                    // first check coroutines
-                    // TODO: it is better to move it somewhere else
-                    val method = DebuggerUtilsEx.getMethod(StackFrameInterceptor.instance?.callerLocation(suspendContext))
-                    if (method != null) {
-                        CoroutineBreakpointFacility.installCoroutineResumedBreakpoint(suspendContext, method)
+                    if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
+                        CoroutineBreakpointFacility.installResumeBreakpointInCallerMethod(suspendContext)
                         applyThreadFilter(getThreadFilterFromContext(suspendContext))
-                        // call ResumeCommand.contextAction directly: if createResumeCommand is used, it will also reset thread filter
-                        with(debugProcess) { object : DebugProcessImpl.ResumeCommand(suspendContext) {} }.contextAction(suspendContext)
-                        return
                     }
                     super.contextAction(suspendContext)
                 }
@@ -138,8 +133,11 @@ object KotlinStepActionFactory {
                     stepThread: ThreadReferenceProxyImpl,
                     parentHint: RequestHint?
                 ): RequestHint {
+                    val suspendReturnIndex = if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
+                        getLocationOfCoroutineSuspendReturn(StackFrameInterceptor.instance?.callerLocation(suspendContext))
+                    } else -1
                     val hint: RequestHint =
-                        KotlinRequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OUT, null, parentHint)
+                        KotlinStepOutRequestHint(suspendReturnIndex, stepThread, suspendContext, StepRequest.STEP_MIN, StepRequest.STEP_OUT, null, parentHint)
                     hint.isIgnoreFilters = debugProcess.session.shouldIgnoreSteppingFilters()
                     return hint
                 }

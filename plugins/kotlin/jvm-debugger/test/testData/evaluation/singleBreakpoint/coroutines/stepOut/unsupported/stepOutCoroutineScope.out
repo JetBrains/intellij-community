@@ -2,7 +2,9 @@ LineBreakpoint created at stepOutCoroutineScope.kt:11
 Run Java
 Connected to the target VM
 stepOutCoroutineScope.kt:11
-stepOutCoroutineScope.kt:12
+stepOutCoroutineScope.kt:9
+stepOutCoroutineScope.kt:11
+resuming stepOutCoroutineScope.kt:11
 Disconnected from the target VM
 
 Process finished with exit code 0

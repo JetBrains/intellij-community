@@ -25,7 +25,7 @@ suspend fun funWithSuspendLast(i: Int): Int {
 }
 
 suspend fun someInt(): Int {
-    delay(1)
+    delay(10)
     return 42
 }
 

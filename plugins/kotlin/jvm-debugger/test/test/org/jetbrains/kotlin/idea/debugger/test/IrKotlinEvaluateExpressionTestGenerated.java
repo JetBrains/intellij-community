@@ -379,6 +379,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
                     }
 
+                    @TestMetadata("stepOutNoSuspension.kt")
+                    public void testStepOutNoSuspension() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutNoSuspension.kt");
+                    }
+
                     @TestMetadata("stepOutOfSingleSuspendCall.kt")
                     public void testStepOutOfSingleSuspendCall() throws Exception {
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutOfSingleSuspendCall.kt");
@@ -387,6 +392,26 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                     @TestMetadata("stepOutSeveralSuspendFrames.kt")
                     public void testStepOutSeveralSuspendFrames() throws Exception {
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutSeveralSuspendFrames.kt");
+                    }
+
+                    @TestMetadata("stepOutTailCallOptimization.kt")
+                    public void testStepOutTailCallOptimization() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutTailCallOptimization.kt");
+                    }
+
+                    @TestMetadata("stepOutWithCounter.kt")
+                    public void testStepOutWithCounter() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutWithCounter.kt");
+                    }
+
+                    @TestMetadata("stepOutWithCounterInCoroutineScope.kt")
+                    public void testStepOutWithCounterInCoroutineScope() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutWithCounterInCoroutineScope.kt");
+                    }
+
+                    @TestMetadata("stepOutWithCounterInLaunch.kt")
+                    public void testStepOutWithCounterInLaunch() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutWithCounterInLaunch.kt");
                     }
 
                     @TestMetadata("stepOutWithException.kt")
@@ -411,16 +436,6 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                     @TestMetadata("stepOutCoroutineScope.kt")
                     public void testStepOutCoroutineScope() throws Exception {
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/unsupported/stepOutCoroutineScope.kt");
-                    }
-
-                    @TestMetadata("stepOutNoSuspension.kt")
-                    public void testStepOutNoSuspension() throws Exception {
-                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/unsupported/stepOutNoSuspension.kt");
-                    }
-
-                    @TestMetadata("stepOutTailCallOptimization.kt")
-                    public void testStepOutTailCallOptimization() throws Exception {
-                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/unsupported/stepOutTailCallOptimization.kt");
                     }
                 }
             }
@@ -486,6 +501,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverCancelledAwait.kt");
                     }
 
+                    @TestMetadata("stepOverCoroutineScopeClosingBracket.kt")
+                    public void testStepOverCoroutineScopeClosingBracket() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverCoroutineScopeClosingBracket.kt");
+                    }
+
                     @TestMetadata("stepOverLaunch.kt")
                     public void testStepOverLaunch() throws Exception {
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverLaunch.kt");
@@ -523,11 +543,6 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                     @TestMetadata("stepOverCoroutineScope.kt")
                     public void testStepOverCoroutineScope() throws Exception {
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/stepOverCoroutineScope.kt");
-                    }
-
-                    @TestMetadata("stepOverCoroutineScopeClosingBracket.kt")
-                    public void testStepOverCoroutineScopeClosingBracket() throws Exception {
-                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/stepOverCoroutineScopeClosingBracket.kt");
                     }
 
                     @TestMetadata("stepOverWithContext.kt")
