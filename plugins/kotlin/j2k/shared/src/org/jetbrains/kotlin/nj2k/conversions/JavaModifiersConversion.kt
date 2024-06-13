@@ -8,16 +8,12 @@ import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.*
 
+/**
+ * Converts Java-specific modifiers (for example, "volatile") to a Kotlin equivalent (usually an annotation).
+ */
 class JavaModifiersConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        if (element is JKModalityOwner && element is JKAnnotationListOwner) {
-            val overrideAnnotation = element.annotationList.annotationByFqName("java.lang.Override")
-            if (overrideAnnotation != null) {
-                element.annotationList.annotations -= overrideAnnotation
-            }
-        }
-
         if (element is JKOtherModifiersOwner && element is JKAnnotationListOwner) {
             element.elementByModifier(VOLATILE)?.let { modifierElement ->
                 element.otherModifierElements -= modifierElement

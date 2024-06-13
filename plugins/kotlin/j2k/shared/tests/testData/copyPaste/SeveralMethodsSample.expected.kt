@@ -1,5 +1,6 @@
 // ERROR: Unresolved reference: PsiElement
 // ERROR: Unresolved reference: UsageInfo
+// ERROR: 'getDimensionServiceKey' overrides nothing
 // ERROR: Unresolved reference: PsiElement
 // ERROR: Unresolved reference: JetPsiUtil
 // ERROR: Unresolved reference: JetNamedFunction
@@ -52,7 +53,7 @@ class A {
         return JetRefactoringUtil.formatPsiMethod(element as PsiMethod, true, false)
     }
 
-    protected fun getDimensionServiceKey(): String {
+    protected override fun getDimensionServiceKey(): String {
         return "#org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinOverridingDialog"
     }
 

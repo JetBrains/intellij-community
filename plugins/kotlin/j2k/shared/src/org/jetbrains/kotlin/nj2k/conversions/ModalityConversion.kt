@@ -7,12 +7,18 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
+import org.jetbrains.kotlin.nj2k.annotationByFqName
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.*
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
 
+/**
+ * Updates the modality (open, final, abstract) of some declarations.
+ * Also, adds the "override" modifier to applicable methods.
+ */
 class ModalityConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -38,16 +44,30 @@ class ModalityConversion(context: NewJ2kConverterContext) : RecursiveConversion(
         context.converter.referenceSearcher.hasInheritors(psiClass)
 
     private fun JKMethod.process() {
+        addOverrideModifierIfNeeded()
+        updateModality()
+    }
+
+    private fun JKMethod.addOverrideModifierIfNeeded() {
+        val psiMethod = psi<PsiMethod>() ?: return
+        val overrideAnnotation = annotationList.annotationByFqName("java.lang.Override")
+
+        if (!hasOtherModifier(OVERRIDE) && (overrideAnnotation != null || psiMethod.findSuperMethods().isNotEmpty())) {
+            otherModifierElements += JKOtherModifierElement(OVERRIDE)
+            if (overrideAnnotation != null) {
+                annotationList.annotations -= overrideAnnotation
+            }
+        }
+    }
+
+    private fun JKMethod.updateModality() {
         val psiMethod = psi<PsiMethod>() ?: return
         val containingClass: JKClass? = parentOfType<JKClass>()
         when {
             visibility == PRIVATE -> modality = FINAL
 
-            modality != ABSTRACT && psiMethod.findSuperMethods().isNotEmpty() -> {
+            modality != ABSTRACT && hasOtherModifier(OVERRIDE) -> {
                 modality = FINAL
-                if (!hasOtherModifier(OtherModifier.OVERRIDE)) {
-                    otherModifierElements += JKOtherModifierElement(OtherModifier.OVERRIDE)
-                }
             }
 
             modality == OPEN

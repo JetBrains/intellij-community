@@ -153,6 +153,16 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/annotations/nullabilityAnnotationOnAnnotationMethod.java");
         }
 
+        @TestMetadata("overrideCustom.java")
+        public void testOverrideCustom() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/annotations/overrideCustom.java");
+        }
+
+        @TestMetadata("overrideWithUnresolvedBaseMethod.java")
+        public void testOverrideWithUnresolvedBaseMethod() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/annotations/overrideWithUnresolvedBaseMethod.java");
+        }
+
         @TestMetadata("primaryConstructorAnnotation.java")
         public void testPrimaryConstructorAnnotation() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/annotations/primaryConstructorAnnotation.java");
