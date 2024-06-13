@@ -3064,6 +3064,7 @@ f:com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsPreviewLanguage
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 e:com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 - java.lang.Enum
+- sf:CHANGE_SIGNATURE:com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 - sf:INHERITORS:com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 - sf:PROBLEMS:com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 - sf:RENAME:com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
@@ -24897,7 +24898,9 @@ f:com.intellij.refactoring.IntroduceTargetChooser
 a:com.intellij.refactoring.RefactoringCodeVisionSupport
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
+- s:isChangeSignatureCodeVisionEnabled(com.intellij.openapi.fileTypes.FileType):Z
 - s:isRenameCodeVisionEnabled(com.intellij.openapi.fileTypes.FileType):Z
+- a:supportsChangeSignature(com.intellij.openapi.fileTypes.FileType):Z
 - a:supportsRename(com.intellij.openapi.fileTypes.FileType):Z
 a:com.intellij.refactoring.RefactoringImpl
 - com.intellij.refactoring.Refactoring
@@ -25100,6 +25103,25 @@ a:com.intellij.refactoring.changeSignature.CallerChooserBase
 - p:getSelectedNodes():java.util.Set
 - p:getTopMember():com.intellij.psi.PsiElement
 - getTree():com.intellij.ui.treeStructure.Tree
+f:com.intellij.refactoring.changeSignature.ChangeSignatureCodeVisionProvider
+- com.intellij.codeInsight.codeVision.CodeVisionProvider
+- sf:Companion:com.intellij.refactoring.changeSignature.ChangeSignatureCodeVisionProvider$Companion
+- <init>():V
+- computeCodeVision(com.intellij.openapi.editor.Editor,kotlin.Unit):com.intellij.codeInsight.codeVision.CodeVisionState
+- getDefaultAnchor():com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+- getGroupId():java.lang.String
+- getId():java.lang.String
+- getName():java.lang.String
+- getRelativeOrderings():java.util.List
+- isAvailableFor(com.intellij.openapi.project.Project):Z
+- precomputeOnUiThread(com.intellij.openapi.editor.Editor):V
+f:com.intellij.refactoring.changeSignature.ChangeSignatureCodeVisionProvider$ChangeSignatureCodeVisionEntry
+- com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
+- com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
+- <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String):V
+- f:getProject():com.intellij.openapi.project.Project
+- onClick(com.intellij.openapi.editor.Editor):V
+f:com.intellij.refactoring.changeSignature.ChangeSignatureCodeVisionProvider$Companion
 a:com.intellij.refactoring.changeSignature.ChangeSignatureDialogBase
 - com.intellij.refactoring.ui.RefactoringDialog
 - psf:EXIT_SILENTLY:java.lang.String

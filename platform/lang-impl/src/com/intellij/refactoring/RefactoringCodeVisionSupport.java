@@ -20,7 +20,13 @@ public abstract class RefactoringCodeVisionSupport {
    */
   public abstract boolean supportsRename(@NotNull FileType fileType);
 
+  public abstract boolean supportsChangeSignature(@NotNull FileType fileType);
+
   public static boolean isRenameCodeVisionEnabled(@NotNull FileType fileType) {
     return ContainerUtil.exists(EP_NAME.getExtensionList(), extension -> extension.supportsRename(fileType));
+  }
+
+  public static boolean isChangeSignatureCodeVisionEnabled(@NotNull FileType fileType) {
+    return ContainerUtil.exists(EP_NAME.getExtensionList(), extension -> extension.supportsChangeSignature(fileType));
   }
 }

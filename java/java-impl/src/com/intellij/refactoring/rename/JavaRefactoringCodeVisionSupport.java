@@ -11,4 +11,9 @@ public class JavaRefactoringCodeVisionSupport extends RefactoringCodeVisionSuppo
   public boolean supportsRename(@NotNull FileType fileType) {
     return fileType == JavaFileType.INSTANCE;
   }
+
+  @Override
+  public boolean supportsChangeSignature(@NotNull FileType fileType) {
+    return fileType == JavaFileType.INSTANCE;
+  }
 }
