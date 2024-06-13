@@ -15219,7 +15219,6 @@ a:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 - com.intellij.openapi.Disposable$Default
 - com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
-- sf:Companion:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent$Companion
 - <init>(com.intellij.openapi.actionSystem.ActionGroup):V
 - <init>(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.Disposable):V
 - p:actionsUpdated(Z,java.util.List):V
@@ -15233,7 +15232,6 @@ a:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - p:paintComponent(java.awt.Graphics):V
 - scheduleHide():V
 - scheduleShow():V
-f:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent$Companion
 a:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 - com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 - sf:Companion:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider$Companion
@@ -15601,11 +15599,6 @@ a:com.intellij.openapi.fileEditor.ChangeEditorSplitAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-f:com.intellij.openapi.fileEditor.EditorSplitGroup
-- com.intellij.openapi.actionSystem.DefaultActionGroup
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.fileEditor.FileNavigatorImpl
 - com.intellij.openapi.fileEditor.FileNavigator
 - <init>():V
@@ -15622,22 +15615,17 @@ f:com.intellij.openapi.fileEditor.SplitEditorToolbar
 - getRightToolbar():com.intellij.openapi.actionSystem.ActionToolbar
 - isLeftToolbarEmpty():Z
 - refresh():V
-f:com.intellij.openapi.fileEditor.SplitHorizontallyAction
-- com.intellij.openapi.fileEditor.ChangeEditorSplitAction
-- <init>():V
-f:com.intellij.openapi.fileEditor.SplitVerticallyAction
-- com.intellij.openapi.fileEditor.ChangeEditorSplitAction
-- <init>():V
 c:com.intellij.openapi.fileEditor.TextEditorWithPreview
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.fileEditor.TextEditor
-- sf:DEFAULT_LAYOUT_FOR_FILE:com.intellij.openapi.util.Key
+- sf:Companion:com.intellij.openapi.fileEditor.TextEditorWithPreview$Companion
 - pf:myEditor:com.intellij.openapi.fileEditor.TextEditor
 - pf:myPreview:com.intellij.openapi.fileEditor.FileEditor
 - <init>(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor):V
 - <init>(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,java.lang.String):V
 - <init>(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,java.lang.String,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout):V
 - <init>(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,java.lang.String,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout,Z):V
+- b:<init>(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,java.lang.String,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - addPropertyChangeListener(java.beans.PropertyChangeListener):V
 - canNavigateTo(com.intellij.pom.Navigatable):Z
 - p:createLeftToolbarActionGroup():com.intellij.openapi.actionSystem.ActionGroup
@@ -15653,11 +15641,9 @@ c:com.intellij.openapi.fileEditor.TextEditorWithPreview
 - getComponent():javax.swing.JComponent
 - getCurrentLocation():com.intellij.openapi.fileEditor.FileEditorLocation
 - getEditor():com.intellij.openapi.editor.Editor
-- s:getEditorWithPreviewIcon(Z):javax.swing.Icon
 - getFile():com.intellij.openapi.vfs.VirtualFile
-- getLayout():com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
+- f:getLayout():com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
 - getName():java.lang.String
-- s:getParentSplitEditor(com.intellij.openapi.fileEditor.FileEditor):com.intellij.openapi.fileEditor.TextEditorWithPreview
 - getPreferredFocusedComponent():javax.swing.JComponent
 - getPreviewEditor():com.intellij.openapi.fileEditor.FileEditor
 - p:getShowEditorAction():com.intellij.openapi.actionSystem.ToggleAction
@@ -15666,9 +15652,9 @@ c:com.intellij.openapi.fileEditor.TextEditorWithPreview
 - p:getSplitterProportionKey():java.lang.String
 - getState(com.intellij.openapi.fileEditor.FileEditorStateLevel):com.intellij.openapi.fileEditor.FileEditorState
 - getStructureViewBuilder():com.intellij.ide.structureView.StructureViewBuilder
-- f:getTabActions():com.intellij.openapi.actionSystem.ActionGroup
+- getTabActions():com.intellij.openapi.actionSystem.ActionGroup
 - getTextEditor():com.intellij.openapi.fileEditor.TextEditor
-- p:handleLayoutChange(Z):V
+- pf:handleLayoutChange(Z):V
 - isModified():Z
 - p:isShowActionsInTabs():Z
 - p:isShowFloatingToolbar():Z
@@ -15676,32 +15662,41 @@ c:com.intellij.openapi.fileEditor.TextEditorWithPreview
 - isVerticalSplit():Z
 - navigateTo(com.intellij.pom.Navigatable):V
 - p:onLayoutChange(com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout):V
-- s:openPreviewForFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor[]
 - removePropertyChangeListener(java.beans.PropertyChangeListener):V
 - selectNotify():V
-- p:setLayout(com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout):V
+- setLayout(com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout):V
 - setState(com.intellij.openapi.fileEditor.FileEditorState):V
 - setVerticalSplit(Z):V
+f:com.intellij.openapi.fileEditor.TextEditorWithPreview$Companion
+- f:getEditorWithPreviewIcon(Z):javax.swing.Icon
+- f:getParentSplitEditor(com.intellij.openapi.fileEditor.FileEditor):com.intellij.openapi.fileEditor.TextEditorWithPreview
+- f:openPreviewForFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor[]
 e:com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
 - java.lang.Enum
+- sf:Companion:com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout$Companion
 - sf:SHOW_EDITOR:com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
 - sf:SHOW_EDITOR_AND_PREVIEW:com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
 - sf:SHOW_PREVIEW:com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
-- s:fromId(java.lang.String,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout):com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
-- getIcon(com.intellij.openapi.fileEditor.TextEditorWithPreview):javax.swing.Icon
-- getName():java.lang.String
+- sf:fromId(java.lang.String,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout):com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getIcon(com.intellij.openapi.fileEditor.TextEditorWithPreview):javax.swing.Icon
+- f:getId():java.lang.String
+- f:getName():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
 - s:values():com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout[]
+f:com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout$Companion
+- f:fromId(java.lang.String,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout):com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
 f:com.intellij.openapi.fileEditor.TextEditorWithPreview$MyFileEditorState
 - com.intellij.openapi.fileEditor.FileEditorState
 - <init>(com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout,com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.fileEditor.FileEditorState):V
 - <init>(com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout,com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.fileEditor.FileEditorState,Z):V
 - canBeMergedWith(com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.fileEditor.FileEditorStateLevel):Z
 - equals(java.lang.Object):Z
-- getFirstState():com.intellij.openapi.fileEditor.FileEditorState
-- getSecondState():com.intellij.openapi.fileEditor.FileEditorState
-- getSplitLayout():com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
-- isVerticalSplit():Z
+- f:getFirstState():com.intellij.openapi.fileEditor.FileEditorState
+- f:getSecondState():com.intellij.openapi.fileEditor.FileEditorState
+- f:getSplitLayout():com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout
+- hashCode():I
+- f:isVerticalSplit():Z
 *a:com.intellij.openapi.fileEditor.TextEditorWithPreviewProvider
 - com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - <init>(com.intellij.openapi.fileEditor.FileEditorProvider):V
