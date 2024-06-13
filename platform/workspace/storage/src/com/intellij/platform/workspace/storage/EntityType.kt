@@ -26,7 +26,7 @@ public abstract class EntityType<T : WorkspaceEntity, B : WorkspaceEntity.Builde
       val ivalClass = ival
       val packageName = ivalClass.packageName
       val simpleName = name.replace(".", "")
-      val c = ivalClass.classLoader.loadClass("$packageName.${simpleName}Impl\$Builder")
+      val c = ivalClass.classLoader.loadClass("$packageName.impl.${simpleName}Impl\$Builder")
       val ctor = c.constructors.find { it.parameterCount == 0 }!!
       return { ctor.newInstance() as B }
     }

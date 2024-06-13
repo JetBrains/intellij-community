@@ -35,7 +35,10 @@ internal object MetadataStorageResolver {
 
   private fun extractPackageName(typeFqn: String): String = typeFqn.substringBeforeLast('.', "")
 
-  private fun metadataStorageFqn(packageName: String): String = "$packageName.$GENERATED_METADATA_STORAGE_IMPL_NAME"
+  private fun metadataStorageFqn(packageName: String): String  {
+    val implPackage = if (packageName.endsWith(".impl")) packageName else "$packageName.impl"
+    return "$implPackage.$GENERATED_METADATA_STORAGE_IMPL_NAME"
+  }
 }
 
 private val Class<*>.metadataStorageInstance: MetadataStorage?

@@ -66,6 +66,6 @@ internal object GeneratedCodeCompatibilityChecker {
   }
 
   private fun Class<WorkspaceEntity>.toImplClass(): Class<*> {
-    return loadClassByName(name + "Impl", classLoader)
+    return loadClassByName("$packageName.impl.${simpleName}Impl", classLoader)
   }
 }
