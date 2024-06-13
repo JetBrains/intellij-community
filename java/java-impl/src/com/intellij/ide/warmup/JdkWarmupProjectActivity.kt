@@ -3,7 +3,6 @@ package com.intellij.ide.warmup
 
 import com.intellij.execution.environment.JvmEnvironmentKeyProvider
 import com.intellij.ide.environment.EnvironmentService
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
@@ -35,8 +34,14 @@ internal class JdkWarmupProjectActivity : ProjectActivity {
     val configuredJdkPath = Path.of(configuredJdk)
     val jdkName = serviceAsync<EnvironmentService>().getEnvironmentValue(JvmEnvironmentKeyProvider.Keys.JDK_NAME, "warmup_jdk")
     val jdk = JavaSdk.getInstance().createJdk(jdkName, configuredJdkPath.toString())
-    writeAction {
-      ProjectJdkTable.getInstance().addJdk(jdk)
+    val projectJdkTable = ProjectJdkTable.getInstance()
+    projectJdkTable.findJdk(jdkName, jdk.sdkType.name).let {
+      if (it == null) writeAction {
+        projectJdkTable.addJdk(jdk)
+      }
+      else if (it.homePath != jdk.homePath) writeAction {
+        projectJdkTable.updateJdk(it, jdk)
+      }
     }
     writeAction {
       ProjectRootManager.getInstance(project).projectSdk = jdk
