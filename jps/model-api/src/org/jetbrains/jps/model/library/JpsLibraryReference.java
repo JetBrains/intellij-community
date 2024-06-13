@@ -17,6 +17,7 @@ package org.jetbrains.jps.model.library;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsCompositeElement;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsModel;
 
@@ -24,6 +25,11 @@ public interface JpsLibraryReference extends JpsElementReference<JpsLibrary> {
   @NotNull
   String getLibraryName();
 
+  /**
+   * @deprecated external references aren't supported anymore. If you need to refer to a {@link JpsElement} outside the model,
+   * use its name instead.
+   */
+  @Deprecated(forRemoval = true)
   @Override
   JpsLibraryReference asExternal(@NotNull JpsModel model);
 
