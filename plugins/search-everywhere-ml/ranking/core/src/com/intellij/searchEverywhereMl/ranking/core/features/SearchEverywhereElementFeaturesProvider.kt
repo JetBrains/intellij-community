@@ -34,6 +34,8 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     internal val ML_SCORE_KEY = EventFields.Double("mlScore")
     internal val SIMILARITY_SCORE = EventFields.Double("similarityScore")
     internal val IS_SEMANTIC_ONLY = EventFields.Boolean("isSemanticOnly")
+    internal val BUFFERED_TIMESTAMP = EventFields.Long("bufferedTimestamp")
+
 
     internal val prefixMatchingNameFeatureToField = hashMapOf<String, EventField<*>>(
       "prefix_same_start_count" to EventFields.Int("${PrefixMatchingUtil.baseName}SameStartCount"),

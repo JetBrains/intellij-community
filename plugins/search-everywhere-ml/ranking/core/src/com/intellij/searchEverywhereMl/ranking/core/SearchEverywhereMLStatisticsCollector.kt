@@ -364,7 +364,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   private fun collectNameFeaturesToFields(): Map<String, EventField<*>> {
     val nameFeatureToField = hashMapOf<String, EventField<*>>(
       *SearchEverywhereElementFeaturesProvider.run {
-        listOf(NAME_LENGTH, ML_SCORE_KEY, SIMILARITY_SCORE, IS_SEMANTIC_ONLY)
+        listOf(NAME_LENGTH, ML_SCORE_KEY, SIMILARITY_SCORE, IS_SEMANTIC_ONLY, BUFFERED_TIMESTAMP)
       }.map { it.name to it }.toTypedArray()
     )
     nameFeatureToField.putAll(SearchEverywhereElementFeaturesProvider.prefixMatchingNameFeatureToField.values.map { it.name to it })
