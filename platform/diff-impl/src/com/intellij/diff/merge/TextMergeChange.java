@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.icons.StrokeKt;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -250,9 +249,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
 
     return new DiffGutterOperation.Simple(editor, offset, () -> {
-      Icon icon = StrokeKt.toStrokeIcon(AllIcons.Diff.Revert, AI_COLOR);
-
-      return createIconRenderer(DiffBundle.message("action.presentation.diff.revert.text"), icon, false, () -> {
+      return createIconRenderer(DiffBundle.message("action.presentation.diff.revert.text"), AllIcons.Diff.Revert, false, () -> {
         myViewer.executeMergeCommand(DiffBundle.message("merge.dialog.reset.change.command"),
                                      Collections.singletonList(this),
                                      () -> myViewer.resetResolvedChange(this));
