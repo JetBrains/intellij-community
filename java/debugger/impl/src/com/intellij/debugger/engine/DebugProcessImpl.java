@@ -112,6 +112,7 @@ import java.util.function.Consumer;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
+  private static boolean LOG_JDI_LOG_IN_UNIT_TESTS = false;
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
@@ -386,7 +387,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     int mask = getTraceMask();
     if (mask == 0 && vm instanceof VirtualMachineImpl extendedVM) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (LOG_JDI_LOG_IN_UNIT_TESTS && ApplicationManager.getApplication().isUnitTestMode()) {
         mask = VirtualMachine.TRACE_ALL;
         extendedVM.setDebugTraceConsumer(string -> LOG.debug("[JDI: " + string + "]"));
       }
