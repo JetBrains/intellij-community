@@ -92,16 +92,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
         }
 
         logIfStubTraceEnabled(() -> {
-          String ret = "Can't build stub" +
-                       ". parserDefinition: " + parserDefinition +
-                       ", elementType: " + elementType +
-                       ", fileName:" + file.getFileName() +
-                       ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file.getFile());
-          VirtualFile parent = file.getFile().getParent();
-          if (parent != null) {
-            ret += ", parentProperties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(parent);
-          }
-          return ret;
+          return "Can't build stub" +
+                 ". parserDefinition: " + parserDefinition +
+                 ", elementType: " + elementType +
+                 ", fileName:" + file.getFileName() +
+                 ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file.getFile());
         });
       }
 
