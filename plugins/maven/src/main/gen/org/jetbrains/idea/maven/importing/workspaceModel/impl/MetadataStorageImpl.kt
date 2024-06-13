@@ -19,14 +19,14 @@ internal object MetadataStorageImpl: MetadataStorageBase() {
         
         addMetadata(typeMetadata)
         
-        typeMetadata = EntityMetadata(fqName = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity", entityDataFqName = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
+        typeMetadata = EntityMetadata(fqName = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity", entityDataFqName = "org.jetbrains.idea.maven.importing.workspaceModel.impl.MavenProjectsTreeSettingsEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "importedFilePaths", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable), primitive = primitiveTypeListNotNullable), withDefault = false)), extProperties = listOf(), isAbstract = false)
         
         addMetadata(typeMetadata)
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity", metadataHash = 542119358)
+        addMetadataHash(typeFqn = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity", metadataHash = -2066553308)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1542509216)
         addMetadataHash(typeFqn = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeEntitySource", metadataHash = -2057748756)
     }

@@ -58,19 +58,19 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         
         addMetadata(typeMetadata)
         
-        typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.WorkspaceEntity", entityDataFqName = "com.intellij.platform.workspace.storage.WorkspaceEntityData", supertypes = listOf(), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false)), extProperties = listOf(), isAbstract = true)
+        typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.WorkspaceEntity", entityDataFqName = "com.intellij.platform.workspace.storage.impl.WorkspaceEntityData", supertypes = listOf(), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false)), extProperties = listOf(), isAbstract = true)
         
         addMetadata(typeMetadata)
         
-        typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId", entityDataFqName = "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicIdData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
+        typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId", entityDataFqName = "com.intellij.platform.workspace.storage.impl.WorkspaceEntityWithSymbolicIdData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "symbolicId", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.SymbolicEntityId")), withDefault = false)), extProperties = listOf(), isAbstract = true)
         
         addMetadata(typeMetadata)
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.WorkspaceEntity", metadataHash = -1093343975)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId", metadataHash = 429186493)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.WorkspaceEntity", metadataHash = 1885263617)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId", metadataHash = -272153521)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 310149856)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.DummyParentEntitySource", metadataHash = -1374988455)
         addMetadataHash(typeFqn = "com.intellij.java.configurationStore.SampleDummyParentCustomModuleEntitySource", metadataHash = -1785529430)

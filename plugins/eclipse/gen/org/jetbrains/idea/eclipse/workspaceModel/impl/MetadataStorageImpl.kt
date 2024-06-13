@@ -52,7 +52,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         
         addMetadata(typeMetadata)
         
-        typeMetadata = EntityMetadata(fqName = "org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity", entityDataFqName = "org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
+        typeMetadata = EntityMetadata(fqName = "org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity", entityDataFqName = "org.jetbrains.idea.eclipse.config.impl.EclipseProjectPropertiesEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "module", valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE, entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleEntity", isChild = false, isNullable = false), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "variablePaths", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable,
 primitiveTypeStringNotNullable), primitive = primitiveTypeMapNotNullable), withDefault = false),
@@ -68,7 +68,7 @@ primitiveTypeIntNotNullable), primitive = primitiveTypeMapNotNullable), withDefa
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity", metadataHash = -1727640762)
+        addMetadataHash(typeFqn = "org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity", metadataHash = -1653370266)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 905035542)
         addMetadataHash(typeFqn = "org.jetbrains.idea.eclipse.config.EclipseProjectFile", metadataHash = -1195240458)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.JpsFileEntitySource", metadataHash = -1709137196)

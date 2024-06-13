@@ -39,7 +39,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         
         addMetadata(typeMetadata)
         
-        typeMetadata = EntityMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity", entityDataFqName = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
+        typeMetadata = EntityMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity", entityDataFqName = "org.jetbrains.kotlin.idea.core.script.ucache.impl.KotlinScriptEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
 "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "path", valueType = primitiveTypeStringNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "dependencies", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryId", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "presentableName", valueType = primitiveTypeStringNotNullable, withDefault = false),
@@ -49,7 +49,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         
         addMetadata(typeMetadata)
         
-        typeMetadata = EntityMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity", entityDataFqName = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
+        typeMetadata = EntityMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity", entityDataFqName = "org.jetbrains.kotlin.idea.core.script.ucache.impl.KotlinScriptLibraryEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
 "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "roots", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRoot", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "url", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false),
@@ -64,8 +64,8 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity", metadataHash = 1481988017)
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity", metadataHash = 947771682)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity", metadataHash = -1499515069)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity", metadataHash = 1908715706)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryId", metadataHash = -733365339)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptId", metadataHash = -1141885280)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRoot", metadataHash = 940316485)

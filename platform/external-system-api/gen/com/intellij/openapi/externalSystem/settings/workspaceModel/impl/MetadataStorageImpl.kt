@@ -20,7 +20,7 @@ internal object MetadataStorageImpl: MetadataStorageBase() {
         
         addMetadata(typeMetadata)
         
-        typeMetadata = EntityMetadata(fqName = "com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity", entityDataFqName = "com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
+        typeMetadata = EntityMetadata(fqName = "com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity", entityDataFqName = "com.intellij.openapi.externalSystem.settings.workspaceModel.impl.ExternalProjectsBuildClasspathEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "projectsBuildClasspath", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable,
 ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectBuildClasspathEntity", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "projectBuildClasspath", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable), primitive = primitiveTypeListNotNullable), withDefault = false),
@@ -32,7 +32,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity", metadataHash = 2037958942)
+        addMetadataHash(typeFqn = "com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity", metadataHash = -17756932)
         addMetadataHash(typeFqn = "com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectBuildClasspathEntity", metadataHash = 668757862)
         addMetadataHash(typeFqn = "com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalModuleBuildClasspathEntity", metadataHash = -637660733)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -632855931)
