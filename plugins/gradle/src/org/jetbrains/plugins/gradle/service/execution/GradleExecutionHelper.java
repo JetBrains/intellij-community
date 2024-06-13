@@ -441,23 +441,8 @@ public class GradleExecutionHelper {
   @ApiStatus.Internal
   @VisibleForTesting
   static List<String> mergeJvmArgs(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
-    MultiMap<String, String> argumentsMap = MultiMap.createLinkedSet();
-    String lastKey = null;
-    for (String jvmArg : ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings)) {
-      if (jvmArg.startsWith("-")) {
-        argumentsMap.putValue(jvmArg, "");
-        lastKey = jvmArg;
-      }
-      else {
-        if (lastKey != null) {
-          argumentsMap.putValue(lastKey, jvmArg);
-          lastKey = null;
-        }
-        else {
-          argumentsMap.putValue(jvmArg, "");
-        }
-      }
-    }
+    List<String> mergedJvmArgs = ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings);
+    MultiMap<String, String> argumentsMap = parseJvmArgs(mergedJvmArgs);
 
     Map<String, String> mergedKeys = new LinkedHashMap<>();
     Set<String> argKeySet = new LinkedHashSet<>(argumentsMap.keySet());
@@ -496,6 +481,27 @@ public class GradleExecutionHelper {
         result.add(val);
       }
     }));
+    return result;
+  }
+
+  private static @NotNull MultiMap<@NotNull String, @NotNull String> parseJvmArgs(@NotNull List<@NotNull String> args) {
+    MultiMap<String, String> result = MultiMap.createLinkedSet();
+    String lastKey = null;
+    for (String jvmArg : args) {
+      if (jvmArg.startsWith("-")) {
+        result.putValue(jvmArg, "");
+        lastKey = jvmArg;
+      }
+      else {
+        if (lastKey != null) {
+          result.putValue(lastKey, jvmArg);
+          lastKey = null;
+        }
+        else {
+          result.putValue(jvmArg, "");
+        }
+      }
+    }
     return result;
   }
 
