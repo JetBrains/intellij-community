@@ -158,11 +158,10 @@ public class PyOperatorReference extends PyReferenceImpl {
   private List<? extends RatedResolveResult> resolveDefinitionMember(@NotNull PyClassLikeType classLikeType,
                                                                      @NotNull PyExpression object,
                                                                      @NotNull String name) {
-    final PyClassLikeType classType = !(classLikeType instanceof PyCustomType customType)
-                                      ? classLikeType.getMetaClassType(myContext.getTypeEvalContext(), true)
-                                      : customType;
-    if (classType != null) {
-      List<? extends RatedResolveResult> results = classType.resolveMember(name, object, AccessDirection.of(myElement), myContext);
+    final PyClassLikeType metaClassType = classLikeType.getMetaClassType(myContext.getTypeEvalContext(), true);
+    if (metaClassType != null) {
+      final List<? extends RatedResolveResult> results =
+        metaClassType.resolveMember(name, object, AccessDirection.of(myElement), myContext);
 
       if (!ContainerUtil.isEmpty(results)) return results;
     }
