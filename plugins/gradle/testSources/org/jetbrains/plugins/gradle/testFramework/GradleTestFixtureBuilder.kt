@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleProjectTestFixtureImpl
 
 interface GradleTestFixtureBuilder {
 
@@ -18,8 +18,7 @@ interface GradleTestFixtureBuilder {
       return object : GradleTestFixtureBuilder {
         override val projectName: String = projectName
         override fun createFixture(gradleVersion: GradleVersion): GradleProjectTestFixture {
-          val fixtureFactory = GradleTestFixtureFactory.getFixtureFactory()
-          return fixtureFactory.createGradleProjectTestFixture(projectName, gradleVersion) {
+          return GradleProjectTestFixtureImpl(projectName, gradleVersion) {
             configure(gradleVersion)
           }
         }

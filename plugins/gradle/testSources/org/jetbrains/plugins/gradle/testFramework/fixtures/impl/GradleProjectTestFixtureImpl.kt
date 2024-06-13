@@ -20,7 +20,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleProjectReload
 import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
@@ -56,7 +55,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
   ) : this(
     projectName, gradleVersion,
     GradleJvmTestFixture(gradleVersion, JavaVersionRestriction.NO),
-    GradleTestFixtureFactory.getFixtureFactory().createFileTestFixture("GradleTestFixture/$gradleVersion/$projectName") {
+    FileTestFixtureImpl("GradleTestFixture/$gradleVersion/$projectName") {
       configureProject()
       excludeFiles(".gradle", "build")
       withFiles { generateGradleWrapper(it.toNioPath(), gradleVersion) }
