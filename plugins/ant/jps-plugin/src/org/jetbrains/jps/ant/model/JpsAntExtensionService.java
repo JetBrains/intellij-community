@@ -17,8 +17,10 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.HashMap;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public final class JpsAntExtensionService {
   public static final String BUNDLED_ANT_PATH_PROPERTY = "jps.bundled.ant.path";
@@ -70,9 +72,13 @@ public final class JpsAntExtensionService {
       LOG.info("Using bundled Ant " + antPath);
 
       antHome = new File(antPath);
+      if (new File(antHome, "ant.jar").exists()) {
+        // everything is packed to a single ./dist/ant.jar
+        return bundledAnt(antHome, antHome.getAbsolutePath());
+      }
     }
     else {
-      final String appHome = PathManager.getHomePath(false);
+      String appHome = PathManager.getHomePath(false);
       if (appHome == null) {
         LOG.debug("idea.home.path and " + BUNDLED_ANT_PATH_PROPERTY + " aren't specified, bundled Ant won't be configured");
         return null;
@@ -86,13 +92,17 @@ public final class JpsAntExtensionService {
         }
       }
     }
+
+    return bundledAnt(antHome, new File(antHome, "lib").getAbsolutePath());
+  }
+
+  private static @Nullable JpsAntInstallationImpl bundledAnt(File antHome, String antJarsHome) {
     if (!antHome.exists()) {
       LOG.debug("Bundled Ant not found at " + antHome.getAbsolutePath());
       return null;
     }
 
-    String antLib = new File(antHome, "lib").getAbsolutePath();
-    return new JpsAntInstallationImpl(antHome, "Bundled Ant", Collections.emptyList(), Collections.singletonList(antLib));
+    return new JpsAntInstallationImpl(antHome, "Bundled Ant", emptyList(), singletonList(antJarsHome));
   }
 
   @Nullable

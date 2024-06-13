@@ -11,7 +11,13 @@ import java.util.List;
 final class AntBuildParametersProvider extends BuildProcessParametersProvider {
   @Override
   public @NotNull List<String> getVMArguments() {
-    File bundledAntHome = GlobalAntConfiguration.getBundledAntHome();
-    return List.of("-Djps.bundled.ant.path=" + bundledAntHome.getAbsolutePath());
+    try {
+      File bundledAntHome = GlobalAntConfiguration.getBundledAntHome();
+      return List.of("-Djps.bundled.ant.path=\"" + bundledAntHome.getAbsolutePath() + "\"");
+    }
+    catch (IllegalStateException e) {
+      // seems broken installation, try to work at least for non-bundled Ant
+      return List.of();
+    }
   }
 }
