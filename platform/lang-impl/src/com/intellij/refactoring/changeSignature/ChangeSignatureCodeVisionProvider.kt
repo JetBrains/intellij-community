@@ -16,11 +16,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.findPsiFile
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.RefactoringCodeVisionSupport
-import com.intellij.refactoring.suggested.REFACTORING_DATA_KEY
-import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
-import com.intellij.refactoring.suggested.performSuggestedRefactoring
+import com.intellij.refactoring.suggested.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
 
@@ -88,6 +90,31 @@ class ChangeSignatureCodeVisionProvider : CodeVisionProvider<Unit> {
     }
 
     return CodeVisionState.READY_EMPTY
+  }
+
+  override fun preparePreview(editor: Editor, file: PsiFile) {
+    val visitor = object : PsiRecursiveElementVisitor() {
+      var refactoredElement: PsiNamedElement? = null
+      override fun visitElement(element: PsiElement) {
+        if (refactoredElement == null && element is PsiNamedElement && element.name == "foo") refactoredElement = element
+        else super.visitElement(element)
+      }
+    }
+    file.accept(visitor)
+    val support = SuggestedRefactoringSupport.forLanguage(file.language) ?: return
+    visitor.refactoredElement?.let {
+      val state = SuggestedRefactoringState(
+        it,
+        support,
+        SuggestedRefactoringState.ErrorLevel.NO_ERRORS,
+        "foo", "",
+        SuggestedRefactoringSupport.Signature.create("foo", "", listOf(), null)!!,
+        SuggestedRefactoringSupport.Signature.create("foo", "", listOf(), null)!!,
+        listOf()
+      )
+      val data = SuggestedChangeSignatureData.create(state, "foo")
+      editor.putUserData(REFACTORING_DATA_KEY, data)
+    }
   }
 
   override val name: String
