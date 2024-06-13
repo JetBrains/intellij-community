@@ -251,6 +251,7 @@ public final class InstanceOfUtils {
       if (!(context instanceof PsiStatement)) return null;
     }
     if (context == null) return null;
+    PsiVariable operandVariable = ExpressionUtils.resolveVariable(cast.getOperand());
     PsiElement parent = context.getContext();
     if (parent instanceof PsiCodeBlock) {
       for (PsiElement stmt = context.getPrevSibling(); stmt != null; stmt = stmt.getPrevSibling()) {
@@ -277,6 +278,9 @@ public final class InstanceOfUtils {
           }
         }
         if (stmt instanceof PsiSwitchLabelStatementBase) break;
+        if (operandVariable != null && VariableAccessUtils.variableIsAssigned(operandVariable, stmt)) {
+          return null;
+        }
       }
       if (parent.getContext() instanceof PsiBlockStatement) {
         context = parent.getContext();
