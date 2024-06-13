@@ -66,9 +66,7 @@
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
                     serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
 
-    <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule" type="fast"/>
-    <getDataRule key="Vcs.Log.Main.Ui" implementationClass="com.intellij.vcs.log.ui.MainVcsLogUiDataRule" type="fast"/>
-    <getDataRule key="Vcs.Log.UiEx" implementationClass="com.intellij.vcs.log.ui.VcsLogUiExDataRule" type="fast"/>
+    <edtDataRule implementation="com.intellij.vcs.log.ui.VcsEdtDataRule"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider
       implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowDiff"/>
