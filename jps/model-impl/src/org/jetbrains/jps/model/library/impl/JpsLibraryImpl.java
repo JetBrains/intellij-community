@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.library.impl;
 
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
@@ -14,7 +12,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -120,67 +117,17 @@ public final class JpsLibraryImpl<P extends JpsElement> extends JpsNamedComposit
 
   @Override
   public List<File> getFiles(final JpsOrderRootType rootType) {
-    List<String> urls = getRootUrls(rootType);
-    List<File> files = new ArrayList<>(urls.size());
-    for (String url : urls) {
-      if (!JpsPathUtil.isJrtUrl(url)) {
-        files.add(JpsPathUtil.urlToFile(url));
-      }
-    }
-    return files;
+    return JpsLibraryRootProcessing.convertToFiles(getRoots(rootType));
   }
 
   @Override
   public @NotNull List<Path> getPaths(@NotNull JpsOrderRootType rootType) {
-    List<String> urls = getRootUrls(rootType);
-    List<Path> result = new ArrayList<>(urls.size());
-    for (String url : urls) {
-      if (!JpsPathUtil.isJrtUrl(url)) {
-        result.add(Paths.get(JpsPathUtil.urlToPath(url)));
-      }
-    }
-    return result;
+    return JpsLibraryRootProcessing.convertToPaths(getRoots(rootType));
   }
 
   @Override
   public List<String> getRootUrls(JpsOrderRootType rootType) {
-    List<String> urls = new ArrayList<>();
-    for (JpsLibraryRoot root : getRoots(rootType)) {
-      switch (root.getInclusionOptions()) {
-        case ROOT_ITSELF:
-          urls.add(root.getUrl());
-          break;
-        case ARCHIVES_UNDER_ROOT:
-          collectArchives(JpsPathUtil.urlToFile(root.getUrl()), false, urls);
-          break;
-        case ARCHIVES_UNDER_ROOT_RECURSIVELY:
-          collectArchives(JpsPathUtil.urlToFile(root.getUrl()), true, urls);
-          break;
-      }
-    }
-    return urls;
-  }
-
-  private static final Set<String> AR_EXTENSIONS = CollectionFactory.createFilePathSet(Arrays.asList("jar", "zip", "swc", "ane"));
-
-  private static void collectArchives(File file, boolean recursively, List<? super String> result) {
-    final File[] children = file.listFiles();
-    if (children != null) {
-      // There is no guarantee about order of files on different OS
-      Arrays.sort(children);
-      for (File child : children) {
-        final String extension = FileUtilRt.getExtension(child.getName());
-        if (child.isDirectory()) {
-          if (recursively) {
-            collectArchives(child, recursively, result);
-          }
-        }
-        // todo get list of extensions mapped to Archive file type from IDE settings
-        else if (AR_EXTENSIONS.contains(extension)) {
-          result.add(JpsPathUtil.getLibraryRootUrl(child));
-        }
-      }
-    }
+    return JpsLibraryRootProcessing.convertToUrls(getRoots(rootType));
   }
 
   @Override
