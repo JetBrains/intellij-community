@@ -4,6 +4,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.ui.JBColor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -36,6 +37,10 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
 
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    return ReadAction.compute(() -> getTableCellRendererComponentInternal(table, value, isSelected, hasFocus, row, column));
+  }
+
+  private Component getTableCellRendererComponentInternal(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     final Component component = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     if (!myRoot.isValid()) {
       return component;
