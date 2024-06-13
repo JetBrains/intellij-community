@@ -5,7 +5,9 @@ import com.intellij.platform.workspace.storage.metadata.MetadataHash
 import com.intellij.platform.workspace.storage.metadata.MetadataStorage
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.utils.collectTypesByFqn
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 public abstract class MetadataStorageBase(
   private val metadataByTypeFqn: MutableMap<String, StorageTypeMetadata> = hashMapOf(),
   private val metadataHashByTypeFqn: MutableMap<String, MetadataHash> = hashMapOf()

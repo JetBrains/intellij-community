@@ -5,12 +5,14 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.metadata.exceptions.MissingTypeMetadataException
 import com.intellij.platform.workspace.storage.metadata.exceptions.MissingTypeMetadataHashException
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Encapsulates all classes that store metadata for classes in [EntityStorage]
  *
  * See [com.intellij.platform.workspace.storage.metadata.model] to see all the classes that implement this interface
  */
+@ApiStatus.Internal
 public interface StorageMetadata
 
 
@@ -19,6 +21,8 @@ public interface StorageMetadata
  *
  * Stores metadata of all types from one package
  */
+
+@ApiStatus.Internal
 public interface MetadataStorage {
   public fun getMetadataByTypeFqnOrNull(fqName: String): StorageTypeMetadata?
 
@@ -43,6 +47,7 @@ public interface MetadataStorage {
  *
  * See [EntityStorageSerializerImpl]
  */
+@ApiStatus.Internal
 public abstract class MetadataStorageBridge(public val metadataStorage: MetadataStorage): MetadataStorage by metadataStorage
 
 
