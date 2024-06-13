@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
+import org.jetbrains.kotlin.nj2k.annotationByFqName
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
@@ -40,14 +42,19 @@ class ModalityConversion(context: NewJ2kConverterContext) : RecursiveConversion(
     private fun JKMethod.process() {
         val psiMethod = psi<PsiMethod>() ?: return
         val containingClass: JKClass? = parentOfType<JKClass>()
+        val overrideAnnotation = annotationList.annotationByFqName("java.lang.Override")
+        if (!hasOtherModifier(OtherModifier.OVERRIDE) && (psiMethod.findSuperMethods()
+                .isNotEmpty() || overrideAnnotation != null)) {
+            otherModifierElements += JKOtherModifierElement(OtherModifier.OVERRIDE)
+            if (overrideAnnotation != null) {
+                annotationList.annotations -= overrideAnnotation
+            }
+        }
         when {
             visibility == PRIVATE -> modality = FINAL
 
-            modality != ABSTRACT && psiMethod.findSuperMethods().isNotEmpty() -> {
+            modality != ABSTRACT && hasOtherModifier(OtherModifier.OVERRIDE) -> {
                 modality = FINAL
-                if (!hasOtherModifier(OtherModifier.OVERRIDE)) {
-                    otherModifierElements += JKOtherModifierElement(OtherModifier.OVERRIDE)
-                }
             }
 
             modality == OPEN

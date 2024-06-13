@@ -5434,6 +5434,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/overloads/AccessorToDrop.java");
         }
 
+        @TestMetadata("alternateOverrideAnnotation.java")
+        public void testAlternateOverrideAnnotation() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/overloads/alternateOverrideAnnotation.java");
+        }
+
         @TestMetadata("Annotations.java")
         public void testAnnotations() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/overloads/Annotations.java");
@@ -5462,6 +5467,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("Synchronized.java")
         public void testSynchronized() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/overloads/Synchronized.java");
+        }
+
+        @TestMetadata("unresolvedOverride.java")
+        public void testUnresolvedOverride() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/overloads/unresolvedOverride.java");
         }
     }
 
