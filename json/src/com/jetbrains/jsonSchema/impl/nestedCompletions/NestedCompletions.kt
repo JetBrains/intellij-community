@@ -193,10 +193,7 @@ private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
         addBeforeOrAfter(value, elementToAdd, element, fakeProperty)
       }
       else {
-        val newElement = replaceValueForNesting(walker, value, element)
-        if (walker.defaultObjectValue.isBlank()) {
-          newElement.parent.addBefore(createLeaf("\n", newElement)!!, newElement)
-        }
+        val newElement = replaceValueForNesting(walker, value, element, completionPath, parentObject)
         switchToObjectSeparator(walker, property.delegate)
         newElement
       }
@@ -212,7 +209,7 @@ private fun switchToObjectSeparator(walker: JsonLikePsiWalker, node: PsiElement)
       if (objectSeparator.isBlank()) {
         deleteWithWsAround(it, deleteBefore = false)
       }
-      else it.replace(createLeaf(objectSeparator, it)!!)
+      else it.replace(createLeaf(objectSeparator, it))
     }
   }
 }
@@ -259,26 +256,25 @@ private fun addBeforeOrAfter(value: JsonValueAdapter,
 
 private fun replaceValueForNesting(walker: JsonLikePsiWalker,
                                    value: JsonValueAdapter,
-                                   element: PsiElement): PsiElement {
-  return if (walker.defaultObjectValue.isNotBlank()) {
-    value.delegate.replace(
-      walker.getSyntaxAdapter(value.delegate.project).createProperty(dummyString, dummyString,
-                                                                     value.delegate.project).parent.also {
+                                   element: PsiElement,
+                                   completionPath: List<String>,
+                                   parentObject: JsonObjectValueAdapter): PsiElement {
+  val project = value.delegate.project
+  return value.delegate.replace(
+      walker.getSyntaxAdapter(project).createProperty(StringUtil.unquoteString(element.text), dummyString,
+                                                      project).parent.also {
         walker.createValueAdapter(it)!!.asObject!!.propertyList.single().let {
-          it.nameValueAdapter!!.delegate.replace(element.copy())
           removePropertyValue(walker, it.delegate)
         }
       }
     ).let {
       walker.createValueAdapter(it)!!.asObject!!.propertyList.single().delegate
     }
-  }
-  else if (value.delegate.text == element.text) value.delegate else value.delegate.replace(element.copy())
 }
 
-private fun createLeaf(content: String, context: PsiElement): LeafPsiElement? {
+private fun createLeaf(content: String, context: PsiElement): LeafPsiElement {
   val psiFileFactory = PsiFileFactory.getInstance(context.project)
   return psiFileFactory.createFileFromText("dummy." + context.containingFile.virtualFile.extension,
                                            context.containingFile.fileType, content)
-    .descendantsOfType<LeafPsiElement>().firstOrNull { it.text == content }
+    .descendantsOfType<LeafPsiElement>().first { it.text == content }
 }
