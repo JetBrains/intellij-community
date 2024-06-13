@@ -37,7 +37,7 @@ object MarkdownActionUtil {
     if (editor == null) return null
     return when (editor) {
       is MarkdownEditorWithPreview -> editor
-      else -> TextEditorWithPreview.getParentSplitEditor(editor) as MarkdownEditorWithPreview?
+      else -> TextEditorWithPreview.getParentSplitEditor(editor) as? MarkdownEditorWithPreview
     }
   }
 
