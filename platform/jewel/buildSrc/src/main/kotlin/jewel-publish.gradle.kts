@@ -4,6 +4,7 @@ plugins {
     kotlin("jvm")
     `maven-publish`
     id("org.jetbrains.dokka")
+    signing
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
@@ -16,6 +17,16 @@ val javadocJar by tasks.registering(Jar::class) {
     from(tasks.dokkaHtml)
     archiveClassifier = "javadoc"
     destinationDirectory = layout.buildDirectory.dir("artifacts")
+}
+
+val publishingExtension = extensions.getByType<PublishingExtension>()
+
+signing {
+    useInMemoryPgpKeys(
+        System.getenv("PGP_PRIVATE_KEY") ?: properties["signing.privateKey"] as String?,
+        System.getenv("PGP_PASSWORD")?: properties["signing.password"] as String?
+    )
+    sign(publishingExtension.publications)
 }
 
 publishing {
