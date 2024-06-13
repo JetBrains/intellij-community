@@ -19,18 +19,22 @@ internal object NumberConversionFixFactory {
         val leftType = diagnostic.leftType
         val rightType = diagnostic.rightType
 
-        if (!leftType.isNumberOrCharType() || !rightType.isNumberOrCharType()) return@ModCommandBased emptyList()
 
-        buildList {
-            if (isNumberConversionAvailable(leftType, rightType)) {
-                val elementContext = prepareNumberConversionElementContext(leftType, rightType)
-                add(NumberConversionFix(left, elementContext, NumberConversionFix.ConversionType.LEFT_HAND_SIDE))
-            }
-            if (isNumberConversionAvailable(leftType, rightType)) {
-                val elementContext = prepareNumberConversionElementContext(rightType, leftType)
-                add(NumberConversionFix(right, elementContext, NumberConversionFix.ConversionType.RIGHT_HAND_SIDE))
-            }
-        }
+        if (!isNumberConversionAvailable(leftType, rightType)) return@ModCommandBased emptyList()
+
+        listOf(
+            NumberConversionFix(
+                element = left,
+                elementContext = prepareNumberConversionElementContext(leftType, rightType),
+                conversionType = NumberConversionFix.ConversionType.LEFT_HAND_SIDE
+            ),
+
+            NumberConversionFix(
+                element = right,
+                elementContext = prepareNumberConversionElementContext(rightType, leftType),
+                conversionType = NumberConversionFix.ConversionType.RIGHT_HAND_SIDE
+            ),
+        )
     }
 }
 
