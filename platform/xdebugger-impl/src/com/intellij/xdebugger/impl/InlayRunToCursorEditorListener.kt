@@ -201,7 +201,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
 
-    if (runToCursorService.isAtExecution(editor.virtualFile, lineNumber)) {
+    if (runToCursorService.isAtExecution(editor.virtualFile ?: return, lineNumber)) {
       showHint(editor, lineNumber, firstNonSpacePos, listOf(ActionManager.getInstance().getAction(XDebuggerActions.RESUME)), lineY)
     }
     else {
