@@ -12,6 +12,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
@@ -32,7 +33,8 @@ abstract class GradleBaseTestCase {
     gradleTestFixture = GradleTestFixtureImpl(
         className = testInfo.testClass.get().simpleName,
         methodName = testInfo.testMethod.get().name,
-        gradleVersion = GradleVersion.current()
+        gradleVersion = GradleVersion.current(),
+        javaVersionRestriction = JavaVersionRestriction.NO
       )
     gradleTestFixture.setUp()
 

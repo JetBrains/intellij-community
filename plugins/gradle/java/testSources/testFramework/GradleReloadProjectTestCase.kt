@@ -4,8 +4,6 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 
 abstract class GradleReloadProjectTestCase : GradleReloadProjectBaseTestCase() {
 
@@ -15,13 +13,5 @@ abstract class GradleReloadProjectTestCase : GradleReloadProjectBaseTestCase() {
 
   suspend fun reloadProject(configure: ImportSpecBuilder.() -> Unit = {}) {
     gradleFixture.reloadProject(project, projectName, configure)
-  }
-
-  override fun test(gradleVersion: GradleVersion, action: suspend () -> Unit) {
-    super.test(gradleVersion) {
-      ExternalSystemExecutionTracer.printExecutionOutputOnException {
-        action()
-      }
-    }
   }
 }

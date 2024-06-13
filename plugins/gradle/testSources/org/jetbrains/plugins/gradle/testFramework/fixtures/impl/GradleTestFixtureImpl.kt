@@ -31,6 +31,7 @@ class GradleTestFixtureImpl(
   private val className: String,
   private val methodName: String,
   override val gradleVersion: GradleVersion,
+  private val javaVersionRestriction: JavaVersionRestriction
 ) : GradleTestFixture {
 
   private lateinit var reloadLeakTracker: OperationLeakTracker
@@ -50,7 +51,7 @@ class GradleTestFixtureImpl(
 
     testDisposable = Disposer.newDisposable()
 
-    gradleJvmFixture = GradleJvmTestFixture(gradleVersion, JavaVersionRestriction.NO)
+    gradleJvmFixture = GradleJvmTestFixture(gradleVersion, javaVersionRestriction)
     gradleJvmFixture.setUp()
     gradleJvm = gradleJvmFixture.gradleJvm
 
