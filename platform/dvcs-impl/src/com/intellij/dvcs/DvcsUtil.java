@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -178,7 +179,8 @@ public final class DvcsUtil {
     };
   }
 
-  public static final Comparator<Repository> REPOSITORY_COMPARATOR = Comparator.comparing(Repository::getPresentableUrl);
+  public static final Comparator<Repository> REPOSITORY_COMPARATOR =
+    Comparator.comparing(DvcsUtil::getShortRepositoryName, NaturalComparator.INSTANCE);
 
   public static void assertFileExists(File file, @NonNls @Nls String message) throws IllegalStateException {
     if (!file.exists()) {
