@@ -30,6 +30,8 @@ sealed class Parent permits TypedChild<error descr="Generics are not allowed in 
 
 non-sealed class TypedChild<F> extends Parent {}
 
+@interface AnnotationType <error descr="'permits' not allowed on @interface">permits</error> I {}
+
 class TestWithAnnotations{
   @Target(ElementType.TYPE_USE)
   @interface Ann {
@@ -38,7 +40,7 @@ class TestWithAnnotations{
   public static void main(String[] args) {
 
   }
-  sealed class PermittedAnnotations permits <error descr="Annotation is not allowed in permit list">@Ann</error> SealedOne {
+  sealed class PermittedAnnotations permits <error descr="Annotations not allowed in 'permits' list">@Ann</error> SealedOne {
   }
 
   non-sealed class SealedOne extends PermittedAnnotations {
