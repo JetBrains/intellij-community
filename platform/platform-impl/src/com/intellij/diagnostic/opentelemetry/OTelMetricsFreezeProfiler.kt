@@ -22,7 +22,7 @@ private class OTelMetricsFreezeProfiler : FreezeProfiler {
   override fun start(reportDir: Path) {
   }
 
-  override fun stop() {
+  override fun stop(reportDir: Path) {
   }
 
   override fun getAttachments(reportDir: Path): List<Attachment> = collectOpenTelemetryReports()
