@@ -398,6 +398,7 @@
               icon="AllIcons.Diff.MagicResolveToolbar"/>
 
       <group id="Diff.Conflicts.Additional.Actions"/>
+      <group id="Diff.Conflicts.Feedback"/>
 
       <group id="compare.contents" icon="AllIcons.Actions.Diff" popup="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup">
         <action id="Diff.ComparePartial.Base.Left" class="com.intellij.openapi.actionSystem.EmptyAction"
