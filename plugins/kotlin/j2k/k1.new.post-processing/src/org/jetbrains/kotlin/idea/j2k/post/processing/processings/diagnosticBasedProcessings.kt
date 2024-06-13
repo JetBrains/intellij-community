@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.isNothing
-import org.jetbrains.kotlin.types.typeUtil.isSignedOrUnsignedNumberType
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
@@ -55,10 +54,7 @@ internal val fixTypeMismatchDiagnosticBasedProcessing =
                 }
             }
 
-            element is KtExpression
-                    && realType.isSignedOrUnsignedNumberType()
-                    && expectedType.isSignedOrUnsignedNumberType()
-                    && isNumberConversionAvailable(realType, expectedType) -> {
+            element is KtExpression && isNumberConversionAvailable(realType, expectedType) -> {
                 val elementContext = prepareNumberConversionElementContext(realType, expectedType)
                 val fix = NumberConversionFix(element, elementContext)
                 fix.asIntention().invoke(element.project, null, element.containingFile)

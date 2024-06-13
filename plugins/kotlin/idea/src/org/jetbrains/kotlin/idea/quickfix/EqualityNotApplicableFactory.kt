@@ -20,17 +20,20 @@ object EqualityNotApplicableFactory : KotlinIntentionActionsFactory() {
         val leftType = diagnosticWithParameters.b
         val rightType = diagnosticWithParameters.c
 
-        if (leftType.isNumberType() && rightType.isNumberType()) {
-            return buildList {
-                if (isNumberConversionAvailable(leftType, rightType, enableNullableType = true)) {
-                    val elementContext = prepareNumberConversionElementContext(leftType, rightType)
-                    add(NumberConversionFix(left, elementContext, NumberConversionFix.ConversionType.LEFT_HAND_SIDE).asIntention())
-                }
-                if (isNumberConversionAvailable(leftType, rightType, enableNullableType = true)) {
-                    val elementContext = prepareNumberConversionElementContext(rightType, leftType)
-                    add(NumberConversionFix(right, elementContext, NumberConversionFix.ConversionType.RIGHT_HAND_SIDE).asIntention())
-                }
-            }
+        if (isNumberConversionAvailable(leftType, rightType, enableNullableType = true)) {
+            return listOf(
+                NumberConversionFix(
+                    element = left,
+                    elementContext = prepareNumberConversionElementContext(leftType, rightType),
+                    conversionType = NumberConversionFix.ConversionType.LEFT_HAND_SIDE
+                ).asIntention(),
+
+                NumberConversionFix(
+                    element = right,
+                    elementContext = prepareNumberConversionElementContext(rightType, leftType),
+                    conversionType = NumberConversionFix.ConversionType.RIGHT_HAND_SIDE
+                ).asIntention(),
+            )
         }
 
         val leftHandSideIsChar = leftType.isChar()
@@ -46,8 +49,6 @@ object EqualityNotApplicableFactory : KotlinIntentionActionsFactory() {
 
         return emptyList()
     }
-
-    private fun KotlinType.isNumberType() = this.makeNotNullable().isSignedOrUnsignedNumberType()
 }
 
 fun prepareNumberConversionElementContext(
