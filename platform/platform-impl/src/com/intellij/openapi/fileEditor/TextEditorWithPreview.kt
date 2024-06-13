@@ -68,13 +68,49 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
   private var layout: Layout? = null
 
-  private var component: JComponent? = null
-  private var splitter: JBSplitter? = null
+  private var component: JComponent
+  private var splitter: JBSplitter
   private var toolbarWrapper: SplitEditorToolbar? = null
 
   init {
     myEditor.putUserData(PARENT_SPLIT_EDITOR_KEY, this)
     myPreview.putUserData(PARENT_SPLIT_EDITOR_KEY, this)
+
+    splitter = createSplitter()
+    splitter.splitterProportionKey = splitterProportionKey
+    splitter.firstComponent = myEditor.component
+    splitter.secondComponent = myPreview.component
+    // we're using OnePixelSplitter, but it actually supports wider dividers
+    splitter.dividerWidth = if (isNewUI()) 1 else 2
+    splitter.divider.background = JBColor.lazy(Supplier {
+      EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.PREVIEW_BORDER_COLOR) ?: UIUtil.getPanelBackground()
+    })
+
+    val toolbarWrapper = createSplitEditorToolbar(splitter)
+    this.toolbarWrapper = toolbarWrapper
+
+    var layout = layout
+    if (layout == null) {
+      val lastUsed = PropertiesComponent.getInstance().getValue(layoutPropertyName)
+      layout = Layout.fromId(id = lastUsed, defaultValue = defaultLayout)
+      this.layout = layout
+    }
+    adjustEditorsVisibility(layout)
+
+    val panel = JBUI.Panels.simplePanel(splitter).addToTop(toolbarWrapper)
+    if (isShowFloatingToolbar) {
+      toolbarWrapper.isVisible = false
+      val layeredPane = MyEditorLayeredComponentWrapper(panel)
+      component = layeredPane
+      val toolbarGroup = toolbarWrapper.rightToolbar.actionGroup
+      val toolbar = LayoutActionsFloatingToolbar(parentComponent = layeredPane, actionGroup = toolbarGroup, parentDisposable = this)
+      layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER as Any)
+      layeredPane.add(toolbar, JLayeredPane.POPUP_LAYER as Any)
+      registerToolbarListeners(panel, toolbar)
+    }
+    else {
+      component = panel
+    }
   }
 
   companion object {
@@ -129,48 +165,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
   protected open fun createSplitter(): JBSplitter = OnePixelSplitter()
 
-  override fun getComponent(): JComponent {
-    component?.let {
-      return it
-    }
-
-    val splitter = createSplitter()
-    this.splitter = splitter
-    splitter.splitterProportionKey = splitterProportionKey
-    splitter.firstComponent = myEditor.component
-    splitter.secondComponent = myPreview.component
-    splitter.dividerWidth = if (isNewUI()) 1 else 2 // we're using OnePixelSplitter, but it actually supports wider dividers
-    splitter.divider.background = JBColor.lazy(Supplier {
-      EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.PREVIEW_BORDER_COLOR) ?: UIUtil.getPanelBackground()
-    })
-
-    val toolbarWrapper = createSplitEditorToolbar(splitter)
-    this.toolbarWrapper = toolbarWrapper
-
-    var layout = layout
-    if (layout == null) {
-      val lastUsed = PropertiesComponent.getInstance().getValue(layoutPropertyName)
-      layout = Layout.fromId(id = lastUsed, defaultValue = defaultLayout)
-      this.layout = layout
-    }
-    adjustEditorsVisibility(layout)
-
-    val panel = JBUI.Panels.simplePanel(splitter).addToTop(toolbarWrapper)
-    if (!isShowFloatingToolbar) {
-      component = panel
-      return panel
-    }
-
-    toolbarWrapper.isVisible = false
-    val layeredPane = MyEditorLayeredComponentWrapper(panel)
-    component = layeredPane
-    val toolbarGroup = toolbarWrapper.rightToolbar.actionGroup
-    val toolbar = LayoutActionsFloatingToolbar(parentComponent = layeredPane, actionGroup = toolbarGroup, parentDisposable = this)
-    layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER)
-    layeredPane.add(toolbar, JLayeredPane.POPUP_LAYER)
-    registerToolbarListeners(panel, toolbar)
-    return layeredPane
-  }
+  override fun getComponent(): JComponent = component
 
   protected open val isShowFloatingToolbar: Boolean
     get() = Registry.`is`("ide.text.editor.with.preview.show.floating.toolbar") && toolbarWrapper!!.isLeftToolbarEmpty
@@ -196,7 +191,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
   open fun setVerticalSplit(verticalSplit: Boolean) {
     isVerticalSplit = verticalSplit
-    splitter!!.orientation = verticalSplit
+    splitter.orientation = verticalSplit
   }
 
   private fun createSplitEditorToolbar(targetComponentForActions: JComponent): SplitEditorToolbar {
@@ -226,12 +221,13 @@ open class TextEditorWithPreview @JvmOverloads constructor(
         adjustEditorsVisibility(splitLayout)
         toolbarWrapper?.refresh()
         if (EDT.isCurrentThreadEdt()) {
-          component?.repaint()
-        }
-        val focusComponent = preferredFocusedComponent
-        val focusOwner = IdeFocusManager.findInstance().focusOwner
-        if (focusComponent != null && focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, getComponent())) {
-          IdeFocusManager.findInstanceByComponent(focusComponent).requestFocus(focusComponent, true)
+          component.repaint()
+
+          val focusComponent = preferredFocusedComponent
+          val focusOwner = IdeFocusManager.findInstance().focusOwner
+          if (focusComponent != null && focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, getComponent())) {
+            IdeFocusManager.findInstanceByComponent(focusComponent).requestFocus(focusComponent, true)
+          }
         }
       }
       setVerticalSplit(state.isVerticalSplit)
@@ -424,8 +420,8 @@ open class TextEditorWithPreview @JvmOverloads constructor(
     this.isVerticalSplit = isVerticalSplit
 
     toolbarWrapper?.refresh()
-    splitter?.orientation = this.isVerticalSplit
-    component?.repaint()
+    splitter.orientation = this.isVerticalSplit
+    component.repaint()
   }
 
   private inner class MyMouseListener(private val toolbar: LayoutActionsFloatingToolbar) : AWTEventListener {
@@ -433,7 +429,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
     override fun eventDispatched(event: AWTEvent) {
       val isMouseOutsideToolbar = toolbar.mousePosition == null
-      if ((component ?: return).mousePosition != null) {
+      if (component.mousePosition != null) {
         alarm.cancelAllRequests()
         toolbar.scheduleShow()
         if (isMouseOutsideToolbar) {
