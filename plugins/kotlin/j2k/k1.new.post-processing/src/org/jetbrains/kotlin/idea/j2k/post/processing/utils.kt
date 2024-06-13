@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 
-internal fun runUndoTransparentActionInEdt(inWriteAction: Boolean, action: () -> Unit) {
+fun runUndoTransparentActionInEdt(inWriteAction: Boolean, action: () -> Unit) {
     ApplicationManager.getApplication().invokeAndWait {
         CommandProcessor.getInstance().runUndoTransparentAction {
             if (inWriteAction) {
