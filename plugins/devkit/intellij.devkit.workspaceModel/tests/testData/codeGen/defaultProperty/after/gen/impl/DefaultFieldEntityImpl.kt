@@ -1,34 +1,30 @@
 package com.intellij.workspaceModel.test.api.impl
 
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.impl.ConnectionId
-import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
-import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.workspaceModel.test.api.DefaultFieldEntity
+import com.intellij.workspaceModel.test.api.TestData
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : ReferredEntity, WorkspaceEntityBase(dataSource) {
+internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData) : DefaultFieldEntity,
+                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ReferredEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+
 
     private val connections = listOf<ConnectionId>(
-      CONTENTROOT_CONNECTION_ID,
     )
 
   }
@@ -38,14 +34,15 @@ internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : 
       readField("version")
       return dataSource.version
     }
-  override val name: String
+  override val data: TestData
     get() {
-      readField("name")
-      return dataSource.name
+      readField("data")
+      return dataSource.data
     }
 
-  override val contentRoot: ContentRootEntity?
-    get() = snapshot.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this)
+  override var anotherVersion: Int = dataSource.anotherVersion
+
+  override var description: String = dataSource.description
 
   override val entitySource: EntitySource
     get() {
@@ -58,9 +55,9 @@ internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : 
   }
 
 
-  internal class Builder(result: ReferredEntityData?) : ModifiableWorkspaceEntityBase<ReferredEntity, ReferredEntityData>(result),
-                                                        ReferredEntity.Builder {
-    internal constructor() : this(ReferredEntityData())
+  internal class Builder(result: DefaultFieldEntityData?) :
+    ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(result), DefaultFieldEntity.Builder {
+    internal constructor() : this(DefaultFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -69,7 +66,7 @@ internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : 
           return
         }
         else {
-          error("Entity ReferredEntity is already created in a different builder")
+          error("Entity DefaultFieldEntity is already created in a different builder")
         }
       }
 
@@ -90,8 +87,8 @@ internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : 
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isNameInitialized()) {
-        error("Field ReferredEntity#name should be initialized")
+      if (!getEntityData().isDataInitialized()) {
+        error("Field DefaultFieldEntity#data should be initialized")
       }
     }
 
@@ -101,10 +98,12 @@ internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : 
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ReferredEntity
+      dataSource as DefaultFieldEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.version != dataSource.version) this.version = dataSource.version
-      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.anotherVersion != dataSource.anotherVersion) this.anotherVersion = dataSource.anotherVersion
+      if (this.description != dataSource.description) this.description = dataSource.description
       updateChildToParentReferences(parents)
     }
 
@@ -126,73 +125,56 @@ internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : 
         changedProperty.add("version")
       }
 
-    override var name: String
-      get() = getEntityData().name
+    override var data: TestData
+      get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).name = value
-        changedProperty.add("name")
+        getEntityData(true).data = value
+        changedProperty.add("data")
+
       }
 
-    override var contentRoot: ContentRootEntity.Builder?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CONTENTROOT_CONNECTION_ID, this) as? ContentRootEntity.Builder)
-          ?: (this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity.Builder)
-        }
-        else {
-          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity.Builder
-        }
-      }
+    override var anotherVersion: Int
+      get() = getEntityData().anotherVersion
       set(value) {
         checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(CONTENTROOT_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = value
-        }
-        changedProperty.add("contentRoot")
+        getEntityData(true).anotherVersion = value
+        changedProperty.add("anotherVersion")
       }
 
-    override fun getEntityClass(): Class<ReferredEntity> = ReferredEntity::class.java
+    override var description: String
+      get() = getEntityData().description
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).description = value
+        changedProperty.add("description")
+      }
+
+    override fun getEntityClass(): Class<DefaultFieldEntity> = DefaultFieldEntity::class.java
   }
 }
 
-internal class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
+internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
   var version: Int = 0
-  lateinit var name: String
+  lateinit var data: TestData
+  var anotherVersion: Int = 0
+  var description: String = "Default description"
 
 
-  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ReferredEntity> {
-    val modifiable = ReferredEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DefaultFieldEntity> {
+    val modifiable = DefaultFieldEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ReferredEntity {
+  override fun createEntity(snapshot: EntityStorageInstrumentation): DefaultFieldEntity {
     val entityId = createEntityId()
     return snapshot.initializeEntity(entityId) {
-      val entity = ReferredEntityImpl(this)
+      val entity = DefaultFieldEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = entityId
       entity
@@ -200,15 +182,17 @@ internal class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.ReferredEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.DefaultFieldEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ReferredEntity::class.java
+    return DefaultFieldEntity::class.java
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return ReferredEntity(version, name, entitySource) {
+    return DefaultFieldEntity(version, data, entitySource) {
+      this.anotherVersion = this@DefaultFieldEntityData.anotherVersion
+      this.description = this@DefaultFieldEntityData.description
     }
   }
 
@@ -221,11 +205,13 @@ internal class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ReferredEntityData
+    other as DefaultFieldEntityData
 
     if (this.entitySource != other.entitySource) return false
     if (this.version != other.version) return false
-    if (this.name != other.name) return false
+    if (this.data != other.data) return false
+    if (this.anotherVersion != other.anotherVersion) return false
+    if (this.description != other.description) return false
     return true
   }
 
@@ -233,24 +219,30 @@ internal class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ReferredEntityData
+    other as DefaultFieldEntityData
 
     if (this.version != other.version) return false
-    if (this.name != other.name) return false
+    if (this.data != other.data) return false
+    if (this.anotherVersion != other.anotherVersion) return false
+    if (this.description != other.description) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
     result = 31 * result + version.hashCode()
-    result = 31 * result + name.hashCode()
+    result = 31 * result + data.hashCode()
+    result = 31 * result + anotherVersion.hashCode()
+    result = 31 * result + description.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + version.hashCode()
-    result = 31 * result + name.hashCode()
+    result = 31 * result + data.hashCode()
+    result = 31 * result + anotherVersion.hashCode()
+    result = 31 * result + description.hashCode()
     return result
   }
 }

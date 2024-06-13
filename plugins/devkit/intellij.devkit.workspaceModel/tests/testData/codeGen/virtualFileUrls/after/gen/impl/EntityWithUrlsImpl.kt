@@ -15,6 +15,8 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.test.api.DataClassWithUrl
+import com.intellij.workspaceModel.test.api.EntityWithUrls
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)

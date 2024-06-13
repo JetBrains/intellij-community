@@ -1,4 +1,3 @@
-//some copyright comment
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -6,6 +5,8 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Abstract
+import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -13,10 +14,11 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.workspaceModel.test.api.ParentEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase(dataSource) {
+internal open class ParentEntityImpl(private val dataSource: ParentEntityData) : ParentEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -26,10 +28,16 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
 
   }
 
-  override val name: String
+  override val data1: String
     get() {
-      readField("name")
-      return dataSource.name
+      readField("data1")
+      return dataSource.data1
+    }
+
+  override val data2: String
+    get() {
+      readField("data2")
+      return dataSource.data2
     }
 
   override val entitySource: EntitySource
@@ -43,9 +51,9 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
   }
 
 
-  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result),
-                                                      SimpleEntity.Builder {
-    internal constructor() : this(SimpleEntityData())
+  internal class Builder(result: ParentEntityData?) : ModifiableWorkspaceEntityBase<ParentEntity, ParentEntityData>(result),
+                                                      ParentEntity.Builder {
+    internal constructor() : this(ParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -54,7 +62,7 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
           return
         }
         else {
-          error("Entity SimpleEntity is already created in a different builder")
+          error("Entity ParentEntity is already created in a different builder")
         }
       }
 
@@ -75,8 +83,11 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isNameInitialized()) {
-        error("Field SimpleEntity#name should be initialized")
+      if (!getEntityData().isData1Initialized()) {
+        error("Field GrandParentEntity#data1 should be initialized")
+      }
+      if (!getEntityData().isData2Initialized()) {
+        error("Field ParentEntity#data2 should be initialized")
       }
     }
 
@@ -86,9 +97,10 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as SimpleEntity
+      dataSource as ParentEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.data1 != dataSource.data1) this.data1 = dataSource.data1
+      if (this.data2 != dataSource.data2) this.data2 = dataSource.data2
       updateChildToParentReferences(parents)
     }
 
@@ -102,35 +114,45 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
 
       }
 
-    override var name: String
-      get() = getEntityData().name
+    override var data1: String
+      get() = getEntityData().data1
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).name = value
-        changedProperty.add("name")
+        getEntityData(true).data1 = value
+        changedProperty.add("data1")
       }
 
-    override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
+    override var data2: String
+      get() = getEntityData().data2
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).data2 = value
+        changedProperty.add("data2")
+      }
+
+    override fun getEntityClass(): Class<ParentEntity> = ParentEntity::class.java
   }
 }
 
-internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
-  lateinit var name: String
+internal class ParentEntityData : WorkspaceEntityData<ParentEntity>() {
+  lateinit var data1: String
+  lateinit var data2: String
 
-  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isData1Initialized(): Boolean = ::data1.isInitialized
+  internal fun isData2Initialized(): Boolean = ::data2.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleEntity> {
-    val modifiable = SimpleEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentEntity> {
+    val modifiable = ParentEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  override fun createEntity(snapshot: EntityStorageInstrumentation): SimpleEntity {
+  override fun createEntity(snapshot: EntityStorageInstrumentation): ParentEntity {
     val entityId = createEntityId()
     return snapshot.initializeEntity(entityId) {
-      val entity = SimpleEntityImpl(this)
+      val entity = ParentEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = entityId
       entity
@@ -138,15 +160,15 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.SimpleEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.ParentEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return SimpleEntity::class.java
+    return ParentEntity::class.java
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return SimpleEntity(name, entitySource) {
+    return ParentEntity(data1, data2, entitySource) {
     }
   }
 
@@ -159,10 +181,11 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as SimpleEntityData
+    other as ParentEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.name != other.name) return false
+    if (this.data1 != other.data1) return false
+    if (this.data2 != other.data2) return false
     return true
   }
 
@@ -170,21 +193,24 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as SimpleEntityData
+    other as ParentEntityData
 
-    if (this.name != other.name) return false
+    if (this.data1 != other.data1) return false
+    if (this.data2 != other.data2) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + name.hashCode()
+    result = 31 * result + data1.hashCode()
+    result = 31 * result + data2.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + name.hashCode()
+    result = 31 * result + data1.hashCode()
+    result = 31 * result + data2.hashCode()
     return result
   }
 }

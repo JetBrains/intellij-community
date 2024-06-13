@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.workspaceModel.test.api.CollectionFieldEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)

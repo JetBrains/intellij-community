@@ -12,12 +12,11 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import java.util.Date
+import com.intellij.workspaceModel.test.api.SimpleEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownPropertyTypeEntityData) : UnknownPropertyTypeEntity,
-                                                                                                      WorkspaceEntityBase(dataSource) {
+internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -27,10 +26,21 @@ internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownProp
 
   }
 
-  override val date: Date
+  override val version: Int
     get() {
-      readField("date")
-      return dataSource.date
+      readField("version")
+      return dataSource.version
+    }
+  override val name: String
+    get() {
+      readField("name")
+      return dataSource.name
+    }
+
+  override val isSimple: Boolean
+    get() {
+      readField("isSimple")
+      return dataSource.isSimple
     }
 
   override val entitySource: EntitySource
@@ -44,9 +54,9 @@ internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownProp
   }
 
 
-  internal class Builder(result: UnknownPropertyTypeEntityData?) :
-    ModifiableWorkspaceEntityBase<UnknownPropertyTypeEntity, UnknownPropertyTypeEntityData>(result), UnknownPropertyTypeEntity.Builder {
-    internal constructor() : this(UnknownPropertyTypeEntityData())
+  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result),
+                                                      SimpleEntity.Builder {
+    internal constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -55,7 +65,7 @@ internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownProp
           return
         }
         else {
-          error("Entity UnknownPropertyTypeEntity is already created in a different builder")
+          error("Entity SimpleEntity is already created in a different builder")
         }
       }
 
@@ -76,8 +86,8 @@ internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownProp
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isDateInitialized()) {
-        error("Field UnknownPropertyTypeEntity#date should be initialized")
+      if (!getEntityData().isNameInitialized()) {
+        error("Field SimpleEntity#name should be initialized")
       }
     }
 
@@ -87,9 +97,11 @@ internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownProp
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as UnknownPropertyTypeEntity
+      dataSource as SimpleEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.date != dataSource.date) this.date = dataSource.date
+      if (this.version != dataSource.version) this.version = dataSource.version
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.isSimple != dataSource.isSimple) this.isSimple = dataSource.isSimple
       updateChildToParentReferences(parents)
     }
 
@@ -103,36 +115,55 @@ internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownProp
 
       }
 
-    override var date: Date
-      get() = getEntityData().date
+    override var version: Int
+      get() = getEntityData().version
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).date = value
-        changedProperty.add("date")
-
+        getEntityData(true).version = value
+        changedProperty.add("version")
       }
 
-    override fun getEntityClass(): Class<UnknownPropertyTypeEntity> = UnknownPropertyTypeEntity::class.java
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).name = value
+        changedProperty.add("name")
+      }
+
+    override var isSimple: Boolean
+      get() = getEntityData().isSimple
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).isSimple = value
+        changedProperty.add("isSimple")
+      }
+
+    override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
   }
 }
 
-internal class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEntity>() {
-  lateinit var date: Date
+internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
+  var version: Int = 0
+  lateinit var name: String
+  var isSimple: Boolean = false
 
-  internal fun isDateInitialized(): Boolean = ::date.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<UnknownPropertyTypeEntity> {
-    val modifiable = UnknownPropertyTypeEntityImpl.Builder(null)
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+
+
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleEntity> {
+    val modifiable = SimpleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  override fun createEntity(snapshot: EntityStorageInstrumentation): UnknownPropertyTypeEntity {
+  override fun createEntity(snapshot: EntityStorageInstrumentation): SimpleEntity {
     val entityId = createEntityId()
     return snapshot.initializeEntity(entityId) {
-      val entity = UnknownPropertyTypeEntityImpl(this)
+      val entity = SimpleEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = entityId
       entity
@@ -140,15 +171,15 @@ internal class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownProper
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.UnknownPropertyTypeEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.SimpleEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return UnknownPropertyTypeEntity::class.java
+    return SimpleEntity::class.java
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return UnknownPropertyTypeEntity(date, entitySource) {
+    return SimpleEntity(version, name, isSimple, entitySource) {
     }
   }
 
@@ -161,10 +192,12 @@ internal class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownProper
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as UnknownPropertyTypeEntityData
+    other as SimpleEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.date != other.date) return false
+    if (this.version != other.version) return false
+    if (this.name != other.name) return false
+    if (this.isSimple != other.isSimple) return false
     return true
   }
 
@@ -172,21 +205,27 @@ internal class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownProper
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as UnknownPropertyTypeEntityData
+    other as SimpleEntityData
 
-    if (this.date != other.date) return false
+    if (this.version != other.version) return false
+    if (this.name != other.name) return false
+    if (this.isSimple != other.isSimple) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + date.hashCode()
+    result = 31 * result + version.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + isSimple.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + date.hashCode()
+    result = 31 * result + version.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + isSimple.hashCode()
     return result
   }
 }

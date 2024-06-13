@@ -1,12 +1,11 @@
+//some copyright comment
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -14,10 +13,11 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.workspaceModel.test.api.SimpleEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityData) : FinalFieldsEntity, WorkspaceEntityBase(dataSource) {
+internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -27,10 +27,10 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
 
   }
 
-  override val descriptor: AnotherDataClass
+  override val name: String
     get() {
-      readField("descriptor")
-      return dataSource.descriptor
+      readField("name")
+      return dataSource.name
     }
 
   override val entitySource: EntitySource
@@ -44,9 +44,9 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
   }
 
 
-  internal class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(result),
-                                                           FinalFieldsEntity.Builder {
-    internal constructor() : this(FinalFieldsEntityData())
+  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result),
+                                                      SimpleEntity.Builder {
+    internal constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -55,7 +55,7 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
           return
         }
         else {
-          error("Entity FinalFieldsEntity is already created in a different builder")
+          error("Entity SimpleEntity is already created in a different builder")
         }
       }
 
@@ -76,8 +76,8 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isDescriptorInitialized()) {
-        error("Field FinalFieldsEntity#descriptor should be initialized")
+      if (!getEntityData().isNameInitialized()) {
+        error("Field SimpleEntity#name should be initialized")
       }
     }
 
@@ -87,9 +87,9 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as FinalFieldsEntity
+      dataSource as SimpleEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.descriptor != dataSource.descriptor) this.descriptor = dataSource.descriptor
+      if (this.name != dataSource.name) this.name = dataSource.name
       updateChildToParentReferences(parents)
     }
 
@@ -103,36 +103,35 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
 
       }
 
-    override var descriptor: AnotherDataClass
-      get() = getEntityData().descriptor
+    override var name: String
+      get() = getEntityData().name
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).descriptor = value
-        changedProperty.add("descriptor")
-
+        getEntityData(true).name = value
+        changedProperty.add("name")
       }
 
-    override fun getEntityClass(): Class<FinalFieldsEntity> = FinalFieldsEntity::class.java
+    override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
   }
 }
 
-internal class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
-  lateinit var descriptor: AnotherDataClass
+internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
+  lateinit var name: String
 
-  internal fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FinalFieldsEntity> {
-    val modifiable = FinalFieldsEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleEntity> {
+    val modifiable = SimpleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  override fun createEntity(snapshot: EntityStorageInstrumentation): FinalFieldsEntity {
+  override fun createEntity(snapshot: EntityStorageInstrumentation): SimpleEntity {
     val entityId = createEntityId()
     return snapshot.initializeEntity(entityId) {
-      val entity = FinalFieldsEntityImpl(this)
+      val entity = SimpleEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = entityId
       entity
@@ -140,15 +139,15 @@ internal class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() 
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.FinalFieldsEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.SimpleEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return FinalFieldsEntity::class.java
+    return SimpleEntity::class.java
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return FinalFieldsEntity(descriptor, entitySource) {
+    return SimpleEntity(name, entitySource) {
     }
   }
 
@@ -161,10 +160,10 @@ internal class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() 
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as FinalFieldsEntityData
+    other as SimpleEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.descriptor != other.descriptor) return false
+    if (this.name != other.name) return false
     return true
   }
 
@@ -172,21 +171,21 @@ internal class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() 
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as FinalFieldsEntityData
+    other as SimpleEntityData
 
-    if (this.descriptor != other.descriptor) return false
+    if (this.name != other.name) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + descriptor.hashCode()
+    result = 31 * result + name.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + descriptor.hashCode()
+    result = 31 * result + name.hashCode()
     return result
   }
 }

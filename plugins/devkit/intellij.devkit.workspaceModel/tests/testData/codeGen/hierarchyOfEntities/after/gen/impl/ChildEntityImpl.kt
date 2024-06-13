@@ -5,7 +5,8 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Default
+import com.intellij.platform.workspace.storage.annotations.Abstract
+import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -13,11 +14,11 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.workspaceModel.test.api.ChildEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData) : DefaultFieldEntity,
-                                                                                        WorkspaceEntityBase(dataSource) {
+internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -27,20 +28,23 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
 
   }
 
-  override val version: Int
+  override val data1: String
     get() {
-      readField("version")
-      return dataSource.version
-    }
-  override val data: TestData
-    get() {
-      readField("data")
-      return dataSource.data
+      readField("data1")
+      return dataSource.data1
     }
 
-  override var anotherVersion: Int = dataSource.anotherVersion
+  override val data2: String
+    get() {
+      readField("data2")
+      return dataSource.data2
+    }
 
-  override var description: String = dataSource.description
+  override val data3: String
+    get() {
+      readField("data3")
+      return dataSource.data3
+    }
 
   override val entitySource: EntitySource
     get() {
@@ -53,9 +57,9 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
   }
 
 
-  internal class Builder(result: DefaultFieldEntityData?) :
-    ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(result), DefaultFieldEntity.Builder {
-    internal constructor() : this(DefaultFieldEntityData())
+  internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(result),
+                                                     ChildEntity.Builder {
+    internal constructor() : this(ChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -64,7 +68,7 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
           return
         }
         else {
-          error("Entity DefaultFieldEntity is already created in a different builder")
+          error("Entity ChildEntity is already created in a different builder")
         }
       }
 
@@ -85,8 +89,14 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isDataInitialized()) {
-        error("Field DefaultFieldEntity#data should be initialized")
+      if (!getEntityData().isData1Initialized()) {
+        error("Field GrandParentEntity#data1 should be initialized")
+      }
+      if (!getEntityData().isData2Initialized()) {
+        error("Field ParentEntity#data2 should be initialized")
+      }
+      if (!getEntityData().isData3Initialized()) {
+        error("Field ChildEntity#data3 should be initialized")
       }
     }
 
@@ -96,12 +106,11 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as DefaultFieldEntity
+      dataSource as ChildEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.version != dataSource.version) this.version = dataSource.version
-      if (this.data != dataSource.data) this.data = dataSource.data
-      if (this.anotherVersion != dataSource.anotherVersion) this.anotherVersion = dataSource.anotherVersion
-      if (this.description != dataSource.description) this.description = dataSource.description
+      if (this.data1 != dataSource.data1) this.data1 = dataSource.data1
+      if (this.data2 != dataSource.data2) this.data2 = dataSource.data2
+      if (this.data3 != dataSource.data3) this.data3 = dataSource.data3
       updateChildToParentReferences(parents)
     }
 
@@ -115,64 +124,55 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
 
       }
 
-    override var version: Int
-      get() = getEntityData().version
+    override var data1: String
+      get() = getEntityData().data1
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).version = value
-        changedProperty.add("version")
+        getEntityData(true).data1 = value
+        changedProperty.add("data1")
       }
 
-    override var data: TestData
-      get() = getEntityData().data
+    override var data2: String
+      get() = getEntityData().data2
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).data = value
-        changedProperty.add("data")
-
+        getEntityData(true).data2 = value
+        changedProperty.add("data2")
       }
 
-    override var anotherVersion: Int
-      get() = getEntityData().anotherVersion
+    override var data3: String
+      get() = getEntityData().data3
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).anotherVersion = value
-        changedProperty.add("anotherVersion")
+        getEntityData(true).data3 = value
+        changedProperty.add("data3")
       }
 
-    override var description: String
-      get() = getEntityData().description
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).description = value
-        changedProperty.add("description")
-      }
-
-    override fun getEntityClass(): Class<DefaultFieldEntity> = DefaultFieldEntity::class.java
+    override fun getEntityClass(): Class<ChildEntity> = ChildEntity::class.java
   }
 }
 
-internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
-  var version: Int = 0
-  lateinit var data: TestData
-  var anotherVersion: Int = 0
-  var description: String = "Default description"
+internal class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
+  lateinit var data1: String
+  lateinit var data2: String
+  lateinit var data3: String
 
+  internal fun isData1Initialized(): Boolean = ::data1.isInitialized
+  internal fun isData2Initialized(): Boolean = ::data2.isInitialized
+  internal fun isData3Initialized(): Boolean = ::data3.isInitialized
 
-  internal fun isDataInitialized(): Boolean = ::data.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DefaultFieldEntity> {
-    val modifiable = DefaultFieldEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildEntity> {
+    val modifiable = ChildEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  override fun createEntity(snapshot: EntityStorageInstrumentation): DefaultFieldEntity {
+  override fun createEntity(snapshot: EntityStorageInstrumentation): ChildEntity {
     val entityId = createEntityId()
     return snapshot.initializeEntity(entityId) {
-      val entity = DefaultFieldEntityImpl(this)
+      val entity = ChildEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = entityId
       entity
@@ -180,17 +180,15 @@ internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>(
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.DefaultFieldEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.ChildEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return DefaultFieldEntity::class.java
+    return ChildEntity::class.java
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return DefaultFieldEntity(version, data, entitySource) {
-      this.anotherVersion = this@DefaultFieldEntityData.anotherVersion
-      this.description = this@DefaultFieldEntityData.description
+    return ChildEntity(data1, data2, data3, entitySource) {
     }
   }
 
@@ -203,13 +201,12 @@ internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>(
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as DefaultFieldEntityData
+    other as ChildEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.version != other.version) return false
-    if (this.data != other.data) return false
-    if (this.anotherVersion != other.anotherVersion) return false
-    if (this.description != other.description) return false
+    if (this.data1 != other.data1) return false
+    if (this.data2 != other.data2) return false
+    if (this.data3 != other.data3) return false
     return true
   }
 
@@ -217,30 +214,27 @@ internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>(
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as DefaultFieldEntityData
+    other as ChildEntityData
 
-    if (this.version != other.version) return false
-    if (this.data != other.data) return false
-    if (this.anotherVersion != other.anotherVersion) return false
-    if (this.description != other.description) return false
+    if (this.data1 != other.data1) return false
+    if (this.data2 != other.data2) return false
+    if (this.data3 != other.data3) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + version.hashCode()
-    result = 31 * result + data.hashCode()
-    result = 31 * result + anotherVersion.hashCode()
-    result = 31 * result + description.hashCode()
+    result = 31 * result + data1.hashCode()
+    result = 31 * result + data2.hashCode()
+    result = 31 * result + data3.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + version.hashCode()
-    result = 31 * result + data.hashCode()
-    result = 31 * result + anotherVersion.hashCode()
-    result = 31 * result + description.hashCode()
+    result = 31 * result + data1.hashCode()
+    result = 31 * result + data2.hashCode()
+    result = 31 * result + data3.hashCode()
     return result
   }
 }

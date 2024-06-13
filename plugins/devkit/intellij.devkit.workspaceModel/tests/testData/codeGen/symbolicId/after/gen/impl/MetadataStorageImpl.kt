@@ -17,7 +17,7 @@ internal object MetadataStorageImpl: MetadataStorageBase() {
 
         var typeMetadata: StorageTypeMetadata
 
-        typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntity", entityDataFqName = "com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
+        typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntity", entityDataFqName = "com.intellij.workspaceModel.test.api.impl.SimpleSymbolicIdEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
 "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "version", valueType = primitiveTypeIntNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
@@ -37,7 +37,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntity", metadataHash = -1119625498)
+        addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntity", metadataHash = 920886074)
         addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SimpleId", metadataHash = 503726574)
         addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks", metadataHash = 869203958)
         addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks\$Many", metadataHash = 1388134395)

@@ -3,8 +3,10 @@ package com.intellij.workspaceModel.test.api.impl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -12,10 +14,12 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.workspaceModel.test.api.AnotherDataClass
+import com.intellij.workspaceModel.test.api.FinalFieldsEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase(dataSource) {
+internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityData) : FinalFieldsEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -25,21 +29,10 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
 
   }
 
-  override val version: Int
+  override val descriptor: AnotherDataClass
     get() {
-      readField("version")
-      return dataSource.version
-    }
-  override val name: String
-    get() {
-      readField("name")
-      return dataSource.name
-    }
-
-  override val isSimple: Boolean
-    get() {
-      readField("isSimple")
-      return dataSource.isSimple
+      readField("descriptor")
+      return dataSource.descriptor
     }
 
   override val entitySource: EntitySource
@@ -53,9 +46,9 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
   }
 
 
-  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result),
-                                                      SimpleEntity.Builder {
-    internal constructor() : this(SimpleEntityData())
+  internal class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(result),
+                                                           FinalFieldsEntity.Builder {
+    internal constructor() : this(FinalFieldsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -64,7 +57,7 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
           return
         }
         else {
-          error("Entity SimpleEntity is already created in a different builder")
+          error("Entity FinalFieldsEntity is already created in a different builder")
         }
       }
 
@@ -85,8 +78,8 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isNameInitialized()) {
-        error("Field SimpleEntity#name should be initialized")
+      if (!getEntityData().isDescriptorInitialized()) {
+        error("Field FinalFieldsEntity#descriptor should be initialized")
       }
     }
 
@@ -96,11 +89,9 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as SimpleEntity
+      dataSource as FinalFieldsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.version != dataSource.version) this.version = dataSource.version
-      if (this.name != dataSource.name) this.name = dataSource.name
-      if (this.isSimple != dataSource.isSimple) this.isSimple = dataSource.isSimple
+      if (this.descriptor != dataSource.descriptor) this.descriptor = dataSource.descriptor
       updateChildToParentReferences(parents)
     }
 
@@ -114,55 +105,36 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
 
       }
 
-    override var version: Int
-      get() = getEntityData().version
+    override var descriptor: AnotherDataClass
+      get() = getEntityData().descriptor
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).version = value
-        changedProperty.add("version")
+        getEntityData(true).descriptor = value
+        changedProperty.add("descriptor")
+
       }
 
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).name = value
-        changedProperty.add("name")
-      }
-
-    override var isSimple: Boolean
-      get() = getEntityData().isSimple
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).isSimple = value
-        changedProperty.add("isSimple")
-      }
-
-    override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
+    override fun getEntityClass(): Class<FinalFieldsEntity> = FinalFieldsEntity::class.java
   }
 }
 
-internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
-  var version: Int = 0
-  lateinit var name: String
-  var isSimple: Boolean = false
+internal class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
+  lateinit var descriptor: AnotherDataClass
 
+  internal fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
 
-  internal fun isNameInitialized(): Boolean = ::name.isInitialized
-
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleEntity> {
-    val modifiable = SimpleEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FinalFieldsEntity> {
+    val modifiable = FinalFieldsEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  override fun createEntity(snapshot: EntityStorageInstrumentation): SimpleEntity {
+  override fun createEntity(snapshot: EntityStorageInstrumentation): FinalFieldsEntity {
     val entityId = createEntityId()
     return snapshot.initializeEntity(entityId) {
-      val entity = SimpleEntityImpl(this)
+      val entity = FinalFieldsEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = entityId
       entity
@@ -170,15 +142,15 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.SimpleEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.FinalFieldsEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return SimpleEntity::class.java
+    return FinalFieldsEntity::class.java
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return SimpleEntity(version, name, isSimple, entitySource) {
+    return FinalFieldsEntity(descriptor, entitySource) {
     }
   }
 
@@ -191,12 +163,10 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as SimpleEntityData
+    other as FinalFieldsEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.version != other.version) return false
-    if (this.name != other.name) return false
-    if (this.isSimple != other.isSimple) return false
+    if (this.descriptor != other.descriptor) return false
     return true
   }
 
@@ -204,27 +174,21 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as SimpleEntityData
+    other as FinalFieldsEntityData
 
-    if (this.version != other.version) return false
-    if (this.name != other.name) return false
-    if (this.isSimple != other.isSimple) return false
+    if (this.descriptor != other.descriptor) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + version.hashCode()
-    result = 31 * result + name.hashCode()
-    result = 31 * result + isSimple.hashCode()
+    result = 31 * result + descriptor.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + version.hashCode()
-    result = 31 * result + name.hashCode()
-    result = 31 * result + isSimple.hashCode()
+    result = 31 * result + descriptor.hashCode()
     return result
   }
 }

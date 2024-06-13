@@ -1,3 +1,4 @@
+//new comment
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -5,8 +6,6 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -14,10 +13,11 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.workspaceModel.test.api.SimpleEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildEntity, WorkspaceEntityBase(dataSource) {
+internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -27,22 +27,21 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
 
   }
 
-  override val data1: String
+  override val version: Int
     get() {
-      readField("data1")
-      return dataSource.data1
+      readField("version")
+      return dataSource.version
+    }
+  override val name: String
+    get() {
+      readField("name")
+      return dataSource.name
     }
 
-  override val data2: String
+  override val isSimple: Boolean
     get() {
-      readField("data2")
-      return dataSource.data2
-    }
-
-  override val data3: String
-    get() {
-      readField("data3")
-      return dataSource.data3
+      readField("isSimple")
+      return dataSource.isSimple
     }
 
   override val entitySource: EntitySource
@@ -56,9 +55,9 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
   }
 
 
-  internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(result),
-                                                     ChildEntity.Builder {
-    internal constructor() : this(ChildEntityData())
+  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result),
+                                                      SimpleEntity.Builder {
+    internal constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -67,7 +66,7 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
           return
         }
         else {
-          error("Entity ChildEntity is already created in a different builder")
+          error("Entity SimpleEntity is already created in a different builder")
         }
       }
 
@@ -88,14 +87,8 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isData1Initialized()) {
-        error("Field GrandParentEntity#data1 should be initialized")
-      }
-      if (!getEntityData().isData2Initialized()) {
-        error("Field ParentEntity#data2 should be initialized")
-      }
-      if (!getEntityData().isData3Initialized()) {
-        error("Field ChildEntity#data3 should be initialized")
+      if (!getEntityData().isNameInitialized()) {
+        error("Field SimpleEntity#name should be initialized")
       }
     }
 
@@ -105,11 +98,11 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ChildEntity
+      dataSource as SimpleEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.data1 != dataSource.data1) this.data1 = dataSource.data1
-      if (this.data2 != dataSource.data2) this.data2 = dataSource.data2
-      if (this.data3 != dataSource.data3) this.data3 = dataSource.data3
+      if (this.version != dataSource.version) this.version = dataSource.version
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.isSimple != dataSource.isSimple) this.isSimple = dataSource.isSimple
       updateChildToParentReferences(parents)
     }
 
@@ -123,55 +116,55 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
 
       }
 
-    override var data1: String
-      get() = getEntityData().data1
+    override var version: Int
+      get() = getEntityData().version
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).data1 = value
-        changedProperty.add("data1")
+        getEntityData(true).version = value
+        changedProperty.add("version")
       }
 
-    override var data2: String
-      get() = getEntityData().data2
+    override var name: String
+      get() = getEntityData().name
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).data2 = value
-        changedProperty.add("data2")
+        getEntityData(true).name = value
+        changedProperty.add("name")
       }
 
-    override var data3: String
-      get() = getEntityData().data3
+    override var isSimple: Boolean
+      get() = getEntityData().isSimple
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).data3 = value
-        changedProperty.add("data3")
+        getEntityData(true).isSimple = value
+        changedProperty.add("isSimple")
       }
 
-    override fun getEntityClass(): Class<ChildEntity> = ChildEntity::class.java
+    override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
   }
 }
 
-internal class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
-  lateinit var data1: String
-  lateinit var data2: String
-  lateinit var data3: String
+internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
+  var version: Int = 0
+  lateinit var name: String
+  var isSimple: Boolean = false
 
-  internal fun isData1Initialized(): Boolean = ::data1.isInitialized
-  internal fun isData2Initialized(): Boolean = ::data2.isInitialized
-  internal fun isData3Initialized(): Boolean = ::data3.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildEntity> {
-    val modifiable = ChildEntityImpl.Builder(null)
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+
+
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleEntity> {
+    val modifiable = SimpleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ChildEntity {
+  override fun createEntity(snapshot: EntityStorageInstrumentation): SimpleEntity {
     val entityId = createEntityId()
     return snapshot.initializeEntity(entityId) {
-      val entity = ChildEntityImpl(this)
+      val entity = SimpleEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = entityId
       entity
@@ -179,15 +172,15 @@ internal class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.ChildEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.SimpleEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ChildEntity::class.java
+    return SimpleEntity::class.java
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return ChildEntity(data1, data2, data3, entitySource) {
+    return SimpleEntity(version, name, isSimple, entitySource) {
     }
   }
 
@@ -200,12 +193,12 @@ internal class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ChildEntityData
+    other as SimpleEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.data1 != other.data1) return false
-    if (this.data2 != other.data2) return false
-    if (this.data3 != other.data3) return false
+    if (this.version != other.version) return false
+    if (this.name != other.name) return false
+    if (this.isSimple != other.isSimple) return false
     return true
   }
 
@@ -213,27 +206,27 @@ internal class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ChildEntityData
+    other as SimpleEntityData
 
-    if (this.data1 != other.data1) return false
-    if (this.data2 != other.data2) return false
-    if (this.data3 != other.data3) return false
+    if (this.version != other.version) return false
+    if (this.name != other.name) return false
+    if (this.isSimple != other.isSimple) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + data1.hashCode()
-    result = 31 * result + data2.hashCode()
-    result = 31 * result + data3.hashCode()
+    result = 31 * result + version.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + isSimple.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + data1.hashCode()
-    result = 31 * result + data2.hashCode()
-    result = 31 * result + data3.hashCode()
+    result = 31 * result + version.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + isSimple.hashCode()
     return result
   }
 }
