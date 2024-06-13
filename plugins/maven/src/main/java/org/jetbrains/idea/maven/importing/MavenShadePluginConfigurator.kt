@@ -25,6 +25,7 @@ import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.nio.file.Path
+import java.util.*
 import kotlin.io.path.pathString
 
 internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
@@ -145,7 +146,10 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
                                     baseDir: String) {
     val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
 
-    val requests = mavenProjects.map { MavenGoalExecutionRequest(File(it.path), MavenExplicitProfiles.NONE) }.toList()
+    val userProperties = Properties()
+    userProperties["skipTests"] = "true"
+    userProperties["maven.test.skip"] = "true"
+    val requests = mavenProjects.map { MavenGoalExecutionRequest(File(it.path), MavenExplicitProfiles.NONE, userProperties) }.toList()
 
     val names = mavenProjects.map { it.displayName }
     val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
