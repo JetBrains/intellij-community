@@ -831,6 +831,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenExecutionRequest mavenExecutionRequest = createRequest(file, activeProfiles, inactiveProfiles);
     mavenExecutionRequest.setGoals(Collections.singletonList(goal));
 
+    Properties userProperties = request.userProperties();
+    mavenExecutionRequest.setUserProperties(userProperties);
+
     Maven maven = getComponent(Maven.class);
     MavenExecutionResult executionResult = maven.execute(mavenExecutionRequest);
 

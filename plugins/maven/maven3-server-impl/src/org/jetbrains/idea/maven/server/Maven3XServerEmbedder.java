@@ -1175,6 +1175,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenExecutionRequest mavenExecutionRequest = createRequest(file, activeProfiles, inactiveProfiles);
     mavenExecutionRequest.setGoals(Collections.singletonList(goal));
 
+    Properties userProperties = request.userProperties();
+    mavenExecutionRequest.setUserProperties(userProperties);
+
     MavenExecutionResult executionResult = safeExecute(mavenExecutionRequest, getComponent(Maven.class));
 
     Maven3ExecutionResult result =
