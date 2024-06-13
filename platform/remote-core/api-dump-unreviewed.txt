@@ -267,7 +267,6 @@ c:com.intellij.remote.RemoteSdkCredentialsHolder
 - com.intellij.remote.RemoteCredentialsHolder
 - com.intellij.remote.RemoteSdkCredentials
 - <init>(java.lang.String):V
-- s:constructSshCredentialsSdkFullPath(com.intellij.remote.RemoteSdkCredentials):java.lang.String
 - copyRemoteSdkCredentialsTo(com.intellij.remote.RemoteSdkCredentialsHolder):V
 - equals(java.lang.Object):Z
 - getDefaultHelpersName():java.lang.String

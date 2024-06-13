@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -16,17 +16,6 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
 
   public RemoteSdkCredentialsHolder(@NotNull final String defaultHelpersDirName) {
     myRemoteSdkProperties = new RemoteSdkPropertiesHolder(defaultHelpersDirName);
-  }
-
-  public static String constructSshCredentialsSdkFullPath(@NotNull RemoteSdkCredentials cred) {
-    @NlsSafe StringBuilder builder = new StringBuilder();
-    if (cred.isRunAsRootViaSudo()) {
-      builder.append("sudo+");
-    }
-    return builder
-      .append(getCredentialsString(cred))
-      .append(cred.getInterpreterPath())
-      .toString();
   }
 
   /**
@@ -107,8 +96,14 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   }
 
   @Override
-  public String getFullInterpreterPath() {
-    return constructSshCredentialsSdkFullPath(this);
+  public @NotNull String getFullInterpreterPath() {
+    var builder = new StringBuilder();
+    if (isRunAsRootViaSudo()) {
+      builder.append("sudo+");
+    }
+    builder.append(getCredentialsString(this));
+    builder.append(getInterpreterPath());
+    return builder.toString();
   }
 
   @Override
