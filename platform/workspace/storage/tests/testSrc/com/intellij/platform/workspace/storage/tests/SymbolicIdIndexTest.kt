@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import org.junit.jupiter.api.Test
@@ -20,7 +21,7 @@ class SymbolicIdIndexTest {
 
     val newEntity = builder.modifySymbolicIdEntity(entity) {
       data = newName
-    } as SymbolicIdEntityImpl
+    } as WorkspaceEntityBase
     val newSymbolicId = builder.indexes.symbolicIdIndex.getEntryById(newEntity.id)
     assertEquals(newName, newSymbolicId!!.presentableName)
     assertEquals(entity.asBase().id, builder.indexes.symbolicIdIndex.getIdsByEntry(newSymbolicId))

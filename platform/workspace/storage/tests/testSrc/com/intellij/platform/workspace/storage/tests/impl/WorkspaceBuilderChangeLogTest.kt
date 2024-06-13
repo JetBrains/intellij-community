@@ -2,6 +2,8 @@
 package com.intellij.platform.workspace.storage.tests.impl
 
 import com.intellij.platform.workspace.storage.ExternalMappingKey
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.ChangeEntry
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.asBase
@@ -19,6 +21,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberProperties
 import kotlin.test.*
 
 class WorkspaceBuilderChangeLogTest {
@@ -58,7 +62,10 @@ class WorkspaceBuilderChangeLogTest {
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
     assertTrue(changeEntry is ChangeEntry.AddEntity)
-    assertEquals("Another Parent", (changeEntry.entityData as XParentEntityData).parentProperty)
+
+    val entityData = changeEntry.entityData
+    assertEquals("com.intellij.platform.workspace.storage.testEntities.entities.impl.XParentEntityData", entityData::class.java.name)
+    assertEquals("Another Parent", entityData.getPropertyValue("parentProperty"))
   }
 
   @Test
@@ -89,8 +96,11 @@ class WorkspaceBuilderChangeLogTest {
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
     assertTrue(changeEntry is ChangeEntry.AddEntity)
-    assertEquals("Another Parent", (changeEntry.entityData as XParentEntityData).parentProperty)
-    assertEquals(changeEntry.entityData.entitySource, AnotherSource)
+
+    val entityData = changeEntry.entityData
+    assertEquals("com.intellij.platform.workspace.storage.testEntities.entities.impl.XParentEntityData", entityData::class.java.name)
+    assertEquals("Another Parent", entityData.getPropertyValue("parentProperty"))
+    assertIs<AnotherSource>(entityData.getPropertyValue("entitySource"))
   }
 
   @Test
@@ -108,8 +118,11 @@ class WorkspaceBuilderChangeLogTest {
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
     assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
-    assertEquals((changeEntry.data!!.newData as XParentEntityData).parentProperty, "Another Parent")
-    assertEquals((changeEntry.data.newData as XParentEntityData).entitySource, AnotherSource)
+
+    val entityData = changeEntry.data!!.newData
+    assertEquals("com.intellij.platform.workspace.storage.testEntities.entities.impl.XParentEntityData", entityData::class.java.name)
+    assertEquals("Another Parent", entityData.getPropertyValue("parentProperty"))
+    assertIs<AnotherSource>(entityData.getPropertyValue("entitySource"))
   }
 
   @Test
@@ -142,8 +155,11 @@ class WorkspaceBuilderChangeLogTest {
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
     assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
-    assertEquals((changeEntry.data!!.newData as XParentEntityData).parentProperty, "Another Parent")
-    assertEquals((changeEntry.data.newData as XParentEntityData).entitySource, AnotherSource)
+
+    val entityData = changeEntry.data!!.newData
+    assertEquals("com.intellij.platform.workspace.storage.testEntities.entities.impl.XParentEntityData", entityData::class.java.name)
+    assertEquals("Another Parent", entityData.getPropertyValue("parentProperty"))
+    assertIs<AnotherSource>(entityData.getPropertyValue("entitySource"))
   }
 
   @Test
@@ -197,8 +213,11 @@ class WorkspaceBuilderChangeLogTest {
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
     assertInstanceOf<ChangeEntry.ReplaceEntity>(changeEntry)
-    assertEquals(((changeEntry as ChangeEntry.ReplaceEntity).data!!.newData as XParentEntityData).parentProperty, "Another Parent")
-    assertIs<SampleEntitySource>((changeEntry.data!!.newData as XParentEntityData).entitySource)
+
+    val entityData = (changeEntry as ChangeEntry.ReplaceEntity).data!!.newData
+    assertEquals("com.intellij.platform.workspace.storage.testEntities.entities.impl.XParentEntityData", entityData::class.java.name)
+    assertEquals("Another Parent", entityData.getPropertyValue("parentProperty"))
+    assertIs<SampleEntitySource>(entityData.getPropertyValue("entitySource"))
   }
 
   @Test
@@ -219,10 +238,16 @@ class WorkspaceBuilderChangeLogTest {
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
     assertInstanceOf<ChangeEntry.ReplaceEntity>(changeEntry)
-    assertEquals(((changeEntry as ChangeEntry.ReplaceEntity).data!!.newData as XParentEntityData).parentProperty,
-                 "Third Parent")
-    assertEquals((changeEntry.data!!.newData as XParentEntityData).entitySource,
-                 AnotherSource)
+
+    val entityData = (changeEntry as ChangeEntry.ReplaceEntity).data!!.newData
+    assertEquals("com.intellij.platform.workspace.storage.testEntities.entities.impl.XParentEntityData", entityData::class.java.name)
+    assertEquals("Third Parent", entityData.getPropertyValue("parentProperty"))
+    assertEquals(AnotherSource, entityData.getPropertyValue("entitySource"))
+  }
+
+  private fun <T> WorkspaceEntityData<*>.getPropertyValue(propertyName: String): T {
+    val property = this::class.memberProperties.first { it.name == propertyName } as KProperty1<WorkspaceEntityData<out WorkspaceEntity>, T>
+    return property.get(this)
   }
 
   @Test
@@ -812,14 +837,13 @@ class WorkspaceBuilderChangeLogTest {
     assertEquals(3, log.size)
     assertNotNull(log.values.filterIsInstance<ChangeEntry.AddEntity>().singleOrNull())
 
-    val parentReferences = (log[(parent.from(newBuilder) as OptionalOneToOneParentEntityImpl).id] as ChangeEntry.ReplaceEntity).references!!
+    val parentReferences = (log[(parent.from(newBuilder) as WorkspaceEntityBase).id] as ChangeEntry.ReplaceEntity).references!!
     assertTrue(parentReferences.removedChildren.isNotEmpty())
     assertTrue(parentReferences.newChildren.isNotEmpty())
     assertTrue(parentReferences.removedParents.isEmpty())
     assertTrue(parentReferences.newParents.isEmpty())
 
-    val childReferences = (log[(parent.child!!.from(
-      newBuilder) as OptionalOneToOneChildEntityImpl).id] as ChangeEntry.ReplaceEntity).references!!
+    val childReferences = (log[(parent.child!!.from(newBuilder) as WorkspaceEntityBase).id] as ChangeEntry.ReplaceEntity).references!!
     assertTrue(childReferences.removedParents.isNotEmpty())
     assertTrue(childReferences.newParents.isEmpty())
     assertTrue(childReferences.removedChildren.isEmpty())
