@@ -7,6 +7,7 @@ import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.compiled.SignatureParsing;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -243,10 +244,14 @@ public /*sealed*/ abstract class TypeInfo {
       sb.append(">");
       return sb.toString();
     }
+    
+    String jvmName() {
+      return myOuter == null ? myName.replace('.', '/') : myOuter.jvmName() + "$" + myName;
+    }
 
     @Override
-    public int innerDepth() {
-      return myOuter != null ? myOuter.innerDepth() + 1 : 0;
+    public int innerDepth(SignatureParsing.@NotNull TypeInfoProvider provider) {
+      return myOuter != null && !provider.isKnownStatic(jvmName()) ? myOuter.innerDepth(provider) + 1 : 0;
     }
 
     public @NotNull RefTypeInfo withComponents(@NotNull List<TypeInfo> components) {
@@ -315,7 +320,7 @@ public /*sealed*/ abstract class TypeInfo {
   /**
    * @return depth of the inner type (how many enclosing types it has)
    */
-  public int innerDepth() {
+  public int innerDepth(SignatureParsing.@NotNull TypeInfoProvider provider) {
     return 0;
   }
 

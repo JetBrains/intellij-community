@@ -43,13 +43,13 @@ class ClsTypeAnnotationCollector extends TypeAnnotationContainer.Collector {
    */
   private byte[] translatePath(@Nullable TypePath path) {
     TypeInfo curType = myTypeInfo;
-    int depth = curType.innerDepth();
+    int depth = curType.innerDepth(myFirstPassData);
     if (path == null) {
       if (depth == 0) {
         return ArrayUtil.EMPTY_BYTE_ARRAY;
       }
       byte[] result = new byte[depth];
-      Arrays.fill(result, TypeAnnotationContainer.Collector.ENCLOSING_CLASS);
+      Arrays.fill(result, ENCLOSING_CLASS);
       return result;
     }
     ByteArrayOutputStream result = new ByteArrayOutputStream();
@@ -62,7 +62,7 @@ class ClsTypeAnnotationCollector extends TypeAnnotationContainer.Collector {
         continue;
       }
       while (depth-- > 0) {
-        result.write(TypeAnnotationContainer.Collector.ENCLOSING_CLASS);
+        result.write(ENCLOSING_CLASS);
         if (!(curType instanceof TypeInfo.RefTypeInfo)) return null;
         curType = ((TypeInfo.RefTypeInfo)curType).outerType();
       }
@@ -73,7 +73,7 @@ class ClsTypeAnnotationCollector extends TypeAnnotationContainer.Collector {
             return null;
           }
           curType = ((TypeInfo.DerivedTypeInfo)curType).child();
-          result.write(TypeAnnotationContainer.Collector.ARRAY_ELEMENT);
+          result.write(ARRAY_ELEMENT);
           break;
         case TypePath.WILDCARD_BOUND:
           if (!(curType instanceof TypeInfo.DerivedTypeInfo) ||
@@ -81,23 +81,23 @@ class ClsTypeAnnotationCollector extends TypeAnnotationContainer.Collector {
             return null;
           }
           curType = ((TypeInfo.DerivedTypeInfo)curType).child();
-          result.write(TypeAnnotationContainer.Collector.WILDCARD_BOUND);
+          result.write(WILDCARD_BOUND);
           break;
         case TypePath.TYPE_ARGUMENT:
           int argumentIndex = path.getStepArgument(i);
           if (!(curType instanceof TypeInfo.RefTypeInfo)) return null;
           curType = ((TypeInfo.RefTypeInfo)curType).genericComponent(argumentIndex);
-          result.write(TypeAnnotationContainer.Collector.TYPE_ARGUMENT);
+          result.write(TYPE_ARGUMENT);
           result.write(argumentIndex);
           break;
         default:
           return null;
       }
       if (curType == null) return null;
-      depth = curType.innerDepth();
+      depth = curType.innerDepth(myFirstPassData);
     }
     while (depth-- > 0) {
-      result.write(TypeAnnotationContainer.Collector.ENCLOSING_CLASS);
+      result.write(ENCLOSING_CLASS);
     }
     return result.toByteArray();
   }

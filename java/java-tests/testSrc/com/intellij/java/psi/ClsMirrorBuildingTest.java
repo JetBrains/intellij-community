@@ -57,6 +57,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testTimeUnit() { doTest(); }
   public void testTypeAnnotations() { doTest(); }
   public void testTypeAnno() { doTest(); }
+  public void testTypeAnnoNestedGeneric() { doTest(); }
   public void testExtendsObjectAnnotated() { doTest(); }
   public void testRecordTest() { doTest(); }
   public void testRecordTestCustomHash() { doTest(); }
