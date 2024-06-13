@@ -4,20 +4,34 @@ package com.intellij.psi.formatter.java
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
+import com.intellij.psi.formatter.java.TypeAnnotationUtil.KNOWN_TYPE_ANNOTATIONS
+import com.intellij.psi.formatter.java.TypeAnnotationUtil.isTypeAnnotation
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 
+/**
+ * This class was designed to handle detection of type annotation during building blocks phase of Java formatter.
+ * As there is no resolving available, it relies on local import table and known type annotations.
+ * @see KNOWN_TYPE_ANNOTATIONS
+ * @see isTypeAnnotation
+ */
 internal object TypeAnnotationUtil {
   private val KNOWN_TYPE_ANNOTATIONS: Set<String> = setOf(
     "org.jetbrains.annotations.NotNull",
     "org.jetbrains.annotations.Nullable"
   )
 
+  /**
+   * Checks if the given ASTNode represents a type annotation.
+   *
+   * @param annotation the ASTNode to check if it is a type annotation or not.
+   * @return true if the ASTNode represents a type annotation, false otherwise
+   */
   @JvmStatic
-  fun isTypeAnnotation(child: ASTNode): Boolean {
-    val node = child.psi as? PsiAnnotation ?: return false
+  fun isTypeAnnotation(annotation: ASTNode): Boolean {
+    val node = annotation.psi as? PsiAnnotation ?: return false
     val next = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace::class.java, PsiAnnotation::class.java)
     if (next is PsiKeyword) return false
     val psiReference: PsiJavaCodeReferenceElement = node.nameReferenceElement ?: return false
