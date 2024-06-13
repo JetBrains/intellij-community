@@ -2,7 +2,9 @@
 package com.intellij.openapi.editor.impl.inspector
 
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RedesignedInspectionsManager {
   companion object {
     @JvmStatic
