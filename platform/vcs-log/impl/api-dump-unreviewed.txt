@@ -989,10 +989,6 @@ a:com.intellij.vcs.log.ui.AbstractVcsLogUi
 - a:getProperties():com.intellij.vcs.log.impl.MainVcsLogUiProperties
 - a:getTable():com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - a:getToolbar():javax.swing.JComponent
-c:com.intellij.vcs.log.ui.MainVcsLogUiDataRule
-- com.intellij.ide.impl.dataRules.GetDataRule
-- <init>():V
-- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 f:com.intellij.vcs.log.ui.VcsBookmarkRef
 - <init>(com.intellij.ide.bookmark.Bookmark,com.intellij.ide.bookmark.BookmarkType,java.lang.String):V
 - f:getBookmark():com.intellij.ide.bookmark.Bookmark
@@ -1082,10 +1078,6 @@ a:com.intellij.vcs.log.ui.VcsLogUiBase
 - sf:SUCCESS:com.intellij.vcs.log.ui.VcsLogUiEx$JumpResult
 - s:valueOf(java.lang.String):com.intellij.vcs.log.ui.VcsLogUiEx$JumpResult
 - s:values():com.intellij.vcs.log.ui.VcsLogUiEx$JumpResult[]
-c:com.intellij.vcs.log.ui.VcsLogUiExDataRule
-- com.intellij.ide.impl.dataRules.GetDataRule
-- <init>():V
-- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 com.intellij.vcs.log.ui.VcsLogUiHolder
 - sf:Companion:com.intellij.vcs.log.ui.VcsLogUiHolder$Companion
 - s:getLogUis(javax.swing.JComponent):java.util.List
