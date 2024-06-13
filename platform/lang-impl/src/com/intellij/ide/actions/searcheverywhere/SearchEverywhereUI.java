@@ -31,6 +31,7 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.local.ContributorsLocalSummary;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -1382,8 +1383,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         data.add(EventFields.Language.with(psi.getLanguage()));
       }
       SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED.log(myProject, data);
-
-
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
 
@@ -1392,6 +1391,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       var correctIndexes = hasNotificationElement ? Arrays.stream(indexes).map(i -> (i - 1)).toArray() : indexes;
       myMlService.onItemSelected(
         myProject, tabId, correctIndexes, selectedItems, () -> myListModel.getFoundElementsInfo(), closePopup, searchText);
+    }
+
+    for (int i : indexes) {
+      SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
+      String selectedTabContributorID = myHeader.getSelectedTab().getReportableID();
+      String reportableContributorID = getReportableContributorID(contributor);
+      ContributorsLocalSummary.getInstance().updateContributorsLocalSummary(reportableContributorID,
+                                                                            selectedTabContributorID.equals(ALL_CONTRIBUTORS_GROUP_ID));
     }
 
     if (closePopup) {

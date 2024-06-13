@@ -134,6 +134,9 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                              elements: List<SearchEverywhereFoundElementInfoWithMl>,
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              additionalEvents: List<EventPair<*>>) {
+    val elementsEvents = getElementsEvents(project, shouldLogFeatures, featureCache, elements, mixedListInfo, elementIdProvider,
+                                          cache.sessionStartTime)
+
     eventId.log(project) {
       val tabId = cache.tabId
       addAll(additionalEvents)
@@ -155,7 +158,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       )
 
       addAll(SearchEverywhereSessionPropertyProvider.getAllProperties(tabId))
-      addAll(getElementsEvents(project, shouldLogFeatures, featureCache, elements, mixedListInfo, elementIdProvider))
+      addAll(elementsEvents)
     }
   }
 
@@ -171,11 +174,12 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                 featureCache: SearchEverywhereMlFeaturesCache,
                                 elements: List<SearchEverywhereFoundElementInfoWithMl>,
                                 mixedListInfo: SearchEverywhereMixedListInfo,
-                                elementIdProvider: SearchEverywhereMlItemIdProvider): List<EventPair<*>> {
+                                elementIdProvider: SearchEverywhereMlItemIdProvider,
+                                sessionStartTime: Long): List<EventPair<*>> {
     val contributorFeaturesProvider = { it: SearchEverywhereFoundElementInfoWithMl ->
       buildList {
         if (shouldLogFeatures) {
-          addAll(contributorFeaturesProvider.getFeatures(it.contributor, mixedListInfo))
+          addAll(contributorFeaturesProvider.getFeatures(it.contributor, mixedListInfo, sessionStartTime))
         }
         else {
           add(contributorFeaturesProvider.getContributorIdFeature(it.contributor))

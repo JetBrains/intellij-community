@@ -11,8 +11,17 @@ internal open class SearchEverywhereFoundElementInfoWithMl(
   val heuristicPriority: Int,
   contributor: SearchEverywhereContributor<*>,
   val mlWeight: Double?,
-  val mlFeatures: List<EventPair<*>>
+  mlFeatures: List<EventPair<*>>
 ) : SearchEverywhereFoundElementInfo(element, getPriority(element, heuristicPriority, mlWeight), contributor) {
+  private val _mlFeatures: MutableList<EventPair<*>> = mlFeatures.toMutableList()
+
+  val mlFeatures: List<EventPair<*>>
+    get() = _mlFeatures.toList()
+
+  fun addMlFeature(feature: EventPair<*>) {
+    _mlFeatures.add(feature)
+  }
+
   companion object {
     internal const val MAX_ELEMENT_WEIGHT = 10_000
 

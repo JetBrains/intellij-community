@@ -30,7 +30,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
                                                private val loggingRandomisation: FeaturesLoggingRandomisation) {
   val itemIdProvider = SearchEverywhereMlOrderedItemIdProvider { MissingKeyProviderCollector.addMissingProviderForClass(it::class.java) }
 
-  private val sessionStartTime: Long = System.currentTimeMillis()
+  val sessionStartTime: Long = System.currentTimeMillis()
   private val providersCache = FeaturesProviderCacheDataProvider().getDataToCache(project)
   private val modelProviderWithCache: SearchEverywhereModelProvider = SearchEverywhereModelProvider()
   private val featureCache = SearchEverywhereMlFeaturesCache()

@@ -12,7 +12,7 @@ import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereModelP
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereRankingModel
 
 internal class SearchEverywhereMlSearchState(
-  private val sessionStartTime: Long, val searchStartTime: Long,
+  val sessionStartTime: Long, val searchStartTime: Long,
   val searchIndex: Int, val searchStartReason: SearchRestartReason,
   val tabId: String, val experimentGroup: Int, val orderByMl: Boolean,
   val keysTyped: Int, val backspacesTyped: Int, val searchQuery: String,
@@ -35,7 +35,7 @@ internal class SearchEverywhereMlSearchState(
                          context: SearchEverywhereMLContextInfo): SearchEverywhereMLItemInfo {
     val features = arrayListOf<EventPair<*>>()
     val contributorId = contributor.searchProviderId
-    val contributorFeatures = contributorFeaturesProvider.getFeatures(contributor, mixedListInfo)
+    val contributorFeatures = contributorFeaturesProvider.getFeatures(contributor, mixedListInfo, sessionStartTime)
 
     SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).forEach { provider ->
       features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache))

@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.ContributorsGlobalSummaryManager
+import com.intellij.searchEverywhereMl.ranking.core.features.statistician.ContributorsLocalStatisticsFields
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.getContributorStatistics
 
 internal class SearchEverywhereContributorFeaturesProvider {
@@ -27,13 +28,14 @@ internal class SearchEverywhereContributorFeaturesProvider {
     internal val CONTRIBUTOR_IS_MOST_POPULAR = EventFields.Boolean("contributorIsMostPopular")
     internal val CONTRIBUTOR_POPULARITY_INDEX = EventFields.Int("contributorPopularityIndex")
 
+    private val LOCAL_STATISTICS = ContributorsLocalStatisticsFields()
     private val GLOBAL_STATISTICS = ContributorsGlobalStatisticsFields()
 
     fun getFeaturesDeclarations(): List<EventField<*>> {
       return listOf(
         CONTRIBUTOR_INFO_ID, CONTRIBUTOR_PRIORITY, CONTRIBUTOR_WEIGHT,
         CONTRIBUTOR_IS_MOST_POPULAR, CONTRIBUTOR_POPULARITY_INDEX
-      ) + GLOBAL_STATISTICS.getFieldsDeclaration()
+      ) + LOCAL_STATISTICS.getFieldsDeclaration() + GLOBAL_STATISTICS.getFieldsDeclaration()
     }
   }
 
@@ -41,7 +43,8 @@ internal class SearchEverywhereContributorFeaturesProvider {
     return CONTRIBUTOR_INFO_ID.with(contributor.searchProviderId)
   }
 
-  fun getFeatures(contributor: SearchEverywhereContributor<*>, mixedListInfo: SearchEverywhereMixedListInfo): List<EventPair<*>> {
+  fun getFeatures(contributor: SearchEverywhereContributor<*>, mixedListInfo: SearchEverywhereMixedListInfo,
+                  sessionStartTime: Long): List<EventPair<*>> {
     val contributor_id = contributor.searchProviderId
     val info = arrayListOf<EventPair<*>>(
       CONTRIBUTOR_INFO_ID.with(contributor_id),
@@ -51,6 +54,8 @@ internal class SearchEverywhereContributorFeaturesProvider {
     mixedListInfo.contributorPriorities[contributor.searchProviderId]?.let { priority ->
       info.add(CONTRIBUTOR_PRIORITY.with(priority))
     }
+
+    info.addAll(LOCAL_STATISTICS.getLocalStatistics(contributor_id, sessionStartTime))
 
     val globalSummary = ContributorsGlobalSummaryManager.getInstance()
     val contributorsStats = globalSummary.getStatistics(contributor_id)
