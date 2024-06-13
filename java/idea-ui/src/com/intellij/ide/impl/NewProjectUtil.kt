@@ -176,9 +176,11 @@ object NewProjectUtil {
         val options =  OpenProjectTask {
           project = newProject
           projectName = projectFile.fileName.toString()
-          callback = ProjectOpenedCallback { _, module ->
-            ApplicationManager.getApplication().invokeLater {
-              moduleConfigurator?.accept(module)
+          callback = ProjectOpenedCallback { openedProject, module ->
+            if (openedProject != newProject) { // project attached
+              ApplicationManager.getApplication().invokeLater {
+                moduleConfigurator?.accept(module)
+              }
             }
           }
         }
