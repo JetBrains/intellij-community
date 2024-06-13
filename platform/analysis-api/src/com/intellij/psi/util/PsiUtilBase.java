@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.util;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -75,7 +77,8 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   public static @Nullable PsiFile getPsiFileInEditor(@NotNull Caret caret, final @NotNull Project project) {
     Editor editor = caret.getEditor();
     assertEditorAndProjectConsistent(project, editor);
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument(), context);
     if (file == null) return null;
 
     PsiUtilCore.ensureValid(file);
