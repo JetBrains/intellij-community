@@ -34,7 +34,7 @@ class ClsTypeAnnotationCollector extends TypeAnnotationContainer.Collector {
   /**
    * Translate annotation path. The most non-trivial thing here is converting inner-to-outer traversal
    * into outer-to-inner. E.g. consider {@code @A Outer.@B Inner} (assuming that Inner is non-static).
-   * Class-file stores empty path for {@code @A} and INNER_TYPE path for {@code @A}. We need the reverse,
+   * Class-file stores empty path for {@code @A} and INNER_TYPE path for {@code @B}. We need the reverse,
    * as when we build the PSI we don't know how many non-static components we have. So we translate path
    * for {@code @A} to ENCLOSING_CLASS and path for {@code @B} to empty.
    *
