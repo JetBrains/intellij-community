@@ -218,7 +218,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
         val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
             ?: error("Couldn't find scratch panel")
 
-        val previewEditor = scratchFileEditor.getPreviewEditor() as TextEditor
+        val previewEditor = scratchFileEditor.previewEditor as TextEditor
         return getFoldingData(previewEditor.editor, withCollapseStatus = false)
     }
 

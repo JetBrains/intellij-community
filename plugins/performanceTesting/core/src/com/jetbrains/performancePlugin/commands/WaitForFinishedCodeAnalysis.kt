@@ -37,14 +37,15 @@ private val FileEditor.description: String
   get() = "${hashCode()} ${javaClass} ${toString()}"
 
 // See DaemonFusReporter. Reality in DaemonCodeAnalyzerImpl is a bit more complicated, probably including other editors if the file has Psi
-private fun Collection<FileEditor>.getWorthy(): List<TextEditor> =
-  mapNotNull {
+private fun Collection<FileEditor>.getWorthy(): List<TextEditor> {
+  return mapNotNull {
     if (it !is TextEditor || it.editor.editorKind != EditorKind.MAIN_EDITOR) null
-    else if (it is TextEditorWithPreview) it.getTextEditor()
+    else if (it is TextEditorWithPreview) it.textEditor
     else it
   }
+}
 
-class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX = CMD_PREFIX + "waitForFinishedCodeAnalysis"
   }

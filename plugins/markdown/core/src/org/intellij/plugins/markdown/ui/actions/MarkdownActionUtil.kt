@@ -45,7 +45,7 @@ object MarkdownActionUtil {
   @JvmStatic
   fun findMarkdownPreviewEditor(event: AnActionEvent): MarkdownPreviewFileEditor? {
     val splitEditor = findSplitEditor(event) ?: return null
-    val editor = splitEditor.getPreviewEditor()
+    val editor = splitEditor.previewEditor
     return when {
       editor !is MarkdownPreviewFileEditor || !editor.getComponent().isVisible -> null
       else -> editor

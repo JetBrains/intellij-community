@@ -16,9 +16,9 @@ internal object MarkdownFileEditorUtils {
   @JvmStatic
   fun findMarkdownPreviewEditor(editor: FileEditor): MarkdownPreviewFileEditor? {
     return when (editor) {
-      is MarkdownEditorWithPreview -> editor.getPreviewEditor() as? MarkdownPreviewFileEditor
+      is MarkdownEditorWithPreview -> editor.previewEditor as? MarkdownPreviewFileEditor
       is MarkdownPreviewFileEditor -> editor
-      else -> TextEditorWithPreview.getParentSplitEditor(editor)?.getPreviewEditor() as? MarkdownPreviewFileEditor
+      else -> TextEditorWithPreview.getParentSplitEditor(editor)?.previewEditor as? MarkdownPreviewFileEditor
     }
   }
 
