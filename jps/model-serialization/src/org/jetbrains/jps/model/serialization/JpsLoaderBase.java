@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.TimingLog;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
+@ApiStatus.Internal
 public abstract class JpsLoaderBase {
   private static final Logger LOG = Logger.getInstance(JpsLoaderBase.class);
   private static final int MAX_ATTEMPTS = 5;

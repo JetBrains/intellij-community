@@ -4,6 +4,7 @@ package org.jetbrains.jps.model.serialization.module;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
@@ -20,6 +21,7 @@ import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import static com.intellij.openapi.util.JDOMUtil.getChildren;
 
+@ApiStatus.Internal
 public final class JpsModuleRootModelSerializer {
   private static final Logger LOG = Logger.getInstance(JpsModuleRootModelSerializer.class);
   public static final String URL_ATTRIBUTE = "url";

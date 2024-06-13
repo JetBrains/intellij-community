@@ -3,11 +3,13 @@ package org.jetbrains.jps.model.serialization.facet;
 
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class FacetManagerState {
   @Property(surroundWithTag = false)
   @XCollection

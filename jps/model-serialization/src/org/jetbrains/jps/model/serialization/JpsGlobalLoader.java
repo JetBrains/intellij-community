@@ -6,6 +6,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -22,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class JpsGlobalLoader extends JpsLoaderBase {
   private static final Logger LOG = Logger.getInstance(JpsGlobalLoader.class);
   public static final String SDK_TABLE_COMPONENT_NAME = "ProjectJdkTable";

@@ -7,12 +7,14 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 @Tag("artifact")
 public class ArtifactState {
   @NonNls public static final String NAME_ATTRIBUTE = "name";

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.Map;
  *
  * @see com.intellij.openapi.components.impl.ProjectWidePathMacroContributor
  */
+@ApiStatus.Internal
 public interface JpsPathMacroContributor {
   /**
    * You are supposed to pass path macros into JPS process via System properties. You can pass custom

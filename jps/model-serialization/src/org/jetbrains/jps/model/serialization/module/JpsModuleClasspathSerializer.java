@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.serialization.module;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
@@ -23,6 +24,7 @@ import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class JpsModuleClasspathSerializer {
   private final String myClasspathId;
 

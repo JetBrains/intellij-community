@@ -4,6 +4,7 @@ package org.jetbrains.jps.model.serialization.runConfigurations;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class JpsRunConfigurationSerializer {
   private static final Logger LOG = Logger.getInstance(JpsRunConfigurationSerializer.class);
 

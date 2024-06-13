@@ -9,6 +9,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.TimingLog;
@@ -45,6 +46,10 @@ import java.util.concurrent.ExecutorService;
 
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL;
 
+/**
+ * Use {@link JpsSerializationManager} to load a project.
+ */
+@ApiStatus.Internal
 public final class JpsProjectLoader extends JpsLoaderBase {
   public static final String MODULE_MANAGER_COMPONENT = "ProjectModuleManager";
   public static final String MODULES_TAG = "modules";

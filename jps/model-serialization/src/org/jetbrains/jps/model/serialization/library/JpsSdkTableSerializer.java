@@ -4,6 +4,7 @@ package org.jetbrains.jps.model.serialization.library;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -24,6 +25,7 @@ import org.jetbrains.jps.model.serialization.JpsPathMapper;
 import java.io.File;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class JpsSdkTableSerializer {
   private static final Logger LOG = Logger.getInstance(JpsSdkTableSerializer.class);
 

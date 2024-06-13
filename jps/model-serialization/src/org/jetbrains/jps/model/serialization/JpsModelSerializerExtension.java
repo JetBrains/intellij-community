@@ -16,6 +16,7 @@
 package org.jetbrains.jps.model.serialization;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
@@ -125,6 +126,7 @@ public abstract class JpsModelSerializerExtension {
     return Collections.emptyList();
   }
 
+  @ApiStatus.Internal
   @Nullable
   public JpsModuleClasspathSerializer getClasspathSerializer() {
     return null;

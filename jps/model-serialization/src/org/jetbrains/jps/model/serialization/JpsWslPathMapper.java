@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class JpsWslPathMapper implements JpsPathMapper {
   private static final List<@NotNull String> WSL_PREFIXES = Arrays.asList("//wsl$/", "//wsl.localhost/");
   private @Nullable String myWslRootPrefix;
