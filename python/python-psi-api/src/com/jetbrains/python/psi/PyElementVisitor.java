@@ -397,4 +397,8 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyTypeParameterList(@NotNull PyTypeParameterList node) {
     visitPyElement(node);
   }
+
+  public void visitPyKeyValueExpression(@NotNull PyKeyValueExpression node) {
+    visitPyExpression(node);
+  }
 }
