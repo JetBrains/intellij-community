@@ -25,12 +25,17 @@ import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 
-internal class GradleProjectTestFixtureImpl private constructor(
+internal class GradleProjectTestFixtureImpl(
   override val projectName: String,
   override val gradleVersion: GradleVersion,
-  private val gradleJvmFixture: GradleJvmTestFixture,
-  override val fileFixture: FileTestFixture
+  private val javaVersionRestriction: JavaVersionRestriction,
+  private val configureProject: FileTestFixture.Builder.() -> Unit
 ) : GradleProjectTestFixture {
+
+  private lateinit var gradleJvmFixture: GradleJvmTestFixture
+
+  override lateinit var fileFixture: FileTestFixture
+    private set
 
   private var _testDisposable: Disposable? = null
   private val testDisposable: Disposable
@@ -47,28 +52,23 @@ internal class GradleProjectTestFixtureImpl private constructor(
   override val module: Module
     get() = project.modules.single { it.name == project.name }
 
-  constructor(
-    projectName: String,
-    gradleVersion: GradleVersion,
-    javaVersionRestriction: JavaVersionRestriction,
-    configureProject: FileTestFixture.Builder.() -> Unit
-  ) : this(
-    projectName, gradleVersion,
-    GradleJvmTestFixture(gradleVersion, javaVersionRestriction),
-    FileTestFixtureImpl("GradleTestFixture/$gradleVersion/$projectName") {
-      configureProject()
-      excludeFiles(".gradle", "build")
-      withFiles { generateGradleWrapper(it.toNioPath(), gradleVersion) }
-      withFiles { createProjectCaches(it) }
-    }
-  )
-
   override fun setUp() {
     _testDisposable = Disposer.newDisposable()
 
     WorkspaceModelCacheImpl.forceEnableCaching(testDisposable)
+
+    gradleJvmFixture = GradleJvmTestFixture(gradleVersion, javaVersionRestriction)
     gradleJvmFixture.setUp()
-    fileFixture.setUp()
+
+    gradleJvmFixture.withProjectSettingsConfigurator {
+      fileFixture = FileTestFixtureImpl("GradleTestFixture/$gradleVersion/$projectName") {
+        configureProject()
+        excludeFiles(".gradle", "build")
+        withFiles { generateGradleWrapper(it.toNioPath(), gradleVersion) }
+        withFiles { createProjectCaches(it) }
+      }
+      fileFixture.setUp()
+    }
 
     installGradleProjectReloadWatcher()
 
@@ -81,9 +81,11 @@ internal class GradleProjectTestFixtureImpl private constructor(
       { ApplicationManager.getApplication().serviceIfCreated<FileBasedIndexEx>()?.waitUntilIndicesAreInitialized() },
       { runBlocking { fileFixture.root.refreshAndAwait() } },
       { runBlocking { _project?.closeProjectAsync() } },
-      { _testDisposable?.let { Disposer.dispose(it) } },
+      { _project = null },
       { fileFixture.tearDown() },
-      { gradleJvmFixture.tearDown() }
+      { gradleJvmFixture.tearDown() },
+      { _testDisposable?.let { Disposer.dispose(it) } },
+      { _testDisposable = null }
     )
   }
 

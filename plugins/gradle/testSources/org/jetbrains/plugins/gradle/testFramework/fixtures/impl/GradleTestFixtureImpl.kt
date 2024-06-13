@@ -53,6 +53,7 @@ class GradleTestFixtureImpl(
 
     gradleJvmFixture = GradleJvmTestFixture(gradleVersion, javaVersionRestriction)
     gradleJvmFixture.setUp()
+    gradleJvmFixture.installProjectSettingsConfigurator()
     gradleJvm = gradleJvmFixture.gradleJvm
 
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
