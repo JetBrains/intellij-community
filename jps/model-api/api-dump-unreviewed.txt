@@ -23,17 +23,6 @@ com.intellij.openapi.fileTypes.FileNameMatcher
 a:com.intellij.openapi.fileTypes.FileNameMatcherEx
 - com.intellij.openapi.fileTypes.FileNameMatcher
 - <init>():V
-com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfiguration
-- org.jetbrains.jps.model.JpsElement
-- a:isBindRepositoryEnabled():Z
-- a:isSha256ChecksumVerificationEnabled():Z
-- a:setBindRepositoryEnabled(Z):V
-- a:setSha256ChecksumVerificationEnabled(Z):V
-a:com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfigurationService
-- <init>():V
-- a:getDependencyResolverConfiguration(org.jetbrains.jps.model.JpsProject):com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfiguration
-- s:getInstance():com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfigurationService
-- a:getOrCreateDependencyResolverConfiguration(org.jetbrains.jps.model.JpsProject):com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfiguration
 org.jetbrains.jps.model.JpsCompositeElement
 - org.jetbrains.jps.model.JpsElement
 - a:getContainer():org.jetbrains.jps.model.JpsElementContainer
@@ -68,16 +57,8 @@ org.jetbrains.jps.model.JpsElementCreator
 a:org.jetbrains.jps.model.JpsElementFactory
 - <init>():V
 - a:createDummyElement():org.jetbrains.jps.model.JpsDummyElement
-- a:createGlobalReference():org.jetbrains.jps.model.JpsElementReference
-- a:createLibrary(java.lang.String,org.jetbrains.jps.model.library.JpsLibraryType,org.jetbrains.jps.model.JpsElement):org.jetbrains.jps.model.library.JpsTypedLibrary
 - a:createLibraryReference(java.lang.String,org.jetbrains.jps.model.JpsElementReference):org.jetbrains.jps.model.library.JpsLibraryReference
-- a:createModel():org.jetbrains.jps.model.JpsModel
-- a:createModule(java.lang.String,org.jetbrains.jps.model.module.JpsModuleType,org.jetbrains.jps.model.JpsElement):org.jetbrains.jps.model.module.JpsModule
 - a:createModuleReference(java.lang.String):org.jetbrains.jps.model.module.JpsModuleReference
-- a:createModuleSourceRoot(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType,org.jetbrains.jps.model.JpsElement):org.jetbrains.jps.model.module.JpsModuleSourceRoot
-- a:createProjectReference():org.jetbrains.jps.model.JpsElementReference
-- a:createSdk(java.lang.String,java.lang.String,java.lang.String,org.jetbrains.jps.model.library.sdk.JpsSdkType,org.jetbrains.jps.model.JpsElement):org.jetbrains.jps.model.library.JpsTypedLibrary
-- a:createSdkReference(java.lang.String,org.jetbrains.jps.model.library.sdk.JpsSdkType):org.jetbrains.jps.model.library.sdk.JpsSdkReference
 - a:createSimpleElement(java.lang.Object):org.jetbrains.jps.model.JpsSimpleElement
 - s:getInstance():org.jetbrains.jps.model.JpsElementFactory
 org.jetbrains.jps.model.JpsElementParameterizedCreator
@@ -336,20 +317,6 @@ a:org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
 - <init>():V
 - a:createMatcher(java.lang.String):com.intellij.openapi.fileTypes.FileNameMatcher
 - s:getInstance():org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
-org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoriesConfiguration
-- org.jetbrains.jps.model.JpsElement
-- a:getRepositories():java.util.List
-- a:setRepositories(java.util.List):V
-c:org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription
-- <init>(java.lang.String,java.lang.String,java.lang.String):V
-- getId():java.lang.String
-- getName():java.lang.String
-- getUrl():java.lang.String
-a:org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
-- <init>():V
-- s:getInstance():org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
-- a:getOrCreateRemoteRepositoriesConfiguration(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoriesConfiguration
-- a:getRemoteRepositoriesConfiguration(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoriesConfiguration
 org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension
 - org.jetbrains.jps.model.JpsElement
 - a:getExplodedUrl():java.lang.String
@@ -966,12 +933,6 @@ org.jetbrains.jps.model.runConfiguration.JpsTypedRunConfiguration
 org.jetbrains.jps.model.serialization.JpsPathMapper
 - sf:IDENTITY:org.jetbrains.jps.model.serialization.JpsPathMapper
 - a:mapUrl(java.lang.String):java.lang.String
-f:org.jetbrains.jps.model.serialization.SerializationConstants
-- sf:EXTERNAL_SYSTEM_ID_ATTRIBUTE:java.lang.String
-- sf:EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE:java.lang.String
-- sf:IS_MAVEN_MODULE_IML_ATTRIBUTE:java.lang.String
-- sf:MAVEN_EXTERNAL_SOURCE_ID:java.lang.String
-- <init>():V
 a:org.jetbrains.jps.service.JpsServiceManager
 - <init>():V
 - a:getExtensions(java.lang.Class):java.lang.Iterable
