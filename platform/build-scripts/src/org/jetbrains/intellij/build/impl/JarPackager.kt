@@ -9,7 +9,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.lang.ImmutableZipFile
+import com.intellij.util.lang.ZipFile
 import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
@@ -650,7 +650,7 @@ private suspend fun isSeparateJar(fileName: String, file: Path, jarPath: String)
 
   val filePreventingMerging = "META-INF/sisu/javax.inject.Named"
   val result = withContext(Dispatchers.IO) {
-    ImmutableZipFile.load(file).use {
+    ZipFile.load(file).use {
       it.getResource(filePreventingMerging) != null
     }
   }
