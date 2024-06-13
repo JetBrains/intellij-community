@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -25,6 +26,7 @@ internal class ScriptingKtModuleFactory : KtModuleFactory {
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 private class KtScriptModuleByModuleInfo(
     private val moduleInfo: ScriptModuleInfo
 ) : KtModuleByModuleInfoBase(moduleInfo), KtScriptModule {

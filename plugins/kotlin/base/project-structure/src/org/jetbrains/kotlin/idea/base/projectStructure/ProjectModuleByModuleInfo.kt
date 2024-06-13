@@ -19,6 +19,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.computeTransitiveDependsOnDependencies
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -70,6 +71,7 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
         return ideaModuleInfo.hashCode()
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun toString(): String {
         return "${this::class.java.simpleName} ${(this as KtModule).moduleDescription}"
     }
@@ -81,6 +83,7 @@ open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) 
 
     override val moduleName: String get() = ideaModule.name
 
+    @KaExperimentalApi
     override val stableModuleName: String? get() = moduleInfo.stableName?.asString()
 
     val moduleId: ModuleId get() = ModuleId(moduleName)
@@ -281,7 +284,10 @@ class NotUnderContentRootModuleByModuleInfo(
 ) : KtModuleByModuleInfoBase(moduleInfo), KtNotUnderContentRootModule {
     override val name: String get() = moduleInfo.name.asString()
     override val file: PsiFile? get() = (moduleInfo as? NotUnderContentRootModuleInfo)?.file
+
+    @KaExperimentalApi
     override val moduleDescription: String get() = "Non under content root module"
+
     override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
     override val project: Project get() = moduleInfo.project
 }

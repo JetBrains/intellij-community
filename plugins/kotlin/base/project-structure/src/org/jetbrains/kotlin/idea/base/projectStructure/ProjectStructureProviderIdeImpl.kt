@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
@@ -55,6 +56,7 @@ inline fun <reified T : KtModule> IdeaModuleInfo.toKtModuleOfType(): @kotlin.int
 }
 
 internal class ProjectStructureProviderIdeImpl(private val project: Project) : KotlinProjectStructureProviderBase() {
+    @OptIn(KaExperimentalApi::class)
     override fun getModule(element: PsiElement, contextualModule: KtModule?): KtModule {
         if (contextualModule is KtSourceModuleByModuleInfoForOutsider || contextualModule is KtScriptDependencyModule) {
             val virtualFile = element.containingFile?.virtualFile
@@ -206,5 +208,6 @@ private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun <T> isScriptOrItsDependency(contextualModule: T?, virtualFile: VirtualFile?) where T : KtModule, T : KtModuleByModuleInfoBase =
     (contextualModule is KtScriptModule) || (virtualFile?.nameSequence?.endsWith(STD_SCRIPT_EXT) == true)
