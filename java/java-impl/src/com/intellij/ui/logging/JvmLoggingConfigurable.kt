@@ -15,13 +15,20 @@ import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.psi.PsiNameHelper
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.concurrency.AppExecutorUtil
 
 
 class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase(), SearchableConfigurable, NoScroll {
+
+  companion object {
+    const val LOG_MAX_NAME_LENGTH = 200
+  }
+
   private lateinit var warningRow: Row
   private lateinit var loggerName: Cell<JBTextField>
   private val settings = project.service<JvmLoggingSettingsStorage>().state
@@ -38,10 +45,7 @@ class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase
           loggerName = textField()
             .bindText(settings::loggerName.toNonNullableProperty(JvmLoggerFieldDelegate.LOGGER_IDENTIFIER))
             .validationOnInput {
-              if (PsiNameHelper.getInstance(project).isIdentifier(it.text)) {
-                return@validationOnInput null
-              }
-              error(LangBundle.message("dialog.message.valid.identifier", it.text))
+              checkLogName(it)
             }
             .widthGroup(JavaBundle.message("jvm.logging.configurable.java.group.display.name"))
         }
@@ -62,8 +66,18 @@ class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase
     return panel
   }
 
+  private fun ValidationInfoBuilder.checkLogName(it: JBTextField): ValidationInfo? =
+    if (it.text.length < LOG_MAX_NAME_LENGTH && PsiNameHelper.getInstance(project).isIdentifier(it.text)) {
+      null
+    }
+    else {
+      error(LangBundle.message("dialog.message.valid.identifier", it.text))
+    }
+
   override fun isModified(): Boolean {
-    return PsiNameHelper.getInstance(project).isIdentifier(loggerName.component.text) && super<DslConfigurableBase>.isModified();
+    return PsiNameHelper.getInstance(project).isIdentifier(loggerName.component.text) &&
+           loggerName.component.text.length < LOG_MAX_NAME_LENGTH &&
+           super<DslConfigurableBase>.isModified()
   }
 
   private fun updateWarningRow(logger: JvmLogger?) {
