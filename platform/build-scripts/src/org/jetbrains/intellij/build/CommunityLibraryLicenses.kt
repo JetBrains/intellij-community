@@ -26,56 +26,15 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Allure java commons", libraryName = "io.qameta.allure.java.commons",
                    url = "https://github.com/allure-framework/allure-java")
       .apache("https://github.com/allure-framework/allure-java/blob/master/README.md"),
-    androidDependency(name = "Am Instrument Data proto", libraryName = "libam-instrumentation-data-proto"),
     LibraryLicense(name = "Amazon Ion Java", libraryName = "ion", url = "https://github.com/amazon-ion/ion-java")
       .apache("https://github.com/amazon-ion/ion-java/blob/master/LICENSE")
       .suppliedByOrganizations("Amazon Ion Team")
       .copyrightText("Copyright 2007-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved."),
-    androidDependency("android-test-plugin-host-device-info-proto"),
-    androidDependency(name = "android-test-plugin-host-retention-proto",
-                      libraryName = "libstudio.android-test-plugin-host-retention-proto"),
-    androidDependency(name = "android-test-plugin-result-listener-gradle-proto",
-                      libraryName = "libstudio.android-test-plugin-result-listener-gradle-proto"),
-    androidDependency(name = "Android ADB Lib", libraryName = "precompiled-adblib"),
-    androidDependency(name = "Android ADB Lib (ddmlib compatibility)", libraryName = "precompiled-adblib.ddmlibcompatibility"),
-    androidDependency(name = "Android ADB Lib (tools)", libraryName = "precompiled-adblib.tools"),
-    androidDependency(name = "Android AIA Protos", libraryName = "aia-proto"),
-    androidDependency(name = "Android Analytics Crash", libraryName = "precompiled-analytics-crash"),
-    androidDependency(name = "Android Analytics Protos", libraryName = "studio-analytics-proto"),
-    androidDependency(name = "Android Analytics Shared", libraryName = "precompiled-analytics-shared"),
-    androidDependency(name = "Android Analytics Tracker", libraryName = "precompiled-analytics-tracker"),
-    androidDependency(name = "Android Annotations", libraryName = "precompiled-android-annotations"),
-    androidDependency(name = "Android Apk Analyzer", libraryName = "precompiled-analyzer"),
-    androidDependency(name = "Android Apk Binary Resources", libraryName = "precompiled-binary-resources"),
-    androidDependency(name = "Android App Inspector (Background Task, proto)", libraryName = "background-inspector-proto"),
-    androidDependency(name = "Android App Inspector (Network, proto)", libraryName = "network_inspector_java_proto"),
-    androidDependency(name = "Android Archive Patcher (explainer)", libraryName = "explainer"),
-    androidDependency(name = "Android Archive Patcher (generator)", libraryName = "generator"),
-    androidDependency(name = "Android Archive Patcher (shared)", libraryName = "shared"),
+
     androidDependency(name = "Android Baksmali", libraryName = "google-baksmali"),
-    androidDependency(name = "Android Build Analysis Result Proto", libraryName = "build-analysis-results-proto"),
-    androidDependency(name = "Android Build Analyzer", libraryName = "precompiled-build-analyzer.common"),
-    androidDependency(name = "Android Builder Model", libraryName = "precompiled-builder-model"),
-    androidDependency(name = "Android Chunkio", libraryName = "precompiled-chunkio"),
-    androidDependency(name = "Android Common Library", libraryName = "precompiled-common"),
+
     // for android-core-proto module library in intellij.android.core
-    androidDependency(name = "Android Core Protos", libraryName = "libandroid-core-proto"),
-    androidDependency(name = "Android Data Binding Base Library", libraryName = "precompiled-db-baseLibrary"),
-    androidDependency(name = "Android Data Binding Base Library Support", libraryName = "precompiled-db-baseLibrarySupport"),
-    androidDependency(name = "Android Data Binding Compiler", libraryName = "precompiled-db-compiler"),
-    androidDependency(name = "Android Data Binding Compiler Common", libraryName = "precompiled-db-compilerCommon"),
-    androidDependency(name = "Android Ddm libapp-processes-proto", libraryName = "libapp-processes-proto"),
-    androidDependency(name = "Android Ddm Library", libraryName = "precompiled-ddmlib"),
-    androidDependency(name = "Android Deployer Library", libraryName = "precompiled-deployer"),
-    androidDependency(name = "Android Deployer Library (libjava_sites)", libraryName = "libjava_sites"),
-    androidDependency(name = "Android Device Provisioner Library", libraryName = "precompiled-device-provisioner"),
     androidDependency(name = "Android DEX library", libraryName = "google-dexlib2"),
-    androidDependency(name = "Android draw9patch library", libraryName = "precompiled-draw9patch"),
-    androidDependency(name = "Android dvlib library", libraryName = "precompiled-dvlib"),
-    androidDependency(name = "Android Dynamic Layout Inspector", libraryName = "precompiled-dynamic-layout-inspector.common"),
-    androidDependency(name = "Android Emulator gRPC API", libraryName = "emulator-proto"),
-    androidDependency(name = "Android Environment Services", libraryName = "precompiled-environment-services"),
-    androidDependency(name = "Android Flags", libraryName = "precompiled-flags"),
     androidDependency(name = "Android Gradle model", version = "0.4-SNAPSHOT", libraryName = null)
       .copy(
         attachedTo = "intellij.android.core",
@@ -83,57 +42,16 @@ object CommunityLibraryLicenses {
       ),
     androidDependency(name = "Android Instant Apps SDK API", version = LibraryLicense.CUSTOM_REVISION, libraryName = null)
       .copy(url = "https://source.android.com/", libraryName = "instantapps-api"),
-    androidDependency(name = "Android JdwpPacket", libraryName = "precompiled-jdwppacket"),
-    androidDependency(name = "Android JdwpsCache", libraryName = "precompiled-jdwpscache"),
-    androidDependency(name = "Android JdwpTracer", libraryName = "precompiled-jdwptracer"),
-    androidDependency(name = "Android Jetifier Core", libraryName = "jetifier-core"),
     LibraryLicense(name = "Android Jimfs library", libraryName = "jimfs", url = "https://github.com/google/jimfs")
       .apache("https://github.com/google/jimfs/blob/master/LICENSE"),
-    androidDependency(name = "Android Kotlin Multiplatform Models", libraryName = "precompiled-kotlin-multiplatform-models"),
-    androidDependency(name = "Android Kotlin Multiplatform Models Proto", libraryName = "kotlin-multiplatform-android-models-proto"),
-    androidDependency(name = "Android Layout Api Library", libraryName = "precompiled-layoutlib-api"),
-    androidDependency(name = "Android Layout Inspector (Skia Proto)", libraryName = "layoutinspector-skia-proto"),
-    androidDependency(name = "Android Layout Inspector (View Proto)", libraryName = "layoutinspector-view-proto"),
     androidDependency(name = "Android Layout Library", libraryName = "layoutlib"),
     LibraryLicense(name = "Android libwebp library", libraryName = "libwebp.jar",
                    url = "https://github.com/webmproject/libwebp",
                    version = LibraryLicense.CUSTOM_REVISION).newBsd("https://github.com/webmproject/libwebp/blob/main/COPYING"),
-    androidDependency(name = "Android Lint Api", libraryName = "precompiled-lint-api"),
-    androidDependency(name = "Android Lint Checks", libraryName = "precompiled-lint-checks"),
-    androidDependency(name = "Android Lint Checks (proto)", libraryName = "liblint-checks-proto"),
-    androidDependency(name = "Android Lint Model", libraryName = "precompiled-lint-model"),
-    androidDependency(name = "Android Logcat Proto", libraryName = "logcat-proto"),
-    androidDependency(name = "Android Manifest Merger", libraryName = "precompiled-manifest-merger"),
-    androidDependency(name = "Android Manifest Parser", libraryName = "precompiled-manifest-parser"),
-    androidDependency(name = "Android MLKit Common Library", libraryName = "precompiled-mlkit-common"),
-    androidDependency(name = "Android ninepatch Library", libraryName = "precompiled-ninepatch"),
-    androidDependency(name = "Android Perf-Logger Library", libraryName = "precompiled-perf-logger"),
-    androidDependency(name = "Android Perflib Library", libraryName = "precompiled-perflib"),
-    androidDependency(name = "Android Pixelprobe Library", libraryName = "precompiled-pixelprobe"),
-    androidDependency(name = "Android Process Monitor", libraryName = "precompiled-process-monitor"),
-    androidDependency(name = "Android ProfGen", libraryName = "precompiled-profgen"),
-    androidDependency(name = "Android Profiler", libraryName = "studio-grpc"),
-    androidDependency(name = "Android Repository", libraryName = "precompiled-repository"),
-    androidDependency(name = "Android Resource Repository", libraryName = "precompiled-resource-repository"),
-    androidDependency(name = "Android Sdk Common", libraryName = "precompiled-sdk-common"),
-    androidDependency(name = "Android Sdk Common Gradle", libraryName = "precompiled-sdk-common.gradle"),
-    androidDependency(name = "Android Sdk Lib", libraryName = "precompiled-sdklib"),
-    androidDependency(name = "Android STracer", libraryName = "precompiled-tracer"),
-    androidDependency(name = "Android Studio Driver (proto)", libraryName = "asdriver_proto"),
-    androidDependency(name = "Android Threading Agent Callback", libraryName = "precompiled-threading-agent-callback"),
-    androidDependency(name = "Android USB Devices", libraryName = "precompiled-usb-devices"),
-    androidDependency(name = "Android Version", libraryName = "libversion"),
-    androidDependency(name = "Android Wizard Template", libraryName = "precompiled-wizardTemplate.impl"),
-    androidDependency(name = "Android Wizard Template Plugin", libraryName = "precompiled-wizardTemplate.plugin"),
-    androidDependency(name = "Android Zipflinger", libraryName = "precompiled-zipflinger"),
-    androidDependency(name = "AndroidX Test Library", libraryName = "utp-core-proto-jarjar"),
-    LibraryLicense(name = "ANTLR 4.5", libraryName = "compilerCommon.antlr.shaded",
-                   url = "https://www.antlr.org").newBsd("https://www.antlr.org/license.html"),
-    LibraryLicense(name = "ANTLR 4.5 Runtime", libraryName = "compilerCommon.antlr_runtime.shaded",
-                   url = "https://www.antlr.org").newBsd("https://www.antlr.org/license.html"),
+    androidDependency(name = "Android SDK Common", libraryName = "android.tools.sdk.common"),
+    androidDependency(name = "Android Studio Platform", libraryName = "studio-platform"),
     LibraryLicense(name = "ANTLR 4.9 Runtime", libraryName = "antlr4-runtime-4.9",
                    url = "https://www.antlr.org").newBsd("https://www.antlr.org/license.html")
-      .copyrightText("Copyright (c) 2012 Terence Parr and Sam Harwell")
       .suppliedByPersons("Terence Parr"),
     LibraryLicense(name = "ap-validation", libraryName = "ap-validation",
                    url = "https://github.com/JetBrains/ap-validation").apache(
@@ -366,10 +284,6 @@ object CommunityLibraryLicenses {
     ffmpegLibraryLicense("ffmpeg-windows-x64"),
     LibraryLicense(name = "FiraCode", attachedTo = "intellij.platform.resources", version = "1.206", license = "OFL",
                    url = "https://github.com/tonsky/FiraCode", licenseUrl = "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
-    // for flatbuffers-java module library in android.sdktools.mlkit-common
-    LibraryLicense(name = "FlatBuffers Java API", libraryName = "flatbuffers-java",
-                   url = "https://google.github.io/flatbuffers/")
-      .apache("https://github.com/google/flatbuffers/blob/master/LICENSE"),
     LibraryLicense(name = "FreeMarker", attachedTo = "intellij.java.coverage", version = "2.3.30",
                    url = "https://freemarker.apache.org")
       .apache("https://freemarker.apache.org/docs/app_license.html"),
@@ -387,9 +301,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(url = "https://github.com/oshi/oshi", libraryName = "github.oshi.core").mit(
       "https://github.com/oshi/oshi/blob/master/LICENSE")
       .suppliedByOrganizations("The OSHI Project Contributors"),
-    LibraryLicense(name = "Google Auto Common Utilities", libraryName = "auto-common",
-                   url = "https://github.com/google/auto/tree/master/common")
-      .apache("https://github.com/google/auto/blob/master/LICENSE"),
     LibraryLicense(libraryName = "Gradle", url = "https://gradle.org/", licenseUrl = "https://gradle.org/license")
       .apache("https://github.com/gradle/gradle/blob/master/LICENSE")
       .suppliedByOrganizations("Gradle Inc."),
@@ -500,8 +411,6 @@ object CommunityLibraryLicenses {
                   groupId = "org.ini4j", artifactId = "ini4j",
                   version = "0.5.4",
                   authors = "Ivan Szkiba"),
-    androidDependency(name = "Instant run protos", libraryName = "deploy_java_proto"),
-    androidDependency(name = "Instant run version", libraryName = "libjava_version"),
     LibraryLicense(name = "intellij-markdown", libraryName = "jetbrains.markdown",
                    url = "https://github.com/JetBrains/markdown")
       .apache("https://github.com/JetBrains/markdown/blob/master/LICENSE"),
@@ -716,9 +625,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JUnit5Jupiter", libraryName = "JUnit5Jupiter", url = "https://junit.org/junit5/").eplV2(),
     LibraryLicense(name = "JUnit5Launcher", libraryName = "JUnit5Launcher", url = "https://junit.org/junit5/").eplV2(),
     LibraryLicense(name = "JUnit5Vintage", libraryName = "JUnit5Vintage", url = "https://junit.org/junit5/").eplV2(),
-    LibraryLicense(name = "Juniversalchardet", libraryName = "juniversalchardet",
-                   url = "https://code.google.com/archive/p/juniversalchardet",
-                   license = "MPL 1.1", licenseUrl = "https://www.mozilla.org/MPL/MPL-1.1.html"),
     LibraryLicense(libraryName = "jzlib", url = "http://www.jcraft.com/jzlib/").newBsd("https://github.com/ymnk/jzlib/raw/master/LICENSE.txt"),
     LibraryLicense(name = "KInference",
                    libraryName = "kinference.core.jvm",
@@ -964,8 +870,6 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/KingSora/OverlayScrollbars/blob/master/LICENSE"),
     LibraryLicense(name = "Package Search API Models", libraryName = "package-search-api-models",
                    url = "https://github.com/JetBrains/package-search-api-models").apache(),
-    androidDependency(name = "Perfetto Library", libraryName = "trace-perfetto-library"),
-    androidDependency(name = "Perfetto protos", libraryName = "perfetto-proto"),
 
     LibraryLicense(name = "pip", attachedTo = "intellij.python", version = "20.3.4",
                    url = "https://pip.pypa.io/")
@@ -1082,7 +986,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "sphinxcontrib-napoleon", attachedTo = "intellij.python", version = "0.7",
                    url = "https://sphinxcontrib-napoleon.readthedocs.io/",
                    licenseUrl = "https://github.com/sphinx-contrib/napoleon/blob/master/LICENSE").simplifiedBsd(),
-    androidDependency(name = "SQLite Inspector Proto", libraryName = "sqlite-inspector-proto"),
     LibraryLicense(name = "Squareup Okio", libraryName = "squareup.okio.jvm", url = "https://github.com/square/okio")
       .apache("https://github.com/square/okio/blob/master/LICENSE.txt")
       .suppliedByOrganizations("Square, Inc."),
@@ -1100,17 +1003,10 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "StreamEx", libraryName = "StreamEx",
                    url = "https://github.com/amaembo/streamex")
       .apache("https://github.com/amaembo/streamex/blob/master/LICENSE"),
-    LibraryLicense(name = "Studio Protobuf", libraryName = "studio-proto", license = "protobuf",
-                   url = "https://github.com/protocolbuffers/protobuf",
-                   licenseUrl = "https://github.com/protocolbuffers/protobuf/blob/master/LICENSE")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
     LibraryLicense(name = "swingx", libraryName = "swingx", license = "LGPL 2.1",
                    url = "https://central.sonatype.com/artifact/org.swinglabs/swingx-core/1.6.2-2",
                    licenseUrl = "https://www.opensource.org/licenses/lgpl-2.1.php")
       .suppliedByOrganizations("Sun Microsystems, Inc."),
-    // for tensorflow-lite-metadata module library in android.sdktools.mlkit-common
-    LibraryLicense(name = "TensorFlow Lite Metadata Library", libraryName = "tensorflow-lite-metadata",
-                   url = "https://tensorflow.org/lite").apache(),
     LibraryLicense(libraryName = "TestNG", url = "https://testng.org/doc/")
       .apache("https://github.com/cbeust/testng/blob/master/LICENSE.txt"),
     LibraryLicense(name = "The Erlang LS extension for VSCode", attachedTo = "intellij.textmate", version = "0.0.43",
@@ -1122,12 +1018,10 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/Thriftpy/thriftpy2/")
       .mit("https://github.com/Thriftpy/thriftpy2/blob/master/LICENSE"),
     // for traceprocessor-proto module library in intellij.android.profilersAndroid
-    androidDependency(name = "TraceProcessor Daemon Protos", libraryName = "traceprocessor-protos"),
     LibraryLicense(name = "Trang", libraryName = "trang-core.jar",
                    url = "https://relaxng.org/jclark/trang.html",
                    version = LibraryLicense.CUSTOM_REVISION)
       .newBsd("https://opensource.org/license/bsd-3-clause/"),
-    androidDependency(name = "Transport Pipeline", libraryName = "transport-proto"),
 
     LibraryLicense(name = "Trove4j (JetBrains's fork)", libraryName = "trove", license = "LGPL",
                    url = "https://github.com/JetBrains/intellij-deps-trove4j",
@@ -1172,7 +1066,6 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/jenkinsci/winp/blob/master/LICENSE.txt")
       .suppliedByPersons("Kohsuke Kawaguchi"),
     // for workmanager-inspector-proto module library in intellij.android.app-inspection.inspectors.workmanager.model
-    androidDependency(name = "WorkManager Inspector Proto", libraryName = "workmanager-inspector-proto"),
     LibraryLicense(name = "Xalan", libraryName = "Xalan-2.7.2", url = "https://xalan.apache.org/xalan-j/")
       .apache("https://xalan.apache.org/xalan-j/#license")
       .suppliedByOrganizations(Suppliers.APACHE),
