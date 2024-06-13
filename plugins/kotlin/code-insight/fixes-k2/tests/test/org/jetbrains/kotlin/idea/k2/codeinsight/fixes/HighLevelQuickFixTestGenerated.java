@@ -7633,7 +7633,39 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/primitiveCastToConversion")
+    public static class PrimitiveCastToConversion extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("boolean.kt")
+        public void testBoolean() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/primitiveCastToConversion/boolean.kt");
+        }
+
+        @TestMetadata("charToShort.kt")
+        public void testCharToShort() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/primitiveCastToConversion/charToShort.kt");
+        }
+
+        @TestMetadata("intToByte.kt")
+        public void testIntToByte() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/primitiveCastToConversion/intToByte.kt");
+        }
+
+        @TestMetadata("longToFloat.kt")
+        public void testLongToFloat() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/primitiveCastToConversion/longToFloat.kt");
+        }
+    }
 
 
 
