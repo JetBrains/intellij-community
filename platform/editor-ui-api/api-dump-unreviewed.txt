@@ -1076,7 +1076,6 @@ a:com.intellij.openapi.actionSystem.ActionGroup
 - f:setPopup(Z):V
 - f:setSearchable(Z):V
 a:com.intellij.openapi.actionSystem.ActionManager
-- <init>():V
 - a:addAnActionListener(com.intellij.openapi.actionSystem.ex.AnActionListener):V
 - addAnActionListener(com.intellij.openapi.actionSystem.ex.AnActionListener,com.intellij.openapi.Disposable):V
 - addTimerListener(I,com.intellij.openapi.actionSystem.TimerListener):V
@@ -1427,31 +1426,6 @@ com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 - getInlineActions():java.util.List
 com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
 - a:alwaysShowIconInMainMenu():Z
-f:com.intellij.openapi.actionSystem.toolbarLayout.AutoLayoutStrategy
-- com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-- <init>(Z,Z):V
-- calcMinimumSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
-- calcPreferredSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
-- calculateBounds(com.intellij.openapi.actionSystem.ActionToolbar):java.util.List
-c:com.intellij.openapi.actionSystem.toolbarLayout.CompressingLayoutStrategy
-- com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-- <init>():V
-- calcMinimumSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
-- calcPreferredSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
-- calculateBounds(com.intellij.openapi.actionSystem.ActionToolbar):java.util.List
-- p:getNonCompressibleWidth(java.awt.Container):I
-f:com.intellij.openapi.actionSystem.toolbarLayout.NoWrapLayoutStrategy
-- com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-- <init>(Z):V
-- calcMinimumSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
-- calcPreferredSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
-- calculateBounds(com.intellij.openapi.actionSystem.ActionToolbar):java.util.List
-f:com.intellij.openapi.actionSystem.toolbarLayout.RightActionsAdjusterStrategyWrapper
-- com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-- <init>(com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy):V
-- calcMinimumSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
-- calcPreferredSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
-- calculateBounds(com.intellij.openapi.actionSystem.ActionToolbar):java.util.List
 com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - sf:AUTOLAYOUT_STRATEGY:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - sf:COMPRESSING_STRATEGY:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
@@ -1460,19 +1434,6 @@ com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - a:calcMinimumSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
 - a:calcPreferredSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
 - a:calculateBounds(com.intellij.openapi.actionSystem.ActionToolbar):java.util.List
-f:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutUtilKt
-- sf:RIGHT_ALIGN_KEY:java.lang.String
-- sf:autoLayoutStrategy():com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-- sf:autoLayoutStrategy(Z):com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-- sf:autoLayoutStrategy(Z,Z):com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-- bs:autoLayoutStrategy$default(Z,Z,I,java.lang.Object):com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-- sf:getChildPreferredSize(java.awt.Container,I):java.awt.Dimension
-f:com.intellij.openapi.actionSystem.toolbarLayout.WrapLayoutStrategy
-- com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-- <init>(Z):V
-- calcMinimumSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
-- calcPreferredSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension
-- calculateBounds(com.intellij.openapi.actionSystem.ActionToolbar):java.util.List
 com.intellij.openapi.editor.BlockInlayPriority
 - sf:ANNOTATIONS:I
 - sf:CODE_AUTHOR:I
@@ -2063,7 +2024,6 @@ c:com.intellij.openapi.editor.LogicalPosition
 - hashCode():I
 - leanForward(Z):com.intellij.openapi.editor.LogicalPosition
 f:com.intellij.openapi.editor.PlatformEditorBundle
-- sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 *:com.intellij.openapi.editor.ScrollPositionCalculator
@@ -2199,38 +2159,6 @@ a:com.intellij.openapi.editor.bidi.BidiRegionsSeparator
 f:com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator
 - com.intellij.lang.LanguageExtension
 - s:getInstance():com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator
-f:com.intellij.openapi.editor.colors.DelegatingFontPreferences
-- com.intellij.openapi.editor.colors.FontPreferences
-- <init>(java.util.function.Supplier):V
-- copyTo(com.intellij.openapi.editor.colors.FontPreferences):V
-- getBoldSubFamily():java.lang.String
-- getEffectiveFontFamilies():java.util.List
-- getFontFamily():java.lang.String
-- getLineSpacing():F
-- getRealFontFamilies():java.util.List
-- getRegularSubFamily():java.lang.String
-- getSize(java.lang.String):I
-- getSize2D(java.lang.String):F
-- hasSize(java.lang.String):Z
-- useLigatures():Z
-a:com.intellij.openapi.editor.colors.EditorColorPalette
-- sf:ORDER_BY_INTENSITY:java.util.Comparator
-- sf:ORDER_NONE:java.util.Comparator
-- pf:myColorsScheme:com.intellij.openapi.editor.colors.EditorColorsScheme
-- <init>(com.intellij.openapi.editor.colors.EditorColorsScheme):V
-- collectColors(com.intellij.util.Function):com.intellij.openapi.editor.colors.EditorColorPalette
-- collectColorsWithFilter(com.intellij.util.Function,Z):com.intellij.openapi.editor.colors.EditorColorPalette
-- getClosestNonConflictingColor(java.awt.Color):java.awt.Color
-- getClosestNonConflictingColor(java.awt.Color,com.intellij.util.Function):java.awt.Color
-- getColors(java.util.Comparator):java.util.Collection
-- getEntries():java.util.Set
-- pa:getTextAttributeKeys(Z):java.util.Collection
-- withBackgroundColors():com.intellij.openapi.editor.colors.EditorColorPalette
-- withForegroundColors():com.intellij.openapi.editor.colors.EditorColorPalette
-a:com.intellij.openapi.editor.colors.EditorColorPaletteFactory
-- <init>():V
-- s:getInstance():com.intellij.openapi.editor.colors.EditorColorPaletteFactory
-- a:getPalette(com.intellij.openapi.editor.colors.EditorColorsScheme,com.intellij.lang.Language):com.intellij.openapi.editor.colors.EditorColorPalette
 com.intellij.openapi.editor.colors.EditorColors
 - sf:ADDED_LINES_COLOR:com.intellij.openapi.editor.colors.ColorKey
 - sf:ANNOTATIONS_COLOR:com.intellij.openapi.editor.colors.ColorKey
@@ -2465,11 +2393,6 @@ com.intellij.openapi.editor.event.CaretListener
 - caretAdded(com.intellij.openapi.editor.event.CaretEvent):V
 - caretPositionChanged(com.intellij.openapi.editor.event.CaretEvent):V
 - caretRemoved(com.intellij.openapi.editor.event.CaretEvent):V
-com.intellij.openapi.editor.event.EditorEventListener
-- com.intellij.openapi.editor.event.CaretListener
-- com.intellij.openapi.editor.event.DocumentListener
-- com.intellij.openapi.editor.event.SelectionListener
-- readOnlyModificationAttempt(com.intellij.openapi.editor.Document):V
 com.intellij.openapi.editor.event.EditorEventMulticaster
 - a:addCaretListener(com.intellij.openapi.editor.event.CaretListener):V
 - a:addCaretListener(com.intellij.openapi.editor.event.CaretListener,com.intellij.openapi.Disposable):V
@@ -2951,7 +2874,6 @@ com.intellij.openapi.vcs.FileStatus
 - a:getId():java.lang.String
 - a:getText():java.lang.String
 f:com.intellij.openapi.vcs.FileStatusFactory
-- sf:FILESTATUS_COLOR_KEY_PREFIX:java.lang.String
 - <init>():V
 - createFileStatus(java.lang.String,java.lang.String):com.intellij.openapi.vcs.FileStatus
 - createFileStatus(java.lang.String,java.lang.String,java.awt.Color):com.intellij.openapi.vcs.FileStatus

@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.colors;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * @see EditorColorPalette#withBackgroundColors()
  * @see EditorColorPalette#withForegroundColors()
  */
+@ApiStatus.Internal
 public abstract class EditorColorPaletteFactory {
   public static EditorColorPaletteFactory getInstance() {
     return ApplicationManager.getApplication().getService(EditorColorPaletteFactory.class);

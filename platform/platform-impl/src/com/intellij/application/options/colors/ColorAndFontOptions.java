@@ -240,7 +240,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
       if (defaultScheme != null && scheme instanceof AbstractColorsScheme) {
         return !((AbstractColorsScheme)scheme)
-          .settingsEqual(defaultScheme, colorKey -> !colorKey.getExternalName().startsWith(FileStatusFactory.FILESTATUS_COLOR_KEY_PREFIX));
+          .settingsEqual(defaultScheme, colorKey -> !colorKey.getExternalName().startsWith(FileStatusFactory.getFilestatusColorKeyPrefix()));
       }
     }
     return false;
@@ -1155,7 +1155,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private boolean myIsNew = false;
     private final RainbowColorsInSchemeState myRainbowState;
     private static final Predicate<ColorKey> FILE_STATUS_COLORS =
-      input -> input != null && input.getExternalName().startsWith(FileStatusFactory.FILESTATUS_COLOR_KEY_PREFIX);
+      input -> input != null && input.getExternalName().startsWith(FileStatusFactory.getFilestatusColorKeyPrefix());
 
 
     private MyColorScheme(@NotNull EditorColorsScheme parentScheme) {

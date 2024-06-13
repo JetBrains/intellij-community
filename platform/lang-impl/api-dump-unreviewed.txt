@@ -20928,10 +20928,6 @@ f:com.intellij.openapi.options.CompoundScheme$MutatorHelper
 - apply(java.util.List,java.util.function.BiConsumer):java.util.List
 - clear():V
 - copy(com.intellij.openapi.options.CompoundScheme):com.intellij.openapi.options.CompoundScheme
-f:com.intellij.openapi.options.colors.EditorColorPaletteFactoryImpl
-- com.intellij.openapi.editor.colors.EditorColorPaletteFactory
-- <init>():V
-- getPalette(com.intellij.openapi.editor.colors.EditorColorsScheme,com.intellij.lang.Language):com.intellij.openapi.editor.colors.EditorColorPalette
 f:com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage
 - com.intellij.openapi.options.colors.ColorSettingsPage
 - com.intellij.psi.codeStyle.DisplayPrioritySortable
