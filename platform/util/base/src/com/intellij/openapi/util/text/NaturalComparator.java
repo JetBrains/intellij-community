@@ -26,6 +26,14 @@ public final class NaturalComparator implements Comparator<String> {
   }
 
   @Contract(pure = true)
+  public static int naturalCompare(@NotNull String s1,
+                                   @NotNull String s2,
+                                   boolean ignoreCase,
+                                   boolean likeFileNames) {
+    return naturalCompare(s1, s2, s1.length(), s2.length(), ignoreCase, likeFileNames);
+  }
+
+  @Contract(pure = true)
   @ApiStatus.Internal
   public static int naturalCompare(@NotNull String s1,
                                    @NotNull String s2,

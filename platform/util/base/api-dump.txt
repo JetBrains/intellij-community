@@ -96,6 +96,7 @@ f:com.intellij.openapi.util.text.NaturalComparator
 - sf:INSTANCE:java.util.Comparator
 - <init>():V
 - compare(java.lang.String,java.lang.String):I
+- s:naturalCompare(java.lang.String,java.lang.String,Z,Z):I
 f:com.intellij.openapi.util.text.Strings
 - sf:EMPTY_CHAR_SEQUENCE:java.lang.CharSequence
 - <init>():V

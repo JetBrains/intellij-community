@@ -61,7 +61,7 @@ internal fun getRefComparator(
     it.isNotFavorite(favoriteBranches, repositories)
   } then compareBy {
     !(isPrefixGrouping() && it.name.contains('/'))
-  } then compareBy { it.name }
+  } then compareBy(GitReference.REFS_NAMES_COMPARATOR) { it.name }
 }
 
 internal fun getSubTreeComparator(favoriteBranches: Map<GitRepository, Set<String>>,

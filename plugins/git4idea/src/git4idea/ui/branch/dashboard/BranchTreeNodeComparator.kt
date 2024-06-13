@@ -11,7 +11,7 @@ internal object BranchTreeNodeComparator : Comparator<BranchNodeDescriptor> {
     val displayText1 = d1.getDisplayText()
     val displayText2 = d2.getDisplayText()
     if (displayText1 != null && displayText2 != null) {
-      return displayText1.compareTo(displayText2)
+      return displayText1.compareTo(displayText2, ignoreCase = true)
     }
     if (displayText1 != null) return -1
     if (displayText2 != null) return 1
