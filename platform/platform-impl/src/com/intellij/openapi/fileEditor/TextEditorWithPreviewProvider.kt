@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.TextEditorWithPreview.MyFileEditorState
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jdom.Attribute
@@ -19,7 +18,7 @@ private const val SPLIT_LAYOUT = "split_layout"
 private const val VERTICAL_SPLIT = "is_vertical_split"
 
 @ApiStatus.Experimental
-abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEditorProvider): AsyncFileEditorProvider, DumbAware {
+abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEditorProvider): AsyncFileEditorProvider {
   private val mainProvider: TextEditorProvider = TextEditorProvider.getInstance()
   private val editorTypeId = createSplitEditorProviderTypeId(mainProvider.editorTypeId, previewProvider.editorTypeId)
 
@@ -127,9 +126,7 @@ abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEd
     return TextEditorWithPreview(firstEditor, secondEditor)
   }
 
-  override fun getPolicy(): FileEditorPolicy {
-    return FileEditorPolicy.HIDE_DEFAULT_EDITOR
-  }
+  override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 }
 
 private fun createEditorBuilder(

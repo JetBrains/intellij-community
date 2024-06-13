@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Set;
 
-final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
+final class EditorConfigEditorProvider implements AsyncFileEditorProvider {
   private static final String EDITOR_TYPE_ID = "org.editorconfig.configmanagement.editor";
 
   static final int MAX_PREVIEW_LENGTH = 10000;

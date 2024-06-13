@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,7 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 
-private class UIFormEditorProvider : FileEditorProvider, DumbAware, AsyncFileEditorProvider {
+private class UIFormEditorProvider : FileEditorProvider, AsyncFileEditorProvider {
   override fun accept(project: Project, file: VirtualFile): Boolean {
     SlowOperations.knownIssue("IDEA-307701, EA-762786").use {
       return FileTypeRegistry.getInstance().isFileOfType(file, GuiFormFileType.INSTANCE) &&

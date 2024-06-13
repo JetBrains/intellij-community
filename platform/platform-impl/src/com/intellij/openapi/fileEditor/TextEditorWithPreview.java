@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -29,7 +29,6 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -53,10 +52,7 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.actionSystem.ActionPlaces.TEXT_EDITOR_WITH_PREVIEW;
 
 /**
- * Two panel editor with three states: Editor, Preview and Editor with Preview.
- * Based on SplitFileEditor by Valentin Fondaratov
- *
- * @author Konstantin Bulenkov
+ * Two-panel editor with three states: Editor, Preview and Editor with Preview.
  */
 public class TextEditorWithPreview extends UserDataHolderBase implements TextEditor {
   private static final Key<TextEditorWithPreview> PARENT_SPLIT_EDITOR_KEY = Key.create("parentSplit");
@@ -68,7 +64,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   private boolean myIsVerticalSplit;
   private JComponent myComponent;
   private JBSplitter mySplitter;
-  private SplitEditorToolbar myToolbarWrapper;
+  private SplitEditorToolbar toolbarWrapper;
   private final @Nls String myName;
   public static final Key<Layout> DEFAULT_LAYOUT_FOR_FILE = Key.create("TextEditorWithPreview.DefaultLayout");
 
@@ -80,7 +76,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myEditor = editor;
     myPreview = preview;
     myName = editorName;
-    myDefaultLayout = ObjectUtils.notNull(getLayoutForFile(myEditor.getFile()), defaultLayout);
+    TextEditorWithPreview.Layout value = getLayoutForFile(myEditor.getFile());
+    myDefaultLayout = value == null ? defaultLayout : value;
     myIsVerticalSplit = isVerticalSplit;
     editor.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
     preview.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
@@ -150,7 +147,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setDividerWidth(ExperimentalUI.isNewUI() ? 1 : 2); // We're using OnePixelSplitter, but it actually supports wider dividers.
     mySplitter.getDivider().setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.PREVIEW_BORDER_COLOR), UIUtil.getPanelBackground())));
 
-    myToolbarWrapper = createSplitEditorToolbar(mySplitter);
+    toolbarWrapper = createSplitEditorToolbar(mySplitter);
 
     if (myLayout == null) {
       String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
@@ -158,16 +155,16 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
     adjustEditorsVisibility();
 
-    BorderLayoutPanel panel = JBUI.Panels.simplePanel(mySplitter).addToTop(myToolbarWrapper);
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel(mySplitter).addToTop(toolbarWrapper);
     if (!isShowFloatingToolbar()) {
       myComponent = panel;
       return myComponent;
     }
 
-    myToolbarWrapper.setVisible(false);
+    toolbarWrapper.setVisible(false);
     MyEditorLayeredComponentWrapper layeredPane = new MyEditorLayeredComponentWrapper(panel);
     myComponent = layeredPane;
-    ActionGroup toolbarGroup = myToolbarWrapper.getRightToolbar().getActionGroup();
+    ActionGroup toolbarGroup = toolbarWrapper.getRightToolbar().getActionGroup();
     LayoutActionsFloatingToolbar toolbar = new LayoutActionsFloatingToolbar(myComponent, toolbarGroup, this);
     layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER);
     myComponent.add(toolbar, JLayeredPane.POPUP_LAYER);
@@ -176,7 +173,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   protected boolean isShowFloatingToolbar() {
-    return Registry.is("ide.text.editor.with.preview.show.floating.toolbar") && myToolbarWrapper.isLeftToolbarEmpty();
+    return Registry.is("ide.text.editor.with.preview.show.floating.toolbar") && toolbarWrapper.isLeftToolbarEmpty();
   }
 
   protected boolean isShowActionsInTabs() {
@@ -257,7 +254,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   private void invalidateLayout() {
     adjustEditorsVisibility();
-    myToolbarWrapper.refresh();
+    toolbarWrapper.refresh();
     myComponent.repaint();
 
     final JComponent focusComponent = getPreferredFocusedComponent();
@@ -582,7 +579,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     if (myIsVerticalSplit == isVerticalSplit) return;
     myIsVerticalSplit = isVerticalSplit;
 
-    myToolbarWrapper.refresh();
+    toolbarWrapper.refresh();
     mySplitter.setOrientation(myIsVerticalSplit);
     myComponent.repaint();
   }
