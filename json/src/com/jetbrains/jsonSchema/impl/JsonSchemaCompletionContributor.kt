@@ -809,7 +809,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                                editor: Editor,
                                walker: JsonLikePsiWalker) =
       context.file.findElementAt(editor.caretModel.offset)?.let {
-        rewindToMeaningfulLeaf(it, walker)
+        rewindToMeaningfulLeaf(it)
       }
 
     private fun insertPropertyWithEnum(context: InsertionContext,

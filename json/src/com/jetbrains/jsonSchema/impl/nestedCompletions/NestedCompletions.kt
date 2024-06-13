@@ -9,6 +9,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.*
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
+import com.jetbrains.jsonSchema.extension.JsonSchemaShorthandValueHandler
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
@@ -81,7 +82,7 @@ fun expandMissingPropertiesAndMoveCaret(context: InsertionContext, completionPat
   val pointer = SmartPointerManager.getInstance(context.project).createSmartPsiFileRangePointer(newElement.containingFile, newElement.textRange)
   PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
   val e = context.file.findElementAt(pointer.range!!.startOffset)
-  val psiElement = rewindToMeaningfulLeaf(e, walker)
+  val psiElement = rewindToMeaningfulLeaf(e)
   if (psiElement != null) {
     context.editor.caretModel.moveToOffset(psiElement.endOffset)
   }
@@ -95,19 +96,19 @@ private fun getOrCreateParentObject(element: PsiElement,
                                     path: List<String>): JsonObjectValueAdapter? {
   val container = element.parent ?: return null
   return walker.createValueAdapter(container)?.asObject
-    ?: walker.createValueAdapter(container.parent)?.asObject?.takeIf {
-      // the first condition is a hack for yaml, we need to invent a better solution here
-      walker.defaultObjectValue.isNotBlank() && walker.getParentPropertyAdapter(container) != null
-    }
-    ?: replaceAtCaretAndGetParentObject(element, walker, context, path).let {
-      walker.createValueAdapter(it)?.asObject
-    }
+         ?: walker.createValueAdapter(container.parent)?.asObject?.takeIf {
+           // the first condition is a hack for yaml, we need to invent a better solution here
+           walker.defaultObjectValue.isNotBlank() && walker.getParentPropertyAdapter(container) != null
+         }
+         ?: replaceAtCaretAndGetParentObject(element, walker, context, path).let {
+           walker.createValueAdapter(it)?.asObject
+         }
 }
 
-fun rewindToMeaningfulLeaf(element: PsiElement?, walker: JsonLikePsiWalker): PsiElement? {
+fun rewindToMeaningfulLeaf(element: PsiElement?): PsiElement? {
   var meaningfulLeaf = element?.lastLeaf()
   while (meaningfulLeaf is PsiWhiteSpace || meaningfulLeaf is PsiErrorElement ||
-    meaningfulLeaf is LeafPsiElement && meaningfulLeaf.text == ",") {
+         meaningfulLeaf is LeafPsiElement && meaningfulLeaf.text == ",") {
     meaningfulLeaf = meaningfulLeaf.prevLeaf()
   }
   return meaningfulLeaf
@@ -158,13 +159,13 @@ private fun addNewPropertyWithObjectValue(parentObject: JsonObjectValueAdapter, 
 }
 
 private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
-                     completionPath: List<String>,
-                     walker: JsonLikePsiWalker,
-                     element: PsiElement,
-                     index: Int,
-                     fakeProperty: PsiElement?): PsiElement? {
+                             completionPath: List<String>,
+                             walker: JsonLikePsiWalker,
+                             element: PsiElement,
+                             index: Int,
+                             fakeProperty: PsiElement?): PsiElement? {
   val property = parentObject.propertyList.firstOrNull { it.name == completionPath[index] }
-                  ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element, fakeProperty)
+                 ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element, fakeProperty)
   fakeProperty?.let {
     cleanupWhitespacesAndDelete(it, walker)
   }
@@ -189,11 +190,12 @@ private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
           walker.getSyntaxAdapter(element.project).createProperty(
             StringUtil.unquoteString(element.text), dummyString, element.project
           ).also { removePropertyValue(walker, it) }
-        } else element.copy()
+        }
+                           else element.copy()
         addBeforeOrAfter(value, elementToAdd, element, fakeProperty)
       }
       else {
-        val newElement = replaceValueForNesting(walker, value, element, completionPath, parentObject)
+        val newElement = replaceValueForNesting(walker, value, element)
         switchToObjectSeparator(walker, property.delegate)
         newElement
       }
@@ -256,20 +258,55 @@ private fun addBeforeOrAfter(value: JsonValueAdapter,
 
 private fun replaceValueForNesting(walker: JsonLikePsiWalker,
                                    value: JsonValueAdapter,
-                                   element: PsiElement,
-                                   completionPath: List<String>,
-                                   parentObject: JsonObjectValueAdapter): PsiElement {
+                                   element: PsiElement): PsiElement {
   val project = value.delegate.project
-  return value.delegate.replace(
-      walker.getSyntaxAdapter(project).createProperty(StringUtil.unquoteString(element.text), dummyString,
-                                                      project).parent.also {
-        walker.createValueAdapter(it)!!.asObject!!.propertyList.single().let {
-          removePropertyValue(walker, it.delegate)
-        }
+  val syntaxAdapter = walker.getSyntaxAdapter(project)
+  val name = StringUtil.unquoteString(element.text)
+  val newProperty = syntaxAdapter.createProperty(
+    name, dummyString, project
+  )
+  val expandedValue = expandShorthandIfApplicable(
+    value, element,
+    walker.findPosition(value.delegate, false)?.stepNames
+  )
+  val newValue = value.delegate.replace(
+    newProperty.parent.also { parentObject ->
+      walker.createValueAdapter(parentObject)!!.asObject!!.propertyList.single().let {
+        removePropertyValue(walker, it.delegate)
       }
-    ).let {
-      walker.createValueAdapter(it)!!.asObject!!.propertyList.single().delegate
     }
+  )
+
+  val parentObjectAdapter = walker.createValueAdapter(newValue)!!.asObject
+  val newPropertyAdapter = parentObjectAdapter!!.propertyList.single()
+  expandedValue?.takeIf {
+    // if we are expanding the same property as in completion - don't perform the expansion here
+    // the completion will expand itself
+    it.key != newPropertyAdapter.name && it.key != StringUtil.unquoteString(newPropertyAdapter.delegate.text)
+  }?.let {
+    addBeforeOrAfter(parentObjectAdapter, syntaxAdapter.createProperty(expandedValue.key, expandedValue.value, project),
+                                element, null).let {
+      walker.getParentPropertyAdapter(it)
+    }
+  }
+
+  return newPropertyAdapter.delegate
+}
+
+private fun expandShorthandIfApplicable(
+  value: JsonValueAdapter,
+  element: PsiElement,
+  elementPath: List<String>?
+): JsonSchemaShorthandValueHandler.KeyValue? {
+  elementPath ?: return null
+  if (!value.isNumberLiteral && !value.isStringLiteral && !value.isBooleanLiteral && !value.isNull) {
+    return null
+  }
+  val expandedValue = JsonSchemaShorthandValueHandler.EXTENSION_POINT_NAME.extensionList
+    .filter { it.isApplicable(element.containingFile) }
+    .mapNotNull { it.expandShorthandValue(elementPath, StringUtil.unquoteString(value.delegate.text)) }
+    .singleOrNull()
+  return expandedValue
 }
 
 private fun createLeaf(content: String, context: PsiElement): LeafPsiElement {
