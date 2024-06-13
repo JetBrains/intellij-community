@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
+import org.jetbrains.kotlin.nj2k.PreprocessorExtensionsRunner
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.regex.Pattern
@@ -149,6 +150,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
     open fun fileToKotlin(text: String, settings: ConverterSettings): String {
         val file = createJavaFile(text)
+
+        PreprocessorExtensionsRunner.runRegisteredPreprocessors(project, listOf(file))
+
         val j2kKind = if (isFirPlugin) K2 else K1_NEW
         val extension = J2kConverterExtension.extension(j2kKind)
         val converter = extension.createJavaToKotlinConverter(project, module, settings)
