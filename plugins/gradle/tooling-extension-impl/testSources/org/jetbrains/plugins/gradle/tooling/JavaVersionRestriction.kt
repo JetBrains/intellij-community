@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling
 
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.tooling.util.JavaVersionMatcher.isVersionMatch
 
 fun interface JavaVersionRestriction {
 
@@ -11,5 +12,14 @@ fun interface JavaVersionRestriction {
   companion object {
     @JvmField
     val NO = JavaVersionRestriction { _, _ -> false }
+
+    /**
+     * @param targetVersionNotation the java version restriction in string form.
+     * The notation variants can be found in the [org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion] documentation.
+     */
+    @JvmStatic
+    fun javaRestrictionOf(targetVersionNotation: String): JavaVersionRestriction {
+      return JavaVersionRestriction { _, source -> !isVersionMatch(source, targetVersionNotation) }
+    }
   }
 }
