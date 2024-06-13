@@ -1,7 +1,6 @@
 // ERROR: This annotation is not applicable to target 'value parameter'.
 // ERROR: This annotation is not applicable to target 'value parameter'.
 // ERROR: This annotation is not applicable to target 'local variable'.
-
 import javaApi.Anon1
 import javaApi.Anon2
 import javaApi.Anon3
