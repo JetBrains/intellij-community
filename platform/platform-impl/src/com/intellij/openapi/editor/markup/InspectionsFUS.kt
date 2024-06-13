@@ -31,7 +31,21 @@ object InspectionsFUS : CounterUsagesCollector() {
     Other
   }
 
-  private val eventLogGroup: EventLogGroup = EventLogGroup("new.inspections.widget", 4)
+  enum class InspectionsActions {
+    GotoPreviousError,
+    GotoNextError
+  }
+
+  enum class RiderSeverityFilters {
+    SYNTAX,
+    ERRORS,
+    WARNINGS,
+    SUGGESTIONS,
+    ALL
+  }
+
+
+  private val eventLogGroup: EventLogGroup = EventLogGroup("new.inspections.widget", 5)
 
   private val actionIdField = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
   private val startAction = eventLogGroup.registerEvent("action_started", EventFields.Int("tabId"), actionIdField)
@@ -42,11 +56,22 @@ object InspectionsFUS : CounterUsagesCollector() {
 
   private val event = eventLogGroup.registerEvent("action_occurred", EventFields.Int("tabId"), EventFields.Enum(("event"), InspectionsEvent::class.java))
 
-  private val segmentClickedEvent = InspectionsFUS.group.registerEvent("segment_clicked",
+  private val segmentClickedEvent = eventLogGroup.registerEvent("segment_clicked",
                                                                        EventFields.Enum(("type"), InspectionSegmentType::class.java),
                                                                        EventFields.Int("count"),
                                                                        EventFields.Boolean("forward"))
 
+  private val actionNotFound = eventLogGroup.registerEvent("inspection_action_not_found", EventFields.Int("tabId"), EventFields.Enum(("event"), InspectionsActions::class.java))
+
+
+  /*--------------*/
+
+  private val inSolution = eventLogGroup.registerEvent("rider_solution_level_changed", EventFields.Enum(("event"), RiderSeverityFilters::class.java))
+  private val configureInspections = eventLogGroup.registerEvent("rider_configuration_edited", EventFields.Int("tabId"))
+  private val styleInspections = eventLogGroup.registerEvent("rider_style_edited", EventFields.Int("tabId"),
+                                                     EventFields.String("pencilsFilterGroup", listOf(
+                                                                         "CodeVision", "SpellingFilter", "NamingFilter", "CodeStyle", "InlayHints")),
+                                                     EventFields.Boolean("isEnabled"))
   fun infoStateDetected(project: Project?, id: Int, state: InspectionsState) {
     infoState.log(project, id, state)
   }
@@ -69,6 +94,22 @@ object InspectionsFUS : CounterUsagesCollector() {
 
   fun segmentClick(project: Project?, type: InspectionSegmentType, count: Int, forward: Boolean) {
     segmentClickedEvent.log(project, type, count, forward)
+  }
+
+  fun actionNotFound(project: Project?, id: Int, action: InspectionsActions) {
+    actionNotFound.log(project, id, action)
+  }
+
+  fun riderSolutionLevelChanged(project: Project?, level: RiderSeverityFilters) {
+    inSolution.log(project, level)
+  }
+
+  fun riderConfigureInspections(project: Project?, tabId: Int) {
+    configureInspections.log(project, tabId)
+  }
+
+  fun riderStyleInspections(project: Project?, tabId: Int, pencilsFilterGroup: String, isEnabled: Boolean) {
+    styleInspections.log(project, tabId, pencilsFilterGroup, isEnabled)
   }
 
   override fun getGroup(): EventLogGroup {

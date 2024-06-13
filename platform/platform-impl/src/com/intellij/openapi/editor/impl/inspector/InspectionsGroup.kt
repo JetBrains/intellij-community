@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.PowerSaveMode
-import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -226,7 +225,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
         return ApplicationInfoEx.getInstanceEx().isEAP
       }
 
-      private val fusActionNotFound = InspectionsFUS.group.registerEvent("inspection_action_not_found", EventFields.Int("tabId"), EventFields.String("actionId", listOf(PREVIOUS_ACTION_ID, NEXT_ACTION_ID)))
+
     }
 
     init {
@@ -298,7 +297,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
       }
 
       val action = ActionManager.getInstance().getAction(actionId) ?: run {
-        fusActionNotFound.log(fusTabId, actionId)
+        InspectionsFUS.actionNotFound(e.project, fusTabId, if (actionId == PREVIOUS_ACTION_ID) InspectionsFUS.InspectionsActions.GotoPreviousError else InspectionsFUS.InspectionsActions.GotoNextError)
         return
       }
 
@@ -331,7 +330,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
     }
 
     private fun wrapDataContext(originalContext: DataContext): DataContext =
-      CustomizedDataContext.create(originalContext) { dataId ->
+      CustomizedDataContext.withProvider(originalContext) { dataId ->
         when {
           INSPECTION_TYPED_ERROR.`is`(dataId) -> item
           else -> null
