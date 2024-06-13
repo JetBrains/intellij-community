@@ -21,9 +21,6 @@ import java.awt.*;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * @author Dennis.Ushakov
- */
 public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
   public static JBRunnerTabsBase create(@Nullable Project project, @NotNull Disposable parentDisposable) {
     return new JBRunnerTabs(project, parentDisposable);
@@ -107,8 +104,9 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
       }
 
       private void updateFont() {
-        JComponent label = getLabelComponent();
+        JComponent label = this.label;
         // can be null at the first updateUI call during init
+        //noinspection ConstantValue
         if (label != null && ExperimentalUI.isNewUI()) {
           label.setFont(JBUI.CurrentTheme.DebuggerTabs.font());
         }

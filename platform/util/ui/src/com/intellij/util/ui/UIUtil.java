@@ -1550,7 +1550,7 @@ public final class UIUtil {
     if (owner == null) {
       return false;
     }
-    if (SwingUtilities.isDescendingFrom(owner, component) || component != null && GraphicsEnvironment.isHeadless()) {
+    if (SwingUtilities.isDescendingFrom(owner, component) || GraphicsEnvironment.isHeadless()) {
       return true;
     }
 
