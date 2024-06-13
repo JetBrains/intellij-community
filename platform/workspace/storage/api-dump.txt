@@ -164,8 +164,6 @@ com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInst
 - a:getOneChildBuilder(com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - a:getParentBuilder(com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - a:replaceChildren(com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.util.List):V
-f:com.intellij.platform.workspace.storage.metadata.utils.ConstructorsGeneratorKt
-- bs:main(java.lang.String[]):V
 com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 - com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 - a:index(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.lang.String,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
