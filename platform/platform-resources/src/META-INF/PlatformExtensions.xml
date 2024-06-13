@@ -179,7 +179,7 @@
                  restartRequired="false"
                  description="New inspection widget with pencils functionality"
                  defaultValue="false"/>
-    <registryKey key="ide.welcom.screen.branch.name"
+    <registryKey key="ide.welcome.screen.branch.name"
                  restartRequired="true"
                  description="New inspection widget with pencils functionality"
                  defaultValue="false"/>
