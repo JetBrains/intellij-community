@@ -20,10 +20,10 @@ public class ComparisonFailureData {
   private static final String ASSERTION_CLASS_NAME = "java.lang.AssertionError";
   private static final String ASSERTION_FAILED_CLASS_NAME = "junit.framework.AssertionFailedError";
 
-  public static final String OPENTEST4J_ASSERTION = "org.opentest4j.AssertionFailedError";
-  public static final String OPENTEST4J_VALUE_WRAPPER = "org.opentest4j.ValueWrapper";
-  public static final String OPENTEST4J_FILE_INFO = "org.opentest4j.FileInfo";
-  public static final Charset OPENTEST4J_FILE_CONTENT_CHARSET = StandardCharsets.UTF_8;
+  private static final String OPENTEST4J_ASSERTION = "org.opentest4j.AssertionFailedError";
+  private static final String OPENTEST4J_VALUE_WRAPPER = "org.opentest4j.ValueWrapper";
+  private static final String OPENTEST4J_FILE_INFO = "org.opentest4j.FileInfo";
+  private static final Charset OPENTEST4J_FILE_CONTENT_CHARSET = StandardCharsets.UTF_8;
 
   private final String myExpected;
   private final String myActual;
@@ -172,30 +172,22 @@ public class ComparisonFailureData {
     attrs.put(expectedOrActualPrefix, text);
   }
 
+  public static boolean isInstance(Class<?> aClass, String className) {
+    if (aClass == null) return false;
+    if (className.equals(aClass.getName())) return true;
+    return isInstance(aClass.getSuperclass(), className);
+  }
+
   public static boolean isAssertionError(Class<?> throwableClass) {
-    if (throwableClass == null) return false;
-    final String throwableClassName = throwableClass.getName();
-    if (throwableClassName.equals(ASSERTION_CLASS_NAME) || 
-        throwableClassName.equals(ASSERTION_FAILED_CLASS_NAME) || 
-        throwableClassName.equals(OPENTEST4J_ASSERTION)) {
-      return true;
-    }
-    return isAssertionError(throwableClass.getSuperclass());
+    return isInstance(throwableClass, ASSERTION_CLASS_NAME) ||
+           isInstance(throwableClass, ASSERTION_FAILED_CLASS_NAME) ||
+           isInstance(throwableClass, OPENTEST4J_ASSERTION);
   }
 
   public static boolean isComparisonFailure(Class<?> aClass) {
-    if (aClass == null) return false;
-    final String throwableClassName = aClass.getName();
-    if (JUNIT_3_COMPARISON_FAILURE.equals(throwableClassName)) {
-      return true;
-    }
-    if (JUNIT_4_COMPARISON_FAILURE.equals(throwableClassName)) {
-      return true;
-    }
-    if (OPENTEST4J_ASSERTION.equals(throwableClassName)) {
-      return true;
-    }
-    return isComparisonFailure(aClass.getSuperclass());
+    return isInstance(aClass, JUNIT_3_COMPARISON_FAILURE) ||
+           isInstance(aClass, JUNIT_4_COMPARISON_FAILURE) ||
+           isInstance(aClass, OPENTEST4J_ASSERTION);
   }
 
   public String getExpectedFilePath() {
@@ -257,7 +249,7 @@ public class ComparisonFailureData {
 
   private static ComparisonFailureData createOpentest4jAssertion(Throwable assertion) {
     try {
-      if (OPENTEST4J_ASSERTION.equals(assertion.getClass().getName())) {
+      if (isInstance(assertion.getClass(), OPENTEST4J_ASSERTION)) {
         Method isExpectedDefinedMethod = assertion.getClass().getDeclaredMethod("isExpectedDefined");
         Method isActualDefinedMethod = assertion.getClass().getDeclaredMethod("isActualDefined");
         boolean isExpectedDefined = ((Boolean)isExpectedDefinedMethod.invoke(assertion)).booleanValue();
@@ -281,10 +273,10 @@ public class ComparisonFailureData {
   private static AssertionValue getOpentest4jAssertionValue(Object valueWrapper)
     throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
-    if (OPENTEST4J_VALUE_WRAPPER.equals(valueWrapper.getClass().getName())) {
+    if (isInstance(valueWrapper.getClass(), OPENTEST4J_VALUE_WRAPPER)) {
       Method valueMethod = valueWrapper.getClass().getDeclaredMethod("getValue");
       Object value = valueMethod.invoke(valueWrapper);
-      if (value != null && OPENTEST4J_FILE_INFO.equals(value.getClass().getName())) {
+      if (value != null && isInstance(value.getClass(), OPENTEST4J_FILE_INFO)) {
         Method contentAsStringMethod = value.getClass().getDeclaredMethod("getContentsAsString", Charset.class);
         String valueString = (String)contentAsStringMethod.invoke(value, OPENTEST4J_FILE_CONTENT_CHARSET);
         Method pathMethod = value.getClass().getDeclaredMethod("getPath");
