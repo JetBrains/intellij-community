@@ -98,6 +98,7 @@ interface NotebookEditorAppearanceFlags {
   fun shouldShowCellLineNumbers(): Boolean
   fun shouldShowExecutionCounts(): Boolean
   fun shouldShowOutExecutionCounts(): Boolean
+  fun shouldShowRunButtonInGutter(): Boolean
 }
 
 object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {

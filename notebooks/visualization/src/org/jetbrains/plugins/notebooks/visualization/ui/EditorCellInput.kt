@@ -23,7 +23,11 @@ class EditorCellInput(
     get() = cell.intervalPointer.get() ?: error("Invalid interval")
 
   private var foldRegion: FoldRegion? = null
-  private val runCellButton = EditorCellRunButton(editor)
+
+  private val runCellButton: EditorCellRunButton? =
+    if (editor.notebookAppearance.shouldShowRunButtonInGutter()) EditorCellRunButton(editor)
+    else null
+
   private val delimiterPanelSize: Int = when (interval.ordinal) {
     0 -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
     else -> editor.notebookAppearance.cellBorderHeight / 2
@@ -114,7 +118,7 @@ class EditorCellInput(
 
   fun dispose() {
     folding.dispose()
-    runCellButton.dispose()
+    runCellButton?.dispose()
     _component.dispose()
   }
 
@@ -151,12 +155,12 @@ class EditorCellInput(
 
   fun showRunButton() {
     try {
-      runCellButton.showRunButton(interval)
+      runCellButton?.showRunButton(interval)
     } catch (e: IllegalStateException) { return }
   }
 
   fun hideRunButton() {
-    runCellButton.hideRunButton()
+    runCellButton?.hideRunButton()
   }
 
   fun addViewComponentListener(listener: EditorCellViewComponentListener) {
