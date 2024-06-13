@@ -2450,6 +2450,16 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/ReferenceToReceiverInsideLambdaWithExplicitThis.kt");
             }
 
+            @TestMetadata("replaceReceiverWithReceiver.kt")
+            public void testReplaceReceiverWithReceiver() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/replaceReceiverWithReceiver.kt");
+            }
+
+            @TestMetadata("replaceReceiverWithReceiver1.kt")
+            public void testReplaceReceiverWithReceiver1() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/replaceReceiverWithReceiver1.kt");
+            }
+
             @TestMetadata("ReturnNotInTheEnd.kt")
             public void testReturnNotInTheEnd() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/ReturnNotInTheEnd.kt");
