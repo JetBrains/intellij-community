@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.TokenType
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -762,12 +763,18 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                                                              propertyValueSeparator.length)
               }
               hadEnter = false
+              val nextSibling = findLeafAtCaret(context, editor, walker)?.nextSibling
               if (insertColon && walker.hasWhitespaceDelimitedCodeBlocks()) {
                 invokeEnterHandler(editor)
                 hadEnter = true
               }
               else {
-                EditorModificationUtilEx.insertStringAtCaret(editor, " ", false, true, 1)
+                if (nextSibling !is PsiWhiteSpace) {
+                  EditorModificationUtilEx.insertStringAtCaret(editor, " ", false, true, 1)
+                }
+                else {
+                  editor.caretModel.moveToOffset(nextSibling.endOffset)
+                }
               }
               if (insertColon || findLeafAtCaret(context, editor, walker)?.text == walker.getPropertyValueSeparator(null)) {
                 stringToInsert = walker.defaultArrayValue + comma
