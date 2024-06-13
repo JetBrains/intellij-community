@@ -28,6 +28,8 @@ public interface ScalaModel extends Serializable {
 
   Set<File> getZincClasspath();
 
+  Set<File> getScalaCompilerPlugins();
+
   ScalaCompileOptions getScalaCompileOptions();
 
   String getSourceCompatibility();

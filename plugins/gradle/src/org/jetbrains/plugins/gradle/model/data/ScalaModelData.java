@@ -18,6 +18,7 @@ public final class ScalaModelData extends AbstractExternalEntityData {
   public static final Key<ScalaModelData> KEY = Key.create(ScalaModelData.class, PROCESSING_AFTER_BUILTIN_SERVICES);
   private Set<File> scalaClasspath;
   private Set<File> zincClasspath;
+  private Set<File> scalaCompilerPlugins;
   private ScalaCompileOptionsData scalaCompileOptions;
   private String sourceCompatibility;
   private String targetCompatibility;
@@ -41,6 +42,14 @@ public final class ScalaModelData extends AbstractExternalEntityData {
 
   public void setZincClasspath(Set<File> zincClasspath) {
     this.zincClasspath = zincClasspath;
+  }
+
+  public Set<File> getScalaCompilerPlugins() {
+    return scalaCompilerPlugins;
+  }
+
+  public void setScalaCompilerPlugins(Set<File> scalaCompilerPlugins) {
+    this.scalaCompilerPlugins = scalaCompilerPlugins;
   }
 
   public ScalaCompileOptionsData getScalaCompileOptions() {
@@ -84,6 +93,7 @@ public final class ScalaModelData extends AbstractExternalEntityData {
       return false;
     }
     if (zincClasspath != null ? !zincClasspath.equals(data.zincClasspath) : data.zincClasspath != null) return false;
+    if (scalaCompilerPlugins != null ? !scalaCompilerPlugins.equals(data.scalaCompilerPlugins) : data.scalaCompilerPlugins != null) return false;
 
     return true;
   }
@@ -93,6 +103,7 @@ public final class ScalaModelData extends AbstractExternalEntityData {
     int result = super.hashCode();
     result = 31 * result + (scalaClasspath != null ? scalaClasspath.hashCode() : 0);
     result = 31 * result + (zincClasspath != null ? zincClasspath.hashCode() : 0);
+    result = 31 * result + (scalaCompilerPlugins != null ? scalaCompilerPlugins.hashCode() : 0);
     result = 31 * result + (scalaCompileOptions != null ? scalaCompileOptions.hashCode() : 0);
     result = 31 * result + (sourceCompatibility != null ? sourceCompatibility.hashCode() : 0);
     result = 31 * result + (targetCompatibility != null ? targetCompatibility.hashCode() : 0);
