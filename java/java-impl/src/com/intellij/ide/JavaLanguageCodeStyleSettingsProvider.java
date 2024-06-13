@@ -634,14 +634,14 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       
         void emptyMethod() {}
       
-        void ComplexMethodWithEmptyCodeBlocks() {
+        void complexMethodWithEmptyCodeBlocks() {
             try {} catch (Exception e) {}
             Runnable r = () -> {};
         }
       
         void oneLineMethod() {int x = 10;}
       
-        void ComplexMethodWithOneLineCodeBlocks() {
+        void complexMethodWithOneLineCodeBlocks() {
             try {int x = 10;} catch (Exception e) {int y = 10;}
       
             Runnable r = () -> {int z = 30;};
