@@ -2555,6 +2555,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/varargrs.kt");
             }
 
+            @TestMetadata("varargrsWithSpread.kt")
+            public void testVarargrsWithSpread() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/varargrsWithSpread.kt");
+            }
+
             @TestMetadata("withImportAlias.kt")
             public void testWithImportAlias() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/withImportAlias.kt");

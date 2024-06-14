@@ -310,6 +310,12 @@ class CodeInliner(
 
         if (parameter.isVarArg) {
             return analyze(call) {
+                val single = expressions.singleOrNull()?.parent as? KtValueArgument
+                if (single?.getSpreadElement() != null) {
+                    val expression = expressions.first()
+                    expression.putCopyableUserData(USER_CODE_KEY, Unit)
+                    return Argument(expression, expression.getKtType(), isNamed = single.isNamed())
+                }
                 val parameterType = parameter.getReturnKtType()
                 val elementType = parameterType.getArrayElementType() ?: return null
                 val expression = psiFactory.buildExpression {
