@@ -311,7 +311,7 @@ class CodeInliner(
         if (parameter.isVarArg) {
             return analyze(call) {
                 val parameterType = parameter.getReturnKtType()
-                val elementType = (parameterType as KtUsualClassType).ownTypeArguments.firstOrNull()?.type ?: expressions.first().getKtType() ?: return null
+                val elementType = parameterType.getArrayElementType() ?: return null
                 val expression = psiFactory.buildExpression {
                     appendFixedText(arrayOfFunctionName(elementType))
                     appendFixedText("(")
