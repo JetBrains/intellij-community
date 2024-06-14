@@ -93,7 +93,7 @@ suspend fun configureGradleScriptsK2(
     project.waitForSmartMode()
 
     writeAction {
-        project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
+        project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
     }
 
     for (script in scripts) {

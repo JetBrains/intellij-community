@@ -13,8 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFileBase
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
+import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
 import org.jetbrains.kotlin.idea.core.script.K2ScriptDependenciesProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptModel
 import org.jetbrains.kotlin.idea.core.script.createScriptModules
@@ -45,7 +45,7 @@ internal class RefreshMainKtsScriptAction : AnAction() {
             project.createScriptModules(setOf(model))
 
             writeAction {
-                project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
+                project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
             }
         }
 

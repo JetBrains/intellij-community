@@ -16,9 +16,6 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.calls
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
@@ -26,6 +23,9 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtDefinitelyNotNullTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
@@ -82,15 +82,15 @@ object K2CreateFunctionFromUsageUtil {
         if (expectedType == null) {
             val parent = this.parent
             expectedType = when {
-                parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL -> builtinTypes.BOOLEAN
-                parent is KtStringTemplateEntryWithExpression -> builtinTypes.STRING
+                parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL -> builtinTypes.boolean
+                parent is KtStringTemplateEntryWithExpression -> builtinTypes.string
                 parent is KtPropertyDelegate -> {
                     val variable = parent.parent as KtProperty
                     val delegateClassName = if (variable.isVar) "ReadWriteProperty" else "ReadOnlyProperty"
                     val ktType = variable.getReturnKtType()
                     val symbol = variable.getSymbol() as? KaCallableSymbol
                     val parameterType = symbol?.receiverType ?: (variable.getSymbol()
-                        .getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.buildSelfClassType() ?: builtinTypes.NULLABLE_ANY
+                        .getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.buildSelfClassType() ?: builtinTypes.nullableAny
                     buildClassType(ClassId.fromString("kotlin/properties/$delegateClassName")) {
                         argument(parameterType)
                         argument(ktType)
@@ -125,7 +125,7 @@ object K2CreateFunctionFromUsageUtil {
             e = parent
         }
         if (e is KtStringTemplateEntry) {
-            return withValidityAssertion { analysisSession.builtinTypes.STRING }
+            return withValidityAssertion { analysisSession.builtinTypes.string }
         }
         return null
     }
@@ -139,7 +139,7 @@ object K2CreateFunctionFromUsageUtil {
             e=e.parent
         }
         if (e is KtFunction && e.bodyBlockExpression == null && e.bodyExpression?.isAncestor(expression) == true) {
-            return e.getExpectedType() ?: withValidityAssertion { analysisSession.builtinTypes.ANY }
+            return e.getExpectedType() ?: withValidityAssertion { analysisSession.builtinTypes.any }
         }
         return null
     }
@@ -241,7 +241,7 @@ object K2CreateFunctionFromUsageUtil {
                 // Some requests from Java side do not have a type. For example, in `var foo = dep.<caret>foo();`, we cannot guess
                 // the type of `foo()`. In this case, the request passes "PsiType:null" whose name is "null" as a text. The analysis
                 // API cannot get a KtType from this weird type. We return `Any?` for this case.
-                builtinTypes.NULLABLE_ANY
+                builtinTypes.nullableAny
             }
         } else {
             null
@@ -289,7 +289,7 @@ object K2CreateFunctionFromUsageUtil {
         }
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun acceptTypeQualifiers(qualifiers: List<KtClassTypeQualifier>, visited: MutableSet<KtType>, predicate: (KtType) -> Boolean) =
         qualifiers.flatMap { it.typeArguments }.map { it.type }.all { accept(it, visited, predicate) }
 

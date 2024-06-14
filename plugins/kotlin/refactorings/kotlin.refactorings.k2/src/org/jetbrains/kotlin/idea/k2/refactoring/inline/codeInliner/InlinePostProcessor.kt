@@ -5,10 +5,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
@@ -141,7 +141,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
 
         result.forEachDescendantOfType<KtCallElement> { callExpression ->
             analyze(callExpression) {
-                val functionCall = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return@forEachDescendantOfType
+                val functionCall = callExpression.resolveCallOld()?.singleFunctionCallOrNull() ?: return@forEachDescendantOfType
 
                 val arguments = functionCall.argumentMapping.entries.toList()
                 val valueParameters = functionCall.partiallyAppliedSymbol.symbol.valueParameters
@@ -224,7 +224,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
 
         analyze(element) {
             for (callExpression in callsToProcess) {
-                val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return
+                val resolvedCall = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
 
                 val argumentsToMakeNamed = callExpression.valueArguments.dropWhile { it.getCopyableUserData(MAKE_ARGUMENT_NAMED_KEY) == null }
                 for (argument in argumentsToMakeNamed) {

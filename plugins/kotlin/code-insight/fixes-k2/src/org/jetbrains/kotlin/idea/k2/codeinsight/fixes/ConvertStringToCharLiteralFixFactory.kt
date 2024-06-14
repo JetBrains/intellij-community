@@ -5,7 +5,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -49,7 +48,7 @@ internal object ConvertStringToCharLiteralFixFactory {
         if (!expectedType.isChar) return emptyList()
 
         val charLiteral = ConvertStringToCharLiteralUtils.prepareCharLiteral(element) ?: return emptyList()
-        if (charLiteral.evaluate(KaConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) == null) return emptyList()
+        if (charLiteral.evaluate() == null) return emptyList()
 
         return listOf(
             ConvertStringToCharLiteralFix(element, charLiteral)
@@ -61,7 +60,7 @@ internal object ConvertStringToCharLiteralFixFactory {
         private val charLiteral: KtExpression, // No need for `SmartPsiElementPointer` since the expression is created by `KtPsiFactory`
     ) : KotlinPsiUpdateModCommandAction.ElementBased<KtStringTemplateExpression, Unit>(element, Unit) {
 
-        override fun getFamilyName() = KotlinBundle.message("convert.string.to.character.literal")
+        override fun getFamilyName(): String = KotlinBundle.message("convert.string.to.character.literal")
 
         override fun invoke(
             actionContext: ActionContext,
