@@ -166,12 +166,14 @@ open class EditorComposite internal constructor(
       // skip initial null value
       var isInitialValue = true
       selectedEditorWithProvider.collect { value ->
-        if (isInitialValue && value == null) {
+        if (isInitialValue) {
           isInitialValue = false
+          if (value == null) {
+            return@collect
+          }
         }
-        else {
-          emit(value)
-        }
+
+        emit(value)
       }
     }.first()
   }

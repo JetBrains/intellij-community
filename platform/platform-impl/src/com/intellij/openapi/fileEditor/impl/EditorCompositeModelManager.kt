@@ -137,7 +137,7 @@ internal class EditorCompositeModelManager(
           }
           catch (e: Throwable) {
             val pluginDescriptor = PluginManager.getPluginByClass(provider.javaClass)
-            LOG.error(PluginException("Cannot create editor by provider ${provider.javaClass.name}", pluginDescriptor?.pluginId))
+            LOG.error(PluginException("Cannot create editor by provider ${provider.javaClass.name}", e, pluginDescriptor?.pluginId))
             null
           }
         }

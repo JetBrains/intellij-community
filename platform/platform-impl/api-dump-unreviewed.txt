@@ -15625,7 +15625,8 @@ c:com.intellij.openapi.fileEditor.TextEditorWithPreview
 - <init>(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,java.lang.String):V
 - <init>(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,java.lang.String,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout):V
 - <init>(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,java.lang.String,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout,Z):V
-- b:<init>(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,java.lang.String,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,java.lang.String,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout,Z,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout):V
+- b:<init>(com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,java.lang.String,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout,Z,com.intellij.openapi.fileEditor.TextEditorWithPreview$Layout,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - addPropertyChangeListener(java.beans.PropertyChangeListener):V
 - canNavigateTo(com.intellij.pom.Navigatable):Z
 - p:createLeftToolbarActionGroup():com.intellij.openapi.actionSystem.ActionGroup
@@ -16401,16 +16402,17 @@ c:com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 - f:updateModifiedProperty():V
 f:com.intellij.openapi.fileEditor.impl.text.TextEditorImpl$Companion
 c:com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+- com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 - com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
 - com.intellij.openapi.fileEditor.impl.text.QuickDefinitionProvider
 - com.intellij.openapi.fileEditor.impl.text.TextBasedFileEditorProvider
-- com.intellij.openapi.project.DumbAware
 - sf:Companion:com.intellij.openapi.fileEditor.impl.text.TextEditorProvider$Companion
 - <init>():V
 - accept(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - f:acceptRequiresReadAction():Z
 - createEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor
+- createFileEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 - p:createWrapperForEditor(com.intellij.openapi.editor.Editor):com.intellij.openapi.fileEditor.impl.text.TextEditorProvider$EditorWrapper
 - sf:getDocuments(com.intellij.openapi.fileEditor.FileEditor):com.intellij.openapi.editor.Document[]
 - getEditorTypeId():java.lang.String

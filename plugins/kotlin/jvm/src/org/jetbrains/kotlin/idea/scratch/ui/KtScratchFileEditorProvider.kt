@@ -8,6 +8,10 @@ import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
@@ -15,7 +19,6 @@ import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
@@ -23,6 +26,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
@@ -32,7 +38,7 @@ import org.jetbrains.kotlin.psi.UserDataProperty
 
 private const val KTS_SCRATCH_EDITOR_PROVIDER: String = "KtsScratchFileEditorProvider"
 
-private class KtScratchFileEditorProvider : FileEditorProvider, DumbAware {
+private class KtScratchFileEditorProvider : FileEditorProvider, AsyncFileEditorProvider {
     override fun getEditorTypeId(): String = KTS_SCRATCH_EDITOR_PROVIDER
 
     override fun accept(project: Project, file: VirtualFile): Boolean {
@@ -49,15 +55,45 @@ private class KtScratchFileEditorProvider : FileEditorProvider, DumbAware {
 
     override fun acceptRequiresReadAction(): Boolean = false
 
+    override suspend fun createFileEditor(
+        project: Project,
+        file: VirtualFile,
+        document: Document?,
+        editorCoroutineScope: CoroutineScope
+    ): FileEditor {
+        val textEditorProvider = TextEditorProvider.getInstance()
+        val scratchFile = readAction { createScratchFile(project, file) }
+            ?: return textEditorProvider.createFileEditor(
+                project = project,
+                file = file,
+                document = document,
+                editorCoroutineScope = editorCoroutineScope,
+            )
+
+        val mainEditor = textEditorProvider.createFileEditor(
+            project = project,
+            file = scratchFile.file,
+            document = readAction { FileDocumentManager.getInstance().getDocument(scratchFile.file) },
+            editorCoroutineScope = editorCoroutineScope,
+        ) as TextEditor
+        val editorFactory = serviceAsync<EditorFactory>()
+        return withContext(Dispatchers.EDT) {
+            val viewer = editorFactory.createViewer(editorFactory.createDocument(""), scratchFile.project, EditorKind.PREVIEW)
+            Disposer.register(mainEditor, Disposable { editorFactory.releaseEditor(viewer) })
+            val previewEditor = textEditorProvider.getTextEditor(viewer)
+            KtScratchFileEditorWithPreview(scratchFile, mainEditor, previewEditor)
+        }
+    }
+
     override fun createEditor(project: Project, file: VirtualFile): FileEditor {
         val scratchFile = createScratchFile(project, file) ?: return TextEditorProvider.getInstance().createEditor(project, file)
-        return KtScratchFileEditorWithPreview.create(scratchFile)
+        return KtScratchFileEditorWithPreview.createKtScratchFileEditor(scratchFile)
     }
 
     override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 }
 
-class KtScratchFileEditorWithPreview private constructor(
+class KtScratchFileEditorWithPreview internal constructor(
     val scratchFile: ScratchFile,
     sourceTextEditor: TextEditor,
     previewTextEditor: TextEditor
@@ -80,8 +116,6 @@ class KtScratchFileEditorWithPreview private constructor(
         layoutProvider = { getLayout()!! }
     )
 
-    private val scratchTopPanel = ScratchTopPanel(scratchFile)
-
     init {
         sourceTextEditor.parentScratchEditorWithPreview = this
         previewTextEditor.parentScratchEditorWithPreview = this
@@ -95,9 +129,7 @@ class KtScratchFileEditorWithPreview private constructor(
         ScratchFileAutoRunner.addListener(scratchFile.project, sourceTextEditor)
     }
 
-    override fun getFile(): VirtualFile {
-        return scratchFile.file
-    }
+    override fun getFile(): VirtualFile = scratchFile.file
 
     override fun previewLineToSourceLines(previewLine: Int): Pair<Int, Int>? {
         val expressionUnderCaret = scratchFile.getExpressionAtLine(previewLine) ?: return null
@@ -158,7 +190,7 @@ class KtScratchFileEditorWithPreview private constructor(
     }
 
     override fun createToolbar(): ActionToolbar {
-        return scratchTopPanel.actionsToolbar
+        return ScratchTopPanel(scratchFile).actionsToolbar
     }
 
     fun clearOutputHandlers() {
@@ -208,7 +240,7 @@ class KtScratchFileEditorWithPreview private constructor(
     }
 
     companion object {
-        fun create(scratchFile: ScratchFile): KtScratchFileEditorWithPreview {
+        internal fun createKtScratchFileEditor(scratchFile: ScratchFile): KtScratchFileEditorWithPreview {
             val textEditorProvider = TextEditorProvider.getInstance()
 
             val mainEditor = textEditorProvider.createEditor(scratchFile.project, scratchFile.file) as TextEditor

@@ -31,6 +31,7 @@ import com.intellij.ui.JBSplitter
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
@@ -38,6 +39,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.Dimension
+import java.awt.EventQueue
 import java.awt.event.AWTEventListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -61,55 +63,69 @@ open class TextEditorWithPreview @JvmOverloads constructor(
   private val name: @Nls String = "TextEditorWithPreview",
   defaultLayout: Layout = Layout.SHOW_EDITOR_AND_PREVIEW,
   private var isVerticalSplit: Boolean = false,
+  private var layout: Layout? = null,
 ) : UserDataHolderBase(), TextEditor {
   @Suppress("LeakingThis")
   private val listenerGenerator = MyListenersMultimap(this)
   private val defaultLayout: Layout = myEditor.file?.getUserData(DEFAULT_LAYOUT_FOR_FILE) ?: defaultLayout
 
-  private var layout: Layout? = null
-
-  private var component: JComponent
-  private var splitter: JBSplitter
-  private var toolbarWrapper: SplitEditorToolbar? = null
+  private val ui = SynchronizedClearableLazy { TextEditorWithPreviewUi(this) }
 
   init {
     myEditor.putUserData(PARENT_SPLIT_EDITOR_KEY, this)
     myPreview.putUserData(PARENT_SPLIT_EDITOR_KEY, this)
-
-    splitter = createSplitter()
-    splitter.splitterProportionKey = splitterProportionKey
-    splitter.firstComponent = myEditor.component
-    splitter.secondComponent = myPreview.component
-    // we're using OnePixelSplitter, but it actually supports wider dividers
-    splitter.dividerWidth = if (isNewUI()) 1 else 2
-    splitter.divider.background = JBColor.lazy(Supplier {
-      EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.PREVIEW_BORDER_COLOR) ?: UIUtil.getPanelBackground()
-    })
-
-    val toolbarWrapper = createSplitEditorToolbar(splitter)
-    this.toolbarWrapper = toolbarWrapper
-
-    var layout = layout
-    if (layout == null) {
-      val lastUsed = PropertiesComponent.getInstance().getValue(layoutPropertyName)
-      layout = Layout.fromId(id = lastUsed, defaultValue = defaultLayout)
-      this.layout = layout
+    EventQueue.invokeLater {
+      ui.value
     }
-    adjustEditorsVisibility(layout)
+  }
 
-    val panel = JBUI.Panels.simplePanel(splitter).addToTop(toolbarWrapper)
-    if (isShowFloatingToolbar) {
-      toolbarWrapper.isVisible = false
-      val layeredPane = MyEditorLayeredComponentWrapper(panel)
-      component = layeredPane
-      val toolbarGroup = toolbarWrapper.rightToolbar.actionGroup
-      val toolbar = LayoutActionsFloatingToolbar(parentComponent = layeredPane, actionGroup = toolbarGroup, parentDisposable = this)
-      layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER as Any)
-      layeredPane.add(toolbar, JLayeredPane.POPUP_LAYER as Any)
-      registerToolbarListeners(panel, toolbar)
+  // we cannot initialize UI it in the constructor, because we call some methods that inheritors override (`createToolbar`)
+  private class TextEditorWithPreviewUi(host: TextEditorWithPreview) {
+    @JvmField val component: JComponent
+    @JvmField var splitter: JBSplitter = host.createSplitter()
+    @JvmField val toolbarWrapper: SplitEditorToolbar
+
+    init {
+      splitter.splitterProportionKey = host.splitterProportionKey
+      splitter.firstComponent = host.myEditor.component
+      splitter.secondComponent = host.myPreview.component
+      // we're using OnePixelSplitter, but it actually supports wider dividers
+      splitter.dividerWidth = if (isNewUI()) 1 else 2
+      splitter.divider.background = JBColor.lazy(Supplier {
+        EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.PREVIEW_BORDER_COLOR) ?: UIUtil.getPanelBackground()
+      })
+
+      val toolbarWrapper = host.createSplitEditorToolbar(splitter)
+      this.toolbarWrapper = toolbarWrapper
+
+      var layout = host.layout
+      if (layout == null) {
+        val lastUsed = PropertiesComponent.getInstance().getValue(host.layoutPropertyName)
+        layout = Layout.fromId(id = lastUsed, defaultValue = host.defaultLayout)
+        host.layout = layout
+      }
+      host.adjustEditorsVisibility(layout)
+
+      val panel = JBUI.Panels.simplePanel(splitter).addToTop(toolbarWrapper)
+      if (host.isShowFloatingToolbar) {
+        toolbarWrapper.isVisible = false
+        val layeredPane = MyEditorLayeredComponentWrapper(panel)
+        component = layeredPane
+        val toolbarGroup = toolbarWrapper.rightToolbar.actionGroup
+        val toolbar = LayoutActionsFloatingToolbar(parentComponent = layeredPane, actionGroup = toolbarGroup, parentDisposable = host)
+        layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER as Any)
+        layeredPane.add(toolbar, JLayeredPane.POPUP_LAYER as Any)
+        host.registerToolbarListeners(panel, toolbar)
+      }
+      else {
+        component = panel
+      }
     }
-    else {
-      component = panel
+
+    fun handleLayoutChange(isVerticalSplit: Boolean) {
+      toolbarWrapper.refresh()
+      splitter.orientation = isVerticalSplit
+      component.repaint()
     }
   }
 
@@ -165,10 +181,10 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
   protected open fun createSplitter(): JBSplitter = OnePixelSplitter()
 
-  override fun getComponent(): JComponent = component
+  override fun getComponent(): JComponent = ui.value.component
 
   protected open val isShowFloatingToolbar: Boolean
-    get() = Registry.`is`("ide.text.editor.with.preview.show.floating.toolbar") && toolbarWrapper!!.isLeftToolbarEmpty
+    get() = Registry.`is`("ide.text.editor.with.preview.show.floating.toolbar") && (ui.valueIfInitialized?.toolbarWrapper?.isLeftToolbarEmpty ?: true)
 
   protected open val isShowActionsInTabs: Boolean
     get() = isNewUI() && getInstance().editorTabPlacement != UISettings.TABS_NONE
@@ -191,7 +207,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
   open fun setVerticalSplit(verticalSplit: Boolean) {
     isVerticalSplit = verticalSplit
-    splitter.orientation = verticalSplit
+    ui.value.splitter.orientation = verticalSplit
   }
 
   private fun createSplitEditorToolbar(targetComponentForActions: JComponent): SplitEditorToolbar {
@@ -219,9 +235,10 @@ open class TextEditorWithPreview @JvmOverloads constructor(
       state.splitLayout?.let { splitLayout ->
         layout = state.splitLayout
         adjustEditorsVisibility(splitLayout)
-        toolbarWrapper?.refresh()
-        if (EDT.isCurrentThreadEdt()) {
-          component.repaint()
+        val ui = ui.valueIfInitialized
+        ui?.toolbarWrapper?.refresh()
+        if (ui != null && EDT.isCurrentThreadEdt()) {
+          ui.component.repaint()
 
           val focusComponent = preferredFocusedComponent
           val focusOwner = IdeFocusManager.findInstance().focusOwner
@@ -418,10 +435,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
     }
 
     this.isVerticalSplit = isVerticalSplit
-
-    toolbarWrapper?.refresh()
-    splitter.orientation = this.isVerticalSplit
-    component.repaint()
+    ui.valueIfInitialized?.handleLayoutChange(isVerticalSplit)
   }
 
   private inner class MyMouseListener(private val toolbar: LayoutActionsFloatingToolbar) : AWTEventListener {
