@@ -111,21 +111,31 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
     if (rebaseFailed) {
       return super.collectNewEntries(entries)
     }
+    if (validateEntries(entries)) {
+      processModel(rebaseTodoModel)
+      return rebaseTodoModel.convertToEntries()
+    } else {
+      myRebaseEditorShown = false
+      rebaseFailed = true
+      LOG.error(
+        "Incorrect git-rebase-todo file was generated",
+        Attachment("generated.txt", entriesGeneratedUsingLog.joinToString("\n")),
+        Attachment("expected.txt", entries.joinToString("\n"))
+      )
+      throw VcsException(GitBundle.message("rebase.using.log.couldnt.start.error"))
+    }
+  }
+
+  private fun validateEntries(entries: List<GitRebaseEntry>): Boolean {
+    if (entriesGeneratedUsingLog.size != entries.size) return false
+
     entriesGeneratedUsingLog.forEachIndexed { i, generatedEntry ->
       val realEntry = entries[i]
       if (!generatedEntry.equalsWithReal(realEntry)) {
-        myRebaseEditorShown = false
-        rebaseFailed = true
-        LOG.error(
-          "Incorrect git-rebase-todo file was generated",
-          Attachment("generated.txt", entriesGeneratedUsingLog.joinToString("\n")),
-          Attachment("expected.txt", entries.joinToString("\n"))
-        )
-        throw VcsException(GitBundle.message("rebase.using.log.couldnt.start.error"))
+        return false
       }
     }
-    processModel(rebaseTodoModel)
-    return rebaseTodoModel.convertToEntries()
+    return true
   }
 }
 
