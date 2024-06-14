@@ -20,6 +20,8 @@ import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 import static com.intellij.psi.impl.source.BasicElementTypes.*;
 
+//suppress to be clear, what type is used
+@SuppressWarnings("UnnecessarilyQualifiedStaticUsage")
 public class BasicOldExpressionParser {
   private enum ExprType {
     CONDITIONAL_OR, CONDITIONAL_AND, OR, XOR, AND, EQUALITY, RELATIONAL, SHIFT, ADDITIVE, MULTIPLICATIVE, UNARY, TYPE
