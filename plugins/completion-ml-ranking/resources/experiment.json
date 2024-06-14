@@ -244,7 +244,7 @@
     {
       "id": "rust",
       "experimentBucketsCount": 16,
-      "includeGroups": [7, 22],
+      "includeGroups": [8, 22],
       "shouldLogElementFeatures": true
     },
     {
