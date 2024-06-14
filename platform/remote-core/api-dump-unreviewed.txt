@@ -443,7 +443,7 @@ e:com.intellij.remote.SshConnectionConfigPatch$ProxyParams$Type
 com.intellij.remote.Tunnelable
 - a:addLocalTunnel(I,I):V
 - a:addRemoteTunnel(I,java.lang.String,I):V
-f:com.intellij.remote.ext.CredentialsCantBeLoaded
+f:com.intellij.remote.ext.CannotLoadCredentialsException
 - java.lang.Exception
 - <init>(java.lang.String):V
 com.intellij.remote.ext.CredentialsCase

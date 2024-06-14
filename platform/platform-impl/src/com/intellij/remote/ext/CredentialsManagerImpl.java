@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote.ext;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,7 @@ final class CredentialsManagerImpl extends CredentialsManager {
         try {
           type.getHandler(credentials).load(element);
         }
-        catch (CredentialsCantBeLoaded e) {
+        catch (CannotLoadCredentialsException e) {
           Logger.getInstance(CredentialsManagerImpl.class).warn(e);
           continue;
         }
