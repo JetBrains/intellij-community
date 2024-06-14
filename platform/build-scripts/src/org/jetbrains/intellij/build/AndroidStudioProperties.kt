@@ -125,7 +125,11 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       layout.withProjectLibrary("assertJ", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
       layout.withProjectLibrary("hamcrest", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
 
-      layout.withProjectLibrary("jetbrains.intellij.deps.eclipse.jgit") // Used by settings repository plugin (b/332587380)
+      // Add libraries needed for compatibility with JetBrains plugins that we do not bundle.
+      // TODO(b/347323348): remove these libraries after updating to IntelliJ 2024.2.
+      layout.withProjectLibrary("jetbrains.intellij.deps.eclipse.jgit") // Settings Sync.
+      layout.withProjectLibrary("cloud-config-client") // Settings Sync.
+      layout.withProjectLibrary("commons-text") // Grazie.
 
       // TODO(b/330399456): error-prone-annotations and grpc are used by ASwB only; these libs should be moved outside the platform.
       layout.withProjectLibrary("error-prone-annotations")
