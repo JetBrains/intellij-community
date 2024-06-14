@@ -4,7 +4,7 @@
     <postStartupActivity implementation="com.intellij.java.compiler.charts.CompilationChartsProjectActivity"/>
     <compileServer.plugin classpath="jps/java-compiler-charts-jps.jar"/>
 
-    <registryKey key="compilation.charts" defaultValue="true"
+    <registryKey key="compilation.charts" defaultValue="false"
                  description="Show compilation charts" restartRequired="true"/>
   </extensions>
 </idea-plugin>
