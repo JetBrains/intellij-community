@@ -360,6 +360,12 @@ abstract class ProductProperties {
   open fun validateLayout(platformLayout: PlatformLayout, context: BuildContext) {}
 
   /**
+   * Copies additional localization resources to the plugin generated localization resources directory.
+   */
+  @ApiStatus.Internal
+  open fun copyAdditionalLocalizationResourcesToPlugin(context: BuildContext, lang: String, targetDir: Path) {}
+
+  /**
    * Build steps which are always skipped for this product.
    * Can be extended via [org.jetbrains.intellij.build.BuildOptions.buildStepsToSkip], but not overridden.
    */

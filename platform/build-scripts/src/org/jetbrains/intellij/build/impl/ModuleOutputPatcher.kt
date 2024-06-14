@@ -65,6 +65,17 @@ class ModuleOutputPatcher {
     }
   }
 
+  /**
+   * Contents of [pathToDirectoryWithPatchedFiles] will be used to patch the module output.
+   */
+  fun patchModuleOutput(moduleName: String, pathToDirectoryWithPatchedFiles: Path) {
+    val list = patchDirs.computeIfAbsent(moduleName) { CopyOnWriteArrayList() }
+    if (list.contains(pathToDirectoryWithPatchedFiles)) {
+      error("Patched directory $pathToDirectoryWithPatchedFiles is already added for module $moduleName")
+    }
+    list.add(pathToDirectoryWithPatchedFiles)
+  }
+
   private fun byteArrayToTraceStringValue(value: ByteArray): String {
     try {
       return StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(value)).toString()

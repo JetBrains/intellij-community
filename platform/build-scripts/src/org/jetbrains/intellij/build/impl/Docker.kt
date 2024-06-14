@@ -3,9 +3,11 @@ package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.io.runProcess
 
-internal object Docker {
+@ApiStatus.Internal
+object Docker {
   val isAvailable: Boolean by lazy {
     try {
       runBlocking {

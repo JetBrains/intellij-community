@@ -58,7 +58,6 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       "intellij.tools.launcherGenerator"
     ).let {
       compilationTasks.compileModules(moduleNames = it)
-      localizeModules(moduleNames = it, context = context)
     }
 
     buildProjectArtifacts(
@@ -379,10 +378,8 @@ internal fun collectModulesToCompileForDistribution(context: BuildContext): Muta
 
 private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
   val compilationTasks = CompilationTasks.create(context)
-  val toLocalize = LinkedHashSet<String>()
   collectModulesToCompileForDistribution(context).let {
     compilationTasks.compileModules(moduleNames = it)
-    toLocalize.addAll(it)
   }
 
   val productLayout = context.productProperties.productLayout
@@ -402,7 +399,6 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       val platform = createPlatformLayout(context = context)
       getModulesForPluginsToPublish(platform = platform, pluginsToPublish = pluginsToPublish).let {
         compilationTasks.compileModules(moduleNames = it)
-        toLocalize.addAll(it)
       }
 
       val builtinModuleData = spanBuilder("build provided module list").useWithScope {
@@ -440,11 +436,6 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
   distState.getModulesForPluginsToPublish().let {
     compilationTasks.compileModules(moduleNames = it)
-    toLocalize.addAll(it)
-  }
-
-  if (toLocalize.isNotEmpty()) {
-    localizeModules(moduleNames = toLocalize, context)
   }
 
   buildProjectArtifacts(platform = distState.platform, enabledPluginModules = enabledPluginModules, compilationTasks = compilationTasks, context = context)
