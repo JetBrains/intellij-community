@@ -408,3 +408,5 @@ f:com.intellij.execution.process.ScriptRunnerUtil
 - s:getProcessOutput(com.intellij.execution.configurations.GeneralCommandLine,com.intellij.openapi.util.Condition,J):java.lang.String
 - s:getProcessOutput(com.intellij.execution.process.ProcessHandler,com.intellij.openapi.util.Condition,J):java.lang.String
 - s:terminateProcessHandler(com.intellij.execution.process.ProcessHandler,J,java.lang.String):V
+com.intellij.execution.process.SelfKiller
+- *:tryDestroyGracefully():Z
