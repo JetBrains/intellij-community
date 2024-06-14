@@ -11,8 +11,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
-import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -152,8 +152,8 @@ class KtVariableDescriptor(
                     // top-level declaration
                     return varFactory.createVariableValue(symbol.variableDescriptor(), null)
                 }
-                val receiverParameter = (expr.resolveCall()?.singleVariableAccessCall()
-                    ?.partiallyAppliedSymbol?.dispatchReceiver as? KtImplicitReceiverValue)?.symbol
+                val receiverParameter = (expr.resolveCallOld()?.singleVariableAccessCall()
+                    ?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
                         as? KaReceiverParameterSymbol
                 val functionLiteral = receiverParameter?.psi as? KtFunctionLiteral
                 val type = receiverParameter?.type

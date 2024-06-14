@@ -9,8 +9,8 @@ import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.idea.devkit.kotlin.util.getContext
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -37,7 +37,7 @@ internal class UsePlatformProcessAwaitExitInspection : LocalInspectionTool() {
           analyze(expression) {
             val callNameExpression = expression.getCallNameExpression()?.text ?: return false
             if (isNotForbidden(callNameExpression)) return false // optimization to avoid resolving
-            val calledSymbol = expression.resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol
+            val calledSymbol = expression.resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol
             if (calledSymbol !is KaNamedSymbol) return false
             val calledMethodName = calledSymbol.name.identifier
             if (isNotForbidden(calledMethodName)) return false

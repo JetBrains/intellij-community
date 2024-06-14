@@ -6,14 +6,15 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -55,7 +56,7 @@ internal class ImportAllMembersIntention :
         val actualReference = element.actualReference
         val target = actualReference?.resolveToSymbol() as? KaNamedClassOrObjectSymbol ?: return null
         val classId = target.classId ?: return null
-        if (target.origin != KtSymbolOrigin.JAVA &&
+        if (target.origin.isJavaSourceOrLibrary() &&
             (target.classKind == KaClassKind.OBJECT ||
                     // One cannot use on-demand import for properties or functions declared inside objects
                     isReferenceToObjectMemberOrUnresolved(element))
@@ -147,7 +148,7 @@ context(KaSession)
 private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression): Boolean {
     val selectorExpression: KtExpression? = qualifiedAccess.getQualifiedExpressionForReceiver()?.selectorExpression
     val referencedSymbol = when (selectorExpression) {
-        is KtCallExpression -> selectorExpression.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
+        is KtCallExpression -> selectorExpression.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
         is KtNameReferenceExpression -> selectorExpression.mainReference.resolveToSymbol()
         else -> return false
     } as? KaSymbolWithKind ?: return true
@@ -173,7 +174,7 @@ private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = importDirecti
         if (getQualifiedExpressionForSelector() != null) return false
         if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
         val referencedSymbol = when (this) {
-            is KtCallExpression -> resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
+            is KtCallExpression -> resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
             is KtNameReferenceExpression -> mainReference.resolveToSymbol()
             else -> return false
         } ?: return false

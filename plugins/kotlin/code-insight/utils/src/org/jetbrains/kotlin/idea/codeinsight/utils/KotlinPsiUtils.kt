@@ -8,8 +8,8 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -355,7 +355,7 @@ fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 context(KaSession)
 fun KtExpression.isSynthesizedFunction(): Boolean {
     val symbol =
-        resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
+        resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
     return symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
@@ -365,7 +365,7 @@ fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
     if (targetFqNames.none()) return false
 
-    val fqName = resolveCall()
+    val fqName = resolveCallOld()
         ?.singleFunctionCallOrNull()
         ?.partiallyAppliedSymbol
         ?.symbol

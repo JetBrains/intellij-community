@@ -18,8 +18,8 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -196,11 +196,11 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
         // element is not an KtReferenceExpression, but KtClass of enum
         // so reference extracted from originalElement
         analyze(referenceExpression) {
-            val symbol = referenceExpression.resolveCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KaNamedSymbol
+            val symbol = referenceExpression.resolveCallOld()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KaNamedSymbol
             val name = symbol?.name?.asString()
             if (name != null && symbol is KaDeclarationSymbol) {
                 val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol
-                val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedClassSymbol }
+                val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
                 val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
                     val navigationElement = superClass.psi?.navigationElement
                     if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled) {

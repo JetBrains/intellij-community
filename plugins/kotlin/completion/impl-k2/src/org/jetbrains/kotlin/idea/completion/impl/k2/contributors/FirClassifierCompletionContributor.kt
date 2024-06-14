@@ -123,7 +123,7 @@ internal class FirAnnotationCompletionContributor(
         }
 
         is KaTypeAliasSymbol -> {
-            val expendedClass = (classifierSymbol.expandedType as? KtNonErrorClassType)?.classSymbol
+            val expendedClass = (classifierSymbol.expandedType as? KtNonErrorClassType)?.symbol
             expendedClass?.let { filterClassifiers(it) } == true
         }
     }

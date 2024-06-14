@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 
@@ -12,7 +12,7 @@ object EmptinessCheckFunctionUtils {
     context(KaSession)
     fun invertFunctionCall(expression: KtExpression): KtExpression? {
         return invertFunctionCall(expression) {
-            val symbol = it.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
+            val symbol = it.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
             symbol?.callableId?.asSingleFqName()
         }
     }

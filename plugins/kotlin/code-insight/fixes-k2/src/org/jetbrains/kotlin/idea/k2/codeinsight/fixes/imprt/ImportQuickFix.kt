@@ -364,7 +364,7 @@ class ImportQuickFix(
             if (this@getImportName !is KaNamedSymbol) error("Unexpected anonymous declaration")
 
             if (this@getImportName is KaCallableSymbol) {
-                val classSymbol = if (receiverType != null) receiverType?.expandedClassSymbol else originalContainingClassForOverride
+                val classSymbol = if (receiverType != null) receiverType?.expandedSymbol else originalContainingClassForOverride
                 classSymbol?.name?.let { append(it.asString()) }
             }
 

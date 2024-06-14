@@ -9,9 +9,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.successfulVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -271,7 +271,7 @@ private fun KtDotQualifiedExpression.isApplicable(parameterName: String): Boolea
         receiver is KtNameReferenceExpression
                 && receiver.getReferencedName() == parameterName
                 && !nameUsed(parameterName, except = receiver)
-    } && callExpression?.resolveCall()?.let {
+    } && callExpression?.resolveCallOld()?.let {
         it.successfulFunctionCallOrNull() == null
                 && it.successfulVariableAccessCall() != null
     } != true
@@ -281,7 +281,7 @@ private fun KtDotQualifiedExpression.isApplicable(parameterName: String): Boolea
 context(KaSession)
 private fun KtDotQualifiedExpression.getHasNullableReceiverExtensionCall(): Boolean {
     val hasNullableType = selectorExpression
-        ?.resolveCall()
+        ?.resolveCallOld()
         ?.successfulFunctionCallOrNull()
         ?.partiallyAppliedSymbol
         ?.extensionReceiver
@@ -329,7 +329,7 @@ private fun KtFunctionLiteral.valueParameterReferences(callExpression: KtCallExp
     return arguments + callExpression.valueArguments.flatMap { valueArgument ->
         valueArgument.collectDescendantsOfType<KtNameReferenceExpression>().filter { referenceExpression ->
             variableSymbolByName[referenceExpression.getReferencedNameAsName()]?.takeIf {
-                it == referenceExpression.resolveCall()?.successfulVariableAccessCall()?.symbol
+                it == referenceExpression.resolveCallOld()?.successfulVariableAccessCall()?.symbol
             } != null
         }
     }

@@ -5,7 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.CallableId
@@ -73,7 +73,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
 
     context(KaSession)
     private fun getReplacementIfApplicable(target: KtExpression): ReplacementInfo? {
-        val resolvedCall = target.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>() ?: return null
+        val resolvedCall = target.resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
         val replaceableCall = resolvedCall.findReplaceableOverride() ?: return null
 
         val replaceWithNegatedIsEmpty = methodToReplaceWith == EmptinessCheckMethod.IS_NOT_EMPTY && !replaceableCall.hasIsNotEmpty
@@ -86,7 +86,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
     }
 
     context(KaSession)
-    private fun KtCallableMemberCall<*, *>.findReplaceableOverride(): ReplaceableCall? {
+    private fun KaCallableMemberCall<*, *>.findReplaceableOverride(): ReplaceableCall? {
         val partiallyAppliedSymbol = this.partiallyAppliedSymbol
         val receiverType = (partiallyAppliedSymbol.extensionReceiver ?: partiallyAppliedSymbol.dispatchReceiver)
             ?.type
@@ -98,9 +98,9 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         }
         val replaceableCall = symbolWithOverrides.firstNotNullOfOrNull { symbol ->
             when (this) {
-                is KtVariableAccessCall -> REPLACEABLE_FIELDS_BY_CALLABLE_ID[symbol.callableId]
+                is KaVariableAccessCall -> REPLACEABLE_FIELDS_BY_CALLABLE_ID[symbol.callableId]
 
-                is KtFunctionCall -> REPLACEABLE_COUNT_CALL.takeIf {
+                is KaFunctionCall -> REPLACEABLE_COUNT_CALL.takeIf {
                     symbol.callableId == REPLACEABLE_COUNT_CALL.callableId && this.partiallyAppliedSymbol.signature.valueParameters.isEmpty()
                 }
             }
@@ -110,7 +110,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
             yield(receiverType)
             yieldAll(receiverType.getAllSuperTypes())
         }
-        if (receiverTypeAndSuperTypes.any { it.expandedClassSymbol?.classId in replaceableCall.supportedReceivers }) {
+        if (receiverTypeAndSuperTypes.any { it.expandedSymbol?.classId in replaceableCall.supportedReceivers }) {
             return replaceableCall
         } else {
             return null

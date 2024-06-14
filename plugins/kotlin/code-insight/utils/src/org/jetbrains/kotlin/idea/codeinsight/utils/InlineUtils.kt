@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -61,7 +61,7 @@ context(KaSession)
 fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionLikeSymbol, KaValueParameterSymbol>? {
     if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
-    val parentCall = parentCallExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
+    val parentCall = parentCallExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return null
     val symbol = parentCall.partiallyAppliedSymbol.symbol
     val valueArgument = parentCallExpression.getContainingValueArgument(argument) ?: return null
     val argumentSymbol = parentCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return null

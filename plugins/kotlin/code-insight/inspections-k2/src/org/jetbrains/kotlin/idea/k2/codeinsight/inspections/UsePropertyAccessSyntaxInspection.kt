@@ -25,15 +25,15 @@ import com.intellij.psi.util.startOffset
 import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
@@ -118,7 +118,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             val problemHighlightType = getProblemHighlightType(symbolPsi)
 
             val receiverType =
-                callableReferenceExpression.resolveCall()
+                callableReferenceExpression.resolveCallOld()
                     ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.dispatchReceiver?.type?.lowerBoundIfFlexible()
                     ?: callableReferenceExpression.getReceiverKtType()?.lowerBoundIfFlexible() ?: return
 
@@ -181,7 +181,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         }
 
         analyze(callExpression) {
-            val resolvedCall = callExpression.resolveCall() ?: return
+            val resolvedCall = callExpression.resolveCallOld() ?: return
             val resolvedFunctionCall = resolvedCall.successfulFunctionCallOrNull() ?: return
 
             val successfulFunctionCallSymbol = resolvedFunctionCall.symbol
@@ -526,12 +526,12 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     }
 
     context(KaSession)
-    private fun getSuccessfullyResolvedCall(callExpression: KtExpression, newExpression: KtExpression): KtCallInfo? {
+    private fun getSuccessfullyResolvedCall(callExpression: KtExpression, newExpression: KtExpression): KaCallInfo? {
         val codeFragment =
             KtPsiFactory(callExpression.project).createExpressionCodeFragment(newExpression.text, callExpression)
         val contentElement = codeFragment.getContentElement() ?: return null
-        val resolvedCall = contentElement.resolveCall() ?: return null
-        if (resolvedCall is KtErrorCallInfo) {
+        val resolvedCall = contentElement.resolveCallOld() ?: return null
+        if (resolvedCall is KaErrorCallInfo) {
             return null
         }
         return resolvedCall
@@ -560,7 +560,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     context(KaSession)
     private fun functionOriginateNotFromJava(allOverriddenSymbols: List<KaCallableSymbol>): Boolean {
         for (overriddenSymbol in allOverriddenSymbols) {
-            if (overriddenSymbol.origin == KtSymbolOrigin.JAVA) {
+            if (overriddenSymbol.origin.isJavaSourceOrLibrary()) {
                 val symbolAnnotations = overriddenSymbol.annotationsList.annotations
                 if (symbolAnnotations.any { it.classId?.asFqNameString()?.equals(JAVA_LANG_OVERRIDE) == true }) {
                     // This is Java's @Override, continue searching for Java method but not overridden

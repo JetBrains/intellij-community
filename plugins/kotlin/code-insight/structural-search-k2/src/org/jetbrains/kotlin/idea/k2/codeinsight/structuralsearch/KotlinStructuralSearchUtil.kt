@@ -5,8 +5,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
@@ -46,7 +46,7 @@ internal val MatchingHandler.withinHierarchyTextFilterSet: Boolean
 
 context(KaSession)
 fun KtExpression.findDispatchReceiver(): KtType? {
-    val symbol = resolveCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return null
+    val symbol = resolveCallOld()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return null
     val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol ?: return null
     val classId = containingClass.classId ?: return null
     val fromKotlinPkg = classId.packageFqName.asString().startsWith("kotlin")

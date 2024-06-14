@@ -21,7 +21,7 @@ interface ContextProvider<E : KtElement, C> {
      * - Everything that came from [org.jetbrains.kotlin.analysis.api.KaSession] like:
      *      - [org.jetbrains.kotlin.analysis.api.symbols.KtSymbol], consider using [org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer] instead.
      *      - [org.jetbrains.kotlin.analysis.api.types.KtType]
-     *      - [org.jetbrains.kotlin.analysis.api.calls.KtCall]
+     *      - [org.jetbrains.kotlin.analysis.api.resolution.KaCall]
      * - The [org.jetbrains.kotlin.analysis.api.KaSession] instance itself.
      * - [com.intellij.psi.PsiElement], consider using [com.intellij.psi.SmartPsiElementPointer] instead.
      *

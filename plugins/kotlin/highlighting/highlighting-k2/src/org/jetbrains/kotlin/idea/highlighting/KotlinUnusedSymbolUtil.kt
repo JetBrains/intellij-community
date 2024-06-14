@@ -17,8 +17,8 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
@@ -429,7 +429,7 @@ object KotlinUnusedSymbolUtil {
           useScope,
           kotlinOptions = searchOptions
       )
-      val originalDeclaration = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedClassSymbol?.psi as? KtNamedDeclaration
+      val originalDeclaration = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol?.psi as? KtNamedDeclaration
       if (symbol !is KaFunctionSymbol || !symbol.annotationsList.hasAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
           if (declaration is KtSecondaryConstructor &&
               declarationContainingClass != null &&
@@ -437,7 +437,7 @@ object KotlinUnusedSymbolUtil {
               (isCheapEnoughToSearchUsages(declarationContainingClass) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES ||
               ReferencesSearch.search(KotlinReferencesSearchParameters(declarationContainingClass, useScope)).any {
                   it.element.getStrictParentOfType<KtTypeAlias>() != null || it.element.getStrictParentOfType<KtCallExpression>()
-                      ?.resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
+                      ?.resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
               })
           ) {
               return true
@@ -643,9 +643,9 @@ object KotlinUnusedSymbolUtil {
 
   context(KaSession)
   private fun KaFunctionSymbol.hasInlineClassParameters(): Boolean {
-      val receiverParameterClassSymbol = receiverType?.expandedClassSymbol as? KaNamedClassOrObjectSymbol
+      val receiverParameterClassSymbol = receiverType?.expandedSymbol as? KaNamedClassOrObjectSymbol
       return receiverParameterClassSymbol?.isInline == true || valueParameters.any {
-          val namedClassOrObjectSymbol = it.returnType.expandedClassSymbol as? KaNamedClassOrObjectSymbol ?: return@any false
+          val namedClassOrObjectSymbol = it.returnType.expandedSymbol as? KaNamedClassOrObjectSymbol ?: return@any false
           namedClassOrObjectSymbol.isInline
       }
   }

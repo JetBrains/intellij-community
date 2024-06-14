@@ -38,10 +38,10 @@ private fun getAssociatedClass(symbol: KtSymbol): KaClassOrObjectSymbol? {
     if (symbol !is KaCallableSymbol) return null
     return when (symbol) {
         is KaFunctionSymbol, is KtPropertySymbol ->
-            if (symbol.isExtension) symbol.receiverType?.expandedClassSymbol else symbol.getContainingSymbol() as? KaClassOrObjectSymbol
+            if (symbol.isExtension) symbol.receiverType?.expandedSymbol else symbol.getContainingSymbol() as? KaClassOrObjectSymbol
         is KtVariableLikeSymbol -> {
             val variableType = symbol.returnType as? KtFunctionalType
-            variableType?.receiverType?.expandedClassSymbol
+            variableType?.receiverType?.expandedSymbol
         }
         else -> null
     }
@@ -74,7 +74,7 @@ private fun getImplicitReceiverInfoOfClass(
 
 context(KaSession)
 private fun getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<KaClassOrObjectSymbol, Name?>? {
-    val associatedClass = receiver.type.expandedClassSymbol ?: return null
+    val associatedClass = receiver.type.expandedSymbol ?: return null
     val associatedTag: Name? = when (val receiverSymbol = receiver.ownerSymbol) {
         is KaClassOrObjectSymbol -> receiverSymbol.name
         is KaAnonymousFunctionSymbol -> {

@@ -420,6 +420,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/objects.kt"));
         }
 
+        @TestMetadata("overriddenReturnTypeNullability.kt")
+        public void testOverriddenReturnTypeNullability() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/overriddenReturnTypeNullability.kt"));
+        }
+
         @TestMetadata("properties.kt")
         public void testProperties() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/properties.kt"));

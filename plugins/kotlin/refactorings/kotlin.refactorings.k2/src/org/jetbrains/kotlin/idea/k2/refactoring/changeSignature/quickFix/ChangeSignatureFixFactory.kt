@@ -6,9 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -145,7 +145,7 @@ object ChangeSignatureFixFactory {
         }
         val callElement = psi.parentOfType<KtCallElement>(input.type == ChangeType.REMOVE) ?: return null
         val functionCall =
-            ((callElement.resolveCall() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtCallableMemberCall<*, *>)
+            ((callElement.resolveCallOld() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)
                 ?: return null
 
         val ktCallableDeclaration = functionCall.partiallyAppliedSymbol.symbol.psi as? KtNamedDeclaration
@@ -372,7 +372,7 @@ object ChangeSignatureFixFactory {
 
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
         val functionLikeSymbol =
-            ((callElement.resolveCall() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtCallableMemberCall<*, *>)?.symbol as? KaFunctionLikeSymbol
+            ((callElement.resolveCallOld() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)?.symbol as? KaFunctionLikeSymbol
                 ?: return emptyList()
 
         val name = getDeclarationName(functionLikeSymbol) ?: return emptyList()

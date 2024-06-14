@@ -37,7 +37,7 @@ class KtClassDef(
         analyze(module) {
             val classLikeSymbol = cls.restoreSymbol() ?: return@analyze false
             classLikeSymbol.superTypes.any { superType ->
-                (superType as? KtNonErrorClassType)?.expandedClassSymbol?.classId?.asFqNameString() == superClassQualifiedName
+                (superType as? KtNonErrorClassType)?.expandedSymbol?.classId?.asFqNameString() == superClassQualifiedName
             }
         }
 
@@ -92,7 +92,7 @@ class KtClassDef(
             val classLikeSymbol = cls.restoreSymbol() ?: return@analyze Stream.empty<TypeConstraints.ClassDef>()
             val list: List<TypeConstraints.ClassDef> = classLikeSymbol.superTypes.asSequence()
                 .filterIsInstance<KtNonErrorClassType>()
-                .mapNotNull { type -> type.expandedClassSymbol }
+                .mapNotNull { type -> type.expandedSymbol }
                 .map { symbol -> symbol.classDef() }
                 .toList()
             @Suppress("SSBasedInspection")

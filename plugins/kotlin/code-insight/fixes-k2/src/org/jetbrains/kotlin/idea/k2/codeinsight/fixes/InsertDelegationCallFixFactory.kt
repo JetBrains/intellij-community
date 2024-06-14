@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -66,7 +67,7 @@ internal object InsertDelegationCallFixFactory {
             val newDelegationCall = element.replaceImplicitDelegationCallWithExplicit(isThis)
 
             analyze(newDelegationCall) {
-                val resolvedCall = newDelegationCall.resolveCall()
+                val resolvedCall = newDelegationCall.resolveCallOld()
 
                 // If the new delegation call does not contain errors and there is no cycle in the delegation call chain,
                 // do not move the caret.

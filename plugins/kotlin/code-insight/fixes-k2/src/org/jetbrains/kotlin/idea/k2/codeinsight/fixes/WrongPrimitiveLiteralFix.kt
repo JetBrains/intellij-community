@@ -35,13 +35,13 @@ data class PrimitiveLiteralData(
 
 context(KaSession)
 fun preparePrimitiveLiteral(element: KtExpression, type: KtType): PrimitiveLiteralData {
-    val typeName = type.expandedClassSymbol?.classId?.asSingleFqName()?.toUnsafe()
+    val typeName = type.expandedSymbol?.classId?.asSingleFqName()?.toUnsafe()
     val expectedTypeIsFloat = type.isFloat
     val expectedTypeIsDouble = type.isDouble
     val expectedTypeIsUnsigned = type.isUNumberType()
 
     val constValue =
-        element.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)?.value
+        element.evaluate()?.value
 
     val fixedExpression = buildString {
         if (expectedTypeIsFloat || expectedTypeIsDouble) {

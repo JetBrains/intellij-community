@@ -28,7 +28,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" />
+    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-platform" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
   </component>
 </module>

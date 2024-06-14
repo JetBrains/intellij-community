@@ -48,7 +48,7 @@ object SuperDeclarationProvider {
                         ?: emptySequence()
 
                     is KaCallableSymbol -> symbol.getDirectlyOverriddenSymbols().asSequence()
-                    is KaClassOrObjectSymbol -> symbol.superTypes.asSequence().mapNotNull { (it as? KtNonErrorClassType)?.classSymbol }
+                    is KaClassOrObjectSymbol -> symbol.superTypes.asSequence().mapNotNull { (it as? KtNonErrorClassType)?.symbol }
                     else -> emptySequence()
                 }
 

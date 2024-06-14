@@ -28,7 +28,7 @@ internal open class ClassifierImportCandidatesProvider(
 
     context(KaSession)
     protected fun KaClassLikeSymbol.getExpandedClassSymbol(): KaClassOrObjectSymbol? = when (this) {
-        is KaTypeAliasSymbol -> expandedType.expandedClassSymbol
+        is KaTypeAliasSymbol -> expandedType.expandedSymbol
         is KaClassOrObjectSymbol -> this
     }
 

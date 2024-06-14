@@ -11,8 +11,8 @@ import org.jetbrains.idea.devkit.util.isInspectionForBlockingContextAvailable
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -106,7 +106,7 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
 
     override fun visitCallExpression(expression: KtCallExpression) {
       analyze(expression) {
-        val functionCall = expression.resolveCall()?.singleFunctionCallOrNull()
+        val functionCall = expression.resolveCallOld()?.singleFunctionCallOrNull()
         val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
 
         if (calledSymbol !is KaNamedSymbol) return
@@ -354,7 +354,7 @@ private fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
     }
 
     val receiverType = function.receiverTypeReference
-    val receiverTypeSymbol = receiverType?.getKtType()?.expandedClassSymbol
+    val receiverTypeSymbol = receiverType?.getKtType()?.expandedSymbol
     return receiverTypeSymbol != null && restrictsSuspension(receiverTypeSymbol)
   }
 }
@@ -362,7 +362,7 @@ private fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
 private fun KaSession.isSuspensionRestricted(lambdaType: KtType): Boolean {
   assert(lambdaType.isSuspendFunctionType)
 
-  val receiverTypeSymbol = (lambdaType as? KtFunctionalType)?.receiverType?.expandedClassSymbol
+  val receiverTypeSymbol = (lambdaType as? KtFunctionalType)?.receiverType?.expandedSymbol
   return receiverTypeSymbol != null && restrictsSuspension(receiverTypeSymbol)
 }
 

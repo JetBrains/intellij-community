@@ -228,7 +228,7 @@ internal class WhenWithOnlyElseInspection
         is KtThisExpression -> true
         is KtObjectLiteralExpression -> true
         else ->
-            evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null
+            evaluate() != null
     }
 
     /**

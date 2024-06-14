@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import org.jetbrains.kotlin.analysis.api.KaSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -261,16 +260,14 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return allowAnalysisFromWriteAction {
             @OptIn(KaAllowAnalysisOnEdt::class)
             allowAnalysisOnEdt {
-                if (ktReference is KaSymbolBasedReference) {
-                    analyze(ktReference.element) {
-                        val symbol = ktReference.resolveToSymbol()
-                        if (symbol is KtSyntheticJavaPropertySymbol) {
-                            val newName = (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.getAdjustedNewName(newElementName)
-                            if (newName == null) {
-                                return (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.renameToOrdinaryMethod(newElementName)
-                            } else {
-                                return super.handleElementRename(ktReference, newName.asString())
-                            }
+                analyze(ktReference.element) {
+                    val symbol = ktReference.resolveToSymbol()
+                    if (symbol is KtSyntheticJavaPropertySymbol) {
+                        val newName = (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.getAdjustedNewName(newElementName)
+                        if (newName == null) {
+                            return (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.renameToOrdinaryMethod(newElementName)
+                        } else {
+                            return super.handleElementRename(ktReference, newName.asString())
                         }
                     }
                 }

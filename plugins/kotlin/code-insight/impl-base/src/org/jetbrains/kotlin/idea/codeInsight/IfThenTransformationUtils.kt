@@ -6,8 +6,8 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatement
@@ -213,7 +213,7 @@ sealed class IfThenTransformationStrategy {
         }
 
         context(KaSession)
-        private fun KtExpression.resolveCallableMemberCall(): KtCallableMemberCall<*, *>? = this.resolveCall()?.successfulCallOrNull()
+        private fun KtExpression.resolveCallableMemberCall(): KaCallableMemberCall<*, *>? = this.resolveCallOld()?.successfulCallOrNull()
 
         context(KaSession)
         private fun KtExpression.collectVariableCalls(): Set<KtCallExpression> = this

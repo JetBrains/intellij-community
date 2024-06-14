@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCompoundArrayAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.calls
+import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -97,14 +97,14 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
         val containerNode = target.parent as? KtContainerNode ?: return null
         val arrayAccessExpression = (containerNode.parent as? KtArrayAccessExpression) ?: return null
 
-        for (call in arrayAccessExpression.resolveCall()?.calls.orEmpty()) {
-            if (call is KtFunctionCall<*>) {
+        for (call in arrayAccessExpression.resolveCallOld()?.calls.orEmpty()) {
+            if (call is KaFunctionCall<*>) {
                 for ((argumentExpression, sig) in call.argumentMapping) {
                     if (argumentExpression == target) {
                         return ExpectedExpressionMatcher(types = listOf(sig.returnType))
                     }
                 }
-            } else if (call is KtCompoundArrayAccessCall) {
+            } else if (call is KaCompoundArrayAccessCall) {
                 val argumentIndex = call.indexArguments.indexOf(target)
                 if (argumentIndex >= 0) {
                     val valueParameter = call.getPartiallyAppliedSymbol.signature.valueParameters.getOrNull(argumentIndex)
@@ -120,8 +120,8 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
 
     context(KaSession)
     private fun getForArgument(callElement: KtCallElement, argument: ValueArgument): ExpectedExpressionMatcher? {
-        for (call in callElement.resolveCall()?.calls.orEmpty()) {
-            if (call is KtFunctionCall<*>) {
+        for (call in callElement.resolveCallOld()?.calls.orEmpty()) {
+            if (call is KaFunctionCall<*>) {
                 for ((argumentExpression, sig) in call.argumentMapping) {
                     if (argumentExpression == argument) {
                         return ExpectedExpressionMatcher(types = listOf(sig.returnType))

@@ -36,8 +36,7 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
@@ -156,7 +155,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KaSession)
     private fun processConstant(expr: KtExpression?): Boolean {
-        val constantValue = expr?.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) ?: return false
+        val constantValue = expr?.evaluate() ?: return false
         if (constantValue is KaConstantValue.KaErrorConstantValue) return false
         val value = constantValue.value
         val ktType = when(value) {
@@ -834,7 +833,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val lambda = parentFunctionLiteral.parent as? KtLambdaExpression ?: return null
         val lambdaArg = lambda.parent as? KtValueArgument ?: return null
         val call = lambdaArg.parent as? KtCallExpression ?: return null
-        val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val functionCall: KaFunctionCall<*> = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
         val target: KaFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return null
         val functionName = target.name.asString()
         if (functionName != LET && functionName != RUN) return null
@@ -1299,7 +1298,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (receiver is KtSimpleNameExpression && receiver.mainReference.resolve() is KtClass) {
                 val arguments = kotlinType.ownTypeArguments
                 if (arguments.size == 1) {
-                    val kType = arguments[0].type?.expandedClassSymbol?.classDef()
+                    val kType = arguments[0].type?.expandedSymbol?.classDef()
                     val kClassPsiType = TypeConstraint.fromDfType(kotlinType.toDfType())
                     if (kType != null && kClassPsiType != TypeConstraints.TOP) {
                         val kClassConstant: DfType = DfTypes.referenceConstant(kType, kClassPsiType)
@@ -1430,7 +1429,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KaSession)
     private fun processCallExpression(expr: KtCallExpression, qualifierOnStack: Boolean = false) {
-        val call: KtSuccessCallInfo? = expr.resolveCall() as? KtSuccessCallInfo
+        val call: KaSuccessCallInfo? = expr.resolveCallOld() as? KaSuccessCallInfo
         val updatedQualifierOnStack = if (!qualifierOnStack && call != null) {
             tryPushImplicitQualifier(call)
         } else {
@@ -1455,7 +1454,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KaSession)
     private fun getLambdaOccurrenceRange(expr: KtCallExpression, parameter: KaValueParameterSymbol): EventOccurrencesRange {
-        val functionCall = expr.resolveCall()?.singleFunctionCallOrNull() ?: return EventOccurrencesRange.UNKNOWN
+        val functionCall = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return EventOccurrencesRange.UNKNOWN
         val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return EventOccurrencesRange.UNKNOWN
         val callEffect = functionSymbol.contractEffects
             .singleOrNull { e -> e is KtContractCallsInPlaceContractEffectDeclaration && e.valueParameterReference.parameterSymbol == parameter }
@@ -1522,7 +1521,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun inlineKnownLambdaCall(expr: KtCallExpression, lambda: KtLambdaExpression): Boolean {
         // TODO: non-qualified methods (run, repeat)
         // TODO: collection methods (forEach, map, etc.)
-        val resolvedCall = expr.resolveCall()?.singleFunctionCallOrNull() ?: return false
+        val resolvedCall = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
         val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return false
         val packageName = symbol.callableId?.packageName ?: return false
         val bodyExpression = lambda.bodyExpression
@@ -1596,7 +1595,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(KaSession)
     private fun inlineKnownMethod(expr: KtCallExpression, argCount: Int, qualifierOnStack: Boolean): Boolean {
         if (argCount == 0 && qualifierOnStack) {
-            val functionCall: KtFunctionCall<*> = expr.resolveCall()?.singleFunctionCallOrNull() ?: return false
+            val functionCall: KaFunctionCall<*> = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
             val target: KaFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return false
             val name = target.name.asString()
             if (name == "isEmpty" || name == "isNotEmpty") {
@@ -1638,8 +1637,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(KaSession)
-    private fun pushCallArguments(expr: KtCallExpression, callInfo: KtSuccessCallInfo?): Int {
-        val functionCall = callInfo?.call as? KtFunctionCall<*> ?: return pushUnresolvedCallArguments(expr)
+    private fun pushCallArguments(expr: KtCallExpression, callInfo: KaSuccessCallInfo?): Int {
+        val functionCall = callInfo?.call as? KaFunctionCall<*> ?: return pushUnresolvedCallArguments(expr)
         var argCount = 0
         var varArgCount = 0
         var varArgType: DfType = DfType.BOTTOM
@@ -1670,9 +1669,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(KaSession)
-    private fun tryPushImplicitQualifier(callInfo: KtSuccessCallInfo): Boolean {
-        val call = callInfo.call as? KtFunctionCall<*>
-        val receiver = (call?.partiallyAppliedSymbol?.dispatchReceiver as? KtImplicitReceiverValue)?.symbol
+    private fun tryPushImplicitQualifier(callInfo: KaSuccessCallInfo): Boolean {
+        val call = callInfo.call as? KaFunctionCall<*>
+        val receiver = (call?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
         if (receiver is KaReceiverParameterSymbol) {
             val psi = receiver.psi
             if (psi is KtFunctionLiteral) {
@@ -1867,7 +1866,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KaSession)
     private fun KtType?.isInlineClass() =
-        ((this as? KtNonErrorClassType)?.expandedClassSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true
+        ((this as? KtNonErrorClassType)?.expandedSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true
 
     context(KaSession)
     private fun balanceType(leftType: KtType?, rightType: KtType?, forceEqualityByContent: Boolean): KtType? = when {

@@ -29,7 +29,7 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
               KotlinBaseHighlightingBundle.message(
                 "0.smart.cast.to.1",
                 receiverName,
-                it.type.asStringForDebugging()
+                it.type.toString()
               )
             )
             if (builder != null) {
@@ -42,7 +42,7 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
               KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
               KotlinBaseHighlightingBundle.message(
                 "smart.cast.to.0",
-                info.smartCastType.asStringForDebugging()
+                info.smartCastType.toString()
               )
             )
             if (builder != null) {

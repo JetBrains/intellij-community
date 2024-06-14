@@ -202,8 +202,8 @@
   </extensions>
 
   <content>
-    <module name="kotlin.base.analysis-api-providers"/>
-    <module name="kotlin.base.fir.analysis-api-providers"/>
+    <module name="kotlin.base.analysis-api-platform"/>
+    <module name="kotlin.base.fir.analysis-api-platform"/>
     <module name="kotlin.base.fir.code-insight"/>
     <module name="kotlin.base.fir.project-structure"/>
 

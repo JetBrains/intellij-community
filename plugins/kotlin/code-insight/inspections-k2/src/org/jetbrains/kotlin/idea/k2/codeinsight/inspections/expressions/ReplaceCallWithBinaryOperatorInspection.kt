@@ -10,10 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -72,7 +72,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         val argument = callExpression.singleArgumentExpression() ?: return null
 
         analyze(element) {
-            val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
+            val resolvedCall = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return null
             if (resolvedCall.symbol.valueParameters.size != 1) return null
             if (resolvedCall.typeArgumentsMapping.isNotEmpty()) return null
             if (!element.isReceiverExpressionWithValue()) return null
@@ -155,7 +155,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         val identifier = calleeExpression.getReferencedNameAsName()
         val dotQualified = calleeExpression.parent.parent as? KtDotQualifiedExpression ?: return null
         fun isOperatorOrCompatible(): Boolean {
-            val functionCall = calleeExpression.resolveCall()?.successfulFunctionCallOrNull()
+            val functionCall = calleeExpression.resolveCallOld()?.successfulFunctionCallOrNull()
             return (functionCall?.symbol as? KaFunctionSymbol)?.isOperator == true
         }
         return when (identifier) {
@@ -208,7 +208,7 @@ private fun KaCallableSymbol.isAnyEquals(): Boolean {
 
 context(KaSession)
 private fun KtExpression.isAnyEquals(): Boolean {
-    val resolvedCall = resolveCall()?.successfulCallOrNull<KtSimpleFunctionCall>() ?: return false
+    val resolvedCall = resolveCallOld()?.successfulCallOrNull<KaSimpleFunctionCall>() ?: return false
     return resolvedCall.symbol.isAnyEquals()
 }
 

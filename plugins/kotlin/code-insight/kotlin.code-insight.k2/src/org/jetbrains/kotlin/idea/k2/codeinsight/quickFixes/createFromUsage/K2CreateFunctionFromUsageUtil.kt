@@ -16,9 +16,9 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.calls
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
@@ -57,24 +57,24 @@ object K2CreateFunctionFromUsageUtil {
 
     context (KaSession)
     internal fun KtType.hasAbstractDeclaration(): Boolean {
-        val classSymbol = expandedClassSymbol ?: return false
+        val classSymbol = expandedSymbol ?: return false
         if (classSymbol.classKind == KaClassKind.INTERFACE) return true
         val declaration = classSymbol.psi as? KtDeclaration ?: return false
         return declaration.modifierList.hasAbstractModifier()
     }
 
     context (KaSession)
-    internal fun KtType.canRefactor(): Boolean = expandedClassSymbol?.psi?.canRefactorElement() == true
+    internal fun KtType.canRefactor(): Boolean = expandedSymbol?.psi?.canRefactorElement() == true
 
     context (KaSession)
     internal fun KtExpression.resolveExpression(): KtSymbol? {
         mainReference?.resolveToSymbol()?.let { return it }
-        val call = resolveCall()?.calls?.singleOrNull() ?: return null
-        return if (call is KtCallableMemberCall<*, *>) call.symbol else null
+        val call = resolveCallOld()?.calls?.singleOrNull() ?: return null
+        return if (call is KaCallableMemberCall<*, *>) call.symbol else null
     }
 
     context (KaSession)
-    internal fun KtType.convertToClass(): KtClass? = expandedClassSymbol?.psi as? KtClass
+    internal fun KtType.convertToClass(): KtClass? = expandedSymbol?.psi as? KtClass
 
     context (KaSession)
     internal fun KtElement.getExpectedKotlinType(): ExpectedKotlinType? {
@@ -151,7 +151,7 @@ object K2CreateFunctionFromUsageUtil {
     private fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
         //is KaCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
         is KaClassLikeSymbol -> symbol // When the receiver is an object
-        else -> getKtType()?.expandedClassSymbol
+        else -> getKtType()?.expandedSymbol
     }?.psi
 
     context (KaSession)
@@ -276,8 +276,11 @@ object K2CreateFunctionFromUsageUtil {
         if (type == null || !visited.add(type)) return true
         if (!predicate.invoke(type)) return false
         return when (type) {
-            is KtClassType -> type.qualifiers.flatMap { it.typeArguments }.map { it.type}.all { accept(it, visited, predicate)}
-                    && (type !is KtFunctionalType || (accept(type.returnType, visited,predicate) && accept(type.receiverType, visited, predicate)))
+            is KtNonErrorClassType -> {
+                acceptTypeQualifiers(type.qualifiers, visited, predicate)
+                        && (type !is KtFunctionalType || (accept(type.returnType, visited,predicate) && accept(type.receiverType, visited, predicate)))
+            }
+            is KtClassErrorType -> acceptTypeQualifiers(type.qualifiers, visited, predicate)
             is KtFlexibleType -> accept(type.lowerBound, visited, predicate) && accept(type.upperBound, visited, predicate)
             is KtCapturedType -> accept(type.projection.type, visited, predicate)
             is KtDefinitelyNotNullType -> accept(type.original, visited, predicate)
@@ -285,6 +288,10 @@ object K2CreateFunctionFromUsageUtil {
             else -> true
         }
     }
+
+    context (KtAnalysisSession)
+    private fun acceptTypeQualifiers(qualifiers: List<KtClassTypeQualifier>, visited: MutableSet<KtType>, predicate: (KtType) -> Boolean) =
+        qualifiers.flatMap { it.typeArguments }.map { it.type }.all { accept(it, visited, predicate) }
 
     /**
      * return [ktType] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null if can't figure out which type to use
@@ -294,7 +301,7 @@ object K2CreateFunctionFromUsageUtil {
         var type = ktType
         do {
             if (allTypesInsideAreAccessible(type, call)) return ktType
-            type = type.expandedClassSymbol?.superTypes?.firstOrNull() ?: return null
+            type = type.expandedSymbol?.superTypes?.firstOrNull() ?: return null
         }
         while(true)
     }

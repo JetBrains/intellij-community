@@ -8,9 +8,8 @@ import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.calls.successfulConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -44,7 +43,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
     private object Resolver : ParcelMigrateToParcelizeResolver<KaSession> {
         context(KaSession)
         private val KtType.classId: ClassId?
-            get() = expandedClassSymbol?.classId
+            get() = expandedSymbol?.classId
 
         context(KaSession)
         override val KtCallableDeclaration.returnTypeClassId: ClassId?
@@ -91,7 +90,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
 
         context(KaSession)
         override fun KtCallExpression.resolveToConstructedClass(): KtClassOrObject? =
-            resolveCall()
+            resolveCallOld()
                 ?.successfulConstructorCallOrNull()
                 ?.symbol
                 ?.containingClassId
@@ -100,7 +99,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
 
         context(KaSession)
         override fun KtExpression.evaluateAsConstantInt(): Int? =
-            (evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION) as? KaConstantValue.KaIntConstantValue)?.value
+            (evaluate() as? KaConstantValue.KaIntConstantValue)?.value
     }
 
     companion object {

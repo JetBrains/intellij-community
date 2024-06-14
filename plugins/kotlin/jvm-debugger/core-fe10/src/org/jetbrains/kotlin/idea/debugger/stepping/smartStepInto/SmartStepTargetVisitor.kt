@@ -13,10 +13,10 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.KtVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.descriptors.Modality
@@ -234,7 +234,7 @@ class SmartStepTargetVisitor(
     ): KotlinLambdaInfo? {
         val callerMethodOrdinal = countExistingMethodCalls(declaration)
         return if (argumentSymbol.returnType.isFunctionalInterfaceType) {
-            val samClassSymbol = argumentSymbol.returnType.expandedClassSymbol ?: return null
+            val samClassSymbol = argumentSymbol.returnType.expandedSymbol ?: return null
             val scope = samClassSymbol.getMemberScope()
             val funMethodSymbol = scope.getCallableSymbols()
                 .filterIsInstance<KaFunctionSymbol>()
@@ -247,7 +247,7 @@ class SmartStepTargetVisitor(
             )
         } else {
             val isNameMangledInBytecode = (argumentSymbol.returnType as? KtFunctionalType)?.parameterTypes
-                ?.any { it.expandedClassSymbol?.isInlineClass() == true } == true
+                ?.any { it.expandedSymbol?.isInlineClass() == true } == true
             KotlinLambdaInfo(
                 methodSymbol, argumentSymbol, callerMethodOrdinal,
                 isNameMangledInBytecode = isNameMangledInBytecode
@@ -319,8 +319,8 @@ class SmartStepTargetVisitor(
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         if (checkLineRangeFits(expression.getLineRange())) {
             analyze(expression) {
-                val resolvedCall = expression.resolveCall() as? KtSuccessCallInfo ?: return
-                val variableAccessCall = resolvedCall.call as? KtVariableAccessCall ?: return
+                val resolvedCall = expression.resolveCallOld() as? KaSuccessCallInfo ?: return
+                val variableAccessCall = resolvedCall.call as? KaVariableAccessCall ?: return
                 val symbol = variableAccessCall.partiallyAppliedSymbol.symbol as? KtPropertySymbol ?: return
                 recordProperty(expression, symbol)
             }
@@ -330,7 +330,7 @@ class SmartStepTargetVisitor(
 
     private fun recordFunctionCall(expression: KtExpression, highlightExpression: KtExpression) {
         analyze(expression) {
-            val resolvedCall = expression.resolveCall()?.successfulFunctionCallOrNull() ?: return
+            val resolvedCall = expression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
             val symbol = resolvedCall.partiallyAppliedSymbol.symbol
             if (symbol.annotations.any { it.classId?.internalName == "kotlin/internal/IntrinsicConstEvaluation" }) {
                 return

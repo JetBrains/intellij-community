@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtDynamicType
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtIntegerLiteralType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -85,10 +84,6 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
                     )
                 }
             )
-        }
-        is KtIntegerLiteralType -> {
-            // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtIntegerLiteralTypeRenderer.AS_ILT_WITH_VALUE
-            text("ILT(${type.value})")
         }
         is KtIntersectionType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtIntersectionTypeRenderer.AS_INTERSECTION

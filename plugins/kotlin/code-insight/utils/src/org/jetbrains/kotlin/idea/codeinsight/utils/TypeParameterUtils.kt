@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -18,7 +18,7 @@ object TypeParameterUtils {
 
     context(KaSession)
     fun collectTypeParametersOnWhichReturnTypeDepends(callElement: KtElement): Set<KaTypeParameterSymbol> {
-        val call = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return emptySet()
+        val call = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return emptySet()
         val callSymbol = call.partiallyAppliedSymbol.symbol
         val typeParameters = callSymbol.typeParameters
         val returnType = callSymbol.returnType

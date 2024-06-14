@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
@@ -25,13 +25,13 @@ internal object AddDataModifierFixFactory {
         val callableSymbol = if (element is KtParameter && element.firstChild is KtDestructuringDeclaration) {
             (element as? KtParameter)?.getParameterSymbol()
         } else {
-            element.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
+            element.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
         }
 
         val type = (callableSymbol?.returnType as? KtNonErrorClassType)?.ownTypeArguments?.firstOrNull()?.type
             ?: callableSymbol?.returnType
 
-        val classSymbol = (type as? KtNonErrorClassType)?.classSymbol as? KaNamedClassOrObjectSymbol
+        val classSymbol = (type as? KaNonErrorClassType)?.symbol as? KaNamedClassOrObjectSymbol
             ?: return@ModCommandBased emptyList()
 
         val modality = classSymbol.modality
