@@ -377,17 +377,15 @@ public final class GenerateMembersUtil {
         }
       }
     }
-    Comparator<PsiAnnotation> comparator = (a1, a2) -> {
-      String q1 = a1.getQualifiedName();
-      String q2 = a2.getQualifiedName();
-      if (q1 == null || q2 == null) return 0;
-      PsiAnnotation oldA1 = oldAnnotations.get(q1);
-      PsiAnnotation oldA2 = oldAnnotations.get(q2);
-      if (oldA1 != null && oldA2 != null) {
-        return oldA1.getTextRange().getStartOffset() - oldA2.getTextRange().getStartOffset();
-      }
-      return 0;
-    };
+    Comparator<PsiAnnotation> comparator = Comparator.comparingInt(a -> {
+      String q = a.getQualifiedName();
+      if (q == null) return -1;
+      PsiAnnotation old = oldAnnotations.get(q);
+      //Probably, it is better to have it at the bottom if it is new.
+      //For example, it preserves the current behavior for @Override
+      if (old == null) return Integer.MAX_VALUE;
+      return old.getTextRange().getStartOffset();
+    });
     PsiModifierList newList2 = ModifierListUtil.createSortedModifierList(newList, comparator, false);
     if (newList2 != null) {
       new CommentTracker().replace(newList, newList2);
