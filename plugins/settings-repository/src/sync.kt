@@ -6,7 +6,7 @@ import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CancellationException

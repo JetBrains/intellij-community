@@ -4,9 +4,7 @@ package com.intellij.openapi.components
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientKind
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * This is primarily intended to be used by the service implementation. When introducing a new service,
@@ -62,12 +60,3 @@ inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getAppl
 inline fun <reified T : Any> services(includeLocal: Boolean): List<T> {
   return ApplicationManager.getApplication().getServices(T::class.java, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
 }
-
-@Internal
-interface ComponentStoreOwner {
-  val componentStore: IComponentStore
-}
-
-@get:Internal
-val ComponentManager.stateStore: IComponentStore
-  get() = if (this is ComponentStoreOwner) this.componentStore else service()

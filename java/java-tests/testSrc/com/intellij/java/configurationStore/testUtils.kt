@@ -2,7 +2,7 @@
 package com.intellij.java.configurationStore
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity

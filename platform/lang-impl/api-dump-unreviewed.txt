@@ -24717,10 +24717,6 @@ c:com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension
 - ps:parseFilePattern(com.intellij.lexer.Lexer):java.lang.String
 - parsePackageSet(com.intellij.lexer.Lexer,java.lang.String,java.lang.String):com.intellij.psi.search.scope.packageSet.PackageSet
 - parseScope(com.intellij.lexer.Lexer):java.lang.String
-f:com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl
-- com.intellij.psi.search.scope.packageSet.PackageSetFactory
-- <init>():V
-- compile(java.lang.String):com.intellij.psi.search.scope.packageSet.PackageSet
 com.intellij.psi.search.scope.packageSet.PackageSetParserExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:parsePackageSet(com.intellij.lexer.Lexer,java.lang.String,java.lang.String):com.intellij.psi.search.scope.packageSet.PackageSet

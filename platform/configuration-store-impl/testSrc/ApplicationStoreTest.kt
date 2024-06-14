@@ -5,6 +5,7 @@ import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.ProjectBundle

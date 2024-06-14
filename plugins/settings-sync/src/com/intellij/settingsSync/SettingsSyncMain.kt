@@ -7,7 +7,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus

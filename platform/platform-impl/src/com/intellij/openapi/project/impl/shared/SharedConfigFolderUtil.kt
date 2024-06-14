@@ -2,7 +2,7 @@
 package com.intellij.openapi.project.impl.shared
 
 import com.intellij.openapi.application.Application
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VfsUtil
@@ -26,7 +26,8 @@ import kotlin.random.Random
 
 interface ConfigFolderChangedListener {
   companion object {
-    val TOPIC = Topic(ConfigFolderChangedListener::class.java.simpleName, ConfigFolderChangedListener::class.java)
+    @JvmField
+    val TOPIC: Topic<ConfigFolderChangedListener> = Topic(ConfigFolderChangedListener::class.java.simpleName, ConfigFolderChangedListener::class.java)
   }
 
   fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>)
@@ -113,9 +114,7 @@ object SharedConfigFolderUtil {
     }
   }
 
-  private fun <T> ioWithRetries(open: () -> T): T {
-    return ioWithRetries(open, { it })
-  }
+  private fun <T> ioWithRetries(open: () -> T): T = ioWithRetries(open) { it }
 
   private fun <T> writeWithRetries(file: Path, vararg options: OpenOption, task: (FileChannel) -> T): T {
     return ioWithRetries(

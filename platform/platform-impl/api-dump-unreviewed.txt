@@ -18080,9 +18080,9 @@ f:com.intellij.openapi.project.impl.UndefinedMacrosConfigurable
 - reset():V
 com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener
 - sf:Companion:com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
 - a:onChange(java.util.Set,java.util.Set):V
 f:com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener$Companion
-- f:getTOPIC():com.intellij.util.messages.Topic
 f:com.intellij.openapi.project.impl.shared.SharedConfigFolderUtil
 - sf:INSTANCE:com.intellij.openapi.project.impl.shared.SharedConfigFolderUtil
 - f:deleteSharedFile(java.nio.file.Path):V

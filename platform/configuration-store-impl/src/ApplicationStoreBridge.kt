@@ -4,7 +4,11 @@ package com.intellij.configurationStore
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ExpandMacroToPathMap
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PathMacroMap
+import com.intellij.openapi.components.StateSplitterEx
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader

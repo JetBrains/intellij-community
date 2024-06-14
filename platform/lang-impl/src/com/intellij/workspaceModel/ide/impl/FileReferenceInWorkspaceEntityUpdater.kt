@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide.impl
 import com.google.common.io.Files
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
