@@ -174,6 +174,9 @@ fun ObjClass<*>.generateExtensionCode(): String? {
 
   return lines {
     if (!openness.extendable) {
+      if (additionalAnnotations.isNotEmpty()) {
+        line(additionalAnnotations)
+      }
       line("$generatedCodeVisibilityModifier fun ${MutableEntityStorage}.modify$name(")
       line("  entity: $name,")
       line("  modification: $name.Builder.() -> Unit,")
