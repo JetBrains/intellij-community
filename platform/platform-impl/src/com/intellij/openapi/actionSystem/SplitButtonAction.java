@@ -52,7 +52,7 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
     SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), SplitButton.class);
 
     Presentation groupPresentation = session.presentation(getDelegate()); // do not remove (RemDev)
-    AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
+    AnAction action = splitButton != null ? splitButton.selectedAction : getMainAction(e);
     if (action != null) {
       Presentation actionPresentation = session.presentation(action);
       presentation.copyFrom(actionPresentation, splitButton);
@@ -64,6 +64,10 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
       e.getPresentation().copyFrom(groupPresentation, splitButton);
     }
     presentation.putClientProperty(FIRST_ACTION, splitButton != null ? null : action);
+  }
+
+  protected @Nullable AnAction getMainAction(@NotNull AnActionEvent e) {
+    return getFirstEnabledAction(e);
   }
 
   @Override
