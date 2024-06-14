@@ -3,6 +3,7 @@ package com.intellij.openapi.project
 
 import com.intellij.ide.IdeBundle
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType
@@ -31,7 +32,10 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
   override fun processTasksWithProgress(suspender: ProgressSuspender?,
                                         visibleIndicator: ProgressIndicator,
                                         parentActivity: StructuredIdeActivity?): SubmissionReceipt? {
-    val childActivity = createChildActivity(parentActivity)
+    if (parentActivity != null) {
+      thisLogger().error("DumbServiceGuiExecutor is supposed to have a plain structure of activities. $parentActivity")
+    }
+    val childActivity = DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.started(project)
     var taskCompletedNormally = false
     return try {
       if (visibleIndicator is ProgressIndicatorEx) DumbServiceAppIconProgress.registerForProgress(project, visibleIndicator)
@@ -43,15 +47,6 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
     finally {
       logProcessFinished(childActivity, if (taskCompletedNormally) IndexingFinishType.FINISHED else IndexingFinishType.TERMINATED)
       DumbModeProgressTitle.getInstance(project).removeDumbModeProgress(visibleIndicator)
-    }
-  }
-
-  private fun createChildActivity(parentActivity: StructuredIdeActivity?): StructuredIdeActivity {
-    return if (parentActivity == null) {
-      DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.started(project)
-    }
-    else {
-      DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.startedWithParent(project, parentActivity)
     }
   }
 

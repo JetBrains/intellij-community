@@ -17887,7 +17887,7 @@ f:com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector
 - removeDumbModeProgress(com.intellij.openapi.progress.ProgressIndicator):V
 f:com.intellij.openapi.project.DumbModeStatisticsCollector
 - sf:DUMB_MODE_ACTIVITY:com.intellij.internal.statistic.IdeActivityDefinition
-- sf:DUMB_MODE_STAGE:com.intellij.internal.statistic.eventLog.events.VarargEventId
+- sf:DUMB_MODE_STAGE_ACTIVITY:com.intellij.internal.statistic.IdeActivityDefinition
 - sf:FINISH_TYPE:com.intellij.internal.statistic.eventLog.events.EnumEventField
 - sf:INSTANCE:com.intellij.openapi.project.DumbModeStatisticsCollector
 - sf:STAGE_CLASS:com.intellij.internal.statistic.eventLog.events.ClassEventField
