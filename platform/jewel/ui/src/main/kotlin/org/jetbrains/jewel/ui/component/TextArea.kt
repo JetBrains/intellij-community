@@ -3,6 +3,7 @@ package org.jetbrains.jewel.ui.component
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -152,7 +153,7 @@ private fun TextAreaDecorationBox(
             if (placeholder != null) {
                 Box(
                     modifier = Modifier.layoutId(PLACEHOLDER_ID),
-                    contentAlignment = Alignment.CenterStart,
+                    contentAlignment = Alignment.TopStart,
                 ) {
                     CompositionLocalProvider(
                         LocalTextStyle provides textStyle.copy(color = placeholderTextColor),
@@ -164,7 +165,7 @@ private fun TextAreaDecorationBox(
 
             Box(
                 modifier = Modifier.layoutId(TEXT_AREA_ID),
-                contentAlignment = Alignment.CenterStart,
+                contentAlignment = Alignment.TopStart,
                 propagateMinConstraints = true,
             ) {
                 innerTextField()
@@ -193,11 +194,18 @@ private fun TextAreaDecorationBox(
             measurables.find { it.layoutId == PLACEHOLDER_ID }
                 ?.measure(placeholderConstraints)
 
-        val width = calculateWidth(textAreaPlaceable, placeholderPlaceable, textAreaConstraints)
-        val height = calculateHeight(textAreaPlaceable, placeholderPlaceable, verticalPadding, textAreaConstraints)
+        val width = calculateWidth(textAreaPlaceable, placeholderPlaceable, incomingConstraints)
+        val height = calculateHeight(textAreaPlaceable, placeholderPlaceable, verticalPadding, incomingConstraints)
 
         layout(width, height) {
-            place(height, textAreaPlaceable, placeholderPlaceable)
+            val startPadding = contentPadding.calculateStartPadding(layoutDirection).roundToPx()
+            val topPadding = contentPadding.calculateTopPadding().roundToPx()
+
+            // Placed top-start
+            textAreaPlaceable.placeRelative(startPadding, topPadding)
+
+            // Placed similar to the input text above
+            placeholderPlaceable?.placeRelative(startPadding, topPadding)
         }
     }
 }
@@ -205,31 +213,19 @@ private fun TextAreaDecorationBox(
 private fun calculateWidth(
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    constraints: Constraints,
+    incomingConstraints: Constraints,
 ): Int =
     maxOf(textFieldPlaceable.width, placeholderPlaceable?.width ?: 0)
-        .coerceAtLeast(constraints.minWidth)
+        .coerceAtLeast(incomingConstraints.minWidth)
 
 private fun calculateHeight(
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
     verticalPadding: Int,
-    constraints: Constraints,
+    incomingConstraints: Constraints,
 ): Int {
     val textAreaHeight = maxOf(textFieldPlaceable.height, placeholderPlaceable?.height ?: 0)
-    return (textAreaHeight + verticalPadding).coerceAtLeast(constraints.minHeight)
-}
-
-private fun Placeable.PlacementScope.place(
-    height: Int,
-    textAreaPlaceable: Placeable,
-    placeholderPlaceable: Placeable?,
-) {
-    // placed center vertically
-    textAreaPlaceable.placeRelative(0, Alignment.CenterVertically.align(textAreaPlaceable.height, height))
-
-    // placed similar to the input text above
-    placeholderPlaceable?.placeRelative(0, Alignment.CenterVertically.align(placeholderPlaceable.height, height))
+    return (textAreaHeight + verticalPadding).coerceAtLeast(incomingConstraints.minHeight)
 }
 
 private const val PLACEHOLDER_ID = "Placeholder"

@@ -2,6 +2,7 @@ package org.jetbrains.jewel.samples.standalone.view.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -40,16 +41,16 @@ fun TextAreas() {
         verticalAlignment = Alignment.Top,
     ) {
         var text1 by remember { mutableStateOf(LOREM_IPSUM) }
-        TextArea(text1, { text1 = it }, modifier = Modifier.weight(1f))
+        TextArea(text1, { text1 = it }, modifier = Modifier.weight(1f).fillMaxHeight())
 
         var text2 by remember { mutableStateOf(LOREM_IPSUM) }
-        TextArea(text2, { text2 = it }, modifier = Modifier.weight(1f), enabled = false)
+        TextArea(text2, { text2 = it }, modifier = Modifier.weight(1f).fillMaxHeight(), enabled = false)
 
         var text3 by remember { mutableStateOf("") }
         TextArea(
             text3,
             { text3 = it },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).fillMaxHeight(),
             outline = Outline.Error,
             placeholder = { Text("Text area with error") },
         )
@@ -58,7 +59,7 @@ fun TextAreas() {
         TextArea(
             text4,
             { text4 = it },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).fillMaxHeight(),
             outline = Outline.Warning,
             placeholder = { Text("Text area with warning") },
         )
