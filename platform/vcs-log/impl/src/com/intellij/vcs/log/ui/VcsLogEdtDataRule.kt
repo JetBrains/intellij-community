@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.EdtDataRule
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.history.FileHistoryUi
 
-internal class VcsEdtDataRule : EdtDataRule {
+internal class VcsLogEdtDataRule : EdtDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val logUi = snapshot[VcsLogDataKeys.VCS_LOG_UI]
     sink[VcsLogInternalDataKeys.FILE_HISTORY_UI] = logUi as? FileHistoryUi

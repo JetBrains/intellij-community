@@ -16,23 +16,19 @@
 package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.ide.impl.dataRules.GetDataRule;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DataSnapshot;
+import com.intellij.openapi.actionSystem.EdtDataRule;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * {@link DiffDataKeys#NAVIGATABLE_ARRAY}
- */
-public class DiffNavigatableArrayRule implements GetDataRule {
+public class DiffEdtDataRule implements EdtDataRule {
   @Override
-  public Object getData(@NotNull DataProvider dataProvider) {
-    final Navigatable element = DiffDataKeys.NAVIGATABLE.getData(dataProvider);
-    if (element == null) {
-      return null;
+  public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
+    Navigatable navigatable = snapshot.get(DiffDataKeys.NAVIGATABLE);
+    if (navigatable != null) {
+      sink.set(DiffDataKeys.NAVIGATABLE_ARRAY, new Navigatable[]{navigatable});
     }
-
-    return new Navigatable[]{element};
   }
 }
 

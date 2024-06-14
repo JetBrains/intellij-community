@@ -365,7 +365,7 @@
 
     <dataValidators implementation="com.intellij.ide.impl.PlatformDataValidators"/>
 
-    <getDataRule key="diff_navigatable_array" implementationClass="com.intellij.diff.actions.impl.DiffNavigatableArrayRule" type="fast"/>
+    <edtDataRule implementation="com.intellij.diff.actions.impl.DiffEdtDataRule"/>
     <actionPromoter implementation="com.intellij.diff.DiffActionPromoter"/>
 
     <projectService serviceInterface="com.intellij.openapi.diff.DirDiffManager"
@@ -1100,9 +1100,8 @@
     <editorNotificationProvider implementation="com.intellij.ide.CommandLineWaitingManager$MyNotification"/>
     <editorNotificationProvider implementation="com.intellij.ide.trustedProjects.impl.UntrustedProjectNotificationProvider"/>
 
-    <edtDataRule implementation="com.intellij.ide.impl.dataRules.BasicEditorDataRule"/>
-    <getDataRule key="fileEditor" implementationClass="com.intellij.ide.impl.dataRules.FileEditorRule" type="fast"/>
-    <getDataRule key="NavigatableArray" implementationClass="com.intellij.ide.impl.dataRules.NavigatableArrayRule" type="fast"/>
+    <edtDataRule implementation="com.intellij.ide.impl.dataRules.BasicEdtDataRule"/>
+    <getDataRule key="NavigatableArray" implementationClass="com.intellij.ide.impl.dataRules.NavigatableArrayRule"/>
     <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
 
     <localInspection shortName="InconsistentLineSeparators" bundle="messages.LangBundle" key="inconsistent.line.separators"

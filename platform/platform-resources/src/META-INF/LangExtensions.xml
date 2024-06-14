@@ -610,7 +610,7 @@
     <getDataRule key="virtualFileArray" implementationClass="com.intellij.ide.impl.dataRules.VirtualFileArrayRule"/>
     <getDataRule key="Navigatable" implementationClass="com.intellij.ide.impl.dataRules.NavigatableRule"/>
     <getDataRule key="usageTarget" implementationClass="com.intellij.ide.impl.dataRules.UsageTargetsRule" injectedContext="true"/>
-    <getDataRule key="UsageInfo.List" implementationClass="com.intellij.ide.impl.dataRules.UsageInfo2ListRule" type="fast"/>
+    <getDataRule key="UsageInfo.List" implementationClass="com.intellij.ide.impl.dataRules.UsageInfo2ListRule"/>
     <getDataRule key="module" implementationClass="com.intellij.ide.impl.dataRules.ModuleRule"/>
     <getDataRule key="symbols" implementationClass="com.intellij.model.psi.impl.TargetSymbolsDataRule" injectedContext="true"/>
     <getDataRule key="search.targets" implementationClass="com.intellij.find.actions.SearchTargetsDataRule"/>

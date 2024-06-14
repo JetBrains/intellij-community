@@ -258,7 +258,8 @@
 
     <getDataRule key="VCS_VIRTUAL_FILES" implementationClass="com.intellij.openapi.vcs.VcsVirtualFilesRule"/>
     <getDataRule key="VCS_REVISION_NUMBERS" implementationClass="com.intellij.openapi.vcs.history.VcsRevisionNumberArrayRule"/>
-    <getDataRule key="vcs.ChangesSelection" implementationClass="com.intellij.openapi.vcs.changes.VcsChangesSelectionRule" type="fast"/>
+    <edtDataRule implementation="com.intellij.openapi.vcs.ui.VcsEdtDataRule"/>
+
     <jbProtocolCommand implementation="com.intellij.openapi.vcs.checkout.JBProtocolCheckoutCommand"/>
     <diff.DiffExtension implementation="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction$MyDiffExtension"/>
 
