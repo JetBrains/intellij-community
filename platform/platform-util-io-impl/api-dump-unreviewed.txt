@@ -1,5 +1,4 @@
 f:com.intellij.execution.process.ProcessServiceImpl
-- com.intellij.execution.process.ProcessService
 - <init>():V
 - getCommand(java.lang.Process):java.util.List
 - hasControllingTerminal(java.lang.Process):Z

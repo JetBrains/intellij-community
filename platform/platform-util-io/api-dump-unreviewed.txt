@@ -381,18 +381,6 @@ c:com.intellij.execution.process.ProcessOutput
 - setCancelled():V
 - setExitCode(I):V
 - setTimeout():V
-com.intellij.execution.process.ProcessService
-- getCommand(java.lang.Process):java.util.List
-- s:getInstance():com.intellij.execution.process.ProcessService
-- a:hasControllingTerminal(java.lang.Process):Z
-- a:isLocalPtyProcess(java.lang.Process):Z
-- a:killWinProcess(I):V
-- a:killWinProcessRecursively(java.lang.Process):V
-- a:sendWinProcessCtrlC(I):Z
-- a:sendWinProcessCtrlC(I,java.io.OutputStream):Z
-- a:sendWinProcessCtrlC(java.lang.Process):Z
-- a:startPtyProcess(java.lang.String[],java.lang.String,java.util.Map,com.intellij.execution.process.LocalPtyOptions,com.intellij.openapi.application.Application,Z,Z,Z):java.lang.Process
-- a:winPtyChildProcessId(java.lang.Process):java.lang.Integer
 com.intellij.execution.process.ProcessTreeKiller
 - a:killProcessTree():Z
 c:com.intellij.execution.process.ProcessWrapper
@@ -450,8 +438,6 @@ f:com.intellij.execution.process.SynchronizedProcessOutput
 - setCancelled():V
 - setExitCode(I):V
 - setTimeout():V
-f:com.intellij.execution.process.WinProcessTerminator
-- sf:terminateWinProcessGracefully(com.intellij.execution.process.KillableProcessHandler,com.intellij.execution.process.ProcessService):Z
 f:com.intellij.execution.process.WinRunnerMediator
 - s:withExternalConsole(com.intellij.execution.configurations.GeneralCommandLine):V
 f:com.intellij.execution.process.impl.ProcessListUtil
