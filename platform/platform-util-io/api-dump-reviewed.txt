@@ -361,6 +361,26 @@ c:com.intellij.execution.process.ProcessNotCreatedException
 - <init>(java.lang.String,com.intellij.execution.configurations.GeneralCommandLine):V
 - <init>(java.lang.String,java.lang.Throwable,com.intellij.execution.configurations.GeneralCommandLine):V
 - getCommandLine():com.intellij.execution.configurations.GeneralCommandLine
+c:com.intellij.execution.process.ProcessOutput
+- <init>():V
+- <init>(I):V
+- <init>(java.lang.String,java.lang.String,I,Z,Z):V
+- appendStderr(java.lang.String):V
+- appendStdout(java.lang.String):V
+- checkSuccess(com.intellij.openapi.diagnostic.Logger):Z
+- getExitCode():I
+- getStderr():java.lang.String
+- getStderrLines():java.util.List
+- getStderrLines(Z):java.util.List
+- getStdout():java.lang.String
+- getStdoutLines():java.util.List
+- getStdoutLines(Z):java.util.List
+- isCancelled():Z
+- isExitCodeSet():Z
+- isTimeout():Z
+- setCancelled():V
+- setExitCode(I):V
+- setTimeout():V
 com.intellij.execution.process.PtyBasedProcess
 - a:hasPty():Z
 - a:setWindowSize(I,I):V
