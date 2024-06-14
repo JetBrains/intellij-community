@@ -15,7 +15,6 @@ data class SshConnectionConfigPatch(
   var serverAliveInterval: Duration?,
   var proxyParams: ProxyParams?,
 ) {
-
   data class ProxyParams(
     var proxyHost: String,
     var proxyPort: Int,
@@ -25,15 +24,10 @@ data class SshConnectionConfigPatch(
     constructor() : this(proxyHost = "", proxyPort = -1, Type.NO_PROXY, authData = null)
 
     enum class Type {
-
       NO_PROXY,
-
       HTTP,
-
       SOCKS,
-
       IDE_WIDE_PROXY
-
     }
 
     data class ProxyAuthData(
@@ -41,21 +35,18 @@ data class SshConnectionConfigPatch(
       var password: String,
       var authType: ProxyAuthType,
     ) {
-
-      constructor() : this("", "", ProxyAuthType.NO_AUTHORIZATION)
+      constructor() : this(username = "", password = "", ProxyAuthType.NO_AUTHORIZATION)
 
       enum class ProxyAuthType {
-
         NO_AUTHORIZATION,
-
         USER_AND_PASSWORD,
-
       }
     }
   }
+
   /**
    * @param hashKnownHosts Indicates that host names and addresses should be hashed while being added to the known hosts file.
-   * @param strictHostKeyChecking How the SSH client should react on a host key which's not mentioned in the known hosts file.
+   * @param strictHostKeyChecking How the SSH client should react to a host key which is absent from the known hosts file.
    */
   data class HostKeyVerifier(
     var hashKnownHosts: Boolean?,

@@ -16,6 +16,7 @@ final class CredentialsManagerImpl extends CredentialsManager {
   }
 
   @Override
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public void loadCredentials(String interpreterPath, @Nullable Element element, RemoteSdkAdditionalData data) {
     for (CredentialsType type : CredentialsType.EP_NAME.getExtensionList()) {
       if (type.hasPrefix(interpreterPath)) {
@@ -34,7 +35,9 @@ final class CredentialsManagerImpl extends CredentialsManager {
 
     UnknownCredentialsHolder credentials = CredentialsType.UNKNOWN.createCredentials();
     credentials.setSdkId(interpreterPath);
-    credentials.load(element);
+    if (element != null) {
+      credentials.load(element);
+    }
     data.setCredentials(CredentialsType.UNKNOWN_CREDENTIALS, credentials);
   }
 }
