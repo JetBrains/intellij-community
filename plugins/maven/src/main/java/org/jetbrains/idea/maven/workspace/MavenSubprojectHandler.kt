@@ -17,7 +17,7 @@ import javax.swing.Icon
 
 internal class MavenSubprojectHandler : SubprojectHandler {
   override fun getSubprojects(workspace: Project): List<Subproject> {
-    return MavenProjectsManager.getInstance(workspace).projects
+    return MavenProjectsManager.getInstance(workspace).rootProjects
       .map { MavenSubproject(it, this) }
   }
 
