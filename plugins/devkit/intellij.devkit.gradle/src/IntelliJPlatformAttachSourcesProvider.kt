@@ -7,13 +7,13 @@ import com.intellij.jarFinder.InternetAttachSourceProvider
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.java.library.getMavenCoordinates
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.findFile
 import com.intellij.psi.PsiFile
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
 import java.io.File
 import java.nio.file.Path
@@ -74,9 +74,8 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       override fun getBusyText() = DevKitGradleBundle.message("attachSources.action.busyText")
 
       override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
-        val externalProjectPath = orderEntries.first().ownerModule.let {
-          ExternalSystemApiUtil.getExternalRootProjectPath(it)
-        } ?: return ActionCallback.REJECTED
+        val externalProjectPath = CachedModuleDataFinder.getGradleModuleData(orderEntries.first().ownerModule)?.directoryToRunTask
+                                  ?: return ActionCallback.REJECTED
 
         val executionResult = ActionCallback()
         val project = psiFile.project
