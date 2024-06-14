@@ -9,7 +9,6 @@ import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.codeInsight.hints.presentation.withTranslated
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorColors
@@ -20,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.withTranslated
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics2D
 import java.awt.Point

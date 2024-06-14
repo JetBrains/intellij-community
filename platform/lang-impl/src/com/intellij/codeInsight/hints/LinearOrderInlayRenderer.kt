@@ -4,11 +4,11 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.hints.InlayHintsUtils.produceUpdatedRootList
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationListener
-import com.intellij.codeInsight.hints.presentation.withTranslated
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.SmartList
+import com.intellij.util.ui.withTranslated
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.*

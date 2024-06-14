@@ -3827,6 +3827,9 @@ f:com.intellij.util.ui.GraphicsUtil
 - s:setupFractionalMetrics(java.awt.Graphics):V
 - s:setupRoundedBorderAntialiasing(java.awt.Graphics):com.intellij.openapi.ui.GraphicsConfig
 - s:stringWidth(java.lang.String,java.awt.Font):I
+f:com.intellij.util.ui.GraphicsUtilKt
+- sf:withTranslated(java.awt.Graphics2D,D,D,kotlin.jvm.functions.Function0):V
+- sf:withTranslated(java.awt.Graphics2D,I,I,kotlin.jvm.functions.Function0):V
 f:com.intellij.util.ui.GridBag
 - java.awt.GridBagConstraints
 - <init>():V
