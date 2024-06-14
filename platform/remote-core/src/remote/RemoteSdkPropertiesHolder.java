@@ -24,8 +24,8 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   private boolean myRunAsRootViaSudo = false;
   private PathMappingSettings myPathMappings = new PathMappingSettings();
 
-  public RemoteSdkPropertiesHolder(String name) {
-    myHelpersDefaultDirName = name;
+  public RemoteSdkPropertiesHolder(String helpersDefaultDirName) {
+    myHelpersDefaultDirName = helpersDefaultDirName;
   }
 
   @Override

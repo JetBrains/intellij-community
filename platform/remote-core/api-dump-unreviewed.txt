@@ -306,9 +306,12 @@ c:com.intellij.remote.RemoteSdkException
 com.intellij.remote.RemoteSdkProperties
 - com.intellij.remote.RemoteSdkPropertiesPaths
 - a:getDefaultHelpersName():java.lang.String
+- s:getFullInterpreterPath(com.intellij.remote.RemoteCredentials,com.intellij.remote.RemoteSdkProperties):java.lang.String
+- s:getInterpreterPathFromFullPath(java.lang.String):java.lang.String
 - a:getPathMappings():com.intellij.util.PathMappingSettings
 - a:getSdkId():java.lang.String
 - a:isHelpersVersionChecked():Z
+- s:isRemoteSdk(java.lang.String):Z
 - a:isRunAsRootViaSudo():Z
 - a:isValid():Z
 - a:setHelpersPath(java.lang.String):V
