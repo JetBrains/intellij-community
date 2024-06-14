@@ -254,8 +254,8 @@ internal class MavenShadeFacetRemapPostTaskConfigurator : MavenAfterImportConfig
 
     uberJarFile.parentFile.mkdirs()
 
-    // TODO: module dependencies
-    val dependencyJarPaths = mavenProject.dependencies.map { it.path }.filter { File(it).exists() }
+    val mavenProjects = shadingData.dependentMavenProjects + mavenProject
+    val dependencyJarPaths = mavenProjects.flatMap { it.dependencies }.map { it.path }.filter { File(it).exists() }
 
     val relocationMap = shadingData.relocationMap
     val remapper = object : Remapper() {
@@ -277,9 +277,6 @@ internal class MavenShadeFacetRemapPostTaskConfigurator : MavenAfterImportConfig
           jarFile.entries().asSequence().forEach jarFileEntry@{ entry ->
             val inputStream = jarFile.getInputStream(entry)
             val entryName = entry.name
-
-            // only remap what is configured
-            if (!relocationMap.keys.any { entryName.startsWith(it) }) return@jarFileEntry
 
             // only add each entry once
             if (!addedEntries.add(entryName)) return@jarFileEntry
