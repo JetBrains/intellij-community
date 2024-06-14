@@ -3,7 +3,6 @@ package com.intellij.remote;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +38,6 @@ public interface RemoteCredentials {
     return false;
   }
 
-  @ApiStatus.Experimental
   default @Nullable SshConnectionConfigPatch getConnectionConfigPatch() {
     return null;
   }

@@ -124,7 +124,7 @@ a:com.intellij.remote.CredentialsType
 com.intellij.remote.MutableRemoteCredentials
 - com.intellij.remote.RemoteCredentials
 - a:setAuthType(com.intellij.remote.AuthType):V
-- *a:setConnectionConfigPatch(com.intellij.remote.SshConnectionConfigPatch):V
+- a:setConnectionConfigPatch(com.intellij.remote.SshConnectionConfigPatch):V
 - a:setHost(java.lang.String):V
 - a:setLiteralPort(java.lang.String):V
 - a:setOpenSshConfigUsageForced(Z):V
@@ -172,7 +172,7 @@ c:com.intellij.remote.RemoteCredentialException
 - <init>(java.lang.String):V
 com.intellij.remote.RemoteCredentials
 - a:getAuthType():com.intellij.remote.AuthType
-- *:getConnectionConfigPatch():com.intellij.remote.SshConnectionConfigPatch
+- getConnectionConfigPatch():com.intellij.remote.SshConnectionConfigPatch
 - a:getHost():java.lang.String
 - a:getLiteralPort():java.lang.String
 - a:getPassphrase():java.lang.String
@@ -350,7 +350,7 @@ a:com.intellij.remote.RemoteSshProcess
 - com.intellij.execution.process.SelfKiller
 - com.intellij.remote.Tunnelable
 - <init>():V
-*f:com.intellij.remote.SshConnectionConfigPatch
+f:com.intellij.remote.SshConnectionConfigPatch
 - <init>():V
 - <init>(com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier,java.time.Duration,com.intellij.remote.SshConnectionConfigPatch$ProxyParams):V
 - f:component1():com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier
@@ -367,7 +367,7 @@ a:com.intellij.remote.RemoteSshProcess
 - f:setHostKeyVerifier(com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier):V
 - f:setProxyParams(com.intellij.remote.SshConnectionConfigPatch$ProxyParams):V
 - f:setServerAliveInterval(java.time.Duration):V
-*f:com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier
+f:com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier
 - <init>():V
 - <init>(java.lang.Boolean,com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier$StrictHostKeyChecking):V
 - f:component1():java.lang.Boolean
@@ -380,7 +380,7 @@ a:com.intellij.remote.RemoteSshProcess
 - hashCode():I
 - f:setHashKnownHosts(java.lang.Boolean):V
 - f:setStrictHostKeyChecking(com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier$StrictHostKeyChecking):V
-*e:com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier$StrictHostKeyChecking
+e:com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier$StrictHostKeyChecking
 - java.lang.Enum
 - sf:ACCEPT_NEW:com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier$StrictHostKeyChecking
 - sf:ASK:com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier$StrictHostKeyChecking
@@ -389,7 +389,7 @@ a:com.intellij.remote.RemoteSshProcess
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier$StrictHostKeyChecking
 - s:values():com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier$StrictHostKeyChecking[]
-*f:com.intellij.remote.SshConnectionConfigPatch$ProxyParams
+f:com.intellij.remote.SshConnectionConfigPatch$ProxyParams
 - <init>():V
 - <init>(java.lang.String,I,com.intellij.remote.SshConnectionConfigPatch$ProxyParams$Type,com.intellij.remote.SshConnectionConfigPatch$ProxyParams$ProxyAuthData):V
 - f:component1():java.lang.String
@@ -408,7 +408,7 @@ a:com.intellij.remote.RemoteSshProcess
 - f:setProxyHost(java.lang.String):V
 - f:setProxyPort(I):V
 - f:setProxyType(com.intellij.remote.SshConnectionConfigPatch$ProxyParams$Type):V
-*f:com.intellij.remote.SshConnectionConfigPatch$ProxyParams$ProxyAuthData
+f:com.intellij.remote.SshConnectionConfigPatch$ProxyParams$ProxyAuthData
 - <init>():V
 - <init>(java.lang.String,java.lang.String,com.intellij.remote.SshConnectionConfigPatch$ProxyParams$ProxyAuthData$ProxyAuthType):V
 - f:component1():java.lang.String
@@ -424,14 +424,14 @@ a:com.intellij.remote.RemoteSshProcess
 - f:setAuthType(com.intellij.remote.SshConnectionConfigPatch$ProxyParams$ProxyAuthData$ProxyAuthType):V
 - f:setPassword(java.lang.String):V
 - f:setUsername(java.lang.String):V
-*e:com.intellij.remote.SshConnectionConfigPatch$ProxyParams$ProxyAuthData$ProxyAuthType
+e:com.intellij.remote.SshConnectionConfigPatch$ProxyParams$ProxyAuthData$ProxyAuthType
 - java.lang.Enum
 - sf:NO_AUTHORIZATION:com.intellij.remote.SshConnectionConfigPatch$ProxyParams$ProxyAuthData$ProxyAuthType
 - sf:USER_AND_PASSWORD:com.intellij.remote.SshConnectionConfigPatch$ProxyParams$ProxyAuthData$ProxyAuthType
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.remote.SshConnectionConfigPatch$ProxyParams$ProxyAuthData$ProxyAuthType
 - s:values():com.intellij.remote.SshConnectionConfigPatch$ProxyParams$ProxyAuthData$ProxyAuthType[]
-*e:com.intellij.remote.SshConnectionConfigPatch$ProxyParams$Type
+e:com.intellij.remote.SshConnectionConfigPatch$ProxyParams$Type
 - java.lang.Enum
 - sf:HTTP:com.intellij.remote.SshConnectionConfigPatch$ProxyParams$Type
 - sf:IDE_WIDE_PROXY:com.intellij.remote.SshConnectionConfigPatch$ProxyParams$Type

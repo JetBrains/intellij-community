@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote
 
-import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
 /**
@@ -11,7 +10,6 @@ import java.time.Duration
  * @param serverAliveInterval How often to send keep-alive messages in OpenSSH format. Overrides `ServerAliveInterval` section of
  *  OpenSSH configs. If the duration is zero or negative, keep-alive messages are forcibly disabled.
  */
-@ApiStatus.Experimental
 data class SshConnectionConfigPatch(
   var hostKeyVerifier: HostKeyVerifier?,
   var serverAliveInterval: Duration?,
@@ -65,7 +63,6 @@ data class SshConnectionConfigPatch(
   ) {
     constructor() : this(hashKnownHosts = null, strictHostKeyChecking = null)
 
-    @ApiStatus.Experimental
     enum class StrictHostKeyChecking {
       /** Never automatically add host keys to the known hosts file. */
       YES,
