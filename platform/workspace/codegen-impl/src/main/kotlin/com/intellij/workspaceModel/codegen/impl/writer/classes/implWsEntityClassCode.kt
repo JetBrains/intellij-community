@@ -21,6 +21,7 @@ fun ObjClass<*>.implWsEntityCode(): String {
 package ${module.implPackage}    
 
 ${implWsEntityAnnotations}
+@OptIn($WorkspaceEntityInternalApi::class)
 internal $inheritanceModifier class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
     ${
     """

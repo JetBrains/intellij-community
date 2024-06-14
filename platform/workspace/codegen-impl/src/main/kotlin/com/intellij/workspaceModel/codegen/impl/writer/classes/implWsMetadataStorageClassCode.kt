@@ -14,6 +14,7 @@ internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<Ob
                                        abstractTypes: List<ValueType.AbstractClass<*>>): String = lines {
   line("package ${module.implPackage}")
   line()
+  line("@OptIn($WorkspaceEntityInternalApi::class)")
   section("internal object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.base}()") {
     val builtTypes: MutableList<String> = arrayListOf()
     val builtPrimitiveTypes = linkedSetOf<BuiltPrimitiveType>()
@@ -64,6 +65,7 @@ internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<Ob
 internal fun CompiledObjModule.implWsMetadataStorageBridgeCode(metadataStorageImpl: QualifiedName): String = lines {
   line("package ${this@implWsMetadataStorageBridgeCode.implPackage}")
   line()
+  line("@OptIn($WorkspaceEntityInternalApi::class)")
   line("internal object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.bridge}($metadataStorageImpl)")
 }
 
