@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.importing
+package org.jetbrains.plugins.gradle.quarantine.importing
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY
 import org.assertj.core.api.BDDAssertions.then
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.plugins.gradle.GradleManager
+import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants

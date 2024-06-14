@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.execution
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.quarantine.execution
 
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.gradle.execution.GradleRunAnythingProviderTestCase
+import org.jetbrains.plugins.gradle.execution.assertCollection
+import org.jetbrains.plugins.gradle.execution.not
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject

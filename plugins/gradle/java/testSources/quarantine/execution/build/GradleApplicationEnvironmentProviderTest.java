@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.execution.build;
+package org.jetbrains.plugins.gradle.quarantine.execution.build;
 
-import com.intellij.execution.*;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -9,6 +11,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProviderTestCase;
 import org.junit.Test;
 
 /**

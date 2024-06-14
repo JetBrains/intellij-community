@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.execution.test.events
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.quarantine.execution.test.events
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.PathManager
@@ -9,7 +9,10 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.*
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatJunit5IsSupported
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.params.ParameterizedTest
