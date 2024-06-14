@@ -44,36 +44,41 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     if (!Registry.`is`("maven.shade.plugin.create.uber.jar.dependency")) return
 
+    val mavenProjectToModules = context.mavenProjectsWithModules.map { it.mavenProject to it.modules }.toMap()
+
     // find all poms with maven-shade-plugin that use class relocation
-    val shadeProjectsWithModulesToRelocations = context.mavenProjectsWithModules.mapNotNull { p ->
-      val relocationMap = p.mavenProject.getRelocationMap()
-      if (relocationMap.isNotEmpty()) p to relocationMap else null
+    val shadedProjectsToRelocations = context.mavenProjectsWithModules.mapNotNull { p ->
+      val mavenProject = p.mavenProject
+      val relocationMap = mavenProject.getRelocationMap()
+      if (relocationMap.isNotEmpty()) mavenProject to relocationMap else null
     }.toMap()
 
-    val shadeProjectsWithModules = shadeProjectsWithModulesToRelocations.keys
+    val shadedProjects = shadedProjectsToRelocations.keys
 
-    if (shadeProjectsWithModules.isEmpty()) return
+    if (shadedProjects.isEmpty()) return
 
     val shadedMavenProjectsToBuildUberJar = mutableMapOf<MavenProject, MavenProjectShadingData>()
 
-    val shadeModuleIdToMavenProject = HashMap<ModuleId, MavenProject>()
-    for (shadeProjectWithModules in shadeProjectsWithModules) {
-      for (module in shadeProjectWithModules.modules) {
-        shadeModuleIdToMavenProject[module.module.symbolicId] = shadeProjectWithModules.mavenProject
+    val shadedModuleIdToMavenProject = HashMap<ModuleId, MavenProject>()
+    for (shadedProject in shadedProjects) {
+      for (module in mavenProjectToModules[shadedProject]!!) {
+        shadedModuleIdToMavenProject[module.module.symbolicId] = shadedProject
       }
     }
-    val shadeModuleIds = shadeModuleIdToMavenProject.keys
+    val shadeModuleIds = shadedModuleIdToMavenProject.keys
 
     // process dependent modules
     for (module in context.storage.entities(ModuleEntity::class.java)) {
       for (dependency in module.dependencies.filterIsInstance<ModuleDependency>()) {
         val dependencyModuleId = dependency.module
         if (shadeModuleIds.contains(dependencyModuleId)) {
-          val mavenProject = shadeModuleIdToMavenProject[dependencyModuleId]!!
+          val mavenProject = shadedModuleIdToMavenProject[dependencyModuleId]!!
           val uberJarPath = getUberJarPath(mavenProject)
           addJarDependency(context.storage, context.project, module, mavenProject.mavenId, uberJarPath)
-          val shadeProjectsWithModule = shadeProjectsWithModules.first { it.mavenProject == mavenProject }
-          val relocationMap = shadeProjectsWithModulesToRelocations[shadeProjectsWithModule]!!
+
+          if (shadedMavenProjectsToBuildUberJar.contains(mavenProject)) continue
+
+          val relocationMap = shadedProjectsToRelocations[mavenProject]!!
           shadedMavenProjectsToBuildUberJar[mavenProject] = MavenProjectShadingData(relocationMap, uberJarPath)
         }
       }
