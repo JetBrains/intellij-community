@@ -19,7 +19,16 @@ import java.util.function.Function
 
 object CoroutineBreakpointFacility {
     fun installResumeBreakpointInCurrentMethod(suspendContext: SuspendContextImpl): Boolean {
-        val resumeLocation = suspendContext.location ?: return false
+        val currentLocation = suspendContext.location ?: return false
+        val methodLineLocations = currentLocation.method().allLineLocations()
+        // In case of stepping over the last closing bracket -> step out.
+        // For a suspend block, the location of the closing bracket is previous to the last
+        // (the last location is the resume location and corresponds to the first line of the function).
+        val resumeLocation = if (methodLineLocations.size > 2 && methodLineLocations[methodLineLocations.size - 2] == currentLocation) {
+            StackFrameInterceptor.instance?.callerLocation(suspendContext)
+        } else {
+            currentLocation
+        } ?: return false
         val nextLocationAfterResumeIndex = getLocationOfNextInstructionAfterResume(resumeLocation)
         return installCoroutineResumedBreakpoint(suspendContext, resumeLocation, nextLocationAfterResumeIndex)
     }

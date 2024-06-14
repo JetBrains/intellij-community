@@ -56,6 +56,25 @@ public final class CoroutinesDebugHelper {
     return getCoroutineOwner(continuation, false);
   }
 
+  public static Object getCallerFrame(Object continuation) throws ReflectiveOperationException {
+    // This method extracts the caller frame of the given continuation.
+    Class<?> coroutineStackFrame = Class.forName("kotlin.coroutines.jvm.internal.CoroutineStackFrame", false, continuation.getClass().getClassLoader());
+    Method getCallerFrame = coroutineStackFrame.getDeclaredMethod("getCallerFrame");
+    getCallerFrame.setAccessible(true);
+    Object callerFrame = getCallerFrame.invoke(continuation);
+    // In case the caller frame is the root CoroutineOwner completion added by the debug agent -> return the current continuation
+    if (callerFrame == null || callerFrame.getClass().getSimpleName().contains(COROUTINE_OWNER_CLASS)) {
+      return continuation;
+    }
+    // In case the caller frame is an instance of ScopeCoroutine, then extract the uCont that is wrapped by the ScopeCoroutine class.
+    // ScopeCoroutine is used to wrap the current continuation and pass it into withContext/coroutineScope/flow.. invocation
+    Class<?> scopeCoroutine = Class.forName("kotlinx.coroutines.internal.ScopeCoroutine", false, continuation.getClass().getClassLoader());
+    if (scopeCoroutine.isInstance(callerFrame)) {
+      return getCallerFrame.invoke(callerFrame);
+    }
+    return callerFrame;
+  }
+
   private static Object getField(Object object, String fieldName) throws ReflectiveOperationException {
     Field field = object.getClass().getField(fieldName);
     field.setAccessible(true);
