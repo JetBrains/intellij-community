@@ -410,22 +410,6 @@ f:com.intellij.execution.process.ScriptRunnerUtil
 - s:terminateProcessHandler(com.intellij.execution.process.ProcessHandler,J,java.lang.String):V
 com.intellij.execution.process.SelfKiller
 - *:tryDestroyGracefully():Z
-f:com.intellij.execution.process.SynchronizedProcessOutput
-- com.intellij.execution.process.ProcessOutput
-- <init>():V
-- appendStderr(java.lang.String):V
-- appendStdout(java.lang.String):V
-- checkSuccess(com.intellij.openapi.diagnostic.Logger):Z
-- getExitCode():I
-- getStderr():java.lang.String
-- getStdout():java.lang.String
-- isCancelled():Z
-- isExitCodeSet():Z
-- isTimeout():Z
-- f:onFinished():java.util.concurrent.CompletionStage
-- setCancelled():V
-- setExitCode(I):V
-- setTimeout():V
 f:com.intellij.execution.process.WinRunnerMediator
 - s:withExternalConsole(com.intellij.execution.configurations.GeneralCommandLine):V
 f:com.intellij.execution.process.impl.ProcessListUtil
