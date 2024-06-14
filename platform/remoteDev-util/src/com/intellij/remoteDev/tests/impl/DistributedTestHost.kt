@@ -62,7 +62,8 @@ import kotlin.time.Duration.Companion.seconds
 open class DistributedTestHost(coroutineScope: CoroutineScope) {
   companion object {
     // it is easier to sort out logs from just testFramework
-    private val LOG = Logger.getInstance(RdctTestFrameworkLoggerCategory.category + "Host")
+    private val LOG
+      get() = Logger.getInstance(RdctTestFrameworkLoggerCategory.category + "Host")
 
     fun getDistributedTestPort(): Int? =
       System.getProperty(AgentConstants.protocolPortPropertyName)?.toIntOrNull()
@@ -236,19 +237,28 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        suspend fun leaveAllModals() {
+        suspend fun leaveAllModals(throwErrorIfModal: Boolean) {
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
+            repeat(10) {
+              if (ModalityState.current() == ModalityState.nonModal()) {
+                return@withContext
+              }
+              delay(1.seconds)
+            }
+            if (throwErrorIfModal) {
+              LOG.error("Unexpected modality: " + ModalityState.current())
+            }
             LaterInvocator.forceLeaveAllModals()
             IdeEventQueue.getInstance().flushQueue()
           }
         }
 
-        session.forceLeaveAllModals.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
-          leaveAllModals()
+        session.forceLeaveAllModals.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, throwErrorIfModal ->
+          leaveAllModals(throwErrorIfModal)
         }
 
         session.closeProjectIfOpened.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
-          leaveAllModals()
+          leaveAllModals(throwErrorIfModal = true)
           ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
           withContext(Dispatchers.EDT + NonCancellable) {
             ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
