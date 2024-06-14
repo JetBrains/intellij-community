@@ -9,7 +9,6 @@ import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
@@ -18,7 +17,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGroup
 import com.intellij.openapi.actionSystem.util.ActionSystem
@@ -477,13 +475,12 @@ object Utils {
         result = list
         if (expire?.invoke() == true) return@use
         val checked = group is CheckedActionGroup
-        val multiChoice = isMultiChoiceGroup(group)
         if (nativePeer == null) {
-          fillMenuInner(component as JComponent, list, checked, multiChoice, enableMnemonics,
+          fillMenuInner(component as JComponent, list, checked, enableMnemonics,
                         presentationFactory, asyncDataContext, place, isWindowMenu, useDarkIcons)
         }
         else {
-          fillMenuInnerMacNative(nativePeer, component as JFrame, list, checked, multiChoice, enableMnemonics,
+          fillMenuInnerMacNative(nativePeer, component as JFrame, list, checked, enableMnemonics,
                                  presentationFactory, asyncDataContext, place, useDarkIcons)
         }
       }
@@ -538,7 +535,6 @@ object Utils {
   private fun fillMenuInner(component: JComponent,
                             list: List<AnAction>,
                             checked: Boolean,
-                            multiChoice: Boolean,
                             enableMnemonics: Boolean,
                             presentationFactory: PresentationFactory,
                             context: DataContext,
@@ -550,9 +546,6 @@ object Utils {
     val children = ArrayList<Component>()
     for (action in filtered) {
       val presentation = presentationFactory.getPresentation(action)
-      if (multiChoice && action is Toggleable) {
-        presentation.isMultiChoice = true
-      }
       var childComponent: JComponent
       if (action is Separator) {
         childComponent = createSeparator(action.text, children.isEmpty())
@@ -607,7 +600,6 @@ object Utils {
                                      frame: JFrame,
                                      list: List<AnAction>,
                                      checked: Boolean,
-                                     multiChoice: Boolean,
                                      enableMnemonics: Boolean,
                                      presentationFactory: PresentationFactory,
                                      context: DataContext,
@@ -616,10 +608,6 @@ object Utils {
     val filtered = filterInvisible(list, presentationFactory, place)
     for (action in filtered) {
       val presentation = presentationFactory.getPresentation(action)
-      if (multiChoice && action is Toggleable) {
-        presentation.isMultiChoice = true
-        System.out.println("MULTICHOICE " + action.javaClass.name)
-      }
       val peer = when {
         action is Separator -> null
         action is ActionGroup && !isSubmenuSuppressed(presentation) -> createMacNativeActionMenu(
@@ -743,26 +731,6 @@ object Utils {
     if (action is KeepingPopupOpenAction) return true
     if (!presentationFlag) return false
     return action is ToggleAction && event is MouseEvent && event.isAltDown
-  }
-
-  @JvmStatic
-  fun isMultiChoiceGroup(actionGroup: ActionGroup): Boolean {
-    if (ActionUtil.isMakeAllToggleActionsMultiChoice()) {
-      return false
-    }
-    val p = actionGroup.getTemplatePresentation()
-    if (p.isMultiChoice) return true
-    if (p.icon === AllIcons.Actions.GroupBy || p.icon === AllIcons.Actions.Show || p.icon === AllIcons.General.GearPlain || p.icon === AllIcons.Debugger.RestoreLayout) {
-      return true
-    }
-    if (actionGroup.javaClass == DefaultActionGroup::class.java) {
-      for (child in (actionGroup as DefaultActionGroup).getChildren(ActionManager.getInstance())) {
-        if (child is Separator) continue
-        if (child !is Toggleable) return false
-      }
-      return true
-    }
-    return false
   }
 
   @JvmStatic
