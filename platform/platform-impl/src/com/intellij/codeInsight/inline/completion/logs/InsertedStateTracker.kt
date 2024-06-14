@@ -29,33 +29,37 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
             initialOffset: Int,
             insertOffset: Int,
             finalSuggestion: String,
-            duration: Duration) {
+            durationSteps: List<Duration>) {
     ThreadingAssertions.assertReadAccess()
     val suggestion = editor.document.getText(TextRange(initialOffset, insertOffset)) + finalSuggestion
     val rangeMarker = editor.document.createRangeMarker(initialOffset, initialOffset + suggestion.length)
     cs.launch {
-      delay(duration.toMillis())
-      if (!editor.isDisposed) {
-        val resultText = readAction { if (rangeMarker.isValid) rangeMarker.document.getText(rangeMarker.textRange) else "" }
-        rangeMarker.dispose()
-        val commonPrefixLength = resultText.commonPrefixWith(suggestion).length
-        val commonSuffixLength = resultText.commonSuffixWith(suggestion).length
-        val editDistance = EditDistance.optimalAlignment(suggestion, resultText, true)
-        val editDistanceNoAdd = editDistance - maxOf(resultText.length - suggestion.length, 0)
-        val data = mutableListOf<EventPair<*>>(
-          InlineCompletionUsageTracker.ShownEvents.REQUEST_ID.with(requestId),
-          EventFields.DurationMs.with(duration.toMillis()),
-          InlineCompletionUsageTracker.InsertedStateEvents.SUGGESTION_LENGTH.with(suggestion.length),
-          InlineCompletionUsageTracker.InsertedStateEvents.RESULT_LENGTH.with(resultText.length),
-          InlineCompletionUsageTracker.InsertedStateEvents.EDIT_DISTANCE.with(editDistance),
-          InlineCompletionUsageTracker.InsertedStateEvents.EDIT_DISTANCE_NO_ADD.with(editDistanceNoAdd),
-          InlineCompletionUsageTracker.InsertedStateEvents.COMMON_PREFIX_LENGTH.with(commonPrefixLength),
-          InlineCompletionUsageTracker.InsertedStateEvents.COMMON_SUFFIX_LENGTH.with(commonSuffixLength),
-        )
-        language?.let { data.add(EventFields.Language.with(it)) }
-        fileLanguage?.let { data.add(EventFields.Language.with(it)) }
-        INSERTED_STATE_EVENT.log(data)
+      var cumulativeDuration = 0L
+      for (duration in durationSteps) {
+        delay(duration.toMillis())
+        cumulativeDuration += duration.toMillis()
+        if (!editor.isDisposed) {
+          val resultText = readAction { if (rangeMarker.isValid) rangeMarker.document.getText(rangeMarker.textRange) else "" }
+          val commonPrefixLength = resultText.commonPrefixWith(suggestion).length
+          val commonSuffixLength = resultText.commonSuffixWith(suggestion).length
+          val editDistance = EditDistance.optimalAlignment(suggestion, resultText, true)
+          val editDistanceNoAdd = editDistance - maxOf(resultText.length - suggestion.length, 0)
+          val data = mutableListOf<EventPair<*>>(
+            InlineCompletionUsageTracker.ShownEvents.REQUEST_ID.with(requestId),
+            EventFields.DurationMs.with(cumulativeDuration),
+            InlineCompletionUsageTracker.InsertedStateEvents.SUGGESTION_LENGTH.with(suggestion.length),
+            InlineCompletionUsageTracker.InsertedStateEvents.RESULT_LENGTH.with(resultText.length),
+            InlineCompletionUsageTracker.InsertedStateEvents.EDIT_DISTANCE.with(editDistance),
+            InlineCompletionUsageTracker.InsertedStateEvents.EDIT_DISTANCE_NO_ADD.with(editDistanceNoAdd),
+            InlineCompletionUsageTracker.InsertedStateEvents.COMMON_PREFIX_LENGTH.with(commonPrefixLength),
+            InlineCompletionUsageTracker.InsertedStateEvents.COMMON_SUFFIX_LENGTH.with(commonSuffixLength),
+          )
+          language?.let { data.add(EventFields.Language.with(it)) }
+          fileLanguage?.let { data.add(EventFields.Language.with(it)) }
+          INSERTED_STATE_EVENT.log(data)
+        }
       }
+      rangeMarker.dispose()
     }
   }
 }

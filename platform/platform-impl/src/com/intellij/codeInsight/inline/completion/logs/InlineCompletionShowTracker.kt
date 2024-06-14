@@ -92,14 +92,15 @@ internal class InlineCompletionShowTracker(
 
   fun inserted() {
     potentiallySelectedIndex?.let {
-      service<InsertedStateTracker>().track(requestId,
-                                            language,
-                                            fileLanguage,
-                                            request.editor,
-                                            initialOffset = request.endOffset,
-                                            insertOffset = lastOffset,
-                                            variantStates[it].finalSuggestion,
-                                            getDuration(),
+      service<InsertedStateTracker>().track(
+        requestId,
+        language,
+        fileLanguage,
+        request.editor,
+        initialOffset = request.endOffset,
+        insertOffset = lastOffset,
+        variantStates[it].finalSuggestion,
+        getDurationSteps(),
       )
     }
   }
@@ -129,11 +130,11 @@ internal class InlineCompletionShowTracker(
     InlineCompletionUsageTracker.SHOWN_EVENT.log(data)
   }
 
-  private fun getDuration(): Duration =
+  private fun getDurationSteps(): List<Duration> =
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      Duration.ofMillis(TEST_CHECK_STATE_AFTER_MLS)
+      listOf(Duration.ofMillis(TEST_CHECK_STATE_AFTER_MLS))
     } else {
-      Duration.ofSeconds(10)
+      listOf(Duration.ofSeconds(10), Duration.ofSeconds(20), Duration.ofSeconds(30), Duration.ofMinutes(4))
     }
 
   private fun extendVariantsNumber(atLeast: Int) {
