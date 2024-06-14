@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.core.script.ucache.impl
 
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -77,9 +78,9 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
   }
 
 
-    internal class Builder(result: KotlinScriptLibraryEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(
+  internal class Builder(result: KotlinScriptLibraryEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(
     result), KotlinScriptLibraryEntity.Builder {
-        internal constructor() : this(KotlinScriptLibraryEntityData())
+    internal constructor() : this(KotlinScriptLibraryEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {

@@ -58,6 +58,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 }
 
 //region generated code
+@Internal
 fun MutableEntityStorage.modifyModuleCustomImlDataEntity(
   entity: ModuleCustomImlDataEntity,
   modification: ModuleCustomImlDataEntity.Builder.() -> Unit,
@@ -109,6 +110,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 }
 
 //region generated code
+@Internal
 fun MutableEntityStorage.modifyModuleGroupPathEntity(
   entity: ModuleGroupPathEntity,
   modification: ModuleGroupPathEntity.Builder.() -> Unit,
@@ -169,6 +171,7 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
 }
 
 //region generated code
+@Internal
 fun MutableEntityStorage.modifyExternalSystemModuleOptionsEntity(
   entity: ExternalSystemModuleOptionsEntity,
   modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit,
@@ -217,6 +220,7 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
+@Internal
 fun MutableEntityStorage.modifyTestModulePropertiesEntity(
   entity: TestModulePropertiesEntity,
   modification: TestModulePropertiesEntity.Builder.() -> Unit,
