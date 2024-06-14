@@ -44,7 +44,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     if (!Registry.`is`("maven.shade.plugin.create.uber.jar.dependency")) return
 
-    val mavenProjectToModules = context.mavenProjectsWithModules.map { it.mavenProject to it.modules }.toMap()
+    val mavenProjectToModules = context.mavenProjectsWithModules.map { it.mavenProject to it.modules.map { m -> m.module } }.toMap()
 
     // find all poms with maven-shade-plugin that use class relocation
     val shadedProjectsToRelocations = context.mavenProjectsWithModules.mapNotNull { p ->
@@ -59,32 +59,51 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
 
     val shadedMavenProjectsToBuildUberJar = mutableMapOf<MavenProject, MavenProjectShadingData>()
 
-    val shadedModuleIdToMavenProject = HashMap<ModuleId, MavenProject>()
-    for (shadedProject in shadedProjects) {
-      for (module in mavenProjectToModules[shadedProject]!!) {
-        shadedModuleIdToMavenProject[module.module.symbolicId] = shadedProject
+    val moduleIdToMavenProject = HashMap<ModuleId, MavenProject>()
+    for (mavenProjectWithModules in context.mavenProjectsWithModules) {
+      for (module in mavenProjectWithModules.modules) {
+        moduleIdToMavenProject[module.module.symbolicId] = mavenProjectWithModules.mavenProject
       }
     }
-    val shadeModuleIds = shadedModuleIdToMavenProject.keys
+    val shadedModuleIds = moduleIdToMavenProject.keys.filter { shadedProjects.contains(moduleIdToMavenProject[it]) }
 
     // process dependent modules
     for (module in context.storage.entities(ModuleEntity::class.java)) {
       for (dependency in module.dependencies.filterIsInstance<ModuleDependency>()) {
         val dependencyModuleId = dependency.module
-        if (shadeModuleIds.contains(dependencyModuleId)) {
-          val mavenProject = shadedModuleIdToMavenProject[dependencyModuleId]!!
+        if (shadedModuleIds.contains(dependencyModuleId)) {
+          val mavenProject = moduleIdToMavenProject[dependencyModuleId]!!
           val uberJarPath = getUberJarPath(mavenProject)
           addJarDependency(context.storage, context.project, module, mavenProject.mavenId, uberJarPath)
 
           if (shadedMavenProjectsToBuildUberJar.contains(mavenProject)) continue
 
           val relocationMap = shadedProjectsToRelocations[mavenProject]!!
-          shadedMavenProjectsToBuildUberJar[mavenProject] = MavenProjectShadingData(relocationMap, uberJarPath)
+          val dependentMavenProjects = mavenProject.collectDependentMavenProjects(mavenProjectToModules, moduleIdToMavenProject)
+          shadedMavenProjectsToBuildUberJar[mavenProject] = MavenProjectShadingData(relocationMap, uberJarPath, dependentMavenProjects)
         }
       }
     }
 
     context.putUserDataIfAbsent(SHADED_MAVEN_PROJECTS, shadedMavenProjectsToBuildUberJar)
+  }
+
+  private fun MavenProject.collectDependentMavenProjects(
+    mavenProjectToModules: Map<MavenProject, List<ModuleEntity>>,
+    moduleIdToMavenProject: HashMap<ModuleId, MavenProject>
+  ): Collection<MavenProject> {
+    val dependentMavenProjects = mutableSetOf<MavenProject>()
+
+    val modules = mavenProjectToModules[this]!!
+    for (module in modules) {
+      val moduleDependencies = module.dependencies.filterIsInstance<ModuleDependency>()
+      for (moduleDependency in moduleDependencies) {
+        val mavenProject = moduleIdToMavenProject[moduleDependency.module]
+        dependentMavenProjects.add(mavenProject ?: continue)
+      }
+    }
+
+    return dependentMavenProjects
   }
 
   private fun MavenProject.getRelocationMap(): Map<String, String> {
@@ -152,7 +171,10 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
   }
 }
 
-private data class MavenProjectShadingData(val relocationMap: Map<String, String>, val uberJarPath: String)
+private data class MavenProjectShadingData(
+  val relocationMap: Map<String, String>,
+  val uberJarPath: String,
+  val dependentMavenProjects: Collection<MavenProject>)
 
 private val SHADED_MAVEN_PROJECTS = Key.create<Map<MavenProject, MavenProjectShadingData>>("SHADED_MAVEN_PROJECTS")
 
