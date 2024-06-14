@@ -626,6 +626,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JUnit5Launcher", libraryName = "JUnit5Launcher", url = "https://junit.org/junit5/").eplV2(),
     LibraryLicense(name = "JUnit5Vintage", libraryName = "JUnit5Vintage", url = "https://junit.org/junit5/").eplV2(),
     LibraryLicense(libraryName = "jzlib", url = "http://www.jcraft.com/jzlib/").newBsd("https://github.com/ymnk/jzlib/raw/master/LICENSE.txt"),
+    LibraryLicense(name = "Kconfig for the Zephyr Project", url = "https://github.com/trond-snekvik/vscode-kconfig", version = "1.2.0",
+                   attachedTo = "intellij.textmate").mit("https://github.com/trond-snekvik/vscode-kconfig/blob/master/LICENSE"),
     LibraryLicense(name = "KInference",
                    libraryName = "kinference.core.jvm",
                    url = "https://packages.jetbrains.team/maven/p/ki/maven",

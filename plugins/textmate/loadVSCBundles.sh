@@ -158,6 +158,21 @@ wget -q https://raw.githubusercontent.com/erlang-ls/vscode/main/language-configu
 wget -q https://raw.githubusercontent.com/erlang-ls/vscode/main/package.json -O "$ROOT/lib/bundles/erlang/package.json"
 wget -q https://raw.githubusercontent.com/erlang-ls/grammar/main/Erlang.plist -O "$ROOT/lib/bundles/erlang/grammar/Erlang.plist"
 
+# Kconfig
+git clone https://github.com/trond-snekvik/vscode-kconfig/
+pushd vscode-kconfig
+
+echo "Adding KConfig"
+declare kconfig_target="$ROOT/lib/bundles/kconfig"
+declare -a kconfig_resources=("LICENSE" "package.json" "language-configuration.json" "syntaxes")
+mkdir -p "$kconfig_target"
+for resource in ${kconfig_resources[@]}
+do
+  cp -r "$resource" "$kconfig_target"
+done
+
+popd
+
 cd $ROOT
 
 rm -rf $ROOT/temp
