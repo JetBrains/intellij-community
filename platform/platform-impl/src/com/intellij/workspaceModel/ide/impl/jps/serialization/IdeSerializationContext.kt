@@ -35,7 +35,7 @@ abstract class BaseIdeSerializationContext : SerializationContext {
   }
 }
 
-open class IdeSerializationContext(
+internal class IdeSerializationContext(
   override val virtualFileUrlManager: VirtualFileUrlManager,
   override val fileContentReader: JpsFileContentReader,
   override val fileInDirectorySourceNames: FileInDirectorySourceNames,

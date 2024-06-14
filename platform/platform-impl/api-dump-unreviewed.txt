@@ -30791,7 +30791,6 @@ f:com.intellij.workspaceModel.ide.impl.WorkspaceModelFusLogger
 - f:logCacheSave(J,J):V
 - f:logLoadingJpsFromIml(J):V
 a:com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
-- com.intellij.platform.workspace.jps.serialization.SerializationContext
 - sf:Companion:com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext$Companion
 - <init>():V
 - getCustomFacetRelatedEntitySerializers():java.util.List
@@ -30813,13 +30812,6 @@ f:com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchroni
 f:com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer$Util
 - sf:INSTANCE:com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer$Util
 - f:backgroundPostStartupProjectLoading(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-c:com.intellij.workspaceModel.ide.impl.jps.serialization.IdeSerializationContext
-- com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
-- <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrlManager,com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader,com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames,com.intellij.openapi.project.ExternalStorageConfigurationManager):V
-- getFileContentReader():com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
-- getFileInDirectorySourceNames():com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
-- getVirtualFileUrlManager():com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-- isExternalStorageEnabled():Z
 com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
 - a:clearCache():V
 f:com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
