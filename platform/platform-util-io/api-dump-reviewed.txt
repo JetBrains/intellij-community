@@ -328,6 +328,17 @@ c:com.intellij.execution.process.OSProcessHandler$Silent
 - com.intellij.execution.process.OSProcessHandler
 - <init>(com.intellij.execution.configurations.GeneralCommandLine):V
 - p:readerOptions():com.intellij.util.io.BaseOutputReader$Options
+f:com.intellij.execution.process.OSProcessUtil
+- <init>():V
+- s:getApplicationPid():java.lang.String
+- s:getCurrentProcessId():I
+- s:getProcessID(java.lang.Process):I
+- s:getProcessList():com.intellij.execution.process.ProcessInfo[]
+- s:killProcess(I):V
+- s:killProcess(java.lang.Process):V
+- s:killProcessTree(java.lang.Process):Z
+- s:terminateProcessGracefully(I):V
+- s:terminateProcessGracefully(java.lang.Process):V
 com.intellij.execution.process.PtyBasedProcess
 - a:hasPty():Z
 - a:setWindowSize(I,I):V
