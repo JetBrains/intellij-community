@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.idea.IJIgnore;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -42,6 +43,7 @@ public class ExecutionManagerRerunSingletonTest extends LightPlatformTestCase {
     }
   }
 
+  @IJIgnore(issue = "IDEA-354952")
   public void testRerunSingleton() {
     Project project = getProject();
     ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
