@@ -389,6 +389,9 @@
     <registryKey key="maven.shade.plugin.generate.uber.jar" defaultValue="false"
                  description="During sync, generate uber jars for Maven projects that use Maven Shade plugin"/>
 
+    <registryKey key="maven.shade.plugin.remap.uber.jar" defaultValue="false"
+                 description="During sync, remap classes in uber jars for Maven projects that use Maven Shade plugin"/>
+
     <registryKey key="maven.sync.refresh.resolved.artifacts" defaultValue="false"
                  description="Refresh resolved artifacts after Maven sync"/>
 
@@ -590,7 +593,8 @@
       implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeDynamic"/>
     <importing.workspaceConfigurator
       implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeStatic"/>
-    <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadeFacetPostTaskConfigurator"/>
+    <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadeFacetGeneratePostTaskConfigurator"/>
+    <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadeFacetRemapPostTaskConfigurator"/>
 
     <projectResolutionContributor implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorContributor"/>
     <projectResolutionContributor implementation="org.jetbrains.idea.maven.importing.MavenCompilerContributor"/>

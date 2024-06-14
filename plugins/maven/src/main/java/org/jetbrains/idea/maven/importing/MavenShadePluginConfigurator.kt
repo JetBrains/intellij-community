@@ -23,10 +23,19 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.ClassWriter
+import org.jetbrains.org.objectweb.asm.commons.ClassRemapper
+import org.jetbrains.org.objectweb.asm.commons.Remapper
 import java.io.File
+import java.io.FileOutputStream
 import java.nio.file.Path
 import java.util.*
+import java.util.jar.JarEntry
+import java.util.jar.JarFile
+import java.util.jar.JarOutputStream
 import kotlin.io.path.pathString
 
 internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
@@ -36,19 +45,16 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
     if (!Registry.`is`("maven.shade.plugin.create.uber.jar.dependency")) return
 
     // find all poms with maven-shade-plugin that use class relocation
-    val shadeProjectsWithModules = context.mavenProjectsWithModules.filter { p ->
-      p.mavenProject
-        .findPlugin("org.apache.maven.plugins", "maven-shade-plugin")
-        ?.executions
-        ?.asSequence()
-        ?.mapNotNull { it.configurationElement?.getChild("relocations") }
-        ?.flatMap { it.getChildren("relocation").asSequence() }
-        ?.any { it.getChild("shadedPattern") != null } ?: false
-    }.toList()
+    val shadeProjectsWithModulesToRelocations = context.mavenProjectsWithModules.mapNotNull { p ->
+      val relocationMap = p.mavenProject.getRelocationMap()
+      if (relocationMap.isNotEmpty()) p to relocationMap else null
+    }.toMap()
+
+    val shadeProjectsWithModules = shadeProjectsWithModulesToRelocations.keys
 
     if (shadeProjectsWithModules.isEmpty()) return
 
-    val shadedMavenProjectsToBuildUberJar = mutableMapOf<MavenProject, String>()
+    val shadedMavenProjectsToBuildUberJar = mutableMapOf<MavenProject, MavenProjectShadingData>()
 
     val shadeModuleIdToMavenProject = HashMap<ModuleId, MavenProject>()
     for (shadeProjectWithModules in shadeProjectsWithModules) {
@@ -66,12 +72,33 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
           val mavenProject = shadeModuleIdToMavenProject[dependencyModuleId]!!
           val uberJarPath = getUberJarPath(mavenProject)
           addJarDependency(context.storage, context.project, module, mavenProject.mavenId, uberJarPath)
-          shadedMavenProjectsToBuildUberJar[mavenProject] = uberJarPath
+          val shadeProjectsWithModule = shadeProjectsWithModules.first { it.mavenProject == mavenProject }
+          val relocationMap = shadeProjectsWithModulesToRelocations[shadeProjectsWithModule]!!
+          shadedMavenProjectsToBuildUberJar[mavenProject] = MavenProjectShadingData(relocationMap, uberJarPath)
         }
       }
     }
 
     context.putUserDataIfAbsent(SHADED_MAVEN_PROJECTS, shadedMavenProjectsToBuildUberJar)
+  }
+
+  private fun MavenProject.getRelocationMap(): Map<String, String> {
+    return this
+             .findPlugin("org.apache.maven.plugins", "maven-shade-plugin")
+             ?.executions
+             ?.asSequence()
+             ?.mapNotNull { it.configurationElement?.getChild("relocations") }
+             ?.flatMap { it.getChildren("relocation").asSequence() }
+             ?.mapNotNull {
+               val pattern = it.getChildText("pattern")
+               val shadedPattern = it.getChildText("shadedPattern")
+               if (pattern != null && shadedPattern != null) pattern.replaceDots() to shadedPattern.replaceDots() else null
+             }
+             ?.toMap() ?: emptyMap()
+  }
+
+  private fun String.replaceDots(): String {
+    return this.replace('.', '/')
   }
 
   private fun getUberJarPath(mavenProject: MavenProject): String {
@@ -120,9 +147,11 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
   }
 }
 
-private val SHADED_MAVEN_PROJECTS = Key.create<Map<MavenProject, String>>("SHADED_MAVEN_PROJECTS")
+private data class MavenProjectShadingData(val relocationMap: Map<String, String>, val uberJarPath: String)
 
-internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurator {
+private val SHADED_MAVEN_PROJECTS = Key.create<Map<MavenProject, MavenProjectShadingData>>("SHADED_MAVEN_PROJECTS")
+
+internal class MavenShadeFacetGeneratePostTaskConfigurator : MavenAfterImportConfigurator {
   override fun afterImport(context: MavenAfterImportConfigurator.Context) {
     if (!Registry.`is`("maven.shade.plugin.generate.uber.jar")) return
 
@@ -164,6 +193,87 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
       withBackgroundProgress(project, MavenProjectBundle.message("maven.generating.uber.jars", text), true) {
         reportRawProgress { reporter ->
           embedder.executeGoal(requests, "package", reporter, mavenEventHandler)
+        }
+      }
+    }
+  }
+}
+
+internal class MavenShadeFacetRemapPostTaskConfigurator : MavenAfterImportConfigurator {
+  override fun afterImport(context: MavenAfterImportConfigurator.Context) {
+    if (!Registry.`is`("maven.shade.plugin.remap.uber.jar")) return
+
+    val shadedMavenProjects = context.getUserData(SHADED_MAVEN_PROJECTS)
+    if (shadedMavenProjects.isNullOrEmpty()) return
+
+    shadedMavenProjects.forEach { (mavenProject, shadingData) ->
+      try {
+        remapUberJar(mavenProject, shadingData)
+      }
+      catch (e: Exception) {
+        MavenLog.LOG.warn(e)
+      }
+    }
+
+    val filesToRefresh = shadedMavenProjects.keys.map { Path.of(it.buildDirectory) }
+    LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
+  }
+
+  private fun remapUberJar(mavenProject: MavenProject, shadingData: MavenProjectShadingData) {
+    // only remap classes if uber jar doesn't exist
+    val uberJarPath = shadingData.uberJarPath
+    val uberJarFile = File(uberJarPath)
+    if (uberJarFile.exists()) return
+
+    uberJarFile.parentFile.mkdirs()
+
+    // TODO: module dependencies
+    val dependencyJarPaths = mavenProject.dependencies.map { it.path }.filter { File(it).exists() }
+
+    val relocationMap = shadingData.relocationMap
+    val remapper = object : Remapper() {
+      override fun map(typeName: String): String {
+        for ((oldPackage, newPackage) in relocationMap) {
+          if (typeName.startsWith(oldPackage)) {
+            return typeName.replaceFirst(oldPackage, newPackage)
+          }
+        }
+        return typeName
+      }
+    }
+
+    val addedEntries = mutableSetOf<String>()
+
+    JarOutputStream(FileOutputStream(uberJarPath)).use { jarOut ->
+      dependencyJarPaths.forEach { dependencyJarPath ->
+        JarFile(File(dependencyJarPath)).use { jarFile ->
+          jarFile.entries().asSequence().forEach jarFileEntry@{ entry ->
+            val inputStream = jarFile.getInputStream(entry)
+            val entryName = entry.name
+
+            // only remap what is configured
+            if (!relocationMap.keys.any { entryName.startsWith(it) }) return@jarFileEntry
+
+            // only add each entry once
+            if (!addedEntries.add(entryName)) return@jarFileEntry
+
+            if (entryName.endsWith(".class")) {
+              val classReader = ClassReader(inputStream)
+              val classWriter = ClassWriter(classReader, 0)
+              val classRemapper = ClassRemapper(classWriter, remapper)
+              classReader.accept(classRemapper, 0)
+              val newEntry = JarEntry(entryName)
+              jarOut.putNextEntry(newEntry)
+              jarOut.write(classWriter.toByteArray())
+              jarOut.closeEntry()
+            }
+            else {
+              jarOut.putNextEntry(entry)
+              inputStream.copyTo(jarOut)
+              jarOut.closeEntry()
+            }
+            inputStream.close()
+          }
         }
       }
     }
