@@ -3016,11 +3016,11 @@ f:com.intellij.execution.target.java.JavaLanguageRuntimeUIFactoryImpl
 com.intellij.execution.ui.AdjustingTabSettingsEditor
 c:com.intellij.execution.ui.AllRunConfigurationsToggle
 - com.intellij.openapi.project.DumbAwareToggleAction
-- com.intellij.ui.popup.KeepingPopupOpenAction
 - <init>():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getBehavior():com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- isSoftMultiChoice():Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.execution.ui.BaseContentCloseListener
