@@ -273,7 +273,6 @@ c:com.intellij.remote.RemoteSdkCredentialsHolder
 - getFullInterpreterPath():java.lang.String
 - getHelpersPath():java.lang.String
 - getInterpreterPath():java.lang.String
-- s:getInterpreterPathFromFullPath(java.lang.String):java.lang.String
 - getPathMappings():com.intellij.util.PathMappingSettings
 - getRemoteSdkProperties():com.intellij.remote.RemoteSdkPropertiesHolder
 - getSdkId():java.lang.String

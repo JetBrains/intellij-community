@@ -13,10 +13,6 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     myRemoteSdkProperties = new RemoteSdkPropertiesHolder(defaultHelpersDirName);
   }
 
-  public static @NotNull String getInterpreterPathFromFullPath(@NotNull String fullPath) {
-    return RemoteSdkProperties.getInterpreterPathFromFullPath(fullPath);
-  }
-
   public @NotNull RemoteSdkPropertiesHolder getRemoteSdkProperties() {
     return myRemoteSdkProperties;
   }

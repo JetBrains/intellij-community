@@ -263,7 +263,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   public static @NotNull PyRemoteSdkAdditionalData loadRemote(@NotNull Sdk sdk, @Nullable Element element) {
     final String path = sdk.getHomePath();
     assert path != null;
-    final PyRemoteSdkAdditionalData data = new PyRemoteSdkAdditionalData(RemoteSdkCredentialsHolder.getInterpreterPathFromFullPath(path), false);
+    final PyRemoteSdkAdditionalData data = new PyRemoteSdkAdditionalData(RemoteSdkProperties.getInterpreterPathFromFullPath(path), false);
     data.load(element);
 
     if (element != null) {

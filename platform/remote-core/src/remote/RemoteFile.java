@@ -46,7 +46,7 @@ public final class RemoteFile {
   }
 
   public static boolean isWindowsPath(@NotNull String path) {
-    path = RemoteSdkCredentialsHolder.getInterpreterPathFromFullPath(path);
+    path = RemoteSdkProperties.getInterpreterPathFromFullPath(path);
     return OSAgnosticPathUtil.startsWithWindowsDrive(path);
   }
 
