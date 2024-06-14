@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex
 import com.intellij.platform.workspace.storage.impl.indices.SymbolicIdInternalIndex
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 
 internal open class StorageIndexes(
   // List of IDs of entities that use this particular persistent id
@@ -107,7 +106,6 @@ internal open class StorageIndexes(
   }
 */
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   private fun assertSymbolicIdIndex(storage: AbstractEntityStorage) {
 
     var expectedSize = 0
@@ -149,7 +147,6 @@ internal open class StorageIndexes(
   }
 }
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal class MutableStorageIndexes(
   override val softLinks: MultimapStorageIndex.MutableMultimapStorageIndex,
   override val virtualFileIndex: VirtualFileIndex.MutableVirtualFileIndex,

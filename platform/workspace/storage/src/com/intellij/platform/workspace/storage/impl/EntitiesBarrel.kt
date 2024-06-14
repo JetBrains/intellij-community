@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
@@ -120,7 +119,6 @@ internal sealed class EntitiesBarrel {
 
   fun size() = entityFamilies.size
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   fun assertConsistency(storage: EntityStorageInstrumentation) {
     val symbolicIds = HashSet<SymbolicEntityId<*>>()
     entityFamilies.forEachIndexed { i, family ->

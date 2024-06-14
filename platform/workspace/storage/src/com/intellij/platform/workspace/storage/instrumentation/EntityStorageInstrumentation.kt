@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.instrumentation
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.asString
 import org.jetbrains.annotations.ApiStatus

@@ -18,7 +18,6 @@ import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappi
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.StorageQuery
@@ -36,7 +35,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal data class EntityPointerImpl<E : WorkspaceEntity>(internal val id: EntityId) : EntityPointer<E> {
   override fun resolve(storage: EntityStorage): E? {
     storage as EntityStorageInstrumentation
@@ -59,7 +57,6 @@ internal data class EntityPointerImpl<E : WorkspaceEntity>(internal val id: Enti
 // companion object in EntityStorageSnapshotImpl is initialized too late
 private val entityStorageSnapshotImplInstancesCounter: AtomicLong = AtomicLong()
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal open class ImmutableEntityStorageImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
@@ -125,7 +122,6 @@ internal open class ImmutableEntityStorageImpl(
 }
 
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal class MutableEntityStorageImpl(
   private val originalSnapshot: ImmutableEntityStorageImpl,
 ) : MutableEntityStorageInstrumentation, AbstractEntityStorage() {
@@ -907,7 +903,6 @@ internal class MutableEntityStorageImpl(
   }
 }
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   internal abstract val entitiesByType: EntitiesBarrel

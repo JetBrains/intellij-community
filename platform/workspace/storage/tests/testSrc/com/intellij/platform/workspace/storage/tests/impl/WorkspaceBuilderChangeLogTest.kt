@@ -9,7 +9,6 @@ import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.tests.builderFrom
@@ -731,7 +730,6 @@ class WorkspaceBuilderChangeLogTest {
     assertTrue(builder.hasSameEntities())
   }
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   @Test
   fun `join remove plus add content root`() {
     val moduleTestEntity = ModuleTestEntity("data", MySource) {

@@ -6,7 +6,6 @@ import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.asString
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -80,7 +79,6 @@ public enum class Operation {
   REMOVED,
 }
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal fun Match.getData(snapshot: ImmutableEntityStorage): Any? {
   return when (this) {
     is MatchWithEntityId -> (snapshot as ImmutableEntityStorageImpl).entityDataByIdOrDie(this.entityId).createEntity(snapshot)

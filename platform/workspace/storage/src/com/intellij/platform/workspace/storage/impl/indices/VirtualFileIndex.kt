@@ -14,7 +14,6 @@ import com.intellij.platform.workspace.storage.impl.asString
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap
 import com.intellij.platform.workspace.storage.impl.containers.putAll
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
@@ -83,14 +82,12 @@ public open class VirtualFileIndex internal constructor(
     }
   }
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<WorkspaceEntity> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
       entityData.createEntity(entityStorage)
     } ?: emptySequence()
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   public fun findEntitiesToPropertyNameByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null

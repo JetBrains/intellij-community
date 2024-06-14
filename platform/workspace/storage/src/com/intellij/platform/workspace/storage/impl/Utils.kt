@@ -1,11 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.instrumentation.Modification
 
 // Just a wrapper for entity id in THIS store
@@ -38,7 +34,6 @@ internal fun loadClassByName(name: String, classLoader: ClassLoader): Class<*> {
  * This function checks if we try to add an entity as a child to itself.
  * It can't verify a circular dependency, and it's performed via a third entity
  */
-@OptIn(EntityStorageInstrumentationApi::class)
 internal fun checkCircularDependency(connectionId: ConnectionId, childId: Int, parentId: Int, storage: AbstractEntityStorage) {
   if (connectionId.parentClass == connectionId.childClass && childId == parentId) {
     val parentEntityId = createEntityId(parentId, connectionId.parentClass)
@@ -55,7 +50,6 @@ internal fun checkCircularDependency(connectionId: ConnectionId, childId: Int, p
  * This function checks if we try to add an entity as a child to itself.
  * It can't verify a circular dependency, and it's performed via a third entity
  */
-@OptIn(EntityStorageInstrumentationApi::class)
 internal fun checkCircularDependency(childId: EntityId, parentId: EntityId, storage: AbstractEntityStorage) {
   if (childId == parentId) {
     val entityData = storage.entityDataByIdOrDie(parentId)

@@ -1,12 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(EntityStorageInstrumentationApi::class)
-
 package com.intellij.platform.workspace.storage.tests.trace
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.asBase
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.tests.builderFrom
@@ -84,7 +81,6 @@ class TraceTest {
   }
 
   @Test
-  @OptIn(EntityStorageInstrumentationApi::class)
   fun `get entities amount`() {
     val traces = ReadTracker.trace(snapshot) {
       (it as ImmutableEntityStorageInstrumentation).entityCount(NamedEntity::class.java)

@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.longs.LongArrayList
@@ -203,7 +202,6 @@ internal sealed interface ReadTrace {
   }
 }
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet {
   val patternSet = ReadTraceHashSet(this.size)
   this@toTraces.forEach { (id, change) ->
@@ -263,7 +261,6 @@ internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentati
   return patternSet
 }
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal fun Sequence<EntityChange<*>>.toTraces(newSnapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet {
   val patternSet = ReadTraceHashSet()
   this.forEach { change ->

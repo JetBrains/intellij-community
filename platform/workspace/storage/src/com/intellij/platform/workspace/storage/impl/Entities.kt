@@ -5,7 +5,6 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.trace.ReadTrace
@@ -156,7 +155,6 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     }
   }
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   public fun updateReferenceToEntity(entityClass: Class<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity.Builder<*>?>) {
     val foundConnectionId = findConnectionId(entityClass, entities)
     if (foundConnectionId == null) return
@@ -485,7 +483,6 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     }
   }
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   private fun processLinkedParentEntity(entity: Any?,
                                         builder: MutableEntityStorage,
                                         entityLink: EntityLink,
@@ -502,7 +499,6 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     }
   }
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   private fun processLinkedChildEntity(entity: Any?,
                                        builder: MutableEntityStorage,
                                        connectionId: ConnectionId) {
@@ -598,7 +594,6 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
 
   public fun createEntityId(): EntityId = createEntityId(id, getEntityInterface().toClassId())
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   public abstract fun createEntity(snapshot: EntityStorageInstrumentation): E
 
   public abstract fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<E>

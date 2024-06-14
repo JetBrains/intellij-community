@@ -2,16 +2,14 @@
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import it.unimi.dsi.fastutil.ints.IntSet
-import org.jetbrains.annotations.ApiStatus
 
 public fun EntityStorage.assertConsistency() {
   (this as AbstractEntityStorage).assertConsistency()
 }
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal fun AbstractEntityStorage.assertConsistency() {
   AbstractEntityStorage.LOG.trace { "Checking consistency of $this" }
 

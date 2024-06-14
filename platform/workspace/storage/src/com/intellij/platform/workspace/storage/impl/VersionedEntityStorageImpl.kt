@@ -6,7 +6,6 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
@@ -123,7 +122,6 @@ public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityS
   private val valuesCache: ValuesCache
     get() = getCurrentSnapshot().cache
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   override val version: Long
     get() = builder.instrumentation.modificationCount
 
@@ -142,7 +140,6 @@ public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityS
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P): Unit =
     valuesCache.clearCachedValue(value, parameter)
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   private fun getCurrentSnapshot(): StorageSnapshotCache {
     val snapshotCache = currentSnapshot.get()
     if (snapshotCache == null || builder.instrumentation.modificationCount != snapshotCache.storageVersion) {
@@ -177,7 +174,6 @@ public class VersionedEntityStorageOnSnapshot(private val storage: ImmutableEnti
 }
 
 public class DummyVersionedEntityStorage(private val builder: MutableEntityStorage) : VersionedEntityStorage {
-  @OptIn(EntityStorageInstrumentationApi::class)
   override val version: Long
     get() = builder.instrumentation.modificationCount
 

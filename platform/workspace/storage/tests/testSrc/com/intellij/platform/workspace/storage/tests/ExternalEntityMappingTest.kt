@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.testEntities.entities.SourceEntity
@@ -135,7 +134,6 @@ class ExternalEntityMappingTest {
     assertEquals(newEntity, newMapping.getEntities(2).single())
   }
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   @Test
   fun `remove mapping from diff test`() {
     val builder = createEmptyBuilder()
