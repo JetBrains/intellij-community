@@ -1218,11 +1218,6 @@
             <option name="FOREGROUND" value="7444D4"/>
           </value>
         </option>
-        <option name="BLOCK_TERMINAL_GENERATE_COMMAND_PENDING_PROMPT_TEXT">
-          <value>
-            <option name="FOREGROUND" value="6C707E"/>
-          </value>
-        </option>
         <option name="BLOCK_TERMINAL_BLACK">
           <value>
             <option name="FOREGROUND" value="0" />
@@ -1818,11 +1813,6 @@
       <option name="BLOCK_TERMINAL_GENERATE_COMMAND_PROMPT_TEXT">
         <value>
           <option name="FOREGROUND" value="B589EC"/>
-        </value>
-      </option>
-      <option name="BLOCK_TERMINAL_GENERATE_COMMAND_PENDING_PROMPT_TEXT">
-        <value>
-          <option name="FOREGROUND" value="868A91"/>
         </value>
       </option>
       <option name="BLOCK_TERMINAL_BLACK">

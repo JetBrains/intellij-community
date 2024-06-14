@@ -195,8 +195,6 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
 
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.generateCommand.promptText"),
                                BlockTerminalColors.GENERATE_COMMAND_PROMPT_TEXT),
-      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.generateCommand.pendingPromptText"),
-                               BlockTerminalColors.GENERATE_COMMAND_PENDING_PROMPT_TEXT),
     };
   }
 
