@@ -79,7 +79,7 @@ class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase
 
   override fun isModified(): Boolean {
     return PsiNameHelper.getInstance(project).isIdentifier(loggerName.component.text) &&
-           loggerName.component.text.length < LOG_MAX_NAME_LENGTH &&
+           loggerName.component.text.length <= LOG_MAX_NAME_LENGTH &&
            super<DslConfigurableBase>.isModified()
   }
 
