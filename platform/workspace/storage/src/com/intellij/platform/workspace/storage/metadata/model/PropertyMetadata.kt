@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.ConnectionId.ConnectionType
 import com.intellij.platform.workspace.storage.metadata.StorageMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.ApiStatus
  * * another data class with properties of the allowed types (references to entities must be wrapped into [EntityPointer]);
  * * sealed class where all implementations satisfy these requirements.
  */
-@ApiStatus.Internal
 public sealed interface PropertyMetadata: StorageMetadata {
   public val name: String
   public val valueType: ValueTypeMetadata
@@ -33,7 +31,6 @@ public sealed interface PropertyMetadata: StorageMetadata {
   public val withDefault: Boolean
 }
 
-@ApiStatus.Internal
 public data class OwnPropertyMetadata(
   override val name: String,
   override val valueType: ValueTypeMetadata,
@@ -43,7 +40,6 @@ public data class OwnPropertyMetadata(
   val isKey: Boolean // EqualsBy annotation
 ): PropertyMetadata
 
-@ApiStatus.Internal
 public data class ExtPropertyMetadata(
   override val name: String,
   override val valueType: ValueTypeMetadata.EntityReference,
@@ -78,7 +74,6 @@ public data class ExtPropertyMetadata(
  * *                              )
  * *                           )
  */
-@ApiStatus.Internal
 public sealed class ValueTypeMetadata: StorageMetadata {
 
   public data class ParameterizedType(val primitive: SimpleType, val generics: List<ValueTypeMetadata>): ValueTypeMetadata()

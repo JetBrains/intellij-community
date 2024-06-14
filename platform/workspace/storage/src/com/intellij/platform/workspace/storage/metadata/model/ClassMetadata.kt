@@ -4,12 +4,10 @@ package com.intellij.platform.workspace.storage.metadata.model
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.metadata.StorageMetadata
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Common metadata interface for the [WorkspaceEntity] and its properties.
  */
-@ApiStatus.Internal
 public sealed interface StorageTypeMetadata: StorageMetadata {
   public val fqName: String
   public val properties: List<OwnPropertyMetadata> // List must be used, because the order of properties is important for deserialization
@@ -22,7 +20,6 @@ public sealed interface StorageTypeMetadata: StorageMetadata {
  *
  * It is [WorkspaceEntity] too.
  */
-@ApiStatus.Internal
 public data class EntityMetadata(
   override val fqName: String,
   override val properties: List<OwnPropertyMetadata>,
@@ -33,7 +30,6 @@ public data class EntityMetadata(
 ) : StorageTypeMetadata
 
 
-@ApiStatus.Internal
 public sealed interface StorageClassMetadata: StorageTypeMetadata
 
 /**
@@ -46,7 +42,6 @@ public sealed interface StorageClassMetadata: StorageTypeMetadata
  * * objects
  * * enum entries
  */
-@ApiStatus.Internal
 public sealed class FinalClassMetadata: StorageClassMetadata {
   public data class ClassMetadata(
     override val fqName: String,
@@ -80,7 +75,6 @@ public sealed class FinalClassMetadata: StorageClassMetadata {
  *
  * Abstract classes have subclasses and have no properties.
  */
-@ApiStatus.Internal
 public sealed class ExtendableClassMetadata: StorageClassMetadata {
   public abstract val subclasses: List<FinalClassMetadata>
   override val properties: List<OwnPropertyMetadata>
