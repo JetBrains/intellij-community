@@ -23,9 +23,10 @@ internal class NavBarBgtDataRule : EdtDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val project = snapshot[CommonDataKeys.PROJECT] ?: return
     val selection = snapshot[NavBarVmItem.SELECTED_ITEMS] ?: return
-    val pointers = selection.map {
-      (it as IdeNavBarVmItem).pointer
+    val pointers = selection.mapNotNull {
+      (it as? IdeNavBarVmItem)?.pointer
     }
+    if (pointers.isEmpty()) return
     sink.lazy(LangDataKeys.IDE_VIEW) {
       NavBarIdeView(pointers)
     }
