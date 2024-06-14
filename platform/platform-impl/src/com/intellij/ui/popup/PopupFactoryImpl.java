@@ -342,7 +342,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (step != null && item != null && step.isSelectable(item) &&
           item.isKeepPopupOpen() && item.getAction() instanceof ToggleAction toggle) {
         AnActionEvent event = step.createAnActionEvent(toggle, keyEvent);
-        ActionUtil.doPerformActionOrShowPopup(toggle, event, popup -> {
+        ActionUtil.performDumbAwareWithCallbacks(toggle, event, () -> {
           toggle.setSelected(event, isRightKey);
         });
         step.updateStepItems(getList());
