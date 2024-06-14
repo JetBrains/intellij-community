@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryTableId

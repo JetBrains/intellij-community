@@ -623,9 +623,6 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - sf:DUMMY:com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
 - a:hasUnloaded():Z
 - a:isUnloaded(java.lang.String):Z
-*f:com.intellij.platform.workspace.jps.WorkspaceModelJpsDumper
-- sf:INSTANCE:com.intellij.platform.workspace.jps.WorkspaceModelJpsDumper
-- f:dumpModuleStructure(com.intellij.platform.workspace.storage.EntityStorage):java.lang.String
 com.intellij.platform.workspace.jps.entities.ContentRootEntity
 - com.intellij.platform.workspace.storage.WorkspaceEntity
 - sf:Companion:com.intellij.platform.workspace.jps.entities.ContentRootEntity$Companion
@@ -880,8 +877,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryTypeId
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
-f:com.intellij.platform.workspace.jps.entities.Library_extensionsKt
-- sf:modifyLibraryPropertiesEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
 f:com.intellij.platform.workspace.jps.entities.ModuleDependency
 - com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 - <init>(com.intellij.platform.workspace.jps.entities.ModuleId,Z,com.intellij.platform.workspace.jps.entities.DependencyScope,Z):V
@@ -933,11 +928,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleEntityAndExtensions
 - sf:getSourceRoots(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder):java.util.List
 - sf:modifyModuleEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ModuleEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleEntity
 - sf:setSourceRoots(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder,java.util.List):V
-f:com.intellij.platform.workspace.jps.entities.ModuleExtensions
-- sf:modifyExternalSystemModuleOptionsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
-- sf:modifyModuleCustomImlDataEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
-- sf:modifyModuleGroupPathEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity
-- sf:modifyTestModulePropertiesEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity
 f:com.intellij.platform.workspace.jps.entities.ModuleId
 - com.intellij.platform.workspace.storage.SymbolicEntityId
 - <init>(java.lang.String):V
@@ -979,12 +969,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleTypeId
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
-f:com.intellij.platform.workspace.jps.entities.OrdersKt
-- sf:modifyFacetsOrderEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.FacetsOrderEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetsOrderEntity
-f:com.intellij.platform.workspace.jps.entities.RootsExtensions
-- sf:modifyCustomSourceRootPropertiesEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity
-- sf:modifyExcludeUrlOrderEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity
-- sf:modifySourceRootOrderEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity
 f:com.intellij.platform.workspace.jps.entities.RootsKt
 - sf:getContentRoot(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity):com.intellij.platform.workspace.jps.entities.ContentRootEntity
 - sf:modifyContentRootEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ContentRootEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ContentRootEntity
