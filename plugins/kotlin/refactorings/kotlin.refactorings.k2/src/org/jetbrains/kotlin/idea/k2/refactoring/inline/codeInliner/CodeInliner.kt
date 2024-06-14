@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.N
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.RECEIVER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_FUNCTION_LITERAL_ARGUMENT_KEY
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.SuperTypeCallEntryReplacementPerformer
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.collectDescendantsOfType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -61,12 +62,18 @@ class CodeInliner(
         val qualifiedElement = if (call is KtExpression) {
             call.getQualifiedExpressionForSelector()
                 ?: call.callableReferenceExpressionForReference()
+                ?: PsiTreeUtil.getParentOfType(call, KtSuperTypeCallEntry::class.java)
                 ?: call
         } else call
         val assignment = (qualifiedElement as? KtExpression)
             ?.getAssignmentByLHS()
             ?.takeIf { it.operationToken == KtTokens.EQ }
-        val originalDeclaration = analyze(call) { call.resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi as? KtDeclaration } ?: return null
+        val originalDeclaration = analyze(call) {
+            (call.parent as? KtCallableReferenceExpression
+                ?: PsiTreeUtil.getParentOfType(call, KtSuperTypeCallEntry::class.java)
+                ?: call)
+                .resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi as? KtDeclaration
+        } ?: return null
         val callableForParameters = (if (assignment != null && originalDeclaration is KtProperty)
             originalDeclaration.setter?.takeIf { inlineSetter && it.hasBody() } ?: originalDeclaration
         else
@@ -91,11 +98,17 @@ class CodeInliner(
         }
 
         val ktFile = elementToBeReplaced.containingKtFile
-        for ((fqName, allUnder, alias) in codeToInline.fqNamesToImport) {
+        for ((path, target) in codeToInline.fqNamesToImport) {
+            val (fqName, allUnder, alias) = path
             if (fqName.startsWith(FqName.fromSegments(listOf("kotlin")))) {
                 //todo https://youtrack.jetbrains.com/issue/KTIJ-25928
                 continue
             }
+
+            if (target?.containingFile == ktFile) {
+                continue
+            }
+
             ktFile.addImport(fqName, allUnder, alias)
         }
 
@@ -180,7 +193,7 @@ class CodeInliner(
 
         val importDeclarations = codeToInline.fqNamesToImport.mapNotNull { importPath ->
             val target =
-                psiFactory.createImportDirective(importPath).mainReference?.resolve() as? KtNamedDeclaration ?: return@mapNotNull null
+                psiFactory.createImportDirective(importPath.importPath).mainReference?.resolve() as? KtNamedDeclaration ?: return@mapNotNull null
             importPath to target
         }
 
@@ -190,11 +203,17 @@ class CodeInliner(
             keepInfixFormIfPossible(importDeclarations.map { it.second })
         }
 
+        codeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced)
         introduceVariablesForParameters(elementToBeReplaced, receiver, receiverType?.first, introduceValueForParameters)
 
         codeToInline.extraComments?.restoreComments(elementToBeReplaced)
         findAndMarkNewDeclarations()
-        return ExpressionReplacementPerformer(codeToInline, elementToBeReplaced as KtExpression).doIt { range ->
+        val performer = when (elementToBeReplaced) {
+            is KtExpression -> ExpressionReplacementPerformer(codeToInline, elementToBeReplaced)
+            is KtSuperTypeCallEntry -> SuperTypeCallEntryReplacementPerformer(codeToInline, elementToBeReplaced)
+            else -> error("Unsupported element: $elementToBeReplaced")
+        }
+        return performer.doIt { range ->
             val pointers = range.filterIsInstance<KtElement>().map { it.createSmartPointer() }.toList()
             val declarations = pointers.mapNotNull { pointer -> pointer.element?.takeIf { it.getCopyableUserData(NEW_DECLARATION_KEY) != null } as? KtNamedDeclaration }
             if (declarations.isNotEmpty()) {
@@ -292,7 +311,7 @@ class CodeInliner(
         if (parameter.isVarArg) {
             return analyze(call) {
                 val parameterType = parameter.getReturnKtType()
-                val elementType = (parameterType as KtUsualClassType).ownTypeArguments.first().type!!
+                val elementType = (parameterType as KtUsualClassType).ownTypeArguments.firstOrNull()?.type ?: expressions.first().getKtType() ?: return null
                 val expression = psiFactory.buildExpression {
                     appendFixedText(arrayOfFunctionName(elementType))
                     appendFixedText("(")

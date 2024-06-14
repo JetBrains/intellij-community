@@ -138,7 +138,7 @@ class CodeInliner (
         val lexicalScope = lexicalScopeElement.getResolutionScope(lexicalScopeElement.analyze(BodyResolveMode.PARTIAL_FOR_COMPLETION))
 
         val importDescriptors = codeToInline.fqNamesToImport.mapNotNull { importPath ->
-            val importDescriptor = file.resolveImportReference(importPath.fqName).firstOrNull() ?: return@mapNotNull null
+            val importDescriptor = file.resolveImportReference(importPath.importPath.fqName).firstOrNull() ?: return@mapNotNull null
             importPath to importDescriptor
         }
 
@@ -153,7 +153,7 @@ class CodeInliner (
         introduceVariablesForParameters(elementToBeReplaced, receiver, receiverType, introduceValuesForParameters)
 
         for ((importPath, importDescriptor) in importDescriptors) {
-            ImportInsertHelper.getInstance(project).importDescriptor(file, importDescriptor, aliasName = importPath.alias)
+            ImportInsertHelper.getInstance(project).importDescriptor(file, importDescriptor, aliasName = importPath.importPath.alias)
         }
 
         codeToInline.extraComments?.restoreComments(elementToBeReplaced)
@@ -204,18 +204,6 @@ class CodeInliner (
                 )
             }
         })
-    }
-
-    protected fun MutableCodeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced: KtElement) {
-        if (elementToBeReplaced !is KtCallableReferenceExpression) return
-        val qualified = mainExpression?.safeAs<KtQualifiedExpression>() ?: return
-        val reference = qualified.callExpression?.calleeExpression ?: qualified.selectorExpression ?: return
-        val callableReference = if (elementToBeReplaced.receiverExpression == null) {
-            psiFactory.createExpressionByPattern("::$0", reference)
-        } else {
-            psiFactory.createExpressionByPattern("$0::$1", qualified.receiverExpression, reference)
-        }
-        codeToInline.replaceExpression(qualified, callableReference)
     }
 
     private fun renameDuplicates(

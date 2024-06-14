@@ -19,11 +19,13 @@ import org.jetbrains.kotlin.resolve.ImportPath
 private val POST_INSERTION_ACTION: Key<(KtElement) -> Unit> = Key("POST_INSERTION_ACTION")
 private val PRE_COMMIT_ACTION: Key<(KtElement) -> Unit> = Key("PRE_COMMIT_ACTION_KEY")
 
+data class ResolvedImportPath(val importPath: ImportPath, val target: PsiElement?)
+
 class MutableCodeToInline(
     var mainExpression: KtExpression?,
     var originalDeclaration: KtDeclaration?,
     val statementsBefore: MutableList<KtExpression>,
-    val fqNamesToImport: MutableCollection<ImportPath>,
+    val fqNamesToImport: MutableCollection<ResolvedImportPath>,
     val alwaysKeepMainExpression: Boolean,
     var extraComments: CommentHolder?,
 ) {

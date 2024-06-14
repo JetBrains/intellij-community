@@ -13,3 +13,4 @@ fun foo(list1: List<Int>,list2: List<Int>) {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+/* IGNORE_K2 */

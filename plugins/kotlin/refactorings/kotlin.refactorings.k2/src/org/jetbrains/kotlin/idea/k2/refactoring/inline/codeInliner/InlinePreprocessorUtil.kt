@@ -15,13 +15,13 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.k2.refactoring.util.ConvertReferenceToLambdaUtil
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ResolvedImportPath
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.forEachDescendantOfType
 import org.jetbrains.kotlin.idea.refactoring.util.getExplicitLambdaSignature
 import org.jetbrains.kotlin.idea.refactoring.util.specifyExplicitLambdaSignature
@@ -230,10 +230,13 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                 null
 
             codeToInline.fqNamesToImport.add(
-                ImportPath(
-                    fqName = importableFqName,
-                    isAllUnder = false,
-                    alias = aliasName,
+                ResolvedImportPath(
+                    ImportPath(
+                        fqName = importableFqName,
+                        isAllUnder = false,
+                        alias = aliasName,
+                    ),
+                    target
                 )
             )
         }
