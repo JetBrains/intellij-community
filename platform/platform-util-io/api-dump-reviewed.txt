@@ -339,6 +339,23 @@ f:com.intellij.execution.process.OSProcessUtil
 - s:killProcessTree(java.lang.Process):Z
 - s:terminateProcessGracefully(I):V
 - s:terminateProcessGracefully(java.lang.Process):V
+c:com.intellij.execution.process.ProcessInfo
+- sf:EMPTY_ARRAY:com.intellij.execution.process.ProcessInfo[]
+- <init>(I,java.lang.String,java.lang.String,java.lang.String):V
+- <init>(I,java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- <init>(I,java.lang.String,java.lang.String,java.lang.String,java.lang.String,I):V
+- <init>(I,java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,java.lang.String,com.intellij.util.ThreeState):V
+- equals(java.lang.Object):Z
+- getArgs():java.lang.String
+- getCommandLine():java.lang.String
+- getExecutableCannonicalPath():java.util.Optional
+- getExecutableDisplayName():java.lang.String
+- getExecutableName():java.lang.String
+- getParentPid():I
+- getPid():I
+- getUser():java.lang.String
+- hashCode():I
+- isOwnedByCurrentUser():com.intellij.util.ThreeState
 com.intellij.execution.process.PtyBasedProcess
 - a:hasPty():Z
 - a:setWindowSize(I,I):V
