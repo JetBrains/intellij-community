@@ -396,3 +396,15 @@ c:com.intellij.execution.process.ProcessWrapper
 com.intellij.execution.process.PtyBasedProcess
 - a:hasPty():Z
 - a:setWindowSize(I,I):V
+f:com.intellij.execution.process.ScriptRunnerUtil
+- sf:STDERR_OUTPUT_KEY_FILTER:com.intellij.openapi.util.Condition
+- sf:STDOUT_OR_STDERR_OUTPUT_KEY_FILTER:com.intellij.openapi.util.Condition
+- sf:STDOUT_OUTPUT_KEY_FILTER:com.intellij.openapi.util.Condition
+- s:execute(java.lang.String,java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String[]):com.intellij.execution.process.OSProcessHandler
+- s:execute(java.lang.String,java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String[],java.nio.charset.Charset,com.intellij.openapi.util.ThrowableNotNullFunction):com.intellij.execution.process.OSProcessHandler
+- s:execute(java.lang.String,java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String[],java.nio.charset.Charset,com.intellij.openapi.util.ThrowableNotNullFunction,java.lang.String[]):com.intellij.execution.process.OSProcessHandler
+- s:execute(java.lang.String,java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String[],java.nio.charset.Charset,com.intellij.openapi.util.ThrowableNotNullFunction,java.lang.String[],Z):com.intellij.execution.process.OSProcessHandler
+- s:getProcessOutput(com.intellij.execution.configurations.GeneralCommandLine):java.lang.String
+- s:getProcessOutput(com.intellij.execution.configurations.GeneralCommandLine,com.intellij.openapi.util.Condition,J):java.lang.String
+- s:getProcessOutput(com.intellij.execution.process.ProcessHandler,com.intellij.openapi.util.Condition,J):java.lang.String
+- s:terminateProcessHandler(com.intellij.execution.process.ProcessHandler,J,java.lang.String):V

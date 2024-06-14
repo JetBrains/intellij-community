@@ -404,22 +404,10 @@ f:com.intellij.execution.process.ScriptRunnerUtil
 - s:execute(java.lang.String,java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String[],java.nio.charset.Charset,com.intellij.openapi.util.ThrowableNotNullFunction):com.intellij.execution.process.OSProcessHandler
 - s:execute(java.lang.String,java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String[],java.nio.charset.Charset,com.intellij.openapi.util.ThrowableNotNullFunction,java.lang.String[]):com.intellij.execution.process.OSProcessHandler
 - s:execute(java.lang.String,java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String[],java.nio.charset.Charset,com.intellij.openapi.util.ThrowableNotNullFunction,java.lang.String[],Z):com.intellij.execution.process.OSProcessHandler
-- s:executeScriptInConsoleWithFullOutput(java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String,J,com.intellij.openapi.util.Condition,java.lang.String[]):com.intellij.execution.process.ScriptRunnerUtil$ScriptOutput
 - s:getProcessOutput(com.intellij.execution.configurations.GeneralCommandLine):java.lang.String
 - s:getProcessOutput(com.intellij.execution.configurations.GeneralCommandLine,com.intellij.openapi.util.Condition,J):java.lang.String
 - s:getProcessOutput(com.intellij.execution.process.ProcessHandler,com.intellij.openapi.util.Condition,J):java.lang.String
-- s:isExecutableInPath(java.lang.String):Z
 - s:terminateProcessHandler(com.intellij.execution.process.ProcessHandler,J,java.lang.String):V
-c:com.intellij.execution.process.ScriptRunnerUtil$ScriptOutput
-- com.intellij.execution.process.ProcessAdapter
-- f:myFilteredOutput:java.lang.StringBuilder
-- f:myMergedOutput:java.lang.StringBuffer
-- <init>(com.intellij.openapi.util.Condition):V
-- getDescriptiveOutput():java.lang.String
-- getFilteredOutput():java.lang.String
-- getMergedOutput():java.lang.String
-- getOutputToParseArray():java.lang.String[]
-- onTextAvailable(com.intellij.execution.process.ProcessEvent,com.intellij.openapi.util.Key):V
 com.intellij.execution.process.SelfKiller
 - *:tryDestroyGracefully():Z
 f:com.intellij.execution.process.SynchronizedProcessOutput
