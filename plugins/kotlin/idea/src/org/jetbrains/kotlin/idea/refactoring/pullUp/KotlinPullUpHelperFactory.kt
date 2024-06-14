@@ -11,6 +11,7 @@ import com.intellij.refactoring.memberPullUp.PullUpHelper
 import com.intellij.refactoring.memberPullUp.PullUpHelperFactory
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.refactoring.createJavaClass
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.toKtDeclarationWrapperAware
@@ -63,7 +64,7 @@ class JavaToKotlinPullUpHelperFactory : PullUpHelperFactory {
         )
         val elementFactory = PsiElementFactory.getInstance(project)
 
-        val dummyTargetClass = createJavaClass(targetClass, null, forcePlainClass = true)
+        val dummyTargetClass = createJavaClass(targetClass, null, ClassKind.CLASS)
         val outerClasses = targetClass.parents.filterIsInstance<KtClassOrObject>().toList().asReversed()
 
         if (outerClasses.isEmpty()) return dummyFile.add(dummyTargetClass) as PsiClass

@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.codeInsight.template.*
@@ -14,14 +13,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.UnfairTextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -52,7 +48,8 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
-import org.jetbrains.kotlin.idea.refactoring.*
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.TransformToJavaUtil.transformToJavaMemberIfApplicable
+import org.jetbrains.kotlin.idea.refactoring.ValVarExpression
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.DialogWithEditor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -850,85 +847,6 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             (typeRefs zip fullyQualifiedReceiverTypeRefs).forEach { (shortRef, longRef) -> shortRef.replace(longRef) }
         }
 
-        private fun transformToJavaMemberIfApplicable(declaration: KtNamedDeclaration): Boolean {
-            fun convertToJava(targetClass: PsiClass): PsiMember? {
-                val psiFactory = KtPsiFactory(declaration.project)
-
-                psiFactory.createPackageDirectiveIfNeeded(config.currentFile.packageFqName)?.let {
-                    declaration.containingFile.addBefore(it, null)
-                }
-
-                val adjustedDeclaration = when (declaration) {
-                    is KtNamedFunction, is KtProperty -> {
-                        val klass = psiFactory.createClass("class Foo {}")
-                        klass.body!!.add(declaration)
-                        (declaration.replace(klass) as KtClass).body!!.declarations.first()
-                    }
-                    else -> declaration
-                }
-
-                return when (adjustedDeclaration) {
-                    is KtNamedFunction, is KtSecondaryConstructor -> {
-                        createJavaMethod(adjustedDeclaration as KtFunction, targetClass)
-                    }
-                    is KtProperty -> {
-                        createJavaField(adjustedDeclaration, targetClass)
-                    }
-                    is KtClass -> {
-                        createJavaClass(adjustedDeclaration, targetClass)
-                    }
-                    else -> null
-                }
-            }
-
-            if (config.isExtension || receiverClassDescriptor !is JavaClassDescriptor) return false
-
-            val targetClass = DescriptorToSourceUtils.getSourceFromDescriptor(receiverClassDescriptor) as? PsiClass
-            if (targetClass == null || !targetClass.canRefactor()) return false
-
-            val project = declaration.project
-
-            val newJavaMember = convertToJava(targetClass) ?: return false
-
-            val modifierList = newJavaMember.modifierList!!
-            if (newJavaMember is PsiMethod || newJavaMember is PsiClass) {
-                modifierList.setModifierProperty(PsiModifier.FINAL, false)
-            }
-
-            val needStatic = when (callableInfo) {
-                is ClassWithPrimaryConstructorInfo -> with(callableInfo.classInfo) {
-                    !inner && kind != ClassKind.ENUM_ENTRY && kind != ClassKind.ENUM_CLASS
-                }
-                else -> callableInfo.receiverTypeInfo.staticContextRequired
-            }
-            modifierList.setModifierProperty(PsiModifier.STATIC, needStatic)
-
-            JavaCodeStyleManager.getInstance(project).shortenClassReferences(newJavaMember)
-
-            val descriptor = OpenFileDescriptor(project, targetClass.containingFile.virtualFile)
-            val targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true)!!
-            targetEditor.selectionModel.removeSelection()
-
-            when (newJavaMember) {
-                is PsiMethod -> CreateFromUsageUtils.setupEditor(newJavaMember, targetEditor)
-                is PsiField -> targetEditor.caretModel.moveToOffset(newJavaMember.endOffset - 1)
-                is PsiClass -> {
-                    val constructor = newJavaMember.constructors.firstOrNull()
-                    val superStatement = constructor?.body?.statements?.firstOrNull() as? PsiExpressionStatement
-                    val superCall = superStatement?.expression as? PsiMethodCallExpression
-                    if (superCall != null) {
-                        val lParen = superCall.argumentList.firstChild
-                        targetEditor.caretModel.moveToOffset(lParen.endOffset)
-                    } else {
-                        targetEditor.caretModel.moveToOffset(newJavaMember.nameIdentifier?.startOffset ?: newJavaMember.startOffset)
-                    }
-                }
-            }
-            targetEditor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
-
-            return true
-        }
-
         private fun setupEditor(declaration: KtNamedDeclaration, setupEditor: Boolean) {
             if (declaration is KtProperty && !declaration.hasInitializer() && containingElement is KtBlockExpression) {
                 val psiFactory = KtPsiFactory(declaration.project)
@@ -1056,7 +974,22 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             if (newDeclaration.getValueParameters().size == parameterTypeExpressions.size) {
                                 setupTypeReferencesForShortening(newDeclaration, parameterTypeExpressions)
                             }
-                            if (!transformToJavaMemberIfApplicable(newDeclaration)) {
+                            val needStatic = when (callableInfo) {
+                                is ClassWithPrimaryConstructorInfo -> with(callableInfo.classInfo) {
+                                    !inner && kind != ClassKind.ENUM_ENTRY && kind != ClassKind.ENUM_CLASS
+                                }
+
+                                else -> callableInfo.receiverTypeInfo.staticContextRequired
+                            }
+                            val isExtension = config.isExtension || receiverClassDescriptor !is JavaClassDescriptor
+                            val targetClass = if (receiverClassDescriptor is DeclarationDescriptor) DescriptorToSourceUtils.getSourceFromDescriptor(receiverClassDescriptor) as? PsiClass else null
+                            if (!transformToJavaMemberIfApplicable(
+                                    newDeclaration,
+                                    config.currentFile.packageFqName,
+                                    isExtension,
+                                    needStatic,
+                                    targetClass
+                                )) {
                                 elementsToShorten.add(newDeclaration)
                                 setupEditor(newDeclaration, isStartTemplate)
                             }

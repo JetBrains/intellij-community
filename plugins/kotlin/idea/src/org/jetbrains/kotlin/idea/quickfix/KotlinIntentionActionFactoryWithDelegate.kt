@@ -66,7 +66,9 @@ abstract class KotlinIntentionActionFactoryWithDelegate<E : KtElement, D : Any> 
 
                     cachedData.get() ?: currentDiagnostic?.let { extractFixData(element, currentDiagnostic) }
                 }
-            }.filter { it.isAvailable(project, null, file) }
+            }.filter {
+                it.isAvailable(project, null, file)
+            }
         } finally {
             cachedData.set(null) // Do not keep cache after all actions are initialized
         }

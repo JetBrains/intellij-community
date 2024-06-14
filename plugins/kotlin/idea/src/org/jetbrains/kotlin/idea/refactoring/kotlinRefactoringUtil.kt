@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.refactoring
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.ide.IdeBundle
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.java.JavaLanguage
@@ -20,16 +19,13 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.changeSignature.ChangeSignatureUtil
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
-import com.intellij.util.VisibilityUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.*
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
@@ -44,8 +40,6 @@ import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.rename.canonicalRender
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
@@ -62,7 +56,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.typeUtil.unCapture
-import java.lang.annotation.Retention
 import java.util.*
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
@@ -145,185 +138,6 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
     }
 
     return null
-}
-
-fun PsiElement.isTrueJavaMethod(): Boolean = this is PsiMethod && this !is KtLightMethod
-
-private fun copyModifierListItems(from: PsiModifierList, to: PsiModifierList, withPsiModifiers: Boolean = true) {
-    if (withPsiModifiers) {
-        for (modifier in PsiModifier.MODIFIERS) {
-            if (from.hasExplicitModifier(modifier)) {
-                to.setModifierProperty(modifier, true)
-            }
-        }
-    }
-    for (annotation in from.annotations) {
-        val annotationName = annotation.qualifiedName ?: continue
-
-        if (Retention::class.java.name != annotationName) {
-            to.addAnnotation(annotationName)
-        }
-    }
-}
-
-private fun <T> copyTypeParameters(
-    from: T,
-    to: T,
-    inserter: (T, PsiTypeParameterList) -> Unit
-) where T : PsiTypeParameterListOwner, T : PsiNameIdentifierOwner {
-    val factory = PsiElementFactory.getInstance((from as PsiElement).project)
-    val templateTypeParams = from.typeParameterList?.typeParameters ?: PsiTypeParameter.EMPTY_ARRAY
-    if (templateTypeParams.isNotEmpty()) {
-        inserter(to, factory.createTypeParameterList())
-        val targetTypeParamList = to.typeParameterList
-        val newTypeParams = templateTypeParams.map {
-            factory.createTypeParameter(it.name!!, it.extendsList.referencedTypes)
-        }
-
-        ChangeSignatureUtil.synchronizeList(
-            targetTypeParamList,
-            newTypeParams,
-            { it!!.typeParameters.toList() },
-            BooleanArray(newTypeParams.size)
-        )
-    }
-}
-
-fun createJavaMethod(function: KtFunction, targetClass: PsiClass): PsiMethod {
-    val template = LightClassUtil.getLightClassMethod(function)
-        ?: throw AssertionError("Can't generate light method: ${function.getElementTextWithContext()}")
-    return createJavaMethod(template, targetClass)
-}
-
-fun createJavaMethod(template: PsiMethod, targetClass: PsiClass): PsiMethod {
-    val factory = PsiElementFactory.getInstance(template.project)
-    val methodToAdd = if (template.isConstructor) {
-        factory.createConstructor(template.name)
-    } else {
-        factory.createMethod(template.name, template.returnType)
-    }
-    val method = targetClass.add(methodToAdd) as PsiMethod
-
-    copyModifierListItems(template.modifierList, method.modifierList)
-    if (targetClass.isInterface) {
-        method.modifierList.setModifierProperty(PsiModifier.FINAL, false)
-    }
-
-    copyTypeParameters(template, method) { psiMethod, typeParameterList ->
-        psiMethod.addAfter(typeParameterList, psiMethod.modifierList)
-    }
-
-    val targetParamList = method.parameterList
-    val newParams = template.parameterList.parameters.map {
-        val param = factory.createParameter(it.name, it.type)
-        copyModifierListItems(it.modifierList!!, param.modifierList!!)
-        param
-    }
-
-    ChangeSignatureUtil.synchronizeList(
-        targetParamList,
-        newParams,
-        { it.parameters.toList() },
-        BooleanArray(newParams.size)
-    )
-
-    if (template.modifierList.hasModifierProperty(PsiModifier.ABSTRACT) || targetClass.isInterface) {
-        method.body!!.delete()
-    } else if (!template.isConstructor) {
-        CreateFromUsageUtils.setupMethodBody(method)
-    }
-
-    return method
-}
-
-fun createJavaField(property: KtNamedDeclaration, targetClass: PsiClass): PsiField {
-    val accessorLightMethods = property.getAccessorLightMethods()
-    val template = accessorLightMethods.getter
-        ?: throw AssertionError("Can't generate light method: ${property.getElementTextWithContext()}")
-
-    val factory = PsiElementFactory.getInstance(template.project)
-    val field = targetClass.add(factory.createField(property.name!!, template.returnType!!)) as PsiField
-
-    with(field.modifierList!!) {
-        val templateModifiers = template.modifierList
-        setModifierProperty(VisibilityUtil.getVisibilityModifier(templateModifiers), true)
-        if ((property as KtValVarKeywordOwner).valOrVarKeyword.toValVar() != KotlinValVar.Var || targetClass.isInterface) {
-            setModifierProperty(PsiModifier.FINAL, true)
-        }
-
-        copyModifierListItems(templateModifiers, this, false)
-    }
-
-    return field
-}
-
-fun createJavaClass(klass: KtClass, targetClass: PsiClass?, forcePlainClass: Boolean = false): PsiClass {
-    val kind = if (forcePlainClass) ClassKind.CLASS else (klass.unsafeResolveToDescriptor() as ClassDescriptor).kind
-
-    val factory = PsiElementFactory.getInstance(klass.project)
-    val className = klass.name!!
-    val javaClassToAdd = when (kind) {
-        ClassKind.CLASS -> factory.createClass(className)
-        ClassKind.INTERFACE -> factory.createInterface(className)
-        ClassKind.ANNOTATION_CLASS -> factory.createAnnotationType(className)
-        ClassKind.ENUM_CLASS -> factory.createEnum(className)
-        else -> throw AssertionError("Unexpected class kind: ${klass.getElementTextWithContext()}")
-    }
-    val javaClass = (targetClass?.add(javaClassToAdd) ?: javaClassToAdd) as PsiClass
-
-    val template = klass.toLightClass() ?: throw AssertionError("Can't generate light class: ${klass.getElementTextWithContext()}")
-
-    copyModifierListItems(template.modifierList!!, javaClass.modifierList!!)
-    if (template.isInterface) {
-        javaClass.modifierList!!.setModifierProperty(PsiModifier.ABSTRACT, false)
-    }
-
-    copyTypeParameters(template, javaClass) { clazz, typeParameterList ->
-        clazz.addAfter(typeParameterList, clazz.nameIdentifier)
-    }
-
-    // Turning interface to class
-    if (!javaClass.isInterface && template.isInterface) {
-        val implementsList = factory.createReferenceListWithRole(
-            template.extendsList?.referenceElements ?: PsiJavaCodeReferenceElement.EMPTY_ARRAY,
-            PsiReferenceList.Role.IMPLEMENTS_LIST
-        )
-
-        implementsList?.let { javaClass.implementsList?.replace(it) }
-    } else {
-        val extendsList = factory.createReferenceListWithRole(
-            template.extendsList?.referenceElements ?: PsiJavaCodeReferenceElement.EMPTY_ARRAY,
-            PsiReferenceList.Role.EXTENDS_LIST
-        )
-
-        extendsList?.let { javaClass.extendsList?.replace(it) }
-
-        val implementsList = factory.createReferenceListWithRole(
-            template.implementsList?.referenceElements ?: PsiJavaCodeReferenceElement.EMPTY_ARRAY,
-            PsiReferenceList.Role.IMPLEMENTS_LIST
-        )
-
-        implementsList?.let { javaClass.implementsList?.replace(it) }
-    }
-
-    for (method in template.methods) {
-        if (isSyntheticValuesOrValueOfMethod(method)) continue
-
-        val hasParams = method.parameterList.parametersCount > 0
-        val needSuperCall = !template.isEnum &&
-                (template.superClass?.constructors ?: PsiMethod.EMPTY_ARRAY).all {
-                    it.parameterList.parametersCount > 0
-                }
-
-        if (method.isConstructor && !(hasParams || needSuperCall)) continue
-        with(createJavaMethod(method, javaClass)) {
-            if (isConstructor && needSuperCall) {
-                body!!.add(factory.createStatementFromText("super();", this))
-            }
-        }
-    }
-
-    return javaClass
 }
 
 internal fun broadcastRefactoringExit(project: Project, refactoringId: String) {
@@ -475,9 +289,6 @@ internal fun ImplicitReceiver.explicateAsText(): String {
 
 val PsiFile.isInjectedFragment: Boolean
     get() = InjectedLanguageManager.getInstance(project).isInjectedFragment(this)
-
-val PsiElement.isInsideInjectedFragment: Boolean
-    get() = containingFile.isInjectedFragment
 
 fun checkSuperMethods(
     declaration: KtDeclaration,
