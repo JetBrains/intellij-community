@@ -116,7 +116,7 @@ internal class GitBranchesTreePopupShowTagsAction :
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun isSelected(e: AnActionEvent): Boolean =
-    e.project?.let(GitVcsSettings::getInstance)?.showTags() ?: false
+    e.project?.let(GitVcsSettings::getInstance)?.showTags() ?: true
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
