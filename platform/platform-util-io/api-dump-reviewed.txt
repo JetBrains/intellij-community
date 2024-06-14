@@ -381,6 +381,8 @@ c:com.intellij.execution.process.ProcessOutput
 - setCancelled():V
 - setExitCode(I):V
 - setTimeout():V
+com.intellij.execution.process.ProcessTreeKiller
+- a:killProcessTree():Z
 com.intellij.execution.process.PtyBasedProcess
 - a:hasPty():Z
 - a:setWindowSize(I,I):V
