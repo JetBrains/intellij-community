@@ -15,7 +15,7 @@ public interface InlayProvider {
     throw new UnsupportedOperationException();
   }
 
-  default @Nullable Inlay<?> createInlayRenderer(@NotNull Editor editor, @NotNull InlayModel inlayModel, int offset) {
-    return inlayModel.addInlineElement(offset, createInlayRenderer(editor));
+  default @Nullable Inlay<?> createInlay(@NotNull Editor editor, int offset) {
+    return editor.getInlayModel().addInlineElement(offset, createInlayRenderer(editor));
   }
 }

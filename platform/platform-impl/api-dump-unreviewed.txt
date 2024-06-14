@@ -3211,8 +3211,8 @@ c:com.intellij.execution.impl.ExpirableTokenProvider
 - createExpirable():com.intellij.openapi.util.Expirable
 - invalidateAll():V
 *:com.intellij.execution.impl.InlayProvider
+- createInlay(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.editor.Inlay
 - createInlayRenderer(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.EditorCustomElementRenderer
-- createInlayRenderer(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.InlayModel,I):com.intellij.openapi.editor.Inlay
 c:com.intellij.execution.process.CommandOutputLogger
 - com.intellij.execution.process.ProcessAdapter
 - <init>(com.intellij.openapi.diagnostic.Logger):V

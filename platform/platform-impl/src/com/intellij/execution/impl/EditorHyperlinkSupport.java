@@ -385,7 +385,7 @@ public final class EditorHyperlinkSupport {
   }
 
   private void addInlay(int offset, @NotNull InlayProvider inlayProvider) {
-    Inlay<?> inlay = inlayProvider.createInlayRenderer(myEditor, myEditor.getInlayModel(), offset);
+    Inlay<?> inlay = inlayProvider.createInlay(myEditor, offset);
     if (inlay != null) {
       INLAY.set(inlay, Unit.INSTANCE);
     }
