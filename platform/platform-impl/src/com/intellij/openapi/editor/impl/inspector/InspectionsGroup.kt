@@ -144,11 +144,20 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
     }
   }
 
-  private open class InspectionsBaseAction(var item: StatusItem, val editor: EditorImpl, var title: @Nls String? = null, var description: @Nls String? = null, var actionLink: Link? = null, protected val fusTabId: Int) : DumbAwareAction(), CustomComponentAction {
+  private open class InspectionsBaseAction(item: StatusItem, val editor: EditorImpl, var title: @Nls String? = null, var description: @Nls String? = null, var actionLink: Link? = null, protected val fusTabId: Int) : DumbAwareAction(), CustomComponentAction {
+    var item = item
+      set(value) {
+        if(field == value) return
+        field = value
+        itemUpdated()
+      }
+
     companion object {
       private val ICON_TEXT_COLOR: ColorKey = ColorKey.createColorKey("ActionButton.iconTextForeground",
                                                                       UIUtil.getContextHelpForeground())
     }
+
+    protected open fun itemUpdated(){}
 
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.BGT
@@ -224,14 +233,19 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
       private fun isGotItAvailable(): Boolean {
         return ApplicationInfoEx.getInstanceEx().isEAP
       }
-
-
     }
 
     init {
       item.detailsText?.let {
         title = DaemonBundle.message("iw.inspection.title", it)
       }
+    }
+
+    override fun itemUpdated() {
+      super.itemUpdated()
+       item.detailsText?.let {
+         title = DaemonBundle.message("iw.inspection.title", it)
+      } ?: run { title = null }
     }
 
     override fun isSecondActionEvent(e: InputEvent?): Boolean {
@@ -244,7 +258,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
         fun getInstance(project: Project): MyService = project.service()
       }
 
-      val scope = scope.childScope(supervisor = true, context = Dispatchers.EDT)
+      val scope = scope.childScope(supervisor = true, context = Dispatchers.EDT, name = "InspectionWidgetGotItTooltipService")
       private var currentJob: Job? = null
 
       @Suppress("DEPRECATION")
