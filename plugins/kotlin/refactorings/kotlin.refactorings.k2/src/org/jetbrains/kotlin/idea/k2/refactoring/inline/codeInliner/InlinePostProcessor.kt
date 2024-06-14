@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
@@ -144,9 +145,17 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
                 val functionCall = callExpression.resolveCallOld()?.singleFunctionCallOrNull() ?: return@forEachDescendantOfType
 
                 val arguments = functionCall.argumentMapping.entries.toList()
-                val valueParameters = functionCall.partiallyAppliedSymbol.symbol.valueParameters
+                val callableSymbol = functionCall.partiallyAppliedSymbol.symbol
+                val valueParameters = callableSymbol.valueParameters
+                var idx = arguments.size
                 for ((argument, param) in arguments.asReversed()) {
+                    idx--
                     val defaultValue = param.symbol.defaultValue
+                        ?: callableSymbol.getAllOverriddenSymbols()
+                            .mapNotNull {
+                                val params = (it as? KtFunctionLikeSymbol)?.valueParameters
+                                params?.getOrNull(idx)?.defaultValue
+                            }.firstOrNull()
 
                     fun substituteDefaultValueWithPassedArguments(): @NlsSafe String? {
                         val key = Key<KtExpression>("SUBSTITUTION")

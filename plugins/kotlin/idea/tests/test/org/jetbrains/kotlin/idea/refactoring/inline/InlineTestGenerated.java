@@ -2115,6 +2115,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/defaultParameterDiffers1.kt");
             }
 
+            @TestMetadata("defaultParameterFromSuper.kt")
+            public void testDefaultParameterFromSuper() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/defaultParameterFromSuper.kt");
+            }
+
             @TestMetadata("defaultParameterImplicitlyUsed.kt")
             public void testDefaultParameterImplicitlyUsed() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/defaultParameterImplicitlyUsed.kt");
