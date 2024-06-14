@@ -276,7 +276,7 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   override fun daemonCanceled(reason: String, fileEditors: Collection<FileEditor>) {
-    ListenerState.LOG.info("daemon canceled with ${fileEditors.size} unfiltered editors")
+    ListenerState.LOG.info("daemon canceled by the reason of '$reason'")
     daemonStopped(fileEditors, true)
   }
 
