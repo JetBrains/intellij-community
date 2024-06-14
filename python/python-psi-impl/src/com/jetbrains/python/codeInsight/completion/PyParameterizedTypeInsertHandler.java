@@ -19,7 +19,7 @@ public class PyParameterizedTypeInsertHandler extends ParenthesesInsertHandler<L
   public static boolean isCompletingParameterizedType(@NotNull PsiElement definition,
                                                       @NotNull PsiElement completionPosition,
                                                       @NotNull TypeEvalContext context) {
-    return PyTypingTypeProvider.isInsideTypeHint(completionPosition, context) && isParameterizedType(definition, context);
+    return PyTypingTypeProvider.isInsideTypeHint(completionPosition, context) && isParameterizableType(definition, context);
   }
 
   public static final PyParameterizedTypeInsertHandler INSTANCE = new PyParameterizedTypeInsertHandler();
@@ -33,8 +33,8 @@ public class PyParameterizedTypeInsertHandler extends ParenthesesInsertHandler<L
     return true;
   }
 
-  private static boolean isParameterizedType(@NotNull PsiElement element, @NotNull TypeEvalContext typeEvalContext) {
+  private static boolean isParameterizableType(@NotNull PsiElement element, @NotNull TypeEvalContext typeEvalContext) {
     return element instanceof PyQualifiedNameOwner qnOwner && PyTypingTypeProvider.GENERIC_CLASSES.contains(qnOwner.getQualifiedName()) ||
-           element instanceof PyClass pyClass && PyTypingTypeProvider.isGeneric(pyClass, typeEvalContext);
+           element instanceof PyClass pyClass && new PyTypingTypeProvider().getGenericType(pyClass, typeEvalContext) != null;
   }
 }
