@@ -120,14 +120,20 @@ internal class RemoveExplicitTypeIntention :
         is KtStringTemplateExpression -> true
         // `val n: Int = 1` - type of `1` is context-independent
         // `val n: Long = 1` - type of `1` is context-dependent
-        is KtConstantExpression -> initializer.getClassId()?.let { buildClassType(it) }?.isSubTypeOf(typeReference.getKtType()) == true
+        is KtConstantExpression -> {
+            val classId = initializer.getClassId()
+            val let = classId?.let { buildClassType(it) }
+            val superType = typeReference.getKtType()
+            val subTypeOf = let?.isSubTypeOf(superType)
+            subTypeOf == true
+        }
         is KtCallExpression -> initializer.typeArgumentList != null || !returnTypeOfCallDependsOnTypeParameters(initializer)
         is KtArrayAccessExpression -> !returnTypeOfCallDependsOnTypeParameters(initializer)
         is KtCallableReferenceExpression -> isCallableReferenceExpressionTypeContextIndependent(initializer)
         is KtQualifiedExpression -> initializer.callExpression?.let { isInitializerTypeContextIndependent(it, typeReference) } == true
         is KtLambdaExpression -> isLambdaExpressionTypeContextIndependent(initializer, typeReference)
         is KtNamedFunction -> isAnonymousFunctionTypeContextIndependent(initializer, typeReference)
-        is KtSimpleNameExpression -> true
+        is KtSimpleNameExpression, is KtBinaryExpression -> true
 
         // consider types of expressions that the compiler views as constants, e.g. `1 + 2`, as independent
         else -> initializer.evaluate() != null

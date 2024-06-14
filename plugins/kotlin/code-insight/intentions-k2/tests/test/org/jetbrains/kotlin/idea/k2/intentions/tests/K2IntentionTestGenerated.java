@@ -3880,6 +3880,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializerWithTypeArgument.kt");
         }
 
+        @TestMetadata("localVariableTypeForBoolean.kt")
+        public void testLocalVariableTypeForBoolean() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/localVariableTypeForBoolean.kt");
+        }
+
         @TestMetadata("needTypeArgument.kt")
         public void testNeedTypeArgument() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/needTypeArgument.kt");
