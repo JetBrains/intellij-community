@@ -101,10 +101,6 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     myRemoteSdkProperties.setRunAsRootViaSudo(runAsRootViaSudo);
   }
 
-  public static boolean isRemoteSdk(@Nullable String path) {
-    return RemoteSdkProperties.isRemoteSdk(path);
-  }
-
   @Override
   public void load(Element element) {
     super.load(element);

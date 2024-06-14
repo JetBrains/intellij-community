@@ -279,7 +279,6 @@ c:com.intellij.remote.RemoteSdkCredentialsHolder
 - getSdkId():java.lang.String
 - hashCode():I
 - isHelpersVersionChecked():Z
-- s:isRemoteSdk(java.lang.String):Z
 - isRunAsRootViaSudo():Z
 - isValid():Z
 - load(org.jdom.Element):V
