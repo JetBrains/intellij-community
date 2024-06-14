@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote
 
 import org.jetbrains.annotations.ApiStatus
@@ -24,13 +24,7 @@ data class SshConnectionConfigPatch(
     var proxyType: Type,
     var authData: ProxyAuthData?,
   ) {
-
-    constructor() : this("", -1, Type.NO_PROXY, null)
-
-    fun withProxyHost(value: String): ProxyParams = apply { proxyHost = value }
-    fun withProxyPort(value: Int): ProxyParams = apply { proxyPort = value }
-    fun withProxyType(value: Type): ProxyParams = apply { proxyType = value }
-    fun withProxyAuthData(value: ProxyAuthData) = apply { authData = value }
+    constructor() : this(proxyHost = "", proxyPort = -1, Type.NO_PROXY, authData = null)
 
     enum class Type {
 
@@ -69,21 +63,10 @@ data class SshConnectionConfigPatch(
     var hashKnownHosts: Boolean?,
     var strictHostKeyChecking: StrictHostKeyChecking?,
   ) {
-    constructor() : this(null, null)
-
-    fun withHashKnownHosts(value: Boolean): HostKeyVerifier = apply { hashKnownHosts = value }
-    fun withStrictHostKeyChecking(value: StrictHostKeyChecking): HostKeyVerifier = apply { strictHostKeyChecking = value }
+    constructor() : this(hashKnownHosts = null, strictHostKeyChecking = null)
   }
 
-  constructor() : this(
-    hostKeyVerifier = null,
-    serverAliveInterval = null,
-    proxyParams = null,
-  )
-
-  fun withHostKeyVerifier(value: HostKeyVerifier): SshConnectionConfigPatch = apply { hostKeyVerifier = value }
-  fun withServerAliveInterval(value: Duration): SshConnectionConfigPatch = apply { serverAliveInterval = value }
-  fun withProxyParameters(value: ProxyParams): SshConnectionConfigPatch = apply { proxyParams = value }
+  constructor() : this(hostKeyVerifier = null, serverAliveInterval = null, proxyParams = null)
 
   fun deepCopy(): SshConnectionConfigPatch = copy(
     hostKeyVerifier = hostKeyVerifier?.copy(),
