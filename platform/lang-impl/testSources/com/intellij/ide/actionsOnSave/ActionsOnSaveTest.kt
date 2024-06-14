@@ -3,8 +3,7 @@ package com.intellij.ide.actionsOnSave
 
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -15,27 +14,37 @@ import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ActionsOnSaveTest : BasePlatformTestCase() {
+
+  /**
+   * Simulates user typing in the editor while Actions on Save are still in progress.
+   * Typing must not be within the same coroutine where Actions on Save run, that's why `cs.launch{}` is used.
+   * To have stable test results, `join()` is used, otherwise there would be a race between running Actions on Save and typing.
+   */
   @Service(Service.Level.PROJECT)
-  private class ActionsOnSaveTestService(val cs: CoroutineScope) {
-    var onBgtActionOnSave1Started: (suspend (Document) -> Unit)? = null
-    fun bgtActionOnSave1Started(document: Document) = onBgtActionOnSave1Started?.let { cs.launch { it(document) } }
+  private class ActionsOnSaveTestService(private val project: Project, val cs: CoroutineScope) {
+    var interceptor: ActionOnSaveInterceptor? = null
+
+    suspend fun actionStarting(actionIndex: Int, document: Document) =
+      interceptor?.let { cs.launch { writeCommandAction(project, "") { it.actionStarting(actionIndex, document) } }.join() }
+
+    suspend fun actionHalfDone(actionIndex: Int, document: Document) =
+      interceptor?.let { cs.launch { writeCommandAction(project, "") { it.actionHalfDone(actionIndex, document) } }.join() }
+
+    suspend fun actionFinished(actionIndex: Int, document: Document) =
+      interceptor?.let { cs.launch { writeCommandAction(project, "") { it.actionFinished(actionIndex, document) } }.join() }
+  }
+
+  private open class ActionOnSaveInterceptor {
+    open fun actionStarting(actionIndex: Int, document: Document) {}
+    open fun actionHalfDone(actionIndex: Int, document: Document) {}
+    open fun actionFinished(actionIndex: Int, document: Document) {}
   }
 
   private data object EdtActionOnSave1 : EdtActionOnSave(1)
   private data object EdtActionOnSave2 : EdtActionOnSave(2)
-
-  private data object BgtActionOnSave1 : BgtActionOnSave(1) {
-    override suspend fun updateDocument(project: Project, document: Document) {
-      project.service<ActionsOnSaveTestService>().bgtActionOnSave1Started(document)
-      super.updateDocument(project, document)
-    }
-  }
-
-  private data object BgtActionOnSave2 : BgtActionOnSave(2)
 
   private sealed class EdtActionOnSave(val index: Int) : ActionsOnSaveFileDocumentManagerListener.ActionOnSave() {
     override fun isEnabledForProject(project: Project): Boolean = true
@@ -44,12 +53,15 @@ class ActionsOnSaveTest : BasePlatformTestCase() {
         .filter { FileDocumentManager.getInstance().getFile(it)?.name?.endsWith(".txt") == true }
         .takeIf { it.isNotEmpty() }
         ?.let { docs ->
-          WriteCommandAction.runWriteCommandAction(project) {
+          runWriteCommandAction(project) {
             docs.forEach { document -> document.insertString(document.textLength, "\nEdtActionOnSave$index") }
           }
         }
     }
   }
+
+  private data object BgtActionOnSave1 : BgtActionOnSave(1)
+  private data object BgtActionOnSave2 : BgtActionOnSave(2)
 
   private sealed class BgtActionOnSave(val index: Int) : ActionsOnSaveFileDocumentManagerListener.DocumentUpdatingActionOnSave() {
     override val presentableName: String = "BgtActionOnSave$index"
@@ -58,15 +70,16 @@ class ActionsOnSaveTest : BasePlatformTestCase() {
     override suspend fun updateDocument(project: Project, document: Document) {
       if (FileDocumentManager.getInstance().getFile(document)?.name?.endsWith(".txt") != true) return
 
-      delay(100)
+      val testService = project.service<ActionsOnSaveTestService>()
+      testService.actionStarting(index, document)
       writeCommandAction(project, "BgtActionOnSave$index(1)") {
         document.insertString(document.textLength, "\nBgtActionOnSave$index(1)")
       }
-
-      delay(100)
+      testService.actionHalfDone(index, document)
       writeCommandAction(project, "BgtActionOnSave$index(2)") {
         document.insertString(document.textLength, "\nBgtActionOnSave$index(2)")
       }
+      testService.actionFinished(index, document)
     }
   }
 
@@ -97,26 +110,15 @@ class ActionsOnSaveTest : BasePlatformTestCase() {
 
   private fun addDocument(fileName: String): Document {
     val document = myFixture.addFileToProject(fileName, "").fileDocument
-    WriteCommandAction.runWriteCommandAction(project) {
+    runWriteCommandAction(project) {
       document.insertString(0, "initial text")
     }
     return document
   }
 
-  private suspend fun typeInDocumentAfterDelay(document: Document, delayMillis: Long) {
-    delay(delayMillis)
-    writeCommandAction(project, "manual typing") {
-      document.insertString(document.textLength, "\nmanual typing")
-    }
-  }
-
-  private fun doTestWithTwoFiles(
-    doc1ExpectedText: String,
-    doc2ExpectedText: String,
-    onBgtActionOnSave1Started: (suspend (document: Document) -> Unit)? = null,
-  ) {
+  private fun doTestWithTwoFiles(interceptor: ActionOnSaveInterceptor?, doc1ExpectedText: String, doc2ExpectedText: String) {
     val testService = project.service<ActionsOnSaveTestService>()
-    testService.onBgtActionOnSave1Started = onBgtActionOnSave1Started
+    testService.interceptor = interceptor
 
     val doc1 = addDocument(file1Name)
     val doc2 = addDocument(file2Name)
@@ -144,52 +146,89 @@ class ActionsOnSaveTest : BasePlatformTestCase() {
   }
 
   fun testAllActionsFinished() =
-    doTestWithTwoFiles(textAfterAllActions, textAfterAllActions)
+    doTestWithTwoFiles(null, textAfterAllActions, textAfterAllActions)
 
-  fun testFirstFileEditedAfterAllActionsFinished() {
-    val doc1ExpectedText = "$textAfterAllActions\nmanual typing"
-    doTestWithTwoFiles(doc1ExpectedText, textAfterAllActions) {
-      if (isDocument1(it)) typeInDocumentAfterDelay(it, 450)
-    }
-  }
-
-  fun testSecondFileEditedAfter50ms() {
-    val doc2ExpectedText = "initial text\nEdtActionOnSave1\nEdtActionOnSave2\nmanual typing"
-    doTestWithTwoFiles(textAfterAllActions, doc2ExpectedText) {
-      if (isDocument2(it)) typeInDocumentAfterDelay(it, 50)
-    }
-  }
-
-  fun testBothFilesEditedBeforeBgtActionsGetChance() {
-    val docExpectedText = "initial text\nEdtActionOnSave1\nEdtActionOnSave2\nmanual typing"
-    var typed = false
-    doTestWithTwoFiles(docExpectedText, docExpectedText) {
-      if (typed) return@doTestWithTwoFiles
-      typed = true
-
-      val (doc1, doc2) = readAction {
+  fun testBothFilesEditedBeforeBgtActionsStart() {
+    val interceptor = object : ActionOnSaveInterceptor() {
+      override fun actionStarting(actionIndex: Int, document: Document) {
         val manager = FileDocumentManager.getInstance()
-        val parentDir = manager.getFile(it)!!.parent
-        manager.getDocument(parentDir.findChild(file1Name)!!)!! to manager.getDocument(parentDir.findChild(file2Name)!!)!!
+        val parentDir = manager.getFile(document)!!.parent
+        val doc1 = manager.getDocument(parentDir.findChild(file1Name)!!)!!
+        val doc2 = manager.getDocument(parentDir.findChild(file2Name)!!)!!
+        doc1.insertString(doc1.textLength, "\nmanual typing")
+        doc2.insertString(doc2.textLength, "\nmanual typing")
       }
-      typeInDocumentAfterDelay(doc1, 0)
-      typeInDocumentAfterDelay(doc2, 0)
     }
+    val docExpectedText = "initial text\nEdtActionOnSave1\nEdtActionOnSave2\nmanual typing"
+    doTestWithTwoFiles(interceptor, docExpectedText, docExpectedText)
   }
 
-  fun testFirstFileEditedAfter150ms() {
+  fun testSecondFileEditedBeforeItsBgtActionsStart() {
+    val interceptor = object : ActionOnSaveInterceptor() {
+      override fun actionStarting(actionIndex: Int, document: Document) {
+        if (isDocument2(document)) {
+          document.insertString(document.textLength, "\nmanual typing")
+        }
+      }
+    }
+    val doc2ExpectedText = "initial text\nEdtActionOnSave1\nEdtActionOnSave2\nmanual typing"
+    doTestWithTwoFiles(interceptor, textAfterAllActions, doc2ExpectedText)
+  }
+
+  fun testFirstFileEditedAfterItsActionsFinished() {
+    val interceptor = object : ActionOnSaveInterceptor() {
+      override fun actionFinished(actionIndex: Int, document: Document) {
+        if (isDocument1(document) && actionIndex == 2) {
+          document.insertString(document.textLength, "\nmanual typing")
+        }
+      }
+    }
+    val doc1ExpectedText = "$textAfterAllActions\nmanual typing"
+    doTestWithTwoFiles(interceptor, doc1ExpectedText, textAfterAllActions)
+  }
+
+  fun testFirstFileEditedInTheMiddle() {
+    val interceptor = object : ActionOnSaveInterceptor() {
+      override fun actionHalfDone(actionIndex: Int, document: Document) {
+        if (isDocument1(document)) {
+          document.insertString(document.textLength, "\nmanual typing")
+        }
+      }
+    }
     val doc1ExpectedText = "initial text\nEdtActionOnSave1\nEdtActionOnSave2\nBgtActionOnSave1(1)\nmanual typing"
-    doTestWithTwoFiles(doc1ExpectedText, textAfterAllActions) {
-      if (isDocument1(it)) typeInDocumentAfterDelay(it, 150)
-    }
+    doTestWithTwoFiles(interceptor, doc1ExpectedText, textAfterAllActions)
   }
 
-  fun testFirstFileEditedAfter250msSecondAfter350() {
+
+  fun testSecondFileEditedInTheMiddle() {
+    val interceptor = object : ActionOnSaveInterceptor() {
+      override fun actionStarting(actionIndex: Int, document: Document) {
+        if (isDocument2(document) && actionIndex == 2) {
+          document.insertString(document.textLength, "\nmanual typing")
+        }
+      }
+    }
+    val doc2ExpectedText = "initial text\nEdtActionOnSave1\nEdtActionOnSave2\nBgtActionOnSave1(1)\nBgtActionOnSave1(2)\nmanual typing"
+    doTestWithTwoFiles(interceptor, textAfterAllActions, doc2ExpectedText)
+  }
+
+  fun testBothFilesEditedInTheMiddle() {
+    val interceptor = object : ActionOnSaveInterceptor() {
+      override fun actionStarting(actionIndex: Int, document: Document) {
+        if (isDocument1(document) && actionIndex == 2) {
+          document.insertString(document.textLength, "\nmanual typing")
+        }
+      }
+
+      override fun actionHalfDone(actionIndex: Int, document: Document) {
+        if (isDocument2(document) && actionIndex == 2) {
+          document.insertString(document.textLength, "\nmanual typing")
+        }
+      }
+    }
+
     val doc1ExpectedText = "initial text\nEdtActionOnSave1\nEdtActionOnSave2\nBgtActionOnSave1(1)\nBgtActionOnSave1(2)\nmanual typing"
     val doc2ExpectedText = "initial text\nEdtActionOnSave1\nEdtActionOnSave2\nBgtActionOnSave1(1)\nBgtActionOnSave1(2)\nBgtActionOnSave2(1)\nmanual typing"
-    doTestWithTwoFiles(doc1ExpectedText, doc2ExpectedText) {
-      if (isDocument1(it)) typeInDocumentAfterDelay(it, 250)
-      if (isDocument2(it)) typeInDocumentAfterDelay(it, 350)
-    }
+    doTestWithTwoFiles(interceptor, doc1ExpectedText, doc2ExpectedText)
   }
 }
