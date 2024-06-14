@@ -39,10 +39,10 @@ f:com.intellij.diff.actions.BlankDiffWindowUtil
 - sf:REMEMBER_CONTENT_KEY:com.intellij.openapi.util.Key
 - sf:createBlankDiffRequestChain(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent):com.intellij.diff.actions.impl.MutableDiffRequestChain
 - bs:createBlankDiffRequestChain$default(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,I,java.lang.Object):com.intellij.diff.actions.impl.MutableDiffRequestChain
-c:com.intellij.diff.actions.impl.DiffNavigatableArrayRule
-- com.intellij.ide.impl.dataRules.GetDataRule
+c:com.intellij.diff.actions.impl.DiffEdtDataRule
+- com.intellij.openapi.actionSystem.EdtDataRule
 - <init>():V
-- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
 c:com.intellij.diff.actions.impl.FocusOppositePaneAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware

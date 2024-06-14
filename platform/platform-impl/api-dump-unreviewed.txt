@@ -6773,10 +6773,6 @@ f:com.intellij.ide.impl.TrustedProjectsStatistics
 - f:getTRUST_HOST_CHECKBOX_SELECTED():com.intellij.internal.statistic.eventLog.events.EventId
 - f:getTRUST_LOCATION_CHECKBOX_SELECTED():com.intellij.internal.statistic.eventLog.events.EventId
 - f:getTRUST_PROJECT_FROM_BANNER():com.intellij.internal.statistic.eventLog.events.EventId
-f:com.intellij.ide.impl.dataRules.FileEditorRule
-- com.intellij.ide.impl.dataRules.GetDataRule
-- <init>():V
-- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 f:com.intellij.ide.impl.dataRules.NavigatableArrayRule
 - com.intellij.ide.impl.dataRules.GetDataRule
 - <init>():V

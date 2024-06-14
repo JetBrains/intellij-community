@@ -2232,11 +2232,6 @@ com.intellij.openapi.vcs.changes.VcsAnnotationRefresher
 - a:dirty(com.intellij.openapi.vcs.changes.BaseRevision):V
 - a:dirty(java.lang.String):V
 - a:dirtyUnder(com.intellij.openapi.vfs.VirtualFile):V
-c:com.intellij.openapi.vcs.changes.VcsChangesSelectionRule
-- com.intellij.ide.impl.dataRules.GetDataRule
-- <init>():V
-- getChangesSelection(com.intellij.openapi.actionSystem.DataProvider):com.intellij.openapi.ListSelection
-- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 f:com.intellij.openapi.vcs.changes.VcsCurrentRevisionProxy
 - com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 - s:create(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.VcsCurrentRevisionProxy
