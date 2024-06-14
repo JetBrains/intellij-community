@@ -1,6 +1,10 @@
 package org.jetbrains.plugins.notebooks.ui.visualization
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBFont
@@ -14,8 +18,7 @@ import javax.swing.BorderFactory
 import javax.swing.JLabel
 
 class NotebookCellTagLabel(@Nls val tag: String, val cellNum: Int) : JLabel(tag) {  // PY-72712
-
-  private var backgroundColor = JBColor.LIGHT_GRAY
+  private var backgroundColor = JBColor.namedColor("Tag.background", Gray.xDF)
   private var foregroundColor = JBColor.BLACK
 
   init {

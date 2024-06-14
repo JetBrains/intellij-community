@@ -83,8 +83,8 @@ class NotebookBelowCellDelimiterPanel(
         val dataContext = DataContext { dataId ->
           when(dataId) {
             CommonDataKeys.EDITOR.name -> editor
-            PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> this@NotebookBelowCellDelimiterPanel
             CommonDataKeys.PROJECT.name -> editor.project
+            PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> this@NotebookBelowCellDelimiterPanel
             else -> null
           }
         }
