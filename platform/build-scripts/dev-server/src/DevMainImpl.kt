@@ -32,7 +32,7 @@ fun buildDevMain(): Collection<Path> {
   var homePath: String? = null
   var newClassPath: Collection<Path>? = null
   runBlocking(Dispatchers.Default) {
-    val batchSpanProcessorScope = childScope()
+    val batchSpanProcessorScope = childScope("BatchSpanProcessor")
     val spanProcessor = BatchSpanProcessor(coroutineScope = batchSpanProcessorScope, spanExporters = java.util.List.of(ConsoleSpanExporter()))
 
     val tracerProvider = SdkTracerProvider.builder()
