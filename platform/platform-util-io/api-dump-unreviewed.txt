@@ -410,8 +410,6 @@ f:com.intellij.execution.process.ScriptRunnerUtil
 - s:terminateProcessHandler(com.intellij.execution.process.ProcessHandler,J,java.lang.String):V
 com.intellij.execution.process.SelfKiller
 - *:tryDestroyGracefully():Z
-f:com.intellij.execution.process.WinRunnerMediator
-- s:withExternalConsole(com.intellij.execution.configurations.GeneralCommandLine):V
 f:com.intellij.execution.process.impl.ProcessListUtil
 - sf:COMMAND_LIST_COMMAND:java.util.List
 - sf:COMM_LIST_COMMAND:java.util.List
