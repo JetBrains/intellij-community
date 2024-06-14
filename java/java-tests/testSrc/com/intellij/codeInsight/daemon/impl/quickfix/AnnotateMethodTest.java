@@ -25,6 +25,7 @@ public class AnnotateMethodTest extends LightQuickFixParameterizedTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     if (getTestName(false).contains("TypeUse")) {
+      NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
       AnnotationPackageSupport mySupport = new AnnotationPackageSupport() {
         @Override
         public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
@@ -41,7 +42,6 @@ public class AnnotateMethodTest extends LightQuickFixParameterizedTestCase {
         }
       }; 
       ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), AnnotationPackageSupport.EP_NAME, mySupport, getTestRootDisposable());
-      NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
       String prevNullable = nnnManager.getDefaultNullable();
       String prevNotNull = nnnManager.getDefaultNotNull();
       nnnManager.setDefaultNotNull("typeUse.NotNull");

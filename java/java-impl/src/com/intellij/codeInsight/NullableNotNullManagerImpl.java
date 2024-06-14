@@ -9,12 +9,13 @@ import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.library.JavaLibraryModificationTracker;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -43,7 +44,8 @@ import static com.intellij.codeInsight.AnnotationUtil.NULLABLE;
 import static com.intellij.codeInspection.options.OptPane.*;
 
 @State(name = "NullableNotNullManager")
-public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element>, ModificationTracker {
+public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element>, ModificationTracker,
+                                                                                  Disposable {
   private static final String INSTRUMENTED_NOT_NULLS_TAG = "instrumentedNotNulls";
 
   private List<AnnotationPackageSupport> myAnnotationSupports;
@@ -61,20 +63,18 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   public NullableNotNullManagerImpl(Project project) {
     super(project);
-    project.getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+    AnnotationPackageSupport.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
-      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+      public void extensionAdded(AnnotationPackageSupport extension, @NotNull PluginDescriptor pluginDescriptor) {
         updateDefaults();
       }
 
       @Override
-      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      public void extensionRemoved(AnnotationPackageSupport extension, @NotNull PluginDescriptor pluginDescriptor) {
         updateDefaults();
       }
-    });
+    }, this);
     updateDefaults();
-    myNullables.addAll(myDefaultNullables.keySet());
-    myNotNulls.addAll(myDefaultNotNulls.keySet());
   }
 
   private void updateDefaults() {
@@ -86,6 +86,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     myDefaultUnknowns = StreamEx.of(myAnnotationSupports)
       .cross(s -> s.getNullabilityAnnotations(Nullability.UNKNOWN).stream()).invert().toMap();
     myDefaultAll = StreamEx.of(myDefaultNullables, myDefaultNotNulls, myDefaultUnknowns).toFlatList(Map::keySet);
+    normalizeDefaults();
   }
 
   @Override
@@ -451,6 +452,11 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
       return Result.create(info, PsiModificationTracker.MODIFICATION_COUNT);
     });
+  }
+
+  @Override
+  public void dispose() {
+    
   }
 
   /**
