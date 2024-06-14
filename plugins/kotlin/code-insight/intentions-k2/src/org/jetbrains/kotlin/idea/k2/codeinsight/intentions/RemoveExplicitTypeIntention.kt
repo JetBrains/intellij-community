@@ -130,7 +130,7 @@ internal class RemoveExplicitTypeIntention :
         is KtCallExpression -> initializer.typeArgumentList != null || !returnTypeOfCallDependsOnTypeParameters(initializer)
         is KtArrayAccessExpression -> !returnTypeOfCallDependsOnTypeParameters(initializer)
         is KtCallableReferenceExpression -> isCallableReferenceExpressionTypeContextIndependent(initializer)
-        is KtQualifiedExpression -> initializer.callExpression?.let { isInitializerTypeContextIndependent(it, typeReference) } == true
+        is KtQualifiedExpression -> ((initializer as? KtDotQualifiedExpression)?.selectorExpression ?: initializer.callExpression)?.let { isInitializerTypeContextIndependent(it, typeReference) } == true
         is KtLambdaExpression -> isLambdaExpressionTypeContextIndependent(initializer, typeReference)
         is KtNamedFunction -> isAnonymousFunctionTypeContextIndependent(initializer, typeReference)
         is KtSimpleNameExpression, is KtBinaryExpression -> true

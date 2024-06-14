@@ -3965,6 +3965,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/onType.kt");
         }
 
+        @TestMetadata("propertyTypeForExtFunctionCall.kt")
+        public void testPropertyTypeForExtFunctionCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/propertyTypeForExtFunctionCall.kt");
+        }
+
         @TestMetadata("propertyTypeFromGetter.kt")
         public void testPropertyTypeFromGetter() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/propertyTypeFromGetter.kt");
