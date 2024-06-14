@@ -8,7 +8,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import java.nio.file.Path
 
-internal fun enableL10nIfPluginInstalled(previousVersion: String?, oldPluginsDir: Path, bundledPluginPath: Path?, brokenPluginVersions: Map<PluginId, Set<String>>?, compatibleBuildNumber: BuildNumber) {
+internal fun enableL10nIfPluginInstalled(previousVersion: String?, oldPluginsDir: Path, bundledPluginPath: Path?, brokenPluginVersions: Map<PluginId, Set<String>>?, compatibleBuildNumber: BuildNumber?) {
   if (previousVersion == null || Version.fromString("2024.1") > Version.fromString("2024.2")) return
   val loadedDescriptors = loadDescriptorsFromOtherIde(oldPluginsDir, bundledPluginPath, brokenPluginVersions, compatibleBuildNumber)
 
