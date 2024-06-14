@@ -139,7 +139,9 @@ public class UsageViewImpl implements UsageViewEx {
   private static int compareByFileAndOffset(@NotNull Usage o1, @NotNull Usage o2) {
     VirtualFile file1 = o1 instanceof UsageInFile ? ((UsageInFile)o1).getFile() : null;
     VirtualFile file2 = o2 instanceof UsageInFile ? ((UsageInFile)o2).getFile() : null;
-    if (file1 == null || file2 == null) return 0;
+    if (file1 == null && file2 == null) return 0;
+    if (file1 == null) return -1;
+    if (file2 == null) return 1;
     if (file1.equals(file2)) {
       return Integer.compare(o1.getNavigationOffset(), o2.getNavigationOffset());
     }
