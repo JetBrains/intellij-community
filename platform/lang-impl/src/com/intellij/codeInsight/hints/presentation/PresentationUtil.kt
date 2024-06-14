@@ -4,18 +4,18 @@ package com.intellij.codeInsight.hints.presentation
 import java.awt.Graphics2D
 import java.awt.Point
 
-internal fun Graphics2D.withTranslated(x: Int, y: Int, block: () -> Unit) {
+internal inline fun Graphics2D.withTranslated(x: Int, y: Int, block: () -> Unit) {
+  translate(x, y)
   try {
-    translate(x, y)
     block()
   } finally {
     translate(-x, -y)
   }
 }
 
-internal fun Graphics2D.withTranslated(x: Double, y: Double, block: () -> Unit) {
+internal inline fun Graphics2D.withTranslated(x: Double, y: Double, block: () -> Unit) {
+  translate(x, y)
   try {
-    translate(x, y)
     block()
   } finally {
     translate(-x, -y)
