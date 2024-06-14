@@ -8,6 +8,8 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
@@ -314,9 +316,6 @@ data class BuildOptions(
      */
     const val IJENT_EXECUTABLE_DOWNLOADING: String = "ijent.executable.downloading"
 
-    @Suppress("SpellCheckingInspection")
-    private const val DEFAULT_SNAP_TOOL_IMAGE = "snapcore/snapcraft:stable@sha256:6d771575c134569e28a590f173f7efae8bf7f4d1746ad8a474c98e02f4a3f627"
-
     private fun parseBooleanValue(text: String): Boolean = when {
       text.toBoolean() -> true
       text.equals(false.toString(), ignoreCase = true) -> false
@@ -336,6 +335,10 @@ data class BuildOptions(
         "diverging from modification times specified in .manifest."
       }
       return value
+    }
+
+    private val DEPENDENCIES_PROPERTIES: DependenciesProperties by lazy {
+      DependenciesProperties(COMMUNITY_ROOT)
     }
   }
 
@@ -368,7 +371,7 @@ data class BuildOptions(
   /**
    * Docker image for snap package creation
    */
-  var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image", DEFAULT_SNAP_TOOL_IMAGE)
+  var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image") ?: DEPENDENCIES_PROPERTIES["snapDockerImage"]
   var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin", "20").toLong()
 
   /**
