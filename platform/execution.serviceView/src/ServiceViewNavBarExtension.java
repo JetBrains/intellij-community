@@ -3,8 +3,6 @@ package com.intellij.platform.execution.serviceView;
 
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,28 +12,6 @@ public final class ServiceViewNavBarExtension extends AbstractNavBarModelExtensi
   public String getPopupMenuGroup(@NotNull DataProvider provider) {
     ServiceView serviceView = ServiceViewActionProvider.getSelectedView(provider);
     return serviceView == null ? null : ServiceViewActionProvider.SERVICE_VIEW_ITEM_POPUP;
-  }
-
-  @Override
-  public @Nullable Object getData(@NotNull String dataId, @NotNull DataProvider provider) {
-    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      return unwrapNavBarItem(PlatformCoreDataKeys.SELECTED_ITEM.getData(provider));
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      Object[] items = PlatformCoreDataKeys.SELECTED_ITEMS.getData(provider);
-      if (items != null) {
-        return ContainerUtil.map2Array(items, ServiceViewNavBarExtension::unwrapNavBarItem);
-      }
-      return null;
-    }
-    return null;
-  }
-
-  private static Object unwrapNavBarItem(Object item) {
-    if (item instanceof ServiceViewNavBarItem serviceItem) {
-      return serviceItem.getItem().getValue();
-    }
-    return item;
   }
 
   @Override
