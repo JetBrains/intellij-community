@@ -383,6 +383,16 @@ c:com.intellij.execution.process.ProcessOutput
 - setTimeout():V
 com.intellij.execution.process.ProcessTreeKiller
 - a:killProcessTree():Z
+c:com.intellij.execution.process.ProcessWrapper
+- java.lang.Process
+- <init>(java.lang.Process):V
+- destroy():V
+- exitValue():I
+- getErrorStream():java.io.InputStream
+- getInputStream():java.io.InputStream
+- getOriginalProcess():java.lang.Process
+- getOutputStream():java.io.OutputStream
+- waitFor():I
 com.intellij.execution.process.PtyBasedProcess
 - a:hasPty():Z
 - a:setWindowSize(I,I):V
