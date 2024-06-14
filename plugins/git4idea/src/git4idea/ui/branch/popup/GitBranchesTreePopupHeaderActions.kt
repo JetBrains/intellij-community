@@ -13,9 +13,9 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.popup.KeepingPopupOpenAction
 import git4idea.GitUtil
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.config.GitVcsSettings
@@ -58,8 +58,10 @@ internal class GitBranchesTreePopupResizeAction :
   }
 }
 
-internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSynchronouslyAction(), KeepingPopupOpenAction {
+internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSynchronouslyAction() {
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun isSoftMultiChoice(): Boolean = false
 
   override fun update(e: AnActionEvent) {
     val projectExist = e.project != null
@@ -75,7 +77,10 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSyn
   override fun getSettings(e: AnActionEvent): DvcsSyncSettings = GitVcsSettings.getInstance(e.project!!)
 }
 
-internal class GitBranchesTreePopupGroupByPrefixAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY), KeepingPopupOpenAction {
+internal class GitBranchesTreePopupGroupByPrefixAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY) {
+
+  override fun isSoftMultiChoice(): Boolean = false
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.setText(DvcsBundle.messagePointer("action.text.branch.group.by.prefix"))
@@ -144,9 +149,10 @@ internal class GitBranchesTreePopupFilterSeparatorWithText : DefaultActionGroup(
   }
 }
 
-internal class GitBranchesTreePopupFilterByAction : ToggleAction(), KeepingPopupOpenAction, DumbAware {
+internal class GitBranchesTreePopupFilterByAction : DumbAwareToggleAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun isSoftMultiChoice(): Boolean = false
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -177,9 +183,10 @@ internal class GitBranchesTreePopupFilterByAction : ToggleAction(), KeepingPopup
   }
 }
 
-internal class GitBranchesTreePopupFilterByRepository : ToggleAction(), KeepingPopupOpenAction, DumbAware {
+internal class GitBranchesTreePopupFilterByRepository : DumbAwareToggleAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun isSoftMultiChoice(): Boolean = false
 
   override fun update(e: AnActionEvent) {
     super.update(e)

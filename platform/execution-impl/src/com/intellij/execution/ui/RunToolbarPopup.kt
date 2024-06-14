@@ -43,12 +43,10 @@ import com.intellij.ui.GroupedElementsRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
-import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.PopupListElementRenderer
-import com.intellij.util.PlatformUtils
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -331,10 +329,11 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
   }
 }
 
-open class AllRunConfigurationsToggle : DumbAwareToggleAction(), KeepingPopupOpenAction, ActionRemoteBehaviorSpecification {
+open class AllRunConfigurationsToggle : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
   override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
+  override fun isSoftMultiChoice(): Boolean = false
 
   override fun isSelected(e: AnActionEvent): Boolean = RunConfigurationStartHistory.getInstance(e.project!!).state.allConfigurationsExpanded
 
