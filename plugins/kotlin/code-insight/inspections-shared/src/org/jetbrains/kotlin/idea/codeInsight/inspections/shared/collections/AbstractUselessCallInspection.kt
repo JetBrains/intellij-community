@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.EmptinessCheckFunctionUtils
 import org.jetbrains.kotlin.name.CallableId
@@ -56,7 +56,7 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
             if (calleeExpression.text !in uselessNames) return
 
             analyze(calleeExpression) {
-                val resolvedCall = calleeExpression.resolveCall()?.singleFunctionCallOrNull() ?: return
+                val resolvedCall = calleeExpression.resolveCallOld()?.singleFunctionCallOrNull() ?: return
                 val callableId = resolvedCall.symbol.callableId ?: return
                 val conversion = uselessFqNames[callableId] ?: return
                 suggestConversionIfNeeded(expression, calleeExpression, conversion)

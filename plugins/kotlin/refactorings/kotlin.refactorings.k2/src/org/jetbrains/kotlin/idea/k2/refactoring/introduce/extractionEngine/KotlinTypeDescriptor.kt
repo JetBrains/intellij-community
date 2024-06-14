@@ -136,7 +136,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
     }
     if (typeToCheck is KtNonErrorClassType) {
 
-        val classSymbol = typeToCheck.classSymbol
+        val classSymbol = typeToCheck.symbol
         if ((classSymbol as? KaAnonymousObjectSymbol)?.superTypes?.all { isResolvableInScope(it, scope, typeParameters) } == true) {
             return true
         }
@@ -173,7 +173,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
 context(KaSession)
 fun approximateWithResolvableType(type: KtType?, scope: PsiElement): KtType? {
     if (type == null) return null
-    if (!(type is KtNonErrorClassType && type.classSymbol is KaAnonymousObjectSymbol)
+    if (!(type is KtNonErrorClassType && type.symbol is KaAnonymousObjectSymbol)
         && isResolvableInScope(type, scope, mutableSetOf())
     ) return type
     return type.getAllSuperTypes().firstOrNull {

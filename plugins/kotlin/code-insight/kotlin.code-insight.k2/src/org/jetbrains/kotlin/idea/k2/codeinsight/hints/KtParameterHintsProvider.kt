@@ -14,8 +14,8 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
@@ -65,7 +65,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         val arguments = valueArgumentList.arguments
 
-        val functionCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return
+        val functionCall = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return
         val functionSymbol: KaFunctionLikeSymbol = functionCall.symbol
         val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
 

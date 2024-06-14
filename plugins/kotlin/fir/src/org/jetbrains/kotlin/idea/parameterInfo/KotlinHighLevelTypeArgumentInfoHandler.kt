@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.parameterInfo
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
@@ -30,18 +30,18 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
     context(KaSession)
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaSymbolWithTypeParameters>? {
         val typeReference = argumentList.parentOfType<KtTypeReference>() ?: return null
-        val ktType = typeReference.getKtType() as? KtClassType ?: return null
-        return when (ktType) {
-            is KtNonErrorClassType -> listOfNotNull(ktType.expandedClassSymbol as? KaNamedClassOrObjectSymbol)
+        return when (val ktType = typeReference.getKtType()) {
+            is KtNonErrorClassType -> listOfNotNull(ktType.expandedSymbol as? KaNamedClassOrObjectSymbol)
             is KtClassErrorType -> {
-                ktType.candidateClassSymbols.mapNotNull { candidateSymbol ->
+                ktType.candidateSymbols.mapNotNull { candidateSymbol ->
                     when (candidateSymbol) {
                         is KaClassOrObjectSymbol -> candidateSymbol
-                        is KaTypeAliasSymbol -> candidateSymbol.expandedType.expandedClassSymbol
+                        is KaTypeAliasSymbol -> candidateSymbol.expandedType.expandedSymbol
                         else -> null
                     } as? KaNamedClassOrObjectSymbol
                 }
             }
+            else -> return null
         }
     }
 
@@ -55,13 +55,13 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
     context(KaSession)
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaSymbolWithTypeParameters>? {
         val callElement = argumentList.parentOfType<KtCallElement>() ?: return null
-        // A call element may not be syntactically complete (e.g., missing parentheses: `foo<>`). In that case, `callElement.resolveCall()`
-        // will NOT return a KtCall because there is no FirFunctionCall there. We find the symbols using the callee name instead.
+        // A call element may not be syntactically complete (e.g., missing parentheses: `foo<>`). In that case, `callElement.resolveCallOld()`
+        // will NOT return a KaCall because there is no FirFunctionCall there. We find the symbols using the callee name instead.
         val reference = callElement.calleeExpression?.references?.singleOrNull() as? KtSimpleNameReference ?: return null
         val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression
         val fileSymbol = callElement.containingKtFile.getFileSymbol()
-        val symbols = callElement.collectCallCandidates()
-            .mapNotNull { (it.candidate as? KtCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.signature }
+        val symbols = callElement.collectCallCandidatesOld()
+            .mapNotNull { (it.candidate as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.signature }
             .filterIsInstance<KtFunctionLikeSignature<*>>()
             .filter { candidate ->
                 // We use the `LENIENT` error type policy to permit candidates even when there are partially specified type arguments (e.g.,

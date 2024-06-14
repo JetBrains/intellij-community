@@ -20,11 +20,11 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.core.script.scriptConfigurationMissingForK2
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
@@ -75,7 +75,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
                 .groupByTo(HashMap(), { it.first }, { convertToBuilder(file, it.first, it.second) })
 
             KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
-                analysis.asSequence().filter { it.severity == Severity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName), file
+                analysis.asSequence().filter { it.severity == KaSeverity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName), file
             )
             return diagnostics
         }
@@ -91,7 +91,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
 
     context(KaSession)
     private fun convertToBuilder(file: KtFile, range: TextRange, diagnostic: KtDiagnosticWithPsi<*>) : HighlightInfo.Builder{
-        val isWarning = diagnostic.severity == Severity.WARNING
+        val isWarning = diagnostic.severity == KaSeverity.WARNING
         val psiElement = diagnostic.psi
         val factoryName = diagnostic.factoryName
         val fixes = KotlinQuickFixService.getInstance().getQuickFixesFor(diagnostic).takeIf { it.isNotEmpty() }
@@ -148,9 +148,9 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             isUnresolvedDiagnostic() -> HighlightInfoType.WRONG_REF
             isDeprecatedDiagnostic() -> HighlightInfoType.DEPRECATED
             else ->  when (severity) {
-                Severity.INFO -> HighlightInfoType.INFORMATION
-                Severity.ERROR -> HighlightInfoType.ERROR
-                Severity.WARNING -> HighlightInfoType.WARNING
+                KaSeverity.INFO -> HighlightInfoType.INFORMATION
+                KaSeverity.ERROR -> HighlightInfoType.ERROR
+                KaSeverity.WARNING -> HighlightInfoType.WARNING
             }
         }
     }

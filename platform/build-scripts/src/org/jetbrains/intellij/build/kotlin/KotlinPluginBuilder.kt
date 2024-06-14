@@ -37,7 +37,7 @@ object KotlinPluginBuilder {
     "kotlin.base.project-structure",
     "kotlin.base.external-build-system",
     "kotlin.base.scripting",
-    "kotlin.base.analysis-api-providers",
+    "kotlin.base.analysis-api-platform",
     "kotlin.base.analysis",
     "kotlin.base.code-insight",
     "kotlin.base.jps",
@@ -47,7 +47,7 @@ object KotlinPluginBuilder {
     "kotlin.base.statistics",
     "kotlin.base.fe10.plugin",
     "kotlin.base.fe10.analysis",
-    "kotlin.base.fe10.analysis-api-providers",
+    "kotlin.base.fe10.analysis-api-platform",
     "kotlin.base.fe10.kdoc",
     "kotlin.base.fe10.code-insight",
     "kotlin.base.fe10.obsolete-compat",
@@ -149,7 +149,7 @@ object KotlinPluginBuilder {
     "kotlin.inspections",
     "kotlin.inspections-fe10",
     "kotlin.features-trainer",
-    "kotlin.base.fir.analysis-api-providers",
+    "kotlin.base.fir.analysis-api-platform",
     "kotlin.base.fir.code-insight",
     "kotlin.base.fir.project-structure",
     "kotlin.code-insight.api",
@@ -209,7 +209,7 @@ object KotlinPluginBuilder {
     )
 
   private val LIBRARIES = java.util.List.of(
-    "kotlinc.analysis-api-providers",
+    "kotlinc.analysis-api-platform-interface",
     "kotlinc.analysis-project-structure",
     "kotlinc.analysis-api",
     "kotlinc.analysis-api-fe10",

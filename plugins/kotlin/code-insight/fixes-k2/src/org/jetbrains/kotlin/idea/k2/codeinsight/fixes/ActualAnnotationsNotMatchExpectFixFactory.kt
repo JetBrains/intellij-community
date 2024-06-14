@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -50,7 +50,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
 
     context (KaSession)
     private fun KtAnnotationEntry.getAnnotationClassId(): ClassId? {
-        val resolvedExpectAnnotationCall = resolveCall()?.singleConstructorCallOrNull() ?: return null
+        val resolvedExpectAnnotationCall = resolveCallOld()?.singleConstructorCallOrNull() ?: return null
         return resolvedExpectAnnotationCall.symbol.containingClassId
     }
 }

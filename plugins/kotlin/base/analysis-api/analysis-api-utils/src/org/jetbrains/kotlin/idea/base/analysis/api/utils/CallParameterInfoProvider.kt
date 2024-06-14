@@ -140,7 +140,7 @@ object CallParameterInfoProvider {
     ): Boolean {
         if (!currentArgument.isInsideAnnotationEntryArgumentList()) return false
 
-        if (signature.symbol.origin != KtSymbolOrigin.JAVA) return false
+        if (!signature.symbol.origin.isJavaSourceOrLibrary()) return false
 
         val parameter = argumentMapping[currentArgument.getArgumentExpression()] ?: return false
         return parameter.name != JvmAnnotationNames.DEFAULT_ANNOTATION_MEMBER_NAME

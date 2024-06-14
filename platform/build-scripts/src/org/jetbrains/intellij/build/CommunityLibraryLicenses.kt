@@ -1173,7 +1173,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.analysis-api-impl-base-tests"),
     jetbrainsLibrary("kotlinc.analysis-api-k2"),
     jetbrainsLibrary("kotlinc.analysis-api-k2-tests"),
-    jetbrainsLibrary("kotlinc.analysis-api-providers"),
+    jetbrainsLibrary("kotlinc.analysis-api-platform-interface"),
     jetbrainsLibrary("kotlinc.analysis-project-structure"),
     jetbrainsLibrary("kotlinc.android-extensions-compiler-plugin"),
     jetbrainsLibrary("kotlinc.assignment-compiler-plugin"),

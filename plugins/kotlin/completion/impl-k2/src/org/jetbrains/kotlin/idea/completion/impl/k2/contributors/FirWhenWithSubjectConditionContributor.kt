@@ -89,7 +89,7 @@ internal class FirWhenWithSubjectConditionContributor(
     context(KaSession)
     private fun getClassSymbol(subjectType: KtType): KaNamedClassOrObjectSymbol? {
         val classType = subjectType as? KtNonErrorClassType
-        return classType?.classSymbol as? KaNamedClassOrObjectSymbol
+        return classType?.symbol as? KaNamedClassOrObjectSymbol
     }
 
 
@@ -148,7 +148,7 @@ internal class FirWhenWithSubjectConditionContributor(
             is KaAnonymousObjectSymbol -> return false
             is KaNamedClassOrObjectSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
             is KaTypeAliasSymbol -> {
-                (symbol.expandedType as? KtNonErrorClassType)?.classSymbol?.let { it is KaNamedSymbol && isPrefixNeeded(it) } == true
+                (symbol.expandedType as? KtNonErrorClassType)?.symbol?.let { it is KaNamedSymbol && isPrefixNeeded(it) } == true
             }
 
             is KaTypeParameterSymbol -> true

@@ -19,7 +19,7 @@ import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractConditionalContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConstantValue
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractEffectDeclaration
@@ -82,7 +82,7 @@ class KotlinFunctionCallInstruction(
         result: MutableList<DfaInstructionState>
     ): DfaValue {
         val factory = resultValue.factory
-        val functionCall = call.resolveCall()?.singleFunctionCallOrNull() ?: return resultValue
+        val functionCall = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return resultValue
         val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return resultValue
         val callEffects = functionSymbol.contractEffects
         for (effect in callEffects) {
@@ -114,7 +114,7 @@ class KotlinFunctionCallInstruction(
     context(KaSession)
     private fun KtContractBooleanExpression.toCondition(
         factory: DfaValueFactory,
-        callDescriptor: KtFunctionCall<*>,
+        callDescriptor: KaFunctionCall<*>,
         arguments: DfaCallArguments
     ): DfaCondition? {
         return when (this) {
@@ -135,7 +135,7 @@ class KotlinFunctionCallInstruction(
     }
 
     private fun KtParameterSymbol.findDfaValue(
-        callDescriptor: KtFunctionCall<*>,
+        callDescriptor: KaFunctionCall<*>,
         arguments: DfaCallArguments
     ): DfaValue? {
         if (this is KaReceiverParameterSymbol) {
@@ -187,7 +187,7 @@ class KotlinFunctionCallInstruction(
                 }
             }
         }
-        val functionCall = call.resolveCall()?.singleFunctionCallOrNull()
+        val functionCall = call.resolveCallOld()?.singleFunctionCallOrNull()
         var dfType = getExpressionDfType(call)
         if (functionCall != null) {
             val type = fromKnownDescriptor(functionCall, arguments, stateBefore)
@@ -201,7 +201,7 @@ class KotlinFunctionCallInstruction(
         return MethodEffect(factory.fromDfType(dfType), pure)
     }
 
-    private fun fromKnownDescriptor(call: KtFunctionCall<*>, arguments: DfaCallArguments, state: DfaMemoryState): DfType? {
+    private fun fromKnownDescriptor(call: KaFunctionCall<*>, arguments: DfaCallArguments, state: DfaMemoryState): DfType? {
         val functionSymbol = call.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return null
         val name = functionSymbol.name.asString()
         val containingPackage = functionSymbol.callableId?.packageName?.asString() ?: return null
@@ -262,13 +262,13 @@ class KotlinFunctionCallInstruction(
 
     context(KaSession)
     private fun getPsiMethod(): PsiMethod? {
-        return call.resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.psi?.toLightMethods()?.singleOrNull()
+        return call.resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.psi?.toLightMethods()?.singleOrNull()
     }
 
     context(KaSession)
     private fun getExpressionDfType(expr: KtExpression): DfType {
-        val constructedClass = (((expr.resolveCall() as? KtSuccessCallInfo)
-            ?.call as? KtCallableMemberCall<*, *>)
+        val constructedClass = (((expr.resolveCallOld() as? KaSuccessCallInfo)
+            ?.call as? KaCallableMemberCall<*, *>)
             ?.partiallyAppliedSymbol?.symbol as? KaConstructorSymbol)
             ?.getContainingSymbol() as? KaClassOrObjectSymbol
         if (constructedClass != null) {

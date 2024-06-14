@@ -7,9 +7,9 @@ import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.calls.KtCall
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension
 
@@ -21,8 +21,8 @@ object KotlinCallHighlighterExtensionForTest : KotlinCallHighlighterExtension {
     }
 
     context(KaSession)
-    override fun highlightCall(elementToHighlight: PsiElement, call: KtCall): HighlightInfoType? {
-        if (call !is KtCallableMemberCall<*, *>) return null
+    override fun highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType? {
+        if (call !is KaCallableMemberCall<*, *>) return null
         val highlightType = call.partiallyAppliedSymbol.symbol.annotations.firstNotNullOfOrNull { annotation ->
             HighlightType.values().singleOrNull { it.annotationName == annotation.classId?.shortClassName?.asString() }
         } ?: return null

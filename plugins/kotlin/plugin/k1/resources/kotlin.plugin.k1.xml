@@ -43,9 +43,9 @@
   <xi:include href="parcelize.k1.xml"/>
 
   <content>
-    <module name="kotlin.base.analysis-api-providers"/>
+    <module name="kotlin.base.analysis-api-platform"/>
     <module name="kotlin.base.fe10.plugin"/>
-    <module name="kotlin.base.fe10.analysis-api-providers"/>
+    <module name="kotlin.base.fe10.analysis-api-platform"/>
     <module name="kotlin.base.fe10.project-structure"/>
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.gradle.gradle"/>

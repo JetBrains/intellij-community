@@ -20,7 +20,7 @@ internal class KotlinValueClassToStringWrapper : KotlinExpressionWrapper {
     @RequiresReadLock
     override fun isApplicable(expression: KtExpression) = analyze(expression) {
         val ktUsualClassType = expression.getKtType() as? KtUsualClassType
-        val ktNamedClassOrObjectSymbol = ktUsualClassType?.classSymbol as? KaNamedClassOrObjectSymbol
+        val ktNamedClassOrObjectSymbol = ktUsualClassType?.symbol as? KaNamedClassOrObjectSymbol
         ktNamedClassOrObjectSymbol?.isInline ?: false
     }
 }

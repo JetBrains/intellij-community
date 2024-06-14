@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isArrayOfCall
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -21,7 +21,7 @@ object RemoveArgumentNamesUtils {
      */
     context(KaSession)
     fun collectSortedArgumentsThatCanBeUnnamed(callElement: KtCallElement): ArgumentsData? {
-        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
         val valueArguments = callElement.valueArgumentList?.arguments ?: return null
 
         val argumentToParameterIndex = CallParameterInfoProvider.mapArgumentsToParameterIndices(

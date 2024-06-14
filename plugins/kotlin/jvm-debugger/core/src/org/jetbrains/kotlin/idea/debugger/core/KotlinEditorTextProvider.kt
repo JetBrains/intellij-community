@@ -12,7 +12,7 @@ import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -148,18 +148,18 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
             reference is KtOperationReferenceExpression && reference.operationSignTokenType == KtTokens.ELVIS -> return true
             reference is KtCollectionLiteralExpression -> return false
             reference is KtCallExpression -> {
-                val callInfo = reference.resolveCall() as? KtSuccessCallInfo ?: return false
+                val callInfo = reference.resolveCallOld() as? KaSuccessCallInfo ?: return false
 
                 return when (val call = callInfo.call) {
-                    is KtAnnotationCall -> {
+                    is KaAnnotationCall -> {
                         val languageVersionSettings = reference.languageVersionSettings
                         languageVersionSettings.supportsFeature(LanguageFeature.InstantiationOfAnnotationClasses)
                     }
-                    is KtFunctionCall<*> -> {
+                    is KaFunctionCall<*> -> {
                         val functionSymbol = call.partiallyAppliedSymbol.symbol
                         isSymbolAllowed(functionSymbol, allowMethodCalls)
                     }
-                    is KtCompoundVariableAccessCall -> {
+                    is KaCompoundVariableAccessCall -> {
                         val functionSymbol = call.compoundAccess.operationPartiallyAppliedSymbol.symbol
                         isSymbolAllowed(functionSymbol, allowMethodCalls)
                     }

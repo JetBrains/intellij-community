@@ -6,8 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
@@ -58,9 +58,9 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         val left = element.left
         val right = element.right
 
-        val leftResolvedCall = left?.resolveCall()?.singleVariableAccessCall()
+        val leftResolvedCall = left?.resolveCallOld()?.singleVariableAccessCall()
         val leftCallee = leftResolvedCall?.symbol ?: return null
-        val rightResolvedCall = right?.resolveCall()?.singleVariableAccessCall()
+        val rightResolvedCall = right?.resolveCallOld()?.singleVariableAccessCall()
         val rightCallee = rightResolvedCall?.symbol ?: return null
 
         if (leftCallee != rightCallee) return null

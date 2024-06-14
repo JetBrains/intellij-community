@@ -5,9 +5,9 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.getCallElement
@@ -45,7 +45,7 @@ object NamedArgumentUtils {
         call: KtCallElement,
         startArgument: KtValueArgument?
     ): Map<SmartPsiElementPointer<KtValueArgument>, Name>? {
-        val resolvedCall = call.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
         if (!resolvedCall.symbol.hasStableParameterNames) {
             return null
         }
@@ -65,12 +65,12 @@ object NamedArgumentUtils {
     context(KaSession)
     fun getStableNameFor(argument: KtValueArgument): Name? {
         val callElement: KtCallElement = getCallElement(argument) ?: return null
-        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
         if (!resolvedCall.symbol.hasStableParameterNames) return null
         return getNameForNameableArgument(argument, resolvedCall)
     }
 
-    private fun getNameForNameableArgument(argument: KtValueArgument, resolvedCall: KtFunctionCall<*>): Name? {
+    private fun getNameForNameableArgument(argument: KtValueArgument, resolvedCall: KaFunctionCall<*>): Name? {
         val valueParameterSymbol = resolvedCall.argumentMapping[argument.getArgumentExpression()]?.symbol ?: return null
         if (valueParameterSymbol.isVararg) {
             if (argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&

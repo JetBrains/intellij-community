@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KtApplicableCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.calls.KtCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KtApplicableCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KtCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 context(KaSession)
 internal val KtCallCandidateInfo.withMapping: CandidateWithMapping
     get() {
-        val functionCall = candidate as KtFunctionCall<*>
+        val functionCall = candidate as KaFunctionCall<*>
         return CandidateWithMapping(
             functionCall.partiallyAppliedSymbol.signature,
             functionCall.argumentMapping,

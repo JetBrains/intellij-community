@@ -210,7 +210,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
             bodyText = buildString {
                 append("if (this === $parameterName) return true\n")
                 append("if ($isNotInstanceCondition) return false\n")
-                if (superContainingEqualsMethod != builtinTypes.ANY.expandedClassSymbol) {
+                if (superContainingEqualsMethod != builtinTypes.ANY.expandedSymbol) {
                     append("if (!super.equals($parameterName)) return false\n")
                 }
 
@@ -317,7 +317,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
             val propertyIterator = variablesForHashCode.iterator()
 
             val initialValue = when {
-                superContainingHashCodeMethod != builtinTypes.ANY.expandedClassSymbol -> "super.hashCode()"
+                superContainingHashCodeMethod != builtinTypes.ANY.expandedSymbol -> "super.hashCode()"
                 propertyIterator.hasNext() -> propertyIterator.next().genVariableHashCode(false)
                 else -> generateClassLiteral(targetClass) + ".hashCode()"
             }

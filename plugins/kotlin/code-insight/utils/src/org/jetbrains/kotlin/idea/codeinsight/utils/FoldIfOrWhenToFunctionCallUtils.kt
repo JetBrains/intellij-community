@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.util.reformatted
@@ -82,7 +82,7 @@ object FoldIfOrWhenToFunctionCallUtils {
 
     context(KaSession)
     private fun KtCallExpression.fqNameAndParameters(): Pair<FqName, List<KtVariableLikeSignature<KaValueParameterSymbol>>>? {
-        val functionCall = resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val functionCall = resolveCallOld()?.singleFunctionCallOrNull() ?: return null
         val fqName = functionCall.symbol.callableId?.asSingleFqName() ?: return null
         val parameters = valueArguments.mapNotNull { functionCall.argumentMapping[it.getArgumentExpression()] }
         return fqName to parameters

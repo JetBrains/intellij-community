@@ -6,7 +6,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -685,10 +685,10 @@ object K2SemanticMatcher {
     ): Boolean {
         if (areNonCallsMatchingByResolve(targetExpression, patternExpression, context)) return true
 
-        val targetCallInfo = targetExpression.resolveCall() ?: return false
-        val patternCallInfo = patternExpression.resolveCall() ?: return false
+        val targetCallInfo = targetExpression.resolveCallOld() ?: return false
+        val patternCallInfo = patternExpression.resolveCallOld() ?: return false
 
-        if (targetCallInfo is KtErrorCallInfo && patternCallInfo is KtErrorCallInfo) {
+        if (targetCallInfo is KaErrorCallInfo && patternCallInfo is KaErrorCallInfo) {
             if (targetCallInfo.isUnresolvedCall() != patternCallInfo.isUnresolvedCall()) return false
             if (targetCallInfo.isUnresolvedCall() && patternCallInfo.isUnresolvedCall()) {
                 if (!areUnresolvedCallsMatchingByResolve(targetExpression, patternExpression, context)) return false
@@ -700,7 +700,7 @@ object K2SemanticMatcher {
 
         if (targetCall?.javaClass != patternCall?.javaClass) return false
 
-        if (targetCall is KtCallableMemberCall<*, *> && patternCall is KtCallableMemberCall<*, *>) {
+        if (targetCall is KaCallableMemberCall<*, *> && patternCall is KaCallableMemberCall<*, *>) {
             val targetAppliedSymbol = targetCall.partiallyAppliedSymbol
             val patternAppliedSymbol = patternCall.partiallyAppliedSymbol
 
@@ -714,8 +714,8 @@ object K2SemanticMatcher {
             if (!areReceiversMatching(targetAppliedSymbol.extensionReceiver, patternAppliedSymbol.extensionReceiver, context)) return false
         }
 
-        val targetArguments = targetExpression.getArgumentsAndSortThemIfCallIsPresent(targetCall as? KtFunctionCall<*>)
-        val patternArguments = patternExpression.getArgumentsAndSortThemIfCallIsPresent(patternCall as? KtFunctionCall<*>)
+        val targetArguments = targetExpression.getArgumentsAndSortThemIfCallIsPresent(targetCall as? KaFunctionCall<*>)
+        val patternArguments = patternExpression.getArgumentsAndSortThemIfCallIsPresent(patternCall as? KaFunctionCall<*>)
 
         for ((targetArgument, patternArgument) in targetArguments.zipWithNulls(patternArguments)) {
             if (!elementsMatchOrBothAreNull(targetArgument, patternArgument, context)) return false
@@ -739,7 +739,7 @@ object K2SemanticMatcher {
     }
 
     context(KaSession)
-    private fun KtExpression.getArgumentsAndSortThemIfCallIsPresent(call: KtFunctionCall<*>?): List<KtExpression?> {
+    private fun KtExpression.getArgumentsAndSortThemIfCallIsPresent(call: KaFunctionCall<*>?): List<KtExpression?> {
         val allArguments = getArgumentOrIndexExpressions(sourceElement = this)
 
         if (call == null) return allArguments
@@ -779,14 +779,14 @@ object K2SemanticMatcher {
 
     context(KaSession)
     private fun areReceiversMatching(
-        targetReceiver: KtReceiverValue?,
-        patternReceiver: KtReceiverValue?,
+        targetReceiver: KaReceiverValue?,
+        patternReceiver: KaReceiverValue?,
         context: MatchingContext,
     ): Boolean = when (targetReceiver) {
-        is KtImplicitReceiverValue -> {
+        is KaImplicitReceiverValue -> {
             when (patternReceiver) {
-                is KtImplicitReceiverValue -> context.areSymbolsEqualOrAssociated(targetReceiver.symbol, patternReceiver.symbol)
-                is KtExplicitReceiverValue -> {
+                is KaImplicitReceiverValue -> context.areSymbolsEqualOrAssociated(targetReceiver.symbol, patternReceiver.symbol)
+                is KaExplicitReceiverValue -> {
                     val patternSymbol = patternReceiver.getSymbolForThisExpressionOrNull()
                     patternSymbol != null && context.areSymbolsEqualOrAssociated(targetReceiver.symbol, patternSymbol)
                 }
@@ -795,16 +795,16 @@ object K2SemanticMatcher {
             }
         }
 
-        is KtSmartCastedReceiverValue -> false // TODO()
+        is KaSmartCastedReceiverValue -> false // TODO()
 
-        is KtExplicitReceiverValue -> {
+        is KaExplicitReceiverValue -> {
             when (patternReceiver) {
-                is KtImplicitReceiverValue -> {
+                is KaImplicitReceiverValue -> {
                     val targetSymbol = targetReceiver.getSymbolForThisExpressionOrNull()
                     targetSymbol != null && context.areSymbolsEqualOrAssociated(targetSymbol, patternReceiver.symbol)
                 }
 
-                is KtExplicitReceiverValue -> targetReceiver.expression.isSemanticMatch(patternReceiver.expression, context)
+                is KaExplicitReceiverValue -> targetReceiver.expression.isSemanticMatch(patternReceiver.expression, context)
                 else -> false
             }
         }
@@ -813,10 +813,10 @@ object K2SemanticMatcher {
     }
 
     context(KaSession)
-    private fun KtCallableMemberCall<*, *>.getTypeArguments(): List<KtType?> = symbol.typeParameters.map { typeArgumentsMapping[it] }
+    private fun KaCallableMemberCall<*, *>.getTypeArguments(): List<KtType?> = symbol.typeParameters.map { typeArgumentsMapping[it] }
 
     context(KaSession)
-    private fun KtExplicitReceiverValue.getSymbolForThisExpressionOrNull(): KtSymbol? =
+    private fun KaExplicitReceiverValue.getSymbolForThisExpressionOrNull(): KtSymbol? =
         (expression as? KtThisExpression)?.mainReference?.resolveToSymbol()
 
     context(KaSession)
@@ -917,7 +917,7 @@ object K2SemanticMatcher {
     private fun KtCallableDeclaration.isFunctionLiteralWithoutParameterSpecification(): Boolean =
         this is KtFunctionLiteral && !this.hasParameterSpecification()
 
-    private fun KtErrorCallInfo.isUnresolvedCall(): Boolean = diagnostic is KaFirDiagnostic.UnresolvedReference
+    private fun KaErrorCallInfo.isUnresolvedCall(): Boolean = diagnostic is KaFirDiagnostic.UnresolvedReference
 
     private fun KtExpression.isCalleeInCall(): Boolean = this == (parent as? KtCallElement)?.calleeExpression
 

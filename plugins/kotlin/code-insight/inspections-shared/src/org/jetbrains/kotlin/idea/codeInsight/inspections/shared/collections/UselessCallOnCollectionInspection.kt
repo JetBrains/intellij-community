@@ -5,8 +5,8 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -76,7 +76,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         val receiverType = expression.receiverExpression.getKtType() as? KtNonErrorClassType ?: return
         val receiverTypeArgument = receiverType.ownTypeArguments.singleOrNull() ?: return
         val receiverTypeArgumentType = receiverTypeArgument.type ?: return
-        val resolvedCall = expression.resolveCall()?.singleFunctionCallOrNull() ?: return
+        val resolvedCall = expression.resolveCallOld()?.singleFunctionCallOrNull() ?: return
         val callableName = resolvedCall.symbol.callableId?.callableName?.asString() ?: return
         if (callableName == "filterIsInstance") {
             if (receiverTypeArgument is KtTypeArgumentWithVariance && receiverTypeArgument.variance == Variance.IN_VARIANCE) return

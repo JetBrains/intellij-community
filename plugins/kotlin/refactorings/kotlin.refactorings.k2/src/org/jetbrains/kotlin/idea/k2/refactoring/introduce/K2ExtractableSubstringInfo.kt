@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
@@ -35,7 +34,7 @@ class K2ExtractableSubstringInfo(
 
         val expr = factory.createExpressionCodeFragment(content, startEntry).getContentElement() ?: return stringType
 
-        val value = expr.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
+        val value = expr.evaluate()
 
         if (value == null) return stringType
 

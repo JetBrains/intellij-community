@@ -2,12 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.successfulVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeToInlineBuilder
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
@@ -24,7 +24,7 @@ class CodeToInlineBuilder(
         allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 val alwaysKeepMainExpression = mainExpression != null && analyze(mainExpression) {
-                    val targetSymbol = mainExpression.resolveCall()?.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol
+                    val targetSymbol = mainExpression.resolveCallOld()?.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol
                     when (targetSymbol) {
                         is KtPropertySymbol -> targetSymbol.getter?.isDefault == false
                         else -> false

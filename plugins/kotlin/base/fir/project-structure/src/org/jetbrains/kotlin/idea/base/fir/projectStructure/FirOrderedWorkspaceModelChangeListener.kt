@@ -5,7 +5,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 
 /**

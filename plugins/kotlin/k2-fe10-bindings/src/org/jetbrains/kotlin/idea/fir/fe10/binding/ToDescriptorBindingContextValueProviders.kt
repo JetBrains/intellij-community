@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
@@ -106,8 +105,6 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
     }
 
     private fun resolveToDescriptors(ktReference: KtReference): Collection<DeclarationDescriptor>? {
-        if (ktReference !is KtSymbolBasedReference) return null
-
         val symbols = context.withAnalysisSession { ktReference.resolveToSymbols() }
         return symbols.map { it.toDeclarationDescriptor(context) }
     }

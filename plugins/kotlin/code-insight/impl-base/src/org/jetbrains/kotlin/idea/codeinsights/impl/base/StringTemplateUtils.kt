@@ -7,7 +7,6 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -129,7 +128,7 @@ private fun buildStringTemplateForExpression(expr: KtExpression?, forceBraces: B
 
 context(KaSession)
 private fun KtConstantExpression.buildStringTemplateForExpression(forceBraces: Boolean): String? {
-    val constantValue = evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) ?: return "\${${text}}"
+    val constantValue = evaluate() ?: return "\${${text}}"
     val isChar = constantValue.constantValueKind == ConstantValueKind.Char
     val stringValue = if (isChar) "${constantValue.value}" else constantValue.renderAsKotlinConstant()
     if (isChar || stringValue == text) {

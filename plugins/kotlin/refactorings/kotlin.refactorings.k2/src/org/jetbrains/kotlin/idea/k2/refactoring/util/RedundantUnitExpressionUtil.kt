@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KtDynamicType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -37,7 +37,7 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
     if (parent is KtReturnExpression) {
         analyze(parent) {
             val expectedReturnType = parent.expectedReturnType() ?: return false
-            val expandedClassSymbol = expectedReturnType.expandedClassSymbol
+            val expandedClassSymbol = expectedReturnType.expandedSymbol
             return expandedClassSymbol != null &&
                     !expectedReturnType.isMarkedNullable &&
                     expandedClassSymbol.classId != StandardClassIds.Any
@@ -81,7 +81,7 @@ private fun KtFunctionLiteral.findLambdaReturnType(): KtType? {
     val callExpression = getStrictParentOfType<KtCallExpression>() ?: return null
     val valueArgument = getStrictParentOfType<KtValueArgument>() ?: return null
     analyze(this) {
-        val functionCallOrNull = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val functionCallOrNull = callExpression.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
         val variableLikeSignature = functionCallOrNull.argumentMapping[valueArgument.getArgumentExpression()] ?: return null
         return (variableLikeSignature.returnType as? KtFunctionalType)?.returnType
     }

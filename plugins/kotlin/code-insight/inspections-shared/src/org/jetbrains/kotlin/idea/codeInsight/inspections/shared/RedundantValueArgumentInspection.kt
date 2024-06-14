@@ -9,10 +9,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
@@ -33,8 +32,8 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
         val argumentIndex = arguments.indexOf(argument).takeIf { it >= 0 } ?: return
 
         analyze(argument) {
-            val argumentConstantValue = argumentExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
-            val call = callElement.resolveCall()?.successfulFunctionCallOrNull() ?: return
+            val argumentConstantValue = argumentExpression.evaluate() ?: return
+            val call = callElement.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
             val parameterSymbol = findTargetParameter(argumentExpression, call) ?: return
 
             if (parameterSymbol.hasDefaultValue) {
@@ -59,7 +58,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
                 }
 
                 val defaultValueExpression = parameter.defaultValue ?: return
-                val defaultConstantValue = defaultValueExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
+                val defaultConstantValue = defaultValueExpression.evaluate() ?: return
 
                 if (argumentConstantValue.value == defaultConstantValue.value) {
                     val description = KotlinBundle.message("inspection.redundant.value.argument.annotation", parameterSymbol.name)
@@ -71,7 +70,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
     })
 
     context(KaSession)
-    private fun findTargetParameter(argumentExpression: KtExpression, call: KtFunctionCall<*>): KaValueParameterSymbol? {
+    private fun findTargetParameter(argumentExpression: KtExpression, call: KaFunctionCall<*>): KaValueParameterSymbol? {
         val targetParameterSymbol = call.argumentMapping[argumentExpression]?.symbol ?: return null
 
         val targetFunctionSymbol = call.partiallyAppliedSymbol.symbol

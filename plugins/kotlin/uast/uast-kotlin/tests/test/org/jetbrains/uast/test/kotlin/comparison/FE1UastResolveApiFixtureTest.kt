@@ -62,6 +62,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkLocalResolve(myFixture)
     }
 
+    fun testGetJavaClass() {
+        checkGetJavaClass(myFixture)
+    }
+
     fun testResolveLocalDefaultConstructor() {
         checkResolveLocalDefaultConstructor(myFixture)
     }
@@ -256,5 +260,17 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveInnerInlineFromLibrary() {
         checkResolveInnerInlineFromLibrary(myFixture)
+    }
+
+    fun testResolveJvmNameOnFunctionFromLibrary() {
+        checkResolveJvmNameOnFunctionFromLibrary(myFixture)
+    }
+
+    fun testResolveJvmNameOnGetterFromLibrary() {
+        checkResolveJvmNameOnGetterFromLibrary(myFixture)
+    }
+
+    fun testResolveJvmNameOnSetterFromLibrary() {
+        checkResolveJvmNameOnSetterFromLibrary(myFixture)
     }
 }

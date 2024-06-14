@@ -27,10 +27,9 @@ import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -273,8 +272,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 val right = loopRange.right
                 // Reported separately by EmptyRangeInspection
                 return left != null && right != null &&
-                        left.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null &&
-                        right.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null
+                        left.evaluate() != null &&
+                        right.evaluate() != null
             }
         }
         return false
@@ -440,7 +439,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
 
         private fun isCallToBuiltInMethod(call: KtCallExpression, methodName: String): Boolean {
             return analyze(call) {
-                val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return@analyze false
+                val functionCall: KaFunctionCall<*> = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return@analyze false
                 val target: KaFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return@analyze false
                 if (target.name.asString() != methodName) return@analyze false
                 return StandardNames.BUILT_INS_PACKAGE_FQ_NAME == target.callableId?.packageName
@@ -480,7 +479,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     if (!value) return false
                     val valueArgList = parent.parent as? KtValueArgumentList ?: return false
                     val call = valueArgList.parent as? KtCallExpression ?: return false
-                    val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return false
+                    val functionCall: KaFunctionCall<*> = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
                     val target: KaFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return false
                     val name = target.name.asString()
                     if (name != "assert" && name != "require" && name != "check") return false
@@ -595,7 +594,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         }
                     }
 
-                    if (expression.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null) return true
+                    if (expression.evaluate() != null) return true
                     if (expression is KtSimpleNameExpression &&
                         (parent is KtValueArgument || parent is KtContainerNode && parent.parent is KtArrayAccessExpression)
                     ) {
@@ -665,7 +664,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         context(KaSession)
         private fun isZero(expression: KtExpression?): Boolean {
             expression ?: return false
-            val constantValue = expression.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)?.value
+            val constantValue = expression.evaluate()?.value
             return constantValue is Number && constantValue.toDouble() == 0.0
         }
 

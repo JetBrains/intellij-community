@@ -31,7 +31,7 @@ fun getParameterNames(expression: KtExpression): List<String>? {
 context(KaSession)
 private fun getParameterNames(type: KtNonErrorClassType): List<String>? {
     if (type.nullability != KtTypeNullability.NON_NULLABLE) return null
-    val classSymbol = type.expandedClassSymbol
+    val classSymbol = type.expandedSymbol
 
     return if (classSymbol is KaNamedClassOrObjectSymbol && classSymbol.isData) {
         val constructorSymbol = classSymbol.getDeclaredMemberScope()

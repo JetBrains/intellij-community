@@ -2,14 +2,14 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KaStarTypeProjection
-import org.jetbrains.kotlin.analysis.api.calls.KaErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KaNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -25,7 +25,7 @@ internal object ChangeToUseSpreadOperatorFixFactory {
         val element = diagnostic.psi as? KtReferenceExpression ?: return@ModCommandBased emptyList()
         val callExpression = element.getStrictParentOfType<KtCallExpression>() ?: return@ModCommandBased emptyList()
         val arrayElementType = diagnostic.actualType.getArrayElementType()?.unwrap() ?: return@ModCommandBased emptyList()
-        val functionCall = (callExpression.resolveCall() as? KaErrorCallInfo)?.candidateCalls?.singleOrNull() as? KaFunctionCall<*>
+        val functionCall = (callExpression.resolveCallOld() as? KaErrorCallInfo)?.candidateCalls?.singleOrNull() as? KaFunctionCall<*>
             ?: return@ModCommandBased emptyList()
 
         if (functionCall.argumentMapping[element]?.symbol?.isVararg != true &&
@@ -55,8 +55,8 @@ private fun KaType.unwrap(): KaType {
 context(KaSession)
 private fun substituteTypeParameterTypesWithStarTypeProjections(type: KaType): KaType? {
     return when (type) {
-        is KaNonErrorClassType -> buildClassType(type.classSymbol) {
-            type.ownTypeArguments.mapNotNull { it.type }.forEach {
+        is KaNonErrorClassType -> buildClassType(type.symbol) {
+            type.typeArguments.mapNotNull { it.type }.forEach {
                 if (it is KaTypeParameterType) {
                     argument(KaStarTypeProjection(token))
                 } else {

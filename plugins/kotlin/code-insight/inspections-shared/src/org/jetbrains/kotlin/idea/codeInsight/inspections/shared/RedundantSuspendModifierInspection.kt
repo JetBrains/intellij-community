@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.descendants
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
@@ -81,7 +81,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 return true
             }
 
-            override fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KtCallInfo?): Boolean {
+            override fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
                 if (callInfo != null) {
                     // A callInfo of null means that the element could not be resolved at all, so it is not even unresolved.
                     // For example, if the element is not an expression, so we ignore those cases.

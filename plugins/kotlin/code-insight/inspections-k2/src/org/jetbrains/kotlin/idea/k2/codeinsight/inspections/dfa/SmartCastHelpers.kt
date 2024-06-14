@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa
 
 import com.intellij.psi.SyntaxTraverser
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.KtSmartCastedReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -34,13 +34,13 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
 
             val implicitReceiverSmartCastList = e.getImplicitReceiverSmartCast()
             if (implicitReceiverSmartCastList.isNotEmpty()) {
-                val symbol = e.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                val symbol = e.resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 if (symbol != null) {
                     var receiver = symbol.dispatchReceiver ?: symbol.extensionReceiver
-                    if (receiver is KtSmartCastedReceiverValue) {
+                    if (receiver is KaSmartCastedReceiverValue) {
                         receiver = receiver.original
                     }
-                    if (receiver is KtImplicitReceiverValue) {
+                    if (receiver is KaImplicitReceiverValue) {
                         val ktType = values[receiver.symbol]
                         return@any ktType != null && implicitReceiverSmartCastList.none { smartCast -> smartCast.type.isEqualTo(ktType) }
                     }

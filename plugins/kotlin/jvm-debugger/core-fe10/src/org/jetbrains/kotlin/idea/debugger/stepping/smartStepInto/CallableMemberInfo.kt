@@ -49,7 +49,7 @@ internal fun CallableMemberInfo(
 
 context(KaSession)
 internal fun KaFunctionLikeSymbol.containsInlineClassInValueArguments(): Boolean =
-    valueParameters.any { it.returnType.expandedClassSymbol?.isInlineClass() == true }
+    valueParameters.any { it.returnType.expandedSymbol?.isInlineClass() == true }
 
 private fun KaFunctionLikeSymbol.methodName() = when (this) {
     is KaFunctionSymbol -> getByteCodeMethodName()

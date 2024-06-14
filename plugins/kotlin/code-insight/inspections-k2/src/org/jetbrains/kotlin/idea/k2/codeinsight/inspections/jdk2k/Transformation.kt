@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.jdk2k
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -41,7 +41,7 @@ object ToKotlinPrint : Transformation {
     }
 
     context(KaSession) override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
-        (callExpression.calleeExpression as? KtSimpleNameExpression)?.getReceiverExpression()?.resolveCall()
+        (callExpression.calleeExpression as? KtSimpleNameExpression)?.getReceiverExpression()?.resolveCallOld()
             ?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.callableId?.asSingleFqName() == FqName("java.lang.System.out")
 }
 
@@ -103,9 +103,9 @@ object ToExtensionFunctionWithNullableReceiverForMutableCollection : Transformat
 
     context(KaSession)
     private fun KtType?.isMutableList(): Boolean =
-        this?.expandedClassSymbol?.classId?.asSingleFqName() == StandardNames.FqNames.mutableList
+        this?.expandedSymbol?.classId?.asSingleFqName() == StandardNames.FqNames.mutableList
 
     context(KaSession)
     private fun KtType?.isMutableListOrSubtype(): Boolean =
-        isMutableList() || this?.expandedClassSymbol?.superTypes?.reversed()?.any { it.isMutableList() } == true
+        isMutableList() || this?.expandedSymbol?.superTypes?.reversed()?.any { it.isMutableList() } == true
 }

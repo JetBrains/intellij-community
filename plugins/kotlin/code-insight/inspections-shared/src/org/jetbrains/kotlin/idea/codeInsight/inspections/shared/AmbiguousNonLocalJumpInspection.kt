@@ -5,8 +5,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -70,7 +70,7 @@ private fun findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump
 
 private fun doesCauseAmbiguityForUnlabeledNonLocalBreakOrContinue(callExpr: KtCallExpression, functionLiteral: PsiElement): Boolean =
     true == analyze(callExpr) {
-        callExpr.resolveCall()?.successfulCallOrNull<KtFunctionCall<*>>()?.argumentMapping?.get(functionLiteral)
+        callExpr.resolveCallOld()?.successfulCallOrNull<KaFunctionCall<*>>()?.argumentMapping?.get(functionLiteral)
             ?.takeIf(::isInlinedParameter)
             ?.name
             ?.let { lambdaParameterName ->

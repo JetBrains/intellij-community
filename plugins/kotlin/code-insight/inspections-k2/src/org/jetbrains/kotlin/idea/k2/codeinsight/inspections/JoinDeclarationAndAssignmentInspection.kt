@@ -15,8 +15,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossiblyNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -96,7 +96,7 @@ internal class JoinDeclarationAndAssignmentInspection :
             }
         }
 
-        val hasTypeParameters = !initializerType?.expandedClassSymbol?.typeParameters.isNullOrEmpty()
+        val hasTypeParameters = !initializerType?.expandedSymbol?.typeParameters.isNullOrEmpty()
         val canOmitDeclaredType =
             if (hasTypeParameters) false
             else equalTypes || !element.isVar && isSubtype
@@ -276,7 +276,7 @@ internal class JoinDeclarationAndAssignmentInspection :
             return null
         }
 
-        val assignmentCall = firstAssignment.left?.resolveCall()?.singleVariableAccessCall()?.symbol ?: return null
+        val assignmentCall = firstAssignment.left?.resolveCallOld()?.singleVariableAccessCall()?.symbol ?: return null
         if (assignmentCall != property.getVariableSymbol()) return null
 
         if (propertyContainer !is KtClassBody) return firstAssignment

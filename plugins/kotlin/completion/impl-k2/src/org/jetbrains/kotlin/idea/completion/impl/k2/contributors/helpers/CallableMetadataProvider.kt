@@ -230,7 +230,7 @@ internal object CallableMetadataProvider {
     }
 
     context(KaSession)
-    private fun buildClassType(symbol: KaClassLikeSymbol): KtClassType = buildClassType(symbol) {
+    private fun buildClassType(symbol: KaClassLikeSymbol): KtType = buildClassType(symbol) {
         repeat(symbol.typeParameters.size) {
             argument(KtStarTypeProjection(token))
         }
@@ -238,7 +238,7 @@ internal object CallableMetadataProvider {
 
     context(KaSession)
     private fun KtType.replaceTypeArgumentsWithStarProjections(): KtType? =
-        expandedClassSymbol?.let { buildClassType(it) }?.withNullability(nullability)
+        expandedSymbol?.let { buildClassType(it) }?.withNullability(nullability)
 
     context(KaSession)
     private fun callableWeightByReceiver(

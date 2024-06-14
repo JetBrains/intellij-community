@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForExplicitReceiverExpression
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
@@ -269,7 +270,7 @@ internal open class FirCallableCompletionContributor(
 
     protected val KaNamedClassOrObjectSymbol.hasImportantStaticMemberScope: Boolean
         get() = classKind == KaClassKind.ENUM_CLASS ||
-                origin == KtSymbolOrigin.JAVA
+                origin.isJavaSourceOrLibrary()
 
     private val KaNamedClassOrObjectSymbol.canBeUsedAsReceiver: Boolean
         get() = classKind.isObject || companionObject != null

@@ -54,8 +54,8 @@ import com.sun.jdi.request.ClassPrepareRequest
 import kotlinx.coroutines.*
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
@@ -408,7 +408,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     context(KaSession)
     private fun KtCallExpression.getBytecodeMethodName(): String? {
-        val resolvedCall = resolveCall()?.successfulFunctionCallOrNull() ?: return null
+        val resolvedCall = resolveCallOld()?.successfulFunctionCallOrNull() ?: return null
         val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return null
         return symbol.getByteCodeMethodName()
     }
@@ -900,7 +900,7 @@ private fun KtFunction.isSamLambda(): Boolean {
 
     analyze(this) {
         val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return false
-        val call = parentCall.resolveCall()?.successfulFunctionCallOrNull() ?: return false
+        val call = parentCall.resolveCallOld()?.successfulFunctionCallOrNull() ?: return false
         val valueArgument = parentCall.getContainingValueArgument(this@isSamLambda) ?: return false
         val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
         return argument.returnType is KtUsualClassType

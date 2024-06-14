@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
@@ -46,7 +45,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
         context.withAnalysisSession { superExpression.getKtType() }?.toKotlinType(context) ?: context.errorHandling()
 
     private fun getCompileTimeValue(key: KtExpression): CompileTimeConstant<*>? {
-        val kaConstantValue = context.withAnalysisSession { key.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION) }
+        val kaConstantValue = context.withAnalysisSession { key.evaluate() }
             ?: return null
         val constantValue = kaConstantValue.toConstantValue()
         // only usesNonConstValAsConstant seems to be used in IDE code
