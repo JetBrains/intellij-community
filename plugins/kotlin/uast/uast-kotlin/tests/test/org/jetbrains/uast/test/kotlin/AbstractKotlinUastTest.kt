@@ -125,8 +125,8 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
     private fun initializeCoreEnvironment() {
         CoreApplicationEnvironment.registerApplicationExtensionPoint(
-            UastLanguagePlugin.extensionPointName,
-            UastLanguagePlugin::class.java,
+          UastLanguagePlugin.EP,
+          UastLanguagePlugin::class.java,
         )
 
         CoreApplicationEnvironment.registerApplicationExtensionPoint(
@@ -140,7 +140,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
         )
         project.registerService(UastContext::class.java)
 
-        Extensions.getRootArea().getExtensionPoint(UastLanguagePlugin.extensionPointName)
+        Extensions.getRootArea().getExtensionPoint(UastLanguagePlugin.EP)
             .registerExtension(JavaUastLanguagePlugin())
 
         AnalysisHandlerExtension.registerExtension(
@@ -151,7 +151,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
     private fun initializeKotlinEnvironment() {
         val area = Extensions.getRootArea()
-        area.getExtensionPoint(UastLanguagePlugin.extensionPointName)
+        area.getExtensionPoint(UastLanguagePlugin.EP)
             .registerExtension(KotlinUastLanguagePlugin(), project)
         area.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME)
             .registerExtension(KotlinEvaluatorExtension(), project)

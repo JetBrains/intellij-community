@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.lang.Language
@@ -20,9 +20,10 @@ import org.jetbrains.uast.util.classSetOf
 @JvmDefaultWithCompatibility
 interface UastLanguagePlugin {
   companion object {
-    val extensionPointName: ExtensionPointName<UastLanguagePlugin> = ExtensionPointName("org.jetbrains.uast.uastLanguagePlugin")
+    @JvmField
+    val EP: ExtensionPointName<UastLanguagePlugin> = ExtensionPointName("org.jetbrains.uast.uastLanguagePlugin")
 
-    fun getInstances(): Collection<UastLanguagePlugin> = extensionPointName.extensionList
+    fun getInstances(): Collection<UastLanguagePlugin> = EP.extensionList
 
     fun byLanguage(language: Language): UastLanguagePlugin? = UastFacade.findPlugin(language)
   }
