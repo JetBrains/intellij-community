@@ -49,7 +49,6 @@ def exec_table_command(init_command, command_type, start_index, end_index, f_glo
         res.append(table_provider.get_column_descriptions(table))
         res.append(NEXT_VALUE_SEPARATOR)
         res.append(table_provider.get_value_counts(table))
-        res.append(NEXT_VALUE_SEPARATOR)
 
     elif command_type == TableCommandType.HISTOGRAM_DATA:
         res.append(table_provider.get_value_occurrences_count(table))
