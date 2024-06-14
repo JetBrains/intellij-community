@@ -252,7 +252,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
       return getSubStep((ActionGroup)action, dataContext, myActionPlace, myPresentationFactory, myEnableMnemonics, true, myShowDisabledActions, null,
                         false, false, () -> dataContext, myPreselectActionCondition, -1);
     }
-    else if (action instanceof ToggleAction && item.isKeepPopupOpen()) {
+    else if (Utils.isKeepPopupOpen(item.getAction(), item.isKeepPopupOpen(), inputEvent)) {
       performActionItem(item, inputEvent);
       return FINAL_CHOICE;
     }

@@ -48,6 +48,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.mac.screenmenu.Menu
+import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -735,6 +736,13 @@ object Utils {
       sb.append(')')
     }
     return sb.toString()
+  }
+
+  @JvmStatic
+  fun isKeepPopupOpen(action: AnAction, presentationFlag: Boolean, event: InputEvent?): Boolean {
+    if (action is KeepingPopupOpenAction) return true
+    if (!presentationFlag) return false
+    return action is ToggleAction && event is MouseEvent && event.isAltDown
   }
 
   @JvmStatic

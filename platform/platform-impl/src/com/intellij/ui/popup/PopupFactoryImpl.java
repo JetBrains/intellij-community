@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -311,7 +312,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public void handleSelect(boolean handleFinalChoices, InputEvent e) {
       ActionItem item = ObjectUtils.tryCast(getList().getSelectedValue(), ActionItem.class);
       ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
-      if (step != null && item != null && step.isSelectable(item) && item.isKeepPopupOpen()) {
+      if (step != null && item != null && step.isSelectable(item) &&
+          Utils.isKeepPopupOpen(item.getAction(), item.isKeepPopupOpen(), e)) {
         step.performActionItem(item, e);
         step.updateStepItems(getList());
       }
@@ -337,9 +339,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private boolean handleRightOrLeftKeyPressed(@NotNull KeyEvent keyEvent, boolean isRightKey) {
       ActionItem item = ObjectUtils.tryCast(getList().getSelectedValue(), ActionItem.class);
       ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
-      if (step != null && item != null && step.isSelectable(item) && item.isKeepPopupOpen() && item.myAction instanceof ToggleAction toggleAction) {
-        AnActionEvent event = step.createAnActionEvent(toggleAction, keyEvent);
-        toggleAction.setSelected(event, isRightKey);
+      if (step != null && item != null && step.isSelectable(item) &&
+          item.isKeepPopupOpen() && item.getAction() instanceof ToggleAction toggle) {
+        AnActionEvent event = step.createAnActionEvent(toggle, keyEvent);
+        ActionUtil.doPerformActionOrShowPopup(toggle, event, popup -> {
+          toggle.setSelected(event, isRightKey);
+        });
         step.updateStepItems(getList());
         return true;
       }

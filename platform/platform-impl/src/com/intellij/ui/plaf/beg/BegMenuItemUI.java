@@ -5,6 +5,7 @@ package com.intellij.ui.plaf.beg;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.util.NlsContexts;
@@ -509,12 +510,13 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       msm = MenuSelectionManager.defaultManager();
     }
     ActionMenuItem item = (ActionMenuItem)menuItem;
-    if (!item.isKeepMenuOpen()) {
+    boolean keepMenuOpen = Utils.isKeepPopupOpen(item.getAnAction(), item.isKeepMenuOpen(), e);
+    if (!keepMenuOpen) {
       msm.clearSelectedPath();
     }
     ActionEvent event = new ActionEvent(menuItem, ActionEvent.ACTION_PERFORMED, null, e.getWhen(), e.getModifiers());
     item.fireActionPerformed(event);
-    if (item.isKeepMenuOpen()) {
+    if (keepMenuOpen) {
       Container parent = item.getParent();
       if (parent instanceof JComponent) {
         //Fake event to trigger update in ActionPopupMenuImpl.MyMenu

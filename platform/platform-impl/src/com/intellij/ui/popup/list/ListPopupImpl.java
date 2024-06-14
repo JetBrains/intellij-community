@@ -8,6 +8,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.ClientSystemInfo;
@@ -503,10 +504,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     Object parentValue = selectedValues.length == 1 ? selectedValue : null;
 
     if (nextStep == PopupStep.FINAL_CHOICE &&
-        parentValue instanceof PopupFactoryImpl.ActionItem actionItem &&
-        actionItem.isKeepPopupOpen()) {
+        parentValue instanceof PopupFactoryImpl.ActionItem item &&
+        Utils.isKeepPopupOpen(item.getAction(), item.isKeepPopupOpen(), e)) {
       ActionPopupStep actionPopupStep = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
-      if (actionPopupStep != null && actionPopupStep.isSelectable(actionItem)) {
+      if (actionPopupStep != null && actionPopupStep.isSelectable(item)) {
         actionPopupStep.updateStepItems(getList());
         return false;
       }
