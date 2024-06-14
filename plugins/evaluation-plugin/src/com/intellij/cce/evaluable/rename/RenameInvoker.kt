@@ -95,7 +95,7 @@ class RenameInvoker(private val project: Project,
                ?: throw IllegalStateException("Can't find language \"${language.ideaLanguageId}\"")
     val provider = SuggestionsProvider.find(project, strategy.suggestionsProvider)
                    ?: throw IllegalStateException("Can't find suggestions provider \"${strategy.suggestionsProvider}\"")
-    return provider.getSuggestions(expectedLine, editor, lang, this::comparator)
+    return provider.getSuggestions(expectedLine, editor, lang,  this::comparator, strategy.collectContextOnly)
   }
 
   private fun createSession(position: Int, expectedText: String, nodeProperties: TokenProperties, lookup: Lookup): Session {

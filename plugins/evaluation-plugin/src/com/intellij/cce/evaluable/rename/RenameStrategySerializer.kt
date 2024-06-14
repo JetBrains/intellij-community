@@ -12,6 +12,7 @@ import java.lang.reflect.Type
 class RenameStrategySerializer : StrategySerializer<RenameStrategy> {
   override fun serialize(src: RenameStrategy, typeOfSrc: Type, context: JsonSerializationContext): JsonObject {
     val jsonObject = JsonObject()
+    jsonObject.addProperty("collectContextOnly", src.collectContextOnly)
     jsonObject.addProperty("placeholderName", src.placeholderName)
     jsonObject.addProperty("suggestionsProvider", src.suggestionsProvider)
     val filtersObject = JsonObject()
@@ -21,9 +22,10 @@ class RenameStrategySerializer : StrategySerializer<RenameStrategy> {
   }
 
   override fun deserialize(map: Map<String, Any>, language: String): RenameStrategy {
+    val collectContextOnly = map.getOrThrow<Boolean>("collectContextOnly")
     val placeholderName = map.getOrThrow<String>("placeholderName")
     val suggestionsProvider = map.getOrThrow<String>("suggestionsProvider")
     val filters = EvaluationFilterReader.readFilters(map.getIfExists<Map<String, Any>>("filters"), language)
-    return RenameStrategy(placeholderName, suggestionsProvider, filters)
+    return RenameStrategy(collectContextOnly, placeholderName, suggestionsProvider, filters)
   }
 }
