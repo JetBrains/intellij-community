@@ -743,6 +743,11 @@ public class Py3CompletionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  // PY-73246
+  public void testSquareBracketsNotInsertedAfterAlreadyParameterizedGenericInsideTypeHints() {
+    doMultiFileTest();
+  }
+
   private void doTestVariants(String @NotNull ... expected) {
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
