@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.history.GitHistoryTraverser
 import git4idea.history.GitHistoryTraverserImpl
@@ -154,7 +155,7 @@ internal class GitRebaseEntryGeneratedUsingLog(details: VcsCommitMetadata) :
   GitRebaseEntryWithDetails(GitRebaseEntry(Action.PICK, details.id.asString(), details.subject.trimStart()), details) {
 
   fun equalsWithReal(realEntry: GitRebaseEntry) =
-    action == realEntry.action &&
-    commit.startsWith(realEntry.commit) &&
-    subject == realEntry.subject
+    if (VcsLogUtil.HASH_PREFIX_REGEX.matcher(realEntry.commit).matches()) {
+      action == realEntry.action && (commit.startsWith(realEntry.commit) || realEntry.commit.startsWith(commit))
+    } else false
 }
