@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.fe10
 
 import org.jetbrains.kotlin.analysis.api.KaConstantInitializerValue
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -721,11 +722,13 @@ class KtSymbolBasedPropertyDescriptor(
 ) : AbstractKtSymbolBasedPropertyDescriptor(context), PropertyDescriptor {
     override fun getVisibility(): DescriptorVisibility = ktSymbol.visibility.toDescriptorVisibility()
 
+    @OptIn(KaExperimentalApi::class)
     override fun getCompileTimeInitializer(): ConstantValue<*>? {
         val constantInitializer = ktSymbol.initializer as? KaConstantInitializerValue ?: return null
         return constantInitializer.constant.toConstantValue()
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun isConst(): Boolean = ktSymbol.initializer != null
 
     override val getter: PropertyGetterDescriptor?

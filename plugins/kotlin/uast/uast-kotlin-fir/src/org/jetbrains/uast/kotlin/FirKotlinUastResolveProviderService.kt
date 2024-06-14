@@ -789,6 +789,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun KtExpression.unwrapKotlinValPropertyReference(): KtExpression? {
         if (this !is KtNameReferenceExpression) return this
         val propertySymbol = resolveCallOld()?.successfulVariableAccessCall()?.symbol as? KaPropertySymbol ?: return this
