@@ -50,13 +50,13 @@ internal class CodeFragmentPopup(val editor: Editor, val lines: IntRange, privat
       .createPopup()
   }
 
-  private fun createEditorFragment(editor: Editor, lines: IntRange): EditorFragmentComponent {
+  private fun createEditorFragment(editor: Editor, lines: IntRange): EditorFragmentComponent? {
+    if (lines.last >= editor.document.lineCount) return null
     return EditorFragmentComponent.createEditorFragmentComponent(editor, lines.first, lines.last + 1, true, true)
   }
 
   fun updateCodePreview() {
-    if (lines.last > editor.document.lineCount) return
-    val editorFragmentComponent = createEditorFragment(editor, lines)
+    val editorFragmentComponent = createEditorFragment(editor, lines) ?: return
     content.removeAll()
     content.add(editorFragmentComponent, fillConstraints)
   }
