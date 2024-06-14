@@ -64,6 +64,21 @@ data class SshConnectionConfigPatch(
     var strictHostKeyChecking: StrictHostKeyChecking?,
   ) {
     constructor() : this(hashKnownHosts = null, strictHostKeyChecking = null)
+
+    @ApiStatus.Experimental
+    enum class StrictHostKeyChecking {
+      /** Never automatically add host keys to the known hosts file. */
+      YES,
+
+      /** Automatically add new host keys to the known hosts file but do not permit connections to hosts with changed host keys. */
+      ACCEPT_NEW,
+
+      /** Automatically add new host keys to the known hosts file and allow connections to hosts with changed host keys to proceed. */
+      NO,
+
+      /** New host keys will be added to the known host file only after the user has confirmed that is what they really want to do. */
+      ASK,
+    }
   }
 
   constructor() : this(hostKeyVerifier = null, serverAliveInterval = null, proxyParams = null)
@@ -72,19 +87,4 @@ data class SshConnectionConfigPatch(
     hostKeyVerifier = hostKeyVerifier?.copy(),
     proxyParams = proxyParams?.copy(),
   )
-}
-
-@ApiStatus.Experimental
-enum class StrictHostKeyChecking {
-  /** Never automatically add host keys to the known hosts file. */
-  YES,
-
-  /** Automatically add new host keys to the user known hosts files, but not permit connections to hosts with changed host keys. */
-  ACCEPT_NEW,
-
-  /** Automatically add new host keys to the user known hosts files and allow connections to hosts with changed host keys to proceed. */
-  NO,
-
-  /** New host keys will be added to the user known host files only after the user has confirmed that is what they really want to do. */
-  ASK,
 }
