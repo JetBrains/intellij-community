@@ -44,6 +44,11 @@ public fun java.awt.Color.toComposeColor(): Color = Color(red = red, green = gre
 
 public fun java.awt.Color?.toComposeColorOrUnspecified(): Color = this?.toComposeColor() ?: Color.Unspecified
 
+public fun retrieveColor(
+    key: String,
+    default: Color,
+): Color = retrieveColorOrNull(key) ?: default
+
 public fun retrieveColorOrNull(key: String): Color? =
     try {
         JBColor.namedColor(key, marker("JEWEL_JBCOLOR_MARKER")).toComposeColor()
@@ -78,9 +83,13 @@ public fun List<Color>.createVerticalBrush(
     return Brush.verticalGradient(this, startY, endY, tileMode)
 }
 
-public fun retrieveIntAsDp(key: String): Dp {
+public fun retrieveIntAsDp(
+    key: String,
+    default: Dp? = null,
+): Dp {
     val rawValue = UIManager.get(key)
     if (rawValue is Int) return rawValue.dp
+    if (default != null) return default
 
     keyNotFound(key, "Int")
 }
@@ -92,7 +101,10 @@ public fun retrieveIntAsDpOrUnspecified(key: String): Dp =
         Dp.Unspecified
     }
 
-public fun retrieveInsetsAsPaddingValues(key: String): PaddingValues = UIManager.getInsets(key)?.toPaddingValues() ?: keyNotFound(key, "Insets")
+public fun retrieveInsetsAsPaddingValues(
+    key: String,
+    default: PaddingValues? = null,
+): PaddingValues = UIManager.getInsets(key)?.toPaddingValues() ?: default ?: keyNotFound(key, "Insets")
 
 /**
  * Converts a [Insets] to [PaddingValues]. If the receiver is a [JBInsets]
@@ -112,7 +124,9 @@ public fun Insets.toPaddingValues(): PaddingValues =
  * [JBInsets.getUnscaled] values, treated as [Dp]. This avoids double
  * scaling.
  */
-public fun JBInsets.toPaddingValues(): PaddingValues = PaddingValues(unscaled.left.dp, unscaled.top.dp, unscaled.right.dp, unscaled.bottom.dp)
+@Suppress("ktlint:standard:function-signature") // False positive
+public fun JBInsets.toPaddingValues(): PaddingValues =
+    PaddingValues(unscaled.left.dp, unscaled.top.dp, unscaled.right.dp, unscaled.bottom.dp)
 
 /**
  * Converts a [Dimension] to [DpSize]. If the receiver is a [JBDimension]
