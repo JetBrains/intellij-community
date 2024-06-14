@@ -1,14 +1,15 @@
 package com.intellij.workspaceModel.test.api.impl
 
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.PersistentEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.Default
-import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -20,7 +21,8 @@ import com.intellij.workspaceModel.test.api.SimpleId
 import com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity,
                                                                                                 WorkspaceEntityBase(dataSource) {
 
@@ -174,6 +176,7 @@ internal class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolic
   }
 }
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class SimpleSymbolicIdEntityData : WorkspaceEntityData<SimpleSymbolicIdEntity>() {
   var version: Int = 0
   lateinit var name: String

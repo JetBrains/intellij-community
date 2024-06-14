@@ -45,7 +45,7 @@ public class EntityStorageSerializerImpl(
   private val ijBuildVersion: String,
 ) : EntityStorageSerializer {
   public companion object {
-    public const val STORAGE_SERIALIZATION_VERSION: String = "version7"
+    public const val STORAGE_SERIALIZATION_VERSION: String = "version8"
 
     private val loadCacheMetadataFromFileTimeMs = MillisecondsMeasurer()
 
