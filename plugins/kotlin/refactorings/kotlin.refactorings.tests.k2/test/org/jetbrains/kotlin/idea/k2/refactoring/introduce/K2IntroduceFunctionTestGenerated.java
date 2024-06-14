@@ -263,6 +263,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/packageQualifier.kt");
         }
 
+        @TestMetadata("parenthesis.kt")
+        public void testParenthesis() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/parenthesis.kt");
+        }
+
         @TestMetadata("privateMemberInClassObject.kt")
         public void testPrivateMemberInClassObject() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/privateMemberInClassObject.kt");

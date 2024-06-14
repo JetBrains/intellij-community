@@ -1147,6 +1147,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/packageQualifier.kt");
             }
 
+            @TestMetadata("parenthesis.kt")
+            public void testParenthesis() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/parenthesis.kt");
+            }
+
             @TestMetadata("privateMemberInClassObject.kt")
             public void testPrivateMemberInClassObject() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/privateMemberInClassObject.kt");
