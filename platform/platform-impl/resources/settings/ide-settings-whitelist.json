@@ -116,6 +116,7 @@
     "com.intellij:app:Vcs-Log-App-Settings.show_tag_names",
     "com.intellij:app:XmlEditorOptions.*",
     "com.intellij.css:app:CssEmmetOptions.*",
+    "com.intellij.java-i18n:app:PropertiesFoldingSettings.*",
     "com.intellij.gradle:app:GradleSystemSettings.serviceDirectoryPath",
     "Docker:app:DockerSettings.dockerComposePath",
     "Docker:app:DockerSettings.dockerPath",
