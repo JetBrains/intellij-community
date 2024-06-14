@@ -5,20 +5,15 @@ package org.jetbrains.kotlin.idea.test
 import com.intellij.facet.FacetManager
 import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.util.indexing.IndexingFlag
-import com.intellij.util.indexing.UnindexedFilesScanner
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Severity
@@ -66,20 +61,6 @@ fun JavaCodeInsightTestFixture.dumpErrorLines(): List<String> {
     if (InTextDirectivesUtils.isDirectiveDefined(file.text, "// DISABLE-ERRORS")) return emptyList()
     return doHighlighting().filter { it.severity == HighlightSeverity.ERROR }.map {
         "// ERROR: ${it.description.replace('\n', ' ')}"
-    }
-}
-
-fun Project.waitIndexingComplete(indexingReason: String? = null) {
-    val project = this
-    UIUtil.dispatchAllInvocationEvents()
-    invokeAndWaitIfNeeded {
-        // TODO: [VD] a dirty hack to reindex created android project
-        IndexingFlag.cleanupProcessedFlag("org.jetbrains.kotlin.idea.test.TestUtilsKt.waitIndexingComplete")
-        with(DumbService.getInstance(project)) {
-            UnindexedFilesScanner(project, indexingReason ?: "<unknown>").queue()
-            completeJustSubmittedTasks()
-        }
-        UIUtil.dispatchAllInvocationEvents()
     }
 }
 

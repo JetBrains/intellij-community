@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.packaging.impl.artifacts.ArtifactUtil
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
@@ -58,7 +59,6 @@ import org.jetbrains.kotlin.idea.notification.catchNotificationTextAsync
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
 import org.jetbrains.kotlin.idea.test.resetCodeStyle
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.waitIndexingComplete
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -2918,7 +2918,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             importProjectsAsync(pomMain, pomA, pomB)
             withContext(Dispatchers.EDT) {
-                project.waitIndexingComplete()
+                IndexingTestUtil.waitUntilIndexesAreReady(project)
             }
             assertModules("module-with-kotlin", "module-with-java", "mvnktest")
 
