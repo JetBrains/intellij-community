@@ -727,10 +727,11 @@ object Utils {
   }
 
   @JvmStatic
-  fun isKeepPopupOpen(action: AnAction, presentationFlag: Boolean, event: InputEvent?): Boolean {
-    if (action is KeepingPopupOpenAction) return true
-    if (!presentationFlag) return false
-    return action is ToggleAction && event is MouseEvent && event.isAltDown
+  fun isKeepPopupOpen(action: AnAction, presentationFlag: Boolean, event: InputEvent?): Boolean = when {
+    action is KeepingPopupOpenAction -> true
+    !presentationFlag -> false
+    action is ToggleAction -> !action.isSoftMultiChoice || event is MouseEvent && event.isAltDown
+    else -> true
   }
 
   @JvmStatic

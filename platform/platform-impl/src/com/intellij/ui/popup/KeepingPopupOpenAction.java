@@ -17,6 +17,9 @@ package com.intellij.ui.popup;
 
 /**
  * Marker interface for actions that prevent popup from closing when user clicks on them.
- * */
+ *
+ * @deprecated For regular actions use {@link com.intellij.openapi.actionSystem.Presentation#setMultiChoice(boolean)} instead.
+ */
+@Deprecated(forRemoval = true)
 public interface KeepingPopupOpenAction {
 }

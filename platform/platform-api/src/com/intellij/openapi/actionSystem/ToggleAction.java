@@ -42,12 +42,24 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text, Presentation.NULL_STRING, icon);
   }
 
+  /**
+   * Set {@link Presentation#isMultiChoice()} flag on by default.
+   *
+   * @see #isSoftMultiChoice()
+   */
   @Override
   @NotNull
   Presentation createTemplatePresentation() {
     Presentation presentation = super.createTemplatePresentation();
     presentation.setMultiChoice(true);
     return presentation;
+  }
+
+  /**
+   * Tells whether multi-choice behavior is activated by Alt modifier (aka "soft multi-choice")
+   * */
+  public boolean isSoftMultiChoice() {
+    return true;
   }
 
   @Override

@@ -653,12 +653,21 @@ public final class Presentation implements Cloneable {
   }
 
   /**
-   * Sets if multiple actions or toggles can be performed in the same menu or popup.
+   * For an action presentation sets whether a menu or a popup is not closed when the action is performed
+   * so more actions can be performed at once.
+   * <p>
+   * {@link com.intellij.openapi.actionSystem.ToggleAction} has this flag on by default in template presentation,
+   * and it is handled in a "soft" manner - only when the Alt is pressed.
+   * See {@link com.intellij.openapi.actionSystem.ToggleAction#isSoftMultiChoice()}.
+   * <p>
+   * Other actions have this flag off by default,
+   * and it is handled in a "hard" manner - always.
    */
   public void setMultiChoice(boolean b) {
     myFlags = BitUtil.set(myFlags, IS_MULTI_CHOICE, b);
   }
 
+  /** @see Presentation#setMultiChoice(boolean) */
   public boolean isMultiChoice() {
     return BitUtil.isSet(myFlags, IS_MULTI_CHOICE);
   }
