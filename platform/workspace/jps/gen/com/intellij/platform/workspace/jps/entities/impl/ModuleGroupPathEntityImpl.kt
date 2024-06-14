@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NonNls
 
 @Internal
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPathEntityData) : ModuleGroupPathEntity, WorkspaceEntityBase(
   dataSource) {

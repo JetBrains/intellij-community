@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNu
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNulls
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentWithNullsImpl(private val dataSource: ParentWithNullsData) : ParentWithNulls, WorkspaceEntityBase(dataSource) {
 

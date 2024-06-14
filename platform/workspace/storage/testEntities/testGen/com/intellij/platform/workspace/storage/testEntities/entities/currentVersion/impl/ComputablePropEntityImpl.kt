@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ComputablePropEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEntityData) : ComputablePropEntity, WorkspaceEntityBase(
   dataSource) {

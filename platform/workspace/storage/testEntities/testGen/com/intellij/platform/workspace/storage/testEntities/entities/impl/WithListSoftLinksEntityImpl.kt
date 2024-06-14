@@ -27,7 +27,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.NameId
 import com.intellij.platform.workspace.storage.testEntities.entities.WithListSoftLinksEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class WithListSoftLinksEntityImpl(private val dataSource: WithListSoftLinksEntityData) : WithListSoftLinksEntity, WorkspaceEntityBase(
   dataSource) {

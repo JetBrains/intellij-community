@@ -22,7 +22,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.VFUEntity2
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntity2, WorkspaceEntityBase(dataSource) {
 

@@ -21,7 +21,7 @@ import java.util.*
 import java.util.Date
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class UnknownFieldEntityImpl(private val dataSource: UnknownFieldEntityData) : UnknownFieldEntity, WorkspaceEntityBase(
   dataSource) {

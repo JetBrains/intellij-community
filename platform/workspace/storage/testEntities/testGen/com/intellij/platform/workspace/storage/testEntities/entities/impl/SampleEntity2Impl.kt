@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntit
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : SampleEntity2, WorkspaceEntityBase(dataSource) {
 

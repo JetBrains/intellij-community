@@ -30,7 +30,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.Descriptor
 import com.intellij.platform.workspace.storage.testEntities.entities.ProjectModelTestEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity, WorkspaceEntityBase(
   dataSource) {

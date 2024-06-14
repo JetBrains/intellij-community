@@ -29,7 +29,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityData) : FacetsOrderEntity, WorkspaceEntityBase(dataSource) {
 

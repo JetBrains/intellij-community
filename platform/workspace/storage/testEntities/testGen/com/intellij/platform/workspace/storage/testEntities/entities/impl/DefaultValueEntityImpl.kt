@@ -20,7 +20,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.DefaultValueEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class DefaultValueEntityImpl(private val dataSource: DefaultValueEntityData) : DefaultValueEntity, WorkspaceEntityBase(
   dataSource) {

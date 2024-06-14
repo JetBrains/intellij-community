@@ -27,7 +27,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.CompositeBa
 import com.intellij.platform.workspace.storage.testEntities.entities.MiddleEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class MiddleEntityImpl(private val dataSource: MiddleEntityData) : MiddleEntity, WorkspaceEntityBase(dataSource) {
 

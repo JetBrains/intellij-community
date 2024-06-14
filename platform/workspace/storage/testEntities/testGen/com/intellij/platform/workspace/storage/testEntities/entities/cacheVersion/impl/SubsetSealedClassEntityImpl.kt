@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetSealedClassEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedClassEntityData) : SubsetSealedClassEntity, WorkspaceEntityBase(
   dataSource) {

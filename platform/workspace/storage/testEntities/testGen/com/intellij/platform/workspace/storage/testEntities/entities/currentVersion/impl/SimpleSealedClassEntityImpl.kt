@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClassEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SimpleSealedClassEntityImpl(private val dataSource: SimpleSealedClassEntityData) : SimpleSealedClassEntity, WorkspaceEntityBase(
   dataSource) {

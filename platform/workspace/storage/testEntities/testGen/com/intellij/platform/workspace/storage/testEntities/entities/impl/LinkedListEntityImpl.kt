@@ -23,7 +23,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListE
 import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntityId
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class LinkedListEntityImpl(private val dataSource: LinkedListEntityData) : LinkedListEntity, WorkspaceEntityBase(dataSource) {
 

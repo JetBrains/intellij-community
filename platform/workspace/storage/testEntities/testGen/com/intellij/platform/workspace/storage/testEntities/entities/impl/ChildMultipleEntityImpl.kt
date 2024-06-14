@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChildMultip
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildMultipleEntityImpl(private val dataSource: ChildMultipleEntityData) : ChildMultipleEntity, WorkspaceEntityBase(
   dataSource) {

@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OoChildForP
 import com.intellij.platform.workspace.storage.testEntities.entities.OoParentWithPidEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OoChildForParentWithPidEntityImpl(private val dataSource: OoChildForParentWithPidEntityData) : OoChildForParentWithPidEntity, WorkspaceEntityBase(
   dataSource) {

@@ -27,7 +27,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChildSingle
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentSingleAbEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildSingleSecondEntityImpl(private val dataSource: ChildSingleSecondEntityData) : ChildSingleSecondEntity, WorkspaceEntityBase(
   dataSource) {

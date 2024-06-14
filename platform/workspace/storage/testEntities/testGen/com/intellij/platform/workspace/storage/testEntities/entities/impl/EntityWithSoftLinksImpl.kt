@@ -36,7 +36,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SoftLinkRef
 import com.intellij.platform.workspace.storage.testEntities.entities.TooDeepContainer
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLinksData) : EntityWithSoftLinks, WorkspaceEntityBase(
   dataSource) {

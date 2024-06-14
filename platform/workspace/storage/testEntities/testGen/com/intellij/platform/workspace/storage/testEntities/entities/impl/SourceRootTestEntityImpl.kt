@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ContentRoot
 import com.intellij.platform.workspace.storage.testEntities.entities.SourceRootTestEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SourceRootTestEntityImpl(private val dataSource: SourceRootTestEntityData) : SourceRootTestEntity, WorkspaceEntityBase(
   dataSource) {

@@ -26,7 +26,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.NamedChildE
 import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class NamedChildEntityImpl(private val dataSource: NamedChildEntityData) : NamedChildEntity, WorkspaceEntityBase(dataSource) {
 

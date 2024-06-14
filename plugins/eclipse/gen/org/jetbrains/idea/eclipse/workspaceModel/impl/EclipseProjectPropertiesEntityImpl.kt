@@ -31,7 +31,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class EclipseProjectPropertiesEntityImpl(private val dataSource: EclipseProjectPropertiesEntityData) : EclipseProjectPropertiesEntity, WorkspaceEntityBase(
   dataSource) {

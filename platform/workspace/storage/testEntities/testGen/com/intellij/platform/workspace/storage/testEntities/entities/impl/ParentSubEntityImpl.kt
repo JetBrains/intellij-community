@@ -27,7 +27,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentSubEntityImpl(private val dataSource: ParentSubEntityData) : ParentSubEntity, WorkspaceEntityBase(dataSource) {
 

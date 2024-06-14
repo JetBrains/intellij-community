@@ -29,7 +29,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.XChildEntit
 import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChildEntity, WorkspaceEntityBase(dataSource) {
 

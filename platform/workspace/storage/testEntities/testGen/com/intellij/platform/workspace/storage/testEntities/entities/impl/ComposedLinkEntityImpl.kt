@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ComposedId
 import com.intellij.platform.workspace.storage.testEntities.entities.ComposedLinkEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ComposedLinkEntityImpl(private val dataSource: ComposedLinkEntityData) : ComposedLinkEntity, WorkspaceEntityBase(
   dataSource) {

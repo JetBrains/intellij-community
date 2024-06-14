@@ -20,7 +20,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.EnumPropsEnum
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class EnumPropsEntityImpl(private val dataSource: EnumPropsEntityData) : EnumPropsEntity, WorkspaceEntityBase(dataSource) {
 

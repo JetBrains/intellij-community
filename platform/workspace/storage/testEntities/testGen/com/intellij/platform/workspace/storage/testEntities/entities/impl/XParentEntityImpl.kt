@@ -27,7 +27,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.XChildWithO
 import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XParentEntity, WorkspaceEntityBase(dataSource) {
 

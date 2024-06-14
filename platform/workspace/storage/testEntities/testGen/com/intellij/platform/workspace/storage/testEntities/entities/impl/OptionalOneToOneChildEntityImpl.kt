@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOne
 import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneParentEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalOneToOneChildEntityData) : OptionalOneToOneChildEntity, WorkspaceEntityBase(
   dataSource) {

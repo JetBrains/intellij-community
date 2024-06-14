@@ -8,7 +8,6 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
@@ -27,7 +26,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEn
 import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) : FacetTestEntity, WorkspaceEntityBase(dataSource) {
 

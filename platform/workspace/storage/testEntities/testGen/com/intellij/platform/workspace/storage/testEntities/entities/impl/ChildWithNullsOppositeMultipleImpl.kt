@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNu
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsOppositeMultiple
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildWithNullsOppositeMultipleImpl(private val dataSource: ChildWithNullsOppositeMultipleData) : ChildWithNullsOppositeMultiple, WorkspaceEntityBase(
   dataSource) {

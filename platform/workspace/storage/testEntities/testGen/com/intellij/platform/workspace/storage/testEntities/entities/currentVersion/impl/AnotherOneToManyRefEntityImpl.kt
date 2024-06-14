@@ -26,7 +26,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.OneToManyRefEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class AnotherOneToManyRefEntityImpl(private val dataSource: AnotherOneToManyRefEntityData) : AnotherOneToManyRefEntity, WorkspaceEntityBase(
   dataSource) {

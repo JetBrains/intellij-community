@@ -32,7 +32,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntity, WorkspaceEntityBase(dataSource) {
 

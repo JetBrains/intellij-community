@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NonNls
 
 @Internal
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrderEntityData) : ExcludeUrlOrderEntity, WorkspaceEntityBase(
   dataSource) {

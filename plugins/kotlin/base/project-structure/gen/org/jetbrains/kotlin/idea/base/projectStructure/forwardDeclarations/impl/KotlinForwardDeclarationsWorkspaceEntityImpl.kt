@@ -28,7 +28,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSource: KotlinForwardDeclarationsWorkspaceEntityData) : KotlinForwardDeclarationsWorkspaceEntity, WorkspaceEntityBase(
   dataSource) {

@@ -27,7 +27,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.EntityWithS
 import com.intellij.platform.workspace.storage.testEntities.entities.SoftLinkReferencedChild
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SoftLinkReferencedChildImpl(private val dataSource: SoftLinkReferencedChildData) : SoftLinkReferencedChild, WorkspaceEntityBase(
   dataSource) {

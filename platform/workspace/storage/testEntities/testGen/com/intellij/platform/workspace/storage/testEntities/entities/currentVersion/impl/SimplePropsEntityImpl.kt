@@ -23,7 +23,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimplePropsEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityData) : SimplePropsEntity, WorkspaceEntityBase(dataSource) {
 

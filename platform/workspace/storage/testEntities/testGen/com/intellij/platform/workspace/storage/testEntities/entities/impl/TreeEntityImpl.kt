@@ -26,7 +26,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.TreeEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class TreeEntityImpl(private val dataSource: TreeEntityData) : TreeEntity, WorkspaceEntityBase(dataSource) {
 

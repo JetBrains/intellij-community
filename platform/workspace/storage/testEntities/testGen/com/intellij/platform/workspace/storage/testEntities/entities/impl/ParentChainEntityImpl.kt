@@ -26,7 +26,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.CompositeAb
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentChainEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityData) : ParentChainEntity, WorkspaceEntityBase(dataSource) {
 

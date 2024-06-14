@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.AttachedEnt
 import com.intellij.platform.workspace.storage.testEntities.entities.MainEntityParentList
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class MainEntityParentListImpl(private val dataSource: MainEntityParentListData) : MainEntityParentList, WorkspaceEntityBase(
   dataSource) {

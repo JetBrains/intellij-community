@@ -20,7 +20,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExternalProjectsBuildClasspathEntityImpl(private val dataSource: ExternalProjectsBuildClasspathEntityData) : ExternalProjectsBuildClasspathEntity, WorkspaceEntityBase(
   dataSource) {

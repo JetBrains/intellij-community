@@ -20,7 +20,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.FirstEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.FirstPId
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FirstEntityWithPIdImpl(private val dataSource: FirstEntityWithPIdData) : FirstEntityWithPId, WorkspaceEntityBase(
   dataSource) {

@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OoChildWith
 import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OoChildWithNullableParentEntityImpl(private val dataSource: OoChildWithNullableParentEntityData) : OoChildWithNullableParentEntity, WorkspaceEntityBase(
   dataSource) {

@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptId
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryId
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntityData) : KotlinScriptEntity, WorkspaceEntityBase(
   dataSource) {

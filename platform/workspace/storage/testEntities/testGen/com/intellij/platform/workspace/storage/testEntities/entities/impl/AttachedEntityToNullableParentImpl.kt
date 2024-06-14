@@ -20,7 +20,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityToNullableParent
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class AttachedEntityToNullableParentImpl(private val dataSource: AttachedEntityToNullableParentData) : AttachedEntityToNullableParent, WorkspaceEntityBase(
   dataSource) {

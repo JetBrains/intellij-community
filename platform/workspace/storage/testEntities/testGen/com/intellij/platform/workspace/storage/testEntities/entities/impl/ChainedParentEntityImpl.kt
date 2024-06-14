@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChainedEnti
 import com.intellij.platform.workspace.storage.testEntities.entities.ChainedParentEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChainedParentEntityImpl(private val dataSource: ChainedParentEntityData) : ChainedParentEntity, WorkspaceEntityBase(
   dataSource) {

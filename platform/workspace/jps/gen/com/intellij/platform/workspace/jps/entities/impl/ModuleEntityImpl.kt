@@ -46,7 +46,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEntity, WorkspaceEntityBase(dataSource) {
 

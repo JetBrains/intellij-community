@@ -22,7 +22,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedPropsOrderEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsOrderEntityData) : ChangedPropsOrderEntity, WorkspaceEntityBase(
   dataSource) {

@@ -26,7 +26,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultipa
 import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentSymbolicId
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class TreeMultiparentRootEntityImpl(private val dataSource: TreeMultiparentRootEntityData) : TreeMultiparentRootEntity, WorkspaceEntityBase(
   dataSource) {

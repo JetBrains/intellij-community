@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithExtensionParent
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildWithExtensionParentImpl(private val dataSource: ChildWithExtensionParentData) : ChildWithExtensionParent, WorkspaceEntityBase(
   dataSource) {

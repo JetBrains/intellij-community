@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: MavenProjectsTreeSettingsEntityData) : MavenProjectsTreeSettingsEntity, WorkspaceEntityBase(
   dataSource) {

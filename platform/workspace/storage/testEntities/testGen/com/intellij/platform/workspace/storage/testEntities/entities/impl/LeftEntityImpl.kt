@@ -33,7 +33,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstrac
 import com.intellij.platform.workspace.storage.testEntities.entities.LeftEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEntity, WorkspaceEntityBase(dataSource) {
 

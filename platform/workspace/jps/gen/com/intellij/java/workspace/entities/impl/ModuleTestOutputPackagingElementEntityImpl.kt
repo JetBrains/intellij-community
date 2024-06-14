@@ -36,7 +36,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ModuleTestOutputPackagingElementEntityImpl(private val dataSource: ModuleTestOutputPackagingElementEntityData) : ModuleTestOutputPackagingElementEntity, WorkspaceEntityBase(
   dataSource) {

@@ -27,7 +27,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SimpleAbstr
 import com.intellij.platform.workspace.storage.testEntities.entities.SimpleChildAbstractEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SimpleChildAbstractEntityImpl(private val dataSource: SimpleChildAbstractEntityData) : SimpleChildAbstractEntity, WorkspaceEntityBase(
   dataSource) {

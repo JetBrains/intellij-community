@@ -23,7 +23,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWi
 import com.intellij.platform.workspace.storage.testEntities.entities.OneSymbolicId
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWithSymbolicIdData) : OneEntityWithSymbolicId, WorkspaceEntityBase(
   dataSource) {

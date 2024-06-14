@@ -26,7 +26,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ComposedIdS
 import com.intellij.platform.workspace.storage.testEntities.entities.NameId
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSoftRefEntityData) : ComposedIdSoftRefEntity, WorkspaceEntityBase(
   dataSource) {

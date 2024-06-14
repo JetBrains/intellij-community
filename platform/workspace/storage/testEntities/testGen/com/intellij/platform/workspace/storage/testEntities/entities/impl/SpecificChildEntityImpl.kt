@@ -27,7 +27,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithE
 import com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SpecificChildEntityImpl(private val dataSource: SpecificChildEntityData) : SpecificChildEntity, WorkspaceEntityBase(
   dataSource) {

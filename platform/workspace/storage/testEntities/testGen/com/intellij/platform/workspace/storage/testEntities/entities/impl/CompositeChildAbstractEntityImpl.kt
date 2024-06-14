@@ -33,7 +33,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentChain
 import com.intellij.platform.workspace.storage.testEntities.entities.SimpleAbstractEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class CompositeChildAbstractEntityImpl(private val dataSource: CompositeChildAbstractEntityData) : CompositeChildAbstractEntity, WorkspaceEntityBase(
   dataSource) {

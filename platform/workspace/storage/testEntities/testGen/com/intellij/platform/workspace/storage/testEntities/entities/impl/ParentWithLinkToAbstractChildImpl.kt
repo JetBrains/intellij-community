@@ -26,7 +26,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.AbstractChi
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithLinkToAbstractChild
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentWithLinkToAbstractChildImpl(private val dataSource: ParentWithLinkToAbstractChildData) : ParentWithLinkToAbstractChild, WorkspaceEntityBase(
   dataSource) {

@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.KeyChild
 import com.intellij.platform.workspace.storage.testEntities.entities.KeyParent
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KeyParentImpl(private val dataSource: KeyParentData) : KeyParent, WorkspaceEntityBase(dataSource) {
 

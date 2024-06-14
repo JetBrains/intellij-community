@@ -22,7 +22,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.NullableVFU
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(5)
+@GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class NullableVFUEntityImpl(private val dataSource: NullableVFUEntityData) : NullableVFUEntity, WorkspaceEntityBase(dataSource) {
 
