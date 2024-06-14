@@ -297,7 +297,8 @@ class CodeFloatingToolbar(
           if (mouseWasOutsideOfComponent) {
             cancel()
           }
-          withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+          val modality = withContext(Dispatchers.EDT) { ModalityState.current() }
+          withContext(Dispatchers.EDT + modality.asContextElement()) {
             if (isPopupButton) button.click() else activeMenuPopup?.cancel()
           }
         }
