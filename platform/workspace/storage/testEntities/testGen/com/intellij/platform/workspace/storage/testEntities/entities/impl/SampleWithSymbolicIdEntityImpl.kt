@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -9,8 +10,8 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
-import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -24,11 +25,13 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildWpidSampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleSymbolicId
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleWithSymbolicIdEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWithSymbolicIdEntityData) : SampleWithSymbolicIdEntity, WorkspaceEntityBase(
   dataSource) {
 
@@ -43,7 +46,7 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
 
   }
 
-  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId> = super.symbolicId
+  override val symbolicId: SampleSymbolicId = super.symbolicId
 
   override val booleanProperty: Boolean
     get() {
@@ -300,6 +303,7 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
   }
 }
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class SampleWithSymbolicIdEntityData : WorkspaceEntityData<SampleWithSymbolicIdEntity>() {
   var booleanProperty: Boolean = false
   lateinit var stringProperty: String

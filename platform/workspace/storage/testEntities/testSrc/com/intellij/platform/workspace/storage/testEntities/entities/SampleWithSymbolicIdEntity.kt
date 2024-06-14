@@ -21,7 +21,7 @@ interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   val children: List<@Child ChildWpidSampleEntity>
   val nullableData: String?
 
-  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+  override val symbolicId: SampleSymbolicId
     get() = SampleSymbolicId(stringProperty)
 
   //region generated code

@@ -2,13 +2,14 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -21,6 +22,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEntityData) : ComputablePropEntity, WorkspaceEntityBase(
   dataSource) {
 
@@ -156,6 +158,7 @@ internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEn
   }
 }
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class ComputablePropEntityData : WorkspaceEntityData<ComputablePropEntity>() {
   lateinit var list: MutableList<Map<List<Int?>, String>>
   var value: Int = 0

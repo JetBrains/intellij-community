@@ -2,13 +2,14 @@
 package org.jetbrains.idea.maven.importing.workspaceModel.impl
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -21,6 +22,7 @@ import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettin
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: MavenProjectsTreeSettingsEntityData) : MavenProjectsTreeSettingsEntity, WorkspaceEntityBase(
   dataSource) {
 
@@ -141,6 +143,7 @@ internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: Maven
   }
 }
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenProjectsTreeSettingsEntity>() {
   lateinit var importedFilePaths: MutableList<String>
 

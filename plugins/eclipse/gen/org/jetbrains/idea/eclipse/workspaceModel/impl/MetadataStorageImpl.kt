@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config.impl
 
-import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata
@@ -11,6 +12,7 @@ import com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadat
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal object MetadataStorageImpl: MetadataStorageBase() {
     override fun initializeMetadata() {
         val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
@@ -68,7 +70,7 @@ primitiveTypeIntNotNullable), primitive = primitiveTypeMapNotNullable), withDefa
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity", metadataHash = -1653370266)
+        addMetadataHash(typeFqn = "org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity", metadataHash = 1101115316)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 905035542)
         addMetadataHash(typeFqn = "org.jetbrains.idea.eclipse.config.EclipseProjectFile", metadataHash = -1195240458)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.JpsFileEntitySource", metadataHash = -1709137196)

@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -9,9 +10,9 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
-import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -24,9 +25,11 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.CompositeBaseEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionSymbolicId
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class HeadAbstractionEntityImpl(private val dataSource: HeadAbstractionEntityData) : HeadAbstractionEntity, WorkspaceEntityBase(
   dataSource) {
 
@@ -40,7 +43,7 @@ internal class HeadAbstractionEntityImpl(private val dataSource: HeadAbstraction
 
   }
 
-  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId> = super.symbolicId
+  override val symbolicId: HeadAbstractionSymbolicId = super.symbolicId
 
   override val data: String
     get() {
@@ -170,6 +173,7 @@ internal class HeadAbstractionEntityImpl(private val dataSource: HeadAbstraction
   }
 }
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class HeadAbstractionEntityData : WorkspaceEntityData<HeadAbstractionEntity>() {
   lateinit var data: String
 

@@ -15,7 +15,7 @@ interface HeadAbstractionEntity : WorkspaceEntityWithSymbolicId {
   val data: String
   val child: @Child CompositeBaseEntity?
 
-  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+  override val symbolicId: HeadAbstractionSymbolicId
     get() = HeadAbstractionSymbolicId(data)
 
   //region generated code

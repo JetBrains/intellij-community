@@ -2,13 +2,14 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -23,6 +24,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.CollectionF
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEntityData) : CollectionFieldEntity, WorkspaceEntityBase(
   dataSource) {
 
@@ -179,6 +181,7 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
   }
 }
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
   lateinit var versions: MutableSet<Int>
   lateinit var names: MutableList<String>

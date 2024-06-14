@@ -2,14 +2,15 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
-import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -25,6 +26,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentMulti
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentMultipleEntityImpl(private val dataSource: ParentMultipleEntityData) : ParentMultipleEntity, WorkspaceEntityBase(
   dataSource) {
 
@@ -188,6 +190,7 @@ internal class ParentMultipleEntityImpl(private val dataSource: ParentMultipleEn
   }
 }
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentMultipleEntityData : WorkspaceEntityData<ParentMultipleEntity>() {
   lateinit var parentData: String
 

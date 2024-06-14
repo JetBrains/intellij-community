@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.core.script.ucache.impl
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -9,7 +10,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRoot
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLibraryEntityData) : KotlinScriptLibraryEntity, WorkspaceEntityBase(
   dataSource) {
 
@@ -221,6 +223,7 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
   }
 }
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptLibraryEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var roots: MutableList<KotlinScriptLibraryRoot>

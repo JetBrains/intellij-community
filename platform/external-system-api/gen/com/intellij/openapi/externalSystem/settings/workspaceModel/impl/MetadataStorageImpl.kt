@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.settings.workspaceModel.impl
 
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
@@ -8,6 +9,7 @@ import com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadat
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal object MetadataStorageImpl: MetadataStorageBase() {
     override fun initializeMetadata() {
         val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")

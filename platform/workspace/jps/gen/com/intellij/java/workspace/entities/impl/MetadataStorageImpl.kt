@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities.impl
 
-import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata
@@ -11,6 +12,7 @@ import com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadat
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal object MetadataStorageImpl: MetadataStorageBase() {
     override fun initializeMetadata() {
         val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
@@ -573,44 +575,44 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArchivePackagingElementEntity", metadataHash = -871316603)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArtifactEntity", metadataHash = -415974584)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity", metadataHash = -466235953)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArtifactPropertiesEntity", metadataHash = 1562184820)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArtifactRootElementEntity", metadataHash = 410208609)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArchivePackagingElementEntity", metadataHash = -1691604565)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArtifactEntity", metadataHash = -1669599238)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity", metadataHash = 568103093)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArtifactPropertiesEntity", metadataHash = 744070860)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArtifactRootElementEntity", metadataHash = -990083961)
         addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArtifactsOrderEntity", metadataHash = -1492991014)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.CompositePackagingElementEntity", metadataHash = 634681091)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.CustomPackagingElementEntity", metadataHash = 661189010)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity", metadataHash = -1963677301)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.DirectoryPackagingElementEntity", metadataHash = -51552188)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity", metadataHash = -1341477178)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.FileCopyPackagingElementEntity", metadataHash = 1825049143)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity", metadataHash = 1449468724)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.JavaModuleSettingsEntity", metadataHash = 1795665606)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity", metadataHash = 2095394304)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity", metadataHash = 1578108780)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity", metadataHash = -1984185011)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity", metadataHash = 639359955)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity", metadataHash = 1829124627)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity", metadataHash = 1799298195)
-        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.PackagingElementEntity", metadataHash = -358090422)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ContentRootEntity", metadataHash = 1435188683)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity", metadataHash = 1124236292)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.CompositePackagingElementEntity", metadataHash = -1291464329)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.CustomPackagingElementEntity", metadataHash = 892816276)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity", metadataHash = 1453968525)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.DirectoryPackagingElementEntity", metadataHash = -1649083918)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity", metadataHash = -744850848)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.FileCopyPackagingElementEntity", metadataHash = 958843229)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity", metadataHash = -504016394)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.JavaModuleSettingsEntity", metadataHash = -467148524)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity", metadataHash = 398549068)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity", metadataHash = -715526658)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity", metadataHash = 419235827)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity", metadataHash = 1792536761)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity", metadataHash = 435923577)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity", metadataHash = 2002728953)
+        addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.PackagingElementEntity", metadataHash = -206789668)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ContentRootEntity", metadataHash = 491826355)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity", metadataHash = 1624272702)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity", metadataHash = -419984627)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity", metadataHash = 846809278)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity", metadataHash = 92483022)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetEntity", metadataHash = 1705949903)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetsOrderEntity", metadataHash = -1200411054)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryEntity", metadataHash = 79202022)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity", metadataHash = 1741291287)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity", metadataHash = 245823882)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity", metadataHash = 714992209)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity", metadataHash = 1441162682)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity", metadataHash = -1095561336)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity", metadataHash = -256122890)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetEntity", metadataHash = 2045805337)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetsOrderEntity", metadataHash = -603534268)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryEntity", metadataHash = -1299194872)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity", metadataHash = 1363876247)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity", metadataHash = 68571124)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity", metadataHash = -968938061)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity", metadataHash = 308708394)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity", metadataHash = 499967575)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkEntity", metadataHash = 681302082)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SourceRootEntity", metadataHash = -1510370459)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity", metadataHash = -544176858)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity", metadataHash = -64862851)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SourceRootEntity", metadataHash = -2072900467)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity", metadataHash = -1720145472)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity", metadataHash = -585221347)
         addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.ArtifactId", metadataHash = 411477007)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryId", metadataHash = -313921070)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryTableId", metadataHash = -1475000117)

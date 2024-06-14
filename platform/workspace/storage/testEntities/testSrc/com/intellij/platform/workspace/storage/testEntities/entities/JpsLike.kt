@@ -15,7 +15,7 @@ interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
   val contentRoots: List<@Child ContentRootTestEntity>
   val facets: List<@Child FacetTestEntity>
 
-  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+  override val symbolicId: ModuleTestEntitySymbolicId
     get() = ModuleTestEntitySymbolicId(name)
 
   //region generated code
@@ -193,7 +193,7 @@ interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
   val moreData: String
   val module: ModuleTestEntity
 
-  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+  override val symbolicId: FacetTestEntitySymbolicId
     get() = FacetTestEntitySymbolicId(data)
 
   //region generated code
