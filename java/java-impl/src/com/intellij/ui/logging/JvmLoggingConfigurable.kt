@@ -67,11 +67,14 @@ class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase
   }
 
   private fun ValidationInfoBuilder.checkLogName(it: JBTextField): ValidationInfo? =
-    if (it.text.length < LOG_MAX_NAME_LENGTH && PsiNameHelper.getInstance(project).isIdentifier(it.text)) {
-      null
+    if (!PsiNameHelper.getInstance(project).isIdentifier(it.text)) {
+      error(LangBundle.message("dialog.message.valid.identifier", it.text))
+    }
+    else if (it.text.length > LOG_MAX_NAME_LENGTH) {
+      error(JavaBundle.message("java.configurable.logger.identifier.long", it.text))
     }
     else {
-      error(LangBundle.message("dialog.message.valid.identifier", it.text))
+      null
     }
 
   override fun isModified(): Boolean {
