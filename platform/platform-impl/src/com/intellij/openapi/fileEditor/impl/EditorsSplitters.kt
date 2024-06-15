@@ -296,8 +296,7 @@ open class EditorsSplitters internal constructor(
     }
   }
 
-  @Internal
-  suspend fun createEditors(state: EditorSplitterState) {
+  internal suspend fun createEditors(state: EditorSplitterState) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
     UiBuilder(splitters = this, isLazyComposite = System.getProperty("idea.delayed.editor.composite", "true").toBoolean())
       .process(
@@ -827,6 +826,7 @@ internal class EditorSplitterStateLeaf(element: Element, storedIdeFingerprint: I
 class EditorSplitterState(element: Element) {
   @JvmField
   internal val splitters: EditorSplitterStateSplitter?
+  @JvmField
   internal val leaf: EditorSplitterStateLeaf?
 
   init {
@@ -849,9 +849,11 @@ class EditorSplitterState(element: Element) {
       }
     }
     else {
-      splitters = EditorSplitterStateSplitter(firstSplitter = EditorSplitterState(first),
-                                              secondSplitter = EditorSplitterState(second),
-                                              splitterElement = splitterElement)
+      splitters = EditorSplitterStateSplitter(
+        firstSplitter = EditorSplitterState(first),
+        secondSplitter = EditorSplitterState(second),
+        splitterElement = splitterElement,
+      )
       leaf = null
     }
   }
@@ -1229,7 +1231,7 @@ internal fun decorateFileIcon(composite: EditorComposite, baseIcon: Icon, uiSett
   return JBUIScale.scaleIcon(result)
 }
 
-internal fun applyTabColor(
+private fun applyTabColor(
   composite: EditorComposite,
   attributes: TextAttributes?,
   tab: TabInfo,
