@@ -8,10 +8,10 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil.createUniqueSdkName
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
-import java.nio.file.Path
 
 internal class JdkWarmupProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
@@ -31,18 +31,14 @@ internal class JdkWarmupProjectActivity : ProjectActivity {
       return
     }
 
-    val configuredJdkPath = Path.of(configuredJdk)
     val jdkName = serviceAsync<EnvironmentService>().getEnvironmentValue(JvmEnvironmentKeyProvider.Keys.JDK_NAME, "warmup_jdk")
-    val jdk = JavaSdk.getInstance().createJdk(jdkName, configuredJdkPath.toString())
-    val projectJdkTable = ProjectJdkTable.getInstance()
-    projectJdkTable.findJdk(jdkName, jdk.sdkType.name).let {
-      if (it == null) writeAction {
-        projectJdkTable.addJdk(jdk)
-      }
-      else if (it.homePath != jdk.homePath) writeAction {
-        projectJdkTable.updateJdk(it, jdk)
-      }
+    val jdks = ProjectJdkTable.getInstance().allJdks
+    val compatibleJdk = jdks.filter { it.homePath == configuredJdk }.run {
+      find { it.name == jdkName } ?: firstOrNull()
     }
+
+    val jdk = compatibleJdk ?: JavaSdk.getInstance().createJdk(createUniqueSdkName(jdkName, jdks.toList()), configuredJdk)
+
     writeAction {
       ProjectRootManager.getInstance(project).projectSdk = jdk
     }
