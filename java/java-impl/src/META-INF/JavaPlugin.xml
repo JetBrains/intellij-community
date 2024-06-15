@@ -2824,8 +2824,7 @@
       <add-to-group group-id="Internal" anchor="after" relative-to-action="Internal.Java"/>
     </group>
 
-    <action id="com.intellij.openapi.projectRoots.impl.ParseSdkmanrcAction"
-            class="com.intellij.openapi.projectRoots.impl.ParseSdkmanrcAction">
+    <action id="ParseSdkmanrcAction" class="com.intellij.openapi.projectRoots.impl.ParseSdkmanrcAction" icon="AllIcons.Actions.Refresh">
       <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
     </action>
 
