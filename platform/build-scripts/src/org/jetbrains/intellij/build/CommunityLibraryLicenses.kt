@@ -1066,7 +1066,10 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/jenkinsci/winp/blob/master/LICENSE.txt")
       .suppliedByPersons("Kohsuke Kawaguchi"),
     // for workmanager-inspector-proto module library in intellij.android.app-inspection.inspectors.workmanager.model
-    LibraryLicense(name = "Xalan", libraryName = "Xalan-2.7.2", url = "https://xalan.apache.org/xalan-j/")
+    LibraryLicense(name = "Xalan", libraryName = "Xalan-2.7.3", url = "https://xalan.apache.org/xalan-j/")
+      .apache("https://xalan.apache.org/xalan-j/#license")
+      .suppliedByOrganizations(Suppliers.APACHE),
+    LibraryLicense(name = "Xalan serializer", libraryName = "Serializer-2.7.3", url = "https://xalan.apache.org/xalan-j/")
       .apache("https://xalan.apache.org/xalan-j/#license")
       .suppliedByOrganizations(Suppliers.APACHE),
     LibraryLicense(libraryName = "Xerces", url = "https://xerces.apache.org/xerces2-j/")
