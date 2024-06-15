@@ -77,6 +77,9 @@ open class CachedImageIcon private constructor(
   val originalPath: String?
     get() = originalLoader?.path
 
+  val expUIPath: String?
+    get() = originalLoader?.expUIPath
+
   @TestOnly
   internal constructor(file: Path, scaleContext: ScaleContext)
     : this(loader = ImageDataByFilePathLoader(file.toUri().toString()), scaleContext = scaleContext)

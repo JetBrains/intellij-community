@@ -61,7 +61,7 @@ private data class RasterizedImageDataLoaderDescriptor(
 }
 
 private class RasterizedImageDataLoader(override val path: String,
-                                        private val expUIPath: String?,
+                                        override val expUIPath: String?,
                                         private val classLoaderRef: WeakReference<ClassLoader>,
                                         private val cacheKey: Int,
                                         override val flags: Int) : ImageDataLoader {
