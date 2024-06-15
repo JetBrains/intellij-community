@@ -3,6 +3,7 @@ package com.intellij.ui.popup.util;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,21 +54,17 @@ public final class PopupImplUtil {
     };
   }
 
-  public static @Nullable Object getDataImplForList(@NotNull JList<?> list, @NotNull String dataId) {
-    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      int index = list.getSelectedIndex();
-      return index > -1 ? list.getSelectedValue() : ObjectUtils.NULL;
-    }
-    else if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      Object[] values = list.getSelectedValues();
-      for (int i = 0; i < values.length; i++) {
-        if (values[i] == null) {
-          values[i] = ObjectUtils.NULL;
-        }
+  public static void uiSnapshotForList(@NotNull JList<?> list, @NotNull DataSink sink) {
+    int index = list.getSelectedIndex();
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEM, index > -1 ? list.getSelectedValue() : ObjectUtils.NULL);
+
+    Object[] values = list.getSelectedValues();
+    for (int i = 0; i < values.length; i++) {
+      if (values[i] == null) {
+        values[i] = ObjectUtils.NULL;
       }
-      return values;
     }
-    return null;
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEMS, values);
   }
 
   public static @Nullable Component getClickSourceFromLastInputEvent() {
