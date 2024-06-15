@@ -27,7 +27,11 @@ data class FileSource(
   override var size: Int,
   override var hash: Long,
   @JvmField  @Contextual val file: Path,
-) : Source
+) : Source {
+  init {
+    assert(Files.isRegularFile(file)) { "'$file' is not a file" }
+  }
+}
 
 @Serializable
 data class SearchableOptionSetIndexItem(@JvmField val file: String, @JvmField val size: Int, @JvmField val hash: Long)

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 
@@ -49,6 +50,10 @@ data class ZipSource(
   @JvmField val distributionFileEntryProducer: DistributionFileEntryProducer?,
   override val filter: ((String) -> Boolean),
 ) : Source, Comparable<ZipSource> {
+  init {
+    assert(Files.isRegularFile(file)) { "'$file' is not a file" }
+  }
+
   override var size: Int = 0
   override var hash: Long = 0
 
@@ -90,6 +95,10 @@ data class DirSource(
   @JvmField val prefix: String = "",
   @JvmField val removeModuleInfo: Boolean = true,
 ) : Source {
+  init {
+    assert(!Files.isRegularFile(dir)) { "'$dir' should not be a file" }
+  }
+
   override var size: Int = 0
   override var hash: Long = 0
 
