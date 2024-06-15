@@ -178,7 +178,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private void setActiveEditors(Editor @NotNull ... editors) {
-    ((EditorTrackerImpl)EditorTracker.Companion.getInstance(myProject)).setActiveEditors(Arrays.asList(editors));
+    (EditorTracker.Companion.getInstance(myProject)).setActiveEditors(Arrays.asList(editors));
   }
 
   @Override
