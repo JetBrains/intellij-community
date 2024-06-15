@@ -65,7 +65,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
 
     private ToggleCommitDate() {
       super(VcsLogBundle.messagePointer("prefer.commit.timestamp.action.text.show"),
-            VcsLogBundle.messagePointer("prefer.commit.timestamp.action.description"), null);
+            VcsLogBundle.messagePointer("action.Vcs.Log.PreferCommitDate.description"), null);
     }
 
     @Override

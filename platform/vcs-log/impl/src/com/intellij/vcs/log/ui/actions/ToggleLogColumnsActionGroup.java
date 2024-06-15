@@ -20,13 +20,7 @@ import java.util.List;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
 
 @ApiStatus.Internal
-public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {
-
-  public ToggleLogColumnsActionGroup() {
-    super(VcsLogBundle.message("action.title.select.columns.to.see"),
-          VcsLogBundle.message("action.description.select.columns.to.see"), null);
-  }
-
+public final class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
@@ -39,7 +33,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> actions = new ArrayList<>();
     if (e != null && !isPopup(e)) {
-      actions.add(Separator.create(VcsLogBundle.message("action.title.select.columns.to.see")));
+      actions.add(Separator.create(VcsLogBundle.message("group.Vcs.Log.ToggleColumns.text")));
     }
 
     List<VcsLogColumn<?>> dynamicColumns = getDynamicColumns();

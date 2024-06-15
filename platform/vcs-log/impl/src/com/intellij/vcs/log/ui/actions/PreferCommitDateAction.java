@@ -5,7 +5,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogProperties;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -23,12 +26,7 @@ import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.isVisible;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.supportsColumnsToggling;
 
 @ApiStatus.Internal
-public class PreferCommitDateAction extends BooleanPropertyToggleAction implements DumbAware {
-  public PreferCommitDateAction() {
-    super(VcsLogBundle.messagePointer("prefer.commit.timestamp.action.text"),
-          VcsLogBundle.messagePointer("prefer.commit.timestamp.action.description"), null);
-  }
-
+public final class PreferCommitDateAction extends BooleanPropertyToggleAction implements DumbAware {
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
     return CommonUiProperties.PREFER_COMMIT_DATE;
