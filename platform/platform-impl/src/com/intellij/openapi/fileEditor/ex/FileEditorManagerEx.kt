@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -217,8 +218,9 @@ abstract class FileEditorManagerEx : FileEditorManager() {
       val project = snapshot[PlatformDataKeys.PROJECT] ?: return
       val caret = snapshot[PlatformDataKeys.CARET] ?: return
       getInstanceEx(project).dataProviders.forEach { provider ->
-        DataSink.uiDataSnapshot(sink, DataProvider { dataId ->
-          provider.getData(dataId, caret.editor, caret)
+        DataSink.uiDataSnapshot(sink, object : DataProvider, DataValidators.SourceWrapper {
+          override fun getData(dataId: @NonNls String): Any? = provider.getData(dataId, caret.editor, caret)
+          override fun unwrapSource(): Any = provider
         })
       }
     }
