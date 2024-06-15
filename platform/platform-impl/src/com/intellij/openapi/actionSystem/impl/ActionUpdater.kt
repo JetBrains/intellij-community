@@ -663,10 +663,15 @@ internal class ActionUpdater @JvmOverloads constructor(
     override fun <T> compute(action: Any,
                              op: String,
                              updateThread: ActionUpdateThread,
-                             supplier: Supplier<out T>): T = runBlockingForActionExpand {
-      val operationName = Utils.operationName(action, op, updater.place)
-      withContext(OperationName(operationName) + RecursionElement.next()) {
-        updater.callAction(action, operationName, updateThread) { supplier.get() }
+                             supplier: Supplier<out T>): T {
+      if (updateThread == ActionUpdateThread.EDT && EDT.isCurrentThreadEdt()) {
+        return supplier.get()
+      }
+      return runBlockingForActionExpand {
+        val operationName = Utils.operationName(action, op, updater.place)
+        withContext(OperationName(operationName) + RecursionElement.next()) {
+          updater.callAction(action, operationName, updateThread) { supplier.get() }
+        }
       }
     }
 
