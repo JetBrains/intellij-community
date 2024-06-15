@@ -26,7 +26,7 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     get() = state.browserPath
 
   var isShowTipsOnStartup: Boolean
-    get() = state.showTipsOnStartup ?: System.getProperty(SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY, "true").toBoolean()
+    get() = state.showTipsOnStartup ?: System.getProperty(SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY, "false").toBoolean()
     set(value) {
       state.showTipsOnStartup = value
     }

@@ -57,7 +57,6 @@ object IdeLauncher {
         add("-Drsch.send.usage.stat=false")
         add("-Duse.linux.keychain=false")
         add("-Didea.initially.ask.config=never")
-        add("-Dide.show.tips.on.startup.default.value=false")
         add("-Didea.home.path=${environmentPaths.sourcesRootFolder}")
         add("-Didea.config.path=${environmentPaths.configFolder}")
         add("-Didea.system.path=${environmentPaths.systemFolder}")
