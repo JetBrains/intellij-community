@@ -185,7 +185,7 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
         |
         |import java.io.File;
         |
-        |public class JavaTask extends DefaultTask {
+        |public class <warning descr="Class 'JavaTask' is never used">JavaTask</warning> extends DefaultTask {
         |    private String inputString;
         |    private String unusedField;
         |
