@@ -1,20 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.icons.ImageDescriptor
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
+import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.listDirectoryEntries
 
 internal const val ROBOTS_FILE_NAME = "icon-robots.txt"
@@ -85,6 +91,34 @@ internal class ImageInfo(
   val scheduledForRemoval: Boolean by lazy {
     flags.deprecation?.comment?.contains("to be removed") == true
   }
+
+  val sourceCodeParameterName: String by lazy {
+    var rootPrefix = "/"
+    if (sourceRoot.rootType == JavaSourceRootType.SOURCE) {
+      @Suppress("UNCHECKED_CAST")
+      val packagePrefix = (sourceRoot.properties as JpsSimpleElement<JavaSourceRootProperties>).data.packagePrefix
+      if (packagePrefix.isNotEmpty()) {
+        rootPrefix += packagePrefix.replace('.', '/') + "/"
+      }
+    }
+
+    val rootDir = Path.of(JpsPathUtil.urlToPath(sourceRoot.url))
+    val deprecation = this.deprecation
+    val imageFile: Path
+    if (deprecation?.replacement == null) {
+      imageFile = basicFile!!
+    }
+    else {
+      imageFile = rootDir.resolve(deprecation.replacement.removePrefix("/").removePrefix(File.separator))
+      assert(isIcon(imageFile)) {
+        "Invalid deprecation replacement '${deprecation.replacement}': $imageFile is not an icon"
+      }
+    }
+
+    val relativePath = rootPrefix + rootDir.relativize(imageFile).invariantSeparatorsPathString
+    assert(relativePath.startsWith("/"))
+    relativePath.removePrefix("/")
+  }
 }
 
 internal data class ImageFlags(@JvmField val used: Boolean, @JvmField val deprecation: DeprecationData?)
@@ -107,7 +141,9 @@ internal class ImageCollector(
   // files processed in parallel, so, concurrent data structures must be used
   private val icons = ConcurrentHashMap<String, ImageInfo>()
   private val phantomIcons = ConcurrentHashMap<String, ImageInfo>()
+  private val mergeRoots: MutableSet<String> = ContainerUtil.newConcurrentSet()
   private val usedIconRobots: MutableSet<Path> = ContainerUtil.newConcurrentSet()
+  private var mappingFile: Path? = null
 
   fun collect(module: JpsModule, includePhantom: Boolean = false): Collection<ImageInfo> {
     for (sourceRoot in module.sourceRoots) {
@@ -116,6 +152,7 @@ internal class ImageCollector(
       }
 
       val rootDir = sourceRoot.path
+      collectMappingFile(rootDir)
 
       val iconDirectory = moduleConfig?.iconDirectory
       if (iconDirectory != null) {
@@ -200,6 +237,10 @@ internal class ImageCollector(
       if (Files.isDirectory(file)) {
         val childRobotData = robotData.fork(file, rootDir)
         val childPrefix = "$prefix/${file.fileName}"
+        if (childRobotData.mergeToRoot) {
+          childRobotData.mergeToRoot = false
+          mergeRoots.add(childPrefix)
+        }
         processDirectory(file, rootDir, sourceRoot, childRobotData, childPrefix, level + 1)
 
         if (childRobotData != robotData) {
@@ -242,7 +283,7 @@ internal class ImageCollector(
   }
 
   private fun downToRoot(root: Path, file: Path, isDirectory: Boolean, common: Path?, robotData: IconRobotsData, level: Int): Path? {
-    if (robotData.isSkipped(file)) {
+    if (robotData.isSkipped(file) || robotData.mergeToRoot) {
       return common
     }
     else if (isDirectory) {
@@ -281,6 +322,100 @@ internal class ImageCollector(
 
   private fun isBlacklistedTopDirectory(name: String): Boolean =
     name == "META-INF" || name == "intentionDescriptions" || name == "inspectionDescriptions" || name == "fileTemplates"
+
+  private fun collectMappingFile(rootDir: Path) {
+    if (mappingFile == null) {
+      val mappings = rootDir.listDirectoryEntries("*Mapping*.json")
+      if (mappings.size == 1) {
+        mappings.isNotEmpty()
+        mappingFile = mappings[0]
+      }
+    }
+  }
+
+  fun mergeImages(images: Collection<ImageInfo>, module: JpsModule): Pair<Collection<ImageInfo>, Map<String, String>> {
+    val mappings = getMappings()
+
+    if (mappings.isEmpty() && mergeRoots.isNotEmpty()) {
+      println("*** Module: ${module.name} contains rule for merge new icons but icon mapping file not found ***")
+    }
+    else if (mappings.isNotEmpty() && mergeRoots.isEmpty()) {
+      println("*** Module: ${module.name} contains icon mapping file but rule for merge new icons not found ***")
+    }
+
+    if (mergeRoots.isNotEmpty()) {
+      val allImages = ArrayList<ImageInfo>()
+
+      mainLoop@for (image in images) {
+        val root = mergeRoots.find { image.id.startsWith("$it/") }
+        if (root == null) {
+          allImages.add(image)
+        }
+        else {
+          for (entry in mappings.entries) {
+            if (image.sourceCodeParameterName == entry.value && images.find { it.sourceCodeParameterName == entry.key } != null) {
+              continue@mainLoop
+            }
+          }
+          val equalOldName = image.id.substring(root.length)
+          val equalOldImage = images.find { it.id == equalOldName }
+          if (equalOldImage != null) {
+            mappings[equalOldImage.sourceCodeParameterName] = image.sourceCodeParameterName
+            continue@mainLoop
+          }
+
+          allImages.add(image.trimPrefix(root))
+        }
+      }
+
+      return allImages to mappings
+    }
+    return images to mappings
+  }
+
+  private fun getMappings(): HashMap<String, String> {
+    val mappings = HashMap<String, String>()
+    val file = mappingFile
+
+    if (file != null && Files.exists(file)) {
+      val json = GsonBuilder().create().fromJson(Files.readString(file), JsonObject::class.java)
+
+      for (key in json.keySet()) {
+        val element = json.get(key)
+        if (element.isJsonPrimitive) {
+          mappings[element.asString] = key
+        }
+        else if (element.isJsonArray) {
+          for (childElement in element.asJsonArray) {
+            mappings[childElement.asString] = key
+          }
+        }
+        else {
+          parseMappings(element.asJsonObject, mappings, key)
+        }
+      }
+    }
+    return mappings
+  }
+
+  private fun parseMappings(json: JsonObject, mappings: HashMap<String, String>, path: String) {
+    for (key in json.keySet()) {
+      val subPath = "$path/$key"
+      val element = json.get(key)
+
+      if (element.isJsonObject) {
+        parseMappings(element.asJsonObject, mappings, subPath)
+      }
+      else if (element.isJsonArray) {
+        for (childElement in element.asJsonArray) {
+          mappings[childElement.asString] = subPath
+        }
+      }
+      else {
+        mappings[element.asString] = subPath
+      }
+    }
+  }
 }
 
 private data class DeprecatedEntry(val matcher: Pattern, val data: DeprecationData)
@@ -296,6 +431,8 @@ internal class IconRobotsData(
   private val deprecated = ArrayList<DeprecatedEntry>()
   private val skipSync = ArrayList<Pattern>()
   private val forceSync = ArrayList<Pattern>()
+
+  var mergeToRoot = false
 
   private val ownDeprecatedIcons = ArrayList<OwnDeprecatedIcon>()
 
@@ -334,6 +471,7 @@ internal class IconRobotsData(
     parse(robots,
           RobotFileHandler("skip:") { value -> answer.skip.add(compilePattern(dir, root, value)) },
           RobotFileHandler("used:") { value -> answer.used.add(compilePattern(dir, root, value)) },
+          RobotFileHandler("merge") { answer.mergeToRoot = true },
           RobotFileHandler("deprecated:") { value ->
             val comment = value.substringAfter(";", "").trim().takeIf { it.isNotEmpty() }
             val valueWithoutComment = value.substringBefore(";")

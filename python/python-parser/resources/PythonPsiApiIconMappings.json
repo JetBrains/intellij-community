@@ -3,7 +3,7 @@
     "com": {
       "jetbrains": {
         "python": {
-          "psi": {
+          "parser": {
             "expui": {
               "python.svg": "icons/com/jetbrains/python/parser/pythonFile.svg"
             }

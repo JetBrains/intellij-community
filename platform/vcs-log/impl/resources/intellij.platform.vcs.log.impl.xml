@@ -24,8 +24,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <iconMapper mappingFile="VcsLogIconMappings.json"/>
-
     <changesViewContent tabName="Log"
                         className="com.intellij.vcs.log.impl.VcsLogContentProvider"
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"

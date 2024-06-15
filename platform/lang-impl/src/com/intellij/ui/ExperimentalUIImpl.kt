@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfo
@@ -33,6 +34,7 @@ private val LOG: Logger
  * @author Konstantin Bulenkov
  */
 private class ExperimentalUIImpl : ExperimentalUI() {
+  private val epIconMapperSuppressor = ExtensionPointName<Any>("com.intellij.iconMapperSuppressor")
   private var shouldUnsetNewUiSwitchKey: Boolean = true
   private val isIconPatcherSet = AtomicBoolean()
   private val isFirstCheck = AtomicBoolean(true)
@@ -40,7 +42,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
   override fun earlyInitValue(): Boolean {
     val prevNewUI = super.earlyInitValue() && !forcedSwitchedUi
-    val newUi = !IconMapperBean.EP_NAME_REVERSE.hasAnyExtensions()
+    val newUi = !epIconMapperSuppressor.hasAnyExtensions()
 
     if (isFirstCheck.compareAndSet(true, false)) {
       changeValue(prevNewUI, newUi)
@@ -110,7 +112,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       installIconPatcher { createPathPatcher(it) }
     }
     else {
-      installIconPatcher { createReversePathPatcher(it) }
+      service<IconMapLoader>().loadIconMapping() // reset mappings
     }
   }
 
@@ -212,17 +214,7 @@ private fun patchUiDefaultsForNewUi() {
   }
 }
 
-private fun createReversePathPatcher(map: Map<ClassLoader, Map<String, String>>): IconPathPatcher {
-  return object : IconPathPatcher() {
-    override fun patchPath(path: String, classLoader: ClassLoader?): String? {
-      return map.get(classLoader)?.get(path)
-    }
-
-    override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?) = originalClassLoader
-  }
-}
-
-private const val reflectivePathPrefix = "com.intellij.icons.ExpUiIcons."
+private const val reflectivePathPrefix = "com.intellij.icons.AllIcons."
 private const val iconPathPrefix = "expui/"
 
 private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): IconPathPatcher {

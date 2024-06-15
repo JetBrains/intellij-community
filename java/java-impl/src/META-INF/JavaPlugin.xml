@@ -2794,7 +2794,6 @@
 
     <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryChecker"/>
 
-    <iconMapper mappingFile="JavaUIIconsMapping.json"/>
     <optionController implementation="com.intellij.compiler.JavaCompilerConfiguration$Provider"/>
 
     <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>

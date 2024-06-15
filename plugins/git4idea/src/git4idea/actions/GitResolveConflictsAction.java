@@ -74,7 +74,7 @@ public class GitResolveConflictsAction extends DumbAwareAction {
 
     presentation.setEnabledAndVisible(isEnabled(project));
     if (presentation.isVisible() && e.getPlace().equals(GitMergeRebaseWidgetKt.GIT_MERGE_REBASE_WIDGET_PLACE)) {
-      presentation.setIcon(DvcsImplIcons.New.ResolveContinue);
+      presentation.setIcon(DvcsImplIcons.ResolveContinue);
 
       // Hide "Resolve Conflicts" action in case when "Continue Rebase" is available
       Collection<GitRepository> rebasingRepositories = GitUtil.getRepositoriesInStates(project, Repository.State.REBASING);

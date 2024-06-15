@@ -23,7 +23,7 @@ class IconMapLoader {
   private val cachedResult = AtomicReference<Map<ClassLoader, Map<String, String>>>()
 
   internal suspend fun preloadIconMapping() {
-    if (!IconMapperBean.EP_NAME.hasAnyExtensions() && !IconMapperBean.EP_NAME_REVERSE.hasAnyExtensions()) {
+    if (!IconMapperBean.EP_NAME.hasAnyExtensions()) {
       cachedResult.compareAndSet(null, emptyMap())
       return
     }
@@ -41,15 +41,6 @@ class IconMapLoader {
   @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun doLoadIconMapping(): MutableMap<ClassLoader, MutableMap<String, String>> {
     val list = coroutineScope {
-      val reverseIterator = IconMapperBean.EP_NAME_REVERSE.filterableLazySequence().iterator()
-      if (reverseIterator.hasNext()) {
-        return@coroutineScope listOf(async {
-          loadFromExtension(reverseIterator.next()) { data, result ->
-            StringUtil.splitByLines(String(data)).forEach { result[it] = it }
-          }
-        })
-      }
-
       val jsonFactory = JsonFactory()
       IconMapperBean.EP_NAME.filterableLazySequence().map { extension ->
         async {

@@ -408,7 +408,8 @@
     <extensionPoint name="themeRemapper" interface="com.intellij.ide.ui.laf.UiThemeRemapper" dynamic="true"/>
     <extensionPoint name="themeMetadataProvider" beanClass="com.intellij.ide.ui.UIThemeMetadataProvider" dynamic="true"/>
     <extensionPoint name="iconMapper" beanClass="com.intellij.ide.ui.IconMapperBean" dynamic="true"/>
-    <extensionPoint name="iconMapperReverse" beanClass="com.intellij.ide.ui.IconMapperBean" dynamic="false"/>
+    <!--suppress PluginXmlDynamicPlugin -->
+    <extensionPoint name="iconMapperSuppressor" beanClass="java.lang.Object" dynamic="false"/>
     <extensionPoint name="uiChangeListener" interface="com.intellij.ui.ExperimentalUI$Listener" dynamic="true"/>
 
     <extensionPoint name="tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

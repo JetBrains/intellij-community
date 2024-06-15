@@ -1355,7 +1355,6 @@
 
     <internal.statistic.libraryUsageImportProcessor language="Groovy"
                                                     implementationClass="org.jetbrains.plugins.groovy.stats.GroovyLibraryUsageImportProcessor"/>
-    <iconMapper mappingFile="GroovyIconMappings.json"/>
     <lang.dumb.mode.supported language="Groovy" implementationClass="org.jetbrains.plugins.groovy.GroovyLanguageDumbAware"/>
   </extensions>
 

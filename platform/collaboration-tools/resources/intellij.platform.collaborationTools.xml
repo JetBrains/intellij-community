@@ -4,7 +4,6 @@
     <module name="intellij.platform.vcs.log.impl"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <iconMapper mappingFile="CollaborationToolsIconMappings.json"/>
     <themeMetadataProvider path="/META-INF/CollaborationTools.themeMetadata.json"/>
     <statistics.notificationIdsHolder implementation="com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder"/>
     <notificationGroup id="VCS Hosting Integrations"

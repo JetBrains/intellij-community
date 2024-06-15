@@ -110,8 +110,13 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
   }
 
   override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon {
+    return loadRasterizedIcon(path, null, classLoader, cacheKey, flags)
+  }
+
+  override fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon {
     assert(!path.startsWith('/'))
     return loadRasterizedIcon(path = path,
+                              expUIPath = expUIPath,
                               classLoader = classLoader,
                               cacheKey = cacheKey,
                               flags = flags,

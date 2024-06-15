@@ -597,8 +597,6 @@
     <registryKey key="intellij.commit.message.validation.enabled" defaultValue="false"
                  description="Enables commit messages validation for intellij project"/>
 
-    <iconMapper mappingFile="DevkitIconMappings.json"/>
-
     <!-- INTERNAL -->
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.run.ModulePathFilterProvider"/>
   </extensions>

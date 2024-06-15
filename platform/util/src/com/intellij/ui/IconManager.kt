@@ -63,6 +63,9 @@ interface IconManager {
   @Internal
   fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
 
+  @ApiStatus.Internal
+  fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
+
   fun createEmptyIcon(icon: Icon): Icon = icon
 
   fun createOffsetIcon(icon: Icon): Icon = icon
@@ -115,6 +118,10 @@ private object DummyIconManager : IconManager {
   override fun getIcon(path: String, classLoader: ClassLoader): Icon = DummyIconImpl(path)
 
   override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon = DummyIconImpl(path)
+
+  override fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon {
+    return loadRasterizedIcon(path, classLoader, cacheKey, flags)
+  }
 
   override fun createLayeredIcon(instance: Iconable, icon: Icon, flags: Int): RowIcon {
     val icons = arrayOfNulls<Icon>(2)

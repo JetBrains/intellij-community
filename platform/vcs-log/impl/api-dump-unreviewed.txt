@@ -707,9 +707,6 @@ e:com.intellij.vcs.log.impl.VcsLogErrorHandler$Source
 f:com.intellij.vcs.log.impl.VcsLogIcons
 - sf:IntelliSort:javax.swing.Icon
 - <init>():V
-f:com.intellij.vcs.log.impl.VcsLogIcons$New
-- sf:IntelliSort:javax.swing.Icon
-- <init>():V
 f:com.intellij.vcs.log.impl.VcsLogIcons$Process
 - sf:Dots_1:javax.swing.Icon
 - sf:Dots_2:javax.swing.Icon

@@ -12,7 +12,6 @@ import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.xml.dom.readXmlAsModel
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.intellij.build.images.sync.dotnet.DotnetIconClasses
-import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -30,7 +29,6 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import javax.xml.stream.XMLStreamException
 import kotlin.io.path.exists
-import kotlin.io.path.invariantSeparatorsPathString
 
 @JvmRecord
 internal data class ModifiedClass(
@@ -45,6 +43,7 @@ internal data class IconClassInfo(
   @JvmField val className: String,
   @JvmField val outFile: Path,
   @JvmField val images: Collection<ImageInfo>,
+  @JvmField val mappings: Map<String, String>? = null,
   @JvmField val isInternal: Boolean = false,
 )
 
@@ -106,17 +105,8 @@ internal open class IconsClassGenerator(
         val images = imageCollector.collect(module = module, includePhantom = true)
         imageCollector.printUsedIconRobots()
 
-        val (expUi, others) = images.partition { it.id.startsWith("/expui/") }
-        return listOf(
-          IconClassInfo(packageName = packageName, className = className, outFile = outFile, images = others),
-          IconClassInfo(
-            packageName = packageName,
-            className = "ExpUiIcons",
-            outFile = dir.resolve("ExpUiIcons.java"),
-            images = expUi.map { it.trimPrefix("/expui") },
-            isInternal = true,
-          ),
-        )
+        val (allImages, mappings) = imageCollector.mergeImages(images, module)
+        return listOf(IconClassInfo(packageName = packageName, className = className, outFile = outFile, images = allImages, mappings = mappings))
       }
       "intellij.android.artwork" -> {
         val packageName = "icons"
@@ -171,7 +161,8 @@ internal open class IconsClassGenerator(
                         ?: existingIconsClass?.className
                         ?: "${directoryName(module).removeSuffix("Icons")}Icons"
         val outFile = targetRoot.resolve("$className.java")
-        val info = IconClassInfo(packageName = packageName, className = className, outFile = outFile, images = images, isInternal = className.contains("Impl"))
+        val (allImages, mappings) = imageCollector.mergeImages(images, module)
+        val info = IconClassInfo(packageName = packageName, className = className, outFile = outFile, images = allImages, mappings = mappings, isInternal = className.contains("Impl"))
         return transformIconClassInfo(info, module)
       }
     }
@@ -344,9 +335,18 @@ internal open class IconsClassGenerator(
       result.append(" final")
     }
     result.append(" class ").append(info.className).append(" {\n")
-    append(result, "private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {", 1)
-    append(result, "return $ICON_MANAGER_CODE.loadRasterizedIcon(path, ${info.className}.class.getClassLoader(), cacheKey, flags);", 2)
-    append(result, "}", 1)
+
+    if (info.mappings.isNullOrEmpty() || info.images.find { !info.mappings.containsKey(it.sourceCodeParameterName) } != null) {
+      append(result, "private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {", 1)
+      append(result, "return $ICON_MANAGER_CODE.loadRasterizedIcon(path, ${info.className}.class.getClassLoader(), cacheKey, flags);", 2)
+      append(result, "}", 1)
+    }
+
+    if (!info.mappings.isNullOrEmpty() && info.images.find { info.mappings.containsKey(it.sourceCodeParameterName) } != null) {
+      append(result, "private static @NotNull Icon load(@NotNull String path, @NotNull String expUIPath, int cacheKey, int flags) {", 1)
+      append(result, "return $ICON_MANAGER_CODE.loadRasterizedIcon(path, expUIPath, ${info.className}.class.getClassLoader(), cacheKey, flags);", 2)
+      append(result, "}", 1)
+    }
 
     val customExternalLoad = images.any { it.deprecation?.replacementContextClazz != null }
     if (customExternalLoad) {
@@ -357,7 +357,7 @@ internal open class IconsClassGenerator(
     }
 
     val inners = StringBuilder()
-    processIcons(images, inners, depth = 0)
+    processIcons(images, info.mappings, inners, depth = 0)
     if (inners.isEmpty()) {
       return null
     }
@@ -367,7 +367,7 @@ internal open class IconsClassGenerator(
     return result
   }
 
-  private fun processIcons(images: Collection<ImageInfo>, result: StringBuilder, depth: Int) {
+  private fun processIcons(images: Collection<ImageInfo>, mappings: Map<String, String>?, result: StringBuilder, depth: Int) {
     val level = depth + 1
 
     val nodeMap = HashMap<String, MutableList<ImageInfo>>(images.size / 2)
@@ -402,7 +402,7 @@ internal open class IconsClassGenerator(
         val oldLength = result.length
         val className = className(key)
         if (isInlineClass(className)) {
-          processIcons(group, result, depth + 1)
+          processIcons(group, mappings, result, depth + 1)
         }
         else {
           // if first in block, do not add yet another extra newline
@@ -411,7 +411,7 @@ internal open class IconsClassGenerator(
           }
           append(result, "public static final class $className {", level)
           val lengthBeforeBody = result.length
-          processIcons(group, result, depth + 1)
+          processIcons(group, mappings, result, depth + 1)
           if (lengthBeforeBody == result.length) {
             result.setLength(oldLength)
           }
@@ -428,7 +428,7 @@ internal open class IconsClassGenerator(
           innerClassWasBefore = false
           result.append('\n')
         }
-        appendImage(image, result, level, hasher)
+        appendImage(image, mappings, result, level, hasher)
       }
     }
   }
@@ -436,7 +436,7 @@ internal open class IconsClassGenerator(
   protected open fun isInlineClass(name: CharSequence): Boolean =
     DotnetIconClasses.isInlineClass(name)
 
-  private fun appendImage(image: ImageInfo, result: StringBuilder, level: Int, hasher: IconHasher) {
+  private fun appendImage(image: ImageInfo, mappings: Map<String, String>?, result: StringBuilder, level: Int, hasher: IconHasher) {
     val file = image.basicFile ?: return
     if (!image.phantom && !isIcon(file)) {
       return
@@ -465,16 +465,6 @@ internal open class IconsClassGenerator(
       append(result, "@ScheduledForRemoval", level)
     }
 
-    val sourceRoot = image.sourceRoot
-    var rootPrefix = "/"
-    if (sourceRoot.rootType == JavaSourceRootType.SOURCE) {
-      @Suppress("UNCHECKED_CAST")
-      val packagePrefix = (sourceRoot.properties as JpsSimpleElement<JavaSourceRootProperties>).data.packagePrefix
-      if (packagePrefix.isNotEmpty()) {
-        rootPrefix += packagePrefix.replace('.', '/') + "/"
-      }
-    }
-
     // backward compatibility - use a streaming camel case for StudioIcons
     val iconName = generateIconFieldName(file)
     val deprecation = image.deprecation
@@ -489,7 +479,7 @@ internal open class IconsClassGenerator(
       return
     }
 
-    val rootDir = Path.of(JpsPathUtil.urlToPath(sourceRoot.url))
+    val rootDir = Path.of(JpsPathUtil.urlToPath(image.sourceRoot.url))
     val imageFile: Path
     if (deprecation?.replacement == null) {
       imageFile = file
@@ -526,15 +516,27 @@ internal open class IconsClassGenerator(
       key = 0
     }
 
-    val relativePath = rootPrefix + rootDir.relativize(imageFile).invariantSeparatorsPathString
-    assert(relativePath.startsWith("/"))
+    val imagePathCodeParameter = image.sourceCodeParameterName
     append(result, "${javaDoc}public static final @NotNull Icon $iconName = " +
-                   "load(\"${relativePath.removePrefix("/")}\", $key, ${image.getFlags()});", level)
+                   "load(\"$imagePathCodeParameter\", ${appendExpUIPath(imagePathCodeParameter, mappings)}$key, ${image.getFlags()});", level)
 
     val oldName = deprecatedIconFieldNameMap[iconName]
     if (oldName != null) {
       append(result, "${javaDoc}public static final @Deprecated @NotNull Icon $oldName = $iconName;", level)
     }
+  }
+
+  private fun appendExpUIPath(imagePathCodeParameter: String, mappings: Map<String, String>?): String {
+    if (mappings != null) {
+      val expUIPath = mappings[imagePathCodeParameter]
+      if (expUIPath != null) {
+        if (expUIPath.endsWith("/$imagePathCodeParameter")) {
+          return "\"${expUIPath.substring(0, expUIPath.length - imagePathCodeParameter.length)}\", "
+        }
+        return "\"$expUIPath\", "
+      }
+    }
+    return ""
   }
 
   private fun append(result: StringBuilder, text: String, level: Int) {
@@ -749,7 +751,7 @@ private class IconHasher(expectedSize: Int) {
   // so, add filename to image id to support such a scenario
   fun hash(data: ByteArray, fileName: String): Int {
     val hash = hashStream.reset().putByteArray(data).putString(fileName).asInt
-    check(uniqueGuard.add(hash))
+    check(uniqueGuard.add(hash)) { "uniqueGuard check failed: $fileName | $hash" }
     return hash
   }
 }

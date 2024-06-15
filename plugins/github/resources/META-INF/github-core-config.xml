@@ -56,8 +56,6 @@
     <registryKey defaultValue="5000"
                  description="Milliseconds margin used when comparing known last seen date with last updated at date for PRs"
                  key="github.last.seen.state.margin.millis"/>
-
-    <iconMapper mappingFile="GithubIconMappings.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
