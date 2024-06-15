@@ -210,19 +210,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         LOG.info("$currentEDTWaitMillis ms to grab EDT for $operationName")
       }
       if (currentEDTPerformMillis > 300) {
-        val throwable: Throwable = PluginException.createByClass(
-          elapsedReport(currentEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.javaClass)
-        val edtTraces = edtTraces
-        // do not report pauses without EDT traces (e.g., due to debugging)
-        if (edtTraces != null && !edtTraces.isEmpty() && edtTraces[0].stackTrace.isNotEmpty()) {
-          for (trace in edtTraces) {
-            throwable.addSuppressed(trace)
-          }
-          LOG.error(throwable)
-        }
-        else if (!DebugAttachDetector.isDebugEnabled()) {
-          LOG.warn(throwable)
-        }
+        reportSlowEdtOperation(action, operationName, currentEDTPerformMillis, edtTraces)
       }
     }
   }
@@ -724,6 +712,26 @@ internal class ActionUpdater @JvmOverloads constructor(
     override suspend fun <T> readAction(block: () -> T): T {
       return readActionUndispatchedForActionExpand(block)
     }
+  }
+}
+
+private fun reportSlowEdtOperation(action: Any,
+                                   operationName: String,
+                                   currentEDTPerformMillis: Long,
+                                   edtTraces: List<Throwable>?) {
+  var edtTraces1 = edtTraces
+  val throwable: Throwable = PluginException.createByClass(
+    elapsedReport(currentEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.javaClass)
+  val edtTraces = edtTraces1
+  // do not report pauses without EDT traces (e.g., due to debugging)
+  if (edtTraces != null && !edtTraces.isEmpty() && edtTraces[0].stackTrace.isNotEmpty()) {
+    for (trace in edtTraces) {
+      throwable.addSuppressed(trace)
+    }
+    LOG.error(throwable)
+  }
+  else if (!DebugAttachDetector.isDebugEnabled()) {
+    LOG.warn(throwable)
   }
 }
 
