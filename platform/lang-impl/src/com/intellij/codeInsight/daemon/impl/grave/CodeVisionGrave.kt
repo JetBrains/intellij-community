@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.grave
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
@@ -6,6 +6,8 @@ import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
@@ -23,41 +25,42 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Service(Level.PROJECT)
 internal class CodeVisionGrave(project: Project, private val scope: CoroutineScope) : TextEditorCache<CodeVisionState>(project, scope) {
-  override fun namePrefix() = "persistent-code-vision"
-  override fun valueExternalizer() = CodeVisionState.Externalizer
-  override fun useHeapCache() = true
+  override fun namePrefix(): String = "persistent-code-vision"
+  override fun valueExternalizer(): CodeVisionState.Externalizer = CodeVisionState.Externalizer
+  override fun useHeapCache(): Boolean = true
 
   fun raise(file: VirtualFile, document: Document): Iterable<Pair<TextRange, CodeVisionEntry>>? {
-    if (!isEnabled() || file !is VirtualFileWithId) {
-      return null
+    if (isEnabled() && file is VirtualFileWithId) {
+      val state = cache[file.id]
+      if (state == null) {
+        LOG.debug { "code vision grave: empty state ${file.name}" }
+        return null
+      }
+      if (state.contentHash != document.contentHash()) {
+        LOG.debug { "code vision grave: state outdated ${file.name}" }
+        cache.remove(file.id)
+        return null
+      }
+      LOG.debug { "code vision grave: zombie raised ${file.name} with entries ${state.entries.size}" }
+      return state.asZombies().sortedBy { (_, cvEntry) -> cvEntry.providerId }
     }
-    val state = cache[file.id]
-    if (state == null) {
-      return null
-    }
-    if (state.contentHash != document.contentHash()) {
-      cache.remove(file.id)
-      return null
-    }
-    return state.asZombies().sortedBy { (_, entry) -> entry.providerId }
+    return null
   }
 
   fun bury(editor: Editor, rangeMarkers: Sequence<Pair<TextRange, CodeVisionEntry>>) {
-    if (!isEnabled() || editor.editorKind != EditorKind.MAIN_EDITOR) {
-      return
-    }
-    val vFile = editor.virtualFile
-    if (vFile !is VirtualFileWithId) {
-      return
-    }
-    val stateList = rangeMarkers
-      .filter { (_, cvEntry) -> !ignoreEntry(cvEntry) }
-      .map { CodeVisionEntryState.create(it) }
-      .toList()
-    val contentHash = editor.document.contentHash()
-    val state = CodeVisionState(contentHash, stateList)
-    scope.launch(Dispatchers.IO) {
-      cache[vFile.id] = state
+    if (isEnabled() && editor.editorKind == EditorKind.MAIN_EDITOR) {
+      val file = editor.virtualFile
+      if (file is VirtualFileWithId) {
+        val stateList = rangeMarkers
+          .filter { (_, cvEntry) -> !ignoreEntry(cvEntry) }
+          .map { CodeVisionEntryState.create(it) }
+          .toList()
+        val state = CodeVisionState(editor.document.contentHash(), stateList)
+        scope.launch(Dispatchers.IO) {
+          LOG.debug { "code vision grave: bury zombie ${file.name} with ${state.entries.size}" }
+          cache[file.id] = state
+        }
+      }
     }
   }
 
@@ -66,5 +69,9 @@ internal class CodeVisionGrave(project: Project, private val scope: CoroutineSco
     return cvEntry is ZombieCodeVisionEntry || cvEntry is RichTextCodeVisionEntry
   }
 
-  private fun isEnabled() = Registry.`is`("cache.inlay.hints.on.disk")
+  private fun isEnabled() = Registry.`is`("cache.inlay.hints.on.disk", true)
+
+  companion object {
+    private val LOG = logger<CodeVisionGrave>()
+  }
 }
