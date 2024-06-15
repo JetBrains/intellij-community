@@ -390,12 +390,15 @@ open class JBTabsImpl internal constructor(
     fakeScrollPane.setBounds(0, 0, 0, 0)
     add(fakeScrollPane) // isShowing() should return true for this component
     add(scrollBar)
-    addMouseWheelListener { event ->
-      val modifiers = UIUtil.getAllModifiers(event) or if (isHorizontalTabs) InputEvent.SHIFT_DOWN_MASK else 0
-      val e = MouseEventAdapter.convert(event, fakeScrollPane, event.id, event.getWhen(), modifiers, event.x, event.y)
-      MouseEventAdapter.redispatch(e, fakeScrollPane)
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      addMouseWheelListener { event ->
+        val modifiers = UIUtil.getAllModifiers(event) or if (isHorizontalTabs) InputEvent.SHIFT_DOWN_MASK else 0
+        val e = MouseEventAdapter.convert(event, fakeScrollPane, event.id, event.getWhen(), modifiers, event.x, event.y)
+        MouseEventAdapter.redispatch(e, fakeScrollPane)
+      }
+      addMouseMotionAwtListener(parentDisposable, coroutineScope)
     }
-    addMouseMotionAwtListener(parentDisposable, coroutineScope)
     isFocusTraversalPolicyProvider = true
     focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
       override fun getDefaultComponent(aContainer: Container): Component? = getToFocus()
@@ -413,28 +416,31 @@ open class JBTabsImpl internal constructor(
       gp.addMouseMotionPreprocessor(tabActionsAutoHideListener, tabActionsAutoHideListenerDisposable)
       glassPane = gp
 
-      val listener = { _: AWTEvent? ->
-        if (JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) {
-          processFocusChange()
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+        val listener = { _: AWTEvent? ->
+          if (JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) {
+            processFocusChange()
+          }
+        }
+        if (coroutineScope == null) {
+          StartupUiUtil.addAwtListener(AWTEvent.FOCUS_EVENT_MASK, parentDisposable, listener)
+        }
+        else {
+          Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
+          coroutineScope.coroutineContext.job.invokeOnCompletion {
+            Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
+          }
         }
       }
-      if (coroutineScope == null) {
-        StartupUiUtil.addAwtListener(AWTEvent.FOCUS_EVENT_MASK, parentDisposable, listener)
-      }
-      else {
-        Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
-        coroutineScope.coroutineContext.job.invokeOnCompletion {
-          Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
-        }
-      }
+
       dragHelper = createDragHelper(child, parentDisposable)
       dragHelper!!.start()
     }
 
-    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
+    putClientProperty(ComponentUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
       getVisibleInfos().asSequence().filter { it != selectedInfo }.map { it.component }.iterator()
     })
-    val hoverListener = object : HoverListener() {
+    object : HoverListener() {
       override fun mouseEntered(component: Component, x: Int, y: Int) {
         toggleScrollBar(isInsideTabsArea(x, y))
       }
@@ -446,8 +452,7 @@ open class JBTabsImpl internal constructor(
       override fun mouseExited(component: Component) {
         toggleScrollBar(false)
       }
-    }
-    hoverListener.addTo(this)
+    }.addTo(this)
     scrollBarChangeListener = ChangeListener { updateTabsOffsetFromScrollBar() }
   }
 
