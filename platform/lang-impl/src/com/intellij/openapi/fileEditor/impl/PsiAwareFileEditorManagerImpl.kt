@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.PowerSaveMode
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.module.ModuleManager
@@ -12,8 +13,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.problems.ProblemListener
 import com.intellij.problems.WolfTheProblemSolver
-import com.intellij.util.ui.EdtInvocationManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: CoroutineScope) : FileEditorManagerImpl(project, coroutineScope) {
   private val problemSolver by lazy(LazyThreadSafetyMode.NONE) { WolfTheProblemSolver.getInstance(getProject()) }
@@ -27,9 +29,12 @@ open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: Corou
     // So we need to drop caches for token types of attributes in LayeredLexerEditorHighlighter
     val connection = project.messageBus.connect(coroutineScope)
     connection.subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener {
-      EdtInvocationManager.invokeLaterIfNeeded {
-        for (editor in EditorFactory.getInstance().allEditors) {
-          (editor as EditorEx).reinitSettings()
+      val editors = EditorFactory.getInstance().getEditorList()
+      coroutineScope.launch(Dispatchers.EDT) {
+        for (editor in editors) {
+          if (!editor.isDisposed) {
+            (editor as EditorEx).reinitSettings()
+          }
         }
       }
     })
@@ -54,18 +59,14 @@ open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: Corou
 
   private inner class MyProblemListener : ProblemListener {
     override fun problemsAppeared(file: VirtualFile) {
-      updateFile(file)
+      queueUpdateFile(file)
     }
 
     override fun problemsDisappeared(file: VirtualFile) {
-      updateFile(file)
+      queueUpdateFile(file)
     }
 
     override fun problemsChanged(file: VirtualFile) {
-      updateFile(file)
-    }
-
-    private fun updateFile(file: VirtualFile) {
       queueUpdateFile(file)
     }
   }
