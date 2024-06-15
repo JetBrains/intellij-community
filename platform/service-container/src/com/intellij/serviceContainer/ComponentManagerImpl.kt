@@ -5,6 +5,7 @@ package com.intellij.serviceContainer
 
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.concurrency.resetThreadContext
+import com.intellij.concurrency.withThreadLocal
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.LoadingState
@@ -1544,10 +1545,13 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
 
   if (!Cancellation.isInNonCancelableSection() && !checkOutsideClassInitializer(debugString)) {
     Cancellation.withNonCancelableSection().use {
-      return getOrCreateInstanceBlocking(debugString = debugString, keyClass = keyClass)
+      return doGetOrCreateInstanceBlocking(keyClass)
     }
   }
+  return doGetOrCreateInstanceBlocking(keyClass)
+}
 
+private fun InstanceHolder.doGetOrCreateInstanceBlocking(keyClass: Class<*>?): Any {
   try {
     return runBlockingInitialization {
       getInstanceInCallerContext(keyClass)
@@ -1564,12 +1568,20 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
  */
 private fun checkOutsideClassInitializer(debugString: String): Boolean {
   val className = isInsideClassInitializer() ?: return true
-  // TODO make this an error
-  LOG.warn(
-    "$className <clinit> requests $debugString instance. " +
-    "Class initialization must not depend on services. " +
-    "Consider using instance of the service on-demand instead.",
-  )
+  if (logAccessInsideClinit.get()) {
+    dontLogAccessInClinit().use {
+      val message = "$className <clinit> requests $debugString instance. " +
+                    "Class initialization must not depend on services. " +
+                    "Consider using instance of the service on-demand instead."
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        LOG.error(message)
+      }
+      else {
+        // TODO make this an error IJPL-156676
+        LOG.warn(message)
+      }
+    }
+  }
   return false
 }
 
@@ -1584,6 +1596,24 @@ private fun isInsideClassInitializer(): String? {
       }
     }
   }
+}
+
+private val logAccessInsideClinit = ThreadLocal.withInitial { true }
+
+private fun dontLogAccessInClinit(): AccessToken {
+  // Logger itself also loads services, which results in SOE:
+  // at com.intellij.serviceContainer.ComponentManagerImpl.getService
+  // at com.intellij.ide.plugins.PluginUtil.getInstance(PluginUtil.java:13)
+  // at com.intellij.diagnostic.DefaultIdeaErrorLogger.canHandle(DefaultIdeaErrorLogger.java:39)
+  // at com.intellij.diagnostic.DialogAppender.queueAppend(DialogAppender.kt:76)
+  // at com.intellij.diagnostic.DialogAppender.publish(DialogAppender.kt:48)
+  // at java.logging/java.util.logging.Logger.log(Logger.java:983)
+  // ...
+  // at com.intellij.openapi.diagnostic.Logger.error(Logger.java:376)
+  // at com.intellij.serviceContainer.ComponentManagerImplKt.getOrCreateInstanceBlocking(ComponentManagerImpl.kt:1557)
+  // at com.intellij.serviceContainer.ComponentManagerImpl.doGetService(ComponentManagerImpl.kt:744)
+  // at com.intellij.serviceContainer.ComponentManagerImpl.getService(ComponentManagerImpl.kt:688)
+  return withThreadLocal(logAccessInsideClinit) { false }
 }
 
 /**
