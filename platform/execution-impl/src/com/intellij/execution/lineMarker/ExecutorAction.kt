@@ -53,27 +53,7 @@ class ExecutorAction private constructor(val origin: AnAction,
           }
         }
       if (createAction != null) {
-        result.add(object : ActionGroupWrapper(createAction as ActionGroup) {
-          override fun update(e: AnActionEvent) {
-            super.update(wrapEvent(e, order))
-          }
-
-          override fun actionPerformed(e: AnActionEvent) {
-            super.actionPerformed(wrapEvent(e, order))
-          }
-
-          override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-            return super.getChildren(e?.let { wrapEvent(e, order) })
-          }
-
-          override fun equals(other: Any?): Boolean {
-            return other is ActionGroupWrapper && delegate == other.delegate
-          }
-
-          override fun hashCode(): Int {
-            return createAction.hashCode()
-          }
-        })
+        result.add(createAction)
       }
       return result
     }
