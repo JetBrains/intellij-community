@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
+import com.intellij.platform.fileEditor.FileEntryTab
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
@@ -690,8 +691,7 @@ open class EditorComposite internal constructor(
       selectedProvider = (selectedEditorWithProvider.value ?: fileEditorWithProviderList.first()).provider.editorTypeId,
       isPreview = isPreview,
       providers = stateMap,
-      tabTitle = null,
-      tabIcon = null,
+      tab = FileEntryTab(),
       pinned = false,
       currentInTab = false,
       ideFingerprint = null,

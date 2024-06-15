@@ -108,7 +108,10 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
   var defaultForeground: Color? = null
     private set
 
-  private var editorAttributes: TextAttributes? = null
+  @Internal
+  var editorAttributes: TextAttributes? = null
+    private set
+
   private var defaultAttributes: SimpleTextAttributes? = null
 
   var isEnabled: Boolean = true
@@ -156,13 +159,12 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     if (defaultAttributes == null) {
       val style = ((if (defaultStyle == -1) SimpleTextAttributes.STYLE_PLAIN else defaultStyle)
         or SimpleTextAttributes.STYLE_USE_EFFECT_COLOR)
-      if (editorAttributes != null) {
-        var attr = SimpleTextAttributes.fromTextAttributes(editorAttributes)
-        attr = SimpleTextAttributes.merge(SimpleTextAttributes(style, defaultForeground), attr)
-        defaultAttributes = attr
+      if (editorAttributes == null) {
+        defaultAttributes = SimpleTextAttributes(style, defaultForeground)
       }
       else {
-        defaultAttributes = SimpleTextAttributes(style, defaultForeground)
+        val attr = SimpleTextAttributes.fromTextAttributes(editorAttributes)
+        defaultAttributes = SimpleTextAttributes.merge(SimpleTextAttributes(style, defaultForeground), attr)
       }
     }
     return defaultAttributes!!

@@ -7,18 +7,21 @@ import com.intellij.ide.util.treeView.findCachedImageIcon
 import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.IdeFingerprint
+import com.intellij.util.xmlb.jdomToJson
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import org.jdom.CDATA
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import java.util.*
 
 private const val PINNED: @NonNls String = "pinned"
 private const val CURRENT_IN_TAB = "current-in-tab"
 
 @Internal
 class FileEntry(
-  @NlsSafe @JvmField val tabTitle: String?,
-  @JvmField val tabIcon: ByteArray?,
+  @JvmField val tab: FileEntryTab,
   @JvmField val pinned: Boolean,
   @JvmField val currentInTab: Boolean,
   @JvmField val url: String,
@@ -28,8 +31,18 @@ class FileEntry(
   @JvmField val providers: Map<String, Element?>,
 )
 
-private const val TAB_TITLE = "tabTitle"
-private const val TAB_ICON = "tabIcon"
+private const val TAB = "tab"
+
+private val json = Json { ignoreUnknownKeys = true }
+
+@Internal
+@Serializable
+class FileEntryTab(
+  @NlsSafe @JvmField val tabTitle: String? = null,
+  @NlsSafe @JvmField val foregroundColor: Int? = null,
+  @NlsSafe @JvmField val textAttributes: JsonObject? = null,
+  @NlsSafe @JvmField val icon: ByteArray? = null,
+)
 
 internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFingerprint): FileEntry {
   val historyElement = fileElement.getChild(HistoryEntry.TAG)
@@ -47,8 +60,7 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
   }
 
   return FileEntry(
-    tabTitle = fileElement.getAttributeValue(TAB_TITLE),
-    tabIcon = fileElement.getAttributeValue(TAB_ICON)?.let { Base64.getDecoder().decode(it) },
+    tab = json.decodeFromString<FileEntryTab>(fileElement.getChildText(TAB) ?: "{}"),
     pinned = fileElement.getAttributeBooleanValue(PINNED),
     currentInTab = fileElement.getAttributeBooleanValue(CURRENT_IN_TAB),
     isPreview = historyElement.getAttributeBooleanValue(PREVIEW_ATTRIBUTE),
@@ -61,6 +73,7 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
 
 internal fun writeWindow(result: Element, window: EditorWindow, delayedStates: Map<EditorComposite, FileEntry>) {
   val selectedComposite = window.selectedComposite
+  val serializer = FileEntryTab.serializer()
   for (tab in window.tabbedPane.tabs.tabs) {
     val composite = tab.composite
     val fileElement = Element("file")
@@ -80,11 +93,15 @@ internal fun writeWindow(result: Element, window: EditorWindow, delayedStates: M
       fileElement.setAttribute(CURRENT_IN_TAB, "true")
     }
 
-    fileElement.setAttribute(TAB_TITLE, tab.text)
+    fileElement.addContent(Element(TAB).addContent(CDATA(json.encodeToString(serializer, FileEntryTab(
+      tabTitle = tab.text,
+      foregroundColor = tab.defaultForeground?.rgb,
+      textAttributes = tab.editorAttributes?.let { editorAttributes ->
+        jdomToJson(Element("a").also { editorAttributes.writeExternal(it) })
+      },
+      icon = tab.icon?.let { findCachedImageIcon(it) }?.encodeToByteArray(),
+    )))))
 
-    tab.icon?.let { findCachedImageIcon(it) }?.let {
-      fileElement.setAttribute(TAB_ICON, Base64.getEncoder().withoutPadding().encodeToString(it.encodeToByteArray()))
-    }
     result.addContent(fileElement)
   }
 }

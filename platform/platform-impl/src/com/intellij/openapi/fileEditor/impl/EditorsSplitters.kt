@@ -70,6 +70,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.xmlb.jsonDomToXml
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jdom.Element
@@ -987,9 +988,10 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
             }
           }
 
-          val initialTabTitle = if (!fileEntry.tabTitle.isNullOrEmpty() && fileEntry.ideFingerprint == ideFingerprint()) {
+          val tabEntry = fileEntry.tab
+          val initialTabTitle = if (!tabEntry.tabTitle.isNullOrEmpty() && fileEntry.ideFingerprint == ideFingerprint()) {
             delayedTasks.add(tabTitleTask)
-            fileEntry.tabTitle
+            tabEntry.tabTitle
           }
           else {
             tabTitleTask.start()
@@ -1000,7 +1002,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
             null
           }
           else {
-            val cachedIcon = fileEntry.tabIcon
+            val cachedIcon = tabEntry.icon
               ?.takeIf { fileEntry.ideFingerprint == ideFingerprint() }
               ?.let { decodeCachedImageIconFromByteArray(it) }
             if (cachedIcon == null) {
@@ -1013,6 +1015,40 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
             cachedIcon ?: placeholderIcon
           }
 
+          val tabColorTask = compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
+            val colorScheme = serviceAsync<EditorColorsManager>().schemeForCurrentUITheme
+            val attributes = if (fileEditorManager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
+            val colors = tabFileColorTask.await()
+
+            var effectiveAttributes = if (fileEntry.isPreview) {
+              val italic = TextAttributes(null, null, null, null, Font.ITALIC)
+              if (attributes == null) italic else TextAttributes.merge(italic, attributes)
+            }
+            else {
+              attributes
+            }
+
+            effectiveAttributes = TextAttributes.merge(TextAttributes(), effectiveAttributes).apply {
+              foregroundColor = colorScheme.getColor(colors.second)
+            }
+
+            colors.first to effectiveAttributes
+          }
+
+          val initialTabTextAttributes = if ((tabEntry.textAttributes != null || tabEntry.foregroundColor != null) &&
+                                             fileEntry.ideFingerprint == ideFingerprint()) {
+            delayedTasks.add(tabColorTask)
+
+            tabEntry.foregroundColor?.let {
+              @Suppress("UseJBColor")
+              Color(it)
+            } to tabEntry.textAttributes?.let { state -> TextAttributes().also { it.readExternal(jsonDomToXml(state)) } }
+          }
+          else {
+            tabColorTask.start()
+            null
+          }
+
           FileToOpen(
             fileEntry = fileEntry,
             scope = compositeCoroutineScope,
@@ -1022,26 +1058,30 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
               tab.setText(initialTabTitle)
               tab.setIcon(initialTabIcon)
 
+              initialTabTextAttributes?.let {
+                tab.setDefaultForegroundAndAttributes(foregroundColor = it.first, attributes = it.second)
+              }
+
               compositeCoroutineScope.launch {
+                val tooltipText = if (UISettings.getInstance().showTabsTooltips) {
+                  readAction { fileEditorManager.getFileTooltipText(file, tab.composite) }
+                }
+                else {
+                  null
+                }
                 val title = tabTitleTask.await()
                 withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
                   tab.setText(title)
-                  tab.setTooltipText(if (UISettings.getInstance().showTabsTooltips) fileEditorManager.getFileTooltipText(file, tab.composite) else null)
+                  tab.setTooltipText(tooltipText)
                 }
               }
 
               compositeCoroutineScope.launch {
-                val colorScheme = serviceAsync<EditorColorsManager>().schemeForCurrentUITheme
-                val attributes = if (fileEditorManager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
-                val colors = tabFileColorTask.await()
+                val (foregroundColor, attributes) = tabColorTask.await()
                 withContext(Dispatchers.EDT) {
-                  applyTabColor(
-                    composite = tab.composite,
+                  tab.setDefaultForegroundAndAttributes(
+                    foregroundColor = foregroundColor,
                     attributes = attributes,
-                    tab = tab,
-                    fileColor = colors.first,
-                    colorScheme = colorScheme,
-                    foregroundFileColor = colors.second,
                   )
                 }
               }
