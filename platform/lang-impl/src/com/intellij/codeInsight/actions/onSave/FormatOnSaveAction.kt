@@ -1,99 +1,92 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.actions.onSave;
+package com.intellij.codeInsight.actions.onSave
 
-import com.intellij.codeInsight.actions.*;
-import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener;
-import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.actions.*
+import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener.ActionOnSave
+import com.intellij.lang.LanguageFormatting
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.DumbService.Companion.isDumb
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import java.util.concurrent.FutureTask
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.FutureTask;
-
-final class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener.ActionOnSave {
-  @Override
-  public boolean isEnabledForProject(@NotNull Project project) {
-    return FormatOnSaveOptions.getInstance(project).isRunOnSaveEnabled() ||
-           OptimizeImportsOnSaveOptions.getInstance(project).isRunOnSaveEnabled() ||
+internal class FormatOnSaveAction : ActionOnSave() {
+  override fun isEnabledForProject(project: Project): Boolean {
+    return FormatOnSaveOptions.getInstance(project).isRunOnSaveEnabled ||
+           OptimizeImportsOnSaveOptions.getInstance(project).isRunOnSaveEnabled ||
            RearrangeCodeOnSaveActionInfo.isRearrangeCodeOnSaveEnabled(project) ||
-           CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project);
+           CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project)
   }
 
-  @Override
-  public void processDocuments(@NotNull Project project, @NotNull Document @NotNull [] documents) {
-    List<PsiFile> allFiles = new ArrayList<>();
-    List<PsiFile> filesToFormat = new ArrayList<>();
-    List<PsiFile> filesToOptimizeImports = new ArrayList<>();
+  override fun processDocuments(project: Project, documents: Array<Document>) {
+    val allFiles = mutableListOf<PsiFile>()
+    val filesToFormat = mutableListOf<PsiFile>()
+    val filesToOptimizeImports = mutableListOf<PsiFile>()
 
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-    FormatOnSaveOptions formatOptions = FormatOnSaveOptions.getInstance(project);
-    OptimizeImportsOnSaveOptions optimizeImportsOptions = OptimizeImportsOnSaveOptions.getInstance(project);
+    val manager = PsiDocumentManager.getInstance(project)
+    val formatOptions = FormatOnSaveOptions.getInstance(project)
+    val optimizeImportsOptions = OptimizeImportsOnSaveOptions.getInstance(project)
 
-    for (Document document : documents) {
-      PsiFile psiFile = manager.getPsiFile(document);
-      if (psiFile == null || !LanguageFormatting.INSTANCE.isAutoFormatAllowed(psiFile)) continue;
+    for (document in documents) {
+      val psiFile = manager.getPsiFile(document)
+      if (psiFile == null || !LanguageFormatting.INSTANCE.isAutoFormatAllowed(psiFile)) continue
 
-      allFiles.add(psiFile);
+      allFiles.add(psiFile)
 
-      if (formatOptions.isRunOnSaveEnabled() && formatOptions.isFileTypeSelected(psiFile.getFileType())) {
-        filesToFormat.add(psiFile);
+      if (formatOptions.isRunOnSaveEnabled && formatOptions.isFileTypeSelected(psiFile.fileType)) {
+        filesToFormat.add(psiFile)
       }
 
-      if (optimizeImportsOptions.isRunOnSaveEnabled() && optimizeImportsOptions.isFileTypeSelected(psiFile.getFileType())) {
-        filesToOptimizeImports.add(psiFile);
+      if (optimizeImportsOptions.isRunOnSaveEnabled && optimizeImportsOptions.isFileTypeSelected(psiFile.fileType)) {
+        filesToOptimizeImports.add(psiFile)
       }
     }
 
     if (filesToFormat.isEmpty() &&
         filesToOptimizeImports.isEmpty() &&
         !RearrangeCodeOnSaveActionInfo.isRearrangeCodeOnSaveEnabled(project) &&
-        !CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project)) {
+        !CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project)
+    ) {
       // nothing to do
-      return;
+      return
     }
 
-    processFiles(project, allFiles, filesToFormat, filesToOptimizeImports);
+    processFiles(project, allFiles, filesToFormat, filesToOptimizeImports)
   }
 
-  private void processFiles(@NotNull Project project,
-                            @NotNull List<PsiFile> allFiles,
-                            @NotNull List<PsiFile> filesToFormat,
-                            @NotNull List<PsiFile> filesToOptimizeImports) {
-    boolean onlyChangedLines = VcsFacade.getInstance().hasActiveVcss(project) &&
-                               FormatOnSaveOptions.getInstance(project).isFormatOnlyChangedLines();
+  private fun processFiles(project: Project,
+                           allFiles: List<PsiFile>,
+                           filesToFormat: List<PsiFile>,
+                           filesToOptimizeImports: List<PsiFile>) {
+    val onlyChangedLines = VcsFacade.getInstance().hasActiveVcss(project) &&
+                           FormatOnSaveOptions.getInstance(project).isFormatOnlyChangedLines
 
-    AbstractLayoutCodeProcessor processor =
-      new ReformatCodeProcessor(project, allFiles.toArray(PsiFile.EMPTY_ARRAY), null, onlyChangedLines) {
-        @Override
-        protected @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
-          return filesToFormat.contains(file) ? super.prepareTask(file, processChangedTextOnly) : emptyTask();
+    var processor: AbstractLayoutCodeProcessor =
+      object : ReformatCodeProcessor(project, allFiles.toTypedArray(), null, onlyChangedLines) {
+        override fun prepareTask(file: PsiFile, processChangedTextOnly: Boolean): FutureTask<Boolean> {
+          return if (filesToFormat.contains(file)) super.prepareTask(file, processChangedTextOnly) else emptyTask()
         }
-      };
+      }
 
-    if (OptimizeImportsOnSaveOptions.getInstance(project).isRunOnSaveEnabled()) {
-      processor = new OptimizeImportsProcessor(processor) {
-        @Override
-        protected @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
-          return filesToOptimizeImports.contains(file) ? super.prepareTask(file, processChangedTextOnly) : emptyTask();
+    if (OptimizeImportsOnSaveOptions.getInstance(project).isRunOnSaveEnabled) {
+      processor = object : OptimizeImportsProcessor(processor) {
+        override fun prepareTask(file: PsiFile, processChangedTextOnly: Boolean): FutureTask<Boolean> {
+          return if (filesToOptimizeImports.contains(file)) super.prepareTask(file, processChangedTextOnly) else emptyTask()
         }
-      };
+      }
     }
 
     if (RearrangeCodeOnSaveActionInfo.isRearrangeCodeOnSaveEnabled(project)) {
-      processor = new RearrangeCodeProcessor(processor);
+      processor = RearrangeCodeProcessor(processor)
     }
 
-    if (CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project) && !DumbService.isDumb(project)) {
-      processor = new CodeCleanupCodeProcessor(processor);
+    if (CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project) && !isDumb(project)) {
+      processor = CodeCleanupCodeProcessor(processor)
     }
 
     // This guarantees that per-file undo chain won't break and there won't be the "Following files affected by this action have been already changed" modal error dialog.
-    processor.setProcessAllFilesAsSingleUndoStep(false);
-    processor.run();
+    processor.setProcessAllFilesAsSingleUndoStep(false)
+    processor.run()
   }
 }
