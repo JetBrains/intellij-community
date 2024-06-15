@@ -110,7 +110,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
   }
 
   private void setActiveEditors(Editor @NotNull ... editors) {
-    ((EditorTrackerImpl)EditorTracker.getInstance(myProject)).setActiveEditors(Arrays.asList(editors));
+    EditorTracker.Companion.getInstance(myProject).setActiveEditors(Arrays.asList(editors));
   }
 
   @Override

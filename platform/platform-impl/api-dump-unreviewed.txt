@@ -16393,6 +16393,7 @@ c:com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 - getPreferredFocusedComponent():javax.swing.JComponent
 - getState(com.intellij.openapi.fileEditor.FileEditorStateLevel):com.intellij.openapi.fileEditor.FileEditorState
 - getStructureViewBuilder():com.intellij.ide.structureView.StructureViewBuilder
+- f:isEditorLoaded():Z
 - isModified():Z
 - isValid():Z
 - navigateTo(com.intellij.pom.Navigatable):V

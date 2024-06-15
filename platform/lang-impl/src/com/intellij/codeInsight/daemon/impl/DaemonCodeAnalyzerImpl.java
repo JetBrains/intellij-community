@@ -3,7 +3,10 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.*;
-import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
@@ -42,7 +45,6 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -91,6 +93,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "DaemonCodeAnalyzer", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@ApiStatus.Internal
 public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   implements PersistentStateComponent<Element>, Disposable, DaemonCodeAnalysisStatus {
 
@@ -242,6 +245,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
   }
 
+  @Override
   public boolean hasFileLevelHighlights(int group, @NotNull PsiFile psiFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     assertMyFile(psiFile.getProject(), psiFile);
@@ -599,7 +603,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         }
       });
     if (!canChangeDocument) {
-      myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonListener() {
+      myProject.getMessageBus().connect(disposable).subscribe(DAEMON_EVENT_TOPIC, new DaemonListener() {
         @Override
         public void daemonCancelEventOccurred(@NotNull String reason) {
           if (assertOnModification.get()) {
@@ -1065,7 +1069,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           !project.isDefault() &&
           project.isInitialized() &&
           !LightEdit.owns(project)) {
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).runUpdate();
+        ((DaemonCodeAnalyzerImpl)getInstance(project)).runUpdate();
       }
     }
   }
@@ -1121,7 +1125,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     try {
       boolean submitted = false;
       for (FileEditor fileEditor : activeEditors) {
-        if (fileEditor instanceof TextEditor textEditor && !AsyncEditorLoader.Companion.isEditorLoaded(textEditor.getEditor())) {
+        if (fileEditor instanceof TextEditor textEditor && !textEditor.isEditorLoaded()) {
           // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
           // for instance `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
           if (PassExecutorService.LOG.isDebugEnabled()) {
@@ -1188,7 +1192,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           "because getBackgroundHighlighter() returned null. fileEditor=",
           fileEditor,
           fileEditor.getClass(),
-          (textEditor == null ? "editor is null" : "editor loaded:" + AsyncEditorLoader.Companion.isEditorLoaded(textEditor.getEditor()))
+          (textEditor == null ? "editor is null" : "editor loaded:" + textEditor.isEditorLoaded())
         );
       }
       return null;
@@ -1328,14 +1332,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     @Override
     public void onCancelled(@NotNull String reason) {
-      DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+      DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)getInstance(myProject);
       daemon.myDaemonListenerPublisher.daemonCanceled(reason, List.of(myFileEditor));
       myFileEditor = null;
     }
 
     @Override
     public void onStop() {
-      DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+      DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)getInstance(myProject);
       daemon.myDaemonListenerPublisher.daemonFinished(List.of(myFileEditor));
       myFileEditor = null;
       HighlightingSessionImpl.clearAllHighlightingSessions(this);
@@ -1359,7 +1363,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private @NotNull Collection<? extends FileEditor> getSelectedEditors() {
     ThreadingAssertions.assertEventDispatchThread();
     // editors in modal context
-    List<? extends Editor> editors = EditorTracker.getInstance(myProject).getActiveEditors();
+    List<? extends Editor> editors = EditorTracker.Companion.getInstance(myProject).getActiveEditors();
     Collection<FileEditor> activeTextEditors = new HashSet<>(editors.size());
     Set<VirtualFile> files = new HashSet<>(editors.size());
     if (!editors.isEmpty()) {

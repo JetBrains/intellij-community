@@ -202,9 +202,7 @@ open class TextEditorImpl @Internal constructor(
 
   override fun toString(): @NonNls String = "Editor: ${component.file}"
 
-  internal fun isLoaded(): Boolean {
-    return asyncLoader.isLoaded()
-  }
+  final override fun isEditorLoaded(): Boolean = asyncLoader.isLoaded()
 }
 
 private class TransientEditorState {

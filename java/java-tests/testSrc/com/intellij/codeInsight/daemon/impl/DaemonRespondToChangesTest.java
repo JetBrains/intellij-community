@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
@@ -178,7 +178,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private void setActiveEditors(Editor @NotNull ... editors) {
-    ((EditorTrackerImpl)EditorTracker.getInstance(myProject)).setActiveEditors(Arrays.asList(editors));
+    ((EditorTrackerImpl)EditorTracker.Companion.getInstance(myProject)).setActiveEditors(Arrays.asList(editors));
   }
 
   @Override
@@ -1393,7 +1393,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
         configureByText(PlainTextFileType.INSTANCE, "");
         Editor editor = getEditor();
-        EditorTracker editorTracker = EditorTracker.getInstance(myProject);
+        EditorTracker editorTracker = EditorTracker.Companion.getInstance(myProject);
         setActiveEditors(editor);
         while (HeavyProcessLatch.INSTANCE.isRunning()) {
           UIUtil.dispatchAllInvocationEvents();
@@ -1450,7 +1450,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
         configureByText(PlainTextFileType.INSTANCE, "");
         Editor editor = getEditor();
-        EditorTracker editorTracker = EditorTracker.getInstance(myProject);
+        EditorTracker editorTracker = EditorTracker.Companion.getInstance(myProject);
         setActiveEditors(editor);
         while (HeavyProcessLatch.INSTANCE.isRunning()) {
           UIUtil.dispatchAllInvocationEvents();
@@ -1512,7 +1512,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       DocumentUtil.executeInBulk(editor.getDocument(), () -> {
         registerFakePass(applied, collected);
 
-        EditorTracker editorTracker = EditorTracker.getInstance(myProject);
+        EditorTracker editorTracker = EditorTracker.Companion.getInstance(myProject);
         setActiveEditors(editor);
         assertTrue(editorTracker.getActiveEditors().contains(editor));
         assertSame(editor, FileEditorManager.getInstance(myProject).getSelectedTextEditor());

@@ -124,7 +124,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     }
 
     Editor editor = supplier.getEditor();
-    AsyncEditorLoader.performWhenLoaded(editor, (ContextAwareRunnable)() -> {
+    AsyncEditorLoader.Companion.performWhenLoaded(editor, (ContextAwareRunnable)() -> {
       VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();
       LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
       for (ScrollRequestListener listener : scrollRequestListeners) {
@@ -164,7 +164,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   @RequiresEdt
   public void scrollTo(@NotNull LogicalPosition logicalPosition, @NotNull ScrollType scrollType) {
     Editor editor = supplier.getEditor();
-    AsyncEditorLoader.performWhenLoaded(editor, (ContextAwareRunnable)() -> {
+    AsyncEditorLoader.Companion.performWhenLoaded(editor, (ContextAwareRunnable)() -> {
       for (ScrollRequestListener listener : scrollRequestListeners) {
         listener.scrollRequested(logicalPosition, scrollType);
       }

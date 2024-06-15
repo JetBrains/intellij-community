@@ -55,7 +55,6 @@ class AsyncEditorLoader internal constructor(
     /**
      * Invoke callback when the editor is successfully loaded. The callback will not be called if the loading was canceled.
      */
-    @JvmStatic
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
       val asyncLoader = editor.getUserData(ASYNC_LOADER)
