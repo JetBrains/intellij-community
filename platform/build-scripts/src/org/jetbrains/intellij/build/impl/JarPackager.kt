@@ -313,14 +313,15 @@ class JarPackager private constructor(
       extraExcludes.mapTo(result) { fileSystem.getPathMatcher("glob:$it") }
       result
     }
-    moduleSources.add(
-      if (moduleOutDir.toString().endsWith(".jar")) {
-        ZipSource(file = moduleOutDir, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
+
+    val source =
+      if (!Files.exists(moduleOutDir)) {
+        context.messages.warning("Module $moduleName output does not exist: $moduleOutDir")
+        null
       }
-      else {
-        DirSource(dir = moduleOutDir, excludes = excludes)
-      }
-    )
+      else if (Files.isDirectory(moduleOutDir)) DirSource(dir = moduleOutDir, excludes = excludes)
+      else ZipSource(file = moduleOutDir, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
+    source?.let { moduleSources.add(it) }
 
     if (layout is PluginLayout && layout.mainModule == moduleName) {
       handleCustomAssets(layout, jarAsset)
@@ -939,9 +940,13 @@ suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: Build
 
   buildJar(
     targetFile = targetFile,
-    sources = moduleNames.map { moduleName ->
+    sources = moduleNames.mapNotNull { moduleName ->
       val output = context.getModuleOutputDir(context.findRequiredModule(moduleName))
-      if (Files.isDirectory(output) || !Files.exists(output)) DirSource(dir = output, excludes = commonModuleExcludes)
+      if (!Files.exists(output)) {
+        context.messages.warning("Module $moduleName output does not exist: $output")
+        return@mapNotNull null
+      }
+      if (Files.isDirectory(output)) DirSource(dir = output, excludes = commonModuleExcludes)
       else ZipSource(file = output, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(commonModuleExcludes))
     },
   )
