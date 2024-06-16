@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtilBase
+import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
@@ -56,8 +57,12 @@ private fun getName(annotation: PsiAnnotation): String? = when (val attributeLit
 
 private fun getType(annotation: PsiAnnotation): PsiType? {
   return when (val attributeType = annotation.findAttributeValue("type")) {
-    is GrExpression -> ResolveUtil.getClassReferenceFromExpression(attributeType) ?: return null
-    is PsiClassObjectAccessExpression -> attributeType.type
+    is GrExpression -> ResolveUtil.getClassReferenceFromExpression(attributeType)
+    is PsiClassObjectAccessExpression -> {
+      val classType = attributeType.type
+      if (classType !is PsiClassType || !PsiTypesUtil.classNameEquals(classType, CommonClassNames.JAVA_LANG_CLASS)) return null
+      classType.parameters.firstOrNull()
+    }
     else -> null
   }
 }
