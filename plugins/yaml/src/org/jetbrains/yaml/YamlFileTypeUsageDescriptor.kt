@@ -4,8 +4,6 @@ package org.jetbrains.yaml
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptor
 import com.intellij.lang.LighterAST
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -13,6 +11,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.util.AstLoadingFilter
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 private val SCHEMA_KEY: Key<ImportantSchema> = Key.create("YAML_USAGE_SCHEMA")
 
@@ -29,9 +28,12 @@ internal open class ImportantFileTypeUsageDescriptor(private val schema: Importa
     // do not run read actions once we computed initial value
     file.getUserData(SCHEMA_KEY)?.let { return it == schema }
 
-    val marker = ReadAction.compute<ImportantSchema, Throwable> {
-      service<YamlFileTypeUsageDetector>().getSchema(project, file)
-    }
+    val marker = ReadAction.nonBlocking<ImportantSchema> {
+      if (project.isDisposed) return@nonBlocking ImportantSchema.NONE
+
+      getSchema(project, file)
+    }.executeSynchronously()
+
     file.putUserData(SCHEMA_KEY, marker)
     return marker == schema
   }
@@ -46,62 +48,60 @@ internal enum class ImportantSchema {
   NONE
 }
 
-@Service
-internal class YamlFileTypeUsageDetector {
-  fun getSchema(project: Project, file: VirtualFile): ImportantSchema {
-    val viewProvider = PsiManager.getInstance(project).findViewProvider(file)
-    if (viewProvider == null) return ImportantSchema.NONE
+@RequiresReadLock
+internal fun getSchema(project: Project, file: VirtualFile): ImportantSchema {
+  val viewProvider = PsiManager.getInstance(project).findViewProvider(file)
+  if (viewProvider == null) return ImportantSchema.NONE
 
-    val files = viewProvider.allFiles
-    for (f in files) {
-      if (f is PsiFileImpl && f.fileType == YAMLFileType.YML) {
-        val astTree = AstLoadingFilter.forceAllowTreeLoading<FileElement, Throwable>(f) {
-          f.calcTreeElement()
-        }
-
-        return detect(astTree.lighterAST)
+  val files = viewProvider.allFiles
+  for (f in files) {
+    if (f is PsiFileImpl && f.fileType == YAMLFileType.YML) {
+      val astTree = AstLoadingFilter.forceAllowTreeLoading<FileElement, Throwable>(f) {
+        f.calcTreeElement()
       }
+
+      return detect(astTree.lighterAST)
     }
-    return ImportantSchema.NONE
   }
+  return ImportantSchema.NONE
+}
 
-  private fun detect(tree: LighterAST): ImportantSchema {
-    var hasApiVersion = false
-    var hasKind = false
+private fun detect(tree: LighterAST): ImportantSchema {
+  var hasApiVersion = false
+  var hasKind = false
 
-    var hasOpenapi = false
-    var hasSwagger = false
+  var hasOpenapi = false
+  var hasSwagger = false
 
-    var hasServices = false
+  var hasServices = false
 
-    var hasResources = false
-    var hasAwsFormat = false
+  var hasResources = false
+  var hasAwsFormat = false
 
-    var schema: ImportantSchema? = null
+  var schema: ImportantSchema? = null
 
-    visitTopLevelKeyPairs(tree) { key, _ ->
-      when (key) {
-        "kind" -> hasKind = true
-        "apiVersion" -> hasApiVersion = true
-        "openapi" -> hasOpenapi = true
-        "swagger" -> hasSwagger = true
-        "services" -> hasServices = true
-        "Resources" -> hasResources = true
-        "AWSTemplateFormatVersion" -> hasAwsFormat = true
-      }
-
-      schema = when {
-        hasOpenapi -> ImportantSchema.OPENAPI
-        hasSwagger -> ImportantSchema.SWAGGER
-        hasApiVersion && hasKind -> ImportantSchema.KUBERNETES
-        hasServices -> ImportantSchema.DOCKER_COMPOSE
-        hasResources || hasAwsFormat -> ImportantSchema.CLOUD_FORMATION
-        else -> null
-      }
-
-      schema == null
+  visitTopLevelKeyPairs(tree) { key, _ ->
+    when (key) {
+      "kind" -> hasKind = true
+      "apiVersion" -> hasApiVersion = true
+      "openapi" -> hasOpenapi = true
+      "swagger" -> hasSwagger = true
+      "services" -> hasServices = true
+      "Resources" -> hasResources = true
+      "AWSTemplateFormatVersion" -> hasAwsFormat = true
     }
 
-    return schema ?: ImportantSchema.NONE
+    schema = when {
+      hasOpenapi -> ImportantSchema.OPENAPI
+      hasSwagger -> ImportantSchema.SWAGGER
+      hasApiVersion && hasKind -> ImportantSchema.KUBERNETES
+      hasServices -> ImportantSchema.DOCKER_COMPOSE
+      hasResources || hasAwsFormat -> ImportantSchema.CLOUD_FORMATION
+      else -> null
+    }
+
+    schema == null
   }
+
+  return schema ?: ImportantSchema.NONE
 }

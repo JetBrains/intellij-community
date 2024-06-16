@@ -44,7 +44,7 @@ internal open class ConfigFileTypeUsageDescriptor(private val libraryMaven: Stri
 
     file.getUserData(SCHEMA_KEY)?.let { return it == libraryMaven }
 
-    val mavenCoords = ReadAction.compute<String, Throwable> {
+    val mavenCoords = ReadAction.nonBlocking<String> {
       val module = try {
         ModuleUtilCore.findModuleForFile(file, project)
       }
@@ -53,7 +53,7 @@ internal open class ConfigFileTypeUsageDescriptor(private val libraryMaven: Stri
       }
 
       ALL_MAVEN.find { hasLibraryJar(module, it) } ?: ""
-    }
+    }.executeSynchronously()
 
     file.putUserData(SCHEMA_KEY, mavenCoords)
 
