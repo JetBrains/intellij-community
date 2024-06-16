@@ -227,30 +227,39 @@ public final class IterationState {
       myMarkupModel = markupModel;
       myOnlyFullLine = onlyFullLine;
       myOnlyFontOrForegroundAffecting = onlyFontOrForegroundAffecting;
+      highlighters = collectHighlighters(
+        myReverseIteration ? end : start,
+        myReverseIteration ? start : end,
+        myReverseIteration ? BY_AFFECTED_END_OFFSET_REVERSED : RangeHighlighterEx.BY_AFFECTED_START_OFFSET
+      );
+      myNextHighlighter = firstAdvance();
+    }
+
+    private RangeHighlighterEx[] collectHighlighters(int start, int end, Comparator<RangeHighlighterEx> comparator) {
       // we have to get all highlighters in advance and sort them by affected offsets
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
-      List<RangeHighlighterEx> list = new ArrayList<>();
-      markupModel.processRangeHighlightersOverlappingWith(myReverseIteration ? end : start, myReverseIteration ? start : end,
-                                                          new CommonProcessors.CollectProcessor<>(list) {
-                                                            @Override
-                                                            protected boolean accept(RangeHighlighterEx ex) {
-                                                              return (!onlyFullLine ||
-                                                                      ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) &&
-                                                                     (!onlyFontOrForegroundAffecting ||
-                                                                      EditorUtil.attributesImpactFontStyleOrColor(
-                                                                        ex.getTextAttributes(myColorsScheme)));
-                                                            }
-                                                          });
-      highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(RangeHighlighterEx.EMPTY_ARRAY);
-      Arrays.sort(highlighters, myReverseIteration ? BY_AFFECTED_END_OFFSET_REVERSED : RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+      var processor = new CommonProcessors.CollectProcessor<RangeHighlighterEx>() {
+        @Override
+        public boolean accept(RangeHighlighterEx h) {
+          return acceptHighlighter(h); // TODO: refactor to skipHighlighter here
+        }
+      };
+      myMarkupModel.processRangeHighlightersOverlappingWith(start, end, processor);
+      RangeHighlighterEx[] highlights = processor.getResults().isEmpty()
+                                        ? RangeHighlighterEx.EMPTY_ARRAY
+                                        : processor.toArray(RangeHighlighterEx.EMPTY_ARRAY);
+      Arrays.sort(highlights, comparator);
+      return highlights;
+    }
 
+    private RangeHighlighterEx firstAdvance() {
       while (i < highlighters.length) {
         RangeHighlighterEx highlighter = highlighters[i++];
         if (!skipHighlighter(highlighter)) {
-          myNextHighlighter = highlighter;
-          break;
+          return highlighter;
         }
       }
+      return null;
     }
 
     private void advance() {
@@ -260,7 +269,6 @@ public final class IterationState {
             getAlignedStartOffset(myNextHighlighter) > myStartOffset) {
           return;
         }
-
         myCurrentHighlighters.add(myNextHighlighter);
         myNextHighlighter = null;
       }
@@ -268,9 +276,9 @@ public final class IterationState {
       while (i < highlighters.length) {
         RangeHighlighterEx highlighter = highlighters[i++];
         if (!skipHighlighter(highlighter)) {
-          if (myReverseIteration ?
-              getAlignedEndOffset(highlighter) < myStartOffset :
-              getAlignedStartOffset(highlighter) > myStartOffset) {
+          if (myReverseIteration
+              ? getAlignedEndOffset(highlighter) < myStartOffset
+              : getAlignedStartOffset(highlighter) > myStartOffset) {
             myNextHighlighter = highlighter;
             break;
           }
@@ -293,14 +301,21 @@ public final class IterationState {
           break;
         }
       }
-      myMarkupModel.processRangeHighlightersOverlappingWith(offset, offset, h -> {
-        if ((!myOnlyFullLine || h.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) &&
-            (!myOnlyFontOrForegroundAffecting || EditorUtil.attributesImpactFontStyleOrColor(h.getTextAttributes(myColorsScheme))) &&
-            !skipHighlighter(h)) {
-          myCurrentHighlighters.add(h);
+      myMarkupModel.processRangeHighlightersOverlappingWith(
+        offset,
+        offset,
+        h -> {
+          if (acceptHighlighter(h) && !skipHighlighter(h)) {
+            myCurrentHighlighters.add(h);
+          }
+          return true;
         }
-        return true;
-      });
+      );
+    }
+
+    private boolean acceptHighlighter(RangeHighlighterEx highlighter) {
+      return (!myOnlyFullLine || highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) &&
+             (!myOnlyFontOrForegroundAffecting || EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(myColorsScheme)));
     }
 
     private int getMinSegmentHighlighterEnd() {
@@ -312,9 +327,10 @@ public final class IterationState {
   }
 
   private boolean skipHighlighter(@NotNull RangeHighlighterEx highlighter) {
-    if (!highlighter.isValid() || highlighter.isAfterEndOfLine() || highlighter.getTextAttributes(myEditor.getColorsScheme()) == null) return true;
-    FoldRegion region = myFoldingModel == null ? null :
-                              myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaStartOffset());
+    if (!highlighter.isValid() || highlighter.isAfterEndOfLine() || highlighter.getTextAttributes(myEditor.getColorsScheme()) == null) {
+      return true;
+    }
+    FoldRegion region = myFoldingModel == null ? null : myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaStartOffset());
     return region != null && region == myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaEndOffset());
   }
 
@@ -325,8 +341,9 @@ public final class IterationState {
     advanceCurrentSelectionIndex();
 
     if (!myUseOnlyFullLineHighlighters) {
-      myCurrentFold = myFoldingModel == null ? null :
-                      myFoldingModel.getCollapsedRegionAtOffset(myReverseIteration ? myStartOffset - 1 : myStartOffset);
+      myCurrentFold = myFoldingModel == null
+                      ? null
+                      : myFoldingModel.getCollapsedRegionAtOffset(myReverseIteration ? myStartOffset - 1 : myStartOffset);
     }
     if (myCurrentFold != null) {
       myEndOffset = myReverseIteration ? myCurrentFold.getStartOffset() : myCurrentFold.getEndOffset();
