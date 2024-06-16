@@ -1,10 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
+import com.intellij.ide.impl.DataValidators
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshotProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
@@ -23,7 +24,6 @@ import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
-import java.util.stream.Stream
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
@@ -67,17 +67,17 @@ class SavedPatchesTree(project: Project,
     if (visibleProvidersList.isNotEmpty()) {
       val selectedObjects = selectedPatchObjects()
       visibleProvidersList.forEach { provider ->
-        DataSink.uiDataSnapshot(sink, DataProvider { dataId ->
-          provider.getData(dataId, selectedObjects)
+        DataSink.uiDataSnapshot(sink, object : DataSnapshotProvider, DataValidators.SourceWrapper {
+          override fun dataSnapshot(sink: DataSink) = provider.uiDataSnapshot(sink, selectedObjects)
+          override fun unwrapSource(): Any = provider
         })
       }
     }
   }
 
-  internal fun selectedPatchObjects(): Stream<SavedPatchesProvider.PatchObject<*>> {
+  internal fun selectedPatchObjects(): Iterable<SavedPatchesProvider.PatchObject<*>> {
     return VcsTreeModelData.selected(this)
       .iterateUserObjects(SavedPatchesProvider.PatchObject::class.java)
-      .toStream()
   }
 
   override fun getToggleClickCount(): Int = 2

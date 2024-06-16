@@ -4325,12 +4325,12 @@ a:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesOperationsGroup
 com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
 - a:buildPatchesTree(com.intellij.openapi.vcs.changes.ui.TreeModelBuilder,Z):V
 - a:getApplyAction():com.intellij.openapi.actionSystem.AnAction
-- a:getData(java.lang.String,java.util.stream.Stream):java.lang.Object
 - a:getDataClass():java.lang.Class
 - a:getPopAction():com.intellij.openapi.actionSystem.AnAction
 - a:getTag():com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - a:isEmpty():Z
 - a:subscribeToPatchesListChanges(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Iterable):V
 com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$ChangeObject
 - com.intellij.openapi.vcs.changes.ui.PresentableChange
 - asChange():com.intellij.openapi.vcs.changes.Change
@@ -4401,12 +4401,12 @@ f:com.intellij.openapi.vcs.changes.savedPatches.ShelfProvider
 - buildPatchesTree(com.intellij.openapi.vcs.changes.ui.TreeModelBuilder,Z):V
 - dispose():V
 - getApplyAction():com.intellij.openapi.actionSystem.AnAction
-- getData(java.lang.String,java.util.stream.Stream):java.lang.Object
 - getDataClass():java.lang.Class
 - getPopAction():com.intellij.openapi.actionSystem.AnAction
 - getTag():com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - isEmpty():Z
 - subscribeToPatchesListChanges(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Iterable):V
 f:com.intellij.openapi.vcs.changes.savedPatches.ShelfProvider$ShelfObject
 - com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$PatchObject
 - <init>(com.intellij.openapi.vcs.changes.savedPatches.ShelfProvider,com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList):V

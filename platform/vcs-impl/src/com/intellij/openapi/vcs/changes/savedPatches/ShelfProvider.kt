@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.savedPatches
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -18,11 +19,10 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.text.DateFormatUtil
-import one.util.streamex.StreamEx
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import java.util.stream.Stream
 
 class ShelfProvider(private val project: Project, parent: Disposable) : SavedPatchesProvider<ShelvedChangeList>, Disposable {
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Shelved Changes Loader", 1)
@@ -75,7 +75,8 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
     val shelvesList = mainLists().sortedByDescending { it.date }
     val shelvesRoot = if (showRootNode) SavedPatchesTree.TagWithCounterChangesBrowserNode(tag).also {
       modelBuilder.insertSubtreeRoot(it)
-    } else {
+    }
+    else {
       modelBuilder.myRoot
     }
 
@@ -96,23 +97,22 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
     }
   }
 
-  override fun getData(dataId: String, selectedObjects: Stream<SavedPatchesProvider.PatchObject<*>>): Any? {
-    if (ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY.`is`(dataId)) {
-      return filterLists(selectedObjects) { l -> !l.isRecycled && !l.isDeleted }
-    }
-    else if (ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY.`is`(dataId)) {
-      return filterLists(selectedObjects) { l -> l.isRecycled && !l.isDeleted }
-    }
-    else if (ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY.`is`(dataId)) {
-      return filterLists(selectedObjects) { l -> l.isDeleted }
-    }
-    return null
+  override fun uiDataSnapshot(sink: DataSink, selectedObjects: Iterable<SavedPatchesProvider.PatchObject<*>>) {
+    sink[ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY] =
+      filterLists(selectedObjects) { l -> !l.isRecycled && !l.isDeleted }
+    sink[ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY] =
+      filterLists(selectedObjects) { l -> l.isRecycled && !l.isDeleted }
+    sink[ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY] =
+      filterLists(selectedObjects) { l -> l.isDeleted }
   }
 
-  private fun filterLists(selectedObjects: Stream<SavedPatchesProvider.PatchObject<*>>,
+  private fun filterLists(selectedObjects: Iterable<SavedPatchesProvider.PatchObject<*>>,
                           predicate: (ShelvedChangeList) -> Boolean): List<ShelvedChangeList> {
-    return StreamEx.of(selectedObjects.map(SavedPatchesProvider.PatchObject<*>::data)).filterIsInstance(dataClass)
-      .filter(predicate).toList()
+    return JBIterable.from(selectedObjects)
+      .map(SavedPatchesProvider.PatchObject<*>::data)
+      .filter(dataClass)
+      .filter(predicate)
+      .toList()
   }
 
   override fun dispose() {
