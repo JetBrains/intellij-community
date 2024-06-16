@@ -176,7 +176,10 @@ class InternalDecoratorImpl internal constructor(
 
     internal fun setBackgroundRecursively(component: Component, bg: Color) {
       val action: (Component) -> Unit = { c ->
-        if (c !is ActionButton && c !is Divider && c !is JTextComponent) {
+        if (c !is ActionButton &&
+            c !is Divider &&
+            c !is JTextComponent &&
+            c !is JComboBox<*>) {
           c.background = bg
         }
       }
