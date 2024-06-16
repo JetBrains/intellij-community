@@ -27,7 +27,7 @@ internal class StickyLinesPass(
 
   override fun doApplyInformationToEditor() {
     collectedLines?.let { lines ->
-      collector.applyLines(lines)
+      collector.applyLines(psiFile, lines)
     }
     collectedLines = null
   }

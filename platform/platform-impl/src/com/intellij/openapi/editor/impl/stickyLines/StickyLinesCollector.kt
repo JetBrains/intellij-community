@@ -101,7 +101,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
   }
 
   @RequiresEdt
-  fun applyLines(lines: Collection<StickyLineInfo>) {
+  fun applyLines(psiFile: PsiFile, lines: Collection<StickyLineInfo>) {
     ThreadingAssertions.assertEventDispatchThread()
 
     val stickyModel: StickyLinesModel = StickyLinesModel.getModel(project, document) ?: return
@@ -116,6 +116,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
     LOG.debug {
       "file: ${fileName()}, appliedLines: ${lines.size}, added: ${linesToAdd.size}, outdated: ${outdatedLines.size}"
     }
+    updatesModStamp(psiFile)
     stickyModel.notifyListeners()
   }
 
