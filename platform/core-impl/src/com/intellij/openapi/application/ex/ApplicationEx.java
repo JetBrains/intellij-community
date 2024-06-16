@@ -2,10 +2,12 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.ApiStatus;
@@ -249,4 +251,9 @@ public interface ApplicationEx extends Application {
   @ApiStatus.Internal
   @Deprecated
   default void flushNativeEventQueue() {}
+
+  @ApiStatus.Internal
+  default void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state) {
+    invokeLater(runnable, state, Conditions.alwaysFalse());
+  }
 }

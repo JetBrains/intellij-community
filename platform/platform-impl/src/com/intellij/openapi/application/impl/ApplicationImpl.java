@@ -284,7 +284,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     }
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
     // Don't need to enable implicit read, as Write Intent lock includes Explicit Read
-    LaterInvocator.invokeLater(state, expired, r);
+    LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state) {
+    LaterInvocator.invokeLater(state, Conditions.alwaysFalse(), myTransactionGuard.wrapCoroutineInvocation(runnable, state));
   }
 
   @Override
@@ -409,7 +415,21 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
     Runnable r =
       myTransactionGuard.wrapLaterInvocation(AppScheduledExecutorService.captureContextCancellationForRunnableThatDoesNotOutliveContextScope(runnable), modalityState);
-    LaterInvocator.invokeAndWait(modalityState, r);
+    LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
+  }
+
+  private @NotNull Runnable wrapWithRunIntendedWriteAction(@NotNull Runnable runnable) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        runIntendedWriteActionOnCurrentThread(runnable);
+      }
+
+      @Override
+      public String toString() {
+        return runnable.toString();
+      }
+    };
   }
 
   @Override
