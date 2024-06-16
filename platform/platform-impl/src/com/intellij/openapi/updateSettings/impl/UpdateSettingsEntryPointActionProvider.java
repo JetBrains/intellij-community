@@ -180,6 +180,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     }
     else {
       myUpdatedPlugins = null;
+      myCustomRepositoryPlugins = null;
     }
     updateState();
   }
@@ -260,7 +261,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
           if (platformUpdateInfo instanceof PlatformUpdates.Loaded && pluginResults != null) {
             setPlatformUpdateInfo((PlatformUpdates.Loaded)platformUpdateInfo);
             newPlatformUpdate(pluginResults.getPluginUpdates().getAllEnabled().stream().toList(),
-                              pluginResults.getPluginNods(),
+                              pluginResults.getPluginUpdates().getIncompatible().stream().toList(),
                               null);
             super.actionPerformed(e);
           }
