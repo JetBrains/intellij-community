@@ -25,9 +25,9 @@ import com.intellij.util.indexing.dependencies.IndexingRequestToken
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
-import kotlinx.collections.immutable.PersistentSet
-import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus
@@ -36,7 +36,6 @@ import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -57,28 +56,25 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
    */
   class IndexingInterruptedException(cause: Throwable) : Exception(cause)
 
-  class FileSet(project: Project, val debugName: String, internal val filesOriginal: PersistentSet<FileIndexingRequest>) {
-    private val filesToProcess: AtomicReference<PersistentSet<FileIndexingRequest>> = AtomicReference(filesOriginal)
+  class FileSet(project: Project, val debugName: String, internal val filesOriginal: Collection<FileIndexingRequest>) {
     val statistics: IndexingFileSetStatistics = IndexingFileSetStatistics(project, debugName)
-
-    constructor(project: Project, debugName: String, files: Collection<FileIndexingRequest>) : this(project, debugName, files.toPersistentSet())
 
     fun isEmpty(): Boolean = filesOriginal.isEmpty()
     fun size(): Int = filesOriginal.size
 
-    fun poll(): FileIndexingRequest? {
-      var first: FileIndexingRequest? = null
-      do {
-        val curr = filesToProcess.get()
-        first = curr.firstOrNull()
-        val replaced = (first == null || filesToProcess.compareAndSet(curr, curr.remove(first)))
+    fun asChannel(cs: CoroutineScope): Channel<FileIndexingRequest> {
+      val channel = Channel<FileIndexingRequest>(INDEXING_THREADS_NUMBER * 2)
+      cs.async {
+        try {
+          filesOriginal.forEach {
+            channel.send(it)
+          }
+        }
+        finally {
+          channel.close()
+        }
       }
-      while (!replaced)
-      return first
-    }
-
-    fun areAllFilesProcessed(): Boolean {
-      return filesToProcess.get().isEmpty()
+      return channel
     }
   }
 
@@ -139,17 +135,15 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     task: suspend (FileIndexingRequest) -> Unit
   ) {
     runBlockingCancellable {
-      repeat(INDEXING_THREADS_NUMBER) {
-        launch(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash},$it)")) {
-          while (!fileSet.areAllFilesProcessed()) {
+      val channel = fileSet.asChannel(this)
+      repeat(INDEXING_THREADS_NUMBER) { threadNr ->
+        launch(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash},$threadNr)")) {
+          channel.consumeEach { fileIndexingJob ->
             ensureActive()
             while (originalSuspender?.isSuspended == true) delay(1) // TODO: get rid of legacy suspender
 
             GLOBAL_INDEXING_SEMAPHORE.withPermit {
-              val fileIndexingJob = fileSet.poll()
-              if (fileIndexingJob != null) {
-                task(fileIndexingJob)
-              }
+              task(fileIndexingJob)
             }
           }
         }
