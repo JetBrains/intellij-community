@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
-import org.jetbrains.kotlin.idea.codeInsight.AbstractInsertImportOnPasteTest
 import org.jetbrains.kotlin.idea.k2.AbstractK2ExpressionTypeTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirJoinLinesTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirPairMatcherTest
+import org.jetbrains.kotlin.idea.k2.copyPaste.AbstractK2InsertImportOnPasteTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProvider
@@ -127,7 +127,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         testClass<AbstractKotlinFirJoinLinesTest> {
             model("../../../idea/tests/testData/joinLines")
         }
-        testClass<AbstractInsertImportOnPasteTest> {
+        testClass<AbstractK2InsertImportOnPasteTest> {
             model(
                 "../../../idea/tests/testData/copyPaste/imports",
                 pattern = KT_WITHOUT_DOTS,

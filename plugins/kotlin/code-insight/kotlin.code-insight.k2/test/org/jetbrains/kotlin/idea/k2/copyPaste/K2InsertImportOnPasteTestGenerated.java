@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeInsight;
+package org.jetbrains.kotlin.idea.k2.copyPaste;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
@@ -18,13 +18,13 @@ import org.junit.runner.RunWith;
 @TestRoot("code-insight/kotlin.code-insight.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImportOnPasteTest {
+public abstract class K2InsertImportOnPasteTestGenerated extends AbstractK2InsertImportOnPasteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/copyPaste/imports")
-    public abstract static class Copy extends AbstractInsertImportOnPasteTest {
+    public abstract static class Copy extends AbstractK2InsertImportOnPasteTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/copyPaste/imports")
-        public static class Uncategorized extends AbstractInsertImportOnPasteTest {
+        public static class Uncategorized extends AbstractK2InsertImportOnPasteTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -488,7 +488,7 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/copyPaste/imports/withConflict")
-        public static class WithConflict extends AbstractInsertImportOnPasteTest {
+        public static class WithConflict extends AbstractK2InsertImportOnPasteTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -583,10 +583,10 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/copyPaste/imports")
-    public abstract static class Cut extends AbstractInsertImportOnPasteTest {
+    public abstract static class Cut extends AbstractK2InsertImportOnPasteTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/copyPaste/imports")
-        public static class Uncategorized extends AbstractInsertImportOnPasteTest {
+        public static class Uncategorized extends AbstractK2InsertImportOnPasteTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1050,7 +1050,7 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/copyPaste/imports/withConflict")
-        public static class WithConflict extends AbstractInsertImportOnPasteTest {
+        public static class WithConflict extends AbstractK2InsertImportOnPasteTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
