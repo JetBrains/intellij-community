@@ -21,7 +21,7 @@ object NewUINotebookDiffEditorAppearance: NotebookEditorAppearance,
   override fun shouldShowCellLineNumbers(): Boolean = false
   override fun shouldShowExecutionCounts(): Boolean = false  // not needed for DIFF -> execution does not reach it
   override fun shouldShowOutExecutionCounts(): Boolean = false
-  override fun shouldShowRunButtonInGutter(): Boolean = true
+  override fun shouldShowRunButtonInGutter(): Boolean = false
   override fun getCellStripeHoverColor(editor: Editor): Color {
     return editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR) ?: JBColor.BLUE
   }
