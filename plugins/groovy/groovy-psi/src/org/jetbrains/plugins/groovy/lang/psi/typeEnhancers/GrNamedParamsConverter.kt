@@ -19,33 +19,59 @@ class GrNamedParamsConverter : GrTypeConverter() {
     return position == Position.METHOD_PARAMETER
   }
 
-  override fun reduceTypeConstraint(leftType: PsiType, rightType: PsiType, position: Position, context: PsiElement): Collection<ConstraintFormula>? {
-    if (!isNamedArgument(leftType, rightType, context) || !isPossibleToConvert(leftType, rightType, context)) return null
-    return listOf(TypeConstraint(leftType, leftType, context))
+  override fun reduceTypeConstraint(leftType: PsiType, rightType: PsiType, position: Position, context: PsiElement): Collection<ConstraintFormula>? =
+    when (val result = createConversion(leftType, rightType, context)) {
+      is Result.Success -> listOf(result.typeConstraint)
+      else -> null
+    }
+
+  private fun createConversion(targetType: PsiType, actualType: PsiType, context: PsiElement): Result {
+    if (actualType !is GrMapTypeFromNamedArgs || targetType !is PsiClassType) return Result.NotNamedParams
+    val rawTypeFqn = targetType.rawType().canonicalText
+    if (rawTypeFqn != CommonClassNames.JAVA_UTIL_MAP) return Result.NotNamedParams
+
+    if (context !is GrMethodCallExpression) return Result.NotNamedParams
+    val method = context.resolveMethod() ?: return Result.NotNamedParams
+
+    val namedParamList = method.parameterList.parameters.mapNotNull { parameter ->
+      val namedParamList = collectNamedParams(parameter)
+      namedParamList.ifEmpty { null }
+    }.singleOrNull() ?: return Result.NotNamedParams
+
+
+    for (namedParam in namedParamList) {
+      if (namedParam.required && namedParam.name !in actualType.stringKeys) {
+        return Result.Error
+      }
+    }
+
+    if (!targetType.isRaw) {
+      val upperBound = targetType.parameters.last()
+
+      for (key in actualType.stringKeys) {
+        val expressionType = actualType.getTypeByStringKey(key)
+        if (expressionType == null || !upperBound.isAssignableFrom(expressionType)) {
+          return Result.Error
+        }
+      }
+    }
+
+    return Result.Success(TypeConstraint(targetType, targetType, context))
   }
 
-  private fun isPossibleToConvert(leftType: PsiType, rightType: PsiType, context: PsiElement): Boolean {
-    return false
-  }
 
+  override fun isConvertible(targetType: PsiType, actualType: PsiType, position: Position, context: GroovyPsiElement): ConversionResult? =
+    when (createConversion(targetType, actualType, context)) {
+      Result.NotNamedParams -> null
+      Result.Error -> ConversionResult.ERROR
+      else -> ConversionResult.OK
+    }
 
-  private fun isNamedArgument(leftType: PsiType, rightType: PsiType, context: PsiElement): Boolean {
-    if (rightType !is GrMapTypeFromNamedArgs || leftType !is PsiClassType) return false
-    val rawTypeFqn = leftType.rawType().canonicalText
-    if (rawTypeFqn != CommonClassNames.JAVA_UTIL_MAP) return false
+  private abstract class Result {
+    object NotNamedParams : Result()
 
-    if (context !is GrMethodCallExpression) return false
+    data class Success(val typeConstraint: TypeConstraint) : Result()
 
-    val method = context.resolveMethod() ?: return false
-
-
-
-    return method.parameterList.parameters.any { parameter -> collectNamedParams(parameter).isNotEmpty() }
-  }
-
-
-  override fun isConvertible(targetType: PsiType, actualType: PsiType, position: Position, context: GroovyPsiElement): ConversionResult? {
-    if (!isNamedArgument(targetType, actualType, context)) return null
-    return if (isPossibleToConvert(targetType, actualType, context)) ConversionResult.OK else ConversionResult.ERROR
+    object Error : Result()
   }
 }
