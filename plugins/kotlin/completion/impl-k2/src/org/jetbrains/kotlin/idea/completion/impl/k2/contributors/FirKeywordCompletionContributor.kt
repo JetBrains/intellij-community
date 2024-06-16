@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.util.match
 
 internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
@@ -46,9 +47,7 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
         sessionParameters: FirCompletionSessionParameters,
     ) {
         val expression = when (positionContext) {
-            is KotlinLabelReferencePositionContext -> positionContext.nameExpression.let { label ->
-                label.parents(withSelf = false).match(KtContainerNode::class, last = KtExpressionWithLabel::class) ?: label
-            }
+            is KotlinLabelReferencePositionContext -> positionContext.nameExpression.let { label -> getExpressionWithLabel(label) ?: label }
 
             is KotlinSimpleNameReferencePositionContext -> positionContext.reference.expression
 
@@ -63,6 +62,8 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
         completeWithResolve(expression ?: positionContext.position, expression, weighingContext)
     }
 
+    private fun getExpressionWithLabel(label: KtLabelReferenceExpression): KtExpressionWithLabel? =
+        label.parents(withSelf = false).match(KtContainerNode::class, last = KtExpressionWithLabel::class)
 
     context(KaSession)
     private fun completeWithResolve(position: PsiElement, expression: KtExpression?, weighingContext: WeighingContext) {

@@ -167,6 +167,14 @@ class KotlinCallableReferencePositionContext(
     override val explicitReceiver: KtExpression?
 ) : KotlinSimpleNameReferencePositionContext()
 
+/**
+ * Position in label reference expression, e.g.:
+ * * `break@r<caret>ef`
+ * * `continue@r<caret>ef`
+ * * `this@r<caret>ef`
+ * * `super@r<caret>ef`
+ * * `return@r<caret>ef`
+ */
 class KotlinLabelReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
