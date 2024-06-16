@@ -253,7 +253,7 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
 
     AnActionEvent event = TestActionEvent.createTestEvent(dataContext);
     Utils.initUpdateSession(event);
-    ((ActionGroup)action).getChildren(event);
+    action.update(event);
     ConfigurationContext sharedContext = DataManager.getInstance().loadFromDataContext(event.getDataContext(), ConfigurationContext.SHARED_CONTEXT);
     PsiElement locationElement = sharedContext.getLocation().getPsiElement();
     assertEquals("main", locationElement.getText());
