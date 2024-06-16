@@ -42,7 +42,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
       return prevModStamp != currModStamp
     }
 
-    fun updatesModStamp(psiFile: PsiFile) {
+    fun updateModStamp(psiFile: PsiFile) {
       psiFile.putUserData(STICKY_LINES_MOD_STAMP_KEY, psiFile.modificationStamp)
       LOG.trace {
         "psiFile: ${psiFile.name}, updateStamp: ${psiFile.modificationStamp}"
@@ -116,7 +116,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
     LOG.debug {
       "file: ${fileName()}, appliedLines: ${lines.size}, added: ${linesToAdd.size}, outdated: ${outdatedLines.size}"
     }
-    updatesModStamp(psiFile)
+    updateModStamp(psiFile)
     stickyModel.notifyListeners()
   }
 
