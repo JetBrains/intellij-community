@@ -809,14 +809,14 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   override fun requestDefaultFocus(): Boolean = focusComponent()?.requestDefaultFocus() ?: false
 
   override fun uiDataSnapshot(sink: DataSink) {
-    sink[CommonDataKeys.PROJECT] = composite.project
-    sink[PlatformCoreDataKeys.FILE_EDITOR] = composite.selectedEditor
-    sink[CommonDataKeys.VIRTUAL_FILE] = composite.file
-    sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = arrayOf(composite.file)
     val component = composite.preferredFocusedComponent
     if (component !== this) {
       DataSink.uiDataSnapshot(sink, component)
     }
+    sink[CommonDataKeys.PROJECT] = composite.project
+    sink[PlatformCoreDataKeys.FILE_EDITOR] = composite.selectedEditor
+    sink[CommonDataKeys.VIRTUAL_FILE] = composite.file
+    sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = arrayOf(composite.file)
   }
 }
 

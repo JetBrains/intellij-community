@@ -614,12 +614,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
+      DialogWrapper wrapper = myDialogWrapper.get();
+      DataSink.uiDataSnapshot(sink, wrapper);
       Project project = getProject();
       if (project != null && project.isInitialized()) {
         sink.set(CommonDataKeys.PROJECT, project);
       }
-      DialogWrapper wrapper = myDialogWrapper.get();
-      DataSink.uiDataSnapshot(sink, wrapper);
     }
 
     private void fitToScreen(Rectangle rect) {

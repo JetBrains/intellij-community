@@ -105,8 +105,8 @@ private class PsiAwareTextEditorComponent(file: VirtualFile, editor: EditorImpl)
     super.uiDataSnapshot(sink)
     val project = editor.project
     if (project != null) {
-      sink[PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE] = (LookupManager.getInstance(project).activeLookup as LookupImpl?)
-        ?.takeIf { it.isVisible }?.bounds
+      val lookup = LookupManager.getInstance(project).activeLookup as LookupImpl?
+      sink[PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE] = lookup?.takeIf { it.isVisible }?.bounds
     }
   }
 }

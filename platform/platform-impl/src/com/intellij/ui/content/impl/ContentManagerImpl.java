@@ -139,12 +139,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
+      for (Object dataProvider : ContainerUtil.concat(dataProviders, Arrays.asList(myUI, DataManager.getDataProvider(this)))) {
+        DataSink.uiDataSnapshot(sink, dataProvider);
+      }
       sink.set(PlatformDataKeys.CONTENT_MANAGER, ContentManagerImpl.this);
       if (getContentCount() > 1) {
         sink.set(PlatformDataKeys.NONEMPTY_CONTENT_MANAGER, ContentManagerImpl.this);
-      }
-      for (Object dataProvider : ContainerUtil.concat(dataProviders, Arrays.asList(myUI, DataManager.getDataProvider(this)))) {
-        DataSink.uiDataSnapshot(sink, dataProvider);
       }
     }
   }
