@@ -6,7 +6,6 @@
     "fileTypes": {
       "angularJS.svg": "icons/AngularJS.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
-      "freemaker.svg": "icons/freemarker-icon.svg",
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "less.svg": "icons/less.svg",
       "react.svg": "org/jetbrains/kotlin/idea/icons/wizard/react.svg",

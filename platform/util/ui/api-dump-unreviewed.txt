@@ -405,7 +405,6 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Diagram:javax.swing.Icon
 - sf:Dtd:javax.swing.Icon
 - sf:Font:javax.swing.Icon
-- sf:Freemaker:javax.swing.Icon
 - sf:Gitignore:javax.swing.Icon
 - sf:Hprof:javax.swing.Icon
 - sf:Htaccess:javax.swing.Icon

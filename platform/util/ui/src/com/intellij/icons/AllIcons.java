@@ -439,7 +439,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Diagram = load("fileTypes/diagram.svg", "expui/", 692669001, 0);
     /** 16x16 */ public static final @NotNull Icon Dtd = load("fileTypes/dtd.svg", "expui/fileTypes/xml.svg", -1804958231, 0);
     /** 16x16 */ public static final @NotNull Icon Font = load("expui/fileTypes/font.svg", -1762443308, 2);
-    /** 16x16 */ public static final @NotNull Icon Freemaker = load("expui/fileTypes/freemaker.svg", -1095174318, 2);
     /** 16x16 */ public static final @NotNull Icon Gitignore = load("expui/fileTypes/gitignore.svg", -264194071, 0);
     /** 16x16 */ public static final @NotNull Icon Hprof = load("fileTypes/hprof.svg", 2107471584, 0);
     /** 16x16 */ public static final @NotNull Icon Htaccess = load("fileTypes/htaccess.svg", -1026396371, 0);
