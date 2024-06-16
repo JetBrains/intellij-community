@@ -77,10 +77,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
       return first
     }
 
-    fun pushBack(request: FileIndexingRequest) {
-      filesToProcess.updateAndGet { it.add(request) }
-    }
-
     fun areAllFilesProcessed(): Boolean {
       return filesToProcess.get().isEmpty()
     }
@@ -123,16 +119,10 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
     runConcurrently(project, fileSet, originalSuspender) { fileIndexingRequest ->
       blockingContext {
-        try {
-          val presentableLocation = getPresentableLocationBeingIndexed(project, fileIndexingRequest.file)
-          progressReporter.setLocationBeingIndexed(presentableLocation)
-          indexOneFileHandleExceptions(fileIndexingRequest, project, project, contentLoader, fileSet.statistics)
-          progressReporter.oneMoreFileProcessed()
-        }
-        catch (t: Throwable) {
-          fileSet.pushBack(fileIndexingRequest)
-          throw t
-        }
+        val presentableLocation = getPresentableLocationBeingIndexed(project, fileIndexingRequest.file)
+        progressReporter.setLocationBeingIndexed(presentableLocation)
+        indexOneFileHandleExceptions(fileIndexingRequest, project, project, contentLoader, fileSet.statistics)
+        progressReporter.oneMoreFileProcessed()
 
         if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
           // TODO: suspend, not block
