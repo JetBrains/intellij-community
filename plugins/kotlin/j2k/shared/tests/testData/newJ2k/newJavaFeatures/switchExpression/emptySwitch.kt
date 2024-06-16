@@ -1,5 +1,5 @@
-// ERROR: Type mismatch: inferred type is Unit but Int was expected
-// ERROR: 'when' expression must be exhaustive, add necessary 'else' branch
+// ERROR: Initializer type mismatch: expected 'kotlin.Int', actual 'kotlin.Unit'.
+// ERROR: 'when' expression must be exhaustive. Add an 'else' branch.
 object NonDefault {
     @JvmStatic
     fun main(args: Array<String>) {

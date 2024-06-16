@@ -1,6 +1,6 @@
-// ERROR: Property must be initialized or be abstract
+// ERROR: Property must be initialized or be abstract.
 class Test {
-    private val s: String
+    private val s: String?
     var b: Boolean = false
     var d: Double = 0.0
 
@@ -8,7 +8,7 @@ class Test {
         b = true
     }
 
-    constructor(s: String) {
+    constructor(s: String?) {
         this.s = s
     }
 }

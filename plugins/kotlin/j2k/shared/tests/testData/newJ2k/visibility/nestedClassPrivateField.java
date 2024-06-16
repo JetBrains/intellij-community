@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class J {
     public class Z {
         private static final int MAGIC = 42;

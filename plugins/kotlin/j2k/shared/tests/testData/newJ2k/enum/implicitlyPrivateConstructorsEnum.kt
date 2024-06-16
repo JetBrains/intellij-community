@@ -1,7 +1,7 @@
 enum class JavaEnum {
     A("a"), B;
 
-    constructor(x: String) {
+    constructor(x: String?) {
         this.x = x
     }
 
@@ -9,5 +9,5 @@ enum class JavaEnum {
         this.x = "default"
     }
 
-    protected var x: String
+    protected var x: String?
 }

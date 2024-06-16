@@ -1,4 +1,3 @@
-// IGNORE_K2
 interface Base {
     public void test();
 }

@@ -1,7 +1,6 @@
-// IGNORE_K2
 class A {
     private int bar(String s) {
-        System.out.println("s = " + s);
+        System.out.println(s);
         return 0;
     }
 

@@ -1,12 +1,12 @@
 internal class A {
     @JvmOverloads
     fun foo(s: String? = null): Any {
-        println("s = $s")
+        println(s)
         return ""
     }
 
     fun bar(s: String?): Any? {
-        println("s = $s")
+        println(s)
         return if (s == null) "" else null
     }
 
@@ -15,7 +15,7 @@ internal class A {
     }
 
     fun bar1(s: String?): Any? {
-        println("s = $s")
+        println(s)
         return if (s == null) "" else null
     }
 
@@ -29,6 +29,6 @@ internal class A {
     }
 
     fun f(p: Int) {
-        println("p = $p")
+        println(p)
     }
 }

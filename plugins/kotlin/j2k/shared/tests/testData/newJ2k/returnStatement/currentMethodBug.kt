@@ -1,16 +1,16 @@
 internal interface I {
-    val int: Int
+    fun returnInt(): Int
 }
 
 internal class C {
-    val `object`: Any?
-        get() {
-            foo(object : I {
-                override val int: Int
-                    get() = 0
-            })
-            return string
-        }
+    fun `object`(): Any? {
+        foo(object : I {
+            override fun returnInt(): Int {
+                return 0
+            }
+        })
+        return string
+    }
 
     fun foo(i: I?) {}
 

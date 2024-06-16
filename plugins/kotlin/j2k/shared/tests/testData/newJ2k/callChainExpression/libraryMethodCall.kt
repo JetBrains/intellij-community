@@ -1,13 +1,14 @@
 internal object Library {
     fun call() {}
 
-    val string: String
-        get() = ""
+    fun string(): String {
+        return ""
+    }
 }
 
 internal class User {
     fun main() {
         Library.call()
-        Library.string.isEmpty()
+        Library.string().isEmpty()
     }
 }

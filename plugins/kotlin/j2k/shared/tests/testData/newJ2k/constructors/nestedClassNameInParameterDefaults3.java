@@ -1,4 +1,3 @@
-// IGNORE_K2
 package pack;
 
 import static pack.A.Nested;

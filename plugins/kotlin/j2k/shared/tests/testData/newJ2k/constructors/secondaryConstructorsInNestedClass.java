@@ -1,4 +1,3 @@
-// IGNORE_K2
 class Outer {
     private static class Nested1 {
         public Nested1(){}

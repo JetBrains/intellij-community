@@ -1,8 +1,7 @@
-// IGNORE_K2
-import java.util.Collection;
+import java.util.ArrayList;
 
 public class A {
-    void foo(Collection<String> collection) {
+    void foo(ArrayList<String> collection) {
         for(int i = collection.size(); i >= 0; i--) {
             System.out.println(i);
         }

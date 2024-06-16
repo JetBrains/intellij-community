@@ -1,6 +1,8 @@
-// ERROR: Type mismatch: inferred type is Unit but Int was expected
-// ERROR: Type mismatch: inferred type is Unit but Int was expected
-// ERROR: 'when' expression must be exhaustive, add necessary 'else' branch
+// ERROR: Initializer type mismatch: expected 'kotlin.Int', actual 'kotlin.Unit'.
+// ERROR: 'when' expression must be exhaustive. Add an 'else' branch.
+// ERROR: New inference error [NewConstraintError at Incorporate TypeVariable(R) == kotlin/Unit from Fix variable R from position Fix variable R: kotlin/Unit <!: kotlin/Int].
+// ERROR: Argument type mismatch: actual type is 'kotlin.Unit', but 'kotlin.Int' was expected.
+// ERROR: Type mismatch: inferred type is 'kotlin.Unit', but 'kotlin.Int' was expected.
 object C {
     @JvmStatic
     fun main(args: Array<String>) {

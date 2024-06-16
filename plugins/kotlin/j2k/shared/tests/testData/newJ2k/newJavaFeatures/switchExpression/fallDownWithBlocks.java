@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class C {
     public static void main(String[] args) {
         int a = switch (args.length) {

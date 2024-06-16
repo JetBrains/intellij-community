@@ -1,4 +1,3 @@
-// IGNORE_K2
 // Stubbed from Android Activity
 class Activity {
     public final void runOnUiThread(Runnable action) {
