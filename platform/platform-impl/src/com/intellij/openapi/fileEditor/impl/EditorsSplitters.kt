@@ -102,13 +102,6 @@ open class EditorsSplitters internal constructor(
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
 
-    internal fun stopOpenFilesActivity(project: Project) {
-      project.getUserData(OPEN_FILES_ACTIVITY)?.let { activity ->
-        activity.end()
-        project.putUserData(OPEN_FILES_ACTIVITY, null)
-      }
-    }
-
     fun findDefaultComponentInSplitters(project: Project?): JComponent? {
       return getSplittersToFocus(project)?.currentCompositeFlow?.value?.preferredFocusedComponent
     }
@@ -1293,4 +1286,11 @@ private fun applyTabColor(
       this.foregroundColor = colorScheme.getColor(foregroundFileColor)
     },
   )
+}
+
+internal fun stopOpenFilesActivity(project: Project) {
+  project.getUserData(OPEN_FILES_ACTIVITY)?.let { activity ->
+    project.putUserData(OPEN_FILES_ACTIVITY, null)
+    activity.end()
+  }
 }

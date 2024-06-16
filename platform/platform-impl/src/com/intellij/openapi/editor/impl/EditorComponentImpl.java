@@ -35,7 +35,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.EditorsSplittersKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
@@ -277,7 +277,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     Project project = editor.getProject();
     if (project != null) {
-      EditorsSplitters.Companion.stopOpenFilesActivity$intellij_platform_ide_impl(project);
+      EditorsSplittersKt.stopOpenFilesActivity(project);
     }
   }
 

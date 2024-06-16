@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.fileEditor.impl.stopOpenFilesActivity
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.blockingContext
@@ -426,7 +427,7 @@ private suspend fun postOpenEditors(
 
   // check after `initDockableContentFactory` - editor in a docked window
   if (!fileEditorManager.hasOpenFiles()) {
-    EditorsSplitters.stopOpenFilesActivity(project)
+    stopOpenFilesActivity(project)
     if (!isNotificationSilentMode(project)) {
       openProjectViewIfNeeded(project, toolWindowInitJob)
       findAndOpenReadmeIfNeeded(project)
