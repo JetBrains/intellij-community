@@ -1105,26 +1105,23 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
           isLazyComposite = isLazyComposite,
           windowAdded = suspend { windowAddedDeferred.await() },
         )
-
-        window.coroutineScope.launch {
-          for (delayedTask in delayedTasks) {
-            delayedTask.start()
-          }
-        }
+        window.updateTabsVisibility()
+        addChild(window.component)
+        splitters.addWindow(window)
+        windowAddedDeferred.complete(Unit)
       }
       finally {
         splitters.insideChange--
         if (window != null) {
-          window.updateTabsVisibility(uiSettings = UISettings.getInstance())
-
-          addChild(window.component)
-          windowAddedDeferred.complete(Unit)
-
-          splitters.addWindow(window)
-          window.tabbedPane.editorTabs.revalidateAndRepaint(layoutNow = true)
           splitters.validate()
 
           window.tabbedPane.editorTabs.updateListeners()
+
+          window.coroutineScope.launch {
+            for (delayedTask in delayedTasks) {
+              delayedTask.start()
+            }
+          }
         }
       }
     }
