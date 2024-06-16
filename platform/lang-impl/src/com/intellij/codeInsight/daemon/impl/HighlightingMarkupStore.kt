@@ -36,7 +36,7 @@ internal class HighlightingMarkupStore(project: Project, private val scope: Coro
   }
 
   object FileMarkupInfoExternalizer : VersionedExternalizer<FileMarkupInfo> {
-    override fun serdeVersion(): Int = 2
+    override fun serdeVersion(): Int = 3
     override fun save(output: DataOutput, value: FileMarkupInfo): Unit = value.bury(output)
     override fun read(input: DataInput): FileMarkupInfo = FileMarkupInfo.exhume(input)
   }
