@@ -114,8 +114,8 @@ class PerProjectIndexingQueue(private val project: Project) {
       LOG.info("Flushing is not allowed at the moment")
       return
     }
-    val (filesInQueue, totalFiles, scanningIds) = getAndResetQueuedFiles()
-    if (totalFiles > 0) {
+    val (filesInQueue, scanningIds) = getAndResetQueuedFiles()
+    if (filesInQueue.size > 0) {
       // note that DumbModeWhileScanningTrigger will not finish dumb mode until scanning is finished
       UnindexedFilesIndexer(project, filesInQueue, reason, scanningIds).queue(project)
     }
@@ -147,16 +147,14 @@ class PerProjectIndexingQueue(private val project: Project) {
 
   private data class QueuedFiles(
     val fileSet: Set<VirtualFile>,
-    val numberOfFiles: Int,
     val scanningIds: LongSet
   )
 
   private fun getAndResetQueuedFiles(): QueuedFiles {
     val filesInQueue = filesSoFar.getAndUpdate { persistentSetOf() }
-    val totalFiles = filesInQueue.size
     val idsOfScannings = scanningIds // we only use scanning ids for diagnostics. TODO: maybe fix non-atomic update
     scanningIds = createSetForScanningIds()
-    return QueuedFiles(filesInQueue, totalFiles, LongSets.unmodifiable(idsOfScannings))
+    return QueuedFiles(filesInQueue,  LongSets.unmodifiable(idsOfScannings))
   }
 
   /**
@@ -196,7 +194,7 @@ class PerProjectIndexingQueue(private val project: Project) {
   @TestOnly
   class TestCompanion(private val q: PerProjectIndexingQueue) {
     fun getAndResetQueuedFiles(): Pair<Set<VirtualFile>, Int> {
-      return q.getAndResetQueuedFiles().let { Pair(it.fileSet, it.numberOfFiles) }
+      return q.getAndResetQueuedFiles().let { Pair(it.fileSet, it.fileSet.size) }
     }
   }
 }
