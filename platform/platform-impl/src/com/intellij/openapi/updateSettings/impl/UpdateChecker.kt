@@ -675,7 +675,11 @@ private fun doUpdateAndShowResult(
   // probably it can lead to disabled plugins becoming incompatible without a notification in platform update dialog
   val updatesForPlugins = updatesForEnabledPlugins // + nonIgnored(pluginUpdates.allDisabled)
   if (!showResults) {
-    UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatesForPlugins, customRepoPlugins)
+    if (platformUpdates is PlatformUpdates.Loaded) {
+      UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins, pluginUpdates.incompatible)
+    } else {
+      UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatesForPlugins, customRepoPlugins)
+    }
     callback?.setDone()
     return null
   }
