@@ -423,3 +423,20 @@ f:com.intellij.execution.util.ExecUtil
 - sf:getOpenCommandPath():java.lang.String
 - sf:getOsascriptPath():java.lang.String
 - sf:getWindowsShellName():java.lang.String
+f:com.intellij.util.LocalFileUrl
+- com.intellij.util.Url
+- addParameters(java.util.Map):com.intellij.util.Url
+- equals(java.lang.Object):Z
+- equalsIgnoreCase(com.intellij.util.Url):Z
+- equalsIgnoreParameters(com.intellij.util.Url):Z
+- getAuthority():java.lang.String
+- getParameters():java.lang.String
+- getPath():java.lang.String
+- getScheme():java.lang.String
+- hashCode():I
+- hashCodeCaseInsensitive():I
+- isInLocalFileSystem():Z
+- resolve(java.lang.String):com.intellij.util.Url
+- toDecodedForm():java.lang.String
+- toExternalForm():java.lang.String
+- trimParameters():com.intellij.util.Url
