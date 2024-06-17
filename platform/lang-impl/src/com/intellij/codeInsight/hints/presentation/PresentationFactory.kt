@@ -126,22 +126,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   }
 
   @Contract(pure = true)
-  fun adjustToNextTextEqualWidth(base: InlayPresentation): InlayPresentation {
-    return DynamicInsetPresentation(base, object : InsetValueProvider {
-
-      fun getInset(roundUp: Boolean): Int {
-        val spaceWidth = EditorUtil.getPlainSpaceWidth(editor)
-        val additionalWidth = spaceWidth - base.width % spaceWidth
-        return if (roundUp) (additionalWidth + 1) / 2 else additionalWidth / 2
-      }
-
-      override val left: Int
-        get() = getInset(true)
-
-      override val right: Int
-        get() = getInset(false)
-    })
-  }
+  fun offsetFromTopForSmallText(base: InlayPresentation) = DynamicInsetPresentation(base, offsetFromTopProvider)
 
   @Contract(pure = true)
   override fun icon(icon: Icon): IconPresentation = IconPresentation(icon, editor.component)
