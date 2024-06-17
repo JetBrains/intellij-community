@@ -5,7 +5,9 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.elementType
+import com.intellij.psi.util.endOffset
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
 import org.jetbrains.yaml.YAMLBundle
@@ -65,15 +67,23 @@ class YAMLDuplicatedKeysInspection : LocalInspectionTool() {
 
     private fun mergeDuplicates(generator: YAMLElementGenerator, keyVal: YAMLKeyValue) {
       val parentMapping = keyVal.parentMapping ?: return
-      val allProps = parentMapping.keyValues.filter { it.keyText == keyVal.keyText }
+      val key = keyVal.keyText
+      val allProps = parentMapping.keyValues.filter { it.keyText == key }
       if (allProps.size <= 1) return
       val firstProperty = allProps[0]
+      var hadMerges = false
       allProps.drop(1).forEach {
         val mapping = firstProperty.value as? YAMLMapping
         val sequence = firstProperty.value as? YAMLSequence
         if (mapping != null && mergeMappings(mapping, it, generator)
             || sequence != null && mergeSequences(sequence, it, generator)) {
+          hadMerges = true
           deleteWithPrecedingEol(it)
+        }
+      }
+      if (hadMerges) {
+        parentMapping.keyValues.firstOrNull { it.keyText == key }?.let {
+          PsiEditorUtil.findEditor(it)?.caretModel?.moveToOffset(it.endOffset)
         }
       }
     }

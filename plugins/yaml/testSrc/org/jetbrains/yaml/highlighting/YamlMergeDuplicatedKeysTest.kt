@@ -23,7 +23,7 @@ class YamlMergeDuplicatedKeysTest : BasePlatformTestCase() {
     myFixture.checkResult("""
       prop:
         bar: 5
-        baz: 6
+        baz: 6<caret>
     """.trimIndent())
   }
 
@@ -42,7 +42,7 @@ class YamlMergeDuplicatedKeysTest : BasePlatformTestCase() {
       prop:
         bar: 5
         foo: 5
-        baz: 6
+        baz: 6<caret>
     """.trimIndent())
   }
 
@@ -62,7 +62,7 @@ class YamlMergeDuplicatedKeysTest : BasePlatformTestCase() {
         - bar
         - baz
         - foo
-        - moo
+        - moo<caret>
     """.trimIndent())
   }
 
@@ -81,7 +81,7 @@ class YamlMergeDuplicatedKeysTest : BasePlatformTestCase() {
       prop:
         - bar
         - moo
-        - foo
+        - foo<caret>
     """.trimIndent())
   }
 
@@ -105,7 +105,7 @@ class YamlMergeDuplicatedKeysTest : BasePlatformTestCase() {
         compose: enabled
         kotlin:
           progressiveMode: true
-          allWarningsAsErrors: true
+          allWarningsAsErrors: true<caret>
       
 
     """.trimIndent())
