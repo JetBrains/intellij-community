@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.gist.storage.GistStorage
@@ -17,20 +19,22 @@ import java.io.DataOutput
 private const val BINARY_FORMAT_VERSION = 1
 private const val NO_TRACK_GIST_STAMP = 0
 
-internal object GradleBuildRootDataSerializer {
+@Service(Service.Level.APP)
+class GradleBuildRootDataSerializer {
 
     private val currentBuildRoot: ThreadLocal<VirtualFile> = ThreadLocal()
 
-    private fun newGist() = GistStorage.getInstance().newGist("GradleBuildRootData", BINARY_FORMAT_VERSION, Externalizer)
+    private val buildRootDataGist =
+        GistStorage.getInstance().newGist("GradleBuildRootData", BINARY_FORMAT_VERSION, Externalizer())
 
     fun read(buildRoot: VirtualFile): GradleBuildRootData? {
         currentBuildRoot.set(buildRoot)
-        return newGist().getGlobalData(buildRoot, NO_TRACK_GIST_STAMP).data()
+        return buildRootDataGist.getGlobalData(buildRoot, NO_TRACK_GIST_STAMP).data()
     }
 
     fun write(buildRoot: VirtualFile, data: GradleBuildRootData?) {
         currentBuildRoot.set(buildRoot) // putGlobalData calls  Externalizer.read
-        newGist().putGlobalData(buildRoot, data, NO_TRACK_GIST_STAMP)
+        buildRootDataGist.putGlobalData(buildRoot, data, NO_TRACK_GIST_STAMP)
     }
 
     fun remove(buildRoot: VirtualFile) {
@@ -38,12 +42,17 @@ internal object GradleBuildRootDataSerializer {
         LastModifiedFiles.remove(buildRoot)
     }
 
-    private object Externalizer: DataExternalizer<GradleBuildRootData> {
+    inner class Externalizer: DataExternalizer<GradleBuildRootData> {
         override fun save(out: DataOutput, value: GradleBuildRootData) =
             writeKotlinDslScriptModels(out, value)
 
         override fun read(`in`: DataInput): GradleBuildRootData =
             readKotlinDslScriptModels(`in`, currentBuildRoot.get().path)
+    }
+
+    companion object {
+        @JvmStatic
+        fun getInstance(): GradleBuildRootDataSerializer = service()
     }
 }
 

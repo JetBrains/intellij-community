@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -186,7 +186,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         val newRoot = tryCreateImportedRoot(sync.workingDir, LastModifiedFiles()) { mergedData } ?: return null
         val buildRootDir = newRoot.dir ?: return null
 
-        GradleBuildRootDataSerializer.write(buildRootDir, mergedData)
+        GradleBuildRootDataSerializer.getInstance().write(buildRootDir, mergedData)
         newRoot.saveLastModifiedFiles()
 
         return newRoot
@@ -309,7 +309,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
 
     private fun tryLoadFromFsCache(settings: GradleProjectSettings, version: String): Imported? {
         return tryCreateImportedRoot(settings.externalProjectPath) {
-            GradleBuildRootDataSerializer.read(it)?.let { data ->
+            GradleBuildRootDataSerializer.getInstance().read(it)?.let { data ->
                 val gradleHome = data.gradleHome
                 if (gradleHome.isNotBlank() && GradleInstallationManager.getGradleVersion(gradleHome) != version) return@let null
 
@@ -335,7 +335,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
             return Imported(externalProjectPath, data, lastModifiedFiles)
         } catch (e: Exception) {
             when (e) {
-                is ReadAction.CannotReadException -> scriptingDebugLog { "tryCreateImportedRoot cancelled" }
+                is ControlFlowException -> throw e
                 else -> scriptingErrorLog("Cannot load script configurations from file attributes for $externalProjectPath", e)
             }
             return null
@@ -367,7 +367,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
     private fun removeData(rootPath: String) {
         val buildRoot = LocalFileSystem.getInstance().findFileByPath(rootPath)
         if (buildRoot != null) {
-            GradleBuildRootDataSerializer.remove(buildRoot)
+            GradleBuildRootDataSerializer.getInstance().remove(buildRoot)
             LastModifiedFiles.remove(buildRoot)
         }
     }
