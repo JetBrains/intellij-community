@@ -50,7 +50,7 @@ public abstract class JsonSchemaSpellcheckerClient {
     final JsonPointerPosition position = walker.findPosition(checkable, isName == ThreeState.NO);
     if (position == null || position.isEmpty() && isName == ThreeState.NO) return false;
 
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, position, walker.createValueAdapter(checkable)).resolve();
     if (schemas.isEmpty()) return false;
 
     return schemas.stream().anyMatch(s -> {

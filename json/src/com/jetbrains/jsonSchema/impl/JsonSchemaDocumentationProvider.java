@@ -104,7 +104,8 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
         position.replaceStep(position.size() - 1, forcedPropName);
       }
     }
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(element.getProject(), rootSchema, position).resolve();
+    final Collection<JsonSchemaObject> schemas =
+      new JsonSchemaResolver(element.getProject(), rootSchema, position, walker.createValueAdapter(element)).resolve();
 
     String htmlDescription = null;
     boolean deprecated = false;

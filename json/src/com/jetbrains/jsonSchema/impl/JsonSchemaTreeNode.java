@@ -5,12 +5,11 @@ import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.progress.ProgressManager;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import com.jetbrains.jsonSchema.impl.tree.Operation;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class JsonSchemaTreeNode {
@@ -23,7 +22,7 @@ public final class JsonSchemaTreeNode {
   private final @NotNull JsonPointerPosition myPosition;
 
   private final @Nullable JsonSchemaTreeNode myParent;
-  private final @NotNull List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
+  private final @NotNull Collection<JsonSchemaTreeNode> myChildren = new LinkedHashSet<>();
 
   public JsonSchemaTreeNode(@Nullable JsonSchemaTreeNode parent,
                             @Nullable JsonSchemaObject schema) {
@@ -106,7 +105,7 @@ public final class JsonSchemaTreeNode {
     return myParent;
   }
 
-  public @NotNull List<JsonSchemaTreeNode> getChildren() {
+  public @NotNull Collection<JsonSchemaTreeNode> getChildren() {
     return myChildren;
   }
 
@@ -160,7 +159,7 @@ public final class JsonSchemaTreeNode {
       if (mySchema.getRef() != null) sb.append("$ref: ").append(mySchema.getRef()).append("\n");
       else if (JsonSchemaObjectReadingUtils.hasProperties(mySchema)) {
         sb.append("properties: ");
-        sb.append(String.join(", ", mySchema.getProperties().keySet())).append("\n");
+        sb.append(String.join(", ", StreamEx.of(mySchema.getPropertyNames()).toList())).append("\n");
       }
       if (!myChildren.isEmpty()) {
         sb.append("OR children of NODE#").append(hashCode()).append(":\n----------------\n")

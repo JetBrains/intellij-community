@@ -29,14 +29,14 @@ public final class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHa
     if (shouldSuppressNavigation) return null;
 
     final IElementType elementType = PsiUtilCore.getElementType(sourceElement);
-    if (elementType != JsonElementTypes.DOUBLE_QUOTED_STRING && elementType != JsonElementTypes.SINGLE_QUOTED_STRING) return null;
-    final JsonStringLiteral literal = PsiTreeUtil.getParentOfType(sourceElement, JsonStringLiteral.class);
+    if (elementType != JsonElementTypes.STRING_LITERAL && elementType != JsonElementTypes.DOUBLE_QUOTED_STRING && elementType != JsonElementTypes.SINGLE_QUOTED_STRING) return null;
+    final JsonStringLiteral literal = PsiTreeUtil.getParentOfType(sourceElement, JsonStringLiteral.class, false);
     if (literal == null) return null;
     final PsiElement parent = literal.getParent();
     if (literal.getReferences().length == 0
-        && parent instanceof JsonProperty
-        && ((JsonProperty)parent).getNameElement() == literal
-        && canNavigateToSchema(parent)) {
+        && parent instanceof JsonProperty parentProperty
+        && parentProperty.getNameElement() == literal
+        && canNavigateToSchema(parentProperty)) {
       final PsiFile containingFile = literal.getContainingFile();
       final JsonSchemaService service = JsonSchemaService.Impl.get(literal.getProject());
       final VirtualFile file = containingFile.getVirtualFile();
@@ -45,7 +45,8 @@ public final class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHa
       if (steps == null) return null;
       final JsonSchemaObject schemaObject = service.getSchemaObject(containingFile);
       if (schemaObject != null) {
-        final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, steps).findNavigationTarget(((JsonProperty)parent).getValue());
+        final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, steps, JsonOriginalPsiWalker.INSTANCE.createValueAdapter(parentProperty.getParent()))
+          .findNavigationTarget(parentProperty.getValue());
         if (target != null) {
           return new PsiElement[] {target};
         }

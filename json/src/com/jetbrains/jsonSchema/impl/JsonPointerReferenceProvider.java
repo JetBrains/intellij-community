@@ -200,8 +200,8 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
       if (Registry.is("json.schema.object.v2")) {
         JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myElement.getProject())
           .getComputedSchemaRootOrNull(myElement.getContainingFile().getVirtualFile());
-        if (schemaRootOrNull != null) {
-          id = schemaRootOrNull.resolveId(myText);
+        if (schemaRootOrNull instanceof RootJsonSchemaObject<?,?> rootJsonSchemaObject) {
+          id = rootJsonSchemaObject.resolveId(myText);
         }
       }
       if (id == null)  {

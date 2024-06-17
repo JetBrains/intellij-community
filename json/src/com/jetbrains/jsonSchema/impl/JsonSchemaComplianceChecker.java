@@ -20,7 +20,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class JsonSchemaComplianceChecker {
   private static final Key<Set<PsiElement>> ANNOTATED_PROPERTIES = Key.create("JsonSchema.Properties.Annotated");
@@ -60,7 +63,7 @@ public final class JsonSchemaComplianceChecker {
     if (firstProp != null) {
       final JsonPointerPosition position = myWalker.findPosition(firstProp.getDelegate(), true);
       if (position == null || position.isEmpty()) return;
-      final MatchResult result = new JsonSchemaResolver(project, myRootSchema, position).detailedResolve();
+      final MatchResult result = new JsonSchemaResolver(project, myRootSchema, position, firstProp.getNameValueAdapter()).detailedResolve();
       for (JsonValueAdapter value : firstProp.getValues()) {
         createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(project, value, result, myOptions));
       }
@@ -80,7 +83,7 @@ public final class JsonSchemaComplianceChecker {
     }
     if (rootToCheck != null) {
       Project project = element.getProject();
-      final MatchResult matchResult = new JsonSchemaResolver(project, myRootSchema).detailedResolve();
+      final MatchResult matchResult = new JsonSchemaResolver(project, myRootSchema, new JsonPointerPosition(), rootToCheck).detailedResolve();
       createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(project, rootToCheck, matchResult, myOptions));
     }
   }

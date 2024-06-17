@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.json.JsonBundle
+import com.intellij.json.pointer.JsonPointerPosition
 import com.intellij.json.psi.*
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
@@ -45,11 +46,13 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider.Companion.getNestedCompletionsData
 import com.jetbrains.jsonSchema.extension.SchemaType
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_ENUM_ORDER_SENSITIVE
 import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_LANGUAGE_INJECTION
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
 import com.jetbrains.jsonSchema.impl.nestedCompletions.*
+import com.jetbrains.jsonSchema.impl.tree.JsonSchemaNodeExpansionRequest
 import one.util.streamex.StreamEx
 import javax.swing.Icon
 
@@ -84,8 +87,9 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
   }
 
   private class Worker(private val rootSchema: JsonSchemaObject,
-                       private val position: PsiElement,
+                       private val completionPsiElement: PsiElement,
                        private val originalPosition: PsiElement,
+                       private val completionType: CompletionType,
                        private val resultHandler: (Collection<LookupElement>) -> Unit) {
     private val wrapInQuotes: Boolean
     private val insideStringLiteral: Boolean
@@ -96,8 +100,8 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     private val myProject: Project = originalPosition.project
 
     init {
-      val walker = JsonLikePsiWalker.getWalker(position, rootSchema)
-      val positionParent = position.parent
+      val walker = JsonLikePsiWalker.getWalker(completionPsiElement, rootSchema)
+      val positionParent = completionPsiElement.parent
       val isInsideQuotedString = (positionParent != null && walker != null && walker.isQuotedString(positionParent))
       wrapInQuotes = !isInsideQuotedString
       psiWalker = walker
@@ -107,7 +111,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     fun work() {
       if (psiWalker == null) return
-      val checkable = psiWalker.findElementToCheck(position)
+      val checkable = psiWalker.findElementToCheck(completionPsiElement)
       if (checkable == null) return
       val isName = psiWalker.isName(checkable)
       val position = psiWalker.findPosition(checkable, isName == ThreeState.NO)
@@ -118,7 +122,11 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       val nestedCompletionsNode = getNestedCompletionsData(originalPosition.containingFile)
         .navigate(position)
 
-      JsonSchemaResolver(myProject, rootSchema, position)
+      val schemaExpansionRequest = JsonSchemaNodeExpansionRequest(
+        psiWalker.getParentPropertyAdapter(completionPsiElement)?.parentObject,
+        completionType == CompletionType.SMART
+      )
+      JsonSchemaResolver(myProject, rootSchema, position, schemaExpansionRequest)
         .resolve()
         .forEach { schema ->
           schema.collectNestedCompletions(myProject, nestedCompletionsNode, null) { path, subSchema ->
@@ -139,15 +147,14 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                       completionPath: SchemaPath?) {
       if (isName != ThreeState.NO) {
         val completionOriginalPosition = psiWalker!!.findChildBy(completionPath, originalPosition)
-        val completionPosition = psiWalker.findChildBy(completionPath, position)
+        val completionPosition = psiWalker.findChildBy(completionPath, completionPsiElement)
 
         val properties = psiWalker.getPropertyNamesOfParentObject(completionOriginalPosition, completionPosition)
         val adapter = psiWalker.getParentPropertyAdapter(completionOriginalPosition)
 
-        val forbiddenNames = findPropertiesThatMustNotBePresent(schema, position, myProject, properties)
+        val forbiddenNames = findPropertiesThatMustNotBePresent(schema, completionPsiElement, myProject, properties)
           .plus(properties)
         addAllPropertyVariants(schema, forbiddenNames, adapter, knownNames, completionPath)
-        addIfThenElsePropertyNameVariants(schema, forbiddenNames, adapter, knownNames, completionPath)
         addPropertyNameSchemaVariants(schema)
       }
 
@@ -176,7 +183,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         .forEach { name ->
           knownNames.add(name)
           val propertySchema = checkNotNull(schema.getPropertyByName(name))
-          addPropertyVariant(name, propertySchema, completionPath)
+          addPropertyVariant(name, propertySchema, completionPath, adapter?.nameValueAdapter)
         }
     }
 
@@ -244,7 +251,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
 
     fun addInjectedLanguageVariants() {
-      val checkable = psiWalker!!.findElementToCheck(position)
+      val checkable = psiWalker!!.findElementToCheck(completionPsiElement)
       if (checkable !is JsonStringLiteral && checkable !is JsonReferenceExpression) return
       Language.getRegisteredLanguages()
         .filter { LanguageUtil.isInjectableLanguage(it) }
@@ -260,7 +267,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
 
     fun addRequiredPropVariants() {
-      val checkable = psiWalker!!.findElementToCheck(position)
+      val checkable = psiWalker!!.findElementToCheck(completionPsiElement)
       if (checkable !is JsonStringLiteral && checkable !is JsonReferenceExpression) return
       val propertiesObject = JsonRequiredPropsReferenceProvider.findPropertiesObject(checkable) ?: return
       val parent = checkable.parent
@@ -368,10 +375,11 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     fun addPropertyVariant(key: String,
                            jsonSchemaObject: JsonSchemaObject,
-                           completionPath: SchemaPath?) {
+                           completionPath: SchemaPath?,
+                           sourcePsiAdapter: JsonValueAdapter?) {
       var propertyKey = key
       var schemaObject = jsonSchemaObject
-      val variants = JsonSchemaResolver(myProject, schemaObject).resolve()
+      val variants = JsonSchemaResolver(myProject, schemaObject, JsonPointerPosition(), sourcePsiAdapter).resolve()
       schemaObject = ObjectUtils.coalesce(variants.firstOrNull(), schemaObject)
       propertyKey = if (!shouldWrapInQuotes(propertyKey, false)) propertyKey else StringUtil.wrapWithDoubleQuote(propertyKey)
 
@@ -444,10 +452,10 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           expandMissingPropertiesAndMoveCaret(context, completionPath)
 
           if (handleInsideQuotesInsertion(context, editor, insideStringLiteral)) return
-          val insertComma = psiWalker?.hasMissingCommaAfter(position) == true
+          val insertComma = psiWalker?.hasMissingCommaAfter(completionPsiElement) == true
           val comma = if (insertComma) "," else ""
           val hasValue = hasEnumValues || psiWalker?.let {
-            it.isPropertyWithValue(it.findElementToCheck(position))
+            it.isPropertyWithValue(it.findElementToCheck(completionPsiElement))
           } == true
           var offset = editor.caretModel.offset
           val initialOffset = offset
@@ -583,8 +591,10 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                      result: CompletionResultSet,
                      rootSchema: JsonSchemaObject,
                      stop: Boolean) {
-      val worker = Worker(rootSchema, parameters.position,
-                          parameters.originalPosition ?: parameters.position) {
+      val worker = Worker(rootSchema,
+                          parameters.position,
+                          parameters.originalPosition ?: parameters.position,
+                          parameters.completionType) {
         result.addAllElements(it)
       }
       worker.work()
@@ -596,9 +606,11 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     @JvmStatic
     fun getCompletionVariants(schema: JsonSchemaObject,
-                              position: PsiElement, originalPosition: PsiElement): List<LookupElement> {
+                              position: PsiElement,
+                              originalPosition: PsiElement,
+                              completionType: CompletionType): List<LookupElement> {
       val result: MutableList<LookupElement> = ArrayList()
-      Worker(schema, position, originalPosition) { elements -> result.addAll(elements) }.work()
+      Worker(schema, position, originalPosition, completionType) { elements -> result.addAll(elements) }.work()
       return result
     }
 

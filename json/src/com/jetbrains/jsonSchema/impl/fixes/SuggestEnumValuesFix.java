@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.fixes;
 
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.json.JsonBundle;
@@ -42,7 +43,7 @@ public final class SuggestEnumValuesFix extends PsiUpdateModCommandQuickFix {
     final JsonSchemaService jsonSchemaService = JsonSchemaService.Impl.get(project);
     JsonSchemaObject object = jsonSchemaService.getSchemaObject(updater.getOriginalFile(file));
     if (object == null) return;
-    List<LookupElement> variants = JsonSchemaCompletionContributor.getCompletionVariants(object, element, element);
+    List<LookupElement> variants = JsonSchemaCompletionContributor.getCompletionVariants(object, element, element, CompletionType.BASIC);
     if (variants.isEmpty()) return;
     updater.templateBuilder().field(element, new ConstantNode(variants.get(0).getLookupString()).withLookupItems(variants));
   }

@@ -46,7 +46,7 @@ internal fun JsonSchemaObject.collectNestedCompletions(
 }
 
 private fun JsonSchemaObject.findSubSchemasByName(project: Project, name: String): Iterable<JsonSchemaObject> =
-  JsonSchemaResolver(project, this, JsonPointerPosition().apply { addFollowingStep(name) }).resolve()
+  JsonSchemaResolver(project, this, JsonPointerPosition().apply { addFollowingStep(name) }, null).resolve()
 
 
 internal fun JsonLikePsiWalker.findChildBy(path: SchemaPath?, start: PsiElement): PsiElement =
