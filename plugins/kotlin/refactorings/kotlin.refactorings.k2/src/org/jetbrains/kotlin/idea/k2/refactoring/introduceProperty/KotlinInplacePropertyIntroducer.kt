@@ -10,13 +10,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.ui.NonFocusableCheckBox
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeChooseValueExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.createPostTypeUpdateProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
-import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.Generator
+import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.KotlinIntroducePropertyHandler.InteractiveExtractionHelperWithOptions
 import org.jetbrains.kotlin.idea.refactoring.introduce.TYPE_REFERENCE_VARIABLE_NAME
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicatesSilently
@@ -33,7 +32,7 @@ import javax.swing.JComboBox
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class KotlinInplacePropertyIntroducer(
+open class KotlinInplacePropertyIntroducer(
     property: KtProperty,
     editor: Editor,
     project: Project,
@@ -55,15 +54,7 @@ class KotlinInplacePropertyIntroducer(
             if (value == currentTarget) return
 
             field = value
-            runWriteActionAndRestartRefactoring {
-                with(extractionResult.config) {
-                    val configuration = copy(generatorOptions = generatorOptions.copy(target = currentTarget))
-                    extractionResult = Generator.generateDeclaration(configuration, property)
-                    property = extractionResult.declaration as KtProperty
-                    myElementToRename = property
-                }
-            }
-            updatePanelControls()
+            restart(KotlinIntroducePropertyHandler(InteractiveExtractionHelperWithOptions(value)))
         }
 
     private var replaceAll: Boolean = replaceAllByDefault

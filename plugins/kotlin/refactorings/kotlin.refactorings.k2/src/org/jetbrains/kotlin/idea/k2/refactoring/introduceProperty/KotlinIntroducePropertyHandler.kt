@@ -6,10 +6,12 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -39,12 +41,17 @@ import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 
+internal val CONTAINER_KEY = Key.create<Unit>("PARENT_CONTAINER")
+
 class KotlinIntroducePropertyHandler(
     val helper: ExtractionEngineHelper = InteractiveExtractionHelper
 ) : RefactoringActionHandler {
-    object InteractiveExtractionHelper : ExtractionEngineHelper(INTRODUCE_PROPERTY) {
+
+    object InteractiveExtractionHelper : InteractiveExtractionHelperWithOptions()
+
+    open class InteractiveExtractionHelperWithOptions(val currentTarget: ExtractionTarget? = null) : ExtractionEngineHelper(INTRODUCE_PROPERTY) {
         private fun getExtractionTarget(descriptor: ExtractableCodeDescriptor) =
-            propertyTargets.firstOrNull { it.isAvailable(descriptor) }
+            propertyTargets.firstOrNull { it.isAvailable(descriptor) && (currentTarget == null || it == currentTarget) }
 
         override fun validate(descriptor: ExtractableCodeDescriptor) =
             descriptor.validate(getExtractionTarget(descriptor) ?: ExtractionTarget.FUNCTION)
@@ -80,8 +87,15 @@ class KotlinIntroducePropertyHandler(
             listOf(ElementKind.EXPRESSION),
             ::validateExpressionElements,
             { _, parent ->
-                parent.getExtractionContainers(strict = true, includeAll = true)
+                val containers = parent.getExtractionContainers(strict = true, includeAll = true)
                     .filter { it is KtClassBody || (it is KtFile && !it.isScript()) }
+                containers.singleOrNull { container ->
+                    val theContainer = container.getUserData(CONTAINER_KEY) != null
+                    if (theContainer) {
+                        container.putUserData(CONTAINER_KEY, null)
+                    }
+                    theContainer
+                }?.let { listOf(it) } ?: containers
             },
             continuation
         )
@@ -104,6 +118,7 @@ class KotlinIntroducePropertyHandler(
                     return ExtractionDataAnalyzer(extractionData).performAnalysis()
                 }
             }
+            val editorState = EditorState(project, editor)
             engine.run(editor, extractionData) {
                 val property = it.declaration as KtProperty
                 val descriptor = it.config.descriptor
@@ -117,7 +132,7 @@ class KotlinIntroducePropertyHandler(
                         doPostponedOperationsAndUnblockDocument(editor.document)
                     }
 
-                    val introducer = KotlinInplacePropertyIntroducer(
+                    val introducer = object : KotlinInplacePropertyIntroducer(
                         property = property,
                         editor = editor,
                         project = project,
@@ -125,8 +140,16 @@ class KotlinIntroducePropertyHandler(
                         doNotChangeVar = false,
                         exprType = exprType,
                         extractionResult = it,
-                        availableTargets = propertyTargets.filter { target -> target.isAvailable(descriptor) }
-                    )
+                        availableTargets = propertyTargets.filter { target -> target.isAvailable(descriptor) },
+                    ) {
+                        override fun onCancel(restart: Boolean) {
+                            if (restart) {
+                                property.parent.putUserData(CONTAINER_KEY, Unit)
+                            }
+                            editorState.revert()
+                        }
+                    }
+
                     introducer.performInplaceRefactoring(LinkedHashSet(descriptor.suggestedNames))
                 } else {
                     processDuplicatesSilently(it.duplicateReplacers, project)

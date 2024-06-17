@@ -2,10 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable;
 
-import com.intellij.codeInsight.template.Expression;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.codeInsight.template.TemplateEditingListener;
-import com.intellij.codeInsight.template.TemplateManagerListener;
+import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.ASTNode;
@@ -21,6 +18,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.ui.JBUI;
@@ -130,6 +128,17 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
         }
     }
 
+    private boolean myRestart = false;
+    protected void restart(RefactoringActionHandler handler) {
+        myRestart = true;
+        PsiFile file = myDeclaration.getContainingFile();
+        TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
+        if (state != null) {
+            state.gotoEnd(true);
+        }
+        handler.invoke(myProject, myEditor, file, null);
+    }
+
     @Nullable
     protected String getAdvertisementActionId() {
         return null;
@@ -203,15 +212,15 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
                 exprTypeCheckbox.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(@NotNull ActionEvent e) {
-                        runWriteActionAndRestartRefactoring(
-                                () -> {
-                                    if (exprTypeCheckbox.isSelected()) {
-                                        String renderedType = renderType(myExprType);
-                                        myDeclaration.setTypeReference(new KtPsiFactory(myProject).createType(renderedType));
-                                    } else {
-                                        myDeclaration.setTypeReference(null);
-                                    }
-                                }
+                        runWriteCommandAction(myProject, getCommandName(), getCommandName(),
+                                              () -> {
+                                                  if (exprTypeCheckbox.isSelected()) {
+                                                      String renderedType = renderType(myExprType);
+                                                      myDeclaration.setTypeReference(new KtPsiFactory(myProject).createType(renderedType));
+                                                  } else {
+                                                      myDeclaration.setTypeReference(null);
+                                                  }
+                                              }
                         );
                     }
                 });
@@ -345,12 +354,37 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
 
         TemplateState templateState =
                 TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
-        if (templateState != null && myDeclaration.getTypeReference() != null) {
-            templateState.addTemplateStateListener(createTypeReferencePostprocessor());
+        if (templateState != null) {
+            if (myDeclaration.getTypeReference() != null) {
+                TemplateEditingListener postprocessor = createTypeReferencePostprocessor();
+                templateState.addTemplateStateListener(new TemplateEditingAdapter() {
+                    @Override
+                    public void templateFinished(@NotNull Template template, boolean brokenOff) {
+                        if (!myRestart) {
+                            postprocessor.templateFinished(template, brokenOff);
+                        }
+                    }
+                });
+            }
+            templateState.addTemplateStateListener(new TemplateEditingAdapter() {
+                @Override
+                public void templateFinished(@NotNull Template template, boolean brokenOff) {
+                    if (brokenOff) {
+                        onCancel(myRestart);
+                    }
+                }
+
+                @Override
+                public void templateCancelled(Template template) {
+                    onCancel(myRestart);
+                }
+            });
         }
 
         return result;
     }
+
+    protected void onCancel(boolean restart) {}
 
     @Override
     protected Collection<PsiReference> collectRefs(SearchScope referencesSearchScope) {
