@@ -19129,6 +19129,8 @@ c:com.intellij.ide.util.treeView.SmartElementDescriptor
 - p:isMarkModified():Z
 - p:isMarkReadOnly():Z
 - update():Z
+f:com.intellij.ide.workspace.SubprojectManagerKt
+- sf:getSubprojectByModule(com.intellij.openapi.module.Module):com.intellij.ide.workspace.Subproject
 f:com.intellij.ide.workspace.configuration.NewWorkspaceWizard
 - com.intellij.ide.wizard.GeneratorNewProjectWizard
 - <init>():V
