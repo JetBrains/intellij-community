@@ -14,6 +14,7 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.asSafely
+import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import org.jetbrains.yaml.meta.impl.YamlKeyInsertHandler
 import org.jetbrains.yaml.meta.model.*
@@ -25,6 +26,10 @@ class YamlStructuralKeysCompletionContributor : CompletionContributor() {
     val position = parameters.position
     val value = position.parentOfType<YAMLValue>(true) ?: return
     if (value.references.isNotEmpty()) return
+    val jsonSchemaService = JsonSchemaService.Impl.get(position.getProject());
+    val jsonObject = jsonSchemaService.getSchemaObject(parameters.originalFile);
+    if (jsonObject != null) return //We have schema for autocompletion
+
     val alreadyDeclared = value.parent.asSafely<YAMLMapping>()?.keyValues?.mapNotNullTo(mutableSetOf()) { it.keyText }.orEmpty()
 
     val keysToSuggest = value.parentsOfType<YAMLSequence>().flatMap { seq ->
