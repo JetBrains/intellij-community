@@ -3,13 +3,15 @@ package com.intellij.platform.ml.embeddings.services
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ml.embeddings.search.indices.EntitySourceType
-import java.util.concurrent.atomic.AtomicLong
+import com.intellij.platform.ml.embeddings.search.indices.IndexType
 
+/**
+ * IndexPersistedEventsCounter interface represents a mechanism for sending persisted count of events to external storage.
+ */
 interface IndexPersistedEventsCounter {
   companion object {
     val EP_NAME = ProjectExtensionPointName<IndexPersistedEventsCounter>("com.intellij.platform.ml.embeddings.indexPersistedEventsCounter")
   }
 
-  suspend fun sendPersistedCount(project: Project, countMap: Map<EntitySourceType, AtomicLong>)
+  suspend fun sendPersistedCount(indexType: IndexType, project: Project)
 }

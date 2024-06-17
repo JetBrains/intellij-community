@@ -6,9 +6,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.EntityId
+import com.intellij.platform.ml.embeddings.search.indices.IndexType.FILES
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
@@ -33,7 +33,7 @@ class FileEmbeddingsStorage(project: Project, coroutineScope: CoroutineScope)
     )
   )
 
-  override val reportableIndex = EmbeddingSearchLogger.Index.FILES
+  override val reportableIndex = FILES
 
   companion object {
     private const val INDEX_DIR = "files"

@@ -4,7 +4,6 @@ package com.intellij.platform.ml.embeddings.search.indices
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import kotlinx.coroutines.flow.Flow
-import java.util.concurrent.atomic.AtomicLong
 
 interface EmbeddingSearchIndex {
   var limit: Int?
@@ -24,7 +23,7 @@ interface EmbeddingSearchIndex {
 
   suspend fun saveToDisk()
   suspend fun loadFromDisk()
-  suspend fun offload(persistEventConsumer: (Map<EntitySourceType, AtomicLong>) -> Unit = {})
+  suspend fun offload()
 
   suspend fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double? = null): List<ScoredText>
   suspend fun streamFindClose(searchEmbedding: FloatTextEmbedding, similarityThreshold: Double? = null): Flow<ScoredText>

@@ -53,22 +53,6 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
   @OptIn(ExperimentalCoroutinesApi::class)
   private val indexingContext = Dispatchers.Default.limitedParallelism(8)
 
-  private val indexEntitiesShards = List(EMBEDDING_WORKER_COUNT) { Channel<EntityIndexAction>(capacity = CHANNEL_CAPACITY) }
-
-  init {
-    for (shard in indexEntitiesShards) {
-      cs.launch {
-        withContext(indexingEventsScope.coroutineContext) {
-          shard.consumeAsFlow().debounceBatch(50.milliseconds).collect { chunk ->
-            chunk.chunked(BATCH_SIZE).forEach { batch ->
-              processEntity(batch)
-            }
-          }
-        }
-      }
-    }
-  }
-
   private val filesLimit: Int?
     get() {
       return if (Registry.`is`("intellij.platform.ml.embeddings.index.files.use.limit")) {
@@ -224,6 +208,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
                 .groupBy({ (entity, _) -> getIndex(entity) }) { (entity, embedding) -> entity.id to embedding }
                 .forEach { (index, values) -> index.addEntries(values) }
               chunk.clear()
+            }
 
             val entityChannel = Channel<List<IndexableEntity>>(capacity = 4096)
 

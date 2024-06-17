@@ -13,7 +13,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Concurrent [EmbeddingSearchIndex] that synchronizes all index change operations with disk and
@@ -110,7 +109,7 @@ open class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var lim
     )
   }
 
-  override suspend fun offload(persistEventConsumer: (Map<EntitySourceType, AtomicLong>) -> Unit) = lock.write {
+  override suspend fun offload() = lock.write {
     indexToId = CollectionFactory.createSmallMemoryFootprintMap()
     idToEntry = CollectionFactory.createSmallMemoryFootprintMap()
   }
