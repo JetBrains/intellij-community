@@ -12,6 +12,7 @@ import com.intellij.util.messages.Topic
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitTag
+import git4idea.GitUtil
 import git4idea.config.GitVcsSettings
 import git4idea.util.StringScanner
 import kotlinx.coroutines.channels.BufferOverflow
@@ -49,9 +50,11 @@ class GitTagHolder(val repository: GitRepository) {
   }
 
   fun getTag(hash: String): GitTag? {
+    if (!GitUtil.isHashString(hash)) return null
+    val targetHash = HashImpl.build(hash)
     return hashToTagCache.computeIfAbsent(hash) {
       tagsWithHashes.firstNotNullOfOrNull {
-        if (it.value.asString() == hash) {
+        if (it.value == targetHash) {
           return@firstNotNullOfOrNull it.key
         }
         return@firstNotNullOfOrNull null
