@@ -1,6 +1,14 @@
 package com.michaelbaranov.microba;
 
+import com.michaelbaranov.microba.calendar.ui.basic.BasicCalendarPaneUI;
+import com.michaelbaranov.microba.calendar.ui.basic.BasicDatePickerUI;
 import com.michaelbaranov.microba.common.MicrobaComponent;
+import com.michaelbaranov.microba.gradient.ui.basic.BasicGradientUI;
+import com.michaelbaranov.microba.gradienteditor.ui.basic.BasicGradientEditorUI;
+import com.michaelbaranov.microba.marker.ui.basic.BasicMarkerBarUI;
+import com.michaelbaranov.microba.marker.ui.metal.MetalMarkerBarUI;
+import com.michaelbaranov.microba.marker.ui.motif.MotifMarkerBarUI;
+import com.michaelbaranov.microba.marker.ui.windows.WindowsMarkerBarUI;
 
 import javax.swing.*;
 import java.applet.Applet;
@@ -45,18 +53,28 @@ public class Microba {
 
     // all L&F
     UIManager.put("microba.CalendarPaneUI", packagePrefix + "calendar.ui.basic.BasicCalendarPaneUI");
+    UIManager.put(packagePrefix + "calendar.ui.basic.BasicCalendarPaneUI", BasicCalendarPaneUI.class);
     UIManager.put("microba.DatePickerUI", packagePrefix + "calendar.ui.basic.BasicDatePickerUI");
+    UIManager.put(packagePrefix + "calendar.ui.basic.BasicDatePickerUI", BasicDatePickerUI.class);
     UIManager.put("microba.GradientUI", packagePrefix + "gradient.ui.basic.BasicGradientUI");
+    UIManager.put(packagePrefix + "gradient.ui.basic.BasicGradientUI", BasicGradientUI.class);
     UIManager.put("microba.GradientEditorUI", packagePrefix + "gradienteditor.ui.basic.BasicGradientEditorUI");
+    UIManager.put(packagePrefix + "gradienteditor.ui.basic.BasicGradientEditorUI", BasicGradientEditorUI.class);
     UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.basic.BasicMarkerBarUI");
+    UIManager.put(packagePrefix + "marker.ui.basic.BasicMarkerBarUI", BasicMarkerBarUI.class);
 
     // particular L&F
     if (lookAndFeel.getID().equals("Windows")) {
       UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.windows.WindowsMarkerBarUI");
-    } else if (lookAndFeel.getID().equals("Metal")) {
+      UIManager.put(packagePrefix + "marker.ui.windows.WindowsMarkerBarUI", WindowsMarkerBarUI.class);
+    }
+    else if (lookAndFeel.getID().equals("Metal")) {
       UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.metal.MetalMarkerBarUI");
-    } else if (lookAndFeel.getID().equals("Motif")) {
+      UIManager.put(packagePrefix + "marker.ui.metal.MetalMarkerBarUI", MetalMarkerBarUI.class);
+    }
+    else if (lookAndFeel.getID().equals("Motif")) {
       UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.motif.MotifMarkerBarUI");
+      UIManager.put(packagePrefix + "marker.ui.motif.MotifMarkerBarUI", MotifMarkerBarUI.class);
     }
   }
 

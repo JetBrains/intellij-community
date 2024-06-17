@@ -1,14 +1,12 @@
 package com.michaelbaranov.microba.common;
 
-import java.awt.Color;
+import com.michaelbaranov.microba.Microba;
+
+import javax.swing.*;
+import javax.swing.plaf.ComponentUI;
+import java.awt.*;
 import java.util.Collections;
 import java.util.Map;
-
-import javax.swing.JComponent;
-import javax.swing.UIManager;
-import javax.swing.plaf.ComponentUI;
-
-import com.michaelbaranov.microba.Microba;
 
 /**
  * Superclass for all Microba GUI components.
@@ -33,16 +31,10 @@ public class MicrobaComponent extends JComponent {
   /**
    * Sets the UI delegate of this component to the corresponding UI delegate
    * taken from UIManager.
-   * <p>
-   * This implementation has a workarount to fix the problem with non-standard
-   * class-loaders.
    */
   public void updateUI() {
-    UIManager.getDefaults().put(UIManager.get(this.getUIClassID()), null);
     ComponentUI delegate = UIManager.getUI(this);
-
     setUI(delegate);
-    invalidate();
   }
 
   /**
