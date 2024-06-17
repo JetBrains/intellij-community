@@ -144,16 +144,18 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
         }
         updateBounds(bounds, view, dx, dy);
         Rectangle viewBounds = view.getBounds();
-        boolean reallyMoveWindow = !moveAfterMouseRelease || !mouseMove;
-        if (reallyMoveWindow && !bounds.equals(viewBounds)) {
+        if (!bounds.equals(viewBounds)) {
           boolean moved = bounds.x != viewBounds.x || bounds.y != viewBounds.y;
           boolean resized = bounds.width != viewBounds.width || bounds.height != viewBounds.height;
-          view.reshape(bounds.x, bounds.y, bounds.width, bounds.height);
-          view.invalidate();
-          view.validate();
-          view.repaint();
-          if (moved) notifyMoved();
-          if (resized) notifyResized();
+          boolean reallyMoveWindow = !moveAfterMouseRelease || !mouseMove;
+          if ((moved && reallyMoveWindow) || resized) {
+            view.reshape(bounds.x, bounds.y, bounds.width, bounds.height);
+            view.invalidate();
+            view.validate();
+            view.repaint();
+            if (moved) notifyMoved();
+            if (resized) notifyResized();
+          }
         }
       }
       if (!mouseMove) {
