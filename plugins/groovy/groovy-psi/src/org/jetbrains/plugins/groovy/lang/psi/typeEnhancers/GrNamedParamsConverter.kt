@@ -27,21 +27,19 @@ class GrNamedParamsConverter : GrTypeConverter() {
     }
 
   private fun createConversion(targetType: PsiType, actualType: PsiType, context: PsiElement): Result {
-    if (actualType !is GrMapTypeFromNamedArgs || targetType !is PsiClassType) return Result.NotNamedParams
-    if (!PsiTypesUtil.classNameEquals(targetType, CommonClassNames.JAVA_UTIL_MAP)) return Result.NotNamedParams
+    if (actualType !is GrMapTypeFromNamedArgs || targetType !is PsiClassType || !PsiTypesUtil.classNameEquals(targetType, CommonClassNames.JAVA_UTIL_MAP) || context !is GrMethodCallExpression) return Result.NotNamedParamsError
 
-    if (context !is GrMethodCallExpression) return Result.NotNamedParams
-    val method = context.resolveMethod() ?: return Result.NotNamedParams
+    val method = context.resolveMethod() ?: return Result.NotNamedParamsError
 
     val namedParamList = method.parameterList.parameters.mapNotNull { parameter ->
       val namedParamList = collectNamedParams(parameter)
       namedParamList.ifEmpty { null }
-    }.singleOrNull() ?: return Result.NotNamedParams
+    }.singleOrNull() ?: return Result.NotNamedParamsError
 
 
     for (namedParam in namedParamList) {
       if (namedParam.required && namedParam.name !in actualType.stringKeys) {
-        return Result.Error
+        return Result.IncompatibleTypesError
       }
     }
 
@@ -51,7 +49,7 @@ class GrNamedParamsConverter : GrTypeConverter() {
       for (key in actualType.stringKeys) {
         val expressionType = actualType.getTypeByStringKey(key)
         if (expressionType == null || !upperBound.isAssignableFrom(expressionType)) {
-          return Result.Error
+          return Result.IncompatibleTypesError
         }
       }
     }
@@ -62,16 +60,16 @@ class GrNamedParamsConverter : GrTypeConverter() {
 
   override fun isConvertible(targetType: PsiType, actualType: PsiType, position: Position, context: GroovyPsiElement): ConversionResult? =
     when (createConversion(targetType, actualType, context)) {
-      Result.NotNamedParams -> null
-      Result.Error -> ConversionResult.ERROR
+      Result.NotNamedParamsError -> null
+      Result.IncompatibleTypesError -> ConversionResult.ERROR
       else -> ConversionResult.OK
     }
 
   private abstract class Result {
-    object NotNamedParams : Result()
+    object NotNamedParamsError : Result()
+
+    object IncompatibleTypesError : Result()
 
     data class Success(val typeConstraint: TypeConstraint) : Result()
-
-    object Error : Result()
   }
 }
