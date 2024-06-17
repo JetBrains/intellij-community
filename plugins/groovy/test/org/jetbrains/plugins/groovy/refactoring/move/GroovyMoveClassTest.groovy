@@ -3,7 +3,6 @@
 package org.jetbrains.plugins.groovy.refactoring.move
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.PackageWrapper
@@ -69,7 +68,8 @@ class GroovyMoveClassTest extends GroovyMoveTestBase {
     doTest("p2", "p1.X")
   }
 
-  boolean perform(VirtualFile root, String newPackageName, String... classNames) {
+  @Override
+  boolean perform(String newPackageName, String[] classNames) {
     final PsiClass[] classes = new PsiClass[classNames.length]
     for (int i = 0; i < classes.length; i++) {
       String className = classNames[i]

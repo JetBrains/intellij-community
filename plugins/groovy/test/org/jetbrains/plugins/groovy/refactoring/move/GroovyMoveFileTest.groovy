@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.refactoring.move
 
 
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -35,10 +34,10 @@ class GroovyMoveFileTest extends GroovyMoveTestBase {
   }
 
   @Override
-  boolean perform(VirtualFile root, String moveTo, String... names) {
-    def pack1 = root.findChild('pack1')
+  boolean perform(String newPackageName, String[] names) {
+    def pack1 = myFixture.findFileInTempDir('pack1')
     PsiFile[] files = myFixture.psiManager.findDirectory(pack1).files.findAll {file -> names.find {name -> name == file.name}}
-    def dir = myFixture.psiManager.findDirectory(root.findChild(moveTo))
+    def dir = myFixture.psiManager.findDirectory(myFixture.findFileInTempDir(newPackageName))
 
     new MoveFilesOrDirectoriesProcessor(myFixture.project, files, dir, false, false, false, null, null).run()
     return true

@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.refactoring.LightMultiFileTestCase
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -24,7 +25,8 @@ class GroovyMoveInnerClassTest extends GroovyMoveTestBase {
     doTest("p2", "p1.X.Y", "Y")
   }
 
-  boolean perform(VirtualFile root, String newPackageName, String... classNames) {
+  @Override
+  boolean perform(String newPackageName, String[] classNames) {
     assertEquals("ClassNames should contain source class name and target class name", 2, classNames.length)
 
     String className = classNames[0]

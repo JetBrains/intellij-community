@@ -15,38 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.move
 
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-
-import java.nio.file.Path
+import com.intellij.refactoring.LightMultiFileTestCase
 
 /**
  * @author Max Medvedev
  */
-abstract class GroovyMoveTestBase extends JavaCodeInsightFixtureTestCase {
-  protected void doTest(String destination, String... names) {
-    String root = PathManager.homePath.replace(File.separatorChar, '/' as char) + basePath + getTestName(true)
+abstract class GroovyMoveTestBase extends LightMultiFileTestCase {
 
-    String rootBefore = "$root/before"
-    PsiTestUtil.removeAllRoots(module, IdeaTestUtil.mockJdk17)
-    List<Path> filesToDelete = new ArrayList<Path>()
-    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myFixture.project, getModule(), rootBefore, filesToDelete, true)
-    def localFileSystem = LocalFileSystem.instance
-    localFileSystem.refresh(false)
-    if (!perform(rootDir, destination, names)) return
-
-    String rootAfter = "$root/after"
-    VirtualFile rootDir2 = localFileSystem.findFileByPath(rootAfter.replace(File.separatorChar, '/' as char))
-    PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting()
-    localFileSystem.refresh(false)
-    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir)
+  protected void doTest(String newPackageName, String[] names) {
+    doTest(() -> perform(newPackageName, names))
   }
 
-  abstract boolean perform(VirtualFile root, String moveTo, String... names)
+  abstract boolean perform(String newPackageName, String[] names)
 }

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.refactoring.move
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor
@@ -138,7 +137,7 @@ class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
   }
 
   @Override
-  boolean perform(VirtualFile root, String moveTo, String... names) {
+  boolean perform(String newPackageName, String[] names) {
     final PsiClass[] classes = new PsiClass[names.length]
     for (int i = 0; i < classes.length; i++) {
       String className = names[i]
@@ -146,7 +145,7 @@ class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
       assertNotNull("Class $className not found", classes[i])
     }
 
-    PsiClass targetClass = myFixture.findClass(moveTo)
+    PsiClass targetClass = myFixture.findClass(newPackageName)
     assertNotNull(targetClass)
 
     def processor = new MoveClassToInnerProcessor(myFixture.project, classes, targetClass, true, true, null)
