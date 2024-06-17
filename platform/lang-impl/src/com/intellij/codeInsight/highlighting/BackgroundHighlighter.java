@@ -216,7 +216,7 @@ final class BackgroundHighlighter {
           count++;
           results.add(result);
           offset = result.getEndOffset();
-          result = findManager.findString(sequence, offset, findModel, null);
+          result = findManager.findString(sequence, offset, findModel);
         }
         return results;
       })
@@ -230,7 +230,10 @@ final class BackgroundHighlighter {
         List<RangeHighlighter> highlighters = new ArrayList<>();
         MarkupModel markupModel = editor.getMarkupModel();
         for (FindResult result : results) {
-          highlighters.add(markupModel.addRangeHighlighter(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES, result.getStartOffset(), result.getEndOffset(),
+          int startOffset = result.getStartOffset();
+          int endOffset = result.getEndOffset();
+          if (startOffset == start && endOffset == end) continue;
+          highlighters.add(markupModel.addRangeHighlighter(EditorColors.HIGHLIGHT_SELECTED_TEXT_ATTRIBUTES, startOffset, endOffset,
                                                            HighlightManagerImpl.OCCURRENCE_LAYER, HighlighterTargetArea.EXACT_RANGE));
         }
         editor.putUserData(SELECTION_HIGHLIGHTS, highlighters);
@@ -349,3 +352,4 @@ final class BackgroundHighlighter {
 
   private static final class HighlightSelectionKey {}
 }
+

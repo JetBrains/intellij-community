@@ -713,6 +713,14 @@
         </value>
       </option>
 
+      <option name="HIGHLIGHT_SELECTED_TEXT_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="808080"/>
+          <option name="EFFECT_TYPE" value="0"/>
+          <option name="ERROR_STRIPE_COLOR" value="808080"/>
+        </value>
+      </option>
+
       <option name="INJECTED_LANGUAGE_FRAGMENT">
         <value>
           <option name="BACKGROUND" value="edfced" deuteranopia="ebebeb" protanopia="ebebeb"/>
@@ -2700,6 +2708,13 @@
           <option name="BACKGROUND" value="32593D" deuteranopia="363827" protanopia="363827"/>
           <option name="EFFECT_COLOR" value="3C704B" deuteranopia="66731d" protanopia="66731d"/>
           <option name="ERROR_STRIPE_COLOR" value="61936f" deuteranopia="65a878" protanopia="65a878"/>
+        </value>
+      </option>
+      <option name="HIGHLIGHT_SELECTED_TEXT_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="6F737A"/>
+          <option name="EFFECT_TYPE" value="0"/>
+          <option name="ERROR_STRIPE_COLOR" value="6F737A"/>
         </value>
       </option>
       <option name="TODO_DEFAULT_ATTRIBUTES">

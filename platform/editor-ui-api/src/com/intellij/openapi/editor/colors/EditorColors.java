@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.lang.Language;
@@ -56,6 +56,7 @@ public interface EditorColors {
   TextAttributesKey WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES =
     TextAttributesKey.createTextAttributesKey("WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES");
   TextAttributesKey TEXT_SEARCH_RESULT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TEXT_SEARCH_RESULT_ATTRIBUTES");
+  TextAttributesKey HIGHLIGHT_SELECTED_TEXT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("HIGHLIGHT_SELECTED_TEXT_ATTRIBUTES");
 
   TextAttributesKey FOLDED_TEXT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("FOLDED_TEXT_ATTRIBUTES");
   ColorKey FOLDED_TEXT_BORDER_COLOR = ColorKey.createColorKey("FOLDED_TEXT_BORDER_COLOR");
