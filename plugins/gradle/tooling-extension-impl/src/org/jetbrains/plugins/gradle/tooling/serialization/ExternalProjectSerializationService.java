@@ -206,7 +206,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     writer.stepOut();
   }
 
-  static void writeDependency(
+  private static void writeDependency(
     IonWriter writer,
     WriteContext context,
     ExternalDependency dependency
@@ -592,7 +592,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     return dependencies;
   }
 
-  static ExternalDependency readDependency(final IonReader reader, final ReadContext context) {
+  private static ExternalDependency readDependency(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 

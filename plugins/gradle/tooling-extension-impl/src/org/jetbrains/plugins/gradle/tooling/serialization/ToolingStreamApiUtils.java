@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public class ToolingStreamApiUtils {
+public final class ToolingStreamApiUtils {
   public static final String OBJECT_ID_FIELD = "objectID";
 
   // todo what about PooledBlockAllocatorProvider?
