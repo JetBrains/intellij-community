@@ -1314,6 +1314,16 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-62301
+  public void testTypingSelfInNewMethod() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   class ReturnsSelf:
+                       def __new__(cls, value: int) -> Self: ...
+                   """);
+  }
+
   // PY-36317
   public void testDictSubscriptionNotReportedAsParametrizedGeneric() {
     doTestByText("""

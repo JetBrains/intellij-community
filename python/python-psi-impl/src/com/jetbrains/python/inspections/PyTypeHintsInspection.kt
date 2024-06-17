@@ -219,7 +219,7 @@ class PyTypeHintsInspection : PyInspection() {
 
       val functionParent = PsiTreeUtil.getParentOfType(node, PyFunction::class.java)
       if (functionParent != null) {
-        if (PyAstFunction.Modifier.STATICMETHOD == functionParent.modifier) {
+        if (PyAstFunction.Modifier.STATICMETHOD == functionParent.modifier && PyNames.NEW != functionParent.name) {
           registerProblemForSelves(PyPsiBundle.message("INSP.type.hints.self.use.in.staticmethod"))
         }
 
