@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.codeInsight.codeVision.ui.popup.layouter.bottom
+import com.intellij.codeInsight.codeVision.ui.popup.layouter.right
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -34,6 +36,7 @@ import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener.
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView
 import org.jetbrains.plugins.notebooks.visualization.ui.keepScrollingPositionWhile
 import java.awt.Graphics
+import java.awt.Point
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -97,7 +100,10 @@ class NotebookCellInlayManager private constructor(
 
   private fun addViewportChangeListener() {
     editor.scrollPane.viewport.addChangeListener {
-      scheduleUpdatePositions()
+      val rect = editor.scrollPane.viewport.viewRect
+      val top = editor.xyToLogicalPosition(rect.location)
+      val bottom = editor.xyToLogicalPosition(Point(rect.right, rect.bottom))
+      scheduleUpdatePositions(top.line, bottom.line)
       viewportQueue.queue(object : Update("Viewport change") {
         override fun run() {
           if (editor.isDisposed) return
@@ -209,9 +215,21 @@ class NotebookCellInlayManager private constructor(
     startOffset >= region.startOffset && endOffset <= region.endOffset
   }
 
-  private fun scheduleUpdatePositions() {
+  private fun scheduleUpdatePositions(from: Int = 0, to: Int = 1000_000_000) {
     runInEdt {
-      _cells.forEach { cell -> cell.updatePositions() }
+      val fromIndex = _cells.indexOfFirst { cell ->
+        val lines = cell.intervalPointer.get()?.lines
+        lines != null && lines.hasIntersectionWith(from..to + 1)
+      }
+      if (fromIndex == -1) return@runInEdt
+      val toIndex = _cells.subList(fromIndex, _cells.size).indexOfFirst { cell ->
+        val lines = cell.intervalPointer.get()?.lines
+        lines != null && !lines.hasIntersectionWith(from..to + 1)
+      }
+      val finalIndex = if (toIndex == -1) _cells.size - 1 else fromIndex + toIndex
+      for (i in max(fromIndex - 1, 0)..min(finalIndex + 1, _cells.size - 1)) {
+        _cells[i].updatePositions()
+      }
     }
   }
 
