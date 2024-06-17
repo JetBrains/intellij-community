@@ -83,7 +83,7 @@ public final class ApplicationNamesInfo {
 
     try {
       XmlElement data = XmlDomReader.readXmlAsModel(stream);
-      if ("true".equals(System.getProperty("qodana.application"))) {
+      if (PlatformUtils.isQodana()) {
         setQodanaProductAttributes(data);
       }
       return data;
