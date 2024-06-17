@@ -41,6 +41,10 @@ public final class ProcessListUtil {
 
   private static final String PARENT_PID_PREFIX = "PPid:";
 
+  private ProcessListUtil() {
+    // Nothing.
+  }
+
   public static ProcessInfo @NotNull [] getProcessList() {
     List<ProcessInfo> result = doGetProcessList();
     return result.toArray(ProcessInfo.EMPTY_ARRAY);

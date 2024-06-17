@@ -329,7 +329,6 @@ c:com.intellij.execution.process.OSProcessHandler$Silent
 - <init>(com.intellij.execution.configurations.GeneralCommandLine):V
 - p:readerOptions():com.intellij.util.io.BaseOutputReader$Options
 f:com.intellij.execution.process.OSProcessUtil
-- <init>():V
 - s:getApplicationPid():java.lang.String
 - s:getCurrentProcessId():I
 - s:getProcessID(java.lang.Process):I
@@ -413,5 +412,4 @@ com.intellij.execution.process.SelfKiller
 f:com.intellij.execution.process.impl.ProcessListUtil
 - sf:COMMAND_LIST_COMMAND:java.util.List
 - sf:COMM_LIST_COMMAND:java.util.List
-- <init>():V
 - s:getProcessList():com.intellij.execution.process.ProcessInfo[]
