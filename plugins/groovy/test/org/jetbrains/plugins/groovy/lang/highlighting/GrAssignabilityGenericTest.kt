@@ -5,6 +5,8 @@ import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.testFramework.LightProjectDescriptor
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
+import org.jetbrains.plugins.groovy.RepositoryTestLibrary
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -14,7 +16,29 @@ class GrAssignabilityGenericTest : GrHighlightingTestBase() {
 
   override fun getCustomInspections(): Array<InspectionProfileEntry> = arrayOf(GroovyAssignabilityCheckInspection())
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = GroovyProjectDescriptors.GROOVY_2_5
+  override fun getProjectDescriptor(): LightProjectDescriptor = PROJECT_DESCRIPTOR
+
+  override fun setUp() {
+    super.setUp()
+
+    myFixture.addClass("""
+      package org.example;
+      
+      public class BaseClass {}
+    """.trimIndent())
+
+    myFixture.addClass("""
+      package org.example;
+      
+      public class DerivedClass extends BaseClass {}
+    """.trimIndent())
+
+    myFixture.addClass("""
+      package org.example;
+      
+      public class SideClass {}
+    """.trimIndent())
+  }
 
   fun testGroovyNamedParamsInSource() = doTest()
 
@@ -40,9 +64,17 @@ class GrAssignabilityGenericTest : GrHighlightingTestBase() {
         }
       }
     """.trimIndent()
-    
+
     myFixture.addClass(classText)
 
     doTest()
+  }
+
+  fun testSpockMethods() = doTest()
+
+  companion object {
+    private val PROJECT_DESCRIPTOR = LibraryLightProjectDescriptor(
+      GroovyProjectDescriptors.LIB_GROOVY_2_5 + RepositoryTestLibrary("org.spockframework:spock-core:2.0-groovy-2.5")
+    )
   }
 }
