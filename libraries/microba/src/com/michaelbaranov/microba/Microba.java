@@ -1,16 +1,14 @@
 package com.michaelbaranov.microba;
 
+import com.michaelbaranov.microba.common.MicrobaComponent;
+
+import javax.swing.*;
 import java.applet.Applet;
-import java.awt.Color;
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.swing.LookAndFeel;
-import javax.swing.UIManager;
-
-import com.michaelbaranov.microba.common.MicrobaComponent;
 
 /**
  * This class is used to initialize Microba library.
@@ -38,37 +36,28 @@ public class Microba {
     UIManager.addPropertyChangeListener(changeListener);
   }
 
-  private static synchronized void setLookAndFeelProperties(
-      LookAndFeel lookAndFeel) {
-    if (lookAndFeel == null)
+  private static synchronized void setLookAndFeelProperties(LookAndFeel lookAndFeel) {
+    if (lookAndFeel == null) {
       return;
+    }
 
     String packagePrefix = "com.michaelbaranov.microba.";
 
     // all L&F
-    UIManager.put("microba.CalendarPaneUI", packagePrefix
-        + "calendar.ui.basic.BasicCalendarPaneUI");
-    UIManager.put("microba.DatePickerUI", packagePrefix
-        + "calendar.ui.basic.BasicDatePickerUI");
-    UIManager.put("microba.GradientUI", packagePrefix
-        + "gradient.ui.basic.BasicGradientUI");
-    UIManager.put("microba.GradientEditorUI", packagePrefix
-        + "gradienteditor.ui.basic.BasicGradientEditorUI");
-    UIManager.put("microba.MarkerBarUI", packagePrefix
-        + "marker.ui.basic.BasicMarkerBarUI");
+    UIManager.put("microba.CalendarPaneUI", packagePrefix + "calendar.ui.basic.BasicCalendarPaneUI");
+    UIManager.put("microba.DatePickerUI", packagePrefix + "calendar.ui.basic.BasicDatePickerUI");
+    UIManager.put("microba.GradientUI", packagePrefix + "gradient.ui.basic.BasicGradientUI");
+    UIManager.put("microba.GradientEditorUI", packagePrefix + "gradienteditor.ui.basic.BasicGradientEditorUI");
+    UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.basic.BasicMarkerBarUI");
 
     // particular L&F
     if (lookAndFeel.getID().equals("Windows")) {
-      UIManager.put("microba.MarkerBarUI", packagePrefix
-          + "marker.ui.windows.WindowsMarkerBarUI");
+      UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.windows.WindowsMarkerBarUI");
     } else if (lookAndFeel.getID().equals("Metal")) {
-      UIManager.put("microba.MarkerBarUI", packagePrefix
-          + "marker.ui.metal.MetalMarkerBarUI");
+      UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.metal.MetalMarkerBarUI");
     } else if (lookAndFeel.getID().equals("Motif")) {
-      UIManager.put("microba.MarkerBarUI", packagePrefix
-          + "marker.ui.motif.MotifMarkerBarUI");
+      UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.motif.MotifMarkerBarUI");
     }
-
   }
 
   private static final class UIChangeListener implements
