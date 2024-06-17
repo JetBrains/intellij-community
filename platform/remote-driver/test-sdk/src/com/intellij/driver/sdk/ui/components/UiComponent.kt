@@ -3,6 +3,8 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Driver
 import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.model.TextData
+import com.intellij.driver.sdk.screenshot.takeScreenshot
+import com.intellij.driver.sdk.screenshot.toBufferedImage
 import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT_SECONDS
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.SearchContext
@@ -13,8 +15,11 @@ import com.intellij.driver.sdk.ui.remote.Robot
 import com.intellij.driver.sdk.ui.remote.RobotProvider
 import com.intellij.driver.sdk.ui.remote.SearchService
 import com.intellij.driver.sdk.waitFor
+import com.intellij.openapi.util.SystemInfo
 import java.awt.Color
 import java.awt.Point
+import java.awt.Rectangle
+import java.awt.image.BufferedImage
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -29,7 +34,8 @@ data class ComponentData(val xpath: String,
 open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   private var cachedComponent: Component? = null
   val component: Component
-    get() = data.foundComponent ?: kotlin.runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull() ?: findThisComponent().apply { cachedComponent = this }
+    get() = data.foundComponent ?: kotlin.runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull()
+            ?: findThisComponent().apply { cachedComponent = this }
 
   fun setFocus() {
     robot.focus(this.component)
@@ -39,7 +45,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     lateinit var result: List<Component>
     var actual = 0
     waitFor(DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
-            errorMessage = {"Can't find component with '${data.xpath}' in ${data.parentSearchContext.context.takeIf { it.isNotEmpty() } ?: "whole hierarchy"}, expected 1, but got ${actual}"})  {
+            errorMessage = { "Can't find component with '${data.xpath}' in ${data.parentSearchContext.context.takeIf { it.isNotEmpty() } ?: "whole hierarchy"}, expected 1, but got ${actual}" }) {
       result = data.parentSearchContext.findAll(data.xpath)
       actual = result.size
       result.size == 1
@@ -85,7 +91,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return allTexts.first { it.text == text }
   }
 
-  fun findOne(text: String, duration: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds) : UiText {
+  fun findOne(text: String, duration: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds): UiText {
     var allTexts = emptyList<UiText>()
     waitFor(duration, errorMessage = "Can't find '$text' in ${data.parentSearchContext.context}") {
       allTexts = findAllText()
@@ -104,7 +110,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       allTexts = findAllText()
       allTexts.any { it.text.contains(text, ignoreCase = ignoreCase) }
     }
-    val filteredTexts = allTexts.filter { it.text.contains(text, ignoreCase = ignoreCase)}
+    val filteredTexts = allTexts.filter { it.text.contains(text, ignoreCase = ignoreCase) }
     if (filteredTexts.size > 1) {
       throw AssertionError("Found ${filteredTexts.size} texts '$text', expected 1")
     }
@@ -117,7 +123,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }.isNotEmpty()
   }
 
-  fun hasTextSequence(vararg texts: String,indexOffset: Int = 0): Boolean {
+  fun hasTextSequence(vararg texts: String, indexOffset: Int = 0): Boolean {
     require(indexOffset >= 0) { "Value must be non-negative" }
     val stringList = texts.toList()
     val uiTextList = findAllText()
@@ -165,6 +171,18 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     val components = searchContext.findAll(component.data.xpath)
     if (components.isEmpty()) return false
     return components.any { it.isVisible() }
+  }
+
+  fun getScreenshot(): BufferedImage {
+    val screenshot = takeScreenshot(Rectangle(component.getLocationOnScreen().x, component.getLocationOnScreen().y, component.width, component.height))
+    if (SystemInfo.isWindows && this is DialogUiComponent)
+      return screenshot.getSubimage(
+        7,
+        0,
+        component.width - 14,
+        component.height - 7
+      )
+    return screenshot
   }
 
   // Mouse
