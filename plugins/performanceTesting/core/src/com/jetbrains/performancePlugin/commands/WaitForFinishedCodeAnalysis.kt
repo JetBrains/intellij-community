@@ -113,7 +113,11 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
         locked = false
       }
       else {
-        sessions.forEach { printCodeAnalyzerStatistis(it.key.editor) }
+        //Printing additional information to get information why huglighting was stucked
+        sessions.forEach {
+          printCodeAnalyzerStatistis(it.key.editor)
+          printFileStatus(it.key.editor)
+        }
         LOG.info("Highlighting still in progress: ${sessions.keys.joinToString(separator = ",\n") { it.description }}")
       }
     }
@@ -254,6 +258,19 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
       LOG.warn("Print Analyzer status failed")
     }
   }
+
+  internal fun printFileStatus(editor: Editor) {
+    try {
+      val fileStatus = (DaemonCodeAnalyzerImpl.getInstance(project) as DaemonCodeAnalyzerImpl)
+        .fileStatusMap
+        .toString(editor.document)
+      LOG.info("File status map $fileStatus")
+    }
+    catch (throwable: Throwable) {
+      LOG.warn("Print Analyzer status map failed")
+    }
+  }
+
 }
 
 private class SimpleEditedDocumentsListener(private val project: Project) : BulkAwareDocumentListener.Simple {
