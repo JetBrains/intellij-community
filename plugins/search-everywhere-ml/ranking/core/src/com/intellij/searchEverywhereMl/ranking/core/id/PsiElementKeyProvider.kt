@@ -8,7 +8,7 @@ private class PsiElementKeyProvider : SearchEverywhereElementKeyProvider {
   override fun getKeyOrNull(element: Any): Any? {
     return when (element) {
       is PsiElement -> element
-      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> element.item
+      is PSIPresentationBgRendererWrapper.ItemWithPresentation<*> -> element.item
       else -> null
     }
   }
