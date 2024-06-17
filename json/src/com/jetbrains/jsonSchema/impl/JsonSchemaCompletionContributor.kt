@@ -166,27 +166,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       }
     }
 
-    fun addIfThenElsePropertyNameVariants(schema: JsonSchemaObject,
-                                          forbiddenNames: Set<String>,
-                                          adapter: JsonPropertyAdapter?,
-                                          knownNames: MutableSet<String>,
-                                          completionPath: SchemaPath?) {
-      val ifThenElseList = schema.ifThenElse ?: return
-
-      val walker = JsonLikePsiWalker.getWalker(position, schema)
-      val propertyAdapter = walker?.getParentPropertyAdapter(position) ?: return
-
-      val parentObject = propertyAdapter.parentObject ?: return
-
-      for (ifThenElse in ifThenElseList) {
-        val effectiveBranch = ifThenElse.effectiveBranchOrNull(myProject, parentObject)
-        if (effectiveBranch == null) continue
-
-        addAllPropertyVariants(effectiveBranch, forbiddenNames,
-                               adapter, knownNames, completionPath)
-      }
-    }
-
     fun addAllPropertyVariants(schema: JsonSchemaObject,
                                forbiddenNames: Set<String>,
                                adapter: JsonPropertyAdapter?,
