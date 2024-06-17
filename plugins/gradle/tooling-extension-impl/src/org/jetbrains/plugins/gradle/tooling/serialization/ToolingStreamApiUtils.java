@@ -121,6 +121,54 @@ public final class ToolingStreamApiUtils {
     return filePath == null ? null : new File(filePath);
   }
 
+  public static <E> void writeCollection(
+    @NotNull IonWriter writer,
+    @NotNull String fieldName,
+    @NotNull Collection<E> collection,
+    @NotNull ThrowableConsumer<? super E, ? extends IOException> elementWriter
+  ) throws IOException {
+    writer.setFieldName(fieldName);
+    writer.stepIn(IonType.LIST);
+    for (E element : collection) {
+      elementWriter.consume(element);
+    }
+    writer.stepOut();
+  }
+
+  public static <E, C extends Collection<E>> C readCollection(
+    @NotNull IonReader reader,
+    @Nullable String fieldName,
+    @NotNull Supplier<? extends C> newCollection,
+    @NotNull Supplier<? extends @Nullable E> elementReader
+  ) {
+    reader.next();
+    assertFieldName(reader, fieldName);
+    reader.stepIn();
+    C collection = newCollection.get();
+    E element;
+    while ((element = elementReader.get()) != null) {
+      collection.add(element);
+    }
+    reader.stepOut();
+    return collection;
+  }
+
+  public static <E> List<E> readList(
+    @NotNull IonReader reader,
+    @Nullable String fieldName,
+    @NotNull Supplier<? extends @Nullable E> elementReader
+  ) {
+    return readCollection(reader, fieldName, ArrayList::new, elementReader);
+  }
+
+  public static <E> Set<E> readSet(
+    @NotNull IonReader reader,
+    @Nullable String fieldName,
+    @NotNull Supplier<? extends @Nullable E> elementReader
+  ) {
+    return readCollection(reader, fieldName, LinkedHashSet::new, elementReader);
+  }
+
   public static <K, V> void writeMap(
     @NotNull IonWriter writer,
     @NotNull String fieldName,
@@ -165,44 +213,27 @@ public final class ToolingStreamApiUtils {
     @NotNull String fieldName,
     @NotNull Collection<String> strings
   ) throws IOException {
-    writer.setFieldName(fieldName);
-    writer.stepIn(IonType.LIST);
-    for (String str : strings) {
-      writer.writeString(str);
-    }
-    writer.stepOut();
+    writeCollection(writer, fieldName, strings, it ->
+      writer.writeString(it)
+    );
   }
 
   public static @NotNull List<String> readStringList(
     @NotNull IonReader reader,
     @Nullable String fieldName
   ) {
-    List<String> list = new ArrayList<>();
-    reader.next();
-    assertFieldName(reader, fieldName);
-    reader.stepIn();
-    String nextString;
-    while ((nextString = readString(reader, null)) != null) {
-      list.add(nextString);
-    }
-    reader.stepOut();
-    return list;
+    return readList(reader, fieldName, () ->
+      readString(reader, null)
+    );
   }
 
   public static @NotNull Set<String> readStringSet(
     @NotNull IonReader reader,
     @Nullable String fieldName
   ) {
-    Set<String> set = new HashSet<>();
-    reader.next();
-    assertFieldName(reader, fieldName);
-    reader.stepIn();
-    String nextString;
-    while ((nextString = readString(reader, null)) != null) {
-      set.add(nextString);
-    }
-    reader.stepOut();
-    return set;
+    return readSet(reader, fieldName, () ->
+      readString(reader, null)
+    );
   }
 
   public static void writeFiles(
@@ -210,44 +241,27 @@ public final class ToolingStreamApiUtils {
     @NotNull String fieldName,
     @NotNull Collection<File> files
   ) throws IOException {
-    writer.setFieldName(fieldName);
-    writer.stepIn(IonType.LIST);
-    for (File file : files) {
-      writer.writeString(file.getPath());
-    }
-    writer.stepOut();
+    writeCollection(writer, fieldName, files, it ->
+      writer.writeString(it.getPath())
+    );
   }
 
   public static @NotNull List<File> readFileList(
     @NotNull IonReader reader,
     @Nullable String fieldName
   ) {
-    reader.next();
-    assertFieldName(reader, fieldName);
-    List<File> list = new ArrayList<>();
-    reader.stepIn();
-    File file;
-    while ((file = readFile(reader, null)) != null) {
-      list.add(file);
-    }
-    reader.stepOut();
-    return list;
+    return readList(reader, fieldName, () ->
+      readFile(reader, null)
+    );
   }
 
   public static @NotNull Set<File> readFileSet(
     @NotNull IonReader reader,
     @Nullable String fieldName
   ) {
-    reader.next();
-    assertFieldName(reader, fieldName);
-    Set<File> set = new HashSet<>();
-    reader.stepIn();
-    File file;
-    while ((file = readFile(reader, null)) != null) {
-      set.add(file);
-    }
-    reader.stepOut();
-    return set;
+    return readSet(reader, fieldName, () ->
+      readFile(reader, null)
+    );
   }
 
   public static void assertFieldName(
