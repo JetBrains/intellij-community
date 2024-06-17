@@ -7,6 +7,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
@@ -15,12 +16,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.io.PathKt;
 import org.jdom.Element;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -261,6 +264,31 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
                    <template name="testTemplate.txt" reformat="true" live-template-enabled="false" enabled="true">
                      <template name="child.txt" file-name="child" reformat="true" live-template-enabled="false" />
                    </template>""", JDOMUtil.writeElement(element));
+  }
+
+  @TestFor(issues = "IJPL-155675")
+  public void testLoadWithChildren() throws IOException {
+    Path tempDir = Files.createTempDirectory(getClass().getSimpleName() + '_' + getTestName(true) + '_');
+    final String templateName = "My Text Template";
+    try {
+      CustomFileTemplate template = new CustomFileTemplate(templateName, "txt");
+      template.setFileName(templateName + "." + template.getExtension());
+      FileUtil.writeToFile(tempDir.resolve(template.getFileName()).toFile(), "aaaaa");
+
+      CustomFileTemplate childTemplate = new CustomFileTemplate(template.getChildName(0), ".props");
+      childTemplate.setFileName(childTemplate.getName() + "." + childTemplate.getExtension());
+      FileUtil.writeToFile(tempDir.resolve(childTemplate.getFileName()).toFile(), "bbb=ccc");
+
+
+      FTManager ftManager = new FTManager("My tests", tempDir);
+      ftManager.loadCustomizedContent();
+      FileTemplateBase loadedTemplate = ftManager.getTemplate(template.getFileName());
+      assertNotNull(loadedTemplate);
+      assertEquals("Should have exactly one child", 1, loadedTemplate.getChildren().length);
+    }
+    finally {
+      NioFiles.deleteRecursively(tempDir);
+    }
   }
 
   private FileTemplateManagerImpl myTemplateManager;
