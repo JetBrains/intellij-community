@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.function.Function;
 
 final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 11);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 12);
   private static final EnumEventField<Settings> SETTING_ID = EventFields.Enum("setting_id", Settings.class, it -> it.internalName);
   private static final IntEventField INT_VALUE_FIELD = EventFields.Int("value");
   private static final StringEventField TRAILING_SPACES_FIELD = EventFields.String("value", List.of("Whole", "Changed", "None"));
@@ -69,6 +69,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     addBoolIfDiffers(set, es, esDefault, s -> s.isBlinkCaret(), Settings.BLINKING_CARET);
     addIfDiffers(set, es, esDefault, s -> s.getBlinkPeriod(), Settings.BLINK_PERIOD, INT_VALUE_FIELD);
     addBoolIfDiffers(set, es, esDefault, s -> s.isBlockCursor(), Settings.BLOCK_CARET);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isHighlightSelectionOccurrences(), Settings.SELECTION_OCCURRENCES_HIGHLIGHT);
     addBoolIfDiffers(set, es, esDefault, s -> s.isRightMarginShown(), Settings.RIGHT_MARGIN);
     addBoolIfDiffers(set, es, esDefault, s -> s.isLineNumbersShown(), Settings.LINE_NUMBERS);
     addBoolIfDiffers(set, es, esDefault, s -> s.areGutterIconsShown(), Settings.GUTTER_ICONS);
@@ -255,6 +256,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     QUICK_DOC_ON_MOUSE_HOVER("quickDocOnMouseHover"),
     BLINKING_CARET("blinkingCaret"),
     BLOCK_CARET("blockCaret"),
+    SELECTION_OCCURRENCES_HIGHLIGHT("selectionOccurrencesHighlight"),
     RIGHT_MARGIN("rightMargin"),
     LINE_NUMBERS("lineNumbers"),
     GUTTER_ICONS("gutterIcons"),
