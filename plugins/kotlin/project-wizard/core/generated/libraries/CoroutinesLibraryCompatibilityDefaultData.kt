@@ -12,7 +12,8 @@ internal val COROUTINES_LIBRARY_COMPATIBILITY_DEFAULT_DATA = KotlinLibraryCompat
     groupId = "org.jetbrains.kotlinx",
     artifactId = "kotlinx-coroutines-core",
     versions = mapOf(
-        "1.9" to "1.8.0",
+        "2.0" to "1.8.1",
+        "1.9" to "1.8.1",
         "1.8" to "1.7.3",
         "1.6" to "1.6.4",
         "1.5" to "1.5.2",
