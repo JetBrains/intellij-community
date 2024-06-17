@@ -11,7 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 @TestApplication
-class JUnit5ModuleTest {
+class JUnit5ModuleFixtureTest {
 
   private companion object {
     val sharedProject = projectFixture()
