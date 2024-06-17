@@ -6,7 +6,10 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.*
+import com.intellij.ui.LoadingNode
+import com.intellij.ui.PlaceProvider
+import com.intellij.ui.SimpleColoredText
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
 import com.intellij.ui.content.AlertIcon
 import com.intellij.ui.tabs.impl.JBTabsImpl
@@ -36,6 +39,7 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     const val ALERT_STATUS: String = "alertStatus"
     const val HIDDEN: String = "hidden"
     const val ENABLED: String = "enabled"
+    const val PINNED: String = "pinned"
 
     private val DEFAULT_ALERT_ICON = AlertIcon(AllIcons.Nodes.TabAlert, 0, -JBUI.scale(6))
   }
@@ -204,8 +208,13 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     return this
   }
 
-  val isPinned: Boolean
-    get() = ClientProperty.isTrue(component, JBTabsImpl.PINNED)
+  var isPinned: Boolean = false
+    set(pinned) {
+      val old = field
+      field = pinned
+      component.putClientProperty(JBTabsImpl.PINNED, if (field) true else null)
+      changeSupport.firePropertyChange(PINNED, old, field)
+    }
 
   val text: @NlsContexts.TabTitle String
     get() = coloredText.toString()

@@ -37,7 +37,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.TabsUtil
-import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
@@ -323,14 +322,20 @@ class EditorWindow internal constructor(
     options: FileEditorOpenOptions,
     isNewEditor: Boolean,
   ) {
-    val isPreviewMode = (isNewEditor || composite.isPreview) && shouldReservePreview(composite.file, options, owner.manager.project)
-    composite.isPreview = isPreviewMode
     if (isNewEditor) {
+      val isPinned = options.pin ||
+                     file.getUserData(DRAG_START_PINNED_KEY)?.takeIf {
+                       file.getUserData(DRAG_START_LOCATION_HASH_KEY) != System.identityHashCode(tabbedPane.tabs) ||
+                       file.getUserData(DRAG_START_INDEX_KEY) != -1
+                     } ?: composite.isPinned
+      val isPreview = !isPinned && shouldReservePreview(composite.file, options, owner.manager.project)
+      composite.isPreview = isPreview
+
       owner.scheduleUpdateFileIcon(file)
 
       var indexToInsert = options.index
       if (indexToInsert == -1) {
-        if (isPreviewMode) {
+        if (isPreview) {
           indexToInsert = composites().indexOfLast { it.isPreview }
         }
         if (indexToInsert == -1) {
@@ -347,6 +352,7 @@ class EditorWindow internal constructor(
         indexToInsert = indexToInsert,
         selectedEditor = composite.selectedEditor,
         parentDisposable = composite,
+        pin = isPinned
       )
 
       composite.coroutineScope.launch {
@@ -355,32 +361,18 @@ class EditorWindow internal constructor(
         }
       }
 
-      var dragStartIndex: Int? = null
-      val hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY)
-      if (hash != null && System.identityHashCode(tabbedPane.tabs) == hash) {
-        dragStartIndex = file.getUserData(DRAG_START_INDEX_KEY)
-      }
-      if (dragStartIndex == null || dragStartIndex != -1) {
-        val initialPinned = file.getUserData(DRAG_START_PINNED_KEY)
-        if (initialPinned != null) {
-          composite.isPinned = initialPinned
-        }
-        else if (composite.isPinned) {
-          composite.isPinned = true
-        }
-      }
       file.putUserData(DRAG_START_LOCATION_HASH_KEY, null)
       file.putUserData(DRAG_START_INDEX_KEY, null)
       file.putUserData(DRAG_START_PINNED_KEY, null)
 
       trimToSize(fileToIgnore = file, transferFocus = false)
     }
+    else {
+      composite.isPreview = !options.pin && composite.isPreview && shouldReservePreview(composite.file, options, owner.manager.project)
+      if (options.pin) setFilePinned(file = file, pinned = true)
+    }
 
     owner.scheduleUpdateFileColor(file)
-
-    if (options.pin) {
-      setFilePinned(composite = composite, pinned = true)
-    }
 
     if (options.selectAsCurrent) {
       setCurrentCompositeAndSelectTab(composite)
@@ -504,7 +496,7 @@ class EditorWindow internal constructor(
       options = FileEditorOpenOptions(
         requestFocus = focusNew,
         isExactState = true,
-        pin = getComposite(nextFile)?.isPinned ?: false,
+        pin = findTabByFile(nextFile)?.isPinned ?: false,
         selectAsCurrent = focusNew,
       ),
     ) ?: return newWindow
@@ -633,7 +625,7 @@ class EditorWindow internal constructor(
         if (componentIndex >= 0) {
           val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
 
-          removedTabs.addLast(Pair(file.url, FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned)))
+          removedTabs.addLast(Pair(file.url, FileEditorOpenOptions(index = componentIndex, pin = isFilePinned(file))))
           if (removedTabs.size >= tabLimit) {
             removedTabs.removeFirst()
           }
@@ -927,23 +919,11 @@ class EditorWindow internal constructor(
   fun isFileOpen(file: VirtualFile): Boolean = getComposite(file) != null
 
   fun isFilePinned(file: VirtualFile): Boolean {
-    return requireNotNull(getComposite(file)) { "file is not open: $file" }.isPinned
+    return requireNotNull(findTabByFile(file)) { "file is not open: $file" }.isPinned
   }
 
   fun setFilePinned(file: VirtualFile, pinned: Boolean) {
-    setFilePinned(composite = requireNotNull(getComposite(file)) { "file is not open: $file" }, pinned = pinned)
-  }
-
-  private fun setFilePinned(composite: EditorComposite, pinned: Boolean) {
-    val wasPinned = composite.isPinned
-    composite.isPinned = pinned
-    if (pinned && composite.isPreview) {
-      composite.isPreview = false
-      owner.scheduleUpdateFileColor(composite.file)
-    }
-    if (wasPinned != pinned && EDT.isCurrentThreadEdt()) {
-      (tabbedPane.tabs as? JBTabsImpl)?.doLayout()
-    }
+    requireNotNull(findTabByFile(file)) { "file is not open: $file" }.isPinned = pinned
   }
 
   fun trimToSize(fileToIgnore: VirtualFile?, transferFocus: Boolean) {
@@ -1044,7 +1024,7 @@ class EditorWindow internal constructor(
     }
 
     val composite = getComposite(file) ?: return false
-    if (composite.isPinned || file == fileToIgnore) {
+    if (isFilePinned(file) || file == fileToIgnore) {
       return false
     }
 

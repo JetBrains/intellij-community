@@ -2096,18 +2096,14 @@ open class FileEditorManagerImpl(
         composite.initDeferred.complete(Unit)
       }
 
-      if (fileEntry.pinned) {
-        composite.isPinned = true
-      }
-      else {
-        if (when {
-            !uiSettings.openInPreviewTabIfPossible -> false
-            fileEntry.isPreview -> true
-            !fileEntry.currentInTab -> false
-            else -> false
-          }) {
-          composite.isPreview = true
-        }
+      if (when {
+          fileEntry.pinned -> false
+          !uiSettings.openInPreviewTabIfPossible -> false
+          fileEntry.isPreview -> true
+          !fileEntry.currentInTab -> false
+          else -> false
+        }) {
+        composite.isPreview = true
       }
 
       tabs.add(createTabInfo(
