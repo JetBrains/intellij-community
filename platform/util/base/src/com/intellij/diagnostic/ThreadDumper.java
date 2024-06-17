@@ -26,6 +26,15 @@ public final class ThreadDumper {
   private ThreadDumper() {
   }
 
+  /**
+   * Evaluate to get coroutine dump in debug sessions
+   * @noinspection unused
+   */
+  @Internal
+  public static @NotNull String dumpForDebug() {
+    return getThreadDumpInfo(getThreadInfos(), true).getRawDump();
+  }
+
   public static @NotNull String dumpThreadsToString() {
     StringWriter writer = new StringWriter();
     dumpThreadInfos(getThreadInfos(), writer);
