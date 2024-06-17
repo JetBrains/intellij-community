@@ -73,6 +73,7 @@
     "com.intellij.database:app:SqlEditorOptions.schemaQualification",
     "com.intellij.database:app:SqlEditorOptions.tableQualification",
     "com.intellij.database:app:SqlFoldingSettings.*",
+    "com.intellij:app:BaseRefactoringSettings.*",
     "com.intellij:app:EmmetOptions.*",
     "com.intellij:app:GeneralSettings.autoSaveFiles",
     "com.intellij:app:GeneralSettings.autoSaveIfInactive",
