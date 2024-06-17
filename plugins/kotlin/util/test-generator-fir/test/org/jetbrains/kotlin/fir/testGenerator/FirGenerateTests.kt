@@ -76,7 +76,6 @@ fun generateK2Tests(isUpToDateCheck: Boolean = false) {
 
 private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     generateK2CodeInsightTests()
-    generateK2Fe10BindingsTests()
     generateK2NavigationTests()
     generateK2DebuggerTests()
     generateK2HighlighterTests()
