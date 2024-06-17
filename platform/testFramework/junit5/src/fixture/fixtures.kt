@@ -9,9 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 
+@TestOnly
 fun tempPathFixture(root: Path? = null): TestFixture<Path> = testFixture {
   val tempDir = withContext(Dispatchers.IO) {
     if (root == null) {
@@ -28,6 +30,7 @@ fun tempPathFixture(root: Path? = null): TestFixture<Path> = testFixture {
   }
 }
 
+@TestOnly
 fun projectFixture(
   pathFixture: TestFixture<Path> = tempPathFixture(null),
   openProjectTask: OpenProjectTask = OpenProjectTask.build(),
@@ -39,6 +42,7 @@ fun projectFixture(
   }
 }
 
+@TestOnly
 fun TestFixture<Project>.moduleFixture(
   name: String? = null,
 ): TestFixture<Module> = testFixture(name ?: "unnamed module") { id ->
@@ -54,6 +58,7 @@ fun TestFixture<Project>.moduleFixture(
   }
 }
 
+@TestOnly
 fun TestFixture<Project>.moduleFixture(
   pathFixture: TestFixture<Path>,
 ): TestFixture<Module> = testFixture { _ ->

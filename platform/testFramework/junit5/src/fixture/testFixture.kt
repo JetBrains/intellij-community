@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.fixture
 
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
+import org.jetbrains.annotations.TestOnly
+
 /**
  * Main building block for fixtures.
  * The [initializer] shall provide logic about how to build and destroy a fixture.
@@ -20,6 +23,7 @@ package com.intellij.testFramework.junit5.fixture
  * }
  * ```
  */
+@TestOnly
 fun <T> testFixture(debugString: String = "", initializer: TestFixtureInitializer<T>): TestFixture<T> {
   return TestFixtureImpl(debugString, initializer)
 }
@@ -44,6 +48,7 @@ fun interface TestFixtureInitializer<T> {
    *
    * TODO consider passing whole ExtensionContext here
    */
+  @OverrideOnly
   suspend fun R<T>.initFixture(uniqueId: String): InitializedTestFixture<T>
 
   sealed interface InitializedTestFixture<T>
