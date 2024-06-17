@@ -116,6 +116,7 @@
     "com.intellij:app:Vcs-Log-App-Settings.show_changes_from_parents",
     "com.intellij:app:Vcs-Log-App-Settings.show_tag_names",
     "com.intellij:app:XmlEditorOptions.*",
+    "com.intellij:app:XmlFoldingSettings.*",
     "com.intellij.css:app:CssEmmetOptions.*",
     "com.intellij.java-i18n:app:PropertiesFoldingSettings.*",
     "com.intellij.javaee.jpa:app:JpaQlFoldingSettings.*",
