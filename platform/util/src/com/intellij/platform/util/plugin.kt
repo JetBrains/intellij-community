@@ -43,6 +43,12 @@ fun putMoreLikelyPluginJarsFirst(pluginDirName: String, filesInLibUnderPluginDir
     if (o2EndsWithIdea != o1EndsWithIdea) {
       return@Comparator if (o2EndsWithIdea) 1 else -1
     }
+
+    val o2IsDbPlugin = o2Name == "database-plugin.jar"
+    val o1IsDbPlugin = o1Name == "database-plugin.jar"
+    if (o2IsDbPlugin != o1IsDbPlugin) {
+      return@Comparator if (o2IsDbPlugin) 1 else -1
+    }
     o1Name.length - o2Name.length
   })
 }
