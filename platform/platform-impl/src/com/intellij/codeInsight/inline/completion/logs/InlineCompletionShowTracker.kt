@@ -100,7 +100,7 @@ internal class InlineCompletionShowTracker(
         initialOffset = request.endOffset,
         insertOffset = lastOffset,
         variantStates[it].finalSuggestion,
-        getDurationSteps(),
+        getDurations(),
       )
     }
   }
@@ -130,11 +130,11 @@ internal class InlineCompletionShowTracker(
     InlineCompletionUsageTracker.SHOWN_EVENT.log(data)
   }
 
-  private fun getDurationSteps(): List<Duration> =
+  private fun getDurations(): List<Duration> =
     if (ApplicationManager.getApplication().isUnitTestMode) {
       listOf(Duration.ofMillis(TEST_CHECK_STATE_AFTER_MLS))
     } else {
-      listOf(Duration.ofSeconds(10), Duration.ofSeconds(20), Duration.ofSeconds(30), Duration.ofMinutes(4))
+      listOf(Duration.ofSeconds(10), Duration.ofSeconds(30), Duration.ofMinutes(1), Duration.ofMinutes(5))
     }
 
   private fun extendVariantsNumber(atLeast: Int) {
