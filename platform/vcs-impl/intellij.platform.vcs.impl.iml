@@ -55,7 +55,6 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="library" name="caffeine" level="project" />
-    <orderEntry type="library" name="microba" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
@@ -70,5 +69,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.microba" />
   </component>
 </module>
