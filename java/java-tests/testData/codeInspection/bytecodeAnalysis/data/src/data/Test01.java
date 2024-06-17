@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Objects;
 import java.util.ArrayList;
 
 @SuppressWarnings({"unused", "IOResourceOpenedButNotSafelyClosed"})
@@ -43,6 +44,11 @@ public class Test01 {
     if (!val) {
       throw new RuntimeException(createMessage(s1, s2));
     }
+  }
+
+  static @ExpectNotNull Runnable doubleCheck(Object obj) {
+    checkNotNullVoid(obj, "obj");
+    return checkNotNull(obj, "obj")::hashCode;
   }
 
   native static String createMessage(String s1, String s2);
