@@ -2772,6 +2772,12 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - isFileUnderVcs(com.intellij.psi.PsiFile):java.lang.Boolean
 - markFilesDirty(com.intellij.openapi.project.Project,java.util.List):V
 - runHeavyModificationTask(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,java.lang.Runnable):V
+f:com.intellij.codeInsight.actions.VisualFormattingSchemesCombo
+- com.intellij.application.options.schemes.SchemesCombo
+- <init>(com.intellij.openapi.project.Project):V
+- f:onApply(com.intellij.codeInsight.actions.ReaderModeSettings):V
+- f:onIsModified(com.intellij.codeInsight.actions.ReaderModeSettings):Z
+- f:onReset(com.intellij.codeInsight.actions.ReaderModeSettings):V
 a:com.intellij.codeInsight.actions.onSave.ActionOnSaveInfoBase
 - com.intellij.ide.actionsOnSave.ActionOnSaveInfo
 - <init>(com.intellij.ide.actionsOnSave.ActionOnSaveContext,java.lang.String,java.lang.String,Z):V

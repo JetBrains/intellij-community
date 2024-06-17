@@ -16,14 +16,30 @@ class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
                          @ApiStatus.Internal val getter: () -> Boolean,
                          @ApiStatus.Internal val setter: (value: Boolean) -> Unit,
                          internal val comment: @NlsContexts.DetailedDescription String? = null,
-                         internal val commentAction: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE,
+                         internal val commentAction: HyperlinkEventAction? = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE,
                          internal val groupName: @Nls String? = null) {
   constructor(name: @NlsContexts.Checkbox String,
               mutableProperty: KMutableProperty0<Boolean>,
               comment: @NlsContexts.DetailedDescription String? = null,
-              commentAction: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE,
+              commentAction: HyperlinkEventAction? = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE,
               groupName: @Nls String? = null)
     : this(name, { mutableProperty.get() }, { mutableProperty.set(it) }, comment, commentAction, groupName)
+
+  // Preserve binary compatibility with these constructors
+  constructor(
+    name: @NlsContexts.Checkbox String,
+    getter: () -> Boolean,
+    setter: (value: Boolean) -> Unit,
+    comment: @NlsContexts.DetailedDescription String? = null,
+    groupName: @Nls String? = null
+  ) : this(name, getter, setter, comment, /*commentAction = */null, groupName)
+
+  constructor(
+    name: @NlsContexts.Checkbox String,
+    mutableProperty: KMutableProperty0<Boolean>,
+    comment: @NlsContexts.DetailedDescription String? = null,
+    groupName: @Nls String? = null
+  ) : this(name, mutableProperty, comment, /*commentAction = */null, groupName)
 
   fun asUiOptionDescriptor(): BooleanOptionDescription {
     return asOptionDescriptor {
@@ -54,6 +70,11 @@ class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
 fun Row.checkBox(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBCheckBox> {
   val result = checkBox(ui.name)
     .bindSelected(ui.getter, ui.setter)
-  ui.comment?.let { result.comment(it, action = ui.commentAction) }
+  ui.comment?.let {
+    if (ui.commentAction != null)
+      result.comment(it, action = ui.commentAction)
+    else
+      result.comment(it)
+  }
   return result
 }

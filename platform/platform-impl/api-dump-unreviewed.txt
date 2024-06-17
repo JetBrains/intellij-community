@@ -453,8 +453,12 @@ f:com.intellij.application.options.colors.highlighting.RendererWrapper
 - calcWidthInPixels(com.intellij.openapi.editor.Inlay):I
 - paint(com.intellij.openapi.editor.Inlay,java.awt.Graphics,java.awt.Rectangle,com.intellij.openapi.editor.markup.TextAttributes):V
 f:com.intellij.application.options.editor.CheckboxDescriptor
+- <init>(java.lang.String,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.String,com.intellij.ui.dsl.builder.HyperlinkEventAction,java.lang.String):V
+- b:<init>(java.lang.String,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.String,com.intellij.ui.dsl.builder.HyperlinkEventAction,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.String,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.String,java.lang.String):V
 - b:<init>(java.lang.String,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,kotlin.reflect.KMutableProperty0,java.lang.String,com.intellij.ui.dsl.builder.HyperlinkEventAction,java.lang.String):V
+- b:<init>(java.lang.String,kotlin.reflect.KMutableProperty0,java.lang.String,com.intellij.ui.dsl.builder.HyperlinkEventAction,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.String,kotlin.reflect.KMutableProperty0,java.lang.String,java.lang.String):V
 - b:<init>(java.lang.String,kotlin.reflect.KMutableProperty0,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:asOptionDescriptor():com.intellij.ide.ui.search.BooleanOptionDescription
@@ -3554,6 +3558,18 @@ f:com.intellij.formatting.visualLayer.InlayPresentation
 - f:getFillerLength():I
 - f:getVertical():Z
 - hashCode():I
+f:com.intellij.formatting.visualLayer.PlatformVirtualFormattingIndentGuideInfo
+- com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo
+- <init>():V
+- getVisualFormattingInlineInlays(com.intellij.openapi.editor.Editor,I,I):java.util.List
+- isVirtualFormattingEnabled(com.intellij.openapi.editor.Editor):Z
+com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo
+- sf:Companion:com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo$Companion
+- s:getInstance():com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo
+- a:getVisualFormattingInlineInlays(com.intellij.openapi.editor.Editor,I,I):java.util.List
+- a:isVirtualFormattingEnabled(com.intellij.openapi.editor.Editor):Z
+f:com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo$Companion
+- f:getInstance():com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo
 a:com.intellij.formatting.visualLayer.VisualFormattingLayerElement
 - a:applyToEditor(com.intellij.openapi.editor.Editor):V
 f:com.intellij.formatting.visualLayer.VisualFormattingLayerElement$BlockInlay
