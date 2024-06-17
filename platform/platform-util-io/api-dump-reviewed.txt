@@ -440,3 +440,18 @@ f:com.intellij.util.LocalFileUrl
 - toDecodedForm():java.lang.String
 - toExternalForm():java.lang.String
 - trimParameters():com.intellij.util.Url
+com.intellij.util.Url
+- a:addParameters(java.util.Map):com.intellij.util.Url
+- a:equalsIgnoreCase(com.intellij.util.Url):Z
+- a:equalsIgnoreParameters(com.intellij.util.Url):Z
+- a:getAuthority():java.lang.String
+- a:getParameters():java.lang.String
+- a:getPath():java.lang.String
+- a:getScheme():java.lang.String
+- a:hashCodeCaseInsensitive():I
+- a:isInLocalFileSystem():Z
+- removeParameter(java.lang.String):com.intellij.util.Url
+- a:resolve(java.lang.String):com.intellij.util.Url
+- a:toDecodedForm():java.lang.String
+- a:toExternalForm():java.lang.String
+- a:trimParameters():com.intellij.util.Url
