@@ -25,22 +25,18 @@
 *f:com.intellij.platform.workspace.storage.EntityChange$Added
 - com.intellij.platform.workspace.storage.EntityChange
 - <init>(com.intellij.platform.workspace.storage.WorkspaceEntity):V
-- f:component1():com.intellij.platform.workspace.storage.WorkspaceEntity
 - f:copy(com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.EntityChange$Added
 - bs:copy$default(com.intellij.platform.workspace.storage.EntityChange$Added,com.intellij.platform.workspace.storage.WorkspaceEntity,I,java.lang.Object):com.intellij.platform.workspace.storage.EntityChange$Added
 - equals(java.lang.Object):Z
-- f:getEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - getNewEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - getOldEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - hashCode():I
 *f:com.intellij.platform.workspace.storage.EntityChange$Removed
 - com.intellij.platform.workspace.storage.EntityChange
 - <init>(com.intellij.platform.workspace.storage.WorkspaceEntity):V
-- f:component1():com.intellij.platform.workspace.storage.WorkspaceEntity
 - f:copy(com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.EntityChange$Removed
 - bs:copy$default(com.intellij.platform.workspace.storage.EntityChange$Removed,com.intellij.platform.workspace.storage.WorkspaceEntity,I,java.lang.Object):com.intellij.platform.workspace.storage.EntityChange$Removed
 - equals(java.lang.Object):Z
-- f:getEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - getNewEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - getOldEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - hashCode():I
@@ -87,7 +83,6 @@
 - a:size():I
 *f:com.intellij.platform.workspace.storage.ExternalMappingKey
 - *sf:Companion:com.intellij.platform.workspace.storage.ExternalMappingKey$Companion
-- <init>(java.lang.String):V
 *f:com.intellij.platform.workspace.storage.ExternalMappingKey$Companion
 - f:create(java.lang.String):com.intellij.platform.workspace.storage.ExternalMappingKey
 *@:com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -413,7 +408,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$Simpl
 com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 - com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 - a:index(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.lang.String,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
-- bs:index$default(com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.lang.String,com.intellij.platform.workspace.storage.url.VirtualFileUrl,I,java.lang.Object):V
 com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - a:append(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - a:getFileName():java.lang.String
