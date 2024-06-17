@@ -14,6 +14,9 @@ public interface ParameterInfoUIContext {
   boolean isUIComponentEnabled();
   void setUIComponentEnabled(boolean enabled);
 
+  default void setUIComponentVisible(boolean visible) {}
+  default boolean isUIComponentVisible() { return true; }
+
   int getCurrentParameterIndex();
   PsiElement getParameterOwner();
 
