@@ -3413,6 +3413,7 @@ com.intellij.lang.parameterInfo.ParameterInfoContext
 com.intellij.lang.parameterInfo.ParameterInfoHandler
 - com.intellij.openapi.project.PossiblyDumbAware
 - couldShowInLookup():Z
+- createBottomComponent():javax.swing.JComponent
 - dispose(com.intellij.lang.parameterInfo.DeleteParameterInfoContext):V
 - a:findElementForParameterInfo(com.intellij.lang.parameterInfo.CreateParameterInfoContext):java.lang.Object
 - a:findElementForUpdatingParameterInfo(com.intellij.lang.parameterInfo.UpdateParameterInfoContext):java.lang.Object
@@ -3425,6 +3426,7 @@ com.intellij.lang.parameterInfo.ParameterInfoHandler
 - supportsOverloadSwitching():Z
 - syncUpdateOnCaretMove(com.intellij.lang.parameterInfo.UpdateParameterInfoContext):V
 - tracksParameterIndex():Z
+- updateBottomComponent(javax.swing.JComponent):V
 - a:updateParameterInfo(java.lang.Object,com.intellij.lang.parameterInfo.UpdateParameterInfoContext):V
 - a:updateUI(java.lang.Object,com.intellij.lang.parameterInfo.ParameterInfoUIContext):V
 com.intellij.lang.parameterInfo.ParameterInfoHandlerWithTabActionSupport
@@ -3443,7 +3445,9 @@ com.intellij.lang.parameterInfo.ParameterInfoUIContext
 - a:isSingleOverload():Z
 - a:isSingleParameterInfo():Z
 - a:isUIComponentEnabled():Z
+- isUIComponentVisible():Z
 - a:setUIComponentEnabled(Z):V
+- setUIComponentVisible(Z):V
 - a:setupRawUIComponentPresentation(java.lang.String):V
 - a:setupUIComponentPresentation(java.lang.String,I,I,Z,Z,Z,java.awt.Color):java.lang.String
 com.intellij.lang.parameterInfo.ParameterInfoUIContextEx
