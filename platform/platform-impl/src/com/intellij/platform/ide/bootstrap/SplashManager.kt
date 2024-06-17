@@ -5,6 +5,7 @@ package com.intellij.platform.ide.bootstrap
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -133,6 +134,15 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
         logger<Splash>().warn(e)
         return@span
       }
+
+      // Hide if splash was deactivated because of focusing some other window in the OS (not IDE Frame).
+      splash.addWindowListener(object : WindowAdapter() {
+        override fun windowDeactivated(e: WindowEvent?) {
+          if (ProjectUtil.getRootFrameForWindow(e?.oppositeWindow) == null) {
+            splash.isVisible = false
+          }
+        }
+      })
 
       StartUpMeasurer.addInstantEvent("splash shown")
       try {

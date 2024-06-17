@@ -1,14 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.Gray
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.drawImage
 import java.awt.*
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
 import java.awt.image.BufferedImage
 
 /**
@@ -43,17 +40,6 @@ internal class Splash(private val image: BufferedImage, isAlwaysOnTop: Boolean) 
       }
     }
     location = StartupUiUtil.getCenterPoint(bounds, size)
-
-    if (isAlwaysOnTop) {
-      // Hide if splash was deactivated because of focusing some other window in the OS (not IDE Frame).
-      addWindowListener(object : WindowAdapter() {
-        override fun windowDeactivated(e: WindowEvent?) {
-          if (ProjectUtil.getRootFrameForWindow(e?.oppositeWindow) == null) {
-            isVisible = false
-          }
-        }
-      })
-    }
   }
 
   override fun paint(g: Graphics) {
