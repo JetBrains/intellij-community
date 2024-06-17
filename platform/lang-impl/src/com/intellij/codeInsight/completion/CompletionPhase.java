@@ -118,7 +118,7 @@ public abstract class CompletionPhase implements Disposable {
 
     @Override
     public void dispose() {
-      LOG.debug("Dispose completion phase: " + this, new Throwable());
+      LOG.trace("Dispose completion phase: " + this);
       myRequestCount = 0;
       if (!replaced && indicator != null) {
         indicator.closeAndFinish(true);

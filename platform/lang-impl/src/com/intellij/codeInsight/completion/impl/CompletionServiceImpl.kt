@@ -265,7 +265,7 @@ private class ClientCompletionService(private val appSession: ClientAppSession) 
             .completionPhaseChanged(isCompletionRunning)
         }
 
-        LOG.debug("Dispose old phase :: oldPhase=$oldPhase, newPhase=$phase, indicator=${if (phase.indicator != null) phase.indicator.hashCode() else -1}", Throwable())
+        LOG.trace("Dispose old phase :: oldPhase=$oldPhase, newPhase=$phase, indicator=${if (phase.indicator != null) phase.indicator.hashCode() else -1}")
         Disposer.dispose(oldPhase)
         completionPhaseHolder = CompletionPhaseHolder(phase = phase, phaseTrace = Throwable())
       }
