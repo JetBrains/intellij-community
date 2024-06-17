@@ -285,9 +285,9 @@ final class FTManager {
     }
     catch (IOException e) {
       LOG.error(e);
-      return true;
+      return false;
     }
-    return false;
+    return true;
   }
 
   @NotNull
