@@ -31,7 +31,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 import java.util.*
 
 //TODO better undo support
-class NewThemeAction : AnAction() {
+internal class NewThemeAction : AnAction() {
   private val THEME_JSON_TEMPLATE = "ThemeJson.json"
   private val THEME_PROVIDER_EP_NAME = UIThemeProvider.EP_NAME.name
 
