@@ -33,8 +33,8 @@ internal class JdkWarmupProjectActivity : ProjectActivity {
 
     val jdkName = serviceAsync<EnvironmentService>().getEnvironmentValue(JvmEnvironmentKeyProvider.Keys.JDK_NAME, "warmup_jdk")
     val jdks = ProjectJdkTable.getInstance().allJdks
-    val compatibleJdk = jdks.filter { it.homePath == configuredJdk }.run {
-      find { it.name == jdkName } ?: firstOrNull()
+    val compatibleJdk = jdks.asSequence().filter { it.homePath == configuredJdk }.run {
+      firstOrNull { it.name.startsWith(jdkName) } ?: firstOrNull()
     }
 
     val jdk = compatibleJdk ?: JavaSdk.getInstance().createJdk(createUniqueSdkName(jdkName, jdks.toList()), configuredJdk)
