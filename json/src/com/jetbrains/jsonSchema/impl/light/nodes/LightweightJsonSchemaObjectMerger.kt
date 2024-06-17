@@ -11,6 +11,9 @@ import kotlinx.collections.immutable.toImmutableSet
 internal object LightweightJsonSchemaObjectMerger : JsonSchemaObjectMerger {
   override fun mergeObjects(base: JsonSchemaObject, other: JsonSchemaObject, pointTo: JsonSchemaObject): JsonSchemaObject {
     ProgressManager.checkCanceled()
+    if (base === other) {
+      return base
+    }
     return MergedJsonSchemaObjectView(base, other, pointTo)
   }
 }
@@ -62,6 +65,13 @@ internal fun MergedJsonSchemaObjectView.booleanOr(memberReference: JsonSchemaObj
 internal fun MergedJsonSchemaObjectView.booleanAnd(memberReference: JsonSchemaObject.() -> Boolean): Boolean {
   val first = base.memberReference()
   if (!first) return false
+  ProgressManager.checkCanceled()
+  return other.memberReference()
+}
+
+internal fun MergedJsonSchemaObjectView.booleanAndNullable(memberReference: JsonSchemaObject.() -> Boolean?): Boolean? {
+  val first = base.memberReference()
+  if (first == false) return false
   ProgressManager.checkCanceled()
   return other.memberReference()
 }
