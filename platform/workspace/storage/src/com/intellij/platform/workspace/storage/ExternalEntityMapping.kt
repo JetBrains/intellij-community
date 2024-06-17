@@ -73,7 +73,7 @@ public interface MutableExternalEntityMapping<T> : ExternalEntityMapping<T> {
  * In order to use the key from multiple places, it should be stored in a field.
  */
 // MUST NOT be data class. Each instance is unique
-public class ExternalMappingKey<T>(private val name: String) {
+public class ExternalMappingKey<T> private constructor(private val name: String) {
   override fun toString(): String {
     return "ExternalMappingKey[name=$name]"
   }
