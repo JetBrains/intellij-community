@@ -629,22 +629,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Kconfig for the Zephyr Project", url = "https://github.com/trond-snekvik/vscode-kconfig", version = "1.2.0",
                    attachedTo = "intellij.textmate").mit("https://github.com/trond-snekvik/vscode-kconfig/blob/master/LICENSE"),
     LibraryLicense(name = "KInference",
-                   libraryName = "kinference.core.jvm",
-                   url = "https://packages.jetbrains.team/maven/p/ki/maven",
-                   additionalLibraryNames = listOf(
-                     "kinference.api.jvm",
-                     "kinference.common.utils.jvm",
-                     "kinference.ir.jvm",
-                     "kinference.logger.jvm",
-                     "kinference.model.profiler.jvm",
-                     "kinference.ndarray.api.jvm",
-                     "kinference.ndarray.core.jvm",
-                     "kinference.primitives.annotations.jvm",
-                     "kinference.serializer.protobuf.jvm",
-                     "kinference.serializer.tiled.jvm",
-                     "kinference.core.jvm",
-                     "kinference.utils",
-                   )).apache("https://github.com/JetBrains-Research/kinference/blob/master/LICENSE.txt")
+                   libraryName = "kinference.core",
+                   url = "https://packages.jetbrains.team/maven/p/ki/maven")
+      .apache("https://github.com/JetBrains-Research/kinference/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "Kodein-DI", libraryName = "kodein-di-jvm", url = "https://github.com/kosi-libs/Kodein")
       .mit("https://github.com/kosi-libs/Kodein/blob/master/LICENSE.txt"),
