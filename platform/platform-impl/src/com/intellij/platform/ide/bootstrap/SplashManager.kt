@@ -139,7 +139,7 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
       splash.addWindowListener(object : WindowAdapter() {
         override fun windowDeactivated(e: WindowEvent?) {
           if (ProjectUtil.getRootFrameForWindow(e?.oppositeWindow) == null) {
-            splash.isVisible = false
+            hideSplash()
           }
         }
       })
