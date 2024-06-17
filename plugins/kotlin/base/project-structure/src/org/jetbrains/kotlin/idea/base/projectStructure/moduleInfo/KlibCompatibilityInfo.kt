@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.platform.TargetPlatform
  */
 sealed class KlibCompatibilityInfo(val isCompatible: Boolean) {
     object Compatible : KlibCompatibilityInfo(true)
-    object Pre14Layout : KlibCompatibilityInfo(false)
     class IncompatibleMetadata(val isOlder: Boolean) : KlibCompatibilityInfo(false)
 }
 
@@ -47,10 +46,6 @@ abstract class AbstractKlibLibraryInfo internal constructor(project: Project, li
 
 val KotlinLibrary.compatibilityInfo: KlibCompatibilityInfo
     get() {
-        val hasPre14Manifest = safeRead(false) { has_pre_1_4_manifest }
-        if (hasPre14Manifest)
-            return KlibCompatibilityInfo.Pre14Layout
-
         val metadataVersion = safeRead(null) { metadataVersion }
         return when {
             metadataVersion == null -> {
