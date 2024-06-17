@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 
 /** Describes all the behavior we cover have for common use cases that configure objects to have field only based on a condition. */
@@ -264,8 +265,9 @@ class JsonBySchemaNotRequiredCompletionTest : JsonBySchemaCompletionBaseTest() {
       testBySchema(
         schemaSetup.schemaJson,
         json,
-        "json",
+        "someFile.json",
         LookupElement::getLookupString,
+        CompletionType.SMART,
         *expectedVariants.map { "\"$it\"" }.toTypedArray(),
       )
     }
