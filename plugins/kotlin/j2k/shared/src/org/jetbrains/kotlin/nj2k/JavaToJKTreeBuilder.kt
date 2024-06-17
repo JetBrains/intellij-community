@@ -1154,7 +1154,7 @@ class JavaToJKTreeBuilder(
      * TODO support not only PsiJavaFile but any PsiElement
      */
     private fun collectNullabilityInfo(element: PsiJavaFile) {
-        val nullityInferrer = J2KNullityInferrer(/* annotateLocalVariables = */ true, element.project)
+        val nullityInferrer = J2KNullityInferrer(element.project)
         try {
             nullityInferrer.collect(element)
         } catch (e: ProcessCanceledException) {
