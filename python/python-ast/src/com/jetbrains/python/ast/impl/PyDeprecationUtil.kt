@@ -12,11 +12,10 @@ fun extractDeprecationMessageFromDecorator(element: PyAstDecoratable): String? {
     return null
   }
 
-  val argumentList = deprecatedDecorator.argumentList ?: return null
-
-  if (argumentList.arguments.isEmpty()) {
+  if (deprecatedDecorator.arguments.isEmpty()) {
     return null
   }
-  val argument = argumentList.arguments[0] as? PyAstStringLiteralExpression ?: return null
+
+  val argument = deprecatedDecorator.arguments[0] as? PyAstStringLiteralExpression ?: return null
   return argument.stringValue
 }

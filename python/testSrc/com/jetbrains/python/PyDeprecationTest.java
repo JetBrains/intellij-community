@@ -114,6 +114,12 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
   }
 
+  public void testStubAndPyFile() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFiles("deprecation/usingDeprecatedMethod.py", "deprecation/deprecatedLibrary.py", "deprecation/deprecatedLibrary.pyi");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
   public void testCustomDeprecatedAnnotation() {
     myFixture.enableInspections(PyDeprecationInspection.class);
     myFixture.configureByFile("deprecation/customDeprecatedAnnotation.py");
