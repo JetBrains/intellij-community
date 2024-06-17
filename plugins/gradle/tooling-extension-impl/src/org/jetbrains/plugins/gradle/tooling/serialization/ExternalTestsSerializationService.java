@@ -32,7 +32,7 @@ public final class ExternalTestsSerializationService implements SerializationSer
   @Override
   public byte[] write(ExternalTestsModel testsModel, Class<? extends ExternalTestsModel> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
+    try (IonWriter writer = createIonWriter().build(out)) {
       write(writer, myWriteContext, testsModel);
     }
     return out.toByteArray();
@@ -136,7 +136,7 @@ public final class ExternalTestsSerializationService implements SerializationSer
           DefaultExternalTestSourceMapping mapping = new DefaultExternalTestSourceMapping();
           mapping.setTestName(readString(reader, "testName"));
           mapping.setTestTaskPath(assertNotNull(readString(reader, "testTaskPath")));
-          mapping.setSourceFolders(readStringSet(reader));
+          mapping.setSourceFolders(readStringSet(reader, null));
           return mapping;
         }
       });

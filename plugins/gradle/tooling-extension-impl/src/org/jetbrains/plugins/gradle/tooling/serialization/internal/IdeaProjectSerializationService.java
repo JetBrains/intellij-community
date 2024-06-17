@@ -569,7 +569,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     contentRoot.setTestDirectories(readSourceDirectories(reader, "testDirectories"));
     contentRoot.setResourceDirectories(readSourceDirectories(reader, "resourceDirectories"));
     contentRoot.setTestResourceDirectories(readSourceDirectories(reader, "testResourceDirectories"));
-    contentRoot.setExcludeDirectories(readFilesSet(reader, "excludeDirectories"));
+    contentRoot.setExcludeDirectories(readFileSet(reader, "excludeDirectories"));
     reader.stepOut();
     return contentRoot;
   }

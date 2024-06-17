@@ -469,16 +469,16 @@ public final class ExternalProjectSerializationService implements SerializationS
     DefaultGradleSourceSetModel sourceSetModel = new DefaultGradleSourceSetModel();
     sourceSetModel.setSourceCompatibility(readString(reader, "sourceCompatibility"));
     sourceSetModel.setTargetCompatibility(readString(reader, "targetCompatibility"));
-    sourceSetModel.setTaskArtifacts(readFiles(reader, "taskArtifacts"));
+    sourceSetModel.setTaskArtifacts(readFileList(reader, "taskArtifacts"));
     sourceSetModel.setConfigurationArtifacts(readConfigurationArtifacts(reader));
     sourceSetModel.setSourceSets(readSourceSets(reader, context));
-    sourceSetModel.setAdditionalArtifacts(readFiles(reader));
+    sourceSetModel.setAdditionalArtifacts(readFileList(reader, null));
     reader.stepOut();
     return sourceSetModel;
   }
 
   private static @NotNull Map<String, Set<File>> readConfigurationArtifacts(IonReader reader) {
-    return readMap(reader, "configurationArtifacts", () -> readString(reader, null), () -> readFilesSet(reader));
+    return readMap(reader, "configurationArtifacts", () -> readString(reader, null), () -> readFileSet(reader, null));
   }
 
   private static @NotNull Map<String, DefaultExternalSourceSet> readSourceSets(IonReader reader, ReadContext context) {
@@ -504,7 +504,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     sourceSet.setSourceCompatibility(readString(reader, "sourceCompatibility"));
     sourceSet.setTargetCompatibility(readString(reader, "targetCompatibility"));
     sourceSet.setPreview(readBoolean(reader, "isPreview"));
-    sourceSet.setArtifacts(readFiles(reader));
+    sourceSet.setArtifacts(readFileList(reader, null));
     sourceSet.setDependencies(readDependencies(reader, context));
     sourceSet.setSources(readSourceDirectorySets(reader));
     sourceSet.setJavaToolchainHome(readFile(reader, "javaToolchainHome"));
@@ -532,8 +532,8 @@ public final class ExternalProjectSerializationService implements SerializationS
     ExternalSystemSourceType sourceType = ExternalSystemSourceType.valueOf(assertNotNull(readString(reader, "sourceType")));
     DefaultExternalSourceDirectorySet directorySet = new DefaultExternalSourceDirectorySet();
     directorySet.setName(assertNotNull(readString(reader, "name")));
-    directorySet.setSrcDirs(readFilesSet(reader));
-    directorySet.setGradleOutputDirs(readFiles(reader));
+    directorySet.setSrcDirs(readFileSet(reader, null));
+    directorySet.setGradleOutputDirs(readFileList(reader, null));
     File outputDir = readFile(reader, "outputDir");
     if (outputDir != null) {
       directorySet.setOutputDir(outputDir);
@@ -574,8 +574,8 @@ public final class ExternalProjectSerializationService implements SerializationS
     reader.next();
     reader.stepIn();
     FilePatternSetImpl patternSet = new FilePatternSetImpl();
-    patternSet.setIncludes(readStringSet(reader));
-    patternSet.setExcludes(readStringSet(reader));
+    patternSet.setIncludes(readStringSet(reader, null));
+    patternSet.setExcludes(readStringSet(reader, null));
     reader.stepOut();
     return patternSet;
   }
@@ -633,20 +633,20 @@ public final class ExternalProjectSerializationService implements SerializationS
           }
           else if (externalDependency instanceof DefaultExternalMultiLibraryDependency) {
             DefaultExternalMultiLibraryDependency multiLibraryDependency = (DefaultExternalMultiLibraryDependency)externalDependency;
-            multiLibraryDependency.getFiles().addAll(readFiles(reader));
-            multiLibraryDependency.getSources().addAll(readFiles(reader));
-            multiLibraryDependency.getJavadoc().addAll(readFiles(reader));
+            multiLibraryDependency.getFiles().addAll(readFileList(reader, null));
+            multiLibraryDependency.getSources().addAll(readFileList(reader, null));
+            multiLibraryDependency.getJavadoc().addAll(readFileList(reader, null));
           }
           else if (externalDependency instanceof DefaultExternalProjectDependency) {
             DefaultExternalProjectDependency projectDependency = (DefaultExternalProjectDependency)externalDependency;
             projectDependency.setProjectPath(readString(reader, "projectPath"));
             projectDependency.setConfigurationName(readString(reader, "configurationName"));
-            projectDependency.setProjectDependencyArtifacts(readFiles(reader));
-            projectDependency.setProjectDependencyArtifactsSources(readFiles(reader));
+            projectDependency.setProjectDependencyArtifacts(readFileList(reader, null));
+            projectDependency.setProjectDependencyArtifactsSources(readFileList(reader, null));
           }
           else if (externalDependency instanceof DefaultFileCollectionDependency) {
             DefaultFileCollectionDependency fileCollectionDependency = (DefaultFileCollectionDependency)externalDependency;
-            fileCollectionDependency.setFiles(readFiles(reader));
+            fileCollectionDependency.setFiles(readFileList(reader, null));
             fileCollectionDependency.setExcludedFromIndexing(readBoolean(reader, "excludedFromIndexing"));
           }
           else if (externalDependency instanceof DefaultUnresolvedExternalDependency) {
