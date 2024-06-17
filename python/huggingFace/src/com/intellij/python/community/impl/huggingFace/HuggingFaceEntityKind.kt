@@ -6,5 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 enum class HuggingFaceEntityKind(val urlFragment: String, val printName: String) {
   MODEL("models", "model"),
-  DATASET("datasets", "dataset")
+  DATASET("datasets", "dataset"),
+  SPACE("spaces", "space")
 }
