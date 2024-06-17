@@ -916,6 +916,12 @@
       }
     },
 
+    "LicenseDialog": {
+      "termsAndConditionsForeground": "Gray8",
+      "licenseDetailsForeground": "Gray6",
+      "separatorColor": "Gray9"
+    },
+
     "UnattendedHostStatus": {
       "warningBackground": "Yellow5",
       "warningForeground": "Gray3",

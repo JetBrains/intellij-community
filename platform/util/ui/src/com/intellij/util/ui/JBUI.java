@@ -11,6 +11,7 @@ import com.intellij.ui.border.NamedBorderKt;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -2428,6 +2429,30 @@ public final class JBUI {
 
       public static @NotNull Color getBadgeBackground(boolean hover) {
         return hover ? BADGE_BACKGROUND_HOVER : BADGE_BACKGROUND;
+      }
+    }
+
+    @ApiStatus.Internal
+    public static final class LicenseDialog {
+      private static final @NotNull Color TERMS_AND_CONDITIONS_COLOR =
+        JBColor.namedColor("LicenseDialog.termsAndConditionsForeground", 0x818594, 0x6F737A);
+
+      private static final @NotNull Color LICENSE_DETAILS_COLOR =
+        JBColor.namedColor("LicenseDialog.licenseDetailsForeground", 0xC9CCD6, 0x9DA0A8);
+
+      private static final @NotNull Color SEPARATOR_COLOR =
+        JBColor.namedColor("LicenseDialog.separatorColor", 0x818594, 0x6F737A);
+
+      public static @NotNull Color getTermsAndConditionsForeground() {
+        return TERMS_AND_CONDITIONS_COLOR;
+      }
+
+      public static @NotNull Color getLicenseDetailsColor() {
+        return LICENSE_DETAILS_COLOR;
+      }
+
+      public static @NotNull Color getSeparatorColor() {
+        return SEPARATOR_COLOR;
       }
     }
   }

@@ -2506,6 +2506,18 @@
     },
     {
       "key": "MainWindow.FullScreeControl.Background"
-    }
+    },
+    {
+      "key": "LicenseDialog.termsAndConditionsForeground",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.licenseDetailsForeground",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.separatorColor",
+      "since": "2024.2"
+    },
   ]
 }
