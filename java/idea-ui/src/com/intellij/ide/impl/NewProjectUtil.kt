@@ -177,7 +177,7 @@ object NewProjectUtil {
           project = newProject
           projectName = projectFile.fileName.toString()
           callback = ProjectOpenedCallback { openedProject, module ->
-            if (openedProject != newProject) { // project attached
+            if (openedProject != newProject && module != null) { // project attached
               ApplicationManager.getApplication().invokeLater {
                 moduleConfigurator?.accept(module)
               }

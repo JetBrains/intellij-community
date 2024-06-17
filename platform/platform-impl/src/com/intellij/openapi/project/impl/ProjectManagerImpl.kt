@@ -753,7 +753,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       LifecycleUsageTriggerCollector.onProjectOpened(project)
     }
 
-    options.callback?.projectOpened(project, module ?: ModuleManager.getInstance(project).modules[0])
+    options.callback?.projectOpened(project, module ?: ModuleManager.getInstance(project).modules.firstOrNull())
 
     jpsMetrics.endSpan("project.opening")
     return project
