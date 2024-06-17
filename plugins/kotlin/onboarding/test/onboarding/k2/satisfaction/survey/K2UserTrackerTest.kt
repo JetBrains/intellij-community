@@ -32,7 +32,7 @@ class K2UserTrackerTest: LightJavaCodeInsightFixtureTestCase() {
         instance.switchedToK1 = false
         assertFalse(instance.state.userSawSurvey)
 
-        assertFalse(instance.shouldShowK2FeedbackDialog())
+        assertFalse(instance.shouldShowK2FeedbackDialog(project))
 
         assertFalse(instance.state.userSawSurvey)
     }
@@ -45,7 +45,7 @@ class K2UserTrackerTest: LightJavaCodeInsightFixtureTestCase() {
 
         assertFalse(instance.state.userSawSurvey)
 
-        assertTrue(instance.shouldShowK2FeedbackDialog())
+        assertTrue(instance.shouldShowK2FeedbackDialog(project))
     }
 
     fun `test don't show dialog if less than one day on K2`() {
@@ -56,19 +56,19 @@ class K2UserTrackerTest: LightJavaCodeInsightFixtureTestCase() {
 
         assertFalse(instance.state.userSawSurvey)
 
-        assertFalse(instance.shouldShowK2FeedbackDialog())
+        assertFalse(instance.shouldShowK2FeedbackDialog(project))
 
         assertFalse(instance.state.userSawSurvey)
     }
 
     fun `test show dialog if more than one day on K2`() {
         val instance = createInstance()
-        instance.state.k2UserSince = Instant.now().epochSecond.minus(25 * 60 * 60) // They've been on K2 for 25 hours
+        instance.state.k2UserSince = Instant.now().epochSecond.minus(25 * 60 * 60) // They've been on K2 for 25 hours //
         instance.state.lastSavedPluginMode = PluginModes.K2.value
         instance.k2PluginModeForTests = true
 
         assertFalse(instance.state.userSawSurvey)
 
-        assertTrue(instance.shouldShowK2FeedbackDialog())
+        assertTrue(instance.shouldShowK2FeedbackDialog(project))
     }
 }
