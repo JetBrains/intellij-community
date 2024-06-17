@@ -11,7 +11,9 @@ import java.io.DataOutput
 
 internal class HighlightingMarkupStore(project: Project, coroutineScope: CoroutineScope) : TextEditorCache<FileMarkupInfo>(project, coroutineScope) {
   override fun namePrefix(): String = "persistent-markup"
-  override fun valueExternalizer(): FileMarkupInfoExternalizer = FileMarkupInfoExternalizer
+
+  override fun valueExternalizer(): VersionedExternalizer<FileMarkupInfo> = FileMarkupInfoExternalizer
+
   override fun useHeapCache(): Boolean = false
 
   fun getMarkup(file: VirtualFileWithId): FileMarkupInfo? = cache[file.id]
@@ -23,10 +25,10 @@ internal class HighlightingMarkupStore(project: Project, coroutineScope: Corouti
   fun removeMarkup(file: VirtualFileWithId) {
     cache.remove(file.id)
   }
+}
 
-  object FileMarkupInfoExternalizer : VersionedExternalizer<FileMarkupInfo> {
-    override fun serdeVersion(): Int = 3
-    override fun save(output: DataOutput, value: FileMarkupInfo): Unit = value.bury(output)
-    override fun read(input: DataInput): FileMarkupInfo = FileMarkupInfo.readFileMarkupInfo(input)
-  }
+private object FileMarkupInfoExternalizer : VersionedExternalizer<FileMarkupInfo> {
+  override fun serdeVersion(): Int = 3
+  override fun save(output: DataOutput, value: FileMarkupInfo): Unit = value.bury(output)
+  override fun read(input: DataInput): FileMarkupInfo = FileMarkupInfo.readFileMarkupInfo(input)
 }
