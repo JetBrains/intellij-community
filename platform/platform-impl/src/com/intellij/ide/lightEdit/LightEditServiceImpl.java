@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -58,60 +58,60 @@ public final class LightEditServiceImpl implements LightEditService,
                                                    PersistentStateComponent<LightEditConfiguration> {
   private static final Logger LOG = Logger.getInstance(LightEditServiceImpl.class);
 
-  private LightEditFrameWrapper myFrameWrapper;
-  private final LightEditorManagerImpl myEditorManager;
-  private final LightEditConfiguration myConfiguration = new LightEditConfiguration();
-  private final LightEditProjectManager myLightEditProjectManager = new LightEditProjectManager();
-  private boolean myEditorWindowClosing = false;
-  private boolean mySaveSession;
+  private LightEditFrameWrapper frameWrapper;
+  private final LightEditorManagerImpl editorManager;
+  private final LightEditConfiguration configuration = new LightEditConfiguration();
+  private final LightEditProjectManager lightEditProjectManager = new LightEditProjectManager();
+  private boolean editorWindowClosing = false;
+  private boolean saveSession;
 
   @Override
   public @NotNull LightEditConfiguration getState() {
-    return myConfiguration;
+    return configuration;
   }
 
   @Override
   public void loadState(@NotNull LightEditConfiguration state) {
-    XmlSerializerUtil.copyBean(state, myConfiguration);
+    XmlSerializerUtil.copyBean(state, configuration);
   }
 
   public LightEditServiceImpl() {
-    myEditorManager = new LightEditorManagerImpl(this);
-    myEditorManager.addListener(this);
+    editorManager = new LightEditorManagerImpl(this);
+    editorManager.addListener(this);
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         ((EncodingManagerImpl)EncodingManager.getInstance()).clearDocumentQueue();
-        if (myFrameWrapper != null) {
+        if (frameWrapper != null) {
           closeAndDisposeFrame();
         }
-        Disposer.dispose(myEditorManager);
+        Disposer.dispose(editorManager);
       }
     });
-    Disposer.register(this, myEditorManager);
+    Disposer.register(this, editorManager);
   }
 
   private void init(boolean restoreSession) {
     Project project = getOrCreateProject();
     invokeOnEdt(() -> {
       boolean notify = false;
-      if (myFrameWrapper == null) {
-        mySaveSession = restoreSession;
-        myFrameWrapper = LightEditFrameWrapperKt.allocateLightEditFrame(project, myConfiguration.frameInfo);
+      if (frameWrapper == null) {
+        saveSession = restoreSession;
+        frameWrapper = LightEditFrameWrapperKt.allocateLightEditFrame(project, configuration.frameInfo);
         LOG.info("Frame created");
         if (restoreSession) {
           restoreSession();
         }
         notify = true;
       }
-      IdeFrameImpl frame = myFrameWrapper.getFrame();
+      IdeFrameImpl frame = frameWrapper.getFrame();
       if (!frame.isVisible()) {
         frame.setVisible(true);
         LOG.info("Window opened");
         notify = true;
       }
-      myFrameWrapper.setFrameTitle(getAppName());
+      frameWrapper.setFrameTitle(getAppName());
       if (notify) {
         ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditServiceListener.TOPIC).lightEditWindowOpened(project);
       }
@@ -135,16 +135,16 @@ public final class LightEditServiceImpl implements LightEditService,
 
   @Override
   public @Nullable Project getProject() {
-    return myLightEditProjectManager.getProject();
+    return lightEditProjectManager.getProject();
   }
 
   @NotNull Project getOrCreateProject() {
-    return myLightEditProjectManager.getOrCreateProject();
+    return lightEditProjectManager.getOrCreateProject();
   }
 
   @Override
   public @NotNull Project openFile(@NotNull VirtualFile file) {
-    Project project = myLightEditProjectManager.getOrCreateProject();
+    Project project = lightEditProjectManager.getOrCreateProject();
     LightEditUtil.LightEditCommandLineOptions commandLineOptions = LightEditUtil.getCommandLineOptions();
     doWhenActionManagerInitialized(() -> {
       doOpenFile(file, commandLineOptions == null || !commandLineOptions.shouldWait());
@@ -176,15 +176,15 @@ public final class LightEditServiceImpl implements LightEditService,
 
   private void doOpenFile(@NotNull VirtualFile file, boolean restoreSession) {
     doShowEditorWindow(restoreSession);
-    LightEditorInfo openEditorInfo = myEditorManager.findOpen(file);
+    LightEditorInfo openEditorInfo = editorManager.findOpen(file);
     if (openEditorInfo == null) {
-      LightEditorInfo newEditorInfo = myEditorManager.createEditor(file);
+      LightEditorInfo newEditorInfo = editorManager.createEditor(file);
       if (newEditorInfo != null) {
         addEditorTab(newEditorInfo);
         LOG.info("Opened new tab for " + file.getPresentableUrl());
         if (Boolean.TRUE.equals(file.getUserData(LightEditUtil.SUGGEST_SWITCH_TO_PROJECT))) {
           file.putUserData(LightEditUtil.SUGGEST_SWITCH_TO_PROJECT, null);
-          if (!LightEditConfiguration.PreferredMode.LightEdit.equals(myConfiguration.preferredMode)) {
+          if (!LightEditConfiguration.PreferredMode.LightEdit.equals(configuration.preferredMode)) {
             suggestSwitchToProject(getOrCreateProject(), file);
           }
         }
@@ -207,8 +207,8 @@ public final class LightEditServiceImpl implements LightEditService,
     if (dialog.isDontAsk()) {
       switch (dialog.getExitCode()) {
         case LightEditConfirmationDialog.STAY_IN_LIGHT_EDIT ->
-          myConfiguration.preferredMode = LightEditConfiguration.PreferredMode.LightEdit;
-        case LightEditConfirmationDialog.PROCEED_TO_PROJECT -> myConfiguration.preferredMode = LightEditConfiguration.PreferredMode.Project;
+          configuration.preferredMode = LightEditConfiguration.PreferredMode.LightEdit;
+        case LightEditConfirmationDialog.PROCEED_TO_PROJECT -> configuration.preferredMode = LightEditConfiguration.PreferredMode.Project;
       }
     }
     if (dialog.getExitCode() == LightEditConfirmationDialog.PROCEED_TO_PROJECT) {
@@ -227,7 +227,7 @@ public final class LightEditServiceImpl implements LightEditService,
 
   private void logStartupTime() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (myFrameWrapper != null) {
+      if (frameWrapper != null) {
         TabInfo info = getEditPanel().getTabs().getSelectedInfo();
         if (info != null) {
           UiNotifyConnector.doWhenFirstShown(info.getComponent(), () -> ApplicationManager.getApplication().invokeLater(() -> {
@@ -260,7 +260,7 @@ public final class LightEditServiceImpl implements LightEditService,
   public LightEditorInfo createNewDocument(@Nullable Path preferredSavePath) {
     showEditorWindow();
     String preferredName = preferredSavePath == null ? null : preferredSavePath.getFileName().toString();
-    LightEditorInfo newEditorInfo = myEditorManager.createEmptyEditor(preferredName);
+    LightEditorInfo newEditorInfo = editorManager.createEmptyEditor(preferredName);
     newEditorInfo.setPreferredSavePath(preferredSavePath);
     addEditorTab(newEditorInfo);
     return newEditorInfo;
@@ -273,15 +273,15 @@ public final class LightEditServiceImpl implements LightEditService,
       return false;
     }
 
-    Project project = myFrameWrapper.getProject();
-    myFrameWrapper.getFrame().setVisible(false);
+    Project project = frameWrapper.getProject();
+    frameWrapper.getFrame().setVisible(false);
     saveSession();
-    myEditorWindowClosing = true;
+    editorWindowClosing = true;
     try {
-      myEditorManager.closeAllEditors();
+      editorManager.closeAllEditors();
     }
     finally {
-      myEditorWindowClosing = false;
+      editorWindowClosing = false;
     }
 
     LOG.info("Window closed");
@@ -290,7 +290,7 @@ public final class LightEditServiceImpl implements LightEditService,
       closeAndDisposeFrame();
       LOG.info("No open projects or welcome frame, exiting");
       try {
-        Disposer.dispose(myEditorManager);
+        Disposer.dispose(editorManager);
         ApplicationManager.getApplication().exit();
       }
       catch (Throwable t) {
@@ -298,15 +298,15 @@ public final class LightEditServiceImpl implements LightEditService,
       }
     }
     else {
-      WindowManagerEx.getInstanceEx().releaseFrame(myFrameWrapper);
-      myFrameWrapper = null;
+      WindowManagerEx.getInstanceEx().releaseFrame(frameWrapper);
+      frameWrapper = null;
     }
     return false;
   }
 
   private boolean canClose() {
     final FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    return !myEditorManager.containsUnsavedDocuments() ||
+    return !editorManager.containsUnsavedDocuments() ||
            autoSaveDocuments() ||
            LightEditUtil.confirmClose(
              ApplicationBundle.message("light.edit.exit.message"),
@@ -320,7 +320,7 @@ public final class LightEditServiceImpl implements LightEditService,
 
                @Override
                public void onDiscard() {
-                 myEditorManager.getUnsavedEditors().forEach(editorInfo -> {
+                 editorManager.getUnsavedEditors().forEach(editorInfo -> {
                    VirtualFile file = editorInfo.getFile();
                    Document document = documentManager.getDocument(file);
                    if (document != null) {
@@ -341,13 +341,13 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   public LightEditPanel getEditPanel() {
-    assert !Disposer.isDisposed(myFrameWrapper.getLightEditPanel());
-    return myFrameWrapper.getLightEditPanel();
+    assert !Disposer.isDisposed(frameWrapper.getLightEditPanel());
+    return frameWrapper.getLightEditPanel();
   }
 
   @Override
   public @Nullable VirtualFile getSelectedFile() {
-    LightEditFrameWrapper frameWrapper = myFrameWrapper;
+    LightEditFrameWrapper frameWrapper = this.frameWrapper;
     if (frameWrapper == null) return null;
     LightEditPanel panel = frameWrapper.getLightEditPanel();
     if (!Disposer.isDisposed(panel)) {
@@ -358,7 +358,7 @@ public final class LightEditServiceImpl implements LightEditService,
 
   @Override
   public @Nullable FileEditor getSelectedFileEditor() {
-    LightEditFrameWrapper frameWrapper = myFrameWrapper;
+    LightEditFrameWrapper frameWrapper = this.frameWrapper;
     if (frameWrapper == null) return null;
     LightEditPanel panel = frameWrapper.getLightEditPanel();
     if (!Disposer.isDisposed(panel)) {
@@ -369,34 +369,34 @@ public final class LightEditServiceImpl implements LightEditService,
 
   @Override
   public void updateFileStatus(@NotNull Collection<? extends VirtualFile> files) {
-    List<LightEditorInfo> editors = ContainerUtil.mapNotNull(files, myEditorManager::findOpen);
+    List<LightEditorInfo> editors = ContainerUtil.mapNotNull(files, editorManager::findOpen);
     if (!editors.isEmpty()) {
-      myEditorManager.fireFileStatusChanged(editors);
+      editorManager.fireFileStatusChanged(editors);
     }
   }
 
   @Override
   public void dispose() {
-    if (myFrameWrapper != null) {
+    if (frameWrapper != null) {
       closeAndDisposeFrame();
     }
   }
 
   private void closeAndDisposeFrame() {
-    if (myFrameWrapper != null) {
-      Disposer.dispose(myFrameWrapper);
+    if (frameWrapper != null) {
+      Disposer.dispose(frameWrapper);
       LOG.info("Frame disposed");
     }
   }
 
   void frameDisposed() {
-    myFrameWrapper = null;
+    frameWrapper = null;
   }
 
   @Override
   public void afterSelect(@Nullable LightEditorInfo editorInfo) {
-    if (myFrameWrapper != null) {
-      myFrameWrapper.setFrameTitle(editorInfo == null ? getAppName() : getFileTitle(editorInfo));
+    if (frameWrapper != null) {
+      frameWrapper.setFrameTitle(editorInfo == null ? getAppName() : getFileTitle(editorInfo));
     }
   }
 
@@ -445,26 +445,26 @@ public final class LightEditServiceImpl implements LightEditService,
 
   @Override
   public void afterClose(@NotNull LightEditorInfo editorInfo) {
-    if (myEditorManager.getEditorCount() == 0 && !myEditorWindowClosing) {
+    if (editorManager.getEditorCount() == 0 && !editorWindowClosing) {
       closeEditorWindow();
     }
   }
 
   @Override
   public @NotNull LightEditorManager getEditorManager() {
-    return myEditorManager;
+    return editorManager;
   }
 
   private void saveEditorAs(@NotNull LightEditorInfo editorInfo, @NotNull VirtualFile targetFile) {
-    LightEditorInfo newInfo = myEditorManager.saveAs(editorInfo, targetFile);
+    LightEditorInfo newInfo = editorManager.saveAs(editorInfo, targetFile);
     getEditPanel().getTabs().replaceTab(editorInfo, newInfo);
   }
 
   @Override
   public void saveToAnotherFile(@NotNull VirtualFile file) {
-    LightEditorInfo editorInfo = myEditorManager.getEditorInfo(file);
+    LightEditorInfo editorInfo = editorManager.getEditorInfo(file);
     if (editorInfo != null) {
-      VirtualFile targetFile = LightEditUtil.chooseTargetFile(myFrameWrapper.getLightEditPanel(), editorInfo);
+      VirtualFile targetFile = LightEditUtil.chooseTargetFile(frameWrapper.getLightEditPanel(), editorInfo);
       if (targetFile != null) {
         saveEditorAs(editorInfo, targetFile);
       }
@@ -473,37 +473,37 @@ public final class LightEditServiceImpl implements LightEditService,
 
   @Override
   public boolean isAutosaveMode() {
-    return myConfiguration.autosaveMode;
+    return configuration.autosaveMode;
   }
 
   @Override
   public void setAutosaveMode(boolean autosaveMode) {
-    myConfiguration.autosaveMode = autosaveMode;
-    myEditorManager.fireAutosaveModeChanged(autosaveMode);
+    configuration.autosaveMode = autosaveMode;
+    editorManager.fireAutosaveModeChanged(autosaveMode);
   }
 
   @TestOnly
   public void disposeCurrentSession() {
-    myEditorManager.releaseEditors();
-    Project project = myLightEditProjectManager.getProject();
+    editorManager.releaseEditors();
+    Project project = lightEditProjectManager.getProject();
     if (project != null) {
       ProjectManagerEx.getInstanceEx().forceCloseProject(project);
     }
   }
 
   private void saveSession() {
-    if (mySaveSession) {
-      LightEditTabs tabs = myFrameWrapper.getLightEditPanel().getTabs();
+    if (saveSession) {
+      LightEditTabs tabs = frameWrapper.getLightEditPanel().getTabs();
       List<VirtualFile> openFiles = tabs.getOpenFiles();
-      myConfiguration.sessionFiles.clear();
-      myConfiguration.sessionFiles.addAll(ContainerUtil.map(openFiles, openFile -> VfsUtilCore.pathToUrl(openFile.getPath())));
+      configuration.sessionFiles.clear();
+      configuration.sessionFiles.addAll(ContainerUtil.map(openFiles, openFile -> VfsUtilCore.pathToUrl(openFile.getPath())));
     }
   }
 
   private void restoreSession() {
     doWhenActionManagerInitialized(() -> {
-      myFrameWrapper.setFrameTitleUpdateEnabled(false);
-      myConfiguration.sessionFiles.forEach(
+      frameWrapper.setFrameTitleUpdateEnabled(false);
+      configuration.sessionFiles.forEach(
         path -> {
           VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
           if (file != null) {
@@ -511,18 +511,18 @@ public final class LightEditServiceImpl implements LightEditService,
           }
         }
       );
-      myFrameWrapper.setFrameTitleUpdateEnabled(true);
+      frameWrapper.setFrameTitleUpdateEnabled(true);
     });
   }
 
   void setFrameInfo(@NotNull FrameInfo frameInfo) {
-    myConfiguration.frameInfo = frameInfo;
+    configuration.frameInfo = frameInfo;
   }
 
   @Override
   public void saveNewDocuments() {
-    for(VirtualFile virtualFile : myEditorManager.getOpenFiles()) {
-      LightEditorInfo editorInfo = Objects.requireNonNull(myEditorManager.getEditorInfo(virtualFile));
+    for(VirtualFile virtualFile : editorManager.getOpenFiles()) {
+      LightEditorInfo editorInfo = Objects.requireNonNull(editorManager.getEditorInfo(virtualFile));
       if (editorInfo.isNew()) {
         VirtualFile preferredTarget = LightEditUtil.getPreferredSaveTarget(editorInfo);
         if (preferredTarget != null) {
@@ -547,8 +547,7 @@ public final class LightEditServiceImpl implements LightEditService,
 
   @Override
   public boolean isPreferProjectMode() {
-    return myConfiguration.preferredMode != null &&
-           LightEditConfiguration.PreferredMode.Project.equals(myConfiguration.preferredMode);
+    return configuration.preferredMode != null && LightEditConfiguration.PreferredMode.Project.equals(configuration.preferredMode);
   }
 
   @Override
