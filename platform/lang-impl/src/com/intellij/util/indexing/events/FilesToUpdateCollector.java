@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -17,6 +18,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
+@Internal
 public class FilesToUpdateCollector {
   private static final Logger LOG = Logger.getInstance(FilesToUpdateCollector.class);
   private final NotNullLazyValue<FileBasedIndexImpl> myFileBasedIndex = NotNullLazyValue.createValue(() -> (FileBasedIndexImpl)FileBasedIndex.getInstance());

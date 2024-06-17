@@ -28905,17 +28905,6 @@ f:com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor
 - com.intellij.psi.impl.PsiTreeChangePreprocessor
 - <init>():V
 - treeChanged(com.intellij.psi.impl.PsiTreeChangeEventImpl):V
-c:com.intellij.util.indexing.events.FilesToUpdateCollector
-- <init>():V
-- clear():V
-- containsFileId(I):Z
-- getDirtyFiles():com.intellij.util.indexing.events.DirtyFiles
-- getFilesToUpdate():java.util.Collection
-- getFilesToUpdateAsIterator():java.util.Iterator
-- isScheduledForUpdate(com.intellij.openapi.vfs.VirtualFile):Z
-- removeFileIdFromFilesScheduledForUpdate(I):V
-- removeScheduledFileFromUpdate(com.intellij.openapi.vfs.VirtualFile):V
-- scheduleForUpdate(com.intellij.util.indexing.events.FileIndexingRequest,java.util.Set,java.util.Collection):V
 a:com.intellij.util.indexing.events.IndexedFilesListener
 - com.intellij.openapi.vfs.AsyncFileListener
 - <init>():V
