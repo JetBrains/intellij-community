@@ -86,7 +86,7 @@ internal fun writeWindow(result: Element, window: EditorWindow, delayedStates: M
       fileElement.addContent(composite.writeDelayedStateAsHistoryEntry(delayedState))
     }
 
-    if (composite.isPinned) {
+    if (tab.isPinned) {
       fileElement.setAttribute(PINNED, "true")
     }
     if (composite === selectedComposite) {

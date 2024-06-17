@@ -224,6 +224,7 @@ class EditorTabbedContainer internal constructor(
     indexToInsert: Int,
     selectedEditor: FileEditor?,
     parentDisposable: Disposable,
+    pin: Boolean,
   ): TabInfo {
     editorTabs.findInfo(file)?.let {
       return it
@@ -236,6 +237,7 @@ class EditorTabbedContainer internal constructor(
       window = window,
       editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup"),
       customizer = {
+        it.isPinned = pin
         it.setText(file.presentableName)
         it.setTooltipText(tooltip)
         if (UISettings.getInstance().showFileIconInTabs) {
@@ -517,6 +519,15 @@ internal fun createTabInfo(
   val tab = TabInfo(component).setObject(file)
   customizer(tab)
   tab.setTestableUi { it.put("editorTab", tab.text) }
+  tab.changeSupport.addPropertyChangeListener(TabInfo.PINNED) {
+    if (it.newValue == true) {
+      val composite = window.getComposite(file)
+      if (composite?.isPreview == true) {
+        composite.isPreview = false
+        window.owner.scheduleUpdateFileColor(file)
+      }
+    }
+  }
 
   val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
   tab.setTabLabelActions(DefaultActionGroup(editorActionGroup, closeTab), ActionPlaces.EDITOR_TAB)

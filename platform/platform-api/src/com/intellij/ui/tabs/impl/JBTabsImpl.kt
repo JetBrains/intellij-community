@@ -104,6 +104,7 @@ open class JBTabsImpl internal constructor(
     QuickActionProvider, MorePopupAware, Accessible {
   companion object {
     @JvmField
+    @Deprecated("use TabInfo.isPinned instead")
     val PINNED: Key<Boolean> = Key.create("pinned")
 
     @JvmField
@@ -1631,6 +1632,10 @@ open class JBTabsImpl internal constructor(
       }
       TabInfo.ENABLED -> {
         updateEnabling()
+      }
+      TabInfo.PINNED -> {
+        resetTabsCache()
+        relayout(forced = true, layoutNow = false)
       }
     }
   }

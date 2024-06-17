@@ -1050,6 +1050,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
             customizer = { tab ->
               tab.setText(initialTabTitle)
               tab.setIcon(initialTabIcon)
+              tab.isPinned = fileEntry.pinned
 
               initialTabTextAttributes?.let {
                 tab.setDefaultForegroundAndAttributes(foregroundColor = it.first, attributes = it.second)

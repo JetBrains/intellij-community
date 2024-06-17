@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.DUMB_AWARE
@@ -413,12 +414,17 @@ open class EditorComposite internal constructor(
   }
 
   /**
-   * @return whether editor composite is pinned
+   * Whether the editor composite is pinned
    */
-  var isPinned: Boolean = false
+  @Deprecated("use EditorWindow.isFilePinned and EditorWindow.setFilePinned instead")
+  var isPinned: Boolean
+    get() = ClientProperty.isTrue(compositePanel, JBTabsImpl.PINNED)
     set(pinned) {
-      field = pinned
-      ClientProperty.put(compositePanel, JBTabsImpl.PINNED, if (field) true else null)
+      for (window in FileEditorManagerEx.getInstanceEx(project).windows) {
+        if (this in window.composites()) {
+          window.setFilePinned(file, pinned)
+        }
+      }
     }
 
   private val _isPreviewFlow = MutableStateFlow(false)
