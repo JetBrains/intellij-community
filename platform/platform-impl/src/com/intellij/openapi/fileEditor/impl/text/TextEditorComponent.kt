@@ -158,7 +158,7 @@ open class TextEditorComponent(
   fun updateModifiedProperty(textEditor: TextEditorImpl) {
     val oldModified = isModified
     isModified = isModifiedImpl
-    textEditor.firePropertyChange(FileEditor.PROP_MODIFIED, oldModified, isModified)
+    textEditor.firePropertyChange(FileEditor.getPropModified(), oldModified, isModified)
   }
 
   /**
@@ -179,7 +179,7 @@ open class TextEditorComponent(
   private fun updateValidProperty(textEditor: TextEditorImpl) {
     val oldValid = isValid
     isValid = isEditorValidImpl
-    textEditor.firePropertyChange(FileEditor.PROP_VALID, oldValid, isValid)
+    textEditor.firePropertyChange(FileEditor.getPropValid(), oldValid, isValid)
   }
 
   override fun uiDataSnapshot(sink: DataSink) {

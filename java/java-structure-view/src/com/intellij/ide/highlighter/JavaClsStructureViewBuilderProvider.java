@@ -27,7 +27,7 @@ public class JavaClsStructureViewBuilderProvider implements StructureViewBuilder
       }
 
       if (psiFile != null) {
-        PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiFile.getLanguage());
+        PsiStructureViewFactory factory = LanguageStructureViewBuilder.getInstance().forLanguage(psiFile.getLanguage());
         if (factory != null) {
           return factory.getStructureViewBuilder(psiFile);
         }

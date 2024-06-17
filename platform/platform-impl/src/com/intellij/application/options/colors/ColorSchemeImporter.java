@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public final class ColorSchemeImporter implements SchemeImporter<EditorColorsScheme> {
 
   private static final String[] FILE_EXTENSIONS =
-    new String[] {EditorColorsManager.COLOR_SCHEME_FILE_EXTENSION.substring(1), "jar"};
+    new String[] {EditorColorsManager.getColorSchemeFileExtension().substring(1), "jar"};
 
   @Override
   public String @NotNull [] getSourceExtensions() {

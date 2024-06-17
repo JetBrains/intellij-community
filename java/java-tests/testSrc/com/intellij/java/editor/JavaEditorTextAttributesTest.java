@@ -157,7 +157,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
         TYPE_PARAMETER_NAME_ATTRIBUTES { color: #20999d;  font-style: normal; }
         """,
 
-      dumpDefaultColorScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME));
+      dumpDefaultColorScheme(EditorColorsScheme.getDefaultSchemeName()));
   }
 
   public void testDarculaColorScheme() {
@@ -220,7 +220,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
   }
 
   public void testInheritanceFlagCanBeOverwrittenWithDefaultAttributes() {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorScheme = (EditorColorsScheme)defaultScheme.clone();
     TextAttributes localVarAttrs = defaultScheme.getAttributes(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
     editorScheme.setAttributes(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES, localVarAttrs);

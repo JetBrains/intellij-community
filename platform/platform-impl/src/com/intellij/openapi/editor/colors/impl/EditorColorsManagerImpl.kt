@@ -267,7 +267,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }
 
     if (scheme == null) {
-      val schemeName = if (lookAndFeelInfo != null && lookAndFeelInfo.isDark) "Darcula" else DEFAULT_SCHEME_NAME
+      val schemeName = if (lookAndFeelInfo != null && lookAndFeelInfo.isDark) "Darcula" else getDefaultSchemeName()
       val defaultColorSchemeManager = DefaultColorSchemesManager.getInstance()
       scheme = defaultColorSchemeManager.getScheme(schemeName)
       if (scheme == null) {
@@ -307,7 +307,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     // It is reasonable to fetch attributes from a Default color scheme.
     // Otherwise, if we launch IDE and then try to switch from a custom colors scheme (e.g., with a dark background) to the default one.
     // The editor will show incorrect highlighting with "traces" of a color scheme which was active during IDE startup.
-    return getScheme(if (dark) "Darcula" else EditorColorsScheme.DEFAULT_SCHEME_NAME)?.getAttributes(key)
+    return getScheme(if (dark) "Darcula" else EditorColorsScheme.getDefaultSchemeName())?.getAttributes(key)
   }
 
   override fun addColorScheme(scheme: EditorColorsScheme) {
@@ -581,7 +581,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }
 
     override val schemeExtension: @NonNls String
-      get() = COLOR_SCHEME_FILE_EXTENSION
+      get() = getColorSchemeFileExtension()
 
     override fun isSchemeEqualToBundled(scheme: EditorColorsSchemeImpl): Boolean {
       if (!scheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX)) {

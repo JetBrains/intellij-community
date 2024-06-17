@@ -32,7 +32,7 @@ abstract class DiffFileEditorBase(
 
   init {
     Disposer.register(contentDisposable, Disposable {
-      firePropertyChange(FileEditor.PROP_VALID, true, false)
+      firePropertyChange(FileEditor.getPropValid(), true, false)
     })
   }
 

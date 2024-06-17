@@ -46,7 +46,7 @@ public final class MethodUpDownUtil {
   }
 
   private static void addNavigationElements(Collection<? super PsiElement> array, PsiFile element) {
-    StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(element);
+    StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(element);
     if (structureViewBuilder instanceof TreeBasedStructureViewBuilder builder) {
       StructureViewModel model = builder.createStructureViewModel(null);
       try {

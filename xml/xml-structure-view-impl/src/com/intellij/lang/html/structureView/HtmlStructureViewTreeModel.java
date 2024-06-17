@@ -63,7 +63,7 @@ final class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel impleme
 
     @Override
     public @NotNull String getName() {
-      return ALPHA_SORTER_ID;
+      return Sorter.getAlphaSorterId();
     }
   };
 

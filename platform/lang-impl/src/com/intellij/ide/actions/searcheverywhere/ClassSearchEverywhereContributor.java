@@ -174,7 +174,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   }
 
   public static @Nullable Navigatable findMember(String memberPattern, String fullPattern, PsiElement psiElement, VirtualFile file) {
-    final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiElement.getLanguage());
+    final PsiStructureViewFactory factory = LanguageStructureViewBuilder.getInstance().forLanguage(psiElement.getLanguage());
     final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
     List<FileEditor> editors = FileEditorManager.getInstance(psiElement.getProject()).getEditorList(file);
     if (builder == null || editors.isEmpty()) {

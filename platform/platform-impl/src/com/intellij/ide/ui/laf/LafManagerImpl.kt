@@ -646,7 +646,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         targetScheme = themeName
       }
       if (!wasUITheme) {
-        properties.setValue(toSavedEditorThemeKey, current.name, if (dark) EditorColorsScheme.DEFAULT_SCHEME_NAME else DarculaLaf.NAME)
+        properties.setValue(toSavedEditorThemeKey, current.name, if (dark) EditorColorsScheme.getDefaultSchemeName() else DarculaLaf.NAME)
       }
       editorColorManager.getScheme(targetScheme)?.let {
         editorColorManager.setGlobalScheme(it, processChangeSynchronously = true)

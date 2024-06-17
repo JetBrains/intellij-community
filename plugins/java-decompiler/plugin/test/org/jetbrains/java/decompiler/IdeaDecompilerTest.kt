@@ -182,7 +182,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun checkStructure(file: VirtualFile, s: String) {
     val editor = FileEditorManager.getInstance(project).openFile(file, false)[0]
-    val builder = StructureViewBuilder.PROVIDER.getStructureViewBuilder(JavaClassFileType.INSTANCE, file, project)!!
+    val builder = StructureViewBuilder.getProvider().getStructureViewBuilder(JavaClassFileType.INSTANCE, file, project)!!
     val svc = builder.createStructureView(editor, project) as StructureViewComponent
     Disposer.register(myFixture.testRootDisposable, svc)
     svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)

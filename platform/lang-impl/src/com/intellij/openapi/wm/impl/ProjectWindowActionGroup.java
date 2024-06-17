@@ -44,7 +44,7 @@ public final class ProjectWindowActionGroup extends IdeDependentActionGroup impl
   }
 
   private static @NlsActions.ActionText String getProjectDisplayName(Project project) {
-    if (LightEdit.owns(project)) return LightEditService.WINDOW_NAME;
+    if (LightEdit.owns(project)) return LightEditService.getWindowName();
     String name = ModuleAttachProcessor.getMultiProjectDisplayName(project);
     return name != null ? name : project.getName();
   }

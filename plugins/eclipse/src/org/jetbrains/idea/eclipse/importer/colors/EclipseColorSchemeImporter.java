@@ -167,7 +167,7 @@ public class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsSc
 
   private static void setupMissingColors(@NotNull EditorColorsScheme scheme) {
     Color background = scheme.getDefaultBackground();
-    String defaultSchemeName = ColorUtil.isDark(background) ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME;
+    String defaultSchemeName = ColorUtil.isDark(background) ? "Darcula" : EditorColorsScheme.getDefaultSchemeName();
     EditorColorsScheme baseScheme = DefaultColorSchemesManager.getInstance().getScheme(defaultSchemeName);
     assert baseScheme != null : "Can not find default scheme '" + defaultSchemeName + "'!";
     for (TextAttributesKey attributesKey : ATTRIBUTES_TO_COPY) {

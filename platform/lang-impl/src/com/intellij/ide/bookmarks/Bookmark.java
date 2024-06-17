@@ -275,7 +275,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     if (psiFile == null) return presentableUrl;
 
-    StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(psiFile);
+    StructureViewBuilder builder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(psiFile);
     if (builder instanceof TreeBasedStructureViewBuilder) {
       StructureViewModel model = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel(null);
       Object element;

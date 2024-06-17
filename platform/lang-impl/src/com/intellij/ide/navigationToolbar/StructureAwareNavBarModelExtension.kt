@@ -120,7 +120,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   }
 
   protected open fun createModel(file: PsiFile, editor: Editor?): @NotNull StructureViewModel? {
-    val builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file)
+    val builder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(file)
     return (builder as? TreeBasedStructureViewBuilder)?.createStructureViewModel(editor)
   }
 

@@ -7,7 +7,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class LanguageStructureViewBuilder extends LanguageExtension<PsiStructureViewFactory>{
+
+  /**
+   * @deprecated use {@link #getInstance()} instead
+   */
+  @Deprecated
   public static final LanguageStructureViewBuilder INSTANCE = new LanguageStructureViewBuilder();
+
+  public static LanguageStructureViewBuilder getInstance() {
+    return INSTANCE;
+  }
 
   private LanguageStructureViewBuilder() {
     super(PsiStructureViewFactory.EP_NAME);

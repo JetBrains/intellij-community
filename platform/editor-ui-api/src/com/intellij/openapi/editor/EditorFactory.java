@@ -9,7 +9,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,8 +201,4 @@ public abstract class EditorFactory {
    */
   @RequiresEdt
   public abstract void refreshAllEditors();
-
-  @ApiStatus.Internal
-  protected EditorFactory() {
-  }
 }

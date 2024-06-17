@@ -317,7 +317,7 @@ public final class EditorActionUtil {
                                           @Nullable IElementType rightTokenType) {
     return leftTokenType != null &&
            rightTokenType != null &&
-           LanguageWordBoundaryFilter.INSTANCE.forLanguage(rightTokenType.getLanguage())
+           LanguageWordBoundaryFilter.getInstance().forLanguage(rightTokenType.getLanguage())
              .isWordBoundary(leftTokenType, rightTokenType);
   }
 

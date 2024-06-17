@@ -213,7 +213,7 @@ public final class ColorAndFontDescriptionPanel extends JPanel implements Option
     Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> baseDescriptor = description.getFallbackKeyDescriptor();
     if (baseDescriptor != null) {
       String attrName = baseDescriptor.second.getDisplayName();
-      String attrLabel = attrName.replaceAll(EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR, FontUtil.rightArrow(
+      String attrLabel = attrName.replaceAll(EditorSchemeAttributeDescriptorWithPath.getNameSeparator(), FontUtil.rightArrow(
         StartupUiUtil.getLabelFont()));
       ColorAndFontDescriptorsProvider settingsPage = baseDescriptor.first;
       String tooltipText;

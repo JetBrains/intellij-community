@@ -25,9 +25,9 @@ import java.util.List;
 @FunctionalInterface
 public interface GutterMarkPreprocessor {
 
-  @ApiStatus.Internal
-  ExtensionPointName<GutterMarkPreprocessor> EP_NAME = ExtensionPointName.create("com.intellij.gutterMarkPreprocessor");
-
   @NotNull
   List<GutterMark> processMarkers(@NotNull List<GutterMark> list);
+
+  @ApiStatus.Internal
+  ExtensionPointName<GutterMarkPreprocessor> EP_NAME = ExtensionPointName.create("com.intellij.gutterMarkPreprocessor");
 }

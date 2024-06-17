@@ -233,7 +233,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
   }
 
   override fun getStructureViewBuilder(project: Project, file: VirtualFile): StructureViewBuilder? {
-    return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.fileType, file, project)
+    return StructureViewBuilder.getProvider().getStructureViewBuilder(file.fileType, file, project)
   }
 
   protected open inner class EditorWrapper(private val editor: Editor) : UserDataHolderBase(), TextEditor {

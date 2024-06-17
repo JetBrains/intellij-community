@@ -7,13 +7,14 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.FontUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Font
 
 @State(name = NotRoamableUiSettings.COMPONENT_NAME,
        category = SettingsCategory.UI,
        exportable = true,
        storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED))])
-class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUiOptions>(NotRoamableUiOptions()) {
+class NotRoamableUiSettings @Internal constructor(): SerializablePersistentStateComponent<NotRoamableUiOptions>(NotRoamableUiOptions()) {
   private var initialConfigurationLoaded = false
 
   companion object {

@@ -341,7 +341,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private void selectDefaultScheme() {
     DefaultColorsScheme defaultScheme =
-      (DefaultColorsScheme)EditorColorsManager.getInstance().getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
+      (DefaultColorsScheme)EditorColorsManager.getInstance().getScheme(EditorColorsManager.getDefaultSchemeName());
     selectScheme(defaultScheme.getEditableCopyName());
   }
 

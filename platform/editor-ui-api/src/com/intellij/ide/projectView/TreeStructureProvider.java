@@ -19,9 +19,6 @@ import java.util.Collection;
  */
 public interface TreeStructureProvider extends PossiblyDumbAware {
 
-  @ApiStatus.Internal
-  ProjectExtensionPointName<TreeStructureProvider> EP = new ProjectExtensionPointName<>("com.intellij.treeStructureProvider");
-
   /**
    * Allows modifying the list of children displayed for the specified node in the
    * project view.
@@ -54,4 +51,7 @@ public interface TreeStructureProvider extends PossiblyDumbAware {
   default @Nullable Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
     return null;
   }
+
+  @ApiStatus.Internal
+  ProjectExtensionPointName<TreeStructureProvider> EP = new ProjectExtensionPointName<>("com.intellij.treeStructureProvider");
 }

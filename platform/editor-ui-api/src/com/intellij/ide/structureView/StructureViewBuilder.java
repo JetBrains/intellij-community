@@ -24,11 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 public interface StructureViewBuilder {
 
-  @ApiStatus.Internal
-  ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.structureViewBuilder");
-
-  StructureViewBuilderProvider PROVIDER =
-    new FileTypeExtensionFactory<>(StructureViewBuilderProvider.class, EP_NAME).get();
+  static @NotNull StructureViewBuilderProvider getProvider() {
+    return PROVIDER;
+  }
 
   /**
    * Returns the structure view implementation for the specified file
@@ -41,4 +39,14 @@ public interface StructureViewBuilder {
    */
   @NotNull
   StructureView createStructureView(@Nullable FileEditor fileEditor, @NotNull Project project);
+
+  @ApiStatus.Internal
+  ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.structureViewBuilder");
+
+  /**
+   * @deprecated use {@link #getProvider()} instead
+   */
+  @Deprecated
+  StructureViewBuilderProvider PROVIDER =
+    new FileTypeExtensionFactory<>(StructureViewBuilderProvider.class, EP_NAME).get();
 }

@@ -43,7 +43,7 @@ public class LanguageFileTypeStructureViewBuilderProvider implements StructureVi
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) return null;
 
-    final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiFile.getLanguage());
+    final PsiStructureViewFactory factory = LanguageStructureViewBuilder.getInstance().forLanguage(psiFile.getLanguage());
     return factory == null ?  null : factory.getStructureViewBuilder(psiFile);
   }
 }

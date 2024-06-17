@@ -144,7 +144,7 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
     PsiFile psi = viewProvider.getPsi(language);
     if (psi == null) return null;
     if (language == baseLanguage) return createMainBuilder(psi);
-    PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(language);
+    PsiStructureViewFactory factory = LanguageStructureViewBuilder.getInstance().forLanguage(language);
     return factory == null ? null : factory.getStructureViewBuilder(psi);
   }
 

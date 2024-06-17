@@ -53,7 +53,7 @@ public final class EditorColorsUtil {
     boolean dark1 = background == null ? StartupUiUtil.isUnderDarcula() : ColorUtil.isDark(background);
     boolean dark2 = ColorUtil.isDark(globalScheme.getDefaultBackground());
     if (dark1 != dark2) {
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(dark1 ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME);
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(dark1 ? "Darcula" : EditorColorsScheme.getDefaultSchemeName());
       if (scheme != null) {
         return scheme;
       }
@@ -63,7 +63,7 @@ public final class EditorColorsUtil {
 
   public static @NotNull EditorColorsScheme getColorSchemeForPrinting() {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    return colorsManager.isDarkEditor() ? colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME)
+    return colorsManager.isDarkEditor() ? colorsManager.getScheme(EditorColorsManager.getDefaultSchemeName())
                                         : colorsManager.getGlobalScheme();
   }
 

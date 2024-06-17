@@ -11,6 +11,6 @@ public final class ColorSchemeExporter extends SerializableSchemeExporter {
 
   @Override
   public String getExtension() {
-    return EditorColorsManager.COLOR_SCHEME_FILE_EXTENSION.substring(1);
+    return EditorColorsManager.getColorSchemeFileExtension().substring(1);
   }
 }

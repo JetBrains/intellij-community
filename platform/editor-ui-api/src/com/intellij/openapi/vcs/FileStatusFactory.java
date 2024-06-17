@@ -79,4 +79,7 @@ public final class FileStatusFactory {
   synchronized void onPluginUnload(@NotNull PluginId pluginId) {
     myStatuses.remove(pluginId);
   }
+
+  private FileStatusFactory() {
+  }
 }

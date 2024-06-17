@@ -8,8 +8,9 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus.Internal
 
-abstract class EditorHighlighterFactory {
+abstract class EditorHighlighterFactory @Internal constructor() {
   companion object {
     @JvmStatic
     fun getInstance(): EditorHighlighterFactory = ApplicationManager.getApplication().service<EditorHighlighterFactory>()

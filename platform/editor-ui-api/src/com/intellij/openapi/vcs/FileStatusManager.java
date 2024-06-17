@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,10 @@ public abstract class FileStatusManager {
       return new DefaultFileStatusManager();
     }
     return project.getService(FileStatusManager.class);
+  }
+
+  @ApiStatus.Internal
+  protected FileStatusManager() {
   }
 
   /**

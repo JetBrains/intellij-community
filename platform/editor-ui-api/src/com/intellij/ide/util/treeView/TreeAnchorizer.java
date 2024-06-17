@@ -27,10 +27,6 @@ public class TreeAnchorizer {
     return result;
   }
 
-  @ApiStatus.Internal
-  protected TreeAnchorizer() {
-  }
-
   public @NotNull Object createAnchor(@NotNull Object element) {
     return element;
   }
@@ -47,5 +43,9 @@ public class TreeAnchorizer {
 
   public static @NotNull List<Object> retrieveList(Collection<Object> anchors) {
     return ContainerUtil.mapNotNull(anchors, getService()::retrieveElement);
+  }
+
+  @ApiStatus.Internal
+  protected TreeAnchorizer() {
   }
 }

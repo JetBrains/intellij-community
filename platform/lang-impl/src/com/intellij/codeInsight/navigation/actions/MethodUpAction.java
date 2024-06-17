@@ -38,7 +38,7 @@ public final class MethodUpAction extends BaseCodeInsightAction implements DumbA
 
   static boolean checkValidForFile(final PsiFile file) {
     try {
-      final StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
+      final StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(file);
       return structureViewBuilder instanceof TreeBasedStructureViewBuilder;
     }
     catch (IndexNotReadyException e) {

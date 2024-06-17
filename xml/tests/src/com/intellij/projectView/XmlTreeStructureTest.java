@@ -81,7 +81,7 @@ public class XmlTreeStructureTest extends BaseProjectViewTestCase {
     XmlFile xmlFile = (XmlFile)getContentDirectory().findFile(fileName);
     VirtualFile virtualFile = xmlFile.getVirtualFile();
     final StructureViewBuilder structureViewBuilder =
-      StructureViewBuilder.PROVIDER.getStructureViewBuilder(virtualFile.getFileType(), virtualFile, myProject);
+      StructureViewBuilder.getProvider().getStructureViewBuilder(virtualFile.getFileType(), virtualFile, myProject);
     StructureViewModel viewModel = ((TreeBasedStructureViewBuilder)structureViewBuilder).createStructureViewModel(null);
     
     try {

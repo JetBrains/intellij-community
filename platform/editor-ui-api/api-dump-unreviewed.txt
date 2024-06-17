@@ -48,7 +48,6 @@ f:com.intellij.ide.highlighter.HighlighterFactory
 f:com.intellij.ide.lightEdit.LightEdit
 - s:owns(com.intellij.openapi.project.Project):Z
 *:com.intellij.ide.lightEdit.LightEditService
-- sf:WINDOW_NAME:java.lang.String
 - a:closeEditorWindow():Z
 - a:createNewDocument(java.nio.file.Path):com.intellij.ide.lightEdit.LightEditorInfo
 - a:getEditorManager():com.intellij.ide.lightEdit.LightEditorManager
@@ -56,6 +55,7 @@ f:com.intellij.ide.lightEdit.LightEdit
 - a:getProject():com.intellij.openapi.project.Project
 - a:getSelectedFile():com.intellij.openapi.vfs.VirtualFile
 - a:getSelectedFileEditor():com.intellij.openapi.fileEditor.FileEditor
+- s:getWindowName():java.lang.String
 - a:isAutosaveMode():Z
 - a:isForceOpenInLightEditMode():Z
 - a:isLightEditEnabled():Z
@@ -70,7 +70,6 @@ f:com.intellij.ide.lightEdit.LightEdit
 - a:showEditorWindow():V
 - a:updateFileStatus(java.util.Collection):V
 *:com.intellij.ide.lightEdit.LightEditServiceListener
-- sf:TOPIC:com.intellij.util.messages.Topic
 - lightEditWindowClosed(com.intellij.openapi.project.Project):V
 - lightEditWindowOpened(com.intellij.openapi.project.Project):V
 *:com.intellij.ide.lightEdit.LightEditTabAttributesProvider
@@ -194,6 +193,7 @@ com.intellij.ide.structureView.StructureView
 com.intellij.ide.structureView.StructureViewBuilder
 - sf:PROVIDER:com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:createStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureView
+- s:getProvider():com.intellij.ide.structureView.StructureViewBuilderProvider
 com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:getStructureViewBuilder(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewBuilder
 a:com.intellij.ide.structureView.StructureViewFactory
@@ -330,7 +330,6 @@ f:com.intellij.ide.ui.NotRoamableUiOptions
 f:com.intellij.ide.ui.NotRoamableUiSettings
 - com.intellij.openapi.components.SerializablePersistentStateComponent
 - sf:Companion:com.intellij.ide.ui.NotRoamableUiSettings$Companion
-- <init>():V
 - f:getEditorAAType():com.intellij.ide.ui.AntialiasingType
 - f:getExperimentalSingleStripe():Z
 - f:getFontFace():java.lang.String
@@ -577,7 +576,6 @@ f:com.intellij.ide.ui.UISettings$Companion
 - f:setupFractionalMetrics(javax.swing.JComponent):V
 com.intellij.ide.ui.UISettingsListener
 - java.util.EventListener
-- sf:TOPIC:com.intellij.util.messages.Topic
 - a:uiSettingsChanged(com.intellij.ide.ui.UISettings):V
 f:com.intellij.ide.ui.UISettingsState
 - com.intellij.openapi.components.BaseState
@@ -1019,8 +1017,8 @@ com.intellij.ide.util.treeView.smartTree.SortableTreeElement
 com.intellij.ide.util.treeView.smartTree.Sorter
 - com.intellij.ide.util.treeView.smartTree.TreeAction
 - sf:ALPHA_SORTER:com.intellij.ide.util.treeView.smartTree.Sorter
-- sf:ALPHA_SORTER_ID:java.lang.String
 - sf:EMPTY_ARRAY:com.intellij.ide.util.treeView.smartTree.Sorter[]
+- s:getAlphaSorterId():java.lang.String
 - a:getComparator():java.util.Comparator
 - a:isVisible():Z
 f:com.intellij.ide.util.treeView.smartTree.SorterUtil
@@ -1050,6 +1048,7 @@ com.intellij.injected.editor.InjectedFileChangesHandlerProvider
 f:com.intellij.lang.LanguageStructureViewBuilder
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.lang.LanguageStructureViewBuilder
+- s:getInstance():com.intellij.lang.LanguageStructureViewBuilder
 - getStructureViewBuilder(com.intellij.psi.PsiFile):com.intellij.ide.structureView.StructureViewBuilder
 com.intellij.lang.PsiStructureViewFactory
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -1690,7 +1689,6 @@ com.intellij.openapi.editor.Editor
 - a:xyToVisualPosition(java.awt.geom.Point2D):com.intellij.openapi.editor.VisualPosition
 - yToVisualLine(I):I
 f:com.intellij.openapi.editor.EditorCoreUtil
-- <init>():V
 - s:createEmptyHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):com.intellij.openapi.editor.highlighter.EditorHighlighter
 - s:inVirtualSpace(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.LogicalPosition):Z
 - s:indentLine(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,I,I,Z):I
@@ -1705,6 +1703,7 @@ com.intellij.openapi.editor.EditorCustomElementRenderer
 - paint(com.intellij.openapi.editor.Inlay,java.awt.Graphics2D,java.awt.geom.Rectangle2D,com.intellij.openapi.editor.markup.TextAttributes):V
 - paint(com.intellij.openapi.editor.Inlay,java.awt.Graphics,java.awt.Rectangle,com.intellij.openapi.editor.markup.TextAttributes):V
 a:com.intellij.openapi.editor.EditorFactory
+- <init>():V
 - a:addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener):V
 - a:addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener,com.intellij.openapi.Disposable):V
 - a:createDocument(java.lang.CharSequence):com.intellij.openapi.editor.Document
@@ -2150,7 +2149,7 @@ f:com.intellij.openapi.editor.VisualPosition
 - leanRight(Z):com.intellij.openapi.editor.VisualPosition
 f:com.intellij.openapi.editor.actions.LanguageWordBoundaryFilter
 - com.intellij.lang.LanguageExtension
-- sf:INSTANCE:com.intellij.openapi.editor.actions.LanguageWordBoundaryFilter
+- s:getInstance():com.intellij.openapi.editor.actions.LanguageWordBoundaryFilter
 c:com.intellij.openapi.editor.actions.WordBoundaryFilter
 - <init>():V
 - isWordBoundary(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):Z
@@ -2233,12 +2232,13 @@ com.intellij.openapi.editor.colors.EditorColorsListener
 - java.util.EventListener
 - a:globalSchemeChange(com.intellij.openapi.editor.colors.EditorColorsScheme):V
 a:com.intellij.openapi.editor.colors.EditorColorsManager
-- sf:COLOR_SCHEME_FILE_EXTENSION:java.lang.String
 - sf:DEFAULT_SCHEME_NAME:java.lang.String
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:addColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
 - a:getActiveVisibleScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - a:getAllSchemes():com.intellij.openapi.editor.colors.EditorColorsScheme[]
+- s:getColorSchemeFileExtension():java.lang.String
+- s:getDefaultSchemeName():java.lang.String
 - a:getGlobalScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - s:getInstance():com.intellij.openapi.editor.colors.EditorColorsManager
 - a:getScheme(java.lang.String):com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -2256,7 +2256,6 @@ com.intellij.openapi.editor.colors.EditorColorsScheme
 - com.intellij.openapi.options.Scheme
 - com.intellij.openapi.options.SchemeMetaInfo
 - java.lang.Cloneable
-- sf:DEFAULT_SCHEME_NAME:java.lang.String
 - a:clone():java.lang.Object
 - getAttributes(com.intellij.openapi.editor.colors.TextAttributesKey,Z):com.intellij.openapi.editor.markup.TextAttributes
 - a:getColor(com.intellij.openapi.editor.colors.ColorKey):java.awt.Color
@@ -2267,6 +2266,7 @@ com.intellij.openapi.editor.colors.EditorColorsScheme
 - a:getConsoleLineSpacing():F
 - a:getDefaultBackground():java.awt.Color
 - a:getDefaultForeground():java.awt.Color
+- s:getDefaultSchemeName():java.lang.String
 - a:getEditorFontName():java.lang.String
 - a:getEditorFontSize():I
 - getEditorFontSize2D():F
@@ -2332,7 +2332,7 @@ com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor
 - a:isModified():Z
 com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath
 - com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor
-- sf:NAME_SEPARATOR:java.lang.String
+- s:getNameSeparator():java.lang.String
 c:com.intellij.openapi.editor.colors.FontPreferences
 - sf:DEFAULT_FONT_NAME:java.lang.String
 - sf:DEFAULT_FONT_SIZE:I
@@ -2496,7 +2496,6 @@ com.intellij.openapi.editor.highlighter.EditorHighlighter
 - setText(java.lang.CharSequence):V
 a:com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 - sf:Companion:com.intellij.openapi.editor.highlighter.EditorHighlighterFactory$Companion
-- <init>():V
 - a:createEditorHighlighter(com.intellij.openapi.editor.colors.EditorColorsScheme,java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.editor.highlighter.EditorHighlighter
 - a:createEditorHighlighter(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.editor.colors.EditorColorsScheme,com.intellij.openapi.project.Project):com.intellij.openapi.editor.highlighter.EditorHighlighter
 - a:createEditorHighlighter(com.intellij.openapi.fileTypes.SyntaxHighlighter,com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.highlighter.EditorHighlighter
@@ -2531,7 +2530,7 @@ com.intellij.openapi.editor.markup.ActiveGutterRenderer
 - getAccessibleName():java.lang.String
 - getAccessibleTooltipText():java.lang.String
 - getTooltipText():java.lang.String
-e:com.intellij.openapi.editor.markup.CustomHighlighterOrder
+*e:com.intellij.openapi.editor.markup.CustomHighlighterOrder
 - java.lang.Enum
 - sf:AFTER_BACKGROUND:com.intellij.openapi.editor.markup.CustomHighlighterOrder
 - sf:AFTER_TEXT:com.intellij.openapi.editor.markup.CustomHighlighterOrder
@@ -2651,8 +2650,6 @@ com.intellij.openapi.fileEditor.FileEditor
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.util.UserDataHolder
 - sf:EMPTY_ARRAY:com.intellij.openapi.fileEditor.FileEditor[]
-- sf:PROP_MODIFIED:java.lang.String
-- sf:PROP_VALID:java.lang.String
 - a:addPropertyChangeListener(java.beans.PropertyChangeListener):V
 - deselectNotify():V
 - getBackgroundHighlighter():com.intellij.codeHighlighting.BackgroundEditorHighlighter
@@ -2662,6 +2659,8 @@ com.intellij.openapi.fileEditor.FileEditor
 - getFilesToRefresh():java.util.List
 - a:getName():java.lang.String
 - a:getPreferredFocusedComponent():javax.swing.JComponent
+- s:getPropModified():java.lang.String
+- s:getPropValid():java.lang.String
 - getState(com.intellij.openapi.fileEditor.FileEditorStateLevel):com.intellij.openapi.fileEditor.FileEditorState
 - getStructureViewBuilder():com.intellij.ide.structureView.StructureViewBuilder
 - getTabActions():com.intellij.openapi.actionSystem.ActionGroup
@@ -2763,6 +2762,7 @@ a:com.intellij.openapi.ide.CopyPasteManager
 - a:getAllContents():java.awt.datatransfer.Transferable[]
 - a:getContents():java.awt.datatransfer.Transferable
 - a:getContents(java.awt.datatransfer.DataFlavor):java.lang.Object
+- s:getCutColor():java.awt.Color
 - s:getInstance():com.intellij.openapi.ide.CopyPasteManager
 - a:isCutElement(java.lang.Object):Z
 - a:removeContentChangedListener(com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener):V
@@ -2875,19 +2875,16 @@ com.intellij.openapi.vcs.FileStatus
 - a:getId():java.lang.String
 - a:getText():java.lang.String
 f:com.intellij.openapi.vcs.FileStatusFactory
-- <init>():V
 - createFileStatus(java.lang.String,java.lang.String):com.intellij.openapi.vcs.FileStatus
 - createFileStatus(java.lang.String,java.lang.String,java.awt.Color):com.intellij.openapi.vcs.FileStatus
 - createFileStatus(java.lang.String,java.util.function.Supplier,com.intellij.openapi.extensions.PluginId):com.intellij.openapi.vcs.FileStatus
 - createFileStatus(java.lang.String,java.util.function.Supplier,java.awt.Color,com.intellij.openapi.extensions.PluginId):com.intellij.openapi.vcs.FileStatus
 - s:getInstance():com.intellij.openapi.vcs.FileStatusFactory
 com.intellij.openapi.vcs.FileStatusListener
-- sf:TOPIC:com.intellij.util.messages.Topic
 - fileStatusChanged(com.intellij.openapi.vfs.VirtualFile):V
 - fileStatusesChanged():V
 a:com.intellij.openapi.vcs.FileStatusManager
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
-- <init>():V
 - addFileStatusListener(com.intellij.openapi.vcs.FileStatusListener,com.intellij.openapi.Disposable):V
 - a:fileStatusChanged(com.intellij.openapi.vfs.VirtualFile):V
 - a:fileStatusesChanged():V

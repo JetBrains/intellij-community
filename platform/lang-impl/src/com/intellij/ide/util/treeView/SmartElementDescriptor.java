@@ -78,7 +78,7 @@ public class SmartElementDescriptor extends NodeDescriptor{
       }
     }
     if (CopyPasteManager.getInstance().isCutElement(element)) {
-      color = CopyPasteManager.CUT_COLOR;
+      color = CopyPasteManager.getCutColor();
     }
 
     boolean changes = !Comparing.equal(icon, getIcon()) || !Comparing.equal(color, myColor);

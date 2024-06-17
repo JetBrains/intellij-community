@@ -2130,7 +2130,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     FileEditor fileEditor = FileEditorManager.getInstance(getProject()).getSelectedEditor(myFile);
     assertNotNull("editor not opened for " + myFile, myFile);
 
-    StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(getFile());
+    StructureViewBuilder builder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(getFile());
     assertNotNull("no builder for " + myFile, builder);
 
     StructureViewComponent component = null;

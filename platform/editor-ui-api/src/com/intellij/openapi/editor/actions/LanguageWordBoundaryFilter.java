@@ -4,7 +4,12 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.lang.LanguageExtension;
 
 public final class LanguageWordBoundaryFilter extends LanguageExtension<WordBoundaryFilter> {
-  public static final LanguageWordBoundaryFilter INSTANCE = new LanguageWordBoundaryFilter();
+
+  private static final LanguageWordBoundaryFilter INSTANCE = new LanguageWordBoundaryFilter();
+
+  public static LanguageWordBoundaryFilter getInstance() {
+    return INSTANCE;
+  }
 
   private LanguageWordBoundaryFilter() {
     super("com.intellij.wordBoundaryFilter", new WordBoundaryFilter());

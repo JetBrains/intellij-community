@@ -3,12 +3,14 @@ package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
 
+@ApiStatus.NonExtendable
 public interface EditorSettings {
   boolean isRightMarginShown();
   void setRightMarginShown(boolean val);

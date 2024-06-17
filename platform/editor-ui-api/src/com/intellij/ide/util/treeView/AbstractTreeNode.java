@@ -97,7 +97,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     fgColor = fgColor == null ? status.getColor() : fgColor;
 
     if (valueIsCut()) {
-      fgColor = CopyPasteManager.CUT_COLOR;
+      fgColor = CopyPasteManager.getCutColor();
     }
 
     if (presentation.getForcedTextForeground() == null) {

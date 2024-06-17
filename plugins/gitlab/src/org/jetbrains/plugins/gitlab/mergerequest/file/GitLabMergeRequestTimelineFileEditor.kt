@@ -58,7 +58,7 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
   override fun isValid(): Boolean = !disposed
   override fun isDisposed(): Boolean = disposed
   override fun dispose() {
-    propertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, true, false)
+    propertyChangeSupport.firePropertyChange(FileEditor.getPropValid(), true, false)
   }
 
   override fun addPropertyChangeListener(listener: PropertyChangeListener) =

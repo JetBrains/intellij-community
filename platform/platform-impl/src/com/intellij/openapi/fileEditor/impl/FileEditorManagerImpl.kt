@@ -1828,12 +1828,12 @@ open class FileEditorManagerImpl(
       }
 
       val propertyName = e.propertyName
-      if (FileEditor.PROP_MODIFIED == propertyName) {
+      if (FileEditor.getPropModified() == propertyName) {
         getComposite(e.source as FileEditor)?.let {
           updateFileIcon(it.file)
         }
       }
-      else if (FileEditor.PROP_VALID == propertyName) {
+      else if (FileEditor.getPropValid() == propertyName) {
         if (e.newValue == false) {
           closeFileEditor(e.source as FileEditor)
         }

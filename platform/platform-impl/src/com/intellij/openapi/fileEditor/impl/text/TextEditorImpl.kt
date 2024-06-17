@@ -189,7 +189,7 @@ open class TextEditorImpl @Internal constructor(
 
   override fun getStructureViewBuilder(): StructureViewBuilder? {
     val file = FileDocumentManager.getInstance().getFile(component.editor.document)?.takeIf { it.isValid } ?: return null
-    return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.fileType, file, project)
+    return StructureViewBuilder.getProvider().getStructureViewBuilder(file.fileType, file, project)
   }
 
   override fun canNavigateTo(navigatable: Navigatable): Boolean {

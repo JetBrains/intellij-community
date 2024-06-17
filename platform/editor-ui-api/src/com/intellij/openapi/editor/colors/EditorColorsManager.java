@@ -5,19 +5,26 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 public abstract class EditorColorsManager {
 
   @Topic.AppLevel
   public static final Topic<EditorColorsListener> TOPIC = new Topic<>(EditorColorsListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
+  /**
+   * @deprecated use {@link #getDefaultSchemeName()} instead
+   */
+  @Deprecated
   public static final @NonNls String DEFAULT_SCHEME_NAME = "Default";
 
-  public static final @NonNls String COLOR_SCHEME_FILE_EXTENSION = ".icls";
+  public static @NonNls @NotNull String getDefaultSchemeName() {
+    return DEFAULT_SCHEME_NAME;
+  }
+
+  public static @NonNls @NotNull String getColorSchemeFileExtension() {
+    return ".icls";
+  }
 
   public static EditorColorsManager getInstance() {
     return ApplicationManager.getApplication().getService(EditorColorsManager.class);
