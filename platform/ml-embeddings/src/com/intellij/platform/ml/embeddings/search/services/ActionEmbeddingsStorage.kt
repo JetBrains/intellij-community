@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearchIndex
+import com.intellij.platform.ml.embeddings.search.indices.IndexType.ACTIONS
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
@@ -39,7 +40,7 @@ class ActionEmbeddingsStorage : EmbeddingsStorage {
     LocalEmbeddingServiceProvider.getInstance().scheduleCleanup()
     val embedding = generateEmbedding(text) ?: return emptyList()
     val neighbours = index.findClosest(searchEmbedding = embedding, topK = topK, similarityThreshold = similarityThreshold)
-    EmbeddingSearchLogger.searchFinished(null, EmbeddingSearchLogger.Index.ACTIONS, TimeoutUtil.getDurationMillis(searchStartTime))
+    EmbeddingSearchLogger.searchFinished(null, ACTIONS, TimeoutUtil.getDurationMillis(searchStartTime))
     return neighbours
   }
 

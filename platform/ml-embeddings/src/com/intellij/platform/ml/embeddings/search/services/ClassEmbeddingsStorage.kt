@@ -5,9 +5,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
-import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.EntityId
+import com.intellij.platform.ml.embeddings.search.indices.IndexType.CLASSES
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
@@ -32,7 +32,7 @@ class ClassEmbeddingsStorage(project: Project, cs: CoroutineScope)
     )
   )
 
-  override val reportableIndex = EmbeddingSearchLogger.Index.CLASSES
+  override val reportableIndex = CLASSES
 
   companion object {
     private const val INDEX_DIR = "classes"

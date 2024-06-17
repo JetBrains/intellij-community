@@ -8,6 +8,8 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ml.embeddings.search.indices.IndexType
+import com.intellij.platform.ml.embeddings.search.indices.IndexType.*
 import com.intellij.platform.ml.embeddings.search.services.*
 import kotlin.math.round
 
@@ -19,7 +21,7 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
   private val USED_MEMORY_MB = EventFields.Double("used_memory_mb")
   private val VECTOR_COUNT = EventFields.Long("vector_count")
   private val INDEX_TYPE = EventFields.String("index_type", listOf("actions", "file-based"))
-  private val INDEX = EventFields.Enum("index", Index::class.java) { it.name.lowercase() }
+  private val INDEX = EventFields.Enum("index", IndexType::class.java) { it.name.lowercase() }
 
   private val COMMON_FIELDS = arrayOf(INDEX_TYPE, MODEL_VERSION, USED_MEMORY_MB, VECTOR_COUNT, ENABLED_INDICES, EventFields.DurationMs)
 
@@ -46,26 +48,26 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
     INDEXING_SAVED.log(project, getCommonFields(project, forActions) + listOf(EventFields.DurationMs.with(durationMs)))
   }
 
-  suspend fun searchFinished(project: Project?, index: Index, durationMs: Long) {
-    require(index == Index.ACTIONS || project != null)
+  suspend fun searchFinished(project: Project?, index: IndexType, durationMs: Long) {
+    require(index == ACTIONS || project != null)
     SEARCH_FINISHED.log(project, buildList {
       add(MODEL_VERSION.with(Registry.stringValue("intellij.platform.ml.embeddings.model.version")))
       add(USED_MEMORY_MB.with(
         roundDouble(
           when (index) {
-            Index.ACTIONS -> ActionEmbeddingsStorage.getInstance().index.estimateMemoryUsage()
-            Index.FILES -> FileEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
-            Index.CLASSES -> ClassEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
-            Index.SYMBOLS -> SymbolEmbeddingStorage.getInstance(project!!).index.estimateMemoryUsage()
+            ACTIONS -> ActionEmbeddingsStorage.getInstance().index.estimateMemoryUsage()
+            FILES -> FileEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
+            CLASSES -> ClassEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
+            SYMBOLS -> SymbolEmbeddingStorage.getInstance(project!!).index.estimateMemoryUsage()
           }.toDouble() / BYTES_IN_MEGABYTE
         )
       ))
       add(VECTOR_COUNT.with(
         when (index) {
-          Index.ACTIONS -> ActionEmbeddingsStorage.getInstance().index.getSize()
-          Index.FILES -> FileEmbeddingsStorage.getInstance(project!!).index.getSize()
-          Index.CLASSES -> ClassEmbeddingsStorage.getInstance(project!!).index.getSize()
-          Index.SYMBOLS -> SymbolEmbeddingStorage.getInstance(project!!).index.getSize()
+          ACTIONS -> ActionEmbeddingsStorage.getInstance().index.getSize()
+          FILES -> FileEmbeddingsStorage.getInstance(project!!).index.getSize()
+          CLASSES -> ClassEmbeddingsStorage.getInstance(project!!).index.getSize()
+          SYMBOLS -> SymbolEmbeddingStorage.getInstance(project!!).index.getSize()
         }.toLong()
       ))
       add(INDEX.with(index))
@@ -118,8 +120,6 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
     }
     return roundDouble(totalMemory.toDouble() / BYTES_IN_MEGABYTE)
   }
-
-  enum class Index { ACTIONS, FILES, CLASSES, SYMBOLS }
 
   private fun roundDouble(value: Double): Double {
     if (!value.isFinite()) return -1.0

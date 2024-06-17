@@ -9,7 +9,6 @@ import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Concurrent [EmbeddingSearchIndex] that stores all embeddings in the memory and allows
@@ -75,7 +74,7 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
     idToEmbedding = (ids zip embeddings).toMap().toMutableMap()
   }
 
-  override suspend fun offload(persistEventConsumer: (Map<EntitySourceType, AtomicLong>) -> Unit) = idToEmbedding.clear()
+  override suspend fun offload() = idToEmbedding.clear()
 
   override suspend fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double?): List<ScoredText> = lock.read {
     idToEmbedding.findClosest(searchEmbedding, topK, similarityThreshold)
