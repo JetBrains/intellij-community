@@ -5,6 +5,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+
 /**
  * Allows an action to retrieve information about the context in which it was invoked.
  * <p/>
@@ -14,21 +16,26 @@ import org.jetbrains.annotations.Nullable;
  * Things have got more complex since the introduction of asynchronous action update.
  * If you need to alter the provided data context or create one from a set of data
  * use {@link CustomizedDataContext} or {@link com.intellij.openapi.actionSystem.impl.SimpleDataContext} instead, even in tests.
- * These classes are async-ready, optionally support {@link com.intellij.openapi.util.UserDataHolder}, and run {@link com.intellij.ide.impl.dataRules.GetDataRule} rules.</li>
+ * These classes are async-ready, optionally support {@link com.intellij.openapi.util.UserDataHolder},
+ * and run {@link com.intellij.ide.impl.dataRules.GetDataRule} rules.</li>
  * <li>Do not to confuse {@link DataProvider} with {@link DataContext}.
  * A {@link DataContext} is usually provided by the platform with {@link DataProvider}s as its building blocks.
  * For example, a node in a tree view could be a {@link DataProvider} but not a {@link DataContext}.</li>
  * </ul>
  *
+ * @see DataKey
+ * @see DataProvider
+ * @see EdtDataProvider
  * @see AnActionEvent#getDataContext()
+ * @see com.intellij.ide.DataManager#getDataContext(Component)
  * @see com.intellij.openapi.actionSystem.CommonDataKeys
  * @see com.intellij.openapi.actionSystem.LangDataKeys
  * @see com.intellij.openapi.actionSystem.PlatformDataKeys
  * @see com.intellij.openapi.actionSystem.PlatformCoreDataKeys
- * @see DataKey
- * @see com.intellij.ide.DataManager
- * @see DataProvider
+ * @see com.intellij.openapi.actionSystem.CustomizedDataContext
+ * @see com.intellij.openapi.actionSystem.impl.SimpleDataContext
  */
+@ApiStatus.NonExtendable
 @FunctionalInterface
 public interface DataContext {
   /**
