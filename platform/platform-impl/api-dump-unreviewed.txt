@@ -14993,23 +14993,7 @@ f:com.intellij.openapi.editor.impl.view.FontLayoutService$Companion
 - f:getInstance():com.intellij.openapi.editor.impl.view.FontLayoutService
 - f:setInstance(com.intellij.openapi.editor.impl.view.FontLayoutService):V
 f:com.intellij.openapi.editor.impl.view.IterationState
-- <init>(com.intellij.openapi.editor.ex.EditorEx,I,I,com.intellij.openapi.editor.impl.view.IterationState$CaretData,Z,Z,Z,Z):V
-- advance():V
-- atEnd():Z
 - s:createByLayerThenByAttributesComparator(com.intellij.openapi.editor.colors.EditorColorsScheme):java.util.Comparator
-- s:createCaretData(com.intellij.openapi.editor.ex.EditorEx):com.intellij.openapi.editor.impl.view.IterationState$CaretData
-- getBeforeLineStartBackgroundAttributes():com.intellij.openapi.editor.markup.TextAttributes
-- getBreakAttributes():com.intellij.openapi.editor.markup.TextAttributes
-- getBreakAttributes(Z):com.intellij.openapi.editor.markup.TextAttributes
-- getCurrentFold():com.intellij.openapi.editor.FoldRegion
-- getEndOffset():I
-- getMergedAttributes():com.intellij.openapi.editor.markup.TextAttributes
-- getPastLineEndBackgroundAttributes():com.intellij.openapi.editor.markup.TextAttributes
-- getStartOffset():I
-- nextIsFoldRegion():Z
-- retreat(I):V
-f:com.intellij.openapi.editor.impl.view.IterationState$CaretData
-- s:copyOf(com.intellij.openapi.editor.impl.view.IterationState$CaretData,Z):com.intellij.openapi.editor.impl.view.IterationState$CaretData
 f:com.intellij.openapi.editor.impl.view.VisualLinesIterator
 - <init>(com.intellij.openapi.editor.impl.EditorImpl,I):V
 - advance():V
