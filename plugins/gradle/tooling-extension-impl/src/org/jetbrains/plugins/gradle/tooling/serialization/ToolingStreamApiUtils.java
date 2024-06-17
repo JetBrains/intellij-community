@@ -16,7 +16,10 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 public final class ToolingStreamApiUtils {
+
   public static final String OBJECT_ID_FIELD = "objectID";
+  public static final String MAP_KEY_FIELD = "key";
+  public static final String MAP_VALUE_FIELD = "value";
 
   // todo what about PooledBlockAllocatorProvider?
   public static @NotNull IonBinaryWriterBuilder createIonWriter() {
@@ -189,9 +192,9 @@ public final class ToolingStreamApiUtils {
     writer.stepIn(IonType.LIST);
     for (Map.Entry<K, V> entry : map.entrySet()) {
       writer.stepIn(IonType.STRUCT);
-      writer.setFieldName("key");
+      writer.setFieldName(MAP_KEY_FIELD);
       keyWriter.consume(entry.getKey());
-      writer.setFieldName("value");
+      writer.setFieldName(MAP_VALUE_FIELD);
       valueWriter.consume(entry.getValue());
       writer.stepOut();
     }
