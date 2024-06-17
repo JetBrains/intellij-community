@@ -82,13 +82,11 @@ class WorkspaceModelBenchmarksPerformanceTest {
   fun beforeTest() {
     Assumptions.assumeTrue(UsefulTestCase.IS_UNDER_TEAMCITY, "Skip slow test on local run")
     println("> Benchmark test started")
-    Registry.get(EntitiesOrphanage.orphanageKey).setValue(true)
   }
 
   @AfterEach
   fun afterTest() {
     println("> Benchmark test finished")
-    Registry.get(EntitiesOrphanage.orphanageKey).setValue(false)
     TracedSnapshotCache.LOG_QUEUE_MAX_SIZE = 10_000
   }
 

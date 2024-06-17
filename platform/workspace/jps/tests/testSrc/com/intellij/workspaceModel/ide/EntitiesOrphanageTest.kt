@@ -38,11 +38,6 @@ class EntitiesOrphanageTest {
   private val virtualFileManager: VirtualFileUrlManager
     get() = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
 
-  @BeforeEach
-  fun setUp() {
-    Assumptions.assumeTrue(EntitiesOrphanage.isEnabled)
-  }
-
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding content root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {

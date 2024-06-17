@@ -16,7 +16,7 @@ abstract class BaseIdeSerializationContext : SerializationContext {
     get() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null
   
   override val isOrphanageEnabled: Boolean
-    get() = EntitiesOrphanage.isEnabled
+    get() = true
   override val customModuleComponentSerializers: List<CustomModuleComponentSerializer>
     get() = CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList
   override val customModuleRootsSerializers: List<CustomModuleRootsSerializer>

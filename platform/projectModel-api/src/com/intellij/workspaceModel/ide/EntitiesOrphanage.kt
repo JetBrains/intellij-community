@@ -37,10 +37,6 @@ interface EntitiesOrphanage {
   fun update(updater: (MutableEntityStorage) -> Unit)
 
   companion object {
-    const val orphanageKey: String = "ide.workspace.model.separate.component.for.roots"
-    val isEnabled: Boolean
-      get() = Registry.`is`(orphanageKey, false)
-
     fun getInstance(project: Project): EntitiesOrphanage = project.service()
   }
 }

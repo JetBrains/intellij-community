@@ -1192,13 +1192,10 @@ f:com.intellij.projectModel.ProjectModelBundle
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 com.intellij.workspaceModel.ide.EntitiesOrphanage
 - sf:Companion:com.intellij.workspaceModel.ide.EntitiesOrphanage$Companion
-- sf:orphanageKey:java.lang.String
 - a:getCurrentSnapshot():com.intellij.platform.workspace.storage.ImmutableEntityStorage
 - a:update(kotlin.jvm.functions.Function1):V
 f:com.intellij.workspaceModel.ide.EntitiesOrphanage$Companion
-- sf:orphanageKey:java.lang.String
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.ide.EntitiesOrphanage
-- f:isEnabled():Z
 com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 - sf:Companion:com.intellij.workspaceModel.ide.JpsProjectLoadingManager$Companion
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.ide.JpsProjectLoadingManager

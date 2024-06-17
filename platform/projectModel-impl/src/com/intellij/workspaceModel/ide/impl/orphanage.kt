@@ -152,7 +152,6 @@ class OrphanService(
 
 private class OrphanListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
-    if (!EntitiesOrphanage.isEnabled) return
     if (useReactiveWorkspaceModelApi()) return
 
     val adders = listOf(
