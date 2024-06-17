@@ -50,11 +50,19 @@ public interface JavaMainMethodProvider extends PossiblyDumbAware {
   @Contract(pure = true)
   @Nullable PsiMethod findMainInClass(@NotNull PsiClass clazz);
 
+  /**
+   * @param clazz class to check
+   * @return a pretty class name. e.x. for Kotlin it allows to return `MyClass` instead of `MyClass.Companion`
+   */
   @Contract(pure = true)
   default @Nullable String getMainClassName(@NotNull PsiClass clazz) {
     return ClassUtil.getJVMClassName(clazz);
   }
 
+  /**
+   * @param psiElement element to check
+   * @return true if the given element or its parent is the main method, false otherwise
+   */
   @Contract(pure = true)
   default boolean isMain(@NotNull PsiElement psiElement) {
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
