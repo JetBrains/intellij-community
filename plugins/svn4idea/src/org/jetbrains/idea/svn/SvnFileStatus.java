@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
 
@@ -27,5 +28,5 @@ public final class SvnFileStatus {
     .createFileStatus("IDEA_SVN_FILESTATUS_OBSTRUCTED", SvnBundle.messagePointer("file.status.obstructed"), new Color(0x727238), OUR_PLUGIN_ID);
 
   public static final FileStatus REPLACED = FileStatusFactory.getInstance()
-    .createFileStatus("IDEA_SVN_REPLACED", SvnBundle.messagePointer("file.status.replaced"), FileStatus.ADDED.getColor(), OUR_PLUGIN_ID);
+    .createFileStatus("IDEA_SVN_REPLACED", SvnBundle.messagePointer("file.status.replaced"), Cancellation.forceNonCancellableSectionInClassInitializer(() -> FileStatus.ADDED.getColor()), OUR_PLUGIN_ID);
 }

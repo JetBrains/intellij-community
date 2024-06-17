@@ -4,6 +4,7 @@ package com.jetbrains.python
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import java.util.function.Function
@@ -122,6 +123,10 @@ abstract class PyElementTypesFacade {
   abstract val asPatternConstructor: Function<in ASTNode, out PsiElement>
 
   companion object {
-    val INSTANCE: PyElementTypesFacade by lazy { ApplicationManager.getApplication().service<PyElementTypesFacade>() }
+    val INSTANCE: PyElementTypesFacade by lazy {
+      Cancellation.forceNonCancellableSectionInClassInitializer {
+        ApplicationManager.getApplication().service<PyElementTypesFacade>()
+      }
+    }
   }
 }
