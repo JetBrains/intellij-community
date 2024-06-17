@@ -76,12 +76,13 @@ private class KtScriptDependencyModuleByModuleInfo(
     override val librarySources: KtLibrarySourceModule?
         get() = moduleInfo.sourcesModuleInfo?.toKtModuleOfType<KtLibrarySourceModule>()
 
-    override fun getBinaryRoots(): Collection<Path> = when (moduleInfo) {
-        is ScriptDependenciesInfo.ForProject -> ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles().map { it.toNioPath() }
+    override val binaryRoots: Collection<Path>
+        get() = when (moduleInfo) {
+            is ScriptDependenciesInfo.ForProject -> ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles().map { it.toNioPath() }
 
-        is ScriptDependenciesInfo.ForFile -> ScriptDependencyAware.getInstance(project)
-            .getScriptDependenciesClassFiles(moduleInfo.scriptFile).map { it.toNioPath() }
-    }
+            is ScriptDependenciesInfo.ForFile -> ScriptDependencyAware.getInstance(project)
+                .getScriptDependenciesClassFiles(moduleInfo.scriptFile).map { it.toNioPath() }
+        }
 
     override val file: KtFile?
         get() = optScriptFile((moduleInfo as? ScriptDependenciesInfo.ForFile)?.scriptFile)

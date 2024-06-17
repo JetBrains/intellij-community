@@ -188,9 +188,8 @@ open class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleB
     override val librarySources: KtLibrarySourceModule
         get() = libraryInfo.sourcesModuleInfo.toKtModuleOfType<KtLibrarySourceModule>()
 
-    override fun getBinaryRoots(): Collection<Path> {
-        return libraryInfo.getLibraryRoots().map(Paths::get)
-    }
+    override val binaryRoots: Collection<Path>
+        get() = libraryInfo.getLibraryRoots().map(Paths::get)
 
     override val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
 
@@ -246,11 +245,10 @@ class SdkKtModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModuleInfoBas
 
     override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
 
-    override fun getBinaryRoots(): Collection<Path> {
-        return moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES).map { virtualFile ->
+    override val binaryRoots: Collection<Path>
+        get() = moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES).map { virtualFile ->
             Paths.get(virtualFile.fileSystem.extractPresentableUrl(virtualFile.path)).normalize()
         }
-    }
 
     override val project: Project get() = moduleInfo.project
 }
