@@ -12,6 +12,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
+import com.intellij.json.pointer.JsonPointerPosition
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -23,12 +24,14 @@ import com.intellij.util.Consumer
 import com.intellij.util.ThreeState
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
+import com.jetbrains.jsonSchema.impl.tree.JsonSchemaNodeExpansionRequest
 import one.util.streamex.StreamEx
 import org.toml.ide.experiments.TomlExperiments
 import org.toml.lang.psi.TomlLiteral
@@ -68,7 +71,8 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
             val pointerPosition = walker.findPosition(checkable, isName == ThreeState.NO)
             if (pointerPosition == null || pointerPosition.isEmpty && isName == ThreeState.NO) return
 
-            val schemas = JsonSchemaResolver(project, rootSchema, pointerPosition).resolve()
+            val expansionRequest = JsonSchemaNodeExpansionRequest(walker.createValueAdapter(checkable), false)
+            val schemas = JsonSchemaResolver(project, rootSchema, pointerPosition, expansionRequest).resolve()
             val knownNames = hashSetOf<String>()
 
             for (schema in schemas) {
@@ -110,14 +114,14 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
 
                     if (isTomlHeader && JsonSchemaObjectReadingUtils.guessType(jsonSchemaObject) !in JSON_COMPOUND_TYPES) continue
 
-                    addPropertyVariant(variant, jsonSchemaObject)
+                    addPropertyVariant(variant, jsonSchemaObject, adapter?.nameValueAdapter)
                 }
             }
         }
 
         @Suppress("NAME_SHADOWING")
-        private fun addPropertyVariant(key: String, jsonSchemaObject: JsonSchemaObject) {
-            val currentVariants = JsonSchemaResolver(project, jsonSchemaObject).resolve()
+        private fun addPropertyVariant(key: String, jsonSchemaObject: JsonSchemaObject, originalPositionAdapter: JsonValueAdapter?) {
+            val currentVariants = JsonSchemaResolver(project, jsonSchemaObject, JsonPointerPosition(), JsonSchemaNodeExpansionRequest(originalPositionAdapter, false)).resolve()
             val jsonSchemaObject = currentVariants.firstOrNull() ?: jsonSchemaObject
 
             var description = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject)

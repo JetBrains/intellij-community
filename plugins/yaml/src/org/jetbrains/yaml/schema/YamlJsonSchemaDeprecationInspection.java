@@ -47,7 +47,7 @@ public class YamlJsonSchemaDeprecationInspection extends YamlJsonSchemaInspectio
           return;
         }
 
-        final MatchResult result = new JsonSchemaResolver(project, schema, position).detailedResolve();
+        final MatchResult result = new JsonSchemaResolver(project, schema, position, walker.createValueAdapter(key)).detailedResolve();
         for (JsonSchemaObject object : result.mySchemas) {
           String message = object.getDeprecationMessage();
           if (message != null) {
