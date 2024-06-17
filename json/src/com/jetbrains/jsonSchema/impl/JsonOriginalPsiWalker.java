@@ -174,6 +174,10 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public @Nullable JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
+    if (element instanceof JsonProperty) {
+      JsonPropertyAdapter parentPropertyAdapter = getParentPropertyAdapter(element);
+      return parentPropertyAdapter == null ? null : parentPropertyAdapter.getNameValueAdapter();
+    }
     return element instanceof JsonValue ? JsonJsonPropertyAdapter.createAdapterByType((JsonValue)element) : null;
   }
 
