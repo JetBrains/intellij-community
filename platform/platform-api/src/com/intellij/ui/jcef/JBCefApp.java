@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -111,7 +112,7 @@ public final class JBCefApp {
       myDebuggingPort.completeExceptionally(new UnsupportedOperationException());
     }
     else {
-      CefSettings settings = SettingsHelper.loadSettings(config);
+      CefSettings settings = Cancellation.forceNonCancellableSectionInClassInitializer(() -> SettingsHelper.loadSettings(config));
 
       if (SystemInfoRt.isLinux && !settings.no_sandbox) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -159,7 +160,7 @@ public final class JBCefApp {
       }
 
       BoolRef trackGPUCrashes = new BoolRef(false);
-      String[] args = SettingsHelper.loadArgs(config, settings, trackGPUCrashes);
+      String[] args = Cancellation.forceNonCancellableSectionInClassInitializer(() -> SettingsHelper.loadArgs(config, settings, trackGPUCrashes));
       CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes.get()));
       myCefSettings = settings;
       myCefApp = CefApp.getInstance(settings);

@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.actions
 
-import com.intellij.ide.actions.*
+import com.intellij.ide.actions.CreateFileFromTemplateAction
+import com.intellij.ide.actions.CreateFileFromTemplateDialog
+import com.intellij.ide.actions.CreateTemplateInPackageAction
+import com.intellij.ide.actions.JavaCreateTemplateInPackageAction
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults
@@ -19,6 +22,7 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -35,11 +39,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook
-import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
@@ -320,7 +320,11 @@ internal fun CreateFileFromTemplateDialog.Builder.addKind(t: KotlinFileTemplate)
 
 internal enum class KotlinFileTemplate(@NlsContexts.ListItem val title: String, val icon: Icon, val fileName: String) {
     Class(KotlinBundle.message("action.new.file.dialog.class.title"), KotlinIcons.CLASS, "Kotlin Class"),
-    File(KotlinBundle.message("action.new.file.dialog.file.title"), KotlinFileType.INSTANCE.icon, "Kotlin File"),
+    File(
+        KotlinBundle.message("action.new.file.dialog.file.title"),
+        Cancellation.forceNonCancellableSectionInClassInitializer { KotlinFileType.INSTANCE.icon },
+        "Kotlin File"
+    ),
     Interface(KotlinBundle.message("action.new.file.dialog.interface.title"), KotlinIcons.INTERFACE, "Kotlin Interface"),
     SealedInterface(KotlinBundle.message("action.new.file.dialog.sealed.interface.title"), KotlinIcons.INTERFACE, "Kotlin Sealed Interface"),
     DataClass(KotlinBundle.message("action.new.file.dialog.data.class.title"), KotlinIcons.CLASS, "Kotlin Data Class"),

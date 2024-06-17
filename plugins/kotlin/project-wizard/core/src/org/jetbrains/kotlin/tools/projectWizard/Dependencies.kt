@@ -1,10 +1,8 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.tools.projectWizard
 
+import com.intellij.openapi.progress.Cancellation
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.DependencyVersionStore
 import org.jetbrains.kotlin.tools.projectWizard.library.LibraryDescriptor
 import org.jetbrains.kotlin.tools.projectWizard.library.LibraryType
@@ -48,7 +46,9 @@ object Dependencies {
         return descriptor
     }
 
-    val JUNIT = registerMavenLibrary(DefaultRepository.MAVEN_CENTRAL, "junit", "junit", "4.13.2")
+    val JUNIT = Cancellation.forceNonCancellableSectionInClassInitializer {
+        registerMavenLibrary(DefaultRepository.MAVEN_CENTRAL, "junit", "junit", "4.13.2")
+    }
     val JUNIT5 = registerMavenLibrary(DefaultRepository.MAVEN_CENTRAL, "org.junit.jupiter", "junit-jupiter-engine", "5.8.2")
 
     object ANDROID {

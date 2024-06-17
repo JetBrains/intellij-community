@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.concurrency.ThreadContext;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.concurrent.CancellationException;
+import java.util.function.Supplier;
 
 import static kotlinx.coroutines.JobKt.ensureActive;
 
@@ -88,5 +89,25 @@ public final class Cancellation {
         isInNonCancelableSection.remove();
       }
     };
+  }
+
+  /**
+   * Throwing {@code CancellationException} from {@code <clinit>} causes {@link ExceptionInInitializerError} and bricks the class forever.
+   * For example, requesting services or connecting a message bus are cancellable operations,
+   * and they must not be invoked from class initializers.
+   * Avoiding complex operations in initializers makes the classloading faster.
+   *
+   * @deprecated To prevent the new code from accidentally calling cancellable APIs,
+   * we need to enable the error logging by default.
+   * To do that, existing failures have to be fixed right away or suppressed.
+   * This method exists to suppress existing failures in our own tests.
+   * It serves as a point for finding all such cases by searching for its usages.
+   * This method will throw an error in coming releases.
+   * <a href="https://youtrack.jetbrains.com/issue/IJPL-1045">YouTrack issue.</a>
+   */
+  @Internal
+  @Deprecated
+  public static <T> T forceNonCancellableSectionInClassInitializer(@NotNull Supplier<T> computable) {
+    return computeInNonCancelableSection(computable::get);
   }
 }
