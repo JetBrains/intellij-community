@@ -2,13 +2,7 @@ microba project
 =======
 Microba controls is a set of JFC (Swing) components.
 
-News
-----------
-This project is on hiatus. 
-
-For a date picker with support for JSR-310 check out [LGoodDatePicker](https://github.com/LGoodDatePicker/LGoodDatePicker)
-
-This is the new home of Microba Project. It was previously hosted on SofurceForge.net [here](http://microba.sf.net)
+It is the fork of the official repository: https://github.com/tdbear/microba
 
 Features
 ---------
@@ -42,18 +36,6 @@ GradientEditor
 * Linear color interpolation
 * Horizontal/vertical alignment
 
-Birdview (for [JGraph libary](http://www.jgraph.com/))
-* Provides overview (bird-eyes view) of a JGraph component
-* Tracks viewport size and position, graph changes, scaling etc.
-* Pannning with the mouse
-
-
-Build
-----------
-Microba currently uses Maven for its build.
-
-   mvn install
-   
 FAQ
 -----------
 [Wiki - FAQ](https://github.com/tdbear/microba/wiki/FAQ)
