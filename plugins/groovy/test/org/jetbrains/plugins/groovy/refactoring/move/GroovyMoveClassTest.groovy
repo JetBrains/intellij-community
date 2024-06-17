@@ -81,7 +81,8 @@ class GroovyMoveClassTest extends GroovyMoveTestBase {
     assertNotNull("Package " + newPackageName + " not found", aPackage)
     final PsiDirectory[] dirs = aPackage.getDirectories()
 
-    final PsiDirectory dir = dirs[dirs.length - 1]
+    assertEquals(1, dirs.size())
+    final PsiDirectory dir = dirs.first()
     final SingleSourceRootMoveDestination moveDestination =
       new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(dir)), dir)
     new MoveClassesOrPackagesProcessor(getProject(), classes, moveDestination, true, true, null).run()

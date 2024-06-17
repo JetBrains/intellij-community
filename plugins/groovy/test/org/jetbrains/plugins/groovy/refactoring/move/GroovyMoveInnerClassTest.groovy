@@ -37,7 +37,8 @@ class GroovyMoveInnerClassTest extends GroovyMoveTestBase {
     assertNotNull("Package " + newPackageName + " not found", aPackage)
     final PsiDirectory[] dirs = aPackage.getDirectories()
 
-    final PsiDirectory dir = dirs[dirs.length - 1]
+    assertEquals(1, dirs.size())
+    final PsiDirectory dir = dirs.first()
     new MoveInnerProcessor(getProject(), psiClass, classNames[1], false, null, dir).run()
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
