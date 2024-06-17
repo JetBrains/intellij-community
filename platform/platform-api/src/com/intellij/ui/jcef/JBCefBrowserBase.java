@@ -593,7 +593,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   boolean isCefBrowserCreateStarted() {
     synchronized (myIsCreateStarted) {
-      return myIsCreateStarted.get() || isCefBrowserCreated();
+      return myIsCreateStarted.get() || getCefDelegate() == null && isCefBrowserCreated();
     }
   }
 

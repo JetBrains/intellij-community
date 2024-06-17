@@ -20,6 +20,7 @@ import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefApp;
 import org.cef.CefSettings;
+import org.cef.browser.CefMessageRouter;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
@@ -382,6 +383,13 @@ public final class JBCefApp {
     }
     assert myCefApp != null;
     return new JBCefClient(myCefApp.createClient());
+  }
+
+  public @NotNull CefMessageRouter createMessageRouter(@Nullable CefMessageRouter.CefMessageRouterConfig config) {
+    if (myDelegate != null) {
+      return myDelegate.createMessageRouter(config);
+    }
+    return CefMessageRouter.create(config);
   }
 
   /**

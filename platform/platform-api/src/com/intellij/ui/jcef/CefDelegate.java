@@ -3,11 +3,13 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.cef.browser.CefBrowser;
+import org.cef.browser.CefMessageRouter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * If 'active', replaces the default JCEF implementation to be used by IntellJ platform.
+ * If 'active', replaces the default JCEF implementation to be used by IntelliJ platform.
  */
 @ApiStatus.Internal
 public interface CefDelegate {
@@ -21,4 +23,5 @@ public interface CefDelegate {
   boolean isCefSupported();
   @NotNull JBCefClient createClient();
   @NotNull CefBrowser createBrowser(@NotNull JBCefClient client, @NotNull String url);
+  @NotNull CefMessageRouter createMessageRouter(@Nullable CefMessageRouter.CefMessageRouterConfig config);
 }

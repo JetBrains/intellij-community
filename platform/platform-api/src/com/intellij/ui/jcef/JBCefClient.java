@@ -10,6 +10,7 @@ import org.cef.CefClient;
 import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
+import org.cef.browser.CefMessageRouter;
 import org.cef.callback.*;
 import org.cef.handler.*;
 import org.cef.misc.BoolRef;
@@ -91,22 +92,20 @@ public class JBCefClient implements JBCefDisposable {
     myCefClient = client;
     Disposer.register(JBCefApp.getInstance().getDisposable(), this);
 
-    if (client != null) {
-      Runnable createPool = () -> {
-        if (myJSQueryPool != null) {
-          LOG.warn("JSQueryPool has already been created, this request will be ignored");
-          return;
-        }
-        myJSQueryPool = JSQueryPool.create(this);
-      };
-      addPropertyChangeListener(Properties.JS_QUERY_POOL_SIZE, evt -> {
-        if (evt.getNewValue() != null) {
-          createPool.run(); // no need to sync it as the property change firing is sync'ed
-        }
-      });
-      if (JS_QUERY_POOL_DEFAULT_SIZE > 0) {
-        createPool.run();
+    Runnable createPool = () -> {
+      if (myJSQueryPool != null) {
+        LOG.warn("JSQueryPool has already been created, this request will be ignored");
+        return;
       }
+      myJSQueryPool = JSQueryPool.create(this);
+    };
+    addPropertyChangeListener(Properties.JS_QUERY_POOL_SIZE, evt -> {
+      if (evt.getNewValue() != null) {
+        createPool.run(); // no need to sync it as the property change firing is sync'ed
+      }
+    });
+    if (JS_QUERY_POOL_DEFAULT_SIZE > 0) {
+      createPool.run();
     }
   }
 
@@ -685,6 +684,20 @@ public class JBCefClient implements JBCefDisposable {
     myLifeSpanHandler.removeAll(browser);
     myLoadHandler.removeAll(browser);
     myRequestHandler.removeAll(browser);
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public void addMessageRouter(@NotNull CefMessageRouter messageRouter) {
+    if (myCefClient == null) return;
+    myCefClient.addMessageRouter(messageRouter);
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public void removeMessageRouter(@NotNull CefMessageRouter messageRouter) {
+    if (myCefClient == null) return;
+    myCefClient.removeMessageRouter(messageRouter);
   }
 
   private class HandlerSupport<T> {

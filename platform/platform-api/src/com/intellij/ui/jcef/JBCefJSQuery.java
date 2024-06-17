@@ -170,7 +170,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
           return;
         }
       }
-      myJBCefClient.getCefClient().removeMessageRouter(myFunc.myRouter);
+      myJBCefClient.removeMessageRouter(myFunc.myRouter);
       myFunc.myRouter.dispose();
       myHandlerMap.clear();
     });
@@ -243,8 +243,8 @@ public final class JBCefJSQuery implements JBCefDisposable {
       CefMessageRouter.CefMessageRouterConfig config = new CefMessageRouter.CefMessageRouterConfig();
       config.jsQueryFunction = myFuncName;
       config.jsCancelFunction = "cefQuery_cancel_" + postfix;
-      myRouter = CefMessageRouter.create(config);
-      client.getCefClient().addMessageRouter(myRouter);
+      myRouter = JBCefApp.getInstance().createMessageRouter(config);
+      client.addMessageRouter(myRouter);
     }
   }
 }
