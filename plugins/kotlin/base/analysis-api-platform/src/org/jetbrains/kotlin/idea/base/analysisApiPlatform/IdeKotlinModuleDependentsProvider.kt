@@ -20,10 +20,10 @@ import org.jetbrains.kotlin.analysis.project.structure.KtDanglingFileModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSdkModule
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.projectStructure.KtLibraryModuleByModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.KtLibrarySourceModuleByModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.KtSdkLibraryModuleByModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryUsageIndex
@@ -50,8 +50,8 @@ internal class IdeKotlinModuleDependentsProvider(private val project: Project) :
             is KtLibraryModuleByModuleInfo -> getDirectDependentsForLibraryModule(module)
             is KtLibrarySourceModuleByModuleInfo -> getDirectDependents(module.binaryLibrary)
 
-            // No dependents need to be provided for `KtSdkModule` and `KtBuiltinsModule` (see `KotlinModuleDependentsProvider`).
-            is KtSdkModule -> emptySet()
+            // No dependents need to be provided for SDK modules and `KtBuiltinsModule` (see `KotlinModuleDependentsProvider`).
+            is KtSdkLibraryModuleByModuleInfo -> emptySet()
             is KtBuiltinsModule -> emptySet()
 
             // There is no way to find dependents of danging file modules, as such modules are created on-site.

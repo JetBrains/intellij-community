@@ -76,6 +76,9 @@ private class KtScriptDependencyModuleByModuleInfo(
     override val librarySources: KtLibrarySourceModule?
         get() = moduleInfo.sourcesModuleInfo?.toKtModuleOfType<KtLibrarySourceModule>()
 
+    override val isSdk: Boolean
+        get() = false
+
     override val binaryRoots: Collection<Path>
         get() = when (moduleInfo) {
             is ScriptDependenciesInfo.ForProject -> ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles().map { it.toNioPath() }

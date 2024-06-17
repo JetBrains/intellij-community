@@ -139,7 +139,7 @@ private class IdeKotlinDeclarationProvider(
 
     private fun computePackageNames(module: KtModule?): Set<String>? = when (module) {
         is KtSourceModuleByModuleInfo -> computeSourceModulePackageSet(module)
-        is SdkKtModuleByModuleInfo -> computeSdkModulePackageSet(module)
+        is KtSdkLibraryModuleByModuleInfo -> computeSdkModulePackageSet(module)
         is KtLibraryModuleByModuleInfo -> computeLibraryModulePackageSet(module)
         is KtLibrarySourceModule -> computePackageNames(module.binaryLibrary)
         is KtBuiltinsModule -> StandardClassIds.builtInsPackages.mapTo(mutableSetOf()) { it.asString() }
@@ -148,7 +148,7 @@ private class IdeKotlinDeclarationProvider(
 
     private fun computeSourceModulePackageSet(module: KtSourceModuleByModuleInfo): Set<String>? = null // KTIJ-27450
 
-    private fun computeSdkModulePackageSet(module: SdkKtModuleByModuleInfo): Set<String>? =
+    private fun computeSdkModulePackageSet(module: KtSdkLibraryModuleByModuleInfo): Set<String>? =
         computePackageSetFromBinaryRoots(module.moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES))
 
     private fun computeLibraryModulePackageSet(module: KtLibraryModuleByModuleInfo): Set<String>? =

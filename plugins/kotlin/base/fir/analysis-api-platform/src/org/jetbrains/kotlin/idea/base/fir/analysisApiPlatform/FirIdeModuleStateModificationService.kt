@@ -116,8 +116,8 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     internal class SdkChangeListener(project: Project): SdkEntityChangeListener(project) {
         override fun entitiesChanged(outdated: List<Sdk>) {
             // Most modules will depend on an SDK, so its removal constitutes global module state modification. We cannot be more
-            // fine-grained here because `KtSdkModules`s aren't supported by `IdeKotlinModuleDependentsProvider`, so invalidation based on
-            // a module-level modification event may not work as expected with a `KtSdkModule`.
+            // fine-grained here because SDK modules aren't supported by `IdeKotlinModuleDependentsProvider`, so invalidation based on a
+            // module-level modification event may not work as expected with an SDK module.
             KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
         }
     }

@@ -21,6 +21,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.computeTransitiveDependsOnDependencies
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.KotlinSourceRootType
@@ -191,6 +193,8 @@ open class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleB
     override val binaryRoots: Collection<Path>
         get() = libraryInfo.getLibraryRoots().map(Paths::get)
 
+    override val isSdk: Boolean get() = false
+
     override val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
 
     override val project: Project get() = libraryInfo.project
@@ -239,9 +243,8 @@ class KtNativeKlibLibraryModuleByModuleInfo(
 }
 
 @ApiStatus.Internal
-class SdkKtModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSdkModule {
-    override val sdkName: String
-        get() = moduleInfo.sdk.name
+class KtSdkLibraryModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KaLibraryModule {
+    override val libraryName: String get() = moduleInfo.sdk.name
 
     override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
 
@@ -249,6 +252,10 @@ class SdkKtModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModuleInfoBas
         get() = moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES).map { virtualFile ->
             Paths.get(virtualFile.fileSystem.extractPresentableUrl(virtualFile.path)).normalize()
         }
+
+    override val librarySources: KaLibrarySourceModule? get() = null
+
+    override val isSdk: Boolean get() = true
 
     override val project: Project get() = moduleInfo.project
 }
