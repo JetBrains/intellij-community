@@ -232,6 +232,7 @@ abstract class ComponentManagerImpl(
   protected open val isMessageBusSupported: Boolean = parent?.parent == null
   protected open val isComponentSupported: Boolean = true
 
+  // FIXME this is effectively no-op right now
   @Volatile
   @JvmField
   internal var componentContainerIsReadonly: String? = null
