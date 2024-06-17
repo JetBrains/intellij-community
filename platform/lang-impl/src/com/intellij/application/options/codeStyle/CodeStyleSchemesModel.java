@@ -105,7 +105,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     updateOverridingStatus();
   }
 
-  private void updateClonedSettings() {
+  public void updateClonedSettings() {
     for (Iterator<CodeStyleScheme> schemeIterator = mySettingsToClone.keySet().iterator(); schemeIterator.hasNext();) {
       CodeStyleScheme scheme = schemeIterator.next();
       if (!mySchemes.contains(scheme)) {
@@ -275,7 +275,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
 
   private static final class ProjectScheme extends CodeStyleSchemeImpl {
     ProjectScheme(@NotNull Project project) {
-      super(CodeStyleScheme.PROJECT_SCHEME_NAME, false, CodeStyleSchemes.getInstance().getDefaultScheme());
+      super(PROJECT_SCHEME_NAME, false, CodeStyleSchemes.getInstance().getDefaultScheme());
 
       CodeStyleSettings perProjectSettings = CodeStyleSettingsManager.getInstance(project).getMainProjectCodeStyle();
       if (perProjectSettings != null) {
@@ -323,7 +323,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
       try {
         myOverridingStatus.getLock().lock();
         List<CodeStyleSettingsModifier> modifiers = getOverridingModifiers();
-        if (modifiers.size() > 0) {
+        if (!modifiers.isEmpty()) {
           myOverridingStatus.update(modifiers);
         }
         else {

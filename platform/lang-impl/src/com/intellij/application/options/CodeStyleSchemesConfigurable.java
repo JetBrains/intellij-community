@@ -12,6 +12,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,7 +156,12 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
       }
     }
 
+    SimpleModificationTracker codeStyleModificationTracker = CodeStyle.getSettings(myProject).getModificationTracker();
+    long settingsModificationCount = codeStyleModificationTracker.getModificationCount();
     CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged();
+    if (settingsModificationCount != codeStyleModificationTracker.getModificationCount()) {
+      myModel.updateClonedSettings();
+    }
   }
 
   @Override
