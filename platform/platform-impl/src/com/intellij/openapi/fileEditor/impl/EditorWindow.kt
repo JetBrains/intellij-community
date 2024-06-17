@@ -480,20 +480,21 @@ class EditorWindow internal constructor(
 
     val splitter = createSplitter(isVertical = orientation == JSplitPane.VERTICAL_SPLIT, proportion = 0.5f, minProp = 0.1f, maxProp = 0.9f)
     splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
-    val newWindow = EditorWindow(owner = owner, coroutineScope = owner.coroutineScope.childScope("EditorWindow"))
-    owner.addWindow(newWindow)
-    val selectedComposite = selectedComposite
 
-    swapComponents(parent = component.parent as JPanel, toAdd = splitter, toRemove = component)
+    val selectedComposite = selectedComposite
     val existingEditor = tabbedPane.component
 
+    val newWindow = EditorWindow(owner = owner, coroutineScope = owner.coroutineScope.childScope("EditorWindow"))
+    owner.addWindow(newWindow)
+
+    swapComponents(parent = existingEditor.parent as JPanel, toAdd = splitter, toRemove = existingEditor)
     if (fileIsSecondaryComponent) {
       splitter.firstComponent = existingEditor
       splitter.secondComponent = newWindow.component
     }
     else {
-      splitter.secondComponent = existingEditor
       splitter.firstComponent = newWindow.component
+      splitter.secondComponent = existingEditor
     }
     normalizeProportionsIfNeed(existingEditor)
 
