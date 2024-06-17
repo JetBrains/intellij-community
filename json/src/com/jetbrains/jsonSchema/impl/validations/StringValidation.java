@@ -11,17 +11,19 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.getValue;
 
 public final class StringValidation implements JsonSchemaValidation {
   public static final StringValidation INSTANCE = new StringValidation();
   @Override
-  public void validate(JsonValueAdapter propValue,
-                       JsonSchemaObject schema,
-                       JsonSchemaType schemaType,
-                       JsonValidationHost consumer,
-                       JsonComplianceCheckerOptions options) {
+  public void validate(@NotNull JsonValueAdapter propValue,
+                       @NotNull JsonSchemaObject schema,
+                       @Nullable JsonSchemaType schemaType,
+                       @NotNull JsonValidationHost consumer,
+                       @NotNull JsonComplianceCheckerOptions options) {
     checkString(propValue.getDelegate(), schema, consumer);
   }
 

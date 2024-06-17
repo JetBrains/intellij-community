@@ -30,11 +30,11 @@ public final class ObjectValidation implements JsonSchemaValidation {
   public static final ObjectValidation INSTANCE = new ObjectValidation();
 
   @Override
-  public void validate(JsonValueAdapter propValue,
-                       JsonSchemaObject schema,
-                       JsonSchemaType schemaType,
-                       JsonValidationHost consumer,
-                       JsonComplianceCheckerOptions options) {
+  public void validate(@NotNull JsonValueAdapter propValue,
+                       @NotNull JsonSchemaObject schema,
+                       @Nullable JsonSchemaType schemaType,
+                       @NotNull JsonValidationHost consumer,
+                       @NotNull JsonComplianceCheckerOptions options) {
     checkObject(propValue, schema, consumer, options);
   }
 
@@ -52,7 +52,8 @@ public final class ObjectValidation implements JsonSchemaValidation {
       if (propertyNamesSchema != null) {
         JsonValueAdapter nameValueAdapter = property.getNameValueAdapter();
         if (nameValueAdapter != null) {
-          JsonValidationHost checker = consumer.checkByMatchResult(nameValueAdapter, consumer.resolve(propertyNamesSchema), options);
+          JsonValidationHost checker = consumer.checkByMatchResult(nameValueAdapter, consumer.resolve(propertyNamesSchema,
+                                                                                                      nameValueAdapter), options);
           if (checker != null) {
             consumer.addErrorsFrom(checker);
           }
@@ -60,13 +61,13 @@ public final class ObjectValidation implements JsonSchemaValidation {
       }
 
       final JsonPointerPosition step = JsonPointerPosition.createSingleProperty(name);
-      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, schema, false);
+      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, schema);
       if (ThreeState.NO.equals(pair.getFirst()) && !set.contains(name)) {
         consumer.error(JsonBundle.message("json.schema.annotation.not.allowed.property", name), property.getDelegate(),
                        JsonValidationError.FixableIssueKind.ProhibitedProperty,
                        new JsonValidationError.ProhibitedPropertyIssueData(name), JsonErrorPriority.LOW_PRIORITY);
       }
-      else if (ThreeState.UNSURE.equals(pair.getFirst())) {
+      else if (ThreeState.UNSURE.equals(pair.getFirst()) && pair.second.getConstantSchema() == null) {
         for (JsonValueAdapter propertyValue : property.getValues()) {
           consumer.checkObjectBySchemaRecordErrors(pair.getSecond(), propertyValue);
         }
@@ -81,7 +82,7 @@ public final class ObjectValidation implements JsonSchemaValidation {
         HashSet<String> requiredNames = new LinkedHashSet<>(required);
         requiredNames.removeAll(set);
         if (!requiredNames.isEmpty()) {
-          JsonValidationError.MissingMultiplePropsIssueData data = createMissingPropertiesData(schema, requiredNames, consumer);
+          JsonValidationError.MissingMultiplePropsIssueData data = createMissingPropertiesData(schema, requiredNames, consumer, value);
           consumer.error(JsonBundle.message("schema.validation.missing.required.property.or.properties", data.getMessage(false)),
                          value.getDelegate(), JsonValidationError.FixableIssueKind.MissingProperty, data,
                          JsonErrorPriority.MISSING_PROPS);
@@ -103,7 +104,7 @@ public final class ObjectValidation implements JsonSchemaValidation {
             HashSet<String> deps = new HashSet<>(list);
             deps.removeAll(set);
             if (!deps.isEmpty()) {
-              JsonValidationError.MissingMultiplePropsIssueData data = createMissingPropertiesData(schema, deps, consumer);
+              JsonValidationError.MissingMultiplePropsIssueData data = createMissingPropertiesData(schema, deps, consumer, value);
               consumer.error(
                 JsonBundle.message("schema.validation.violated.dependency", data.getMessage(false), entry.getKey()),
                 value.getDelegate(),
@@ -121,12 +122,50 @@ public final class ObjectValidation implements JsonSchemaValidation {
             consumer.checkObjectBySchemaRecordErrors(dependency, value);
           }
         });
+
+      reportUnevaluatedPropertiesSchemaViolation(consumer, schema, object);
     }
+  }
+
+  private static void reportUnevaluatedPropertiesSchemaViolation(@NotNull JsonValidationHost consumer,
+                                                                 @NotNull JsonSchemaObject schemaNode,
+                                                                 @NotNull JsonObjectValueAdapter inspectedObject) {
+    var unevaluatedPropertiesSchema = schemaNode.getUnevaluatedPropertiesSchema();
+    if (unevaluatedPropertiesSchema == null) return;
+
+    var constantSchemaValue = unevaluatedPropertiesSchema.getConstantSchema();
+    if (Boolean.TRUE.equals(constantSchemaValue)) return;
+
+    for (JsonPropertyAdapter childPropertyAdapter : inspectedObject.getPropertyList()) {
+      if (isCoveredByAdjacentSchemas(consumer, childPropertyAdapter, schemaNode)) {
+        continue;
+      }
+
+      JsonValueAdapter childPropertyNameAdapter = childPropertyAdapter.getNameValueAdapter();
+      if (childPropertyNameAdapter == null) continue;
+
+      consumer.checkObjectBySchemaRecordErrors(unevaluatedPropertiesSchema, childPropertyNameAdapter);
+    }
+  }
+
+  private static boolean isCoveredByAdjacentSchemas(@NotNull JsonValidationHost validationHost,
+                                                    @NotNull JsonPropertyAdapter propertyAdapter,
+                                                    @NotNull JsonSchemaObject schemaNode) {
+    var instancePropertyName = propertyAdapter.getName();
+    if (instancePropertyName != null && schemaNode.getPropertyByName(instancePropertyName) != null) return true;
+    if (instancePropertyName != null && schemaNode.getMatchingPatternPropertySchema(instancePropertyName) != null) return true;
+    JsonSchemaObject additionalPropertiesSchema = schemaNode.getAdditionalPropertiesSchema();
+    if (additionalPropertiesSchema != null && Boolean.TRUE.equals(additionalPropertiesSchema.getConstantSchema())) return true;
+    JsonValueAdapter propertyNameAdapter = propertyAdapter.getNameValueAdapter();
+    if (propertyNameAdapter != null && validationHost.hasRecordedErrorsFor(propertyNameAdapter)) return true;
+
+    return false;
   }
 
   public static JsonValidationError.MissingMultiplePropsIssueData createMissingPropertiesData(@NotNull JsonSchemaObject schema,
                                                                                               Set<String> requiredNames,
-                                                                                              JsonValidationHost consumer) {
+                                                                                              JsonValidationHost consumer,
+                                                                                              @NotNull JsonValueAdapter inspectedElementAdapter) {
     List<JsonValidationError.MissingPropertyIssueData> allProps = new ArrayList<>();
     for (String req : requiredNames) {
       JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
@@ -150,7 +189,7 @@ public final class ObjectValidation implements JsonSchemaValidation {
           defaultValue = valueFromEnum;
         }
         else {
-          result = consumer.resolve(propertySchema);
+          result = consumer.resolve(propertySchema, inspectedElementAdapter);
           if (result.mySchemas.size() == 1) {
             valueFromEnum = getDefaultValueFromEnum(result.mySchemas.get(0), enumCount);
             if (valueFromEnum != null) {
@@ -161,7 +200,7 @@ public final class ObjectValidation implements JsonSchemaValidation {
         type = propertySchema.getType();
         if (type == null) {
           if (result == null) {
-            result = consumer.resolve(propertySchema);
+            result = consumer.resolve(propertySchema, inspectedElementAdapter);
           }
           if (result.mySchemas.size() == 1) {
             type = result.mySchemas.get(0).getType();
@@ -182,18 +221,22 @@ public final class ObjectValidation implements JsonSchemaValidation {
     if (propOrNull != null) {
       return propOrNull;
     }
-    else {
-      JsonSchemaObject propertySchema = schema.getMatchingPatternPropertySchema(req);
-      if (propertySchema != null) {
-        return propertySchema;
-      }
-      else {
-        JsonSchemaObject additionalPropertiesSchema = schema.getAdditionalPropertiesSchema();
-        if (additionalPropertiesSchema != null) {
-          return additionalPropertiesSchema;
-        }
-      }
+
+    JsonSchemaObject propertySchema = schema.getMatchingPatternPropertySchema(req);
+    if (propertySchema != null) {
+      return propertySchema;
     }
+
+    JsonSchemaObject additionalPropertiesSchema = schema.getAdditionalPropertiesSchema();
+    if (additionalPropertiesSchema != null) {
+      return additionalPropertiesSchema;
+    }
+
+    JsonSchemaObject unevaluatedPropertiesSchema = schema.getUnevaluatedPropertiesSchema();
+    if (unevaluatedPropertiesSchema != null && unevaluatedPropertiesSchema.getConstantSchema() == null) {
+      return unevaluatedPropertiesSchema;
+    }
+
     return null;
   }
 
@@ -223,7 +266,7 @@ public final class ObjectValidation implements JsonSchemaValidation {
 
     Iterable<String> iter = (() -> schema.getPropertyNames());
     var missingProperties = StreamSupport.stream(iter.spliterator(), false).filter(it -> !existingProperties.contains(it)).collect(Collectors.toSet());
-    var missingPropertiesData = createMissingPropertiesData(schema, missingProperties, validationHost);
+    var missingPropertiesData = createMissingPropertiesData(schema, missingProperties, validationHost, objectValueAdapter);
     validationHost.error(
       JsonBundle.message("schema.validation.missing.not.required.property.or.properties", missingPropertiesData.getMessage(false)),
       inspectedValue.getDelegate(),

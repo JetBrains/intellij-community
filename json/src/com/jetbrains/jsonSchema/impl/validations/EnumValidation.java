@@ -24,11 +24,11 @@ import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.X_INTELLIJ_CA
 public final class EnumValidation implements JsonSchemaValidation {
   public static final EnumValidation INSTANCE = new EnumValidation();
   @Override
-  public void validate(JsonValueAdapter propValue,
-                       JsonSchemaObject schema,
-                       JsonSchemaType schemaType,
-                       JsonValidationHost consumer,
-                       JsonComplianceCheckerOptions options) {
+  public void validate(@NotNull JsonValueAdapter propValue,
+                       @NotNull JsonSchemaObject schema,
+                       @Nullable JsonSchemaType schemaType,
+                       @NotNull JsonValidationHost consumer,
+                       @NotNull JsonComplianceCheckerOptions options) {
     List<Object> enumItems = schema.getEnum();
     if (enumItems == null) return;
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(propValue.getDelegate(), schema);
