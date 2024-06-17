@@ -99,6 +99,11 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     return patterns;
   }
 
+  public void setPatterns(@NotNull FilePatternSet patterns) {
+    this.patterns.setIncludes(patterns.getIncludes());
+    this.patterns.setExcludes(patterns.getExcludes());
+  }
+
   public void setInheritedCompilerOutput(boolean inheritedCompilerOutput) {
     this.inheritedCompilerOutput = inheritedCompilerOutput;
   }
