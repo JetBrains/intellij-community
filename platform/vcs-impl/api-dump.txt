@@ -3667,8 +3667,9 @@ c:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi
 - sf:SAVED_PATCHES_UI_PLACE:java.lang.String
 - <init>(com.intellij.openapi.project.Project,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,com.intellij.openapi.Disposable):V
 - dispose():V
-- f:expandPatchesByProvider(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider):V
 - pf:getPatchesTree():com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesTree
+- f:showFirstUnderObject(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider,java.lang.Object):V
+- f:showFirstUnderProvider(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - f:updateLayout():V
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi$Companion

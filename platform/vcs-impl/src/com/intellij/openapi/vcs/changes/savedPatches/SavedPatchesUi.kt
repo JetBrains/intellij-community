@@ -185,8 +185,12 @@ open class SavedPatchesUi(project: Project,
     return providers.find { it.dataClass.isInstance(selectedPatch.data) } ?: return providers.first()
   }
 
-  fun expandPatchesByProvider(provider: SavedPatchesProvider<*>) {
-    patchesTree.expandPatchesByProvider(provider)
+  fun showFirstUnderProvider(provider: SavedPatchesProvider<*>) {
+    patchesTree.invokeAfterRefresh { patchesTree.showFirstUnderProvider(provider) }
+  }
+
+  fun showFirstUnderObject(provider: SavedPatchesProvider<*>, userObject: Any) {
+    patchesTree.invokeAfterRefresh { patchesTree.showFirstUnderObject(provider, userObject) }
   }
 
   @ApiStatus.Internal
