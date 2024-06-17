@@ -3,9 +3,7 @@ package git4idea.rebase.interactive
 
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
-
-internal const val REBASE_SQUASH_SEPARATOR = "\n\n\n"
-internal val AUTOSQUASH_SUBJECT_PREFIXES = listOf("fixup!", "squash!", "amend!")
+import git4idea.rebase.GitSquashedCommitsMessage
 
 internal fun <T : GitRebaseEntry> convertToModel(entries: List<T>): GitRebaseTodoModel<T> {
   val result = mutableListOf<GitRebaseTodoModel.Element<T>>()
@@ -72,15 +70,12 @@ private fun <T : GitRebaseEntry> amendCommitMessage(root: GitRebaseTodoModel.Ele
 
   val oldMessage = (root.type as? GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword)?.newMessage
                    ?: root.entry.commitDetails.fullMessage
-  var entryCommitMessage = newEntry.commitDetails.fullMessage
-  if (AUTOSQUASH_SUBJECT_PREFIXES.any { prefix -> entryCommitMessage.startsWith(prefix) }) {
-    entryCommitMessage = entryCommitMessage.substringAfter("\n", "").trim()
-  }
+  val entryCommitMessage = GitSquashedCommitsMessage.trimAutosquashSubject(newEntry.commitDetails.fullMessage)
   if (entryCommitMessage.isBlank()) return null
 
   val newMessage = when {
     newEntry.action is GitRebaseEntry.Action.SQUASH -> {
-      oldMessage + REBASE_SQUASH_SEPARATOR + entryCommitMessage
+      GitSquashedCommitsMessage.squash(oldMessage, entryCommitMessage)
     }
     newEntry.action is GitRebaseEntry.Action.FIXUP && newEntry.action.overrideMessage -> {
       entryCommitMessage

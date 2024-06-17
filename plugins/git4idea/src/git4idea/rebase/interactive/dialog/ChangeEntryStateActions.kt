@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.TableUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry
+import git4idea.rebase.GitSquashedCommitsMessage
 import git4idea.rebase.getFullCommitMessage
 import git4idea.rebase.interactive.GitRebaseTodoModel
-import git4idea.rebase.interactive.REBASE_SQUASH_SEPARATOR
 import git4idea.rebase.interactive.convertToEntries
 import java.awt.event.InputEvent
 import java.util.function.Supplier
@@ -169,25 +169,17 @@ internal class SquashAction(private val table: GitRebaseCommitsTableView) :
     val currentChildrenCount = currentRoot?.children?.size
 
     val root = rebaseTodoModel.unite(indicesToUnite)
-    if (currentRoot != null) {
+    val messagesToSquash = if (currentRoot != null) {
       // added commits to already squashed
       val newChildren = root.children.drop(currentChildrenCount!!)
       val model = table.model
-      rebaseTodoModel.reword(
-        root.index,
-        (listOf(root) + newChildren)
-          .map { model.getCommitMessage(it.index) }
-          .toSet()
-          .joinToString(REBASE_SQUASH_SEPARATOR)
-      )
+      (listOf(root) + newChildren).map { model.getCommitMessage(it.index) }
     }
     else {
-      val message = root.uniteGroup
-        .map { element -> element.entry.getFullCommitMessage()!! }
-        .toSet()
-        .joinToString(REBASE_SQUASH_SEPARATOR)
-      rebaseTodoModel.reword(root.index, message)
+      root.uniteGroup.map { element -> element.entry.getFullCommitMessage()!! }
     }
+
+    rebaseTodoModel.reword(root.index, GitSquashedCommitsMessage.prettySquash(messagesToSquash))
     reword(root.index)
   }
 }
