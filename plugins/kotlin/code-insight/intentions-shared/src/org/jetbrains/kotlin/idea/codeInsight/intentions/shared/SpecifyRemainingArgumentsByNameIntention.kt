@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class RemainingNamedArgumentData(val name: Name, val hasDefault: Boolean)
 
@@ -62,7 +61,7 @@ internal sealed class SpecifyRemainingArgumentsByNameIntention(
         // does not require one after the left parenthesis
         if (argumentList.arguments.size == 1 && !codeStyle.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE) return
         // If we already have a newline before this argument, we do not need another one
-        if (prevSibling.safeAs<PsiWhiteSpace>().isLineBreak()) return
+        if ((prevSibling as? PsiWhiteSpace).isLineBreak()) return
 
         argumentList.addBefore(psiFactory.createNewLine(), this)
     }
@@ -104,7 +103,7 @@ internal sealed class SpecifyRemainingArgumentsByNameIntention(
         element.trimDoubleEndingNewlines(psiFactory)
         element.reformat(canChangeWhiteSpacesOnly = true)
 
-        // Create a template that allows the user to change each inserted TODO() to an actual value
+        // Create a template that allows the user to change each inserted todo to an actual value
         updater.templateBuilder().apply {
             for (todoExpression in templateFields) {
                 field(todoExpression, todoExpression.text)
@@ -112,7 +111,8 @@ internal sealed class SpecifyRemainingArgumentsByNameIntention(
         }
     }
 
-    context(KaSession) override fun prepareContext(element: KtValueArgumentList): List<RemainingNamedArgumentData>? {
+    context(KaSession)
+    override fun prepareContext(element: KtValueArgumentList): List<RemainingNamedArgumentData>? {
         val functionCall = element.parent as? KtCallExpression ?: return null
         val resolvedCall = functionCall.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
         val functionSymbol = resolvedCall.partiallyAppliedSymbol.symbol
