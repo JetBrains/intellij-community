@@ -216,10 +216,10 @@
             nameKey="hints.settings.parameters"
             descriptionKey="inlay.kotlin.parameters.hints">
       <!--        <option bundle="messages.KotlinBundle"-->
-      <!--              optionId="hints.parameters.blacklisted"-->
+      <!--              optionId="hints.parameters.excluded"-->
       <!--              enabledByDefault="false"-->
       <!--              nameKey="hints.settings.excluded.parameters"-->
-      <!--              descriptionKey="inlay.kotlin.parameters.hints.blacklisted"/>-->
+      <!--              descriptionKey="inlay.kotlin.parameters.hints.excluded"/>-->
     </codeInsight.declarativeInlayProvider>
 
     <codeInsight.declarativeInlayProvider
