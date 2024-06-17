@@ -14,7 +14,6 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.*
 import java.nio.file.Path
 
@@ -47,13 +46,11 @@ internal suspend fun linkToWorkspace(workspace: Project, projectPath: String) {
   val referentProject = blockingContext { projectManagerImpl.loadProject(Path.of(projectPath), false, false) }
   var success = false
   try {
-    val settings = importSettingsFromProject(referentProject)
-    for (importedSettings in settings) {
-      if (importedSettings.applyTo(workspace)) {
-        success = true
-        break
-      }
+    WorkspaceSettingsImporter.EP_NAME.extensionList.forEach { importer: WorkspaceSettingsImporter ->
+      importer.importFromProject(referentProject)?.applyTo(workspace)
     }
+    val settings = SubprojectHandler.EP_NAME.extensionList.mapNotNull { it.importFromProject(referentProject) }
+    success = settings.any { it.applyTo(workspace) }
   }
   finally {
     (referentProject as ComponentManagerEx).getCoroutineScope().coroutineContext.job.cancelAndJoin()
@@ -64,18 +61,4 @@ internal suspend fun linkToWorkspace(workspace: Project, projectPath: String) {
       }
     }
   }
-}
-
-private fun importSettingsFromProject(project: Project): List<ImportedProjectSettings> {
-  val settings = mutableListOf<ImportedProjectSettings>()
-  val handlers = SubprojectHandler.EP_NAME.extensionList
-  for (handler in handlers) {
-    settings.addIfNotNull(handler.importFromProject(project))
-  }
-
-  val importers = WorkspaceSettingsImporter.EP_NAME.extensionList
-  for (importer in importers) {
-    settings.addIfNotNull(importer.importFromProject(project))
-  }
-  return settings
 }
