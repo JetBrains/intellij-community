@@ -18,6 +18,7 @@ import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.SuperUserStatus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.*
 import java.nio.charset.Charset
@@ -50,6 +51,7 @@ object ExecUtil {
     @Deprecated("Inline this property")
     get() = CommandLineUtil.getWinShellName()
 
+  @ApiStatus.Internal
   @JvmStatic
   @Throws(IOException::class)
   fun loadTemplate(loader: ClassLoader, templateName: String, variables: Map<String, String>?): String {
@@ -117,6 +119,7 @@ object ExecUtil {
     }
   }
 
+  @ApiStatus.Internal
   @JvmStatic
   fun readFirstLine(stream: InputStream, cs: Charset?): String? {
     return try {
@@ -137,12 +140,14 @@ object ExecUtil {
    * @param prompt the prompt string for the users (not used on Windows)
    * @return the results of running the process
    */
+  @ApiStatus.Internal
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
   fun sudo(commandLine: GeneralCommandLine, prompt: @Nls String): Process {
     return sudoCommand(commandLine, prompt).createProcess()
   }
 
+  @ApiStatus.Internal
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
   fun sudoCommand(commandLine: GeneralCommandLine, prompt: @Nls String): GeneralCommandLine {
@@ -164,6 +169,7 @@ object ExecUtil {
       .withRedirectErrorStream(commandLine.isRedirectErrorStream)
   }
 
+  @ApiStatus.Internal
   fun envCommand(commandLine: GeneralCommandLine): List<String> =
     when (val args = envCommandArgs(commandLine)) {
       emptyList<String>() -> emptyList()
@@ -178,6 +184,7 @@ object ExecUtil {
       else -> env.map { entry -> "${entry.key}=${entry.value}" }
     }
 
+  @ApiStatus.Internal
   @JvmStatic
   @Throws(IOException::class, ExecutionException::class)
   fun sudoAndGetOutput(commandLine: GeneralCommandLine, prompt: @Nls String): ProcessOutput =
@@ -186,15 +193,25 @@ object ExecUtil {
   @NlsSafe
   internal fun escapeAppleScriptArgument(arg: String) = "quoted form of \"${arg.replace("\"", "\\\"").replace("\\", "\\\\")}\""
 
+  @ApiStatus.Internal
+  @Deprecated(
+    "It is an oversimplified quoting. Prefer CommandLineUtil.posixQuote instead.",
+    ReplaceWith(
+      "CommandLineUtil.posixQuote(arg)",
+      "com.intellij.execution.CommandLineUtil.posixQuote",
+    ),
+  )
   @JvmStatic
   fun escapeUnixShellArgument(arg: String): String = "'${arg.replace("'", "'\"'\"'")}'"
 
+  @ApiStatus.Internal
   @JvmStatic
   fun hasTerminalApp(): Boolean {
     return SystemInfoRt.isWindows || SystemInfoRt.isMac ||
            hasKdeTerminal.get() || hasGnomeTerminal.get() || hasUrxvt.get() || hasXTerm.get()
   }
 
+  @ApiStatus.Internal
   @NlsSafe
   @JvmStatic
   fun getTerminalCommand(@Nls(capitalization = Nls.Capitalization.Title) title: String?, command: String): List<String> {
@@ -247,6 +264,7 @@ object ExecUtil {
    *
    * NOTE. Windows implementation does not return the original process exit code!
    */
+  @ApiStatus.Internal
   @JvmStatic
   fun setupLowPriorityExecution(commandLine: GeneralCommandLine) {
     if (canRunLowPriority()) {
@@ -264,6 +282,7 @@ object ExecUtil {
 
   private fun canRunLowPriority() = Registry.`is`("ide.allow.low.priority.process") && (SystemInfoRt.isWindows || hasNice)
 
+  @ApiStatus.Internal
   @JvmStatic
   fun setupNoTtyExecution(commandLine: GeneralCommandLine) {
     if (SystemInfoRt.isLinux && hasSetsid.get()) {

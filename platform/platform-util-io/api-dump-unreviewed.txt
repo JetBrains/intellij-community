@@ -416,24 +416,13 @@ f:com.intellij.execution.process.impl.ProcessListUtil
 f:com.intellij.execution.util.ExecUtil
 - sf:INSTANCE:com.intellij.execution.util.ExecUtil
 - sf:createTempExecutableScript(java.lang.String,java.lang.String,java.lang.String):java.io.File
-- f:envCommand(com.intellij.execution.configurations.GeneralCommandLine):java.util.List
-- sf:escapeUnixShellArgument(java.lang.String):java.lang.String
 - sf:execAndGetOutput(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.ProcessOutput
 - sf:execAndGetOutput(com.intellij.execution.configurations.GeneralCommandLine,I):com.intellij.execution.process.ProcessOutput
 - sf:execAndGetOutput(com.intellij.execution.configurations.GeneralCommandLine,java.lang.String):java.lang.String
 - sf:execAndReadLine(com.intellij.execution.configurations.GeneralCommandLine):java.lang.String
 - sf:getOpenCommandPath():java.lang.String
 - sf:getOsascriptPath():java.lang.String
-- sf:getTerminalCommand(java.lang.String,java.lang.String):java.util.List
 - sf:getWindowsShellName():java.lang.String
-- sf:hasTerminalApp():Z
-- sf:loadTemplate(java.lang.ClassLoader,java.lang.String,java.util.Map):java.lang.String
-- sf:readFirstLine(java.io.InputStream,java.nio.charset.Charset):java.lang.String
-- sf:setupLowPriorityExecution(com.intellij.execution.configurations.GeneralCommandLine):V
-- sf:setupNoTtyExecution(com.intellij.execution.configurations.GeneralCommandLine):V
-- sf:sudo(com.intellij.execution.configurations.GeneralCommandLine,java.lang.String):java.lang.Process
-- sf:sudoAndGetOutput(com.intellij.execution.configurations.GeneralCommandLine,java.lang.String):com.intellij.execution.process.ProcessOutput
-- sf:sudoCommand(com.intellij.execution.configurations.GeneralCommandLine,java.lang.String):com.intellij.execution.configurations.GeneralCommandLine
 f:com.intellij.util.LocalFileUrl
 - com.intellij.util.Url
 - <init>(java.lang.String):V

@@ -413,3 +413,13 @@ f:com.intellij.execution.process.impl.ProcessListUtil
 - sf:COMMAND_LIST_COMMAND:java.util.List
 - sf:COMM_LIST_COMMAND:java.util.List
 - s:getProcessList():com.intellij.execution.process.ProcessInfo[]
+f:com.intellij.execution.util.ExecUtil
+- sf:INSTANCE:com.intellij.execution.util.ExecUtil
+- sf:createTempExecutableScript(java.lang.String,java.lang.String,java.lang.String):java.io.File
+- sf:execAndGetOutput(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.ProcessOutput
+- sf:execAndGetOutput(com.intellij.execution.configurations.GeneralCommandLine,I):com.intellij.execution.process.ProcessOutput
+- sf:execAndGetOutput(com.intellij.execution.configurations.GeneralCommandLine,java.lang.String):java.lang.String
+- sf:execAndReadLine(com.intellij.execution.configurations.GeneralCommandLine):java.lang.String
+- sf:getOpenCommandPath():java.lang.String
+- sf:getOsascriptPath():java.lang.String
+- sf:getWindowsShellName():java.lang.String
