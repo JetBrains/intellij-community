@@ -36,19 +36,19 @@ internal class GradleSubprojectHandler : ExternalSubprojectHandler(GradleConstan
     get() = GradleIcons.GradleSubproject
 }
 
-private class GradleImportedProjectSettings(private val project: Project) : ImportedProjectSettings {
+private class GradleImportedProjectSettings(project: Project): ImportedProjectSettings {
   private val gradleProjectsSettings: Collection<GradleProjectSettings> = GradleSettings.getInstance(project).linkedProjectsSettings
   private val projectDir = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(project.basePath!!))
 
   override suspend fun applyTo(workspace: Project): Boolean {
     if (gradleProjectsSettings.isEmpty()) {
-      if (canOpenGradleProject(projectDir) && isTrusted(projectDir, project)) {
+      if (canOpenGradleProject(projectDir) && isTrusted(projectDir, workspace)) {
         linkAndSyncGradleProject(workspace, projectDir)
         return true
       }
       return false
     }
-    if (!isTrusted(projectDir, project)) {
+    if (!isTrusted(projectDir, workspace)) {
       return true
     }
     val targetGradleSettings = GradleSettings.getInstance(workspace)
