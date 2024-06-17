@@ -393,8 +393,8 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
   val changedSources = changesList.flatMapTo(HashSet()) { changes ->
     changes.flatMap { change ->
       when (change) {
-        is EntityChange.Added -> listOf(change.entity)
-        is EntityChange.Removed -> listOf(change.entity)
+        is EntityChange.Added -> listOf(change.newEntity)
+        is EntityChange.Removed -> listOf(change.oldEntity)
         is EntityChange.Replaced -> listOf(change.oldEntity, change.newEntity)
       }
     }.map { it.entitySource }

@@ -47,14 +47,14 @@ open class ArtifactBridge(
         event.getChanges(ArtifactEntity::class.java).asSequence().filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
           val resolvedArtifactId = artifactId
 
-          if (it.entity.symbolicId != resolvedArtifactId) return@forEach
+          if (it.oldEntity.symbolicId != resolvedArtifactId) return@forEach
 
           // Artifact may be "re-added" with the same id
           // In this case two artifact bridges exists with the same ArtifactId: one for removed artifact and one for newly created
           // We should make sure that we "disable" removed artifact bridge
           if (resolvedArtifactId in event.storageAfter
-              && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != this@ArtifactBridge
-              && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != originalArtifact) {
+              && event.storageBefore.artifactsMap.getDataByEntity(it.oldEntity) != this@ArtifactBridge
+              && event.storageBefore.artifactsMap.getDataByEntity(it.oldEntity) != originalArtifact) {
             return@forEach
           }
 

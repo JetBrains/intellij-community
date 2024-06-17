@@ -25,9 +25,9 @@ class GlobalSdkBridgeInitializer : BridgeInitializer {
 
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
-      builder.mutableSdkMap.getOrPutDataByEntity(addChange.entity) {
+      builder.mutableSdkMap.getOrPutDataByEntity(addChange.newEntity) {
         val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", "")
-        sdkEntityCopy.applyChangesFrom(addChange.entity)
+        sdkEntityCopy.applyChangesFrom(addChange.newEntity)
         ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy))
       }
     }
@@ -61,9 +61,9 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
 
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
-      builder.mutableSdkMap.getOrPutDataByEntity(addChange.entity) {
+      builder.mutableSdkMap.getOrPutDataByEntity(addChange.newEntity) {
         val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", "")
-        sdkEntityCopy.applyChangesFrom(addChange.entity)
+        sdkEntityCopy.applyChangesFrom(addChange.newEntity)
         ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy))
       }
     }
@@ -80,7 +80,7 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
       LOG.debug { "Process sdk change $change" }
       when (change) {
         is EntityChange.Added -> {
-          val createdSdkBridge = event.storageAfter.sdkMap.getDataByEntity(change.entity)
+          val createdSdkBridge = event.storageAfter.sdkMap.getDataByEntity(change.newEntity)
                                       ?: error("Sdk bridge should be created before in `GlobalWorkspaceModel.initializeBridges`")
           ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkAdded(createdSdkBridge)
         }
@@ -96,8 +96,8 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
           }
         }
         is EntityChange.Removed -> {
-          val sdkBridge = event.storageBefore.sdkMap.getDataByEntity(change.entity)
-          LOG.debug { "Fire 'jdkRemoved' event for ${change.entity.name}, sdk = $sdkBridge" }
+          val sdkBridge = event.storageBefore.sdkMap.getDataByEntity(change.oldEntity)
+          LOG.debug { "Fire 'jdkRemoved' event for ${change.oldEntity.name}, sdk = $sdkBridge" }
           if (sdkBridge != null) {
             ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkRemoved(sdkBridge)
           }

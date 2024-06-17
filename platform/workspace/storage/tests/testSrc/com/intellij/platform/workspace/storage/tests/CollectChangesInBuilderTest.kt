@@ -45,8 +45,8 @@ class CollectChangesInBuilderTest {
     val changes = assertChangelogSize(4).getValue(SampleEntity::class.java) as List<EntityChange<SampleEntity>>
     val change1 = changes.single { it is EntityChange.Added }
     val change2 = changes.single { it is EntityChange.Removed }
-    assertEquals("added", (change1 as EntityChange.Added).entity.stringProperty)
-    assertEquals("initial", (change2 as EntityChange.Removed).entity.stringProperty)
+    assertEquals("added", (change1 as EntityChange.Added).newEntity.stringProperty)
+    assertEquals("initial", (change2 as EntityChange.Removed).oldEntity.stringProperty)
   }
 
   @Test
@@ -84,7 +84,7 @@ class CollectChangesInBuilderTest {
     }
     builder.removeEntity(modified)
     assertChangelogSize(1)
-    assertEquals("initial", (collectSampleEntityChanges().single() as EntityChange.Removed).entity.stringProperty)
+    assertEquals("initial", (collectSampleEntityChanges().single() as EntityChange.Removed).oldEntity.stringProperty)
   }
 
   @Test
@@ -112,7 +112,7 @@ class CollectChangesInBuilderTest {
       stringProperty = "changed"
     }
     assertChangelogSize(1)
-    assertEquals("changed", (collectSampleEntityChanges().single() as EntityChange.Added).entity.stringProperty)
+    assertEquals("changed", (collectSampleEntityChanges().single() as EntityChange.Added).newEntity.stringProperty)
   }
 
   @Test
@@ -140,8 +140,8 @@ class CollectChangesInBuilderTest {
     val changes = assertChangelogSize(2)
     val childChange = changes.getValue(XChildEntity::class.java).single() as EntityChange.Added<XChildEntity>
     val parentChange = changes.getValue(XParentEntity::class.java).single() as EntityChange.Added<XParentEntity>
-    assertEquals("added", childChange.entity.childProperty)
-    assertEquals("added", parentChange.entity.parentProperty)
+    assertEquals("added", childChange.newEntity.childProperty)
+    assertEquals("added", parentChange.newEntity.parentProperty)
   }
 
   @Test
@@ -155,8 +155,8 @@ class CollectChangesInBuilderTest {
     val changes = assertChangelogSize(2, newBuilder, storage)
     val childChange = changes.getValue(XChildEntity::class.java).single() as EntityChange.Removed<XChildEntity>
     val parentChange = changes.getValue(XParentEntity::class.java).single() as EntityChange.Removed<XParentEntity>
-    assertEquals("to remove", childChange.entity.childProperty)
-    assertEquals("to remove", parentChange.entity.parentProperty)
+    assertEquals("to remove", childChange.oldEntity.childProperty)
+    assertEquals("to remove", parentChange.oldEntity.parentProperty)
   }
 
   @Test

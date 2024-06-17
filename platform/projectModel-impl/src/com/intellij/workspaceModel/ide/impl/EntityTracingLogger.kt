@@ -32,8 +32,8 @@ class EntityTracingLogger {
         WorkspaceModel.getInstance(project).eventLog.collect { event ->
           event.getAllChanges().forEach {
             when (it) {
-              is EntityChange.Added -> printInfo("added", it.entity)
-              is EntityChange.Removed -> printInfo("removed", it.entity)
+              is EntityChange.Added -> printInfo("added", it.newEntity)
+              is EntityChange.Removed -> printInfo("removed", it.oldEntity)
               is EntityChange.Replaced -> {
                 printInfo("replaced from", it.oldEntity)
                 printInfo("replaced to", it.newEntity)

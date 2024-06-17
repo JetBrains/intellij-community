@@ -136,12 +136,12 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     for (change in moduleChanges) {
       when (change) {
         is EntityChange.Added -> {
-          LOG.debug { "Add tracked global libraries and SDK from ${change.entity.name}" }
-          collectAddedLibrariesAndAddSdks(change.entity.dependencies, change.entity, newLibrariesCollector, newLibraryLevels)
+          LOG.debug { "Add tracked global libraries and SDK from ${change.newEntity.name}" }
+          collectAddedLibrariesAndAddSdks(change.newEntity.dependencies, change.newEntity, newLibrariesCollector, newLibraryLevels)
         }
         is EntityChange.Removed -> {
-          LOG.debug { "Removed tracked global libraries and SDK from ${change.entity.name}" }
-          collectRemovedLibrariesAndRemoveSdks(change.entity.dependencies, change.entity, removedLibrariesCollector, removeLibraryLevels)
+          LOG.debug { "Removed tracked global libraries and SDK from ${change.oldEntity.name}" }
+          collectRemovedLibrariesAndRemoveSdks(change.oldEntity.dependencies, change.oldEntity, removedLibrariesCollector, removeLibraryLevels)
         }
         is EntityChange.Replaced -> {
           val removedDependencies = change.oldEntity.dependencies - change.newEntity.dependencies.toSet()

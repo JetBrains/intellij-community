@@ -283,8 +283,8 @@ internal fun Sequence<EntityChange<*>>.toTraces(newSnapshot: ImmutableEntityStor
         }
       }
       is EntityChange.Removed<*> -> {
-        val ofClass = change.entity.getEntityInterface()
-        val entityData = change.entity.asBase().getData()
+        val ofClass = change.oldEntity.getEntityInterface()
+        val entityData = change.oldEntity.asBase().getData()
 
         patternSet.add(ReadTrace.EntitiesOfType(ofClass).hash)
 

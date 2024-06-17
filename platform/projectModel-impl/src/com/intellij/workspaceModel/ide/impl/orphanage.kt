@@ -66,7 +66,7 @@ internal class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrp
   private fun checkIfParentsAlreadyExist(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     val orphanModules = changes[ModuleEntity::class.java]
                           ?.filterIsInstance<EntityChange.Added<ModuleEntity>>()
-                          ?.map { it.entity } ?: return
+                          ?.map { it.newEntity } ?: return
 
     val snapshot = project.workspaceModel.currentSnapshot
     val orphanToSnapshotModule = orphanModules
@@ -165,7 +165,7 @@ private class OrphanListener(private val project: Project) : WorkspaceModelChang
       // Do not move to the field! They should be created every time! (or the code should be refactored)
       val changedModules = event.getChanges(ModuleEntity::class.java)
         .filterIsInstance<EntityChange.Added<ModuleEntity>>()
-        .map { it.entity }
+        .map { it.newEntity }
 
       val orphanage = EntitiesOrphanage.getInstance(project).currentSnapshot
       val orphanModules = changedModules.mapNotNull {

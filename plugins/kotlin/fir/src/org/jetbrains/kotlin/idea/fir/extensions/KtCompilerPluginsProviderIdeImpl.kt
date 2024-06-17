@@ -98,8 +98,8 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
 
     private val EntityChange<FacetEntity>.facetTypes: List<String>
         get() = when (this) {
-            is EntityChange.Added -> listOf(entity.typeId.name)
-            is EntityChange.Removed -> listOf(entity.typeId.name)
+            is EntityChange.Added -> listOf(newEntity.typeId.name)
+            is EntityChange.Removed -> listOf(oldEntity.typeId.name)
             is EntityChange.Replaced -> listOf(oldEntity.typeId.name, newEntity.typeId.name)
         }
 

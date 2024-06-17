@@ -85,12 +85,12 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
       .forEach { change ->
         when (change) {
           is EntityChange.Added -> {
-            val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.entity)
+            val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.newEntity)
                                       ?: error("Facet bridge should be already initialized")
             publisher.fireBeforeFacetAdded(existingFacetBridge)
           }
           is EntityChange.Removed -> {
-            val facet = event.storageBefore.facetMapping().getDataByEntity(change.entity) ?: return@forEach
+            val facet = event.storageBefore.facetMapping().getDataByEntity(change.oldEntity) ?: return@forEach
             publisher.fireBeforeFacetRemoved(facet)
           }
           is EntityChange.Replaced -> {
@@ -113,7 +113,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
       val result = mutableSetOf<String>()
       for (entityChange in event.getChanges(ModuleEntity::class.java)) {
         if (entityChange is EntityChange.Added) {
-          result.add(entityChange.entity.name)
+          result.add(entityChange.newEntity.name)
         }
       }
       result
@@ -126,12 +126,12 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
       .forEach { change ->
         when (change) {
           is EntityChange.Added -> {
-            val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.entity)
+            val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.newEntity)
                                       ?: error("Facet bridge should be already initialized")
             val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.newEntity)
             getFacetManager(moduleEntity)?.model?.facetsChanged()
 
-            FacetManagerBase.setFacetName(existingFacetBridge, change.entity.name)
+            FacetManagerBase.setFacetName(existingFacetBridge, change.newEntity.name)
             existingFacetBridge.initFacet()
 
             // We should not send an event if the associated module was added in the same transaction.

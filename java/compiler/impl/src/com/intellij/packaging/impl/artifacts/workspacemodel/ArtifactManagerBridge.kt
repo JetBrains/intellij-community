@@ -180,7 +180,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
     changes.forEach {
       when (it) {
-        is EntityChange.Removed<*> -> current.artifactsMap.getDataByEntity(it.entity)?.let { it1 -> removed.add(it1) }
+        is EntityChange.Removed<*> -> current.artifactsMap.getDataByEntity(it.oldEntity)?.let { it1 -> removed.add(it1) }
         is EntityChange.Added -> Unit
         is EntityChange.Replaced -> {
           // Collect changes and transfer info from the modifiable bridge artifact to the original artifact
@@ -218,7 +218,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     changes.forEach {
       when (it) {
         is EntityChange.Added<*> -> {
-          val artifactBridge = artifactModel.diff.artifactsMap.getDataByEntity(it.entity)!!
+          val artifactBridge = artifactModel.diff.artifactsMap.getDataByEntity(it.newEntity)!!
           added.add(artifactBridge)
           artifactBridge.setActualStorage()
         }

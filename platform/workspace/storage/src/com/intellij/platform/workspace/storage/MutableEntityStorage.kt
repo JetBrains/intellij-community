@@ -232,7 +232,7 @@ public sealed class EntityChange<T : WorkspaceEntity> {
    * added entity, or as a result of a batch operation ([replaceBySource][MutableEntityStorage.replaceBySource], 
    * [applyChangesFrom][MutableEntityStorage.applyChangesFrom]), or after modification of a reference from a parent entity).
    */
-  public data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
+  public data class Added<T : WorkspaceEntity>(private val entity: T) : EntityChange<T>() {
     override val oldEntity: T?
       get() = null
     override val newEntity: T
@@ -249,7 +249,7 @@ public sealed class EntityChange<T : WorkspaceEntity> {
    * another removed entity, or as a result of a batch operation ([replaceBySource][MutableEntityStorage.replaceBySource],
    * [applyChangesFrom][MutableEntityStorage.applyChangesFrom]), or after modification of a reference from a parent entity).
    */
-  public data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
+  public data class Removed<T : WorkspaceEntity>(private val entity: T) : EntityChange<T>() {
     override val oldEntity: T
       get() = entity
     override val newEntity: T?
