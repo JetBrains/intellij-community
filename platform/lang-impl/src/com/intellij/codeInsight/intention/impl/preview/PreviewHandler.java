@@ -3,8 +3,6 @@ package com.intellij.codeInsight.intention.impl.preview;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -83,31 +81,29 @@ public final class PreviewHandler<T> {
         myProcessor.hide();
       }
     });
-    if (list instanceof DataProvider dataProvider) {
-      list.getModel().addListDataListener(new ListDataListener() {
-        @Override
-        public void intervalAdded(ListDataEvent e) {
-          update(dataProvider);
-        }
+    list.getModel().addListDataListener(new ListDataListener() {
+      @Override
+      public void intervalAdded(ListDataEvent e) {
+        update(list);
+      }
 
-        @Override
-        public void intervalRemoved(ListDataEvent e) {
-          update(dataProvider);
-        }
+      @Override
+      public void intervalRemoved(ListDataEvent e) {
+        update(list);
+      }
 
-        @Override
-        public void contentsChanged(ListDataEvent e) {
-          update(dataProvider);
-        }
-      });
-      myListPopup.addListSelectionListener(e -> {
-        update(dataProvider);
-      });
-    }
+      @Override
+      public void contentsChanged(ListDataEvent e) {
+        update(list);
+      }
+    });
+    myListPopup.addListSelectionListener(e -> {
+      update(list);
+    });
   }
 
-  private void update(@NotNull DataProvider dataProvider) {
-    Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData(dataProvider);
+  private void update(@NotNull JList<?> list) {
+    Object selectedItem = list.getSelectedValue();
     T item = ObjectUtils.tryCast(selectedItem, myClass);
     if (item != null) {
       update(item);
