@@ -108,7 +108,7 @@ class EditorWindow internal constructor(
   val isDisposed: Boolean
     get() = !coroutineScope.isActive
 
-  private val removedTabs = ArrayDeque<kotlin.Pair<String, FileEditorOpenOptions>>()
+  private val removedTabs = ArrayDeque<Pair<String, FileEditorOpenOptions>>()
 
   val isShowing: Boolean
     get() = component.isShowing
@@ -643,14 +643,22 @@ class EditorWindow internal constructor(
         val componentIndex = findComponentIndex(composite)
         // composite could close itself on decomposition
         if (componentIndex >= 0) {
-          val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
-
           removedTabs.addLast(file.url to FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned))
           if (removedTabs.size >= tabLimit) {
             removedTabs.removeFirst()
           }
 
-          tabbedPane.removeTabAt(componentIndex, indexToSelect)
+          val info = tabbedPane.editorTabs.getTabAt(componentIndex)
+          // removing the hidden tab happens at the end of the drag-out,
+          // we've already selected the correct tab for this case in dragOutStarted
+          if (info.isHidden || !manager.project.isOpen || isDisposed) {
+            tabbedPane.editorTabs.removeTabWithoutChangingSelection(info)
+          }
+          else {
+            val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
+            val toSelect = if (indexToSelect >= 0 && indexToSelect < tabbedPane.editorTabs.tabCount) tabbedPane.editorTabs.getTabAt(indexToSelect) else null
+            tabbedPane.editorTabs.removeTab(info = info, forcedSelectionTransfer = toSelect)
+          }
           fileEditorManager.disposeComposite(composite)
         }
 
@@ -908,7 +916,7 @@ class EditorWindow internal constructor(
 
   fun getComposite(inputFile: VirtualFile): EditorComposite? = findTabByFile(inputFile)?.composite
 
-  internal fun findCompositeAndTab(inputFile: VirtualFile): kotlin.Pair<EditorComposite, TabInfo>? {
+  internal fun findCompositeAndTab(inputFile: VirtualFile): Pair<EditorComposite, TabInfo>? {
     val file = (inputFile as? BackedVirtualFile)?.originFile ?: inputFile
     for (tab in tabbedPane.tabs.tabs) {
       val composite = tab.composite

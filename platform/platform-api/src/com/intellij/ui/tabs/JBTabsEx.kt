@@ -19,8 +19,6 @@ interface JBTabsEx : JBTabs {
 
   fun addTabSilently(info: TabInfo, index: Int): TabInfo?
 
-  fun removeTab(info: TabInfo, forcedSelectionTransfer: TabInfo?)
-
   fun getToSelectOnRemoveOf(tab: TabInfo): TabInfo?
 
   fun sortTabs(comparator: Comparator<TabInfo>)

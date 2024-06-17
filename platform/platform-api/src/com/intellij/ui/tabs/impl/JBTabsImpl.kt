@@ -2366,12 +2366,9 @@ open class JBTabsImpl internal constructor(
     return removeTab(info = info, forcedSelectionTransfer = null)
   }
 
-  override fun removeTab(info: TabInfo, forcedSelectionTransfer: TabInfo?) {
-    removeTab(info = info, forcedSelectionTransfer = forcedSelectionTransfer)
-  }
-
   @RequiresEdt
-  internal fun removeTab(
+  @Internal
+  fun removeTab(
     info: TabInfo?,
     forcedSelectionTransfer: TabInfo?,
     isDropTarget: Boolean = false,
@@ -2424,6 +2421,28 @@ open class JBTabsImpl internal constructor(
     revalidateAndRepaint(true)
     fireTabRemoved(info)
     return result
+  }
+
+  @RequiresEdt
+  @Internal
+  fun removeTabWithoutChangingSelection(info: TabInfo) {
+    if (removeNotifyInProgress) {
+      LOG.warn(IllegalStateException("removeNotify in progress"))
+    }
+
+    if (popupInfo == info) {
+      popupInfo = null
+    }
+
+    if (!tabs.contains(info)) {
+      return
+    }
+
+    if (visibleInfos.isEmpty()) {
+      removeDeferredNow()
+    }
+    revalidateAndRepaint(true)
+    fireTabRemoved(info)
   }
 
   // Tells whether focus is currently within one of the tab's components, or it was there last time the containing window had focus
@@ -3060,6 +3079,7 @@ open class JBTabsImpl internal constructor(
   val navigationActions: ActionGroup
     get() = myNavigationActions
 
+  @Suppress("removal", "OVERRIDE_DEPRECATION")
   override fun getDataProvider(): DataProvider? = dataProvider
 
   override fun setDataProvider(dataProvider: DataProvider): JBTabsImpl {

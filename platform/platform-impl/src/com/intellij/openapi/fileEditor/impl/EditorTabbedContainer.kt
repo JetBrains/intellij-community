@@ -170,13 +170,15 @@ class EditorTabbedContainer internal constructor(
     get() = editorTabs.component
 
   fun removeTabAt(componentIndex: Int, indexToSelect: Int) {
-    var toSelect = if (indexToSelect >= 0 && indexToSelect < editorTabs.tabCount) editorTabs.getTabAt(indexToSelect) else null
     val info = editorTabs.getTabAt(componentIndex)
     // removing the hidden tab happens at the end of the drag-out, we've already selected the correct tab for this case in dragOutStarted
     if (info.isHidden || !window.manager.project.isOpen || window.isDisposed) {
-      toSelect = null
+      editorTabs.removeTabWithoutChangingSelection(info = info)
     }
-    editorTabs.removeTab(info = info, forcedSelectionTransfer = toSelect)
+    else {
+      val toSelect = if (indexToSelect >= 0 && indexToSelect < editorTabs.tabCount) editorTabs.getTabAt(indexToSelect) else null
+      editorTabs.removeTab(info = info, forcedSelectionTransfer = toSelect)
+    }
   }
 
   val selectedIndex: Int

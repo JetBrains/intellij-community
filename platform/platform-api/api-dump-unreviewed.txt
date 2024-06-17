@@ -10681,7 +10681,6 @@ com.intellij.ui.tabs.JBTabsEx
 - a:isEditorTabs():Z
 - a:isEmptyVisible():Z
 - a:isHideTopPanel():Z
-- a:removeTab(com.intellij.ui.tabs.TabInfo,com.intellij.ui.tabs.TabInfo):V
 - a:setHideTopPanel(Z):V
 - a:setTitleProducer(kotlin.jvm.functions.Function0):V
 - a:sortTabs(java.util.Comparator):V
@@ -11084,7 +11083,6 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - removeAllTabs():V
 - removeNotify():V
 - removeTab(com.intellij.ui.tabs.TabInfo):com.intellij.openapi.util.ActionCallback
-- removeTab(com.intellij.ui.tabs.TabInfo,com.intellij.ui.tabs.TabInfo):V
 - pf:reorderTab(com.intellij.ui.tabs.TabInfo,I):V
 - requestFocus():V
 - requestFocusInWindow():Z
