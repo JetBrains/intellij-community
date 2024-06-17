@@ -25,6 +25,15 @@ public final class ToolingStreamApiUtils {
       .withStreamCopyOptimized(true);
   }
 
+  public static void writeInt(
+    @NotNull IonWriter writer,
+    @NotNull String fieldName,
+    int value
+  ) throws IOException {
+    writer.setFieldName(fieldName);
+    writer.writeInt(value);
+  }
+
   public static int readInt(
     @NotNull IonReader reader,
     @Nullable String fieldName

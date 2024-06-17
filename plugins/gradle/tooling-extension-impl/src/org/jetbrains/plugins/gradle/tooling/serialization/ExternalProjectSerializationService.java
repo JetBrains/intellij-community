@@ -6,13 +6,14 @@ import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
 import com.amazon.ion.util.IonStreamUtils;
+import org.jetbrains.annotations.ApiStatus;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyReadContext;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyWriteContext;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
-import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap.ObjectFactory;
@@ -23,12 +24,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencySerialisationUtil.readDependency;
+import static com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencySerialisationUtil.writeDependency;
 import static com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public final class ExternalProjectSerializationService implements SerializationService<ExternalProject> {
   private final WriteContext myWriteContext = new WriteContext();
   private final ReadContext myReadContext = new ReadContext();
@@ -198,161 +202,9 @@ public final class ExternalProjectSerializationService implements SerializationS
     WriteContext context,
     Collection<? extends ExternalDependency> dependencies
   ) throws IOException {
-    writer.setFieldName("dependencies");
-    writer.stepIn(IonType.LIST);
-    for (ExternalDependency dependency : dependencies) {
-      writeDependency(writer, context, dependency);
-    }
-    writer.stepOut();
-  }
-
-  private static void writeDependency(
-    IonWriter writer,
-    WriteContext context,
-    ExternalDependency dependency
-  ) throws IOException {
-    if (dependency instanceof ExternalLibraryDependency) {
-      writeDependency(writer, context, (ExternalLibraryDependency)dependency);
-    }
-    else if (dependency instanceof ExternalMultiLibraryDependency) {
-      writeDependency(writer, context, (ExternalMultiLibraryDependency)dependency);
-    }
-    else if (dependency instanceof ExternalProjectDependency) {
-      writeDependency(writer, context, (ExternalProjectDependency)dependency);
-    }
-    else if (dependency instanceof FileCollectionDependency) {
-      writeDependency(writer, context, (FileCollectionDependency)dependency);
-    }
-    else if (dependency instanceof UnresolvedExternalDependency) {
-      writeDependency(writer, context, (UnresolvedExternalDependency)dependency);
-    }
-  }
-
-  private static void writeDependency(final IonWriter writer, final WriteContext context, final ExternalLibraryDependency dependency)
-    throws IOException {
-    context.getDependenciesCollector().add(dependency, new ObjectCollector.Processor<IOException>() {
-      @Override
-      public void process(boolean isAdded, int objectId) throws IOException {
-        writer.stepIn(IonType.STRUCT);
-        writer.setFieldName(OBJECT_ID_FIELD);
-        writer.writeInt(objectId);
-        if (isAdded) {
-          writer.setFieldName("_type");
-          writer.writeString(ExternalLibraryDependency.class.getSimpleName());
-          writeDependencyCommonFields(writer, context, dependency);
-
-          writeFile(writer, "file", dependency.getFile());
-          writeFile(writer, "source", dependency.getSource());
-          writeFile(writer, "javadoc", dependency.getJavadoc());
-        }
-        writer.stepOut();
-      }
-    });
-  }
-
-  private static void writeDependency(final IonWriter writer, final WriteContext context, final ExternalMultiLibraryDependency dependency)
-    throws IOException {
-    context.getDependenciesCollector().add(dependency, new ObjectCollector.Processor<IOException>() {
-      @Override
-      public void process(boolean isAdded, int objectId) throws IOException {
-        writer.stepIn(IonType.STRUCT);
-        writer.setFieldName(OBJECT_ID_FIELD);
-        writer.writeInt(objectId);
-        if (isAdded) {
-          writer.setFieldName("_type");
-          writer.writeString(ExternalMultiLibraryDependency.class.getSimpleName());
-          writeDependencyCommonFields(writer, context, dependency);
-          writeFiles(writer, "files", dependency.getFiles());
-          writeFiles(writer, "sources", dependency.getSources());
-          writeFiles(writer, "javadocs", dependency.getJavadoc());
-        }
-        writer.stepOut();
-      }
-    });
-  }
-
-  private static void writeDependency(final IonWriter writer, final WriteContext context, final ExternalProjectDependency dependency)
-    throws IOException {
-    context.getDependenciesCollector().add(dependency, new ObjectCollector.Processor<IOException>() {
-      @Override
-      public void process(boolean isAdded, int objectId) throws IOException {
-        writer.stepIn(IonType.STRUCT);
-        writer.setFieldName(OBJECT_ID_FIELD);
-        writer.writeInt(objectId);
-        if (isAdded) {
-          writer.setFieldName("_type");
-          writer.writeString(ExternalProjectDependency.class.getSimpleName());
-          writeDependencyCommonFields(writer, context, dependency);
-
-          writeString(writer, "projectPath", dependency.getProjectPath());
-          writeString(writer, "configurationName", dependency.getConfigurationName());
-          writeFiles(writer, "projectDependencyArtifacts", dependency.getProjectDependencyArtifacts());
-          writeFiles(writer, "projectDependencyArtifactsSources", dependency.getProjectDependencyArtifactsSources());
-        }
-        writer.stepOut();
-      }
-    });
-  }
-
-  private static void writeDependency(final IonWriter writer, final WriteContext context, final FileCollectionDependency dependency)
-    throws IOException {
-    context.getDependenciesCollector().add(dependency, new ObjectCollector.Processor<IOException>() {
-      @Override
-      public void process(boolean isAdded, int objectId) throws IOException {
-        writer.stepIn(IonType.STRUCT);
-        writer.setFieldName(OBJECT_ID_FIELD);
-        writer.writeInt(objectId);
-        if (isAdded) {
-          writer.setFieldName("_type");
-          writer.writeString(FileCollectionDependency.class.getSimpleName());
-          writeDependencyCommonFields(writer, context, dependency);
-          writeFiles(writer, "files", dependency.getFiles());
-          writeBoolean(writer, "excludedFromIndexing", dependency.isExcludedFromIndexing());
-        }
-        writer.stepOut();
-      }
-    });
-  }
-
-  private static void writeDependency(final IonWriter writer, final WriteContext context, final UnresolvedExternalDependency dependency)
-    throws IOException {
-    context.getDependenciesCollector().add(dependency, new ObjectCollector.Processor<IOException>() {
-      @Override
-      public void process(boolean isAdded, int objectId) throws IOException {
-        writer.stepIn(IonType.STRUCT);
-        writer.setFieldName(OBJECT_ID_FIELD);
-        writer.writeInt(objectId);
-        if (isAdded) {
-          writer.setFieldName("_type");
-          writer.writeString(UnresolvedExternalDependency.class.getSimpleName());
-          writeDependencyCommonFields(writer, context, dependency);
-          writeString(writer, "failureMessage", dependency.getFailureMessage());
-        }
-        writer.stepOut();
-      }
-    });
-  }
-
-  private static void writeDependencyCommonFields(IonWriter writer, WriteContext context, ExternalDependency dependency)
-    throws IOException {
-    ExternalDependencyId id = dependency.getId();
-    writer.setFieldName("id");
-    writer.stepIn(IonType.STRUCT);
-    writeString(writer, "group", id.getGroup());
-    writeString(writer, "name", id.getName());
-    writeString(writer, "version", id.getVersion());
-    writeString(writer, "packaging", id.getPackaging());
-    writeString(writer, "classifier", id.getClassifier());
-    writer.stepOut();
-
-    writeString(writer, "scope", dependency.getScope());
-    writeString(writer, "selectionReason", dependency.getSelectionReason());
-    writer.setFieldName("classpathOrder");
-    writer.writeInt(dependency.getClasspathOrder());
-    writer.setFieldName("exported");
-    writer.writeBool(dependency.getExported());
-
-    writeDependencies(writer, context, dependency.getDependencies());
+    writeCollection(writer, "dependencies", dependencies, it ->
+      writeDependency(writer, context.myDependencyContext, it)
+    );
   }
 
   private static void writeTasks(IonWriter writer, Map<String, ? extends ExternalTask> tasks) throws IOException {
@@ -581,137 +433,31 @@ public final class ExternalProjectSerializationService implements SerializationS
   }
 
   private static Collection<ExternalDependency> readDependencies(IonReader reader, ReadContext context) {
-    List<ExternalDependency> dependencies = new ArrayList<>();
-    reader.next();
-    reader.stepIn();
-    ExternalDependency dependency;
-    while ((dependency = readDependency(reader, context)) != null) {
-      dependencies.add(dependency);
-    }
-    reader.stepOut();
-    return dependencies;
+    return readList(reader, "dependencies", () ->
+      readDependency(reader, context.myDependencyContext)
+    );
   }
 
-  private static ExternalDependency readDependency(final IonReader reader, final ReadContext context) {
-    if (reader.next() == null) return null;
-    reader.stepIn();
+  private static class ReadContext {
 
-    ExternalDependency dependency =
-      context.getDependenciesMap().computeIfAbsent(readInt(reader, OBJECT_ID_FIELD), new ObjectFactory<AbstractExternalDependency>() {
+    private final DependencyReadContext myDependencyContext = new DependencyReadContext();
 
-        @Override
-        public AbstractExternalDependency newInstance() {
-          String type = readString(reader, "_type");
-          if (ExternalLibraryDependency.class.getSimpleName().equals(type)) {
-            return new DefaultExternalLibraryDependency();
-          }
-          else if (ExternalMultiLibraryDependency.class.getSimpleName().equals(type)) {
-            return new DefaultExternalMultiLibraryDependency();
-          }
-          else if (ExternalProjectDependency.class.getSimpleName().equals(type)) {
-            return new DefaultExternalProjectDependency();
-          }
-          else if (FileCollectionDependency.class.getSimpleName().equals(type)) {
-            return new DefaultFileCollectionDependency();
-          }
-          else if (UnresolvedExternalDependency.class.getSimpleName().equals(type)) {
-            return new DefaultUnresolvedExternalDependency();
-          }
-          else {
-            throw new RuntimeException("Unsupported dependency");
-          }
-        }
-
-        @Override
-        public void fill(AbstractExternalDependency externalDependency) {
-          readDependencyCommonFields(reader, context, externalDependency);
-          if (externalDependency instanceof DefaultExternalLibraryDependency) {
-            DefaultExternalLibraryDependency libraryDependency = (DefaultExternalLibraryDependency)externalDependency;
-            libraryDependency.setFile(readFile(reader, "file"));
-            libraryDependency.setSource(readFile(reader, "source"));
-            libraryDependency.setJavadoc(readFile(reader, "javadoc"));
-          }
-          else if (externalDependency instanceof DefaultExternalMultiLibraryDependency) {
-            DefaultExternalMultiLibraryDependency multiLibraryDependency = (DefaultExternalMultiLibraryDependency)externalDependency;
-            multiLibraryDependency.getFiles().addAll(readFileList(reader, null));
-            multiLibraryDependency.getSources().addAll(readFileList(reader, null));
-            multiLibraryDependency.getJavadoc().addAll(readFileList(reader, null));
-          }
-          else if (externalDependency instanceof DefaultExternalProjectDependency) {
-            DefaultExternalProjectDependency projectDependency = (DefaultExternalProjectDependency)externalDependency;
-            projectDependency.setProjectPath(readString(reader, "projectPath"));
-            projectDependency.setConfigurationName(readString(reader, "configurationName"));
-            projectDependency.setProjectDependencyArtifacts(readFileList(reader, null));
-            projectDependency.setProjectDependencyArtifactsSources(readFileList(reader, null));
-          }
-          else if (externalDependency instanceof DefaultFileCollectionDependency) {
-            DefaultFileCollectionDependency fileCollectionDependency = (DefaultFileCollectionDependency)externalDependency;
-            fileCollectionDependency.setFiles(readFileList(reader, null));
-            fileCollectionDependency.setExcludedFromIndexing(readBoolean(reader, "excludedFromIndexing"));
-          }
-          else if (externalDependency instanceof DefaultUnresolvedExternalDependency) {
-            DefaultUnresolvedExternalDependency unresolvedExternalDependency = (DefaultUnresolvedExternalDependency)externalDependency;
-            unresolvedExternalDependency.setFailureMessage(readString(reader, "failureMessage"));
-          }
-          else {
-            throw new RuntimeException("Unsupported dependency type: " + externalDependency.getClass().getName());
-          }
-        }
-      });
-    reader.stepOut();
-    return dependency;
-  }
-
-  private static void readDependencyCommonFields(IonReader reader,
-                                                 ReadContext context,
-                                                 AbstractExternalDependency dependency) {
-    readDependencyId(reader, dependency);
-    dependency.setScope(readString(reader, "scope"));
-    dependency.setSelectionReason(readString(reader, "selectionReason"));
-    dependency.setClasspathOrder(readInt(reader, "classpathOrder"));
-    dependency.setExported(readBoolean(reader, "exported"));
-    dependency.setDependencies(readDependencies(reader, context));
-  }
-
-  private static void readDependencyId(IonReader reader, AbstractExternalDependency dependency) {
-    DefaultExternalDependencyId id = (DefaultExternalDependencyId)dependency.getId();
-    reader.next();
-    assertFieldName(reader, "id");
-    reader.stepIn();
-    id.setGroup(readString(reader, "group"));
-    id.setName(readString(reader, "name"));
-    id.setVersion(readString(reader, "version"));
-    id.setPackaging(assertNotNull(readString(reader, "packaging")));
-    id.setClassifier(readString(reader, "classifier"));
-    reader.stepOut();
-  }
-
-  public static class ReadContext {
     private final IntObjectMap<DefaultExternalProject> myProjectsMap = new IntObjectMap<>();
-
-    private final IntObjectMap<AbstractExternalDependency> myDependenciesMap = new IntObjectMap<>();
 
     public IntObjectMap<DefaultExternalProject> getProjectsMap() {
       return myProjectsMap;
     }
-
-    public IntObjectMap<AbstractExternalDependency> getDependenciesMap() {
-      return myDependenciesMap;
-    }
   }
 
-  public static class WriteContext {
+  private static class WriteContext {
+
+    private final DependencyWriteContext myDependencyContext = new DependencyWriteContext();
+
     private final ObjectCollector<ExternalProject, IOException> myProjectsCollector =
-      new ObjectCollector<>();
-    private final ObjectCollector<ExternalDependency, IOException> myDependenciesCollector =
       new ObjectCollector<>();
 
     public ObjectCollector<ExternalProject, IOException> getProjectsCollector() {
       return myProjectsCollector;
-    }
-
-    public ObjectCollector<ExternalDependency, IOException> getDependenciesCollector() {
-      return myDependenciesCollector;
     }
   }
 }
