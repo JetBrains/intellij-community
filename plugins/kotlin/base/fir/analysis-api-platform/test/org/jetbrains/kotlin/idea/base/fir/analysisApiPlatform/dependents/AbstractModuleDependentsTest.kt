@@ -42,14 +42,14 @@ abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<Modul
         assertEquals(
             "Direct dependents of ${entityReference.name}:",
             target.directDependents,
-            directDependents.map { (it as KtSourceModule).moduleName }.toSet(),
+            directDependents.map { (it as KtSourceModule).name }.toSet(),
         )
 
         val transitiveDependents = moduleDependentsProvider.getTransitiveDependents(targetModule)
         assertEquals(
             "Transitive dependents of ${entityReference.name}:",
             target.transitiveDependents,
-            transitiveDependents.map { (it as KtSourceModule).moduleName }.toSet(),
+            transitiveDependents.map { (it as KtSourceModule).name }.toSet(),
         )
     }
 }

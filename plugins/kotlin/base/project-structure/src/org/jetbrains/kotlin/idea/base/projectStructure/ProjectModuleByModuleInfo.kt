@@ -82,12 +82,12 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
 open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSourceModule {
     val ideaModule: Module get() = moduleInfo.module
 
-    override val moduleName: String get() = ideaModule.name
+    override val name: String get() = ideaModule.name
 
     @KaExperimentalApi
     override val stableModuleName: String? get() = moduleInfo.stableName?.asString()
 
-    val moduleId: ModuleId get() = ModuleId(moduleName)
+    val moduleId: ModuleId get() = ModuleId(name)
 
     override val directRegularDependencies: List<KtModule>
         get() = moduleInfo.collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED)

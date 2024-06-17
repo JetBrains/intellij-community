@@ -188,7 +188,7 @@ internal fun getModulesStringForMarkerTooltip(navigatableDeclarations: Collectio
 
 @OptIn(KaExperimentalApi::class)
 private val KtModule.moduleName: String
-    get() = (this as? KtSourceModule)?.moduleName ?: moduleDescription
+    get() = (this as? KtSourceModule)?.name ?: moduleDescription
 
 fun expectTooltip(navigatableDeclarations: Collection<SmartPsiElementPointer<KtDeclaration>>?): String? {
     val modulesString = getModulesStringForMarkerTooltip(navigatableDeclarations) ?: return null

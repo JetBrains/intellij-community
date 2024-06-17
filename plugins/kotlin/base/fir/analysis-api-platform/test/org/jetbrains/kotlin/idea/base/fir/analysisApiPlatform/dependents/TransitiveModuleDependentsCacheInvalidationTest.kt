@@ -75,5 +75,5 @@ class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest(
     }
 
     private fun KtModule.getTransitiveDependentNames(): Set<String> =
-        moduleDependentsProvider.getTransitiveDependents(this).mapTo(mutableSetOf()) { (it as KtSourceModule).moduleName }
+        moduleDependentsProvider.getTransitiveDependents(this).mapTo(mutableSetOf()) { (it as KtSourceModule).name }
 }

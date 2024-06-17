@@ -44,7 +44,7 @@ abstract class AbstractLocalSessionInvalidationTest : AbstractSessionInvalidatio
             .map { session ->
                 val moduleSession = session as LLFirModuleSession
                 val module = moduleSession.ktModule as KtSourceModule
-                module.moduleName
+                module.name
             }
             .distinct()
             .sorted()
