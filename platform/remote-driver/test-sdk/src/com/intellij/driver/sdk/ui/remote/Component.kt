@@ -21,6 +21,7 @@ interface Component {
   fun getForeground(): ColorRef
   fun getBackground(): ColorRef
   fun getAccessibleContext(): AccessibleContextRef?
+  fun getParent(): Component
 }
 
 @Remote("java.awt.Color")

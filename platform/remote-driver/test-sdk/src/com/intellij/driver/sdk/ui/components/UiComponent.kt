@@ -4,7 +4,6 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.model.TextData
 import com.intellij.driver.sdk.screenshot.takeScreenshot
-import com.intellij.driver.sdk.screenshot.toBufferedImage
 import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT_SECONDS
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.SearchContext
@@ -171,6 +170,10 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     val components = searchContext.findAll(component.data.xpath)
     if (components.isEmpty()) return false
     return components.any { it.isVisible() }
+  }
+
+  fun getParent(): UiComponent {
+    return UiComponent(ComponentData(data.xpath + "/..", driver, searchService, robotProvider, data.parentSearchContext, component.getParent()))
   }
 
   fun getScreenshot(): BufferedImage {

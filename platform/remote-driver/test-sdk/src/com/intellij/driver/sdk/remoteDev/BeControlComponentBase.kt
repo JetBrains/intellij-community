@@ -101,6 +101,10 @@ open class BeControlComponentBase(
     return frontendComponent.getAccessibleContext()
   }
 
+  override fun getParent(): Component {
+    return frontendComponent.getParent()
+  }
+
   override fun getRef() = getFrontendRef()
 
   override fun getRefPluginId() = ""
