@@ -35,7 +35,7 @@ private val NAVIGABLE_ELEMENT: Key<PsiElement> = Key("GROOVY_NAMED_VARIANT_NAVIG
 
 fun collectNamedParams(mapParameter: PsiParameter): List<NamedParamData> {
   val mapType = mapParameter.type
-  if (mapType !is PsiClassType || mapType.rawType().canonicalText != CommonClassNames.JAVA_UTIL_MAP) return emptyList()
+  if (!PsiTypesUtil.classNameEquals(mapType, CommonClassNames.JAVA_UTIL_MAP)) return emptyList()
 
   val annotations = mapParameter
     .getAnnotation(GROOVY_TRANSFORM_NAMED_PARAMS)

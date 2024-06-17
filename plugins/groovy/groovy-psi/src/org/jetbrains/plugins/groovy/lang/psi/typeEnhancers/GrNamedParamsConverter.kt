@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
+import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapTypeFromNamedArgs
@@ -27,8 +28,7 @@ class GrNamedParamsConverter : GrTypeConverter() {
 
   private fun createConversion(targetType: PsiType, actualType: PsiType, context: PsiElement): Result {
     if (actualType !is GrMapTypeFromNamedArgs || targetType !is PsiClassType) return Result.NotNamedParams
-    val rawTypeFqn = targetType.rawType().canonicalText
-    if (rawTypeFqn != CommonClassNames.JAVA_UTIL_MAP) return Result.NotNamedParams
+    if (!PsiTypesUtil.classNameEquals(targetType, CommonClassNames.JAVA_UTIL_MAP)) return Result.NotNamedParams
 
     if (context !is GrMethodCallExpression) return Result.NotNamedParams
     val method = context.resolveMethod() ?: return Result.NotNamedParams
