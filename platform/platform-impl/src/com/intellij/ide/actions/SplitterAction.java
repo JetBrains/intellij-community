@@ -72,7 +72,7 @@ public abstract class SplitterAction extends DumbAwareAction implements ActionRe
   static final class Unsplit extends SplitterAction {
     @Override
     void actionPerformed(@NotNull EditorWindow window) {
-      window.getManager().unsplitWindow();
+      window.unsplit$intellij_platform_ide_impl(true);
     }
   }
 

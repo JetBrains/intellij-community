@@ -271,8 +271,6 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   override val activeWindow: CompletableFuture<EditorWindow?>
     get() = CompletableFuture.completedFuture(null)
 
-  override fun unsplitWindow() {}
-
   override fun unsplitAllWindow() {}
 
   override val windows: Array<EditorWindow>

@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeGlassPaneUtil
+import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
@@ -349,7 +350,8 @@ class EditorWindow internal constructor(
         parentDisposable = composite,
       )
 
-      composite.coroutineScope.launch {
+      coroutineScope.launch {
+        attachAsChildTo(composite.coroutineScope)
         composite.selectedEditorWithProvider.drop(1).collect {
           tab.setTabPaneActions(it?.fileEditor?.tabActions)
         }
@@ -830,33 +832,38 @@ class EditorWindow internal constructor(
     }
   }
 
-  fun unsplit(setCurrent: Boolean) {
+  internal fun unsplit(setCurrent: Boolean) {
     checkConsistency()
     val splitter = component.parent as? Splitter ?: return
-    var compositeToSelect = selectedComposite
-    val siblings = getSiblings()
-    val parent = splitter.parent as JPanel
-    for (eachSibling in siblings) {
-      // selected editors will be added first
-      val selected = eachSibling.selectedComposite
-      if (compositeToSelect == null && selected != null) {
-        compositeToSelect = selected
-        break
-      }
-    }
+    val siblingWindows = owner.windows().filter { it != this@EditorWindow && SwingUtilities.isDescendingFrom(it.component, splitter) }.toList()
+
+    // selected editors will be added first
+    var compositeToSelect = selectedComposite ?: siblingWindows.firstNotNullOfOrNull { eachSibling -> eachSibling.selectedComposite }
 
     // we'll select and focus on a single editor in the end
     val openOptions = FileEditorOpenOptions(selectAsCurrent = false, requestFocus = false)
-    for (sibling in siblings) {
-      for (siblingComposite in sibling.composites().toList()) {
+    val editorTabLimit = UISettings.getInstance().state.editorTabLimit
+    for (siblingWindow in siblingWindows) {
+      for (siblingComposite in siblingWindow.composites().toList()) {
         if (compositeToSelect == null) {
           compositeToSelect = siblingComposite
         }
-        processSiblingComposite(siblingComposite, openOptions)
+        if (tabbedPane.tabs.tabs.firstOrNull { it.composite.file == siblingComposite.file } == null && tabCount < editorTabLimit) {
+          addComposite(
+            composite = siblingComposite,
+            file = siblingComposite.file,
+            options = openOptions,
+            isNewEditor = true,
+          )
+        }
+        else {
+          manager.disposeComposite(siblingComposite)
+        }
       }
-      sibling.dispose()
+      siblingWindow.dispose()
     }
 
+    val parent = splitter.parent as JPanel
     swapComponents(parent = parent, toAdd = tabbedPane.component, toRemove = splitter)
     parent.revalidate()
 
@@ -867,20 +874,6 @@ class EditorWindow internal constructor(
       owner.setCurrentWindow(window = this, requestFocus = false)
     }
     normalizeProportionsIfNeed(component)
-  }
-
-  private fun processSiblingComposite(composite: EditorComposite, openOptions: FileEditorOpenOptions) {
-    if (findTabByFile(composite.file) == null && tabCount < UISettings.getInstance().state.editorTabLimit) {
-      addComposite(
-        composite = composite,
-        file = composite.file,
-        options = openOptions,
-        isNewEditor = false,
-      )
-    }
-    else {
-      manager.disposeComposite(composite)
-    }
   }
 
   fun unsplitAll() {

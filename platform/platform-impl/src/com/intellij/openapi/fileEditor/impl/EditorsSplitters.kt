@@ -949,7 +949,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       fileEntries.map { fileEntry ->
         async {
           val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@async null
-          val compositeCoroutineScope = windowCoroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
+          val compositeCoroutineScope = splitters.coroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
           val model = fileEditorManager.createEditorCompositeModelOnStartup(
             compositeCoroutineScope = compositeCoroutineScope,
             fileProvider = { file },

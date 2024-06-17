@@ -663,10 +663,6 @@ open class FileEditorManagerImpl(
     fileTitleUpdateChannel.queue(file)
   }
 
-  override fun unsplitWindow() {
-    getActiveSplitterSync().currentWindow?.unsplit(true)
-  }
-
   override fun unsplitAllWindow() {
     getActiveSplitterSync().currentWindow?.unsplitAll()
   }
@@ -1204,7 +1200,7 @@ open class FileEditorManagerImpl(
     window: EditorWindow,
     fileEntry: FileEntry? = null,
   ): EditorComposite? {
-    val compositeCoroutineScope = window.coroutineScope.childScope("EditorComposite(file=${file.name})")
+    val compositeCoroutineScope = window.owner.coroutineScope.childScope("EditorComposite(file=${file.name})")
     val model = createEditorCompositeModel(
       coroutineScope = compositeCoroutineScope,
       editorPropertyChangeListener = editorPropertyChangeListener,

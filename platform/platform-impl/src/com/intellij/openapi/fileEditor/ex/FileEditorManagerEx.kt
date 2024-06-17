@@ -3,11 +3,7 @@ package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.ide.impl.DataValidators
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.DataSnapshot
-import com.intellij.openapi.actionSystem.EdtDataRule
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -89,8 +85,6 @@ abstract class FileEditorManagerEx : FileEditorManager() {
    * @return true if the window was closed; false otherwise
    */
   abstract fun closeFileWithChecks(file: VirtualFile, window: EditorWindow): Boolean
-
-  abstract fun unsplitWindow()
 
   abstract fun unsplitAllWindow()
 

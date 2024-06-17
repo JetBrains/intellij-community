@@ -172,10 +172,6 @@ public final class Mock {
     }
 
     @Override
-    public void unsplitWindow() {
-    }
-
-    @Override
     public void unsplitAllWindow() {
     }
 
