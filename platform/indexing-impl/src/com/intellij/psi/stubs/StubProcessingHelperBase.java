@@ -59,7 +59,7 @@ public abstract class StubProcessingHelperBase {
 
     if (value.size() == 1 && value.get(0) == 0) {
       //noinspection unchecked
-      return !checkType(requiredClass, psiFile, psiFile, debugOperationName, value, ZeroStubIdList) || processor.process((Psi)psiFile);
+      return !checkType(requiredClass, psiFile, psiFile, debugOperationName, value, 0, ZeroStubIdList) || processor.process((Psi)psiFile);
     }
 
     List<StubbedSpine> spines = getAllSpines(psiFile);
@@ -69,7 +69,7 @@ public abstract class StubProcessingHelperBase {
 
     for (int i = 0, size = value.size(); i < size; i++) {
       PsiElement psi = getStubPsi(spines, value.get(i));
-      if (!checkType(requiredClass, psiFile, psi, debugOperationName, value, StubPsiCheck)) break;
+      if (!checkType(requiredClass, psiFile, psi, debugOperationName, value, i, StubPsiCheck)) break;
       //noinspection unchecked
       if (!processor.process((Psi)psi)) return false;
     }
@@ -85,7 +85,8 @@ public abstract class StubProcessingHelperBase {
   }
 
   private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, @Nullable PsiElement psiElement,
-                                                     @NotNull Computable<String> debugOperationName, @NotNull StubIdList debugStubIdList,
+                                                     @NotNull Computable<String> debugOperationName,
+                                                     @NotNull StubIdList debugStubIdList, int stubIdListIdx,
                                                      @NotNull StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source) {
     if (requiredClass.isInstance(psiElement)) return true;
 
@@ -94,8 +95,8 @@ public abstract class StubProcessingHelperBase {
                           (psiElement != null ? ", psiElement.class=" + psiElement.getClass() : "") +
                           ", requiredClass=" + requiredClass +
                           ", operation=" + debugOperationName.get() +
-                          ", stubIdList=" + debugStubIdList +
-                          ".\nref: 50cf572587cf";
+                          ", stubIdList=" + debugStubIdList + "@" + stubIdListIdx +
+                          ".\nref: 20240717";
 
     StubTree stubTree = ((PsiFileWithStubSupport)psiFile).getStubTree();
     if (stubTree == null && psiFile instanceof PsiFileImpl) stubTree = ((PsiFileImpl)psiFile).calcStubTree();
