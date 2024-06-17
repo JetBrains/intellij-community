@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class TestPackagePrivateFieldInit {
     Object start;
     Object end;

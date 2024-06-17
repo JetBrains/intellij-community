@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class J {
     public void test() {
         Pojo pojo = new Pojo("a", "b");

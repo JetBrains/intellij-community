@@ -1,5 +1,6 @@
 class C {
-    protected var x: String? = ""
+    private var x: String? = ""
+    var other: C? = null
 
     fun getX(): String? {
         return x
@@ -7,6 +8,9 @@ class C {
 
     fun setX(x: String?) {
         println("setter invoked")
+        if (other != null) {
+            this.other!!.x = x
+        }
         this.x = x
     }
 }
