@@ -98,21 +98,14 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
   }
 
   override fun uiDataSnapshot(sink: DataSink, selectedObjects: Iterable<SavedPatchesProvider.PatchObject<*>>) {
-    sink[ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY] =
-      filterLists(selectedObjects) { l -> !l.isRecycled && !l.isDeleted }
-    sink[ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY] =
-      filterLists(selectedObjects) { l -> l.isRecycled && !l.isDeleted }
-    sink[ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY] =
-      filterLists(selectedObjects) { l -> l.isDeleted }
-  }
-
-  private fun filterLists(selectedObjects: Iterable<SavedPatchesProvider.PatchObject<*>>,
-                          predicate: (ShelvedChangeList) -> Boolean): List<ShelvedChangeList> {
-    return JBIterable.from(selectedObjects)
+    val shelvedLists = JBIterable.from(selectedObjects)
       .map(SavedPatchesProvider.PatchObject<*>::data)
       .filter(dataClass)
-      .filter(predicate)
       .toList()
+
+    sink[ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY] = shelvedLists.filter { l -> !l.isRecycled && !l.isDeleted }
+    sink[ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY] = shelvedLists.filter { l -> l.isRecycled && !l.isDeleted }
+    sink[ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY] = shelvedLists.filter { l -> l.isDeleted }
   }
 
   override fun dispose() {

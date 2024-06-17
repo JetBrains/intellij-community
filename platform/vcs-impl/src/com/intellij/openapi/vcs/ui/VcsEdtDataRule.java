@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.EdtDataRule;
 import com.intellij.openapi.vcs.changes.Change;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -17,16 +18,20 @@ import static com.intellij.openapi.vcs.VcsDataKeys.*;
 public class VcsEdtDataRule implements EdtDataRule {
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
+    sink.set(CHANGES_SELECTION, getListSelection(snapshot));
+  }
+
+  private static @Nullable ListSelection<Change> getListSelection(@NotNull DataSnapshot snapshot) {
     Change[] selectedChanges = snapshot.get(SELECTED_CHANGES);
-    ListSelection<Change> selection =
-      selectedChanges == null ? null :
-      ListSelection.createAt(Arrays.asList(selectedChanges), 0).asExplicitSelection();
-    if (selection == null) {
-      Change[] changes = snapshot.get(CHANGES);
-      selection = changes == null ? null : ListSelection.createAt(Arrays.asList(changes), 0);
+    if (selectedChanges != null) {
+      return ListSelection.createAt(Arrays.asList(selectedChanges), 0).asExplicitSelection();
     }
-    if (selection != null) {
-      sink.set(CHANGES_SELECTION, selection);
+
+    Change[] changes = snapshot.get(CHANGES);
+    if (changes != null) {
+      return ListSelection.createAt(Arrays.asList(changes), 0);
     }
+
+    return null;
   }
 }
