@@ -81,7 +81,7 @@ interface JavaSignatureAdditionalData : SuggestedRefactoringSupport.SignatureAdd
 data class JavaDeclarationAdditionalData(
   override val visibility: String?,
   override val annotations: String,
-  override val exceptionTypes: List<String>
+  override val exceptionTypes: List<String>,
 ) : JavaSignatureAdditionalData
 
 internal data class JavaCallAdditionalData(
@@ -107,6 +107,23 @@ private val visibilityModifiers = listOf(PsiModifier.PUBLIC, PsiModifier.PROTECT
 
 internal fun PsiMethod.visibility(): String? {
   return visibilityModifiers.firstOrNull { hasModifierProperty(it) }
+}
+
+internal fun PsiMethod.explicitVisibility(): String {
+  val explicitModifier = visibilityModifiers.firstOrNull { modifier -> this.modifierList.hasExplicitModifier(modifier) }
+  if (explicitModifier != null) return explicitModifier
+  if ((this.parent as? PsiClass)?.isInterface == true) {
+    return PsiModifier.PUBLIC
+  }
+  return PsiModifier.PACKAGE_LOCAL
+}
+
+internal fun PsiMethod.explicitAbstract(): Boolean {
+  val modifierList = this.modifierList
+  return modifierList.hasExplicitModifier(PsiModifier.ABSTRACT) ||
+         ((this.parent as? PsiClass)?.isInterface == true &&
+          !modifierList.hasExplicitModifier(PsiModifier.DEFAULT) &&
+          !modifierList.hasExplicitModifier(PsiModifier.STATIC))
 }
 
 internal fun PsiJvmModifiersOwner.extractAnnotations(): String {
