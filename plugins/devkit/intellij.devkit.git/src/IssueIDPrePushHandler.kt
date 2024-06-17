@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
 
-abstract class IssueIDPrePushHandler : PrePushHandler {
+internal abstract class IssueIDPrePushHandler : PrePushHandler {
   abstract val paths: List<String>
   open val pathsToIgnore = listOf("/test/", "/testData/")
   abstract val commitMessageRegex: Regex
