@@ -20,9 +20,9 @@ import kotlin.io.path.pathString
 object LocalizationUtil {
   @Volatile
   private var isL10nInitialized: Boolean = false
-  private const val LOCALIZATION_FOLDER_NAME = "localization"
-  const val LOCALIZATION_KEY = "i18n.locale"
-  val l10nPluginIdToLanguageTag = mapOf(Pair("com.intellij.ja", "ja"), Pair("com.intellij.ko", "ko"), Pair("com.intellij.zh", "zh-CN"))
+  private const val LOCALIZATION_FOLDER_NAME: String = "localization"
+  const val LOCALIZATION_KEY: String = "i18n.locale"
+  val l10nPluginIdToLanguageTag: Map<String, String> = mapOf("com.intellij.ja" to "ja", "com.intellij.ko" to "ko", "com.intellij.zh" to "zh-CN")
 
   @JvmOverloads
   fun getPluginClassLoader(defaultLoader: ClassLoader? = null): ClassLoader? {
