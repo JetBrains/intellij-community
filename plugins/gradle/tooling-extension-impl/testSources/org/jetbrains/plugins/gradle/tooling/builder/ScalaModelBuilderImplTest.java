@@ -67,7 +67,7 @@ public class ScalaModelBuilderImplTest extends AbstractModelBuilderTest {
       .applyPlugin("scala")
       .withMavenCentral()
       .addImplementationDependency("org.scala-lang:scala-library:2.13.14")
-      .addDependency("scalaCompilerPlugins 'com.olegpy:better-monadic-for_2.13:0.3.1'")
+      .addDependency("scalaCompilerPlugins", "com.olegpy:better-monadic-for_2.13:0.3.1")
       .generate()
     );
 
