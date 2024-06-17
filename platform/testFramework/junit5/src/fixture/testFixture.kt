@@ -4,7 +4,7 @@ package com.intellij.testFramework.junit5.fixture
 /**
  * Main building block for fixtures.
  * The [initializer] shall provide logic about how to build and destroy a fixture.
- * Scoping and fixture dependencies are taken care of be the framework.
+ * Scoping and fixture dependencies are taken care of by the framework.
  *
  * Example:
  * ```
