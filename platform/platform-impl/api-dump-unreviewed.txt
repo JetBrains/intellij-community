@@ -15745,7 +15745,6 @@ a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - runWhenLoaded(com.intellij.openapi.editor.Editor,java.lang.Runnable):V
 - a:setCurrentWindow(com.intellij.openapi.fileEditor.impl.EditorWindow):V
 - a:unsplitAllWindow():V
-- a:unsplitWindow():V
 f:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx$Companion
 - f:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - f:getInstanceExIfCreated(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -15895,20 +15894,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer
 - f:setTabLayoutPolicy(I):V
 - f:setTabPlacement(I):V
 - f:setTextAttributes(I,com.intellij.openapi.editor.markup.TextAttributes):V
-f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer$DockableEditor
-- com.intellij.ui.docking.DockableContent
-- <init>(java.awt.Image,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.actionSystem.Presentation,java.awt.Dimension,Z):V
-- <init>(java.awt.Image,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.actionSystem.Presentation,java.awt.Dimension,Z,Z):V
-- close():V
-- getDockContainerType():java.lang.String
-- f:getFile():com.intellij.openapi.vfs.VirtualFile
-- f:getImg():java.awt.Image
-- getKey():com.intellij.openapi.vfs.VirtualFile
-- getPreferredSize():java.awt.Dimension
-- getPresentation():com.intellij.openapi.actionSystem.Presentation
-- getPreviewImage():java.awt.Image
-- f:isNorthPanelAvailable():Z
-- f:isPinned():Z
 f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - sf:Companion:com.intellij.openapi.fileEditor.impl.EditorWindow$Companion
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
@@ -15964,7 +15949,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - bs:split$default(com.intellij.openapi.fileEditor.impl.EditorWindow,I,Z,com.intellij.openapi.vfs.VirtualFile,Z,Z,I,java.lang.Object):com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:toFront():V
 - f:trimToSize(com.intellij.openapi.vfs.VirtualFile,Z):V
-- f:unsplit(Z):V
 - f:unsplitAll():V
 f:com.intellij.openapi.fileEditor.impl.EditorWindow$Companion
 - f:getTabLimit():I

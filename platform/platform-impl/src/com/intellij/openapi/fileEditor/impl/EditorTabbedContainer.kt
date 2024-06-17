@@ -28,13 +28,15 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer.DockableEditor
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_INDEX_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LOCATION_HASH_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
@@ -279,48 +281,48 @@ class EditorTabbedContainer internal constructor(
     val selected = editorTabs.targetInfo ?: return
     window.manager.closeFile((selected.`object` as VirtualFile), window)
   }
+}
 
-  class DockableEditor(
-    val img: Image?,
-    val file: VirtualFile,
-    private val presentation: Presentation,
-    private val preferredSize: Dimension,
-    val isPinned: Boolean,
-    val isNorthPanelAvailable: Boolean,
-  ) : DockableContent<VirtualFile?> {
-    constructor(
-      img: Image,
-      file: VirtualFile,
-      presentation: Presentation,
-      preferredSize: Dimension,
-      isFilePinned: Boolean,
-    ) : this(
-      img = img,
-      file = file,
-      presentation = presentation,
-      preferredSize = preferredSize,
-      isPinned = isFilePinned,
-      isNorthPanelAvailable = isNorthPanelVisible(UISettings.getInstance()),
-    )
+internal class DockableEditor(
+  @JvmField val img: Image?,
+  @JvmField val file: VirtualFile,
+  private val presentation: Presentation,
+  private val preferredSize: Dimension,
+  @JvmField val isPinned: Boolean,
+  @JvmField val isNorthPanelAvailable: Boolean,
+) : DockableContent<VirtualFile?> {
+  constructor(
+    img: Image,
+    file: VirtualFile,
+    presentation: Presentation,
+    preferredSize: Dimension,
+    isFilePinned: Boolean,
+  ) : this(
+    img = img,
+    file = file,
+    presentation = presentation,
+    preferredSize = preferredSize,
+    isPinned = isFilePinned,
+    isNorthPanelAvailable = isNorthPanelVisible(UISettings.getInstance()),
+  )
 
-    override fun getKey(): VirtualFile = file
+  override fun getKey(): VirtualFile = file
 
-    override fun getPreviewImage(): Image? = img
+  override fun getPreviewImage(): Image? = img
 
-    override fun getPreferredSize(): Dimension = preferredSize
+  override fun getPreferredSize(): Dimension = preferredSize
 
-    override fun getDockContainerType(): String = DockableEditorContainerFactory.TYPE
+  override fun getDockContainerType(): String = DockableEditorContainerFactory.TYPE
 
-    override fun getPresentation(): Presentation = presentation
+  override fun getPresentation(): Presentation = presentation
 
-    override fun close() {}
-  }
+  override fun close() {}
 }
 
 private fun doProcessDoubleClick(e: MouseEvent, editorTabs: JBTabsImpl, window: EditorWindow) {
   val info = editorTabs.findInfo(e)
   if (info != null) {
-    val composite = (info.component as EditorCompositePanel).composite
+    val composite = info.composite
     if (composite.isPreview) {
       composite.isPreview = false
       window.owner.scheduleUpdateFileColor(composite.file)
