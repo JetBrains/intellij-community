@@ -72,16 +72,20 @@ private fun GitRepository.calcIcon(): Icon? {
   return AllIcons.General.Warning
 }
 
-private fun GitRepository.calcTooltip(): @NlsContexts.Tooltip String {
-  if (state == Repository.State.DETACHED) {
-    return GitBundle.message("git.status.bar.widget.tooltip.detached")
+private fun GitRepository.calcTooltip(): @NlsContexts.Tooltip String? {
+  val branchName = currentBranch?.name
+  val repoState = state
+  return when {
+    repoState == Repository.State.DETACHED -> GitBundle.message("git.status.bar.widget.tooltip.detached")
+    repoState == Repository.State.REBASING -> GitBundle.message("git.status.bar.widget.tooltip.rebasing")
+    branchName != null -> {
+      var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(), branchName)
+      if (!GitUtil.justOneGitRepository(project)) {
+        message += "\n"
+        message += DvcsBundle.message("tooltip.branch.widget.root.name.text", root.name)
+      }
+      message
+    }
+    else -> null
   }
-
-  var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(),
-                                   GitBranchUtil.getBranchNameOrRev(this))
-  if (!GitUtil.justOneGitRepository(project)) {
-    message += "\n"
-    message += DvcsBundle.message("tooltip.branch.widget.root.name.text", root.name)
-  }
-  return message
 }
