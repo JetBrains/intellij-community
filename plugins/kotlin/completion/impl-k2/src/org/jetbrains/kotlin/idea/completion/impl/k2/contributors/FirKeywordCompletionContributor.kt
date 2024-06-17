@@ -5,7 +5,8 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import com.intellij.psi.util.parents
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.KeywordCompletion
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.util.match
 
 internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
@@ -40,17 +40,16 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
 
     private val resolveDependentCompletionKeywordHandlers = ResolveDependentCompletionKeywordHandlerProvider(basicContext)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
         val expression = when (positionContext) {
-            is KotlinSimpleNameReferencePositionContext -> positionContext.reference.expression.let {
-                it.parentsWithSelf.match(KtLabelReferenceExpression::class, KtContainerNode::class, last = KtExpressionWithLabel::class)
-                    ?: it
-            }
+            is KotlinLabelReferencePositionContext -> positionContext.nameExpression.let { label -> getExpressionWithLabel(label) ?: label }
+
+            is KotlinSimpleNameReferencePositionContext -> positionContext.reference.expression
 
             is KotlinTypeConstraintNameInWhereClausePositionContext, is KotlinIncorrectPositionContext, is KotlinClassifierNamePositionContext ->
                 error("keyword completion should not be called for ${positionContext::class.simpleName}")
@@ -63,8 +62,10 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
         completeWithResolve(expression ?: positionContext.position, expression, weighingContext)
     }
 
+    private fun getExpressionWithLabel(label: KtLabelReferenceExpression): KtExpressionWithLabel? =
+        label.parents(withSelf = false).match(KtContainerNode::class, last = KtExpressionWithLabel::class)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeWithResolve(position: PsiElement, expression: KtExpression?, weighingContext: WeighingContext) {
         complete(position) { lookupElement, keyword ->
             val lookups = DefaultCompletionKeywordHandlerProvider.getHandlerForKeyword(keyword)
@@ -88,7 +89,7 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
 
 private class ResolveDependentCompletionKeywordHandlerProvider(
     basicContext: FirBasicCompletionContext
-) : CompletionKeywordHandlerProvider<KtAnalysisSession>() {
+) : CompletionKeywordHandlerProvider<KaSession>() {
     override val handlers = CompletionKeywordHandlers(
         ReturnKeywordHandler,
         BreakContinueKeywordHandler(KtTokens.CONTINUE_KEYWORD),

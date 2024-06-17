@@ -49,6 +49,7 @@ public interface SymbolDocumentationTargetProvider {
   /**
    * @return targets to handle documentation actions which are invoked on the given {@code symbol}, or an empty list if this provider is
    * unaware of the given symbol.
+   * @apiNote if multiple targets are returned, then their order is maintained and will be reflected in the tool window and any popups.
    */
   @RequiresReadLock
   @RequiresBackgroundThread

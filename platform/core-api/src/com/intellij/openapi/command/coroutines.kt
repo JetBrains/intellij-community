@@ -2,6 +2,8 @@
 package com.intellij.openapi.command
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAndWriteScope
+import com.intellij.openapi.application.ReadResult
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -38,5 +40,19 @@ suspend fun <T> WriteCommandAction.Builder.execute(action: () -> T): T {
     blockingContext {
       builder.compute<T, Throwable>(action::invoke)
     }
+  }
+}
+
+/**
+ * Runs given [action] with [read and write scope][com.intellij.openapi.application.ReadAndWriteScope] described via the receiver.
+ *
+ * @see com.intellij.openapi.application.ReadAndWriteScope.writeAction
+ */
+@ApiStatus.Experimental
+fun <T> ReadAndWriteScope.writeCommandAction(project: Project, @NlsContexts.Command commandName: String, action: () -> T): ReadResult<T> {
+  return writeAction {
+    WriteCommandAction.writeCommandAction(project)
+      .withName(commandName)
+      .compute<T, Throwable>(action)
   }
 }

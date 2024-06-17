@@ -29,7 +29,8 @@ class AnalysisLogger<M : MLModel<P>, P : Any>(
 
     val patchOnBeforeStarted = mlSessionLogger.acquirePatchLogger(false)
     apiPlatform.coroutineScope.launch {
-      sessionAnalyser?.onBeforeSessionStarted()?.let { patchOnBeforeStarted.logSession(it) }
+      val analysis = sessionAnalyser?.onBeforeSessionStarted() ?: emptyList()
+      patchOnBeforeStarted.logSession(analysis)
     }
 
     return object : MLApproachListener<M, P> {

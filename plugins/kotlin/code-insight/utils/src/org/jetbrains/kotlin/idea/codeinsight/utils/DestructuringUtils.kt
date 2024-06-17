@@ -3,9 +3,9 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -28,12 +28,12 @@ fun getParameterNames(expression: KtExpression): List<String>? {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getParameterNames(type: KtNonErrorClassType): List<String>? {
     if (type.nullability != KtTypeNullability.NON_NULLABLE) return null
-    val classSymbol = type.expandedClassSymbol
+    val classSymbol = type.expandedSymbol
 
-    return if (classSymbol is KtNamedClassOrObjectSymbol && classSymbol.isData) {
+    return if (classSymbol is KaNamedClassOrObjectSymbol && classSymbol.isData) {
         val constructorSymbol = classSymbol.getDeclaredMemberScope()
             .getConstructors()
             .find { it.isPrimary }
@@ -43,7 +43,7 @@ private fun getParameterNames(type: KtNonErrorClassType): List<String>? {
     } else null
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getClassType(declaration: KtDestructuringDeclaration): KtNonErrorClassType? {
     val initializer = declaration.initializer
     val type = if (initializer != null) {

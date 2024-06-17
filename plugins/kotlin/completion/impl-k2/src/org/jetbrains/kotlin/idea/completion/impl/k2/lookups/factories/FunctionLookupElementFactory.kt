@@ -10,10 +10,10 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.renderer.render
 
 internal class FunctionLookupElementFactory {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createLookup(
         name: Name,
         signature: KtFunctionLikeSignature<*>,
@@ -93,15 +93,15 @@ internal class FunctionLookupElementFactory {
 }
 
 object FunctionInsertionHelper {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun functionCanBeCalledWithoutExplicitTypeArguments(
-        symbol: KtFunctionLikeSymbol,
+        symbol: KaFunctionLikeSymbol,
         expectedType: KtType?
     ): Boolean {
         if (symbol.typeParameters.isEmpty()) return true
 
         val typeParametersToInfer = symbol.typeParameters.toSet()
-        val potentiallyInferredTypeParameters = mutableSetOf<KtTypeParameterSymbol>()
+        val potentiallyInferredTypeParameters = mutableSetOf<KaTypeParameterSymbol>()
 
         /**
          * Collects type arguments of [type] (or type itself in case of [KtTypeParameterType]), which are probably will be inferred.

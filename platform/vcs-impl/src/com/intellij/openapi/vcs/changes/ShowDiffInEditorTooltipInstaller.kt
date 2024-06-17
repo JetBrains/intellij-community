@@ -9,12 +9,12 @@ import com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ActionToolbarGotItTooltip
-import com.intellij.openapi.vcs.changes.ui.findToolbarActionButton
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -53,7 +53,7 @@ private class ShowDiffInEditorTabTooltipHolder(disposable: Disposable,
 
   private fun showGotItTooltip() {
     val diffSettingsButton: (ActionToolbar) -> JComponent? = { toolbar ->
-      findToolbarActionButton(toolbar) { action -> action is SetEditorSettingsActionGroup || action is SetEditorSettingsAction }
+      ActionButtonUtil.findToolbarActionButton(toolbar) { b -> b.action is SetEditorSettingsActionGroup || b.action is SetEditorSettingsAction }
     }
     notificationQueue.queue(DisposableUpdate.createDisposable(this, TOOLTIP_ID) {
       ActionToolbarGotItTooltip(TOOLTIP_ID, VcsBundle.message("show.diff.in.editor.tab.got.it.tooltip"),

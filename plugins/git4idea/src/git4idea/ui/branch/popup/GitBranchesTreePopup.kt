@@ -10,7 +10,6 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.concurrency.waitForPromise
@@ -40,19 +39,20 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
+import git4idea.GitReference
 import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.branch.GitBranchType
+import git4idea.branch.GitRefType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryChangeListener
-import git4idea.repo.GitRepositoryManager
+import git4idea.repo.*
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopupFetchAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.TOP_LEVEL_ACTION_PLACE
+import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer.Companion.getText
@@ -105,6 +105,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   private val expandedPaths = HashSet<TreePath>()
 
+  private val am = ActionManager.getInstance()
+  private val findKeyStroke = KeymapUtil.getKeyStroke(am.getAction("Find").shortcutSet)
+
   init {
     setParentValue(parentValue)
     minimumSize = if (isNewUI) JBDimension(375, 300) else JBDimension(300, 200)
@@ -118,6 +121,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       installRepoListener()
       installResizeListener()
       warnThatBranchesDivergedIfNeeded()
+      installTagsListener(step.treeModel)
       DvcsBranchSyncPolicyUpdateNotifier(project, GitVcs.getInstance(project),
                                          GitVcsSettings.getInstance(project), GitRepositoryManager.getInstance(project))
         .initBranchSyncPolicyIfNotInitialized()
@@ -237,7 +241,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     var haveBranches = false
 
     TreeUtil.treeTraverser(tree)
-      .filter(BranchType::class or BranchTypeUnderRepository::class or GitBranch::class or BranchUnderRepository::class)
+      .filter(BranchType::class or RefTypeUnderRepository::class or GitBranch::class or RefUnderRepository::class)
       .forEach { node ->
         if (!haveBranches && !model.isLeaf(node)) {
           haveBranches = true
@@ -247,8 +251,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
           node is GitBranch && isChild() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
           node is GitBranch && !isChild() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
           node is GitBranch && treeStep.affectedRepositories.any { node in it.recentCheckoutBranches } -> node
-          node is BranchUnderRepository && node.repository.currentBranch == node.branch -> node
-          node is BranchTypeUnderRepository -> node
+          node is RefUnderRepository && node.repository.currentBranch == node.ref -> node
+          node is RefTypeUnderRepository -> node
           else -> null
         }
 
@@ -284,6 +288,16 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     })
   }
 
+  private fun installTagsListener(treeModel: GitBranchesTreeModel) {
+    project.messageBus.connect(this).subscribe(GitTagHolder.GIT_TAGS_LOADED, GitTagLoaderListener {
+      runInEdt {
+        val state = GitBranchesPopupTreeStateHolder.createStateForTree(tree)
+        treeModel.updateTags()
+        state?.applyTo(tree)
+      }
+    })
+  }
+
   private fun installResizeListener() {
     addResizeListener({ userResized = true }, this)
   }
@@ -313,14 +327,14 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   private fun toggleFavorite(userObject: Any?) {
-    val branchUnderRepository = userObject as? BranchUnderRepository
-    val branch = userObject as? GitBranch ?: branchUnderRepository?.branch ?: return
+    val branchUnderRepository = userObject as? RefUnderRepository
+    val reference = userObject as? GitReference ?: branchUnderRepository?.ref ?: return
     val repositories = branchUnderRepository?.repository?.let(::listOf) ?: treeStep.affectedRepositories
-    val branchType = GitBranchType.of(branch)
+    val branchType = GitRefType.of(reference)
     val branchManager = project.service<GitBranchManager>()
-    val anyNotFavorite = repositories.any { repository -> !branchManager.isFavorite(branchType, repository, branch.name) }
+    val anyNotFavorite = repositories.any { repository -> !branchManager.isFavorite(branchType, repository, reference.name) }
     repositories.forEach { repository ->
-      branchManager.setFavorite(branchType, repository, branch.name, anyNotFavorite)
+      branchManager.setFavorite(branchType, repository, reference.name, anyNotFavorite)
     }
   }
 
@@ -338,15 +352,12 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       speedSearch.updatePattern(textInEditor)
       onSpeedSearchPatternChanged()
     }
-    val editorActionsContext = mapOf(PlatformCoreDataKeys.CONTEXT_COMPONENT to mySpeedSearchPatternField.textEditor)
-
-    (am.getAction(SPEED_SEARCH_DEFAULT_ACTIONS_GROUP) as ActionGroup)
-      .getChildren(null)
-      .forEach { action ->
-        registerAction(am.getId(action),
-                       KeymapUtil.getKeyStroke(action.shortcutSet),
-                       createShortcutAction(action, editorActionsContext, updateSpeedSearch, false))
-      }
+    val group = am.getAction(SPEED_SEARCH_DEFAULT_ACTIONS_GROUP) as DefaultActionGroup
+    for (action in group.getChildren(am)) {
+      registerAction(am.getId(action),
+                     KeymapUtil.getKeyStroke(action.shortcutSet),
+                     createShortcutAction(action, false, mySpeedSearchPatternField.textEditor, updateSpeedSearch))
+    }
   }
 
   private fun installShortcutActions(model: TreeModel) {
@@ -359,7 +370,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       .forEach { action ->
         registerAction(am.getId(action),
                        KeymapUtil.getKeyStroke(action.shortcutSet),
-                       createShortcutAction<Any>(action))
+                       createShortcutAction(action, true, null, null))
       }
   }
 
@@ -389,10 +400,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
   }
 
-  private fun <T> createShortcutAction(action: AnAction,
-                                       actionContext: Map<DataKey<T>, T> = emptyMap(),
-                                       afterActionPerformed: (() -> Unit)? = null,
-                                       closePopup: Boolean = true) = object : AbstractAction() {
+  private fun createShortcutAction(action: AnAction,
+                                   closePopup: Boolean,
+                                   contextComponent: JComponent?,
+                                   afterActionPerformed: (() -> Unit)?): AbstractAction = object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent?) {
       if (closePopup) {
         cancel()
@@ -400,14 +411,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
           parent.cancel()
         }
       }
-
-      val stepContext = GitBranchesTreePopupStep.createDataContext(project, treeStep.selectedRepository, treeStep.affectedRepositories)
-      val resultContext =
-        with(SimpleDataContext.builder().setParent(stepContext)) {
-          actionContext.forEach { (key, value) -> add(key, value) }
-          build()
-        }
-
+      val resultContext = GitBranchesTreePopupStep.createDataContext(
+        project, contextComponent, treeStep.selectedRepository, treeStep.affectedRepositories)
       val actionPlace = if (isChild()) SINGLE_REPOSITORY_ACTION_PLACE else TOP_LEVEL_ACTION_PLACE
       ActionUtil.invokeAction(action, resultContext, actionPlace, null, afterActionPerformed)
     }
@@ -449,7 +454,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private fun JTree.calculateTopLevelVisibleRows() =
     model.getChildCount(model.root) + model.getChildCount(
       if (model is GitBranchesTreeSingleRepoModel
-          && GitVcsSettings.getInstance(treeStep.project).showRecentBranches()) RecentNode else GitBranchType.LOCAL)
+          && GitVcsSettings.getInstance(treeStep.project).showRecentBranches()) RecentNode
+      else GitBranchType.LOCAL)
 
   private fun overrideTreeActions(tree: JTree) = with(tree) {
     overrideBuiltInAction("toggle") {
@@ -543,8 +549,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   override fun getInputMap(): InputMap = tree.inputMap
 
-  private val findKeyStroke = KeymapUtil.getKeyStroke(am.getAction("Find").shortcutSet)
-
   override fun afterShow() {
     selectPreferred()
     traverseNodesAndExpand()
@@ -631,9 +635,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     if (selected != null) {
       val userObject = TreeUtil.getUserObject(selected)
       val point = e?.point
-      val branchUnderRepository = userObject as? BranchUnderRepository
-      val branch = userObject as? GitBranch ?: branchUnderRepository?.branch
-      if (point != null && branch != null && isMainIconAt(point, branch)) {
+      val branchUnderRepository = userObject as? RefUnderRepository
+      val reference = userObject as? GitReference ?: branchUnderRepository?.ref
+      if (point != null && reference != null && isMainIconAt(point, reference)) {
         toggleFavorite(userObject)
         return
       }
@@ -741,9 +745,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
     }
   }
-
-  private val am
-    get() = ActionManager.getInstance()
 
   companion object {
 

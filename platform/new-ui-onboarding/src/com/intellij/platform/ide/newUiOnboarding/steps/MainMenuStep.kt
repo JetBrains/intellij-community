@@ -17,7 +17,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import java.awt.Point
 
-class MainMenuStep : NewUiOnboardingStep {
+internal class MainMenuStep : NewUiOnboardingStep {
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val button = NewUiOnboardingUtil.findUiComponent(project) { button: ActionButton ->
       button.action is MainMenuButton.ShowMenuAction

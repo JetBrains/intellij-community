@@ -194,6 +194,7 @@ public interface PsiSearchHelper {
                                   boolean caseSensitive,
                                   boolean processInjectedPsi);
 
+  @ApiStatus.Internal
   default boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {
     throw new UnsupportedOperationException();
   }

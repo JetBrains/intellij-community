@@ -84,7 +84,7 @@ private fun addOptions(
   roots: MutableMap<OptionSetId, MutableList<ConfigurableEntry>>,
 ) {
   val configurableEntry = createConfigurableElement(originalConfigurable)
-  writeOptions(configurableEntry, options.get(originalConfigurable)!!)
+  writeOptions(configurableElement = configurableEntry, options = options.get(originalConfigurable)!!)
 
   val configurable = if (originalConfigurable is ConfigurableWrapper) {
     originalConfigurable.configurable as? SearchableConfigurable ?: originalConfigurable
@@ -98,22 +98,20 @@ private fun addOptions(
       for ((key, value) in processKeymap()) {
         val entryElement = createConfigurableElement(configurable)
         writeOptions(entryElement, value)
-        addElement(roots, entryElement, key)
+        addElement(roots = roots, entry = entryElement, module = key)
       }
     }
-    is OptionsContainingConfigurable -> {
-      processOptionsContainingConfigurable(configurable, configurableEntry)
-    }
+    is OptionsContainingConfigurable -> processOptionsContainingConfigurable(configurable, configurableEntry)
     is PluginManagerConfigurable -> {
       val optionDescriptions = TreeSet<OptionDescription>()
-      wordsToOptionDescriptors(optionPath = setOf(IdeBundle.message("plugin.manager.repositories")), path = null, result = optionDescriptions)
+      wordsToOptionDescriptors(optionPaths = setOf(IdeBundle.message("plugin.manager.repositories")), path = null, result = optionDescriptions)
       configurableEntry.entries.add(SearchableOptionEntry(words = optionDescriptions.map { it.option.trim() }, hit = IdeBundle.message("plugin.manager.repositories")))
     }
     is AllFileTemplatesConfigurable -> {
       for ((key, value) in processFileTemplates()) {
         val entryElement = createConfigurableElement(configurable)
         writeOptions(entryElement, value)
-        addElement(roots, entryElement, key)
+        addElement(roots = roots, entry = entryElement, module = key)
       }
     }
   }
@@ -231,19 +229,18 @@ private fun collectOptions(registrar: SearchableOptionsRegistrar, options: Mutab
 }
 
 private fun processOptionsContainingConfigurable(configurable: OptionsContainingConfigurable, configurableElement: ConfigurableEntry) {
-  val optionsPath = configurable.processListOptions()
+  val optionPaths = configurable.processListOptions()
   val result = TreeSet<OptionDescription>()
-  wordsToOptionDescriptors(optionPath = optionsPath, path = null, result = result)
-  val optionsWithPaths = configurable.processListOptionsWithPaths()
-  for (path in optionsWithPaths.keys) {
-    wordsToOptionDescriptors(optionsWithPaths.get(path)!!, path, result)
+  wordsToOptionDescriptors(optionPaths = optionPaths, path = null, result = result)
+  for ((path, optionPath) in configurable.processListOptionsWithPaths()) {
+    wordsToOptionDescriptors(optionPaths = optionPath, path = path, result = result)
   }
   writeOptions(configurableElement, result)
 }
 
-private fun wordsToOptionDescriptors(optionPath: Set<String>, path: String?, result: MutableSet<OptionDescription>) {
+private fun wordsToOptionDescriptors(optionPaths: Set<String>, path: String?, result: MutableSet<OptionDescription>) {
   val registrar = SearchableOptionsRegistrar.getInstance()
-  for (opt in optionPath) {
+  for (opt in optionPaths) {
     for (word in registrar.getProcessedWordsWithoutStemming(opt)) {
       if (word != null) {
         result.add(OptionDescription(word, opt, path))
@@ -258,19 +255,15 @@ private fun processKeymap(): Map<OptionSetId, Set<OptionDescription>> {
   val actionToPluginId = getActionToPluginId(actionManager)
   val componentName = "ActionManager"
   val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
-  val iterator = actionManager.actions(false).iterator()
-  while (iterator.hasNext()) {
-    val action = iterator.next()
+  for (action in actionManager.actions(canReturnStub = false)) {
     val module = getModuleByAction(action, actionToPluginId)
     val options = map.computeIfAbsent(module) { TreeSet() }
-    val text = action.templatePresentation.text
-    if (text != null) {
-      collectOptions(registrar = searchableOptionsRegistrar, options = options, text = text, path = componentName)
+    action.templatePresentation.text?.let {
+      collectOptions(registrar = searchableOptionsRegistrar, options = options, text = it, path = componentName)
     }
 
-    val description = action.templatePresentation.description
-    if (description != null) {
-      collectOptions(registrar = searchableOptionsRegistrar, options = options, text = description, path = componentName)
+    action.templatePresentation.description?.let {
+      collectOptions(registrar = searchableOptionsRegistrar, options = options, text = it, path = componentName)
     }
   }
   return map
@@ -309,13 +302,9 @@ private val CORE_SET_ID = OptionSetId(pluginId = PluginManagerCore.CORE_ID, modu
 
 private fun getSetIdByClass(aClass: Class<*>): OptionSetId {
   val classLoader = aClass.classLoader
-  if (classLoader is PluginAwareClassLoader) {
-    return getSetIdByPluginDescriptor(classLoader.pluginDescriptor)
-  }
-  else {
-    return CORE_SET_ID
-  }
+  return if (classLoader is PluginAwareClassLoader) getSetIdByPluginDescriptor(classLoader.pluginDescriptor) else CORE_SET_ID
 }
+
 private fun getSetIdByPluginDescriptor(pluginDescriptor: PluginDescriptor): OptionSetId {
   if (pluginDescriptor.pluginId == PluginManagerCore.CORE_ID) {
     return CORE_SET_ID
@@ -329,8 +318,12 @@ private fun getSetIdByPluginDescriptor(pluginDescriptor: PluginDescriptor): Opti
 }
 
 private fun writeOptions(configurableElement: ConfigurableEntry, options: Set<OptionDescription>) {
-  for ((key, item) in options.groupBy { it.hit?.trim() to it.path?.trim() }) {
-    configurableElement.entries.add(SearchableOptionEntry(words = item.mapNotNull { it.option?.trim() }, hit = key.first, path = key.second))
+  for ((key, optionDescriptions) in options.groupBy { it.hit?.trim() to it.path?.trim() }) {
+    configurableElement.entries.add(SearchableOptionEntry(
+      words = optionDescriptions.mapNotNull { it.option?.trim() },
+      hit = key.first,
+      path = key.second,
+    ))
   }
 }
 

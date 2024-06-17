@@ -1,10 +1,10 @@
 import lombok.Getter;
 
-public class GetterLazyVariableNotInitialized {
+public class <warning descr="Class 'GetterLazyVariableNotInitialized' is never used">GetterLazyVariableNotInitialized</warning> {
 
     private final String hoge;
 
-    public GetterLazyVariableNotInitialized(String hoge) {
+    public <warning descr="Constructor 'GetterLazyVariableNotInitialized(java.lang.String)' is never used">GetterLazyVariableNotInitialized</warning>(String hoge) {
       this.hoge = hoge;
     }
 

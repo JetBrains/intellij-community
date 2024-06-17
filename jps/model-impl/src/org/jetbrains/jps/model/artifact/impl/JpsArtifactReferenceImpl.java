@@ -22,8 +22,8 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactReference;
 import org.jetbrains.jps.model.impl.JpsNamedElementReferenceImpl;
 
-public class JpsArtifactReferenceImpl extends JpsNamedElementReferenceImpl<JpsArtifact,JpsArtifactReferenceImpl> implements JpsArtifactReference {
-  public JpsArtifactReferenceImpl(@NotNull String artifactName) {
+class JpsArtifactReferenceImpl extends JpsNamedElementReferenceImpl<JpsArtifact,JpsArtifactReferenceImpl> implements JpsArtifactReference {
+  JpsArtifactReferenceImpl(@NotNull String artifactName) {
     super(JpsArtifactRole.ARTIFACT_COLLECTION_ROLE, artifactName, JpsElementFactory.getInstance().createProjectReference());
   }
 

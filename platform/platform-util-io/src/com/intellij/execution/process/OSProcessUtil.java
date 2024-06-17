@@ -146,6 +146,10 @@ public final class OSProcessUtil {
     return (int)ProcessHandle.current().pid();
   }
 
+  /**
+   * @deprecated {@link #getCurrentProcessId()} does the same.
+   */
+  @Deprecated
   public static String getApplicationPid() {
     if (ourPid == null) {
       ourPid = String.valueOf(getCurrentProcessId());

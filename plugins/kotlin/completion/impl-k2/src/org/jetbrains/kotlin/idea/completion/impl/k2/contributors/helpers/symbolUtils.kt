@@ -2,33 +2,33 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.idea.references.KtReference
 
 /**
  * Resolves [reference] to symbol and returns static scope for the obtained symbol.
- * Note that if the symbol is [org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol], `null` is returned.
+ * Note that if the symbol is [org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol], `null` is returned.
  * See KT-34281 for more details.
  */
-context(KtAnalysisSession)
+context(KaSession)
 internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
     val scopeIndex = CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX
 
     return reference.resolveToSymbols().mapNotNull { symbol ->
         when (symbol) {
-            is KtSymbolWithMembers -> {
-                val scope = if (symbol is KtNamedClassOrObjectSymbol && symbol.classKind.isObject) {
+            is KaSymbolWithMembers -> {
+                val scope = if (symbol is KaNamedClassOrObjectSymbol && symbol.classKind.isObject) {
                     symbol.getMemberScope()
                 } else {
                     symbol.getStaticMemberScope()
@@ -43,13 +43,13 @@ internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
     }
 }
 
-internal data class KtClassifierSymbolWithContainingScopeKind(
-    private val _symbol: KtClassifierSymbol,
+internal data class KaClassifierSymbolWithContainingScopeKind(
+    private val _symbol: KaClassifierSymbol,
     val scopeKind: KaScopeKind
 ) : KtLifetimeOwner {
     override val token: KtLifetimeToken
         get() = _symbol.token
-    val symbol: KtClassifierSymbol get() = withValidityAssertion { _symbol }
+    val symbol: KaClassifierSymbol get() = withValidityAssertion { _symbol }
 }
 
 internal data class KtCallableSignatureWithContainingScopeKind(

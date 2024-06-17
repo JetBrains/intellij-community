@@ -10,6 +10,7 @@ import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorListener
+import com.intellij.idea.AppMode
 import com.intellij.idea.LoggerFactory
 import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 import com.intellij.openapi.application.ApplicationManager
@@ -213,7 +214,7 @@ class ProjectLoaded : ApplicationInitializedListener {
                                          { PerformanceTestSpan.getContext() },
                                          { takeFullScreenshot(it) })
     }
-    if (ApplicationManagerEx.getApplicationEx().isLightEditMode) {
+    if (AppMode.isLightEdit()) {
       LightEditService.getInstance().editorManager.addListener(object : LightEditorListener {
         override fun afterSelect(editorInfo: LightEditorInfo?) {
           runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
@@ -222,6 +223,10 @@ class ProjectLoaded : ApplicationInitializedListener {
           runOnProjectInit(LightEditService.getInstance().project!!)
         }
       })
+    }
+    if (ApplicationManagerEx.isInIntegrationTest() && AppMode.isHeadless() && AppMode.isCommandLine()){
+      MessagePool.getInstance().addListener { reportErrorsFromMessagePool() }
+      LOG.info("Error watcher has started in headless mode")
     }
   }
 

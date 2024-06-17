@@ -1,23 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtClassTypeQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtClassType
+import org.jetbrains.kotlin.analysis.api.types.KtClassTypeQualifier
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUtil.convertToClass
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUtil.hasAbstractDeclaration
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUtil.resolveExpression
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.hasAbstractDeclaration
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.types.Variance
 
@@ -70,29 +70,29 @@ object CreateKotlinCallableActionTextBuilder {
                     ?: request.receiverExpression.text
                 receiverTypeText = addedPackage + renderedReceiver
             }
-            return if (request.isExtension && receiverSymbol is KtCallableSymbol) {
+            return if (request.isExtension && receiverSymbol is KaCallableSymbol) {
                 val receiverType = receiverSymbol.returnType
                 (if (receiverType is KtFunctionalType) "($receiverTypeText)." else "$receiverTypeText.") to receiverTypeText
             } else {
-                (receiverTypeText + if (receiverSymbol is KtClassLikeSymbol && !(receiverSymbol is KtClassOrObjectSymbol && receiverSymbol.classKind == KtClassKind.OBJECT)) ".Companion." else ".") to receiverTypeText
+                (receiverTypeText + if (receiverSymbol is KaClassLikeSymbol && !(receiverSymbol is KaClassOrObjectSymbol && receiverSymbol.classKind == KaClassKind.OBJECT)) ".Companion." else ".") to receiverTypeText
             }
         }
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun KtSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KtType?): String? {
         return when (this) {
-            is KtCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
+            is KaCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
                 ?.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)
 
-            is KtClassLikeSymbol -> classId?.shortClassName?.asString() ?: render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
+            is KaClassLikeSymbol -> classId?.shortClassName?.asString() ?: render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
             else -> null
         }
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun KtType.selfOrSuperTypeWithAbstractMatch(isAbstract: Boolean): KtType? {
-        if (this.hasAbstractDeclaration() == isAbstract || this is KtNonErrorClassType && (classSymbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.INTERFACE) return this
+        if (this.hasAbstractDeclaration() == isAbstract || this is KtNonErrorClassType && (symbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.INTERFACE) return this
         return getDirectSuperTypes().firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
     }
 
@@ -100,12 +100,13 @@ object CreateKotlinCallableActionTextBuilder {
     private val RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT: KtTypeRenderer = KtTypeRendererForSource.WITH_SHORT_NAMES.with {
         classIdRenderer = object : KtClassTypeQualifierRenderer {
             override fun renderClassTypeQualifier(
-                analysisSession: KtAnalysisSession,
-                type: KtClassType,
+                analysisSession: KaSession,
+                type: KtType,
+                qualifiers: List<KtClassTypeQualifier>,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
             ) {
-                printer.append(type.qualifiers.joinToString(separator = ".") { it.name.asString() })
+                printer.append(qualifiers.joinToString(separator = ".") { it.name.asString() })
             }
         }
     }

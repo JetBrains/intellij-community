@@ -328,7 +328,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Rename artifact via workspace model: ${selectedArtifact.name} -> $artifactName")
       makeChecksHappy {
         workspaceModel.updateProjectModel {
-          it.modifyEntity(selectedArtifact) {
+          it.modifyArtifactEntity(selectedArtifact) {
             this.name = artifactName
           }
         }
@@ -356,7 +356,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Change build on make option for ${selectedArtifact.name}: Prev value: ${selectedArtifact.includeInProjectBuild}")
       makeChecksHappy {
         workspaceModel.updateProjectModel {
-          it.modifyEntity(selectedArtifact) {
+          it.modifyArtifactEntity(selectedArtifact) {
             this.includeInProjectBuild = !this.includeInProjectBuild
           }
         }
@@ -383,7 +383,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Change artifact type for ${selectedArtifact.name}: Prev value: ${selectedArtifact.artifactType}")
       makeChecksHappy {
         workspaceModel.updateProjectModel {
-          it.modifyEntity(selectedArtifact) {
+          it.modifyArtifactEntity(selectedArtifact) {
             this.artifactType = id
           }
         }

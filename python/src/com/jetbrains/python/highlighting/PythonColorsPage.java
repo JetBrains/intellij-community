@@ -114,7 +114,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
 
   @Override
   public @NotNull SyntaxHighlighter getHighlighter() {
-    final SyntaxHighlighterFactory factory = SyntaxHighlighterFactory.LANGUAGE_FACTORY.forLanguage(PythonLanguage.getInstance());
+    final SyntaxHighlighterFactory factory = SyntaxHighlighterFactory.getLanguageFactory().forLanguage(PythonLanguage.getInstance());
     if (factory instanceof PySyntaxHighlighterFactory) {
       return ((PySyntaxHighlighterFactory)factory).getSyntaxHighlighterForLanguageLevel(LanguageLevel.getLatest());
     }

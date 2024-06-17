@@ -80,6 +80,7 @@ import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FIL
 import static com.intellij.openapi.application.ImportOldConfigsState.InitialImportScenario.*;
 import static com.intellij.openapi.application.migrations.AIAssistant241Kt.AI_PLUGIN_ID;
 import static com.intellij.openapi.application.migrations.AIAssistant241Kt.migrateAiForToolbox;
+import static com.intellij.openapi.application.migrations.Localization242Kt.enableL10nIfPluginInstalled;
 import static com.intellij.openapi.application.migrations.PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT;
 import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 
@@ -285,7 +286,12 @@ public final class ConfigImportHelper {
       }
 
       if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
-        new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
+        try {
+          new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
+        }
+        catch (IOException e) {
+          log.error("cannot write config migration marker file to " + newConfigDir, e);
+        }
         restart(args);
       }
     }
@@ -355,7 +361,7 @@ public final class ConfigImportHelper {
         Restarter.scheduleRestart(false);
       }
       catch (IOException e) {
-        StartupErrorReporter.showMessage(BootstrapBundle.message("restart.failed.title"), e);
+        StartupErrorReporter.showError(BootstrapBundle.message("restart.failed.title"), e);
       }
       System.exit(0);
     }
@@ -833,7 +839,7 @@ public final class ConfigImportHelper {
     catch (Exception e) {
       log.warn(e);
       String message = BootstrapBundle.message("import.settings.failed", IoErrorText.message(e));
-      StartupErrorReporter.showMessage(BootstrapBundle.message("import.settings.failed.title"), message, false);
+      StartupErrorReporter.showWarning(BootstrapBundle.message("import.settings.failed.title"), message);
     }
   }
 
@@ -947,6 +953,8 @@ public final class ConfigImportHelper {
         Files.isDirectory(oldPluginsDir) ? collectPendingPluginUpdates(actionCommands, options.log) : __ -> false;
       migratePlugins(oldPluginsDir, oldConfigDir, newPluginsDir, newConfigDir, options, hasPendingUpdate);
     }
+
+    enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir, options.bundledPluginPath, options.brokenPluginVersions, options.compatibleBuildNumber);
 
     if (SystemInfoRt.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
       setKeymapIfNeeded(oldConfigDir, newConfigDir, log);

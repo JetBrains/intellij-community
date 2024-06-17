@@ -10,7 +10,6 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModel
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 
@@ -28,8 +27,7 @@ internal class GHPRDataContext(val scope: CoroutineScope,
                                val avatarIconsProvider: GHAvatarIconsProvider,
                                val reactionIconsProvider: IconsProvider<GHReactionContent>,
                                val filesManager: GHPRFilesManager,
-                               val interactionState: GHPRPersistentInteractionState,
-                               val newPRDiffModel: GHPRDiffRequestModel) {
+                               val interactionState: GHPRPersistentInteractionState) {
 
   private val listenersDisposable = Disposer.newDisposable("GH PR context listeners disposable")
 

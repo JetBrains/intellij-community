@@ -2664,16 +2664,17 @@ c:com.intellij.projectImport.ProjectAttachProcessor
 - <init>():V
 - attachToProject(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback):Z
 - *:attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.coroutines.Continuation):java.lang.Object
+- beforeAttach(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - beforeDetach(com.intellij.openapi.module.Module):V
 - sf:canAttachToProject():Z
 - getActionText(com.intellij.openapi.project.Project):java.lang.String
 - getDefaultOptionIndex():I
 - getDescription(com.intellij.openapi.project.Project):java.lang.String
-- sf:getProcessor(com.intellij.openapi.project.Project,java.nio.file.Path):com.intellij.projectImport.ProjectAttachProcessor
-- isEnabled(com.intellij.openapi.project.Project,java.nio.file.Path):Z
+- sf:getProcessor(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.project.Project):com.intellij.projectImport.ProjectAttachProcessor
+- isEnabled(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.project.Project):Z
 f:com.intellij.projectImport.ProjectAttachProcessor$Companion
 - f:canAttachToProject():Z
-- f:getProcessor(com.intellij.openapi.project.Project,java.nio.file.Path):com.intellij.projectImport.ProjectAttachProcessor
+- f:getProcessor(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.project.Project):com.intellij.projectImport.ProjectAttachProcessor
 com.intellij.projectImport.ProjectOpenedCallback
 - a:projectOpened(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module):V
 c:com.intellij.ui.AnimatedIcon
@@ -3142,10 +3143,14 @@ f:com.intellij.util.proxy.CommonProxy$HostInfo
 com.intellij.util.proxy.JavaProxyProperty
 - sf:HTTPS_HOST:java.lang.String
 - sf:HTTPS_PORT:java.lang.String
+- sf:HTTPS_PROXY_PASSWORD:java.lang.String
+- sf:HTTPS_PROXY_USER:java.lang.String
 - sf:HTTP_HOST:java.lang.String
 - sf:HTTP_NON_PROXY_HOSTS:java.lang.String
 - sf:HTTP_PASSWORD:java.lang.String
 - sf:HTTP_PORT:java.lang.String
+- sf:HTTP_PROXY_PASSWORD:java.lang.String
+- sf:HTTP_PROXY_USER:java.lang.String
 - sf:HTTP_USERNAME:java.lang.String
 - sf:PROXY_SET:java.lang.String
 - sf:SOCKS_HOST:java.lang.String
@@ -3231,26 +3236,38 @@ c:com.intellij.util.ui.update.MergingUpdateQueue
 c:com.intellij.util.ui.update.UiNotifyConnector
 - com.intellij.openapi.Disposable
 - java.awt.event.HierarchyListener
+- sf:Companion:com.intellij.util.ui.update.UiNotifyConnector$Companion
 - <init>(java.awt.Component,com.intellij.util.ui.update.Activatable):V
-- p:<init>(java.awt.Component,com.intellij.util.ui.update.Activatable,java.lang.Void):V
 - <init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):V
-- p:<init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z,java.lang.Void):V
+- p:<init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z,java.lang.Object):V
 - dispose():V
-- s:doWhenFirstShown(java.awt.Component,java.lang.Runnable):V
-- s:doWhenFirstShown(java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable):V
-- s:doWhenFirstShown(javax.swing.JComponent,java.lang.Runnable):V
-- *s:forceNotifyIsShown(java.awt.Component):V
+- sf:doWhenFirstShown(java.awt.Component,java.lang.Runnable):V
+- sf:doWhenFirstShown(java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable):V
+- sf:doWhenFirstShown(javax.swing.JComponent,java.lang.Runnable):V
 - p:hideNotify():V
 - p:hideOnDispose():V
 - hierarchyChanged(java.awt.event.HierarchyEvent):V
-- s:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector
-- s:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):com.intellij.util.ui.update.UiNotifyConnector
-- setupListeners():V
+- sf:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector
+- sf:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):com.intellij.util.ui.update.UiNotifyConnector
+- pf:setupListeners(java.awt.Component):V
 - p:showNotify():V
+f:com.intellij.util.ui.update.UiNotifyConnector$Companion
+- f:doWhenFirstShown(java.awt.Component,java.lang.Runnable):V
+- f:doWhenFirstShown(java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable):V
+- f:doWhenFirstShown(java.awt.Component,Z,kotlin.jvm.functions.Function0):V
+- f:doWhenFirstShown(javax.swing.JComponent,java.lang.Runnable):V
+- bs:doWhenFirstShown$default(com.intellij.util.ui.update.UiNotifyConnector$Companion,java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable,I,java.lang.Object):V
+- bs:doWhenFirstShown$default(com.intellij.util.ui.update.UiNotifyConnector$Companion,java.awt.Component,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+- *f:forceNotifyIsShown(java.awt.Component):V
+- f:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector
+- f:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):com.intellij.util.ui.update.UiNotifyConnector
 f:com.intellij.util.ui.update.UiNotifyConnector$Once
 - com.intellij.util.ui.update.UiNotifyConnector
+- sf:Companion:com.intellij.util.ui.update.UiNotifyConnector$Once$Companion
 - <init>(java.awt.Component,com.intellij.util.ui.update.Activatable):V
-- s:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector$Once
+- sf:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector$Once
+f:com.intellij.util.ui.update.UiNotifyConnector$Once$Companion
+- f:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector$Once
 a:com.intellij.util.ui.update.Update
 - com.intellij.util.ui.update.ComparableObject$Impl
 - java.lang.Runnable

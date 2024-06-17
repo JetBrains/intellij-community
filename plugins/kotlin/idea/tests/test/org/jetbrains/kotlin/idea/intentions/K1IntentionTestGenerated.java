@@ -16365,6 +16365,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitType/lambdaInitializerWithTypeArgument.kt");
         }
 
+        @TestMetadata("localVariableTypeForBoolean.kt")
+        public void testLocalVariableTypeForBoolean() throws Exception {
+            runTest("testData/intentions/removeExplicitType/localVariableTypeForBoolean.kt");
+        }
+
         @TestMetadata("needTypeArgument.kt")
         public void testNeedTypeArgument() throws Exception {
             runTest("testData/intentions/removeExplicitType/needTypeArgument.kt");
@@ -16443,6 +16448,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("onType.kt")
         public void testOnType() throws Exception {
             runTest("testData/intentions/removeExplicitType/onType.kt");
+        }
+
+        @TestMetadata("propertyTypeForExtFunctionCall.kt")
+        public void testPropertyTypeForExtFunctionCall() throws Exception {
+            runTest("testData/intentions/removeExplicitType/propertyTypeForExtFunctionCall.kt");
         }
 
         @TestMetadata("propertyTypeFromGetter.kt")

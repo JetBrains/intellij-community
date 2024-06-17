@@ -1,15 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.nj2k;
 
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -18,14 +15,12 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,18 +31,15 @@ import java.util.List;
  * with some modifications to better support J2K. These modifications may be later
  * ported back and this copy may be deleted.
  */
-@SuppressWarnings({"DuplicatedCode", "unused"})
+@SuppressWarnings("DuplicatedCode")
 class J2KNullityInferrer {
     private static final int MAX_PASSES = 10;
-    public static final String NOTHING_FOUND_TO_INFER = "Nothing found to infer";
     private int numAnnotationsAdded;
     private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<>();
     private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<>();
-    private final boolean myAnnotateLocalVariables;
     private final SmartPointerManager myPointerManager;
 
-    J2KNullityInferrer(boolean annotateLocalVariables, @NotNull Project project) {
-        myAnnotateLocalVariables = annotateLocalVariables;
+    J2KNullityInferrer(@NotNull Project project) {
         myPointerManager = SmartPointerManager.getInstance(project);
     }
 
@@ -153,9 +145,7 @@ class J2KNullityInferrer {
             return variable.getUseScope();
         }
 
-        PsiModifierList modifierList = field.getModifierList();
-        if (modifierList == null) return null;
-        if (modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
+        if (isPrivate(field)) {
             return variable.getUseScope();
         }
 
@@ -163,6 +153,12 @@ class J2KNullityInferrer {
         // because it can be very slow in large projects
         PsiFile containingFile = variable.getContainingFile();
         return containingFile != null ? new LocalSearchScope(containingFile) : null;
+    }
+
+    private static boolean isPrivate(PsiField field) {
+        PsiModifierList modifierList = field.getModifierList();
+        if (modifierList == null) return false;
+        return modifierList.hasModifierProperty(PsiModifier.PRIVATE);
     }
 
     public void collect(@NotNull PsiFile file) {
@@ -175,74 +171,6 @@ class J2KNullityInferrer {
             pass++;
         }
         while (prevNumAnnotationsAdded < numAnnotationsAdded && pass < MAX_PASSES);
-    }
-
-    @TestOnly
-    public void apply(final @NotNull Project project) {
-        final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-        for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNullableSet) {
-            annotateNullable(project, manager, pointer.getElement());
-        }
-
-        for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNotNullSet) {
-            annotateNotNull(project, manager, pointer.getElement());
-        }
-
-        if (myNullableSet.isEmpty() && myNotNullSet.isEmpty()) {
-            throw new RuntimeException(NOTHING_FOUND_TO_INFER);
-        }
-    }
-
-    private static boolean annotateNotNull(
-            @NotNull Project project,
-            @NotNull NullableNotNullManager manager,
-            final @Nullable PsiModifierListOwner element
-    ) {
-        if (element == null ||
-            element instanceof PsiField field && field.hasInitializer() && field.hasModifierProperty(PsiModifier.FINAL)) {
-            return false;
-        }
-        invoke(project, element, manager.getDefaultNotNull(), manager.getDefaultNullable());
-        return true;
-    }
-
-    private static boolean annotateNullable(
-            @NotNull Project project,
-            @NotNull NullableNotNullManager manager,
-            final @Nullable PsiModifierListOwner element
-    ) {
-        if (element == null) return false;
-        invoke(project, element, manager.getDefaultNullable(), manager.getDefaultNotNull());
-        return true;
-    }
-
-    private static void invoke(
-            final @NotNull Project project,
-            final @NotNull PsiModifierListOwner element,
-            final @NotNull String fqn, final @NotNull String toRemove
-    ) {
-        new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile());
-    }
-
-    public int getCount() {
-        return myNotNullSet.size() + myNullableSet.size();
-    }
-
-    public static boolean apply(@NotNull Project project, @NotNull NullableNotNullManager manager, UsageInfo info) {
-        if (info instanceof NullableUsageInfo) {
-            return annotateNullable(project, manager, (PsiModifierListOwner) info.getElement());
-        }
-        if (info instanceof NotNullUsageInfo) {
-            return annotateNotNull(project, manager, (PsiModifierListOwner) info.getElement());
-        }
-        return false;
-    }
-
-    private boolean shouldIgnore(@NotNull PsiModifierListOwner element) {
-        if (myAnnotateLocalVariables) return false;
-        if (element instanceof PsiLocalVariable) return true;
-        if (element instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiForeachStatement) return true;
-        return false;
     }
 
     private void registerNullableAnnotation(@NotNull PsiModifierListOwner declaration) {
@@ -263,41 +191,16 @@ class J2KNullityInferrer {
         numAnnotationsAdded++;
     }
 
-    private void registerAnnotationByNullAssignmentStatus(PsiVariable variable) {
+    private boolean registerAnnotationByNullAssignmentStatus(PsiVariable variable) {
         if (variableNeverAssignedNull(variable)) {
             registerNotNullAnnotation(variable);
+            return true;
         } else if (variableSometimesAssignedNull(variable)) {
             registerNullableAnnotation(variable);
+            return true;
         }
-    }
 
-    private static final class NullableUsageInfo extends UsageInfo {
-        private NullableUsageInfo(@NotNull PsiElement element) {
-            super(element);
-        }
-    }
-
-    private static final class NotNullUsageInfo extends UsageInfo {
-        private NotNullUsageInfo(@NotNull PsiElement element) {
-            super(element);
-        }
-    }
-
-    void collect(@NotNull List<? super UsageInfo> usages) {
-        collect(usages, true);
-        collect(usages, false);
-    }
-
-    private void collect(@NotNull List<? super UsageInfo> usages, boolean nullable) {
-        final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> set = nullable ? myNullableSet : myNotNullSet;
-        for (SmartPsiElementPointer<? extends PsiModifierListOwner> elementPointer : set) {
-            ReadAction.run(() -> {
-                PsiModifierListOwner element = elementPointer.getElement();
-                if (element != null && !shouldIgnore(element)) {
-                    usages.add(nullable ? new NullableUsageInfo(element) : new NotNullUsageInfo(element));
-                }
-            });
-        }
+        return false;
     }
 
     private boolean isNotNull(@Nullable PsiModifierListOwner owner) {
@@ -374,7 +277,38 @@ class J2KNullityInferrer {
             if (variable.getType() instanceof PsiPrimitiveType || hasNullability(variable)) {
                 return;
             }
-            registerAnnotationByNullAssignmentStatus(variable);
+
+            if (registerAnnotationByNullAssignmentStatus(variable)) return;
+            inferNullabilityFromVariableReferences(variable);
+        }
+
+        private void inferNullabilityFromVariableReferences(@NotNull PsiVariable variable) {
+            if (KotlinPluginModeProvider.Companion.isK1Mode()) {
+                // Try not to break K1 nullability inference
+                return;
+            }
+
+            SearchScope scope = getScope(variable);
+            if (scope == null) return;
+
+            final Query<PsiReference> references = ReferencesSearch.search(variable, scope);
+            for (final PsiReference reference : references) {
+                final PsiElement element = reference.getElement();
+                if (!(element instanceof PsiReferenceExpression referenceExpression)) {
+                    continue;
+                }
+
+                final PsiElement refParent =
+                        PsiTreeUtil.skipParentsOfType(referenceExpression, PsiParenthesizedExpression.class, PsiTypeCastExpression.class);
+
+                processReference(variable, referenceExpression, refParent);
+
+                if (isNullable(variable)) {
+                    // We determined that the variable is nullable, so there is no need to check the rest of references.
+                    // But if it is not-null, we keep going because we may find that it is nullable later, after all.
+                    break;
+                }
+            }
         }
 
         @Override
@@ -395,7 +329,7 @@ class J2KNullityInferrer {
                     for (PsiReferenceExpression expr : VariableAccessUtils.getVariableReferences(parameter, method)) {
                         final PsiElement parent =
                                 PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class, PsiTypeCastExpression.class);
-                        if (processParameter(parameter, expr, parent)) return;
+                        if (processReference(parameter, expr, parent)) return;
                         if (isNotNull(method)) {
                             PsiElement toReturn = parent;
                             if (parent instanceof PsiConditionalExpression &&
@@ -415,7 +349,7 @@ class J2KNullityInferrer {
                     if (place instanceof PsiReferenceExpression expr) {
                         final PsiElement parent =
                                 PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class, PsiTypeCastExpression.class);
-                        if (processParameter(parameter, expr, parent)) return;
+                        if (processReference(parameter, expr, parent)) return;
                     }
                 }
             } else {
@@ -423,18 +357,30 @@ class J2KNullityInferrer {
             }
         }
 
-        private boolean processParameter(@NotNull PsiParameter parameter, @NotNull PsiReferenceExpression expr, PsiElement parent) {
+        private boolean processReference(@NotNull PsiVariable variable, @NotNull PsiReferenceExpression expr, PsiElement parent) {
+            if (NullabilityKt.isUsedInAutoUnboxingContext(expr)) {
+                registerNotNullAnnotation(variable);
+                return true;
+            }
+
             if (PsiUtil.isAccessedForWriting(expr)) return true;
 
+            if (NullabilityKt.getDfaNullability(expr) == DfaNullability.NOT_NULL) {
+                // If Java DFA can determine that the nullability of the reference is definitely not-null,
+                // we are probably inside an "instance of" check (which is like a smart cast for Java DFA).
+                // So we give up trying to guess the nullability of the declaration from this reference.
+                return false;
+            }
+
             if (parent instanceof PsiThrowStatement) {
-                registerNotNullAnnotation(parameter);
+                registerNotNullAnnotation(variable);
                 return true;
             } else if (parent instanceof PsiSynchronizedStatement) {
-                registerNotNullAnnotation(parameter);
+                registerNotNullAnnotation(variable);
                 return true;
             } else if (parent instanceof PsiArrayAccessExpression) {
                 // For both array and index expressions
-                registerNotNullAnnotation(parameter);
+                registerNotNullAnnotation(variable);
                 return true;
             } else if (parent instanceof PsiBinaryExpression binOp) {
                 PsiExpression opposite = null;
@@ -448,24 +394,22 @@ class J2KNullityInferrer {
 
                 if (opposite != null && opposite.getType() == PsiTypes.nullType()) {
                     if (DfaPsiUtil.isAssertionEffectively(binOp, binOp.getOperationTokenType() == JavaTokenType.NE)) {
-                        registerNotNullAnnotation(parameter);
+                        registerNotNullAnnotation(variable);
                         return true;
                     }
-                    registerNullableAnnotation(parameter);
+                    registerNullableAnnotation(variable);
                     return true;
                 }
-            } else if (parent instanceof PsiInstanceOfExpression) {
-                return true;
             } else if (parent instanceof PsiReferenceExpression ref) {
                 final PsiExpression qualifierExpression = ref.getQualifierExpression();
                 if (qualifierExpression == expr) {
-                    registerNotNullAnnotation(parameter);
+                    registerNotNullAnnotation(variable);
                     return true;
                 } else {
                     PsiElement exprParent = expr.getParent();
                     while (exprParent instanceof PsiTypeCastExpression || exprParent instanceof PsiParenthesizedExpression) {
                         if (qualifierExpression == exprParent) {
-                            registerNotNullAnnotation(parameter);
+                            registerNotNullAnnotation(variable);
                             return true;
                         }
                         exprParent = exprParent.getParent();
@@ -475,41 +419,51 @@ class J2KNullityInferrer {
                 if (assignment.getRExpression() == expr &&
                     assignment.getLExpression() instanceof PsiReferenceExpression ref &&
                     ref.resolve() instanceof PsiVariable localVar && isNotNull(localVar)) {
-                    registerNotNullAnnotation(parameter);
+                    registerNotNullAnnotation(variable);
                     return true;
                 }
             } else if (parent instanceof PsiForeachStatement forEach) {
                 if (forEach.getIteratedValue() == expr) {
-                    registerNotNullAnnotation(parameter);
+                    registerNotNullAnnotation(variable);
                     return true;
                 }
             } else if (parent instanceof PsiSwitchStatement switchStatement && switchStatement.getExpression() == expr) {
-                registerNotNullAnnotation(parameter);
+                registerNotNullAnnotation(variable);
                 return true;
             }
 
+            if (processArgumentReference(variable, expr)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        private boolean processArgumentReference(@NotNull PsiVariable variable, @NotNull PsiReferenceExpression expr) {
             final PsiCall call = PsiTreeUtil.getParentOfType(expr, PsiCall.class);
-            if (call != null) {
-                final PsiExpressionList argumentList = call.getArgumentList();
-                if (argumentList != null) {
-                    final PsiExpression[] args = argumentList.getExpressions();
-                    int idx = ArrayUtil.find(args, expr);
-                    if (idx >= 0) {
-                        final PsiMethod resolvedMethod = call.resolveMethod();
-                        if (resolvedMethod != null) {
-                            final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
-                            if (idx < parameters.length) { //not vararg
-                                final PsiParameter resolvedToParam = parameters[idx];
-                                boolean isArray = parameter.getType() instanceof PsiArrayType;
-                                if (isNotNull(resolvedToParam) || (isArray && !parameter.isVarArgs() && resolvedToParam.isVarArgs())) {
-                                    // In the case of varargs in Kotlin, the spread operator needs to be applied to a not-null array
-                                    registerNotNullAnnotation(parameter);
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                }
+            if (call == null) return false;
+            final PsiExpressionList argumentList = call.getArgumentList();
+            if (argumentList == null) return false;
+
+            final PsiExpression[] args = argumentList.getExpressions();
+            int idx = ArrayUtil.find(args, expr);
+            if (idx < 0) return false;
+
+            final PsiMethod resolvedMethod = call.resolveMethod();
+            if (resolvedMethod == null) return false;
+
+            final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
+            //not vararg
+            if (idx >= parameters.length) return false;
+
+            final PsiParameter resolvedToParam = parameters[idx];
+            boolean isArray = variable.getType() instanceof PsiArrayType;
+            boolean isVarArgs = variable instanceof PsiParameter parameter && parameter.isVarArgs();
+
+            if (isNotNull(resolvedToParam) || (isArray && !isVarArgs && resolvedToParam.isVarArgs())) {
+                // In the case of varargs in Kotlin, the spread operator needs to be applied to a not-null array
+                registerNotNullAnnotation(variable);
+                return true;
             }
 
             return false;
@@ -521,8 +475,10 @@ class J2KNullityInferrer {
             if (field instanceof PsiEnumConstant || field.getType() instanceof PsiPrimitiveType || hasNullability(field)) {
                 return;
             }
-            registerAnnotationByNullAssignmentStatus(field);
+
+            if (registerAnnotationByNullAssignmentStatus(field)) return;
+            if (!isPrivate(field)) return;
+            inferNullabilityFromVariableReferences(field);
         }
     }
 }
-

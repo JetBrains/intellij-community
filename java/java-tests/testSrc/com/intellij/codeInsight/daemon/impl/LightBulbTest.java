@@ -15,8 +15,14 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -38,6 +44,8 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.EditorTestUtil;
@@ -124,7 +132,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
   }
 
   private void setActiveEditors(Editor @NotNull ... editors) {
-    ((EditorTrackerImpl)EditorTracker.getInstance(myProject)).setActiveEditors(Arrays.asList(editors));
+    EditorTracker.Companion.getInstance(myProject).setActiveEditors(Arrays.asList(editors));
   }
 
   @Override
@@ -416,6 +424,76 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
         List<IntentionActionWithTextCaching> actions = hintComponent.getCachedIntentions().getAllActions();
         assertTrue(actions.toString(), ContainerUtil.exists(actions, a -> a.getText().equals(MyDumbFix.fixText)));
       }
+    });
+  }
+
+  static class MyDumbFix implements DumbAware, LocalQuickFix {
+    private static final String fixText = "myDumbFix13";
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return "MyDumbFix";
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return fixText;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+
+    }
+  }
+  public static class MyDumbAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
+    static final String ERR_MSG = "w13";
+
+    public MyDumbAnnotator() {
+      iDidIt(); // is not supposed to ever do anything
+    }
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiComment) {
+        ProblemDescriptor descriptor = InspectionManager.getInstance(element.getProject())
+          .createProblemDescriptor(element, ERR_MSG, true, ProblemHighlightType.ERROR, true);
+        holder.newAnnotation(HighlightSeverity.ERROR, ERR_MSG).newLocalQuickFix(new MyDumbFix(), descriptor).registerFix().create();
+        iDidIt();
+      }
+      LOG.debug(getClass()+".annotate("+element+") = "+didIDoIt());
+    }
+  }
+
+  public void testLightBulbMustShowForLocalQuickFixGeneratedByDumbAwareAnnotatorInDumbMode() {
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyDumbAnnotator()}, () -> {
+      configureByText(JavaFileType.INSTANCE, """
+        class X {
+          // <caret>xxx
+        }
+        """);
+      ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+      UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
+
+      HighlightInfo info = assertOneElement(highlightErrors());
+      assertEquals(MyDumbAnnotator.ERR_MSG, info.getDescription());
+      {
+        IntentionHintComponent hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
+        List<IntentionActionWithTextCaching> actions = hintComponent.getCachedIntentions().getAllActions();
+        assertTrue(actions.toString(), ContainerUtil.exists(actions, a -> a.getText().equals(MyDumbFix.fixText)));
+      }
+
+      myDaemonCodeAnalyzer.mustWaitForSmartMode(false, getTestRootDisposable());
+      DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
+        myDaemonCodeAnalyzer.restart();
+        HighlightInfo info2 = assertOneElement(highlightErrors());
+        assertEquals(MyDumbAnnotator.ERR_MSG, info2.getDescription());
+
+        {
+          IntentionHintComponent hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
+          List<IntentionActionWithTextCaching> actions = hintComponent.getCachedIntentions().getAllActions();
+          assertTrue(actions.toString(), ContainerUtil.exists(actions, a -> a.getText().equals(MyDumbFix.fixText)));
+        }
+      });
     });
   }
 

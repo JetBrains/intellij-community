@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
@@ -86,7 +86,7 @@ abstract class KtGenerateMembersHandler(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createMemberEntries(
         editor: Editor,
         currentClass: KtClassOrObject,
@@ -164,10 +164,10 @@ abstract class KtGenerateMembersHandler(
      * callable symbol for an overridable member that the user has picked to override (or implement), and the value is the stub
      * implementation for the chosen symbol.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
 private fun getMembersOrderedByRelativePositionsInSuperTypes(
         currentClass: KtClassOrObject,
-        newMemberSymbolsAndGeneratedPsi: Map<KtCallableSymbol, KtCallableDeclaration>
+        newMemberSymbolsAndGeneratedPsi: Map<KaCallableSymbol, KtCallableDeclaration>
     ): List<MemberEntry> {
 
         // This doubly linked list tracks the preferred ordering of members.
@@ -184,7 +184,7 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
             for (existingDeclaration in existingDeclarations) {
                 val node: DoublyLinkedNode<MemberEntry> = DoublyLinkedNode(MemberEntry.ExistingEntry(existingDeclaration))
                 sentinelTailNode.prepend(node)
-                val callableSymbol = existingDeclaration.getSymbol() as? KtCallableSymbol ?: continue
+                val callableSymbol = existingDeclaration.getSymbol() as? KaCallableSymbol ?: continue
                 for (overriddenSymbol in callableSymbol.getAllOverriddenSymbols()) {
                     put(overriddenSymbol.psi ?: continue, node)
                 }

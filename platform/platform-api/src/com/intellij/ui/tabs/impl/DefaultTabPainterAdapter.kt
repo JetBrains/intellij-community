@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl
 
 import com.intellij.ui.tabs.JBTabPainter
@@ -6,24 +6,32 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 
-class DefaultTabPainterAdapter(val painter: JBTabPainter): TabPainterAdapter {
-  override val tabPainter: JBTabPainter
-    get() = painter
-
+class DefaultTabPainterAdapter(override val tabPainter: JBTabPainter) : TabPainterAdapter {
   override fun paintBackground(label: TabLabel, g: Graphics, tabs: JBTabsImpl) {
     val info = label.info
-    val isSelected = info == tabs.selectedInfo
-
     val rect = Rectangle(0, 0, label.width, label.height)
-
     val g2d = g as Graphics2D
-    if (isSelected && tabs.getVisibleInfos().size > 1) {
-      painter
-        .paintSelectedTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isActiveTabs(info),
-                          tabs.isHoveredTab(label))
+    if (info == tabs.selectedInfo && tabs.getVisibleInfos().size > 1) {
+      tabPainter.paintSelectedTab(
+        position = tabs.position,
+        g = g2d,
+        rect = rect,
+        borderThickness = tabs.borderThickness,
+        tabColor = info.tabColor,
+        active = tabs.isActiveTabs(info),
+        hovered = tabs.isHoveredTab(label),
+      )
     }
     else {
-      painter.paintTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isActiveTabs(info), tabs.isHoveredTab(label) && tabs.getVisibleInfos().size > 1)
+      tabPainter.paintTab(
+        position = tabs.position,
+        g = g2d,
+        rect = rect,
+        borderThickness = tabs.borderThickness,
+        tabColor = info.tabColor,
+        active = tabs.isActiveTabs(info),
+        hovered = tabs.isHoveredTab(label) && tabs.getVisibleInfos().size > 1,
+      )
     }
   }
 }

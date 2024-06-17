@@ -1,24 +1,29 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
+import kotlin.reflect.KClass
 
 class EditorCell(
   private val editor: EditorEx,
   internal var intervalPointer: NotebookIntervalPointer,
   private val viewFactory: (EditorCell) -> EditorCellView
-) : UserDataHolder by UserDataHolderBase() {
+) : Disposable, UserDataHolder by UserDataHolderBase() {
 
   val source: String
     get() {
       val document = editor.document
       val startOffset = document.getLineStartOffset(interval.lines.first + 1)
       val endOffset = document.getLineEndOffset(interval.lines.last)
+      if (startOffset >= endOffset) return ""  // possible for empty cells
       return document.getText(TextRange(startOffset, endOffset))
     }
   val type: NotebookCellLines.CellType get() = interval.type
@@ -50,14 +55,14 @@ class EditorCell(
 
   fun hide() {
     _visible = false
-    view?.dispose()
+    view?.let { Disposer.dispose(it) }
     view = null
   }
 
   fun show() {
     _visible = true
     if (view == null) {
-      view = viewFactory(this)
+      view = viewFactory(this).also { Disposer.register(this, it) }
       view?.updateSelection(_selected)
       gutterAction?.let { view?.setGutterAction(it) }
     }
@@ -67,8 +72,8 @@ class EditorCell(
     view?.updatePositions()
   }
 
-  fun dispose() {
-    view?.dispose()
+  override fun dispose() {
+    view?.let { Disposer.dispose(it) }
   }
 
   fun update(force: Boolean = false) {
@@ -84,8 +89,23 @@ class EditorCell(
     view?.setGutterAction(action)
   }
 
-  inline fun <reified T : Any> getExtension(): T? {
+  inline fun <reified T : NotebookCellInlayController> getController(): T? {
+    val lazyFactory = getLazyFactory(T::class)
+    if (lazyFactory != null) {
+      createLazyControllers(lazyFactory)
+    }
     return view?.getExtension<T>()
   }
 
+  @PublishedApi internal fun createLazyControllers(factory: NotebookCellInlayController.LazyFactory) {
+    factory.cellOrdinalsInCreationBlock.add(interval.ordinal)
+    update(true)
+    factory.cellOrdinalsInCreationBlock.remove(interval.ordinal)
+  }
+
+  @PublishedApi internal fun <T: NotebookCellInlayController> getLazyFactory(type: KClass<T>): NotebookCellInlayController.LazyFactory? {
+    return NotebookCellInlayController.Factory.EP_NAME.extensionList
+      .filterIsInstance<NotebookCellInlayController.LazyFactory>()
+      .firstOrNull { it.getControllerClass() == type.java }
+  }
 }

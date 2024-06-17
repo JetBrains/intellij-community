@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
@@ -18,7 +18,7 @@ internal class AddWhenRemainingBranchesIntention :
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtWhenExpression): AddRemainingWhenBranchesUtils.Context? {
         val whenMissingCases = element.getMissingCases().takeIf {
             it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown

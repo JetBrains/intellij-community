@@ -2,8 +2,10 @@
 package com.intellij.openapi.editor.event;
 
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface EditorEventListener extends DocumentListener, CaretListener, SelectionListener {
   default void readOnlyModificationAttempt(@NotNull Document document) {
   }

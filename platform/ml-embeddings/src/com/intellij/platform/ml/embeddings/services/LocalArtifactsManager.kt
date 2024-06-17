@@ -126,12 +126,12 @@ class LocalArtifactsManager {
 
     private fun showDownloadErrorNotification() {
       NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
-        .createNotification(
+        ?.createNotification(
           EmbeddingsBundle.getMessage("ml.embeddings.notification.model.downloading.failed.title"),
           EmbeddingsBundle.getMessage("ml.embeddings.notification.model.downloading.failed.content"),
           NotificationType.WARNING
         )
-        .notify(null)
+        ?.notify(null)
     }
   }
 }

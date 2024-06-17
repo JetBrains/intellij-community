@@ -22,16 +22,17 @@ import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.merge.TextMergeRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.util.Consumer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class TextMergeRequestImpl extends TextMergeRequest {
   @Nullable private final Project myProject;
   @NotNull private final DocumentContent myOutput;

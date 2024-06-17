@@ -321,7 +321,7 @@ public final class CommonDataflow {
    * @return DfType for that expression. May return {@link DfType#TOP} if no information from dataflow is known about this expression
    */
   @NotNull
-  public static DfType getDfType(PsiExpression expression) {
+  public static DfType getDfType(@NotNull PsiExpression expression) {
     return getDfType(expression, false);
   }
 
@@ -331,7 +331,7 @@ public final class CommonDataflow {
    * @return DfType for that expression. May return {@link DfType#TOP} if no information from dataflow is known about this expression
    */
   @NotNull
-  public static DfType getDfType(PsiExpression expression, boolean ignoreAssertions) {
+  public static DfType getDfType(@NotNull PsiExpression expression, boolean ignoreAssertions) {
     DataflowResult result = getDataflowResult(expression);
     if (result == null) return DfType.TOP;
     expression = PsiUtil.skipParenthesizedExprDown(expression);

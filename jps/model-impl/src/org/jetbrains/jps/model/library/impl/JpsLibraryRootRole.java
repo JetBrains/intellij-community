@@ -20,10 +20,10 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 
-public final class JpsLibraryRootRole extends JpsElementChildRoleBase<JpsLibraryRoot> {
+final class JpsLibraryRootRole extends JpsElementChildRoleBase<JpsLibraryRoot> {
   private final JpsOrderRootType myRootType;
 
-  public JpsLibraryRootRole(@NotNull JpsOrderRootType rootType) {
+  JpsLibraryRootRole(@NotNull JpsOrderRootType rootType) {
     super("library root");
     myRootType = rootType;
   }

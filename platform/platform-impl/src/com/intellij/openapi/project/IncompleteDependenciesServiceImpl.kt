@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 class IncompleteDependenciesServiceImpl(private val project: Project) : IncompleteDependenciesService {
   override val stateFlow = MutableStateFlow(DependenciesState.COMPLETE)
   private val tokens = HashSet<IncompleteDependenciesAccessTokenImpl>()
+  private var incompleteModeActivity: StructuredIdeActivity? = null // atomic is not needed because reads/writes are guarded by synchronized
 
   @RequiresReadLock
   override fun getState(): DependenciesState {
@@ -24,20 +25,28 @@ class IncompleteDependenciesServiceImpl(private val project: Project) : Incomple
   }
 
   @RequiresWriteLock
-  override fun enterIncompleteState(): IncompleteDependenciesAccessToken {
-    return issueToken()
+  override fun enterIncompleteState(requestor: Any): IncompleteDependenciesAccessToken {
+    return issueToken(requestor.javaClass)
   }
 
   @RequiresWriteLock
-  private fun issueToken(): IncompleteDependenciesAccessTokenImpl {
+  private fun issueToken(requestor: Class<*>): IncompleteDependenciesAccessTokenImpl {
     ThreadingAssertions.assertWriteAccess() // @RequiresWriteLock does nothing in Kotlin
     synchronized(tokens) {
       val lastToken = tokens.lastOrNull()
       val stateBefore = if (lastToken == null) DependenciesState.COMPLETE else DependenciesState.INCOMPLETE
       val stateAfter = DependenciesState.INCOMPLETE
 
-      val activity = IncompleteDependenciesModeStatisticsCollector.started(project, stateBefore, stateAfter)
-      val token = IncompleteDependenciesAccessTokenImpl(activity)
+      val currentIncompleteModeActivity = incompleteModeActivity
+                                          ?: run {
+                                            assert(stateBefore == DependenciesState.COMPLETE)
+                                            val newActivity = IncompleteDependenciesModeStatisticsCollector.incompleteModeStarted(project)
+                                            incompleteModeActivity = newActivity
+                                            newActivity
+                                          }
+
+      val subtaskActivity = IncompleteDependenciesModeStatisticsCollector.incompleteModeSubtaskStarted(project, currentIncompleteModeActivity, requestor, stateBefore, stateAfter)
+      val token = IncompleteDependenciesAccessTokenImpl(subtaskActivity, requestor)
       tokens.add(token)
 
       updateState(stateBefore, stateAfter)
@@ -52,7 +61,12 @@ class IncompleteDependenciesServiceImpl(private val project: Project) : Incomple
       tokens.remove(token)
       val stateBefore = DependenciesState.INCOMPLETE
       val stateAfter = if (tokens.isEmpty()) DependenciesState.COMPLETE else DependenciesState.INCOMPLETE
-      IncompleteDependenciesModeStatisticsCollector.finished(token.activity, stateBefore, stateAfter)
+      IncompleteDependenciesModeStatisticsCollector.incompleteModeSubtaskFinished(token.subtaskActivity, token.requestor, stateBefore, stateAfter)
+      if (stateAfter == DependenciesState.COMPLETE) {
+        assert(incompleteModeActivity != null)
+        IncompleteDependenciesModeStatisticsCollector.incompleteModeFinished(incompleteModeActivity)
+        incompleteModeActivity = null
+      }
       updateState(stateBefore, stateAfter)
     }
   }
@@ -69,7 +83,7 @@ class IncompleteDependenciesServiceImpl(private val project: Project) : Incomple
     }
   }
 
-  private inner class IncompleteDependenciesAccessTokenImpl(val activity: StructuredIdeActivity) : IncompleteDependenciesAccessToken() {
+  private inner class IncompleteDependenciesAccessTokenImpl(val subtaskActivity: StructuredIdeActivity, val requestor: Class<*>) : IncompleteDependenciesAccessToken() {
     @RequiresWriteLock
     override fun finish() {
       deregisterToken(this)

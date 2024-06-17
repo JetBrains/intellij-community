@@ -1,6 +1,6 @@
 internal class A {
     fun foo(p: Int) {
-        println("p = [$p]")
+        println(p)
     }
 
     @Synchronized

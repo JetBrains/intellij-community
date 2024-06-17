@@ -1,0 +1,55 @@
+<html>
+<body>
+Reports missing or redundant hints in <code>UastHintedVisitorAdapter</code> creation.
+<p>
+  <code>UastHintedVisitorAdapter</code> receives hints that allow to optimize UAST visitor execution by visiting only elements, which classes are specified in the hint list.
+</p>
+<p>
+  If the visitor implements, e.g., <code>visitCallExpression</code> method, but does not include <code>UCallExpression</code> in hints, then the method will not be executed.
+</p>
+<p>
+  If the visitor does not implement, e.g., <code>visitCallExpression</code> method, but does include <code>UCallExpression</code> in hints, then the inherited method will be unnecessarily executed.
+</p>
+
+<h3>Examples</h3>
+
+<pre><code lang="kotlin">
+return UastHintedVisitorAdapter.create(
+  language,
+  object : AbstractUastNonRecursiveVisitor() {
+    override fun visitForExpression(node: UForExpression): Boolean {
+      inspectLoopExpression()
+      return true
+    }
+
+    override fun visitDoWhileExpression(node: UDoWhileExpression): Boolean { // unused at runtime
+      inspectLoopExpression()
+      return true
+    }
+    //...
+  },
+  arrayOf(UForExpression::class.java) // Bad: missing UDoWhileExpression::class.java
+)
+</code></pre>
+
+<pre><code lang="kotlin">
+UastHintedVisitorAdapter.create(
+  language,
+  object : AbstractUastNonRecursiveVisitor() {
+    override fun visitForExpression(node: UForExpression): Boolean {
+      inspectLoopExpression()
+      return true
+    }
+    //...
+  },
+  arrayOf(
+    UForExpression::class.java,
+    UDoWhileExpression::class.java // Bad: visiting UDoWhileExpression is not implemented
+  )
+)
+</code></pre>
+
+<!-- tooltip end -->
+<p><small>New in 2024.2</small>
+</body>
+</html>

@@ -6,9 +6,9 @@ import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -87,7 +87,7 @@ class KotlinSmartStepTargetFilterer(
 
     private fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean {
         analyze(declaration) {
-            val symbol = declaration.getSymbol() as? KtFunctionLikeSymbol ?: return false
+            val symbol = declaration.getSymbol() as? KaFunctionLikeSymbol ?: return false
             return owner == symbol.getJvmInternalClassName() && signature == symbol.getJvmSignature()
         }
     }
@@ -126,8 +126,8 @@ private fun MutableMap<String, Int>.increment(key: String): Int {
     return newValue
 }
 
-context(KtAnalysisSession)
-private fun KtFunctionLikeSymbol.getJvmSignature(): String? {
+context(KaSession)
+private fun KaFunctionLikeSymbol.getJvmSignature(): String? {
     val element = psi ?: return null
     val receiver = receiverType?.jvmName(element) ?: ""
     val parameterTypes = valueParameters.map { it.returnType.jvmName(element) ?: return null }.joinToString("")
@@ -135,11 +135,11 @@ private fun KtFunctionLikeSymbol.getJvmSignature(): String? {
     return "($receiver$parameterTypes)$returnType"
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtType.jvmName(element: PsiElement): String? {
     if (this !is KtNonErrorClassType) return null
     val psiType = asPsiType(element, allowErrorTypes = false) ?: return null
-    if (classSymbol.isInlineClass()) {
+    if (symbol.isInlineClass()) {
         // handle wrapped types
         if (psiType.canonicalText == "java.lang.Object") return "Ljava/lang/Object;"
         if (psiType is PsiPrimitiveType) {

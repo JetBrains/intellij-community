@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.IndexableFilesIterationMethods.iterateRoots
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 internal class AdditionalLibraryIndexableAddedFilesIterator(val presentableLibraryName: @Nls String?,
@@ -39,4 +40,5 @@ internal class AdditionalLibraryIndexableAddedFilesIterator(val presentableLibra
   override fun getRootUrls(project: Project): Set<String> = rootsToIndex.map { it.url }.toSet()
 }
 
+@Internal
 data class PartialAdditionalLibraryIndexableSetOrigin(val rootsToIndex: Collection<VirtualFile>) : IndexableSetOrigin

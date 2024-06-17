@@ -10,7 +10,6 @@ import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntM
 import com.intellij.platform.util.io.storages.intmultimaps.HashUtils;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.Unmappable;
@@ -19,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Set;
 import java.util.function.BiPredicate;
 
 /**
@@ -91,7 +89,6 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
     int foundRecordId = keyHashToIdMap.lookup(adjustedHash, recordId -> {
       long logRecordId = convertStoredIdToLogId(recordId);
       return keyValuesLog.read(logRecordId, recordBuffer -> {
-        
         K recordKey = entryExternalizer.readKey(recordBuffer);
         return recordKey != null;
       });
@@ -202,9 +199,6 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
 
   @Override
   public boolean processKeys(@NotNull Processor<? super K> processor) throws IOException {
-    //Keys listed via .forEach() are non-unique -- having 2 entries (key, value1), (key, value2) same key be listed twice.
-    Set<K> alreadyProcessed = CollectionFactory.createSmallMemoryFootprintSet();
-    //MAYBE RC: Having alreadyProcessed set is expensive for large maps?
     return keyHashToIdMap.forEach((keyHash, recordId) -> {
       K key = readKey(convertStoredIdToLogId(recordId));
       if (key == null) {
@@ -212,10 +206,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
           "(keyHash: " + keyHash + ", recordId: " + recordId + "): key can't be null, removed records must NOT be in keyHashToIdMap"
         );
       }
-      if (alreadyProcessed.add(key)) {
-        return processor.process(key);
-      }
-      return true;
+      return processor.process(key);
     });
   }
 
@@ -361,7 +352,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
 
   //logRecordId (long): id of record in AppendOnlyLog
   //storedId    (int):  id stored (as value) in the keyHashToIdMap
-  
+
   static int convertLogIdToStoredId(long logRecordId) {
     int intStoredId = (int)logRecordId;
     if (intStoredId != logRecordId) {

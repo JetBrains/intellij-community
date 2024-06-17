@@ -24,6 +24,62 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
   override val priority: WebSymbol.Priority
 ) : WebSymbolHtmlAttributeInfo {
 
+  override fun withName(name: String): WebSymbolHtmlAttributeInfo =
+    copy(name = name)
+
+  override fun withSymbol(symbol: WebSymbol): WebSymbolHtmlAttributeInfo =
+    copy(symbol = symbol)
+
+  override fun withAcceptsNoValue(acceptsNoValue: Boolean): WebSymbolHtmlAttributeInfo =
+    copy(acceptsNoValue = acceptsNoValue)
+
+  override fun withAcceptsValue(acceptsValue: Boolean): WebSymbolHtmlAttributeInfo =
+    copy(acceptsValue = acceptsValue)
+
+  override fun withEnumValues(enumValues: List<WebSymbolCodeCompletionItem>?): WebSymbolHtmlAttributeInfo =
+    copy(enumValues = enumValues)
+
+  override fun withStrictEnumValues(strictEnumValues: Boolean): WebSymbolHtmlAttributeInfo =
+    copy(strictEnumValues = strictEnumValues)
+
+  override fun withType(type: Any?): WebSymbolHtmlAttributeInfo =
+    copy(type = type)
+
+  override fun withIcon(icon: Icon?): WebSymbolHtmlAttributeInfo =
+    copy(icon = icon)
+
+  override fun withRequired(required: Boolean): WebSymbolHtmlAttributeInfo =
+    copy(required = required)
+
+  override fun withDefaultValue(defaultValue: String?): WebSymbolHtmlAttributeInfo =
+    copy(defaultValue = defaultValue)
+
+  override fun withPriority(priority: WebSymbol.Priority): WebSymbolHtmlAttributeInfo =
+    copy(priority = priority)
+
+  override fun with(name: String,
+                    symbol: WebSymbol,
+                    acceptsNoValue: Boolean,
+                    acceptsValue: Boolean,
+                    enumValues: List<WebSymbolCodeCompletionItem>?,
+                    strictEnumValues: Boolean,
+                    type: Any?,
+                    icon: Icon?,
+                    required: Boolean,
+                    defaultValue: String?,
+                    priority: WebSymbol.Priority): WebSymbolHtmlAttributeInfo =
+    copy(name = name,
+         symbol = symbol,
+         acceptsNoValue = acceptsNoValue,
+         acceptsValue = acceptsValue,
+         enumValues = enumValues,
+         strictEnumValues = strictEnumValues,
+         type = type,
+         icon = icon,
+         required = required,
+         defaultValue = defaultValue,
+         priority = priority)
+
   companion object {
     fun create(name: String,
                queryExecutor: WebSymbolsQueryExecutor,

@@ -3243,13 +3243,19 @@ public class StringUtil {
     return StringUtilRt.endsWithIgnoreCase(text, suffix);
   }
 
-  /**
-   * @see StringUtilRt#formatFileSize(long, String, int)
-   */
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
     return StringUtilRt.formatFileSize(fileSize, unitSeparator, rank);
+  }
+
+  /**
+   * @see StringUtilRt#formatFileSize(long, String, int, boolean)
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank, boolean fixedFractionPrecision) {
+    return StringUtilRt.formatFileSize(fileSize, unitSeparator, rank, fixedFractionPrecision);
   }
 
   @Contract(pure = true)

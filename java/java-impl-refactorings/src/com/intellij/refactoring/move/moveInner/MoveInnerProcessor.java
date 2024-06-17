@@ -231,6 +231,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
           }
         }
       }
+      referencesToRebind.sort(Comparator.comparing(ref -> !(ref instanceof PsiImportStaticReferenceElement)));
 
       myInnerClass.delete();
 

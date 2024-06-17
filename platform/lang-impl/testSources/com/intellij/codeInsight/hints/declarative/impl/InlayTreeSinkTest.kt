@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
+import com.intellij.codeInsight.hints.declarative.HintColorKind
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
@@ -20,7 +21,7 @@ class InlayTreeSinkTest : LightPlatformCodeInsightFixture4TestCase() {
     val data = inlayData.single()
     assertEquals(providerId, data.providerId)
     assertEquals(false, data.disabled)
-    assertEquals(false, data.hasBackground)
+    assertEquals(HintColorKind.TextWithoutBackground, data.hintColorKind)
   }
 
   @Test

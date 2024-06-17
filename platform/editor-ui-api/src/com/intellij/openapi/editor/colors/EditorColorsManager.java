@@ -23,6 +23,10 @@ public abstract class EditorColorsManager {
     return ApplicationManager.getApplication().getService(EditorColorsManager.class);
   }
 
+  @ApiStatus.Internal
+  protected EditorColorsManager() {
+  }
+
   public abstract void addColorScheme(@NotNull EditorColorsScheme scheme);
 
   public abstract EditorColorsScheme @NotNull [] getAllSchemes();

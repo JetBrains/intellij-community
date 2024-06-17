@@ -20,4 +20,9 @@ public interface PyAstKeyValueExpression extends PyAstExpression {
   default PyAstExpression getValue() {
     return PsiTreeUtil.getNextSiblingOfType(getKey(), PyAstExpression.class);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyKeyValueExpression(this);
+  }
 }

@@ -49,6 +49,8 @@ class GitVcsOptions : BaseState() {
   var recentCommonBranch by string()
   @get:OptionTag("SHOW_RECENT_BRANCHES")
   var showRecentBranches by property(true)
+  @get:OptionTag("SHOW_TAGS")
+  var showTags by property(true)
 
   @get:OptionTag("FILTER_BY_ACTION_IN_POPUP")
   var filterByActionInPopup by property(true)

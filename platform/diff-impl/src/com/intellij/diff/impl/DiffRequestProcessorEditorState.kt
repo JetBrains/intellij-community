@@ -8,15 +8,16 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorStateWithPreferredOpenMode
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState
 
-data class DiffRequestProcessorEditorState(
-  val embeddedEditorStates: List<TextEditorState>
+internal data class DiffRequestProcessorEditorState(
+  @JvmField val embeddedEditorStates: List<TextEditorState>
 ) : FileEditorStateWithPreferredOpenMode {
   override val openMode: FileEditorManagerImpl.OpenMode?
     get() = if (!isDiffInEditor) FileEditorManagerImpl.OpenMode.NEW_WINDOW else null
 
-  override fun canBeMergedWith(otherState: FileEditorState, level: FileEditorStateLevel): Boolean =
-    otherState is DiffRequestProcessorEditorState &&
-    embeddedEditorStates.zip(otherState.embeddedEditorStates).all { (l, r) -> l.canBeMergedWith(r, level) }
+  override fun canBeMergedWith(otherState: FileEditorState, level: FileEditorStateLevel): Boolean {
+    return otherState is DiffRequestProcessorEditorState &&
+           embeddedEditorStates.zip(otherState.embeddedEditorStates).all { (l, r) -> l.canBeMergedWith(r, level) }
+  }
 
   override fun toString(): String = embeddedEditorStates.joinToString()
 }

@@ -3,12 +3,12 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.psi.KtFile
 
 interface ExternalCodeProcessing {
     fun prepareWriteOperation(progress: ProgressIndicator?): () -> Unit
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun bindJavaDeclarationsToConvertedKotlinOnes(files: List<KtFile>)
 }

@@ -26,7 +26,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.concurrency.FutureResult
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
@@ -36,7 +35,6 @@ import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progres
 import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.util.concurrent.Future
 import kotlin.math.max
 import kotlin.math.min
 
@@ -86,55 +84,35 @@ class EditorInlaysManager(val project: Project, private val editor: EditorImpl, 
     inlayElements.clear()
   }
 
-  fun updateCell(psi: PsiElement, inlayOutputs: List<InlayOutput>? = null, createTextOutput: Boolean = false): Future<Unit> {
-    val result = FutureResult<Unit>()
-    if (ApplicationManager.getApplication().isUnitTestMode && !isEnabledInTests) return result.apply { set(Unit) }
+  fun updateCell(psi: PsiElement, inlayOutputs: List<InlayOutput>? = null, createTextOutput: Boolean = false) {
+    if (ApplicationManager.getApplication().isUnitTestMode && !isEnabledInTests) return
     ApplicationManager.getApplication().invokeLater {
-      try {
-        if (editor.isDisposed) {
-          result.set(Unit)
-          return@invokeLater
-        }
-        if (!psi.isValid) {
-          getInlayComponent(psi)?.let { oldInlay -> removeInlay(oldInlay, cleanup = false) }
-          result.set(Unit)
-          return@invokeLater
-        }
-        if (isOutputPositionCollapsed(psi)) {
-          result.set(Unit)
-          return@invokeLater
-        }
-        val outputs = inlayOutputs ?: descriptor.getInlayOutputs(psi)
-        if (outputs == null) {
-          result.set(Unit)
-          return@invokeLater
-        }
-        scrollKeeper.savePosition()
+      if (editor.isDisposed) return@invokeLater
+
+      if (!psi.isValid) {
         getInlayComponent(psi)?.let { oldInlay -> removeInlay(oldInlay, cleanup = false) }
-        if (outputs.isEmpty() && !createTextOutput) {
-          result.set(Unit)
-          return@invokeLater
-        }
-        val component = addInlayComponent(psi)
-        if (outputs.isNotEmpty()) addInlayOutputs(component, outputs)
-        if (createTextOutput) component.createOutputComponent()
-        scrollKeeper.restorePosition(true)
-      } catch (e: Throwable) {
-        result.set(Unit)
-        throw e
+        return@invokeLater
       }
+      if (isOutputPositionCollapsed(psi)) return@invokeLater
+
+      val outputs = inlayOutputs ?: descriptor.getInlayOutputs(psi)
+      if (outputs == null) return@invokeLater
+
+      scrollKeeper.savePosition()
+      getInlayComponent(psi)?.let { oldInlay -> removeInlay(oldInlay, cleanup = false) }
+      if (outputs.isEmpty() && !createTextOutput) return@invokeLater
+
+      val component = addInlayComponent(psi)
+      if (outputs.isNotEmpty()) addInlayOutputs(component, outputs)
+      if (createTextOutput) component.createOutputComponent()
+      scrollKeeper.restorePosition(true)
+
       ApplicationManager.getApplication().invokeLater {
-        try {
-          scrollKeeper.savePosition()
-          updateInlays()
-          scrollKeeper.restorePosition(true)
-        }
-        finally {
-          result.set(Unit)
-        }
+        scrollKeeper.savePosition()
+        updateInlays()
+        scrollKeeper.restorePosition(true)
       }
     }
-    return result
   }
 
   private fun isOutputPositionCollapsed(psiCell: PsiElement): Boolean =
@@ -148,13 +126,10 @@ class EditorInlaysManager(val project: Project, private val editor: EditorImpl, 
     }
   }
 
-  fun updateInlayProgressStatus(psi: PsiElement, progressStatus: InlayProgressStatus): Future<Unit> {
-    val result = FutureResult<Unit>()
+  fun updateInlayProgressStatus(psi: PsiElement, progressStatus: InlayProgressStatus) {
     ApplicationManager.getApplication().invokeLater {
       getInlayComponent(psi)?.updateProgressStatus(progressStatus)
-      result.set(Unit)
     }
-    return result
   }
 
   private fun updateInlaysForViewport() {

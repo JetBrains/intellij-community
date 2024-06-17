@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Objects;
 
 public final class ScrollableSingleRowLayout extends SingleRowLayout {
   public static final int DEADZONE_FOR_DECLARE_TAB_HIDDEN = 10;
@@ -51,9 +52,9 @@ public final class ScrollableSingleRowLayout extends SingleRowLayout {
     }
     else {
       int max = data.requiredLength - data.toFitLength + getMoreRectAxisSize();
-      Insets actionInsets = myTabs.getActionsInsets();
-      max += myTabs.isHorizontalTabs() ? actionInsets.left + actionInsets.right
-                                       : actionInsets.top + actionInsets.bottom;
+      Insets actionInsets = tabs.getActionsInsets();
+      max += tabs.isHorizontalTabs() ? actionInsets.left + actionInsets.right
+                                     : actionInsets.top + actionInsets.bottom;
       if (!ExperimentalUI.isNewUI() && getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
         max += data.entryPointAxisSize;
       }
@@ -62,22 +63,22 @@ public final class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   private void doScrollToSelectedTab(SingleRowPassInfo passInfo) {
-    if (myTabs.isMouseInsideTabsArea() || myTabs.isScrollBarAdjusting() || myTabs.isRecentlyActive()) {
+    if (tabs.isMouseInsideTabsArea() || tabs.isScrollBarAdjusting$intellij_platform_ide() || tabs.isRecentlyActive()) {
       return;
     }
     int offset = -myScrollOffset;
     for (TabInfo info : passInfo.myVisibleInfos) {
       final int length = getRequiredLength(info);
-      if (info == myTabs.getSelectedInfo()) {
+      if (info == tabs.getSelectedInfo()) {
         if (offset < 0) {
           scroll(offset);
         }
         else {
           int maxLength = passInfo.toFitLength - getMoreRectAxisSize();
-          Insets actionInsets = myTabs.getActionsInsets();
-          if (myTabs.getEntryPointPreferredSize().width == 0) {
-            maxLength -= myTabs.isHorizontalTabs() ? actionInsets.left + actionInsets.right
-                                                   : actionInsets.top + actionInsets.bottom;
+          Insets actionInsets = tabs.getActionsInsets();
+          if (tabs.getEntryPointPreferredSize().width == 0) {
+            maxLength -= tabs.isHorizontalTabs() ? actionInsets.left + actionInsets.right
+                                                 : actionInsets.top + actionInsets.bottom;
           }
           if (!ExperimentalUI.isNewUI() && getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
             maxLength -= passInfo.entryPointAxisSize;
@@ -119,15 +120,15 @@ public final class ScrollableSingleRowLayout extends SingleRowLayout {
       length = getStrategy().getLengthIncrement(label.getPreferredSize());
       int moreRectSize = getMoreRectAxisSize();
       if (data.entryPointAxisSize == 0) {
-        Insets insets = myTabs.getActionsInsets();
+        Insets insets = tabs.getActionsInsets();
         moreRectSize += insets.left + insets.right;
       }
       if (data.position + length > data.toFitLength - moreRectSize) {
         if (getStrategy().drawPartialOverflowTabs()) {
-          int clippedLength = ExperimentalUI.isNewUI() && myTabs.getTabsPosition().isSide()
+          int clippedLength = ExperimentalUI.isNewUI() && tabs.getTabsPosition().isSide()
                               ? length : data.toFitLength - data.position - moreRectSize;
           final Rectangle rec = getStrategy().getLayoutRect(data, data.position, clippedLength);
-          myTabs.layout(label, rec);
+          tabs.layout(label, rec);
         }
         label.setAlignmentToCenter(false);
         return false;
@@ -138,8 +139,8 @@ public final class ScrollableSingleRowLayout extends SingleRowLayout {
 
   @Override
   public boolean isTabHidden(@NotNull TabInfo info) {
-    TabLabel label = myTabs.getInfoToLabel().get(info);
-    Rectangle bounds = label.getBounds();
+    TabLabel label = tabs.getTabLabel(info);
+    Rectangle bounds = Objects.requireNonNull(label).getBounds();
     int deadzone = JBUI.scale(DEADZONE_FOR_DECLARE_TAB_HIDDEN);
     return getStrategy().getMinPosition(bounds) < -deadzone
            || bounds.width < label.getPreferredSize().width - deadzone
@@ -151,8 +152,8 @@ public final class ScrollableSingleRowLayout extends SingleRowLayout {
     int i = data.toLayout.size() - 1;
     while (i >= 0) {
       TabInfo info = data.toLayout.get(i);
-      TabLabel label = myTabs.getInfoToLabel().get(info);
-      if (!label.getBounds().isEmpty()) {
+      TabLabel label = tabs.getTabLabel(info);
+      if (!Objects.requireNonNull(label).getBounds().isEmpty()) {
         return label;
       }
       i--;
@@ -161,7 +162,7 @@ public final class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   private int getMoreRectAxisSize() {
-    if (ExperimentalUI.isNewUI() && myTabs.getPosition().isSide()) {
+    if (ExperimentalUI.isNewUI() && tabs.getPosition().isSide()) {
       return 0;
     }
     return getStrategy().getMoreRectAxisSize();

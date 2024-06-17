@@ -70,6 +70,7 @@
   <technology name="cucumber" root="io.cucumber"/>
   <technology name="dagger" root="dagger"/>
   <technology name="datanucleus-jpa" root="org.datanucleus.api"/>
+  <technology name="datasphere-studio" root="com.webank.wedatasphere.dss"/>
   <technology name="debezium" root="io.debezium"/>
   <technology name="decompose" root="com.arkivanov.decompose"/>
   <technology name="deequ" root="deequ"/>
@@ -175,6 +176,7 @@
   <technology name="jodd-db" root="jodd.db"/>
   <technology name="jooby" root="org.jooby"/>
   <technology name="jooq" root="org.jooq"/>
+  <technology name="jpress" root="io.jpress"/>
   <technology name="js-externals" root="js.externals"/>
   <technology name="json-path" root="com.jayway.jsonpath"/>
   <technology name="json4s" root="json4s"/>

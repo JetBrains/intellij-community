@@ -704,10 +704,6 @@ com.intellij.openapi.editor.impl.event.MarkupModelListener
 - attributesChanged(com.intellij.openapi.editor.ex.RangeHighlighterEx,Z,Z):V
 - attributesChanged(com.intellij.openapi.editor.ex.RangeHighlighterEx,Z,Z,Z):V
 - beforeRemoved(com.intellij.openapi.editor.ex.RangeHighlighterEx):V
-c:com.intellij.psi.impl.search.IndexPatternSearcher
-- com.intellij.openapi.application.QueryExecutorBase
-- ps:executeImpl(com.intellij.psi.search.searches.IndexPatternSearch$SearchParameters,com.intellij.util.Processor):V
-- processQuery(com.intellij.psi.search.searches.IndexPatternSearch$SearchParameters,com.intellij.util.Processor):V
 c:com.intellij.psi.impl.search.LexerEditorHighlighterLexer
 - com.intellij.lexer.LexerBase
 - <init>(com.intellij.openapi.editor.highlighter.EditorHighlighter,Z):V
@@ -725,10 +721,6 @@ c:com.intellij.psi.impl.search.LightIndexPatternSearch
 - com.intellij.util.QueryFactory
 - sf:SEARCH:com.intellij.psi.impl.search.LightIndexPatternSearch
 - <init>():V
-c:com.intellij.psi.impl.search.LightIndexPatternSearcher
-- com.intellij.psi.impl.search.IndexPatternSearcher
-- <init>():V
-- processQuery(com.intellij.psi.search.searches.IndexPatternSearch$SearchParameters,com.intellij.util.Processor):V
 c:com.intellij.psi.impl.search.PsiTodoSearchHelperImpl
 - com.intellij.psi.search.PsiTodoSearchHelper
 - <init>(com.intellij.openapi.project.Project):V

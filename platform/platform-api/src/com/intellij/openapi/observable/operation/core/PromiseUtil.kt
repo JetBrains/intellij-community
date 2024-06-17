@@ -63,12 +63,20 @@ inline fun <R> ObservableOperationTrace.waitForOperation(
   return Disposer.newDisposable("waitForOperation for $name").use { parentDisposable ->
     val startPromise = getOperationStartPromise(parentDisposable)
     val finishPromise = getOperationFinishPromise(parentDisposable)
-    val result = action()
-    runCatching { startPromise.wait(startTimeout) }
-      .throwOnFailureAndWrapTimeout { "Operation '$name' didn't started during $startTimeout.\n$this" }
-    runCatching { finishPromise.wait(finishTimeout) }
-      .throwOnFailureAndWrapTimeout { "Operation '$name' didn't finished during $finishTimeout.\n$this" }
-    result
+    runCatching {
+      action()
+    }.onSuccess {
+      runCatching { startPromise.wait(startTimeout) }
+        .throwOnFailureAndWrapTimeout { "Operation '$name' didn't started during $startTimeout.\n$this" }
+      runCatching { finishPromise.wait(finishTimeout) }
+        .throwOnFailureAndWrapTimeout { "Operation '$name' didn't finished during $finishTimeout.\n$this" }
+    }.onFailureCatching {
+      runCatching { startPromise.wait(startTimeout) }
+        .onSuccess {
+          runCatching { finishPromise.wait(finishTimeout) }
+            .throwOnFailureAndWrapTimeout { "Operation '$name' didn't finished during $finishTimeout.\n$this" }
+        }
+    }.getOrThrow()
   }
 }
 
@@ -85,12 +93,24 @@ inline fun ObservableOperationTrace.waitForOperationCompletion(
 }
 
 @ApiStatus.Internal
-fun <T> Result<T>.throwOnFailureAndWrapTimeout(lazyMessage: () -> String) {
-  when (val exception = exceptionOrNull()) {
-    null -> return
-    is TimeoutException -> throw OperationTimeoutException(lazyMessage(), exception)
-    is TimeoutCancellationException -> throw OperationTimeoutException(lazyMessage(), exception)
+private fun <T> Result<T>.wrapTimeoutException(lazyMessage: () -> String): Result<T> {
+  return try {
+    Result.success(getOrThrow())
   }
+  catch (exception: TimeoutException) {
+    Result.failure(OperationTimeoutException(lazyMessage(), exception))
+  }
+  catch (exception: TimeoutCancellationException) {
+    Result.failure(OperationTimeoutException(lazyMessage(), exception))
+  }
+  catch (exception: Throwable) {
+    Result.failure(exception)
+  }
+}
+
+@ApiStatus.Internal
+fun <T> Result<T>.throwOnFailureAndWrapTimeout(lazyMessage: () -> String) {
+  wrapTimeoutException(lazyMessage).getOrThrow()
 }
 
 private class OperationTimeoutException(message: String, cause: Throwable) : CancellationException(message) {

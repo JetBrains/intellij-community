@@ -8,16 +8,16 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.createSmartPointer
 import com.intellij.ui.RowIcon
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
@@ -33,9 +33,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 internal class OverrideKeywordHandler(
     private val basicContext: FirBasicCompletionContext
-) : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.OVERRIDE_KEYWORD) {
+) : CompletionKeywordHandler<KaSession>(KtTokens.OVERRIDE_KEYWORD) {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -43,7 +43,7 @@ internal class OverrideKeywordHandler(
         project: Project
     ): Collection<LookupElement> = createOverrideMemberLookups(parameters, declaration = null, project) + lookup
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createOverrideMemberLookups(
         parameters: CompletionParameters,
         declaration: KtCallableDeclaration?,
@@ -78,12 +78,12 @@ internal class OverrideKeywordHandler(
         } else allMembers.toList()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun canCompleteDeclarationWithMember(
         declaration: KtCallableDeclaration,
-        symbolToOverride: KtCallableSymbol
+        symbolToOverride: KaCallableSymbol
     ): Boolean = when (declaration) {
-        is KtFunction -> symbolToOverride is KtFunctionSymbol
+        is KtFunction -> symbolToOverride is KaFunctionSymbol
         is KtValVarKeywordOwner -> {
             if (symbolToOverride !is KtVariableSymbol) {
                 false
@@ -96,7 +96,7 @@ internal class OverrideKeywordHandler(
         else -> false
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createLookupElementToGenerateSingleOverrideMember(
         member: KtClassMember,
         declaration: KtCallableDeclaration?,
@@ -107,15 +107,15 @@ internal class OverrideKeywordHandler(
         val symbolPointer = member.memberInfo.symbolPointer
         val memberSymbol = symbolPointer.restoreSymbol()
         requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
-        check(memberSymbol is KtNamedSymbol)
+        check(memberSymbol is KaNamedSymbol)
         check(classOrObject !is KtEnumEntry)
 
         val text = getSymbolTextForLookupElement(memberSymbol)
         val baseIcon = getBaseIcon(memberSymbol)
-        val isImplement = (memberSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT
+        val isImplement = (memberSymbol as? KaSymbolWithModality)?.modality == Modality.ABSTRACT
         val additionalIcon = if (isImplement) AllIcons.Gutter.ImplementingMethod else AllIcons.Gutter.OverridingMethod
         val icon = RowIcon(baseIcon, additionalIcon)
-        val isSuspendFunction = (memberSymbol as? KtFunctionSymbol)?.isSuspend == true
+        val isSuspendFunction = (memberSymbol as? KaFunctionSymbol)?.isSuspend == true
 
         val containingSymbol = memberSymbol.unwrapFakeOverrides.originalContainingClassForOverride
         val baseClassName = containingSymbol?.name?.asString()
@@ -143,12 +143,12 @@ internal class OverrideKeywordHandler(
         )
     }
 
-    context(KtAnalysisSession)
-    private fun getSymbolTextForLookupElement(memberSymbol: KtCallableSymbol): String = buildString {
+    context(KaSession)
+    private fun getSymbolTextForLookupElement(memberSymbol: KaCallableSymbol): String = buildString {
         append(KtTokens.OVERRIDE_KEYWORD.value)
             .append(" ")
             .append(memberSymbol.render(renderingOptionsForLookupElementRendering))
-        if (memberSymbol is KtFunctionSymbol) {
+        if (memberSymbol is KaFunctionSymbol) {
             append(" {...}")
         }
     }

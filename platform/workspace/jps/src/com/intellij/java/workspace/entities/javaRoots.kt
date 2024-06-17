@@ -48,7 +48,7 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyJavaSourceRootPropertiesEntity(
   entity: JavaSourceRootPropertiesEntity,
   modification: JavaSourceRootPropertiesEntity.Builder.() -> Unit,
 ): JavaSourceRootPropertiesEntity {
@@ -100,7 +100,7 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyJavaResourceRootPropertiesEntity(
   entity: JavaResourceRootPropertiesEntity,
   modification: JavaResourceRootPropertiesEntity.Builder.() -> Unit,
 ): JavaResourceRootPropertiesEntity {

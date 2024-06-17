@@ -491,7 +491,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   public static void collectProcessedWordsWithoutStemming(@NotNull String text,
                                                           @NotNull Set<? super String> result,
                                                           @NotNull Set<String> stopWords) {
-    for (String opt : WORD_SEPARATOR_CHARS.split(Strings.toLowerCase(text))) {
+    for (String opt : WORD_SEPARATOR_CHARS.split(text.toLowerCase(Locale.ENGLISH))) {
       if (stopWords.contains(opt)) {
         continue;
       }
@@ -513,9 +513,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   }
 
   static void collectProcessedWords(@NotNull String text, @NotNull Set<? super String> result, @NotNull Set<String> stopWords) {
-    String toLowerCase = StringUtil.toLowerCase(text);
-    final String[] options = WORD_SEPARATOR_CHARS.split(toLowerCase);
-    for (String opt : options) {
+    String toLowerCase = text.toLowerCase(Locale.ENGLISH);
+    for (String opt : WORD_SEPARATOR_CHARS.split(toLowerCase)) {
       if (stopWords.contains(opt)) {
         continue;
       }

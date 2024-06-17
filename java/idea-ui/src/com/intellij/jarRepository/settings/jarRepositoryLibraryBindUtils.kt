@@ -13,7 +13,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
 import com.intellij.platform.workspace.jps.entities.libraryProperties
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyLibraryPropertiesEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
@@ -53,7 +53,7 @@ internal fun updateLibrariesRepositoryId(builder: MutableEntityStorage, fromJarR
       return@forEach
     }
 
-    builder.modifyEntity(entity) {
+    builder.modifyLibraryPropertiesEntity(entity) {
       propertiesXmlTag = newXmlTag
     }
   }

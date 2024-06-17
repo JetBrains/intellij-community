@@ -46,7 +46,7 @@ interface NullToNotNullEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyNullToNotNullEntity(
   entity: NullToNotNullEntity,
   modification: NullToNotNullEntity.Builder.() -> Unit,
 ): NullToNotNullEntity {

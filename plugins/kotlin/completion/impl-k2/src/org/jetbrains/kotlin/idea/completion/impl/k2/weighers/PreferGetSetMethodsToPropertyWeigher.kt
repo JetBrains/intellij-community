@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.name.Name
@@ -15,7 +15,7 @@ internal object PreferGetSetMethodsToPropertyWeigher {
     const val WEIGHER_ID = "kotlin.preferGetSetMethodsToProperty"
     private var LookupElement.propertyName by UserDataProperty(Key<Name>("KOTLIN_PROPERTY_NAME"))
 
-    context(KtAnalysisSession)
+    context(KaSession)
 fun addWeight(lookupElement: LookupElement, symbol: KtSymbol) {
         lookupElement.propertyName = (symbol as? KtPropertySymbol)?.name
     }

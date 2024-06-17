@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.java.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -27,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumeratorBase<JpsJavaDependenciesEnumeratorImpl> implements JpsJavaDependenciesEnumerator {
   private boolean myProductionOnly;
   private boolean myRuntimeOnly;

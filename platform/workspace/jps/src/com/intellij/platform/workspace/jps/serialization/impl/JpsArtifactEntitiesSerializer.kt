@@ -52,7 +52,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
     builder.entities(ArtifactEntity::class.java).forEach {
       // Convert artifact to the new source
       val artifactSource = JpsEntitySourceFactory.createJpsEntitySourceForArtifact(configLocation)
-      builder.modifyEntity(it) {
+      builder.modifyArtifactEntity(it) {
         this.entitySource = artifactSource
       }
 
@@ -66,7 +66,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
 
     // Convert properties
     builder.entities(ArtifactPropertiesEntity::class.java).forEach {
-      builder.modifyEntity(it) {
+      builder.modifyArtifactPropertiesEntity(it) {
         this.entitySource = it.artifact.entitySource
       }
     }
@@ -206,7 +206,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       if (order != null) {
         val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
         if (entity != null) {
-          builder.modifyEntity(entity) {
+          builder.modifyArtifactsOrderEntity(entity) {
             orderOfArtifacts.addAll(order.orderOfArtifacts)
           }
         }

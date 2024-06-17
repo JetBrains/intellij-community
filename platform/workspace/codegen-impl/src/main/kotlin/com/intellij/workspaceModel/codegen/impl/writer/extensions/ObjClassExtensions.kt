@@ -63,7 +63,10 @@ private fun collectFields(objClass: ObjClass<*>, fieldsByName: MutableMap<String
     }
   }
   for (field in objClass.fields) {
-    if (withComputable || field.valueKind !is ObjProperty.ValueKind.Computable) {
+    if (withComputable
+      || field.valueKind !is ObjProperty.ValueKind.Computable
+      || field.name == "symbolicId" // symbolicId is a computable field, but still we'd like to know it's type
+    ) {
       fieldsByName.remove(field.name)
       fieldsByName[field.name] = field
     }

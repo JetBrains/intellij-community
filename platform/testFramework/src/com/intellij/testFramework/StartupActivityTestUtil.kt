@@ -18,7 +18,7 @@ object StartupActivityTestUtil {
    * You should not wait for activities - they may never finish. Instead, you should wait for
    * side effects (events) produced by that activity (import finish, project refresh, etc.)
    *
-   * This method is okay-ish short-term solution, when you need more time to prepare proper events that you can wait in test for.
+   * This method is an okay-ish short-term solution, when you need more time to prepare proper events that you can wait for in tests.
    */
   @Deprecated("Please wait for proper event instead. Activities might never finish by design.")
   @JvmStatic

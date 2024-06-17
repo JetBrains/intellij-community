@@ -2,9 +2,18 @@
 
 fun coroutine(block: suspend () -> Unit) {}
 
-// Not redundant
+inline fun runBlock(block: () -> Unit) {}
+
+// Redundant
 suspend fun rootSuspend() {
     coroutine {
+        empty()
+    }
+}
+
+// Not redundant
+suspend fun rootSuspend() {
+    runBlock {
         empty()
     }
 }
@@ -43,7 +52,7 @@ class SIterator {
 
 }
 
-// Not redundant
+// Redundant
 suspend fun foo() {
     val iterable = SIterable()
     coroutine {
@@ -54,9 +63,29 @@ suspend fun foo() {
 }
 
 // Not redundant
+suspend fun foo() {
+    val iterable = SIterable()
+    runBlock {
+        for (x in iterable) {
+            println(x)
+        }
+    }
+}
+
+// Redundant
 suspend fun bar() {
     val iterator = SIterator()
     coroutine {
+        for (x in iterator) {
+            println(x)
+        }
+    }
+}
+
+// Not redundant
+suspend fun bar() {
+    val iterator = SIterator()
+    runBlock {
         for (x in iterator) {
             println(x)
         }

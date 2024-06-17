@@ -43,6 +43,7 @@ class OnDemandFeedbackResolver(private val cs: CoroutineScope) {
     cs.launch {
       if (!canShowFeedbackNotification() || !survey.isSuitableToShow(project)) {
         onShowAction.invoke(false)
+        return@launch
       }
 
       withContext(Dispatchers.EDT) {

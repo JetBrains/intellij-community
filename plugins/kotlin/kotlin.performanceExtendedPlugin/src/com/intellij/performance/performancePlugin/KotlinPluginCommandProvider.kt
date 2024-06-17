@@ -17,5 +17,6 @@ internal class KotlinPluginCommandProvider : CommandProvider {
         TypingWithCompletionCommand.PREFIX to CreateCommand(::TypingWithCompletionCommand),
         EnableKotlinDaemonLogCommand.PREFIX to CreateCommand(::EnableKotlinDaemonLogCommand),
         AddKotlinCompilerOptionsCommand.PREFIX to CreateCommand(::AddKotlinCompilerOptionsCommand),
+        ConvertJavaToKotlinCommand.PREFIX to CreateCommand(::ConvertJavaToKotlinCommand)
     )
 }

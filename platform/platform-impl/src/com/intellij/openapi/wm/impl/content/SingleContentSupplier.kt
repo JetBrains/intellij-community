@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content
 
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
@@ -106,6 +107,7 @@ interface SingleContentSupplier {
       getSupplierFrom(content.component)
 
     fun getSupplierFrom(component: JComponent): SingleContentSupplier? =
-      (component as? DataProvider)?.let(KEY::getData) ?: component.getClientProperty(KEY.name) as? SingleContentSupplier
+      KEY.getData(DataManager.getInstance().getDataContext(component))
+      ?: component.getClientProperty(KEY.name) as? SingleContentSupplier
   }
 }

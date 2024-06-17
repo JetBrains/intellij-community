@@ -60,8 +60,11 @@ interface IconManager {
   /**
    * Path must be specified without a leading slash, in a format for [ClassLoader.getResourceAsStream]
    */
-  @ApiStatus.Internal
+  @Internal
   fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
+
+  @ApiStatus.Internal
+  fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
 
   fun createEmptyIcon(icon: Icon): Icon = icon
 
@@ -98,7 +101,7 @@ interface IconManager {
   @ApiStatus.Experimental
   fun colorizedIcon(baseIcon: Icon, colorProvider: () -> Color): Icon = baseIcon
 
-  @ApiStatus.Internal
+  @Internal
   fun hashClass(aClass: Class<*>): Long = aClass.hashCode().toLong()
 
   fun getPluginAndModuleId(classLoader: ClassLoader): Pair<String, String?> = "com.intellij" to null
@@ -115,6 +118,10 @@ private object DummyIconManager : IconManager {
   override fun getIcon(path: String, classLoader: ClassLoader): Icon = DummyIconImpl(path)
 
   override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon = DummyIconImpl(path)
+
+  override fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon {
+    return loadRasterizedIcon(path, classLoader, cacheKey, flags)
+  }
 
   override fun createLayeredIcon(instance: Iconable, icon: Icon, flags: Int): RowIcon {
     val icons = arrayOfNulls<Icon>(2)

@@ -85,15 +85,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
     List<ScopeDescriptor> scopeDescriptors = createScopes();
     myEverywhereScope = findEverywhereScope(scopeDescriptors);
-    SearchScope projectScope = findProjectScope(scopeDescriptors);
-    if (myEverywhereScope.equals(projectScope)) {
-      // just get the second scope, i.e. Attached Directories in DataGrip
-      ScopeDescriptor secondScope = JBIterable.from(scopeDescriptors)
-        .filter(o -> !o.scopeEquals(this.myEverywhereScope) && !o.scopeEquals(null))
-        .first();
-      projectScope = secondScope != null ? (GlobalSearchScope)secondScope.getScope() : this.myEverywhereScope;
-    }
-    myProjectScope = projectScope;
+    myProjectScope = findProjectScope(scopeDescriptors, myEverywhereScope);
     myScopeDescriptor = getInitialSelectedScope(scopeDescriptors);
 
     myProject.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
@@ -105,8 +97,17 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   }
 
   @ApiStatus.Internal
-  protected @NotNull SearchScope findProjectScope(@NotNull List<ScopeDescriptor> scopeDescriptors) {
-    return GlobalSearchScope.projectScope(myProject);
+  protected @NotNull SearchScope findProjectScope(@NotNull List<ScopeDescriptor> scopeDescriptors, @NotNull SearchScope everywhereScope) {
+    SearchScope projectScope = GlobalSearchScope.projectScope(myProject);
+    if (everywhereScope.equals(projectScope)) {
+      // just get the second scope, i.e. Attached Directories in DataGrip
+      ScopeDescriptor secondScope = JBIterable.from(scopeDescriptors)
+        .filter(o -> !o.scopeEquals(everywhereScope) && !o.scopeEquals(null))
+        .first();
+      projectScope = secondScope != null ? secondScope.getScope() : everywhereScope;
+      if (projectScope == null) projectScope = everywhereScope;
+    }
+    return projectScope;
   }
 
   @ApiStatus.Internal

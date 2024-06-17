@@ -13,32 +13,25 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import it.unimi.dsi.fastutil.longs.LongArraySet
 import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.longs.LongSets
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.LockSupport
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
-private class PerProviderSinkFactory(private val uncommittedListener: UncommittedFilesListener) {
-  interface UncommittedFilesListener {
-    fun onUncommittedCountChanged(cntDirty: Int)
-    fun commit(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long)
-  }
-
+private class PerProviderSinkFactory() {
   private val activeSinksCount: AtomicInteger = AtomicInteger()
   private val cancelActiveSinks: AtomicBoolean = AtomicBoolean()
-  private val cntFilesDirty = AtomicInteger()
 
-  inner class PerProviderSinkImpl(private val iterator: IndexableFilesIterator,
-                                  private val scanningId: Long) : PerProjectIndexingQueue.PerProviderSink {
-    private val files: MutableList<VirtualFile> = ArrayList()
+  inner class PerProviderSinkImpl(private val doAddFile: (VirtualFile) -> Unit) : PerProjectIndexingQueue.PerProviderSink {
     private var closed = false
 
     init {
@@ -52,42 +45,24 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
         ProgressManager.checkCanceled()
       }
 
-      files.add(file)
-      val cntDirty = cntFilesDirty.incrementAndGet()
-      uncommittedListener.onUncommittedCountChanged(cntDirty)
-    }
-
-    private fun commit() {
-      LOG.assertTrue(!closed, "Should not invoke 'commit' after 'close'")
-
-      if (files.isNotEmpty()) {
-        val cntDirty = cntFilesDirty.addAndGet(-files.size)
-        LOG.assertTrue(cntDirty >= 0, "cntFilesDirty should be positive or 0: $cntDirty")
-        uncommittedListener.commit(iterator, files, scanningId)
-        files.clear()
-      }
+      doAddFile(file)
     }
 
     override fun close() {
-      try {
-        if (!closed) {
-          commit()
-        }
-      }
-      finally {
+      if (!closed) {
         closed = true
         activeSinksCount.decrementAndGet()
       }
     }
   }
 
-  fun newSink(provider: IndexableFilesIterator, scanningId: Long): PerProjectIndexingQueue.PerProviderSink {
+  fun newSink(addFile: (VirtualFile) -> Unit): PerProjectIndexingQueue.PerProviderSink {
     if (cancelActiveSinks.get()) {
       ProgressManager.getGlobalProgressIndicator()?.cancel()
       ProgressManager.checkCanceled()
     }
 
-    return PerProviderSinkImpl(provider, scanningId)
+    return PerProviderSinkImpl(addFile)
   }
 
   fun cancelAllProducersAndWait() {
@@ -97,14 +72,11 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
       LockSupport.parkNanos(50_000_000)
       activeSinksCount.get() == 0
     }
-    LOG.assertTrue(cntFilesDirty.get() == 0, "Should contain no dirty files. But got: " + cntFilesDirty.get())
   }
 
   fun resumeProducers() {
     cancelActiveSinks.set(false)
   }
-
-  fun getUncommittedDirtyFilesCount(): Int = cntFilesDirty.get()
 
   companion object {
     private val LOG = logger<PerProviderSinkFactory>()
@@ -124,58 +96,26 @@ class PerProjectIndexingQueue(private val project: Project) {
     override fun close()
   }
 
-  private val sinkFactory = PerProviderSinkFactory(object : PerProviderSinkFactory.UncommittedFilesListener {
-    override fun onUncommittedCountChanged(cntDirty: Int) = publishEstimatedFilesCount(cntDirty)
-    override fun commit(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long) = addFiles(iterator, files,
-                                                                                                                 scanningId)
-  })
+  private val sinkFactory = PerProviderSinkFactory()
 
-  private val estimatedFilesCount: MutableStateFlow<Int> = MutableStateFlow(0)
-
-  // guarded by [lock]. Must be in consistent state under write lock (see [lock] comment)
-  // Total count of VirtualFile in filesSoFar. This is (arguable) performance optimization
-  private val cntFilesSoFar = AtomicInteger()
-
-  // guarded by [lock]. Must be in consistent state under write lock (see [lock] comment)
   // Files that will be re-indexed
-  private var filesSoFar: MutableSet<VirtualFile> = ConcurrentHashMap.newKeySet()
+  private val filesSoFar: MutableStateFlow<PersistentSet<VirtualFile>> = MutableStateFlow(persistentSetOf())
 
-  // guarded by [lock]. Must be in consistent state under write lock (see [lock] comment)
+  private val estimatedFilesCount: Flow<Int> = filesSoFar.map { it.size }
+
   // Ids of scannings from which [filesSoFar] came
   private var scanningIds: LongSet = createSetForScanningIds()
 
-  // Code under read lock still runs in parallel, so all the counters (e.g. [cntFilesSoFar]) and collections (e.g. [filesSoFar]) still have
-  // to be thread-safe. It is only required that the state must be consistent under the write lock (e.g. [cntFilesSoFar] corresponds to total
-  // count of files in [filesSoFar])
-  private val lock = ReentrantReadWriteLock()
-
   @Volatile
   private var allowFlushing: Boolean = true
-
-  // `private` because we want clients to use [PerProviderSink] which forces them to report files one by one.
-  // Accepting `List<VirtualFile>` delays the moment when we know that many files have changed, and we need a dumb mode.
-  // Accepting [VirtualFile] without intermediate buffering ([PerProviderSink] is essentially a non-thread safe buffer) and adding
-  // them directly to [filesSoFar] will likely slow down the process (though this assumption is not properly verified)
-  private fun addFiles(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long) {
-    lock.read {
-      filesSoFar.addAll(files)
-      cntFilesSoFar.addAndGet(files.size)
-      scanningIds.add(scanningId)
-    }
-  }
-
-  private fun publishEstimatedFilesCount(cntUncommittedDirty: Int) {
-    val newValue = (cntUncommittedDirty + cntFilesSoFar.get())
-    estimatedFilesCount.value = newValue
-  }
 
   fun flushNow(reason: String) {
     if (!allowFlushing) {
       LOG.info("Flushing is not allowed at the moment")
       return
     }
-    val (filesInQueue, totalFiles, scanningIds) = getAndResetQueuedFiles()
-    if (totalFiles > 0) {
+    val (filesInQueue, scanningIds) = getAndResetQueuedFiles()
+    if (filesInQueue.size > 0) {
       // note that DumbModeWhileScanningTrigger will not finish dumb mode until scanning is finished
       UnindexedFilesIndexer(project, filesInQueue, reason, scanningIds).queue(project)
     }
@@ -207,24 +147,14 @@ class PerProjectIndexingQueue(private val project: Project) {
 
   private data class QueuedFiles(
     val fileSet: Set<VirtualFile>,
-    val numberOfFiles: Int,
     val scanningIds: LongSet
   )
 
   private fun getAndResetQueuedFiles(): QueuedFiles {
-    try {
-      return lock.write {
-        val filesInQueue = filesSoFar
-        filesSoFar = ConcurrentHashMap.newKeySet()
-        val totalFiles = cntFilesSoFar.getAndSet(0)
-        val idsOfScannings = scanningIds
-        scanningIds = createSetForScanningIds()
-        return@write QueuedFiles(filesInQueue, totalFiles, LongSets.unmodifiable(idsOfScannings))
-      }
-    }
-    finally {
-      publishEstimatedFilesCount(sinkFactory.getUncommittedDirtyFilesCount())
-    }
+    val filesInQueue = filesSoFar.getAndUpdate { persistentSetOf() }
+    val idsOfScannings = scanningIds // we only use scanning ids for diagnostics. TODO: maybe fix non-atomic update
+    scanningIds = createSetForScanningIds()
+    return QueuedFiles(filesInQueue,  LongSets.unmodifiable(idsOfScannings))
   }
 
   /**
@@ -232,7 +162,8 @@ class PerProjectIndexingQueue(private val project: Project) {
    * Will throw [ProcessCanceledException] if the queue is suspended via [cancelAllTasksAndWait]
    */
   fun getSink(provider: IndexableFilesIterator, scanningId: Long): PerProviderSink {
-    return sinkFactory.newSink(provider, scanningId)
+    scanningIds.add(scanningId)
+    return sinkFactory.newSink { vFile -> filesSoFar.update { it.add(vFile) } }
   }
 
   /**
@@ -253,7 +184,7 @@ class PerProjectIndexingQueue(private val project: Project) {
     sinkFactory.resumeProducers()
   }
 
-  fun estimatedFilesCount(): StateFlow<Int> = estimatedFilesCount
+  fun estimatedFilesCount(): Flow<Int> = estimatedFilesCount
 
   companion object {
     private val LOG = logger<PerProjectIndexingQueue>()
@@ -263,7 +194,7 @@ class PerProjectIndexingQueue(private val project: Project) {
   @TestOnly
   class TestCompanion(private val q: PerProjectIndexingQueue) {
     fun getAndResetQueuedFiles(): Pair<Set<VirtualFile>, Int> {
-      return q.getAndResetQueuedFiles().let { Pair(it.fileSet, it.numberOfFiles) }
+      return q.getAndResetQueuedFiles().let { Pair(it.fileSet, it.fileSet.size) }
     }
   }
 }

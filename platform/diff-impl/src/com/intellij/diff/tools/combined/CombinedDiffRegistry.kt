@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.editor.DiffEditorViewerFileEditor.Companion.reloadDiffEditorsForFiles
@@ -40,7 +40,7 @@ object CombinedDiffRegistry {
   fun resetBadge() = PropertiesComponent.getInstance().setValue(BADGE_ID, true)
 }
 
-class CombinedDiffAdvancedSettingsChangeListener : AdvancedSettingsChangeListener {
+internal class CombinedDiffAdvancedSettingsChangeListener : AdvancedSettingsChangeListener {
   override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
     if (id == CombinedDiffRegistry.COMBINED_DIFF_SETTING_ID) {
       for (project in ProjectManager.getInstance().openProjects) {

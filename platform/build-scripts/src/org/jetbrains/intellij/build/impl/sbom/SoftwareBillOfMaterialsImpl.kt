@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.DigestUtil.sha1Hex
 import com.intellij.util.io.DigestUtil.updateContentHash
@@ -9,6 +10,7 @@ import com.intellij.util.io.bytesToHex
 import com.intellij.util.io.sha256Hex
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.outputStream
+import io.ktor.client.plugins.ClientRequestException
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -67,7 +69,8 @@ internal class SoftwareBillOfMaterialsImpl(
   private val distributionFiles: List<DistributionFileEntry>
 ) : SoftwareBillOfMaterials {
   private companion object {
-    val JETBRAINS_GITHUB_ORGANIZATIONS = setOf("JetBrains", "Kotlin")
+    val JETBRAINS_GITHUB_ORGANIZATIONS: Set<String> = setOf("JetBrains", "Kotlin")
+    val STRICT_MODE: Boolean = SystemProperties.getBooleanProperty("intellij.build.sbom.strictMode", false)
   }
 
   private val specVersion: String = Version.TWO_POINT_THREE_VERSION
@@ -347,7 +350,7 @@ internal class SoftwareBillOfMaterialsImpl(
     }.toList()
   }
 
-  private fun generate(
+  private suspend fun generate(
     document: SpdxDocument,
     rootPackage: SpdxPackage,
     runtimePackage: SpdxPackage?,
@@ -372,6 +375,9 @@ internal class SoftwareBillOfMaterialsImpl(
         document = document,
         license = license,
       )
+    }
+    if (STRICT_MODE) {
+      checkCopyrightTextForLibraries()
     }
     val libraryPackages = mavenLibraries.mapNotNull { lib ->
       val libraryPackage = document.spdxPackage(lib)
@@ -470,7 +476,12 @@ internal class SoftwareBillOfMaterialsImpl(
             mavenLibrary(mavenDescriptor, libraryFile, libraryEntry, libraryLicense)
           }
           else {
-            anonymousMavenLibrary(libraryFile, libraryEntry, libraryLicense)
+            MavenLibrary(
+              path = libraryFile,
+              library = libraryLicense,
+              entry = libraryEntry,
+              sha256Checksum = sha256Hex(libraryFile),
+            ).takeIf { it.coordinates != null }
           }
         }
       }.mapNotNull { it.await() }.toList()
@@ -502,28 +513,23 @@ internal class SoftwareBillOfMaterialsImpl(
     check(checksums.count() == 1) {
       "Missing checksum for $coordinates: ${checksums.map { it.url }}"
     }
-    val pomXmlName = coordinates.getFileName(packaging = "pom", classifier = "")
-    val pomXmlModel = libraryFile
-      .resolveSibling(libraryFile.nameWithoutExtension + ".pom")
-      .takeIf { it.exists() }
-      ?.bufferedReader()?.use {
-        MavenXpp3Reader().read(it, false)
-      } ?: MetaInf(libraryFile).pomXmlModel
+    val pomName = coordinates.getFileName(packaging = "pom", classifier = "")
     return MavenLibrary(
+      path = libraryFile,
       coordinates = coordinates,
       repositoryUrl = repositoryUrl,
       downloadUrl = repositoryUrl?.let { "$it/${coordinates.directoryPath}/$libraryName" },
-      pomXmlUrl = repositoryUrl?.let { "$it/${coordinates.directoryPath}/$pomXmlName" },
+      pomUrl = repositoryUrl?.let { "$it/${coordinates.directoryPath}/$pomName" },
       sha256Checksum = checksums.single().sha256sum,
       library = libraryLicense,
       entry = libraryEntry,
-      pomXmlModel = pomXmlModel
     )
   }
 
-  private class MetaInf(jarFile: Path) {
+  private class MetaInfo(jarFile: Path) {
     var coordinates: MavenCoordinates? = null
-    var pomXmlModel: Model? = null
+    var pomFile: String? = null
+    var pomModel: Model? = null
 
     val ByteBuffer.reader: Reader
       get() = ByteArray(remaining())
@@ -532,11 +538,13 @@ internal class SoftwareBillOfMaterialsImpl(
         .bufferedReader()
 
     init {
+      // FIXME IJI-1882: this logic is not correct since multiple pom.xml and pom.properties may be present
       readZipFile(jarFile) { name, data ->
         when {
           !name.startsWith("META-INF/") -> return@readZipFile
           name.endsWith("/pom.xml") -> data().reader.use {
-            pomXmlModel = MavenXpp3Reader().read(it, false)
+            pomFile = "$jarFile!$name"
+            pomModel = MavenXpp3Reader().read(it, false)
           }
           name.endsWith("/pom.properties") -> {
             val pom = Properties()
@@ -550,19 +558,6 @@ internal class SoftwareBillOfMaterialsImpl(
         }
       }
     }
-  }
-
-  private fun anonymousMavenLibrary(libraryFile: Path,
-                                    libraryEntry: LibraryFileEntry,
-                                    libraryLicense: LibraryLicense): MavenLibrary? {
-    val metaInf = MetaInf(libraryFile)
-    return MavenLibrary(
-      coordinates = metaInf.coordinates ?: return null,
-      library = libraryLicense,
-      entry = libraryEntry,
-      sha256Checksum = sha256Hex(libraryFile),
-      pomXmlModel = metaInf.pomXmlModel
-    )
   }
 
   private fun MavenCoordinates.externalRef(document: SpdxDocument, repositoryUrl: String): ExternalRef {
@@ -588,17 +583,38 @@ internal class SoftwareBillOfMaterialsImpl(
   }
 
   private inner class MavenLibrary(
-    val coordinates: MavenCoordinates,
+    path: Path,
+    coordinates: MavenCoordinates? = null,
     val repositoryUrl: String? = null,
     val downloadUrl: String? = null,
     val sha256Checksum: String,
     val library: LibraryLicense,
     val entry: LibraryFileEntry,
-    val pomXmlUrl: String? = null,
-    val pomXmlModel: Model?
+    val pomUrl: String? = null,
   ) {
-    val organizations = (pomXmlModel?.organization?.name?.let { sequenceOf(it) }
-                         ?: pomXmlModel?.developers?.asSequence()?.mapNotNull { it.organization })
+    val metaInfo by lazy {
+      MetaInfo(path)
+    }
+
+    val coordinates: MavenCoordinates? = coordinates ?: metaInfo.coordinates
+
+    val standalonePomFile: Path =
+      path.resolveSibling(path.nameWithoutExtension + ".pom")
+
+    val pomModelSource: String? =
+      standalonePomFile
+        .takeIf { it.exists() }
+        ?.toString() ?: metaInfo.pomFile
+
+    val pomModel: Model? =
+      standalonePomFile
+        .takeIf { it.exists() }
+        ?.bufferedReader()?.use {
+          MavenXpp3Reader().read(it, false)
+        } ?: metaInfo.pomModel
+
+    val organizations = (pomModel?.organization?.name?.let { sequenceOf(it) }
+                         ?: pomModel?.developers?.asSequence()?.mapNotNull { it.organization })
       ?.filter { it.isNotBlank() }
       ?.mapNotNull {
         @Suppress("HardCodedStringLiteral")
@@ -608,7 +624,7 @@ internal class SoftwareBillOfMaterialsImpl(
       ?.takeIf { it.isNotBlank() }
       ?.let { "Organization: $it" }
 
-    val developers = pomXmlModel?.developers?.asSequence()
+    val developers = pomModel?.developers?.asSequence()
       ?.mapNotNull {
         when {
           it.name?.isNotBlank() == true && it.email?.isNotBlank() == true -> "${translateSupplier(it.name)} <${it.email}>"
@@ -621,17 +637,82 @@ internal class SoftwareBillOfMaterialsImpl(
       ?.takeIf { it.isNotBlank() }
       ?.let { "Person: $it" }
 
-    val supplier: String? = library.supplier ?: organizations ?: developers
+    val supplier: String? by lazy {
+      val supplierFromPom = organizations ?: developers
+      check(!STRICT_MODE || supplierFromPom == null || library.supplier == null) {
+        "Library '${library.name ?: library.libraryName}' ($coordinates): the explicitly specified supplier '${library.supplier}' is excessive " +
+        "because the library already has the supplier '$supplierFromPom' specified in $pomModelSource"
+      }
+      supplierFromPom ?: library.supplier
+    }
 
     val copyrightText: String? by lazy {
-      library.copyrightText ?: when {
+      check(!isSupplierJetBrains || library.copyrightText == null) {
+        "Library '${library.name ?: library.libraryName}' ($coordinates): the explicitly specified copyrightText '${library.copyrightText}' is excessive " +
+        "because the library is supplied by JetBrains and the copyrightText '${jetBrainsOwnLicense.copyrightText}' " +
+        "will be used automatically"
+      }
+      val inferredCopyrightText = if (pomModel?.inceptionYear != null && supplier != null) {
+        "Copyright (C) ${pomModel.inceptionYear} " + supplier
+          ?.removePrefix("Organization: ")
+          ?.removePrefix("Person: ")
+      }
+      else {
+        null
+      }
+      check(!STRICT_MODE || inferredCopyrightText == null || library.copyrightText == null) {
+        "Library '$coordinates': the explicitly specified copyrightText '${library.copyrightText}' is excessive " +
+        "because the library already has the copyrightText '$inferredCopyrightText' inferred from $pomModelSource"
+      }
+      when {
         isSupplierJetBrains -> jetBrainsOwnLicense.copyrightText
-        pomXmlModel?.inceptionYear != null && supplier != null -> "Copyright (C) ${pomXmlModel.inceptionYear} " + supplier
-          .removePrefix("Organization: ")
-          .removePrefix("Person: ")
+        inferredCopyrightText != null -> inferredCopyrightText
+        library.copyrightText != null -> library.copyrightText
         isSupplierApache -> "Copyright (C) ${Suppliers.APACHE}"
         else -> null
       }
+    }
+
+    suspend fun checkCopyrightText() {
+      if (copyrightText != null) return
+      var licenseUrl = library.licenseUrl ?: return
+      if (licenseUrl.startsWith("https://github.com/") && !licenseUrl.contains("/raw/")) {
+        licenseUrl = "https://raw.githubusercontent.com/" +
+                     licenseUrl.removePrefix("https://github.com/")
+                       .replace("blob/", "")
+      }
+      @Suppress("HardCodedStringLiteral")
+      val licenseHtml = try {
+        downloadAsText(licenseUrl)
+      }
+      catch (e: ClientRequestException) {
+        error(
+          "'copyrightText' for '$library' library is missing, please specify it. " +
+          "Unable to suggest anything due to '${e.message}'"
+        )
+      }
+      val candidates = Jsoup.parse(licenseHtml)
+        .wholeText().lineSequence()
+        .filter { it.contains("Copyright") }
+        .map { it.trim() }
+        .map { "'$it'" }
+        .toList()
+      error(
+        buildString {
+          append("'copyrightText' for '$library' library is missing, please specify it")
+          if (candidates.any()) {
+            append(
+              candidates.joinToString(
+                prefix = ". Suggested options:\n\t",
+                separator = "\t\n"
+              )
+            )
+          }
+          else {
+            append(". No suggested options.")
+          }
+        }
+      )
     }
 
     val isSupplierJetBrains: Boolean by lazy {
@@ -678,6 +759,9 @@ internal class SoftwareBillOfMaterialsImpl(
   private fun SpdxDocument.spdxPackage(library: MavenLibrary): SpdxPackage {
     val document = this
     val upstreamPackage = spdxPackageUpstream(library.library.forkedFrom)
+    checkNotNull(library.coordinates) {
+      "Missing coordinates for library ${library.library}"
+    }
     val libPackage = spdxPackage(
       this, name = "${library.coordinates.groupId}:${library.coordinates.artifactId}",
       licenseDeclared = library.license(this),
@@ -733,8 +817,8 @@ internal class SoftwareBillOfMaterialsImpl(
       }
       else -> {
         setSupplier(SpdxConstants.NOASSERTION_VALUE)
-        if (library.pomXmlUrl != null) {
-          setSourceInfo("Supplier information is not available in ${library.pomXmlUrl}")
+        if (library.pomUrl != null) {
+          setSourceInfo("Supplier information is not available in ${library.pomUrl}")
         }
       }
     }
@@ -891,6 +975,35 @@ internal class SoftwareBillOfMaterialsImpl(
           }
         }
       }
+    }
+  }
+
+  private suspend fun checkCopyrightTextForLibraries() {
+    val sortedLibraries = mavenLibraries.sortedBy {
+      it.library.name ?: it.library.libraryName
+    }
+    val errors = supervisorScope {
+      sortedLibraries.slice(50..100).map {
+        async {
+          it.checkCopyrightText()
+        }
+      }.mapNotNull {
+        try {
+          it.await()
+          null
+        }
+        catch (e: IllegalStateException) {
+          e.message
+        }
+      }
+    }
+    if (errors.any()) {
+      context.messages.error(
+        errors.joinToString(
+          prefix = "Some copyright texts for software bill of materials are missing:\n\n",
+          separator = "\n\n"
+        )
+      )
     }
   }
 }

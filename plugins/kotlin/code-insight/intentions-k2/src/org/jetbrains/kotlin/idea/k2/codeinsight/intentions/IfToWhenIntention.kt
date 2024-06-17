@@ -6,7 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 internal class IfToWhenIntention : KotlinApplicableModCommandAction<KtIfExpression, Unit>(KtIfExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("replace.if.with.when")
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtIfExpression) {
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
@@ -7,16 +7,19 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.ProxySimpleDiffRequest;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
 
+@ApiStatus.Internal
 public class TextMergeViewer implements MergeTool.MergeViewer {
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final TextMergeRequest myMergeRequest;

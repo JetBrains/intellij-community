@@ -445,6 +445,16 @@
       bundle="messages.GroovyBundle"
       nameKey="settings.inlay.groovy.implicit.null.argument.provider.name"
       descriptionKey="settings.inlay.groovy.implicit.null.argument.provider.description"/>
+    <codeInsight.declarativeInlayProvider
+    language="Groovy"
+    implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyLambdaParameterTypeHintsInlayProvider"
+    isEnabledByDefault="true"
+    group="LAMBDAS_GROUP"
+    providerId="groovy.lambda.parameter.inlay.provider"
+    bundle="messages.GroovyBundle"
+    nameKey="settings.inlay.groovy.lambda.parameter.provider.name"
+    descriptionKey="settings.inlay.groovy.lambda.parameter.provider.description"
+    />
     <codeInsight.parameterNameHints
         language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyInlayParameterHintsProvider"
     />
@@ -1345,7 +1355,6 @@
 
     <internal.statistic.libraryUsageImportProcessor language="Groovy"
                                                     implementationClass="org.jetbrains.plugins.groovy.stats.GroovyLibraryUsageImportProcessor"/>
-    <iconMapper mappingFile="GroovyIconMappings.json"/>
     <lang.dumb.mode.supported language="Groovy" implementationClass="org.jetbrains.plugins.groovy.GroovyLanguageDumbAware"/>
   </extensions>
 

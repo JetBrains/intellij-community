@@ -182,7 +182,7 @@ public final class DaemonListeners implements Disposable {
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
       try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333913, EA-765304")) {
         for (Editor editor : activeEditors) {
-          PsiFile file = psiDocumentManager.getCachedPsiFile(editor.getDocument());
+          PsiFile file = ReadAction.compute(() -> psiDocumentManager.getCachedPsiFile(editor.getDocument()));
           errorStripeUpdateManager.repaintErrorStripePanel(editor, file);
         }
       }

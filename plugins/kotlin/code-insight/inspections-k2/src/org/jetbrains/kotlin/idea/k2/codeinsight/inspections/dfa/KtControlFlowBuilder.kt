@@ -33,16 +33,15 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractCallsInPlaceContractEffectDeclaration
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -82,7 +81,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return flow
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processExpression(expr: KtExpression?) {
         if (expr == null) {
             pushUnknown()
@@ -154,9 +153,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(PushValueInstruction(DfType.TOP))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processConstant(expr: KtExpression?): Boolean {
-        val constantValue = expr?.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) ?: return false
+        val constantValue = expr?.evaluate() ?: return false
         if (constantValue is KaConstantValue.KaErrorConstantValue) return false
         val value = constantValue.value
         val ktType = when(value) {
@@ -179,12 +178,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processConstantExpression(expr: KtConstantExpression) {
         addInstruction(PushValueInstruction(getConstant(expr), KotlinExpressionAnchor(expr)))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processLambda(expr: KtLambdaExpression) {
         val element = expr.bodyExpression
         if (element != null) {
@@ -194,7 +193,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         pushUnknown()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processStringTemplate(expr: KtStringTemplateExpression) {
         var first = true
         val entries = expr.entries
@@ -230,7 +229,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processBlock(expr: KtBlockExpression) {
         val statements = expr.statements
         if (statements.isEmpty()) {
@@ -247,7 +246,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processThrowExpression(expr: KtThrowExpression) {
         val exception = expr.thrownExpression
         processExpression(exception)
@@ -263,13 +262,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         pushUnknown()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processCodeDeclaration(expr: KtExpression) {
         processEscapes(expr)
         pushUnknown()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processObjectLiteral(expr: KtObjectLiteralExpression) {
         processEscapes(expr)
         for (superTypeListEntry in expr.objectDeclaration.superTypeListEntries) {
@@ -282,7 +281,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processEscapes(expr: KtExpression) {
         val vars = mutableSetOf<DfaVariableValue>()
         val existingVars: Set<KtVariableDescriptor> = factory.values.asSequence()
@@ -303,7 +302,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processIsExpression(expr: KtIsExpression) {
         processExpression(expr.leftHandSide)
         val type = getTypeCheckDfType(expr.typeReference)
@@ -321,7 +320,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processAsExpression(expr: KtBinaryExpressionWithTypeRHS) {
         val operand = expr.left
         val typeReference = expr.right
@@ -371,7 +370,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getTypeCheckDfType(typeReference: KtTypeReference?): DfType {
         if (typeReference == null) return DfType.TOP
         val kotlinType = typeReference.getKtType()
@@ -390,7 +389,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processBinaryExpression(expr: KtBinaryExpression) {
         val token = expr.operationToken
         val relation = relationFromToken(token)
@@ -441,7 +440,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addCall(expr, 2)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processInCheck(kotlinType: KtType?, range: KtExpression?, anchor: KotlinAnchor, negated: Boolean) {
         if (kotlinType != null && (kotlinType.isInt || kotlinType.isLong)) {
             if (range is KtBinaryExpression) {
@@ -484,7 +483,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(FlushFieldsInstruction())
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processNullSafeOperator(expr: KtBinaryExpression) {
         val left = expr.left
         processExpression(left)
@@ -501,7 +500,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processBinaryRelationExpression(
         expr: KtBinaryExpression, relation: RelationType,
         forceEqualityByContent: Boolean
@@ -548,7 +547,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processAssignmentExpression(expr: KtBinaryExpression) {
         val left = expr.left
         val right = expr.right
@@ -588,7 +587,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(FinishElementInstruction(expr))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processArrayAccess(expr: KtArrayAccessExpression, storedValue: KtExpression? = null) {
         val arrayExpression = expr.arrayExpression
         processExpression(arrayExpression)
@@ -670,7 +669,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processUnknownArrayStore(storedValue: KtExpression) {
         // stack before: <array_expression> <index_expression>
         processExpression(storedValue)
@@ -680,12 +679,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addCall(parent as KtExpression, 3)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtType?.isSubTypeOf(wantedType: ClassId) =
         this is KtNonErrorClassType && classId == wantedType ||
         this != null && getAllSuperTypes().any { type -> type is KtNonErrorClassType && type.classId == wantedType }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processMathExpression(expr: KtBinaryExpression, mathOp: LongRangeBinOp) {
         val left = expr.left
         val right = expr.right
@@ -706,7 +705,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(NumericBinaryInstruction(mathOp, KotlinExpressionAnchor(expr)))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processShortCircuitExpression(expr: KtBinaryExpression, and: Boolean) {
         val left = expr.left
         val right = expr.right
@@ -727,7 +726,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(ResultOfInstruction(anchor))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpressionWithLabel.targetLoop(): KtLoopExpression? {
         val label = getTargetLabel() as? KtLabelReferenceExpression
         return if (label == null) {
@@ -737,7 +736,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processLabeledJumpExpression(expr: KtExpressionWithLabel) {
         val targetLoop = expr.targetLoop()
         if (targetLoop == null || !PsiTreeUtil.isAncestor(context, targetLoop, false)) {
@@ -754,7 +753,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(ControlTransferInstruction(factory.controlTransfer(target, traps)))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createTransfer(
         exitedStatement: PsiElement, blockToFlush: PsiElement, resultValue: DfaValue,
         exitBlock: Boolean = false
@@ -792,7 +791,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processReturnExpression(expr: KtReturnExpression) {
         val returnedExpression = expr.returnedExpression
         processExpression(returnedExpression)
@@ -827,15 +826,15 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
      * the `let`, rather than from the parent method instead.
      * This is semantically equivalent and allows to get rid of some noise warnings.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun findEffectiveTargetSymbol(expression: KtReturnExpression): KtFunctionLiteral? {
         val parentFunctionLiteral = expression.parentOfType<KtFunctionLiteral>()
         if (parentFunctionLiteral == null || !context.isAncestor(parentFunctionLiteral)) return null
         val lambda = parentFunctionLiteral.parent as? KtLambdaExpression ?: return null
         val lambdaArg = lambda.parent as? KtValueArgument ?: return null
         val call = lambdaArg.parent as? KtCallExpression ?: return null
-        val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return null
-        val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
+        val functionCall: KaFunctionCall<*> = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
+        val target: KaFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return null
         val functionName = target.name.asString()
         if (functionName != LET && functionName != RUN) return null
         if (StandardNames.BUILT_INS_PACKAGE_FQ_NAME != target.callableId?.packageName) return null
@@ -851,7 +850,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processIfExpression(ifExpression: KtIfExpression) {
         val condition = ifExpression.condition
         processExpression(condition)
@@ -877,7 +876,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(FinishElementInstruction(ifExpression))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processWhenExpression(expr: KtWhenExpression) {
         val subjectExpression = expr.subjectExpression
         val dfVar: DfaVariableValue?
@@ -922,7 +921,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(FinishElementInstruction(expr))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processWhenCondition(dfVar: DfaVariableValue?, dfVarType: KtType?, condition: KtWhenCondition) {
         when (condition) {
             is KtWhenConditionWithExpression -> {
@@ -969,7 +968,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processDoWhileExpression(expr: KtDoWhileExpression) {
         inlinedBlock(expr) {
             val offset = ControlFlow.FixedOffset(flow.instructionCount)
@@ -983,7 +982,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(FinishElementInstruction(expr))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processWhileExpression(expr: KtWhileExpression) {
         inlinedBlock(expr) {
             val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
@@ -1013,7 +1012,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processDestructuringDeclaration(expr: KtDestructuringDeclaration) {
         processExpression(expr.initializer)
         for (entry in expr.entries) {
@@ -1027,7 +1026,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processTryExpression(statement: KtTryExpression) {
         inlinedBlock(statement) {
             val tryBlock = statement.tryBlock
@@ -1085,7 +1084,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processForExpression(expr: KtForExpression) {
         inlinedBlock(expr) {
             val parameter = expr.loopParameter
@@ -1111,7 +1110,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(FinishElementInstruction(expr))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun flushParameter(parameter: KtParameter) {
         val destructuringDeclaration = parameter.destructuringDeclaration
         if (destructuringDeclaration != null) {
@@ -1135,7 +1134,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processForRange(expr: KtForExpression, parameterVar: DfaVariableValue, parameterType: KtType?): () -> Unit {
         val range = expr.loopRange
         if (parameterVar.dfType is DfIntegralType) {
@@ -1221,7 +1220,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return { pushUnknown() }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun findSpecialField(type: KtType?): SpecialField? {
         type ?: return null
         return when {
@@ -1235,7 +1234,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun findSpecialField(expr: KtQualifiedExpression): SpecialField? {
         val selector = expr.selectorExpression ?: return null
         val receiver = expr.receiverExpression
@@ -1247,7 +1246,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return field
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun rangeFunction(
         expr: KtForExpression,
         parameterVar: DfaVariableValue,
@@ -1272,7 +1271,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         setOffset(finalOffset)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private inline fun inlinedBlock(element: KtElement, fn: () -> Unit) {
         // Transfer value is pushed to avoid emptying stack beyond this point
         trapTracker.pushTrap(InsideInlinedBlockTrap(element))
@@ -1285,13 +1284,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(PopInstruction())
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processCallableReference(expr: KtCallableReferenceExpression) {
         processExpression(expr.receiverExpression)
         addInstruction(KotlinCallableReferenceInstruction(expr, expr.getKotlinType().toDfType()))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processClassLiteralExpression(expr: KtClassLiteralExpression) {
         val kotlinType = expr.getKotlinType()
         val receiver = expr.receiverExpression
@@ -1299,7 +1298,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (receiver is KtSimpleNameExpression && receiver.mainReference.resolve() is KtClass) {
                 val arguments = kotlinType.ownTypeArguments
                 if (arguments.size == 1) {
-                    val kType = arguments[0].type?.expandedClassSymbol?.classDef()
+                    val kType = arguments[0].type?.expandedSymbol?.classDef()
                     val kClassPsiType = TypeConstraint.fromDfType(kotlinType.toDfType())
                     if (kType != null && kClassPsiType != TypeConstraints.TOP) {
                         val kClassConstant: DfType = DfTypes.referenceConstant(kType, kClassPsiType)
@@ -1315,7 +1314,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         // TODO: support kotlin-class as a variable; link to TypeConstraint
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processDeclaration(variable: KtProperty) {
         val initializer = variable.initializer
         if (initializer == null) {
@@ -1335,7 +1334,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(JvmAssignmentInstruction(KotlinExpressionAnchor(variable), dfaVariable))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processReferenceExpression(expr: KtSimpleNameExpression, qualifierOnStack: Boolean = false) {
         val dfVar = KtVariableDescriptor.createFromSimpleName(factory, expr)
         if (dfVar != null) {
@@ -1374,7 +1373,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processQualifiedReferenceExpression(expr: KtQualifiedExpression) {
         val receiver = expr.receiverExpression
         processExpression(receiver)
@@ -1417,7 +1416,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun pushJavaClassField(receiver: KtExpression, selector: KtExpression?, expr: KtQualifiedExpression): Boolean {
         if (selector == null || !selector.textMatches("java")) return false
         if (!receiver.getKotlinType().isSubTypeOf(StandardClassIds.KClass)) return false
@@ -1428,9 +1427,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processCallExpression(expr: KtCallExpression, qualifierOnStack: Boolean = false) {
-        val call: KtSuccessCallInfo? = expr.resolveCall() as? KtSuccessCallInfo
+        val call: KaSuccessCallInfo? = expr.resolveCallOld() as? KaSuccessCallInfo
         val updatedQualifierOnStack = if (!qualifierOnStack && call != null) {
             tryPushImplicitQualifier(call)
         } else {
@@ -1453,10 +1452,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addCall(expr, argCount, updatedQualifierOnStack)
     }
 
-    context(KtAnalysisSession)
-    private fun getLambdaOccurrenceRange(expr: KtCallExpression, parameter: KtValueParameterSymbol): EventOccurrencesRange {
-        val functionCall = expr.resolveCall()?.singleFunctionCallOrNull() ?: return EventOccurrencesRange.UNKNOWN
-        val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return EventOccurrencesRange.UNKNOWN
+    context(KaSession)
+    private fun getLambdaOccurrenceRange(expr: KtCallExpression, parameter: KaValueParameterSymbol): EventOccurrencesRange {
+        val functionCall = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return EventOccurrencesRange.UNKNOWN
+        val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return EventOccurrencesRange.UNKNOWN
         val callEffect = functionSymbol.contractEffects
             .singleOrNull { e -> e is KtContractCallsInPlaceContractEffectDeclaration && e.valueParameterReference.parameterSymbol == parameter }
                 as? KtContractCallsInPlaceContractEffectDeclaration
@@ -1466,7 +1465,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return EventOccurrencesRange.UNKNOWN
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun inlineLambda(lambda: KtLambdaExpression, kind: EventOccurrencesRange) {
         /*
             We encode unknown call with inlineable lambda as
@@ -1518,12 +1517,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun inlineKnownLambdaCall(expr: KtCallExpression, lambda: KtLambdaExpression): Boolean {
         // TODO: non-qualified methods (run, repeat)
         // TODO: collection methods (forEach, map, etc.)
-        val resolvedCall = expr.resolveCall()?.singleFunctionCallOrNull() ?: return false
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return false
+        val resolvedCall = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
+        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return false
         val packageName = symbol.callableId?.packageName ?: return false
         val bodyExpression = lambda.bodyExpression
         val receiver = (expr.parent as? KtQualifiedExpression)?.receiverExpression
@@ -1593,11 +1592,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return false
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun inlineKnownMethod(expr: KtCallExpression, argCount: Int, qualifierOnStack: Boolean): Boolean {
         if (argCount == 0 && qualifierOnStack) {
-            val functionCall: KtFunctionCall<*> = expr.resolveCall()?.singleFunctionCallOrNull() ?: return false
-            val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return false
+            val functionCall: KaFunctionCall<*> = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
+            val target: KaFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return false
             val name = target.name.asString()
             if (name == "isEmpty" || name == "isNotEmpty") {
                 val callableId = target.callableId
@@ -1621,7 +1620,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return false
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun pushUnresolvedCallArguments(expr: KtCallExpression): Int {
         val args = expr.valueArgumentList?.arguments
         var argCount = 0
@@ -1637,9 +1636,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return argCount
     }
 
-    context(KtAnalysisSession)
-    private fun pushCallArguments(expr: KtCallExpression, callInfo: KtSuccessCallInfo?): Int {
-        val functionCall = callInfo?.call as? KtFunctionCall<*> ?: return pushUnresolvedCallArguments(expr)
+    context(KaSession)
+    private fun pushCallArguments(expr: KtCallExpression, callInfo: KaSuccessCallInfo?): Int {
+        val functionCall = callInfo?.call as? KaFunctionCall<*> ?: return pushUnresolvedCallArguments(expr)
         var argCount = 0
         var varArgCount = 0
         var varArgType: DfType = DfType.BOTTOM
@@ -1669,11 +1668,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return argCount
     }
 
-    context(KtAnalysisSession)
-    private fun tryPushImplicitQualifier(callInfo: KtSuccessCallInfo): Boolean {
-        val call = callInfo.call as? KtFunctionCall<*>
-        val receiver = (call?.partiallyAppliedSymbol?.dispatchReceiver as? KtImplicitReceiverValue)?.symbol
-        if (receiver is KtReceiverParameterSymbol) {
+    context(KaSession)
+    private fun tryPushImplicitQualifier(callInfo: KaSuccessCallInfo): Boolean {
+        val call = callInfo.call as? KaFunctionCall<*>
+        val receiver = (call?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
+        if (receiver is KaReceiverParameterSymbol) {
             val psi = receiver.psi
             if (psi is KtFunctionLiteral) {
                 val varDescriptor = KtLambdaThisVariableDescriptor(psi, receiver.type.toDfType())
@@ -1684,7 +1683,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return false
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getReferenceValue(expr: KtExpression, target: PsiElement?): DfType? {
         return when (target) {
             // Companion object qualifier
@@ -1715,7 +1714,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processPrefixExpression(expr: KtPrefixExpression) {
         val operand = expr.baseExpression
         processExpression(operand)
@@ -1759,7 +1758,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(EvalUnknownInstruction(anchor, 1, expr.getKotlinType()?.toDfType() ?: DfType.TOP))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processPostfixExpression(expr: KtPostfixExpression) {
         val operand = expr.baseExpression
         processExpression(operand)
@@ -1798,11 +1797,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processThisExpression(expr: KtThisExpression) {
         val exprType = expr.getKotlinType()
         val descriptor =
-            ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol() as? KtReceiverParameterSymbol
+            ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol() as? KaReceiverParameterSymbol
         if (descriptor != null && exprType != null) {
             val function = descriptor.psi as? KtFunctionLiteral
             val declType = descriptor.type
@@ -1838,12 +1837,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return method?.containingClass?.qualifiedName == CommonClassNames.JAVA_LANG_OBJECT
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun addImplicitConversion(expression: KtExpression?, expectedType: KtType?) {
         addImplicitConversion(expression?.getKotlinType(), expectedType)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun addImplicitConversion(actualType: KtType?, expectedType: KtType?) {
         actualType ?: return
         expectedType ?: return
@@ -1865,11 +1864,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtType?.isInlineClass() =
-        ((this as? KtNonErrorClassType)?.expandedClassSymbol as? KtNamedClassOrObjectSymbol)?.isInline == true
+        ((this as? KtNonErrorClassType)?.expandedSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun balanceType(leftType: KtType?, rightType: KtType?, forceEqualityByContent: Boolean): KtType? = when {
         leftType == null || rightType == null -> null
         leftType.isNothing && leftType.isMarkedNullable -> rightType.withNullability(KtTypeNullability.NULLABLE)
@@ -1880,7 +1879,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         else -> null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun balanceType(left: KtType?, right: KtType?): KtType? {
         if (left == null || right == null) return null
         if (left == right) return left

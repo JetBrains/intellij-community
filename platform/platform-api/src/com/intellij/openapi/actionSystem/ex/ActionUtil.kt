@@ -464,12 +464,6 @@ object ActionUtil {
     return KeymapUtil.getShortcutsForMnemonicCode(action.templatePresentation.mnemonic)
   }
 
-  @ApiStatus.Internal
-  @JvmStatic
-  fun isMakeAllToggleActionsMultiChoice(): Boolean {
-    return Registry.`is`("actionSystem.toggles.multi-choice.by.default")
-  }
-
   @ApiStatus.Experimental
   @JvmStatic
   fun getShortcutSet(id: @NonNls String): ShortcutSet {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("removal", "DEPRECATION", "ReplaceGetOrSet")
 
 package com.intellij.ui.tabs.impl.multiRow
@@ -13,7 +13,7 @@ import java.awt.Point
 import java.awt.Rectangle
 import kotlin.math.abs
 
-abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
+sealed class MultiRowLayout(protected val tabs: JBTabsImpl,
                               protected val showPinnedTabsSeparately: Boolean) : TableLayout(tabs) {
   protected var prevLayoutPassInfo: MultiRowPassInfo? = null
 
@@ -144,8 +144,8 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
       for (i in 0 until data.myVisibleInfos.size - 1) {
         val firstInfo = data.myVisibleInfos[i]
         val secondInfo = data.myVisibleInfos[i + 1]
-        val first = tabs.infoToLabel.get(firstInfo)!!
-        val second = tabs.infoToLabel.get(secondInfo)!!
+        val first = tabs.getTabLabel(firstInfo)!!
+        val second = tabs.getTabLabel(secondInfo)!!
         val firstBounds = first.bounds
         val secondBounds = second.bounds
         val between = firstBounds.maxX < point.x

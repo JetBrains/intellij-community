@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.BitUtil;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinBase;
@@ -219,5 +220,41 @@ public final class NioFiles {
    */
   public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<? super Path> callback) throws IOException {
     FileUtilRt.deleteRecursively(fileOrDirectory, callback::accept);
+  }
+
+  /**
+   * A handy stub for building tree stats collecting visitors (e.g., for estimating the number of files before deletion).
+   * It ignores exceptions and skips symlinks and NTFS reparse points.
+   */
+  public static abstract class StatsCollectingVisitor extends SimpleFileVisitor<Path> {
+    protected abstract void countDirectory(Path dir, BasicFileAttributes attrs);
+    protected abstract void countFile(Path file, BasicFileAttributes attrs);
+
+    @Override
+    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+      countDirectory(dir, attrs);
+      if (attrs.isSymbolicLink() || SystemInfoRt.isWindows && attrs.isOther() /*probably an NTFS reparse point*/) {
+        return FileVisitResult.SKIP_SUBTREE;
+      }
+      else {
+        return FileVisitResult.CONTINUE;
+      }
+    }
+
+    @Override
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+      countFile(file, attrs);
+      return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+      return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+      return FileVisitResult.CONTINUE;
+    }
   }
 }

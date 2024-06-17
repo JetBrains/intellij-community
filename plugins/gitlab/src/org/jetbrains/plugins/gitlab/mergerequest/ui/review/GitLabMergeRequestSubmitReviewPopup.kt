@@ -14,7 +14,6 @@ import com.intellij.ide.plugins.newui.InstallButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
-import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JPanel
 
@@ -62,10 +61,9 @@ internal object GitLabMergeRequestSubmitReviewPopup : CodeReviewSubmitPopupHandl
   }
 
   override val errorPresenter: ErrorStatusPresenter<Throwable> by lazy {
-    object : ErrorStatusPresenter.Text<Throwable> {
-      override fun getErrorTitle(error: Throwable): String = CollaborationToolsBundle.message("review.submit.failed")
-      override fun getErrorDescription(error: Throwable): String = ExceptionUtil.getPresentableMessage(error)
-      override fun getErrorAction(error: Throwable): Action? = null
-    }
+    ErrorStatusPresenter.simple(
+      CollaborationToolsBundle.message("review.submit.failed"),
+      descriptionProvider = ExceptionUtil::getPresentableMessage
+    )
   }
 }

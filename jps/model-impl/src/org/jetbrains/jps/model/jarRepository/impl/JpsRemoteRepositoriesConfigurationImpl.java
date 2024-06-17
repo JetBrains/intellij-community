@@ -16,12 +16,12 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public final class JpsRemoteRepositoriesConfigurationImpl extends JpsElementBase<JpsRemoteRepositoriesConfigurationImpl> implements JpsRemoteRepositoriesConfiguration{
+final class JpsRemoteRepositoriesConfigurationImpl extends JpsElementBase<JpsRemoteRepositoriesConfigurationImpl> implements JpsRemoteRepositoriesConfiguration{
   public static final JpsElementChildRole<JpsRemoteRepositoriesConfiguration> ROLE = JpsElementChildRoleBase.create("remote repositories configuration");
   
   private final List<JpsRemoteRepositoryDescription> repositories = new ArrayList<>();
 
-  public JpsRemoteRepositoriesConfigurationImpl() {
+  JpsRemoteRepositoriesConfigurationImpl() {
     this(Arrays.asList( // defaults
       new JpsRemoteRepositoryDescription("central", "Maven Central repository", "https://repo1.maven.org/maven2"),
       new JpsRemoteRepositoryDescription("jboss.community", "JBoss Community repository", "https://repository.jboss.org/nexus/content/repositories/public/")

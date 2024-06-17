@@ -2,11 +2,13 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.ui.scale.JBUIScale
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Experimental
 data class BlockBounds(val blockId: CombinedBlockId, val minY: Int, val maxY: Int) {
   val height: Int
     get() = maxY - minY

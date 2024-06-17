@@ -20,7 +20,6 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Files
 import java.nio.file.Path
@@ -66,7 +65,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.structureView.impl",
   "intellij.platform.tasks.impl",
   "intellij.platform.testRunner",
-  "intellij.platform.dependenciesToolwindow",
   "intellij.platform.rd.community",
   "intellij.remoteDev.util",
   "intellij.platform.feedback",
@@ -95,40 +93,11 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
 
 internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
   "jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
-  "intellij-coverage", LibraryPackMode.STANDALONE_SEPARATE,
 )
 
 internal fun collectPlatformModules(to: MutableCollection<String>) {
   to.addAll(PLATFORM_API_MODULES)
   to.addAll(PLATFORM_IMPLEMENTATION_MODULES)
-}
-
-internal fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPluginModules: Set<String>, context: BuildContext): Boolean {
-  val modules = HashSet<String>()
-  collectIncludedPluginModules(enabledPluginModules = enabledPluginModules, product = productLayout, result = modules, context = context)
-  modules.addAll(productLayout.productApiModules)
-  modules.addAll(productLayout.productImplementationModules)
-
-  val coverageModuleName = "intellij.platform.coverage"
-  if (modules.contains(coverageModuleName)) {
-    return true
-  }
-
-  val javaExtensionService = JpsJavaExtensionService.getInstance()
-  for (moduleName in modules) {
-    for (element in context.findRequiredModule(moduleName).dependenciesList.dependencies) {
-      if (element !is JpsModuleDependency ||
-          javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
-        continue
-      }
-
-      if (element.moduleReference.moduleName == coverageModuleName) {
-        return true
-      }
-    }
-  }
-
-  return false
 }
 
 private fun addModule(relativeJarPath: String, moduleNames: Collection<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
@@ -139,17 +108,14 @@ private fun addModule(relativeJarPath: String, moduleNames: Collection<String>, 
 }
 
 suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
-  val productLayout = context.productProperties.productLayout
   val enabledPluginModules = context.bundledPluginModules.toHashSet()
   return createPlatformLayout(
-    addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
-                          hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = enabledPluginModules, context = context),
     projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context),
     context = context,
   )
 }
 
-internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
+internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
   val jetBrainsClientModuleFilter = context.jetBrainsClientModuleFilter
   val productLayout = context.productProperties.productLayout
   val layout = PlatformLayout()
@@ -204,6 +170,18 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
     "jaxb-runtime",
     "jaxb-api",
   ))
+
+  layout.withProjectLibraries(listOf(
+    "org.codehaus.groovy:groovy",
+    "org.codehaus.groovy:groovy-jsr223",
+    "org.codehaus.groovy:groovy-json",
+    "org.codehaus.groovy:groovy-templates",
+    "org.codehaus.groovy:groovy-xml",
+  ), "groovy.jar")
+  // ultimate only
+  if (context.project.libraryCollection.findLibrary("org.apache.ivy") != null) {
+    layout.withProjectLibrary("org.apache.ivy", "groovy.jar", reason = "ivy workaround")
+  }
 
   // used by intellij.database.jdbcConsole - put to a small util module
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
@@ -263,9 +241,6 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
   explicit.addAll(toModuleItemSequence(list = PLATFORM_API_MODULES, productLayout = productLayout, reason = "PLATFORM_API_MODULES", context = context))
   explicit.addAll(toModuleItemSequence(list = PLATFORM_IMPLEMENTATION_MODULES, productLayout = productLayout, reason = "PLATFORM_IMPLEMENTATION_MODULES", context = context))
   explicit.addAll(toModuleItemSequence(list = productLayout.productApiModules, productLayout = productLayout, reason = "productApiModules", context = context))
-  if (addPlatformCoverage) {
-    explicit.add(ModuleItem(moduleName = "intellij.platform.coverage", relativeOutputFile = APP_JAR, reason = "coverage"))
-  }
 
   val explicitModuleNames = explicit.map { it.moduleName }.toList()
 
@@ -303,8 +278,11 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
       .sortedBy { it.moduleName }
       .toList(),
   )
+
+  // sqlite - used by DB and "import settings" (temporarily)
+  layout.alwaysPackToPlugin(listOf("flexmark", "okhttp", "sqlite"))
   for (item in projectLibrariesUsedByPlugins) {
-    if (!layout.excludedProjectLibraries.contains(item.libraryName)) {
+    if (!layout.isProjectLibraryExcluded(item.libraryName) && !layout.isLibraryAlwaysPackedIntoPlugin(item.libraryName)) {
       layout.includedProjectLibraries.add(item)
     }
   }
@@ -333,9 +311,6 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
   return layout
 }
 
-// sqlite - used by DB and "import settings" (temporarily)
-fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = name == "flexmark" || name == "okhttp" || name == "sqlite"
-
 internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
   val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
   val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)
@@ -355,7 +330,7 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
         }
 
         val libName = libRef.libraryName
-        if (plugin.hasLibrary(libName) || isLibraryAlwaysPackedIntoPlugin(libName)) {
+        if (plugin.hasLibrary(libName)) {
           continue
         }
 
@@ -370,7 +345,7 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
   return result
 }
 
-internal fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): Set<String> {
+fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): Set<String> {
   val result = LinkedHashSet<String>()
   result.addAll(context.bundledPluginModules)
   pluginsToPublish.mapTo(result) { it.mainModule }

@@ -47,6 +47,9 @@ public interface PyClassStub extends NamedStub<PyClass> {
   @Nullable
   String getDocString();
 
+  @Nullable
+  String getDeprecationMessage();
+
   /**
    * @return literal text of expressions in the base classes list.
    */

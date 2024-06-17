@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.getRequestTitle;
 
+@ApiStatus.Internal
 public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvider {
   @Override
   public @NotNull ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {

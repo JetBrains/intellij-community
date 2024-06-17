@@ -68,6 +68,10 @@ public abstract class PerformFixesModalTask implements SequentialTask {
     return true;
   }
 
+  public int getNumberOfSucceededFixes() {
+    return myResultCount.get(Result.SUCCESS);
+  }
+
   public void doRun(ProgressIndicator indicator) {
     indicator.setIndeterminate(false);
     while (!isDone()) {

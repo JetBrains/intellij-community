@@ -46,4 +46,10 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() 
             publish("producer")
         }
     }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.9.20+")
+    fun testForwardDeclarations() {
+        doTest()
+    }
 }

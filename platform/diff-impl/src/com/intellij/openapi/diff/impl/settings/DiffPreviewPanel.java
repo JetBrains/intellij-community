@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.diff.impl.settings;
 
@@ -32,6 +32,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -46,6 +47,7 @@ import static com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffS
 /**
  * The panel from the Settings, that allows to see changes to diff/merge coloring scheme right away.
  */
+@ApiStatus.Internal
 class DiffPreviewPanel implements PreviewPanel {
   private final JPanel myPanel;
   private final MyViewer myViewer;

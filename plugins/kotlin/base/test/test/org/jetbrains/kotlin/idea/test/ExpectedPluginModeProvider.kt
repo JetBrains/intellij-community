@@ -17,17 +17,19 @@ interface ExpectedPluginModeProvider {
     val pluginMode: KotlinPluginMode
 }
 
-// do not expose
-private fun ExpectedPluginModeProvider.assertKotlinPluginMode() {
-    val expectedPluginMode = pluginMode
-    val actualPluginMode = KotlinPluginModeProvider.currentPluginMode
+fun ExpectedPluginModeProvider.assertKotlinPluginMode() = assertKotlinPluginMode(
+    expectedPluginMode = pluginMode,
+)
 
-    Assert.assertEquals(
-        "Invalid Kotlin plugin detected: $actualPluginMode, but $expectedPluginMode was expected",
-        expectedPluginMode,
-        actualPluginMode,
-    )
-}
+// do not expose
+internal fun assertKotlinPluginMode(
+    expectedPluginMode: KotlinPluginMode,
+    actualPluginMode: KotlinPluginMode = KotlinPluginModeProvider.currentPluginMode,
+) = Assert.assertEquals(
+    "Invalid Kotlin plugin detected: $actualPluginMode, but $expectedPluginMode was expected",
+    expectedPluginMode,
+    actualPluginMode,
+)
 
 /**
  * Executes a [setUp] function after enabling the K1 or K2 Kotlin plugin in system properties.
@@ -55,4 +57,3 @@ fun <T> T.setUpWithKotlinPlugin(
 ) where T : UsefulTestCase,
         T : ExpectedPluginModeProvider =
     setUpWithKotlinPlugin(testRootDisposable, setUp)
-

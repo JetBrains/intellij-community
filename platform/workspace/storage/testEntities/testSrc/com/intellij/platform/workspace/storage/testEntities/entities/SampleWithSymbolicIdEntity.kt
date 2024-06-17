@@ -21,7 +21,7 @@ interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   val children: List<@Child ChildWpidSampleEntity>
   val nullableData: String?
 
-  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+  override val symbolicId: SampleSymbolicId
     get() = SampleSymbolicId(stringProperty)
 
   //region generated code
@@ -66,7 +66,7 @@ interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySampleWithSymbolicIdEntity(
   entity: SampleWithSymbolicIdEntity,
   modification: SampleWithSymbolicIdEntity.Builder.() -> Unit,
 ): SampleWithSymbolicIdEntity {
@@ -112,7 +112,7 @@ interface ChildWpidSampleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChildWpidSampleEntity(
   entity: ChildWpidSampleEntity,
   modification: ChildWpidSampleEntity.Builder.() -> Unit,
 ): ChildWpidSampleEntity {

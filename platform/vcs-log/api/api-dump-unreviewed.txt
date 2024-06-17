@@ -117,9 +117,6 @@ com.intellij.vcs.log.VcsLogDiffHandler
 - f:getHash1():com.intellij.vcs.log.Hash
 - f:getHash2():com.intellij.vcs.log.Hash
 - hashCode():I
-com.intellij.vcs.log.VcsLogFileHistoryProvider
-- a:canShowFileHistory(java.util.Collection,java.lang.String):Z
-- a:showFileHistory(java.util.Collection,java.lang.String):V
 com.intellij.vcs.log.VcsLogFilter
 - a:getDisplayText():java.lang.String
 - a:getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey

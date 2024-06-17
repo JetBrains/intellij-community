@@ -6,7 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.j2k.PostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
@@ -21,7 +21,7 @@ internal class ClearUnknownInferenceLabelsProcessing : PostProcessing {
         target.deleteLabelComments { comment -> comment.text.asInferenceLabel() != null }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun computeAppliers(target: PostProcessingTarget, converterContext: NewJ2kConverterContext): List<PostProcessingApplier> {
         error("Not supported in K1 J2K")
     }
@@ -32,7 +32,7 @@ internal class ClearExplicitLabelsProcessing : PostProcessing {
         target.deleteLabelComments { comment -> comment.text.asExplicitLabel() != null }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun computeAppliers(target: PostProcessingTarget, converterContext: NewJ2kConverterContext): List<PostProcessingApplier> {
         error("Not supported in K1 J2K")
     }

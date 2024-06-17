@@ -7,8 +7,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+@Internal
 public final class ReferenceDescriptor {
   @NotNull
   public static final Function<PsiReference, ReferenceDescriptor> MAPPER = psiReference -> {

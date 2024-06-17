@@ -188,7 +188,7 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
  * In contrast to [CombinedDiffBaseEditorForEachCaretHandler] actions,
  * are not bound to particular [com.intellij.openapi.editor.Editor] instance and works even for collapsed blocks.
  */
-abstract class CombinedGlobalBlockNavigationAction : DumbAwareAction() {
+internal abstract class CombinedGlobalBlockNavigationAction : DumbAwareAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
@@ -199,7 +199,7 @@ abstract class CombinedGlobalBlockNavigationAction : DumbAwareAction() {
   }
 }
 
-class CombinedCaretToNextBlockAction : CombinedGlobalBlockNavigationAction() {
+internal class CombinedCaretToNextBlockAction : CombinedGlobalBlockNavigationAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
@@ -209,7 +209,7 @@ class CombinedCaretToNextBlockAction : CombinedGlobalBlockNavigationAction() {
   }
 }
 
-class CombinedCaretToPrevBlockAction : CombinedGlobalBlockNavigationAction() {
+internal class CombinedCaretToPrevBlockAction : CombinedGlobalBlockNavigationAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
@@ -219,7 +219,7 @@ class CombinedCaretToPrevBlockAction : CombinedGlobalBlockNavigationAction() {
   }
 }
 
-class CombinedToggleBlockCollapseAction : CombinedGlobalBlockNavigationAction() {
+internal class CombinedToggleBlockCollapseAction : CombinedGlobalBlockNavigationAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
@@ -227,7 +227,7 @@ class CombinedToggleBlockCollapseAction : CombinedGlobalBlockNavigationAction() 
   }
 }
 
-class CombinedToggleBlockCollapseAllAction : DumbAwareAction() {
+internal class CombinedToggleBlockCollapseAllAction : DumbAwareAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 

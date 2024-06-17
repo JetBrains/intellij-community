@@ -12,6 +12,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       Assertions.assertNull(javaHomeProperty)
       Assertions.assertNull(gradleLoggingLevel)
       Assertions.assertNull(parallel)
+      Assertions.assertNull(isolatedProjects)
       Assertions.assertNull(jvmOptions)
     }
   }
@@ -29,6 +30,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       Assertions.assertNull(javaHomeProperty)
       Assertions.assertNull(gradleLoggingLevel)
       Assertions.assertNull(parallel)
+      Assertions.assertNull(isolatedProjects)
       Assertions.assertNull(jvmOptions)
     }
   }
@@ -43,6 +45,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       Assertions.assertNull(javaHomeProperty)
       Assertions.assertNull(gradleLoggingLevel)
       Assertions.assertNull(parallel)
+      Assertions.assertNull(isolatedProjects)
       Assertions.assertNull(jvmOptions)
     }
   }
@@ -53,6 +56,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       setProperty(GRADLE_JAVA_HOME_PROPERTY, "javaHome")
       setProperty(GRADLE_LOGGING_LEVEL_PROPERTY, "info")
       setProperty(GRADLE_PARALLEL_PROPERTY, "true")
+      setProperty(GRADLE_ISOLATED_PROJECTS_PROPERTY, "true")
       setProperty(GRADLE_JVM_OPTIONS_PROPERTY, "-Xmx20G")
     }
     assertGradlePropertiesFile {
@@ -62,6 +66,8 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       Assertions.assertEquals(gradlePropertiesPath, gradleLoggingLevel?.location)
       Assertions.assertEquals(true, parallel?.value)
       Assertions.assertEquals(gradlePropertiesPath, parallel?.location)
+      Assertions.assertEquals(true, isolatedProjects?.value)
+      Assertions.assertEquals(gradlePropertiesPath, isolatedProjects?.location)
       Assertions.assertEquals( "-Xmx20G", jvmOptions?.value)
       Assertions.assertEquals(gradlePropertiesPath, jvmOptions?.location)
     }
@@ -74,6 +80,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       setProperty(GRADLE_JAVA_HOME_PROPERTY, "value2")
       setProperty(GRADLE_LOGGING_LEVEL_PROPERTY, "value3")
       setProperty(GRADLE_PARALLEL_PROPERTY, "true")
+      setProperty(GRADLE_ISOLATED_PROJECTS_PROPERTY, "true")
       setProperty(GRADLE_JVM_OPTIONS_PROPERTY, "-Xmx20G")
       setProperty("another.property.2", "value4")
     }
@@ -84,6 +91,8 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
       Assertions.assertEquals(gradlePropertiesPath, gradleLoggingLevel?.location)
       Assertions.assertEquals(true, parallel?.value)
       Assertions.assertEquals(gradlePropertiesPath, parallel?.location)
+      Assertions.assertEquals(true, isolatedProjects?.value)
+      Assertions.assertEquals(gradlePropertiesPath, isolatedProjects?.location)
       Assertions.assertEquals("-Xmx20G", jvmOptions?.value)
       Assertions.assertEquals(gradlePropertiesPath, jvmOptions?.location)
     }

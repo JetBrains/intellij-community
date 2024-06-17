@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
@@ -673,7 +673,7 @@ public class DisposerTest  {
     Disposable root = Disposer.newDisposable("test_root");
 
     Disposable[] children = IntStream.range(0, N).mapToObj(i -> Disposer.newDisposable("child " + i)).toArray(Disposable[]::new);
-    PlatformTestUtil.newPerformanceTest(name.getMethodName(), () -> {
+    PerformanceTestUtil.newPerformanceTest(name.getMethodName(), () -> {
         for (Disposable child : children) {
           Disposer.register(root, child);
         }

@@ -78,8 +78,9 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!EditorModificationUtil.requestWriting(editor)) return;
 
-    DataContext context = CustomizedDataContext.create(dataContext, dataId ->
-      PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : null);
+    DataContext context = CustomizedDataContext.withSnapshot(dataContext, sink -> {
+      sink.set(PasteAction.TRANSFERABLE_PROVIDER, () -> transferable);
+    });
 
     final Project project = editor.getProject();
     final Document document = editor.getDocument();

@@ -11,9 +11,11 @@ interface ImportBlockRangeProvider {
     val EP_NAME: ExtensionPointName<ImportBlockRangeProvider> = ExtensionPointName.create("com.intellij.importBlockRangeProvider")
 
     @JvmStatic
-    fun getRange(file: PsiFile): TextRange? = EP_NAME.extensionList.firstNotNullOfOrNull { it.getImportBlockRange(file) }
+    fun getRange(file: PsiFile): TextRange? = EP_NAME.findFirstSafe { it.isEnabledForFile(file) }?.getImportBlockRange(file)
+    fun isFileSupported(file: PsiFile): Boolean = EP_NAME.findFirstSafe { it.isEnabledForFile(file) } != null
 
   }
 
+  fun isEnabledForFile(file: PsiFile): Boolean
   fun getImportBlockRange(file: PsiFile): TextRange?
 }

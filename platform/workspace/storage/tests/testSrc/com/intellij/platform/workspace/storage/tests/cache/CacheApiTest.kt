@@ -94,7 +94,7 @@ class CacheApiTest {
 
     val snapshot2 = snapshot.toBuilder().also {
       val entity = it.resolve(NameId("MyName"))!!
-      it.modifyEntity(entity) {
+      it.modifyNamedEntity(entity) {
         this.myName = "AnotherName"
       }
     }.toSnapshot()
@@ -129,7 +129,7 @@ class CacheApiTest {
 
     val snapshot2 = snapshot.toBuilder().also {
       val entity = it.resolve(NameId("MyName"))!!
-      it.modifyEntity(entity) {
+      it.modifyNamedEntity(entity) {
         this.myName = "DifferentName"
       }
     }.toSnapshot()
@@ -156,13 +156,13 @@ class CacheApiTest {
 
     val builder = snapshot.toBuilder()
     val entity = builder.resolve(NameId("MyName"))!!
-    builder.modifyEntity(entity) {
+    builder.modifyNamedEntity(entity) {
       this.myName = "AnotherName"
     }
-    builder.modifyEntity(entity) {
+    builder.modifyNamedEntity(entity) {
       this.myName = "ThirdName"
     }
-    builder.modifyEntity(entity) {
+    builder.modifyNamedEntity(entity) {
       this.myName = "FourthName"
     }
     val snapshot2 = builder.toSnapshot()
@@ -195,19 +195,19 @@ class CacheApiTest {
 
     val snapshot2 = snapshot.toBuilder().also {
       val entity = it.resolve(NameId("MyName"))!!
-      it.modifyEntity(entity) {
+      it.modifyNamedEntity(entity) {
         this.myName = "AnotherName"
       }
     }.toSnapshot()
     val snapshot3 = snapshot2.toBuilder().also {
       val entity = it.resolve(NameId("AnotherName"))!!
-      it.modifyEntity(entity) {
+      it.modifyNamedEntity(entity) {
         this.myName = "ThirdName"
       }
     }.toSnapshot()
     val snapshot4 = snapshot3.toBuilder().also {
       val entity = it.resolve(NameId("ThirdName"))!!
-      it.modifyEntity(entity) {
+      it.modifyNamedEntity(entity) {
         this.myName = "FourthName"
       }
     }.toSnapshot()
@@ -239,13 +239,13 @@ class CacheApiTest {
 
     val snapshot2 = snapshot.toBuilder().also {
       val entity = it.resolve(NameId("MyName"))!!
-      it.modifyEntity(entity) {
+      it.modifyNamedEntity(entity) {
         this.myName = "AnotherName"
       }
     }.toSnapshot()
     val snapshot3 = snapshot2.toBuilder().also {
       val entity = it.resolve(NameId("AnotherName"))!!
-      it.modifyEntity(entity) {
+      it.modifyNamedEntity(entity) {
         this.myName = "ThirdName"
       }
     }.toSnapshot()
@@ -281,7 +281,7 @@ class CacheApiTest {
 
     val snapshot2 = snapshot.update {
       val parent = it.resolve(NameId("MyName"))!!
-      it.modifyEntity(parent) {
+      it.modifyNamedEntity(parent) {
         this.myName = "AnotherName"
       }
       it addEntity NamedChildEntity("prop3", AnotherSource) {
@@ -372,7 +372,7 @@ class CacheApiTest {
 
     val snapshot2 = snapshot.toBuilder().also {
       val entity = it.resolve(NameId("MyName"))!!
-      it.modifyEntity(entity) {
+      it.modifyNamedEntity(entity) {
         this.entitySource = AnotherSource
       }
     }.toSnapshot()
@@ -438,7 +438,7 @@ class CacheApiTest {
 
     val snapshot2 = snapshot.toBuilder().also {
       val entity = it.resolve(NameId("MyName"))!!
-      it.modifyEntity(entity) {
+      it.modifyNamedEntity(entity) {
         this.myName = "NewName"
       }
     }.toSnapshot()
@@ -481,7 +481,7 @@ class CacheApiTest {
     val snapshot2 = snapshot.toBuilder().also {
       val parent = it.resolve(NameId("MyName"))!!
       val child = parent.children.first()
-      it.modifyEntity(child) {
+      it.modifyNamedChildEntity(child) {
         this.childProperty = "AnotherProp"
       }
     }.toSnapshot()
@@ -606,7 +606,7 @@ class CacheApiTest {
     snapshot.cached(query)
 
     val newSnapshot = snapshot.toBuilder().also {
-      it.modifyEntity(it.resolve(NameId("AnotherEntity"))!!) {
+      it.modifyNamedEntity(it.resolve(NameId("AnotherEntity"))!!) {
         this.entitySource = MySource
       }
     }.toSnapshot()
@@ -633,7 +633,7 @@ class CacheApiTest {
     snapshot.cached(query)
 
     val newSnapshot = snapshot.toBuilder().also {
-      it.modifyEntity(it.resolve(NameId("AnotherEntity"))!!) {
+      it.modifyNamedEntity(it.resolve(NameId("AnotherEntity"))!!) {
         this.entitySource = MySource
       }
     }.toSnapshot()
@@ -829,7 +829,7 @@ class CacheApiTest {
 
     val newSnapshot = snapshot.toBuilder().also {
       val child = it.entities(NamedChildEntity::class.java).single()
-      it.modifyEntity(child) {
+      it.modifyNamedChildEntity(child) {
         this.childProperty = "AnotherValue"
       }
     }.toSnapshot()

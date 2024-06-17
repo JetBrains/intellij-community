@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 
-class CombinedDiffManagerImpl(val project: Project) : CombinedDiffManager {
+private class CombinedDiffManagerImpl(private val project: Project) : CombinedDiffManager {
   override fun createProcessor(diffPlace: String?): CombinedDiffComponentProcessor {
     val model = CombinedDiffModel(project)
     model.context.putUserData(DiffUserDataKeys.PLACE, diffPlace)
@@ -19,7 +19,7 @@ class CombinedDiffManagerImpl(val project: Project) : CombinedDiffManager {
 }
 
 private class MyGoToChangePopupAction(val model: CombinedDiffModel) : PresentableGoToChangePopupAction.Default<PresentableChange>() {
-  private val viewer get() = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
+ private val viewer get() = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
   override fun getChanges(): ListSelection<out PresentableChange> {
     val changes = model.requests.map { it.producer }.filterIsInstance<PresentableChange>()

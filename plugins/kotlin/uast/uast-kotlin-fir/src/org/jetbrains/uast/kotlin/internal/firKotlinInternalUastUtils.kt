@@ -6,19 +6,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.*
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.annotations.*
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.providers.DecompiledPsiDeclarationProvider.findPsi
+import org.jetbrains.kotlin.analysis.api.platform.DecompiledPsiDeclarationProvider.findPsi
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.lazyPub
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -37,7 +43,7 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lazyPub {
 @OptIn(KaAllowAnalysisOnEdt::class)
 internal inline fun <R> analyzeForUast(
     useSiteKtElement: KtElement,
-    action: KtAnalysisSession.() -> R
+    action: KaSession.() -> R
 ): R = allowAnalysisOnEdt {
     @OptIn(KaAllowAnalysisFromWriteAction::class)
     allowAnalysisFromWriteAction {
@@ -45,9 +51,9 @@ internal inline fun <R> analyzeForUast(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun containingKtClass(
-    ktConstructorSymbol: KtConstructorSymbol,
+    ktConstructorSymbol: KaConstructorSymbol,
 ): KtClass? {
     return when (val psi = ktConstructorSymbol.psi) {
         is KtClass -> psi
@@ -56,7 +62,7 @@ internal fun containingKtClass(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun toPsiClass(
     ktType: KtType,
     source: UElement?,
@@ -75,15 +81,15 @@ internal fun toPsiClass(
     )
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun toPsiMethod(
-    functionSymbol: KtFunctionLikeSymbol,
+    functionSymbol: KaFunctionLikeSymbol,
     context: KtElement,
 ): PsiMethod? {
     // `inline` w/ `reified` type param from binary dependency,
     // which we can't find source PSI, so fake it
     if (functionSymbol.origin == KtSymbolOrigin.LIBRARY &&
-        (functionSymbol as? KtFunctionSymbol)?.isInline == true &&
+        (functionSymbol as? KaFunctionSymbol)?.isInline == true &&
         functionSymbol.typeParameters.any { it.isReified }
     ) {
         functionSymbol.getContainingJvmClassName()?.let { fqName ->
@@ -109,7 +115,7 @@ internal fun toPsiMethod(
             // For synthetic members in enum classes, `psi` points to their containing enum class.
             if (psi is KtClass && psi.isEnum()) {
                 val lc = psi.toLightClass() ?: return null
-                lc.methods.find { it.name == (functionSymbol as? KtFunctionSymbol)?.name?.identifier }?.let { return it }
+                lc.methods.find { it.name == (functionSymbol as? KaFunctionSymbol)?.name?.identifier }?.let { return it }
             }
 
             // Default primary constructor
@@ -142,16 +148,16 @@ internal fun toPsiMethod(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun toPsiMethodForDeserialized(
-    functionSymbol: KtFunctionLikeSymbol,
+    functionSymbol: KaFunctionLikeSymbol,
     context: KtElement,
     psi: KtFunction?,
 ): PsiMethod? {
 
     fun equalSignatures(psiMethod: PsiMethod): Boolean {
         val methodParameters: Array<PsiParameter> = psiMethod.parameterList.parameters
-        val symbolParameters: List<KtValueParameterSymbol> = functionSymbol.valueParameters
+        val symbolParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
         if (methodParameters.size != symbolParameters.size) {
             return false
         }
@@ -186,15 +192,30 @@ private fun toPsiMethodForDeserialized(
 
     fun PsiClass.lookup(): PsiMethod? {
         val candidates =
-            if (functionSymbol is KtConstructorSymbol)
+            if (functionSymbol is KaConstructorSymbol)
                 constructors.filter { it.parameterList.parameters.size == functionSymbol.valueParameters.size }
-            else
-                methods.filter { it.name == psi?.name }
+            else {
+                val jvmName = when (functionSymbol) {
+                    is KtPropertyGetterSymbol -> {
+                        functionSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets = setOf(PROPERTY_GETTER, null))
+                    }
+                    is KtPropertySetterSymbol -> {
+                        functionSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets = setOf(PROPERTY_SETTER, null))
+                    }
+                    else -> {
+                        functionSymbol.getJvmNameFromAnnotation()
+                    }
+                }
+                val id = jvmName
+                    ?: functionSymbol.callableIdIfNonLocal?.callableName?.identifierOrNullIfSpecial
+                    ?: psi?.name
+                methods.filter { it.name == id }
+            }
         return when (candidates.size) {
             0 -> {
                 if (psi != null) {
                     UastFakeDeserializedSourceLightMethod(psi, this@lookup)
-                } else if (functionSymbol is KtFunctionSymbol) {
+                } else if (functionSymbol is KaFunctionSymbol) {
                     UastFakeDeserializedSymbolLightMethod(
                         functionSymbol.createPointer(),
                         functionSymbol.name.identifier,
@@ -213,7 +234,9 @@ private fun toPsiMethodForDeserialized(
     }
 
     // Deserialized member function
-    functionSymbol.callableId?.classId?.let { classId ->
+    val classId = psi?.containingClass()?.getClassId()
+        ?: functionSymbol.callableId?.classId
+    if (classId != null) {
         toPsiClass(
             buildClassType(classId),
             source = null,
@@ -225,7 +248,7 @@ private fun toPsiMethodForDeserialized(
     return if (psi != null) {
         // Lint/UAST IDE: with deserialized PSI
         psi.containingKtFile.findFacadeClass()?.lookup()
-    } else if (functionSymbol is KtFunctionSymbol) {
+    } else if (functionSymbol is KaFunctionSymbol) {
         // Lint/UAST CLI: attempt to find the binary class
         //   with the facade fq name from the resolved symbol
         functionSymbol.getContainingJvmClassName()?.let { fqName ->
@@ -236,7 +259,26 @@ private fun toPsiMethodForDeserialized(
     } else null
 }
 
-context(KtAnalysisSession)
+/**
+ * Returns a `JvmName` annotation value.
+ *
+ * @param allowedUseSiteTargets If non-empty, only annotations with the specified use-site targets are checked.
+ */
+private fun KtAnnotatedSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets: Set<AnnotationUseSiteTarget?> = emptySet()): String? {
+    for (annotation in annotations[JvmStandardClassIds.JVM_NAME_CLASS_ID]) {
+        if (allowedUseSiteTargets.isEmpty() || annotation.useSiteTarget in allowedUseSiteTargets) {
+            val firstArgumentExpression = annotation.arguments.firstOrNull()?.expression
+            if (firstArgumentExpression is KaConstantAnnotationValue) {
+                return firstArgumentExpression.constantValue.value as? String
+            }
+            break
+        }
+    }
+
+    return null
+}
+
+context(KaSession)
 internal fun toPsiType(
     ktType: KtType,
     source: UElement?,
@@ -250,7 +292,7 @@ internal fun toPsiType(
         config
     )
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun toPsiType(
     ktType: KtType,
     containingLightDeclaration: PsiModifierListOwner?,
@@ -283,9 +325,9 @@ internal fun toPsiType(
     ) ?: UastErrorType
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun receiverType(
-    ktCall: KtCallableMemberCall<*, *>,
+    ktCall: KaCallableMemberCall<*, *>,
     source: UElement,
     context: KtElement,
 ): PsiType? {
@@ -304,14 +346,14 @@ internal fun receiverType(
     )
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal val KtType.typeForValueClass: Boolean
     get() {
-        val symbol = expandedClassSymbol as? KtNamedClassOrObjectSymbol ?: return false
+        val symbol = expandedSymbol as? KaNamedClassOrObjectSymbol ?: return false
         return symbol.isInline
     }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun isInheritedGenericType(ktType: KtType?): Boolean {
     if (ktType == null) return false
     return ktType is KtTypeParameterType &&
@@ -321,7 +363,7 @@ internal fun isInheritedGenericType(ktType: KtType?): Boolean {
         nullability(ktType) != KtTypeNullability.NON_NULLABLE
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun nullability(ktType: KtType?): KtTypeNullability? {
     if (ktType == null) return null
     if (ktType is KtErrorType) return null
@@ -331,15 +373,15 @@ internal fun nullability(ktType: KtType?): KtTypeNullability? {
         KtTypeNullability.NON_NULLABLE
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
-    return (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
+    return (ktCallableDeclaration.getSymbol() as? KaCallableSymbol)?.returnType
 }
 
 /**
  * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KtLibraryModule].
  */
-context(KtAnalysisSession)
+context(KaSession)
 internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement? {
     if (symbol.origin == KtSymbolOrigin.LIBRARY) {
         // UAST/Lint CLI: use [DecompiledPsiDeclarationProvider] / [KotlinStaticPsiDeclarationFromBinaryModuleProvider]
@@ -348,7 +390,7 @@ internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement?
             ?: symbol.psi
     }
 
-    if (symbol is KtCallableSymbol) {
+    if (symbol is KaCallableSymbol) {
         if (symbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KtSymbolOrigin.SUBSTITUTION_OVERRIDE) {
             val originalSymbol = symbol.unwrapFakeOverrides
             if (originalSymbol !== symbol) {
@@ -360,12 +402,24 @@ internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement?
     return symbol.psi
 }
 
-internal fun KtElement.toPsiElementAsLightElement(): PsiElement? {
-    val candidates = toLightElements().takeIf { it.isNotEmpty() } ?: return null
+internal fun KtElement.toPsiElementAsLightElement(
+    sourcePsi: KtExpression? = null
+): PsiElement? {
     if (this is KtProperty) {
-        // Weigh [PsiField]
-        return candidates.firstOrNull { psiMember -> psiMember is PsiField }
-            ?: candidates.firstOrNull()
+        with(getAccessorLightMethods()) {
+            // Weigh [PsiField]
+            backingField?.let { return it }
+            val readWriteAccess = sourcePsi?.readWriteAccess()
+            when {
+                readWriteAccess?.isWrite == true -> {
+                    setter?.let { return it }
+                }
+                readWriteAccess?.isRead == true -> {
+                    getter?.let { return it }
+                }
+                else -> {}
+            }
+        }
     }
-    return candidates.firstOrNull()
+    return toLightElements().firstOrNull()
 }

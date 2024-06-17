@@ -140,7 +140,9 @@
 
     <trustedProjectsLocator implementation="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectsLocator"/>
 
-    <recoveryAction implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataRecoveryAction"/>
+    <recoveryAction implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemRecoveryAction"/>
+
+    <externalSystemRecoveryContributor implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectDataRecoveryContributor$Factory"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider$Listener"

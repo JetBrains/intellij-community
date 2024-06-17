@@ -39,7 +39,7 @@ interface SelfLinkedEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySelfLinkedEntity(
   entity: SelfLinkedEntity,
   modification: SelfLinkedEntity.Builder.() -> Unit,
 ): SelfLinkedEntity {

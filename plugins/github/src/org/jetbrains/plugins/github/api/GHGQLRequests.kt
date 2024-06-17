@@ -14,6 +14,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.api.util.GHSchemaPreview
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 object GHGQLRequests {
   object User {
@@ -63,6 +64,14 @@ object GHGQLRequests {
                                               "repository")
     }
 
+    fun loadPullRequestTemplates(repository: GHRepositoryCoordinates): GQLQuery<List<GHRepositoryPullRequestTemplate>?> {
+      return GQLQuery.OptionalTraversedParsedList(repository.serverPath.toGraphQLUrl(), GHGQLQueries.getPullRequestTemplates,
+                                                  mapOf("repoOwner" to repository.repositoryPath.owner,
+                                                        "repoName" to repository.repositoryPath.repository),
+                                                  GHRepositoryPullRequestTemplate::class.java,
+                                                  "repository", "pullRequestTemplates")
+    }
+
     fun getProtectionRules(repository: GHRepositoryCoordinates,
                            pagination: GraphQLRequestPagination? = null): GQLQuery<GraphQLPagedResponseDataDTO<GHBranchProtectionRule>> {
       return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.getProtectionRules,
@@ -108,6 +117,17 @@ object GHGQLRequests {
   }
 
   object PullRequest {
+    fun findOneId(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPRIdentifier?> {
+      return GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findPullRequestId,
+                                              mapOf("repoOwner" to repository.repositoryPath.owner,
+                                                    "repoName" to repository.repositoryPath.repository,
+                                                    "number" to number),
+                                              GHPRIdentifier::class.java,
+                                              "repository", "pullRequest").apply {
+        acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
+      }
+    }
+
     fun create(repository: GHRepositoryCoordinates,
                repositoryId: String,
                baseRefName: String,

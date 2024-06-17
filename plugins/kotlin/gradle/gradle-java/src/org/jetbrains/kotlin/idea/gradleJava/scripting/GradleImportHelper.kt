@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFileBase
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -135,7 +134,6 @@ internal class LoadKtGradleConfigurationAction : AnAction() {
 }
 
 fun getGradleVersion(project: Project, settings: GradleProjectSettings): String {
-    return GradleInstallationManager.getGradleVersion(
-        service<GradleInstallationManager>().getGradleHome(project, settings.externalProjectPath)?.path
-    ) ?: GradleVersion.current().version
+    val gradleHome = service<GradleInstallationManager>().getGradleHome(project, settings.externalProjectPath)?.path
+    return GradleInstallationManager.getGradleVersion(gradleHome) ?: GradleVersion.current().version
 }

@@ -28,31 +28,7 @@ class IndexingTestUtil(private val project: Project) {
     Disposer.register(parentDisposable, listenerDisposable)
 
     ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {
-      /*
-        ... DEADLOCK: there are two afterWriteActionFinished, but first one is not delivered yet :DEADLOCK ...
-        at com.intellij.testFramework.IndexingTestUtil$waitAfterWriteAction$1.afterWriteActionFinished(IndexingTestUtil.kt:30)
-        ...
-        at jdk.proxy2.$Proxy45.afterWriteActionFinished(jdk.proxy2/Unknown Source)
-        at com.intellij.openapi.application.impl.ApplicationImpl.fireAfterWriteActionFinished(ApplicationImpl.java:1015)
-        at com.intellij.openapi.application.impl.ApplicationImpl.afterWriteActionFinished(ApplicationImpl.java:1170)
-        ...
-        at com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction(ApplicationImpl.java:857)
-        at com.intellij.openapi.application.WriteAction.run(WriteAction.java:84)
-        at com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.lambda$reloadPsi$18(PushedFilePropertiesUpdaterImpl.java:454)
-        ...
-        at com.intellij.openapi.project.MergingTaskQueue$QueuedTask.executeTask(MergingTaskQueue.java:329)
-        at com.intellij.openapi.project.DumbServiceSyncTaskQueue.doRunTaskSynchronously(DumbServiceSyncTaskQueue.java:86)
-        ...
-        at com.intellij.openapi.project.DumbServiceSyncTaskQueue.processQueue(DumbServiceSyncTaskQueue.java:71)
-        at com.intellij.openapi.project.DumbServiceSyncTaskQueue$1.afterWriteActionFinished(DumbServiceSyncTaskQueue.java:100)
-        ...
-        at jdk.proxy2.$Proxy45.afterWriteActionFinished(jdk.proxy2/Unknown Source)
-        ...
-        at com.intellij.openapi.application.impl.ApplicationImpl.fireAfterWriteActionFinished(ApplicationImpl.java:1015)
-        ...
-        at com.intellij.openapi.application.WriteAction.compute(WriteAction.java:95)
-        ...
-       */
+
       // Volatile: any thread could be write thread
       @Volatile
       private var nested: Int = 1 // 1 because at least one write action is currently happenings
@@ -173,8 +149,6 @@ class IndexingTestUtil(private val project: Project) {
   companion object {
     @JvmStatic
     fun waitUntilIndexesAreReadyInAllOpenedProjects() {
-      // FileBasedIndexTumbler currently does not work in tests, because it cannot wait for DumbServiceSyncTaskQueue.
-      // This method should probably be removed after DumbServiceSyncTaskQueue is dropped
       for (project in ProjectManager.getInstance().openProjects) {
         IndexingTestUtil(project).waitUntilFinished()
       }

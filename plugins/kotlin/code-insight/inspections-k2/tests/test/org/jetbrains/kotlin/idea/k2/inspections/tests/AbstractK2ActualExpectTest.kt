@@ -3,25 +3,23 @@ package org.jetbrains.kotlin.idea.k2.inspections.tests
 
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.inspections.runInspection
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.NoActualForExpectInspection
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinNoActualForExpectInspection
+import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixtureTestCase
 import java.io.File
+abstract class AbstractK2ActualExpectTest : KotlinLightMultiplatformCodeInsightFixtureTestCase() {
 
-abstract class AbstractK2ActualExpectTest : AbstractK2MultiplatformTest() {
-    override fun setUp() {
-        super.setUp()
-    }
+    fun doTest(testPath: String) {
+        configureModuleStructure(testPath)
 
-    override fun doTest(testPath: String) {
-        super.doTest(testPath)
-        val configFile = File(testPath, "missing_actuals.txt")
+        val configFile = File(testPath)
         assertExists(configFile)
         val fileText = configFile.readText()
         val missingActualDirective = InTextDirectivesUtils.findLineWithPrefixRemoved(fileText, "// MISSING_ACTUALS:")
-        assertNotNull("Missing actuals declaration", missingActualDirective)
+        assertNotNull("Missing MISSING_ACTUALS declaration in config file", missingActualDirective)
         val expectedMissingActualModules = missingActualDirective!!.substringAfter(":").trim()
             .takeIf { !it.isEmpty() }?.split(",")?.map { it.trim() } ?: emptyList()
         val problemDescriptors = runInspection(
-            NoActualForExpectInspection::class.java,
+            KotlinNoActualForExpectInspection::class.java,
             project,
             settings = null
         ).problemElements.values.map { it.descriptionTemplate }
@@ -33,7 +31,7 @@ abstract class AbstractK2ActualExpectTest : AbstractK2MultiplatformTest() {
         } else {
             problemDescriptor.substringAfter(":").trim().split(",").map { it.trim() }.filter { !it.isBlank() }
         }
-        assertSameElements(expectedMissingActualModules, missingActuals)
+        assertSameElements(missingActuals, expectedMissingActualModules)
     }
 
     override fun tearDown() {

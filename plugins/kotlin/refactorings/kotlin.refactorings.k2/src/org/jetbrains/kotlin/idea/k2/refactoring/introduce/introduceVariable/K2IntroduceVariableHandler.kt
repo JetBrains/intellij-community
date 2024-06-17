@@ -15,8 +15,8 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.util.application
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -387,8 +387,8 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             val psiToCheck = referencesFromExpressionToExtract.flatMap { reference ->
                 // in case of an unresolved reference consider all containers applicable
                 val symbol = reference.mainReference.resolveToSymbol() ?: return@flatMap emptyList()
-                val implicitReceivers = reference.resolveCall()
-                    ?.singleCallOrNull<KtCallableMemberCall<*, *>>()
+                val implicitReceivers = reference.resolveCallOld()
+                    ?.singleCallOrNull<KaCallableMemberCall<*, *>>()
                     ?.getImplicitReceivers()
 
                 buildList {
@@ -396,7 +396,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
                     if (symbol.origin == KtSymbolOrigin.SOURCE) {
                         addIfNotNull(symbol.psi)
-                    } else if (symbol is KtValueParameterSymbol && symbol.isImplicitLambdaParameter) {
+                    } else if (symbol is KaValueParameterSymbol && symbol.isImplicitLambdaParameter) {
                         addIfNotNull(symbol.getFunctionLiteralByImplicitLambdaParameterSymbol())
                     }
                 }

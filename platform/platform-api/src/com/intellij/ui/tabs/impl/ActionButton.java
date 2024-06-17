@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NotNull;
 
@@ -151,12 +152,8 @@ class ActionButton implements ActionListener {
   private @NotNull AnActionEvent createAnEvent(InputEvent inputEvent, int modifiers) {
     Presentation presentation = myAction.getTemplatePresentation().clone();
     DataContext parent = DataManager.getInstance().getDataContext(myInplaceButton);
-    DataContext dataContext = CustomizedDataContext.create(parent, dataId -> {
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        Object object = myTabInfo.getObject();
-        if (object instanceof VirtualFile) return object;
-      }
-      return null;
+    DataContext dataContext = CustomizedDataContext.withSnapshot(parent, sink -> {
+      sink.set(CommonDataKeys.VIRTUAL_FILE, ObjectUtils.tryCast(myTabInfo.getObject(), VirtualFile.class));
     });
     return new AnActionEvent(inputEvent, dataContext, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation,
                              ActionManager.getInstance(), modifiers);

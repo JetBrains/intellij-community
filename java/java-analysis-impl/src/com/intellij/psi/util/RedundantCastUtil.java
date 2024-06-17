@@ -1110,8 +1110,9 @@ public final class RedundantCastUtil {
         }
       }
     }
-    else if (parent instanceof PsiLocalVariable) {
-      return ((PsiLocalVariable)parent).getTypeElement().isInferredType();
+    else if (parent instanceof PsiLocalVariable localVar) {
+      return localVar.getTypeElement().isInferredType() &&
+             (!castType.equals(opType) || PsiPolyExpressionUtil.isPolyExpression(operand));
     }
     return false;
   }

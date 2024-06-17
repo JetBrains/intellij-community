@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -19,10 +20,7 @@ import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -32,6 +30,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -89,6 +88,21 @@ public final class SearchEverywhereHeader {
     mySelectedTab.everywhereAction.setEverywhere(
       !mySelectedTab.everywhereAction.isEverywhere());
     myToolbar.updateActionsImmediately();
+  }
+
+  @ApiStatus.Internal
+  public void changeScope(@NotNull BiFunction<? super ScopeDescriptor, ? super List<ScopeDescriptor>, @Nullable ScopeDescriptor> processor) {
+    if (mySelectedTab.everywhereAction == null) return;
+    if (mySelectedTab.everywhereAction instanceof ScopeChooserAction sca) {
+      List<ScopeDescriptor> scopes = new ArrayList<>();
+      sca.processScopes(scopes::add);
+      ScopeDescriptor currentScope = sca.getSelectedScope();
+      ScopeDescriptor newScope = processor.apply(currentScope, scopes);
+      if (newScope != null && newScope != currentScope) {
+        sca.onScopeSelected(newScope);
+        myToolbar.updateActionsImmediately();
+      }
+    }
   }
 
   private @NotNull ActionToolbar createToolbar(@Nullable AnAction showInFindToolWindowAction) {

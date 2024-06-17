@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -33,16 +33,16 @@ fun KtNameReferenceExpression.getFunctionLiteralByImplicitLambdaParameter(): KtF
 }
 
 
-context(KtAnalysisSession)
-fun KtNameReferenceExpression.getImplicitLambdaParameterSymbol(): KtValueParameterSymbol? {
-    val parameterSymbol = mainReference.resolveToSymbol() as? KtValueParameterSymbol ?: return null
+context(KaSession)
+fun KtNameReferenceExpression.getImplicitLambdaParameterSymbol(): KaValueParameterSymbol? {
+    val parameterSymbol = mainReference.resolveToSymbol() as? KaValueParameterSymbol ?: return null
     if (!parameterSymbol.isImplicitLambdaParameter) return null
     return parameterSymbol
 }
 
-context(KtAnalysisSession)
-fun KtValueParameterSymbol.getFunctionLiteralByImplicitLambdaParameterSymbol(): KtFunctionLiteral? {
+context(KaSession)
+fun KaValueParameterSymbol.getFunctionLiteralByImplicitLambdaParameterSymbol(): KtFunctionLiteral? {
     if (!isImplicitLambdaParameter) return null
-    val lambda = getContainingSymbol() as? KtAnonymousFunctionSymbol ?: return null
+    val lambda = getContainingSymbol() as? KaAnonymousFunctionSymbol ?: return null
     return lambda.psi as? KtFunctionLiteral
 }

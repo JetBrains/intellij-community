@@ -186,6 +186,6 @@ abstract class AbstractExtractionDataAnalyzer<KotlinType, P : IMutableParameter<
             }
         }
 
-        return functionNames.toList().takeIf { it.isNotEmpty() } ?: listOf(Registry.stringValue("kotlin.extract.function.default.name"))
+        return functionNames.toList().takeIf { it.isNotEmpty() } ?: listOf(KotlinNameSuggester.suggestNameByName(Registry.stringValue("kotlin.extract.function.default.name"), validator))
     }
 }

@@ -41,11 +41,12 @@ class VirtualFileIndexTest {
     val entity = builder addEntity VFUEntity("hello", virtualFileManager.getOrCreateFromUrl(fileUrl), SampleEntitySource("test"))
     assertEquals(fileUrl, entity.fileProperty.url)
 
-    val modifiedEntity = builder.modifyEntity(entity) {
+    val modifiedEntity = builder.modifyVFUEntity(entity) {
       this.fileProperty = virtualFileManager.getOrCreateFromUrl(fileUrl2)
       this.fileProperty = virtualFileManager.getOrCreateFromUrl(fileUrl3)
-    } as VFUEntityImpl
+    }
     assertEquals(fileUrl3, modifiedEntity.fileProperty.url)
+    modifiedEntity as WorkspaceEntityBase
     val virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles(modifiedEntity.id)
     assertEquals(1, virtualFiles.size)
     assertEquals(modifiedEntity.fileProperty, virtualFiles.first())
@@ -156,10 +157,12 @@ class VirtualFileIndexTest {
     assertEquals(fileUrlB, entityB.fileProperty.url)
     assertEquals(entityB.fileProperty, virtualFile.first())
 
-    entityB = diff.modifyEntity((entityB as VFUEntity).from(diff)) {
+    entityB = diff.modifyVFUEntity((entityB as VFUEntity).from(diff)) {
       fileProperty = virtualFileManager.getOrCreateFromUrl(fileUrlC)
-    } as VFUEntityImpl
+    }
     assertEquals(entityA.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
+
+    entityB as WorkspaceEntityBase
     virtualFile = diff.indexes.virtualFileIndex.getVirtualFiles(entityB.id)
     assertNotNull(virtualFile)
     assertEquals(fileUrlC, entityB.fileProperty.url)
@@ -191,8 +194,8 @@ class VirtualFileIndexTest {
     val entityB = builder addEntity VFUEntity("foo", virtualFileManager.getOrCreateFromUrl(fileUrlB), SampleEntitySource("test"))
     builder addEntity VFUEntity("baz", virtualFileManager.getOrCreateFromUrl(fileUrlC), SampleEntitySource("test"))
     builder.assertConsistency()
-    assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityA as VFUEntityImpl).id).first())
-    assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityB as VFUEntityImpl).id).first())
+    assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityA as WorkspaceEntityBase).id).first())
+    assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityB as WorkspaceEntityBase).id).first())
     assertSame(entityA.fileProperty, entityB.fileProperty)
 
     assertEquals(fileUrlA, entityA.fileProperty.url)

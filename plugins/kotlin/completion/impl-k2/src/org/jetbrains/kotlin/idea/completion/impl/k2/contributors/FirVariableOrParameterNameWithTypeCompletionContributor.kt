@@ -8,16 +8,16 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.NameUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -48,7 +48,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
     private val nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>> = getNameFiltersWithUserPrefixes()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
@@ -73,7 +73,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         completeClassesFromIndices(variableOrParameter, visibilityChecker, lookupNamesAdded, weighingContext)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeFromParametersInFile(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
@@ -128,7 +128,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeClassesFromScopeContext(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
@@ -146,7 +146,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeClassesFromIndices(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
@@ -161,10 +161,10 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun addSuggestions(
         variableOrParameter: KtCallableDeclaration,
-        symbol: KtClassifierSymbol,
+        symbol: KaClassifierSymbol,
         userPrefix: String,
         lookupNamesAdded: MutableSet<String>,
         weighingContext: WeighingContext,
@@ -172,11 +172,11 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
     ) {
         ProgressManager.checkCanceled()
 
-        if (symbol is KtClassOrObjectSymbol && symbol.classKind.isObject) return
+        if (symbol is KaClassOrObjectSymbol && symbol.classKind.isObject) return
 
         val shortNameString = when (symbol) {
-            is KtTypeParameterSymbol -> symbol.name.asString()
-            is KtClassLikeSymbol -> symbol.name?.asString()
+            is KaTypeParameterSymbol -> symbol.name.asString()
+            is KaClassLikeSymbol -> symbol.name?.asString()
         } ?: return
 
         val typeLookupElement = lookupElementFactory.createTypeLookupElement(symbol) ?: return
@@ -262,24 +262,24 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
-    private fun getAvailableTypeParameters(scopes: KtScope): Sequence<KtTypeParameterSymbol> =
-        scopes.getClassifierSymbols().filterIsInstance<KtTypeParameterSymbol>()
+    context(KaSession)
+    private fun getAvailableTypeParameters(scopes: KtScope): Sequence<KaTypeParameterSymbol> =
+        scopes.getClassifierSymbols().filterIsInstance<KaTypeParameterSymbol>()
 
     private fun getDeclarationFromReceiverTypeReference(typeReference: KtTypeReference): KtCallableDeclaration? {
         return (typeReference.parent as? KtCallableDeclaration)?.takeIf { it.receiverTypeReference == typeReference }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun typeIsVisible(
         type: KtType,
         visibilityChecker: CompletionVisibilityChecker,
-        availableTypeParameters: Set<KtTypeParameterSymbol> = emptySet()
+        availableTypeParameters: Set<KaTypeParameterSymbol> = emptySet()
     ): Boolean = when (type) {
         is KtTypeParameterType -> type.symbol in availableTypeParameters
 
         is KtUsualClassType -> {
-            visibilityChecker.isVisible(type.classSymbol) && type.ownTypeArguments.all { typeArgument ->
+            visibilityChecker.isVisible(type.symbol) && type.ownTypeArguments.all { typeArgument ->
                 when (typeArgument) {
                     is KtStarTypeProjection -> true
                     is KtTypeArgumentWithVariance -> typeIsVisible(typeArgument.type, visibilityChecker, availableTypeParameters)

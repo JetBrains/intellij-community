@@ -95,10 +95,16 @@ public final class GitIndexUtil {
   public static @NotNull List<StagedFileOrDirectory> listTreeForRawPaths(@NotNull GitRepository repository,
                                                                          @NotNull List<String> filePaths,
                                                                          @NotNull VcsRevisionNumber revision) throws VcsException {
-    List<StagedFileOrDirectory> result = new ArrayList<>();
-    VirtualFile root = repository.getRoot();
+    return listTreeForRawPaths(repository.getProject(), repository.getRoot(), filePaths, revision);
+  }
 
-    GitLineHandler h = new GitLineHandler(repository.getProject(), root, GitCommand.LS_TREE);
+  public static @NotNull List<StagedFileOrDirectory> listTreeForRawPaths(@Nullable Project project,
+                                                                         @NotNull VirtualFile repositoryRoot,
+                                                                         @NotNull List<String> filePaths,
+                                                                         @NotNull VcsRevisionNumber revision) throws VcsException {
+    List<StagedFileOrDirectory> result = new ArrayList<>();
+
+    GitLineHandler h = new GitLineHandler(project, repositoryRoot, GitCommand.LS_TREE);
     h.addParameters(revision.asString());
     h.endOptions();
     h.addParameters(filePaths);
@@ -107,13 +113,14 @@ public final class GitIndexUtil {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
-        ContainerUtil.addIfNotNull(result, parseListTreeRecord(root, line));
+        ContainerUtil.addIfNotNull(result, parseListTreeRecord(repositoryRoot, line));
       }
     });
     Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
 
     return result;
   }
+
 
   private static @Nullable StagedFile parseListFilesStagedRecord(@NotNull VirtualFile root, @NotNull String line) {
     try {

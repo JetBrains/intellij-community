@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
@@ -124,7 +124,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
  *
  * @return true if [typeToCheck] doesn't contain unresolved components in the scope of [scope] and is "denotable"
  */
-context(KtAnalysisSession)
+context(KaSession)
 fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: MutableSet<TypeParameter>): Boolean {
     require(scope.containingFile is KtFile)
     ((typeToCheck as? KtTypeParameterType)?.symbol?.psi as? KtTypeParameter)?.let { typeParameter ->
@@ -136,18 +136,18 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
     }
     if (typeToCheck is KtNonErrorClassType) {
 
-        val classSymbol = typeToCheck.classSymbol
-        if ((classSymbol as? KtAnonymousObjectSymbol)?.superTypes?.all { isResolvableInScope(it, scope, typeParameters) } == true) {
+        val classSymbol = typeToCheck.symbol
+        if ((classSymbol as? KaAnonymousObjectSymbol)?.superTypes?.all { isResolvableInScope(it, scope, typeParameters) } == true) {
             return true
         }
 
-        if ((classSymbol as? KtClassOrObjectSymbol)?.classId == null) {
+        if ((classSymbol as? KaClassOrObjectSymbol)?.classId == null) {
             //because org.jetbrains.kotlin.fir.FirVisibilityChecker.Default always return true for local classes,
             //let's be pessimistic here and prohibit local classes completely
             return false
         }
 
-        if (classSymbol is KtSymbolWithVisibility) {
+        if (classSymbol is KaSymbolWithVisibility) {
             val fileSymbol = (scope.containingFile as KtFile).getFileSymbol()
             if (!isVisible(classSymbol, fileSymbol, null, scope)) {
                 return false
@@ -170,10 +170,10 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
 }
 
 
-context(KtAnalysisSession)
+context(KaSession)
 fun approximateWithResolvableType(type: KtType?, scope: PsiElement): KtType? {
     if (type == null) return null
-    if (!(type is KtNonErrorClassType && type.classSymbol is KtAnonymousObjectSymbol)
+    if (!(type is KtNonErrorClassType && type.symbol is KaAnonymousObjectSymbol)
         && isResolvableInScope(type, scope, mutableSetOf())
     ) return type
     return type.getAllSuperTypes().firstOrNull {

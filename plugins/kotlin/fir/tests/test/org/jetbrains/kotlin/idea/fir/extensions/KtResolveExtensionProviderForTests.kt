@@ -7,10 +7,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.*
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
@@ -96,18 +96,18 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
 
     override fun createNavigationTargetsProvider(): KtResolveExtensionNavigationTargetsProvider {
         return object : KtResolveExtensionNavigationTargetsProvider() {
-            override fun KtAnalysisSession.getNavigationTargets(element: KtElement): Collection<PsiElement> =
+            override fun KaSession.getNavigationTargets(element: KtElement): Collection<PsiElement> =
                 element.parentsWithSelf
                     .filterIsInstance<KtDeclaration>()
                     .firstNotNullOfOrNull { declaration ->
                         val fqNameParts = when (val symbol = declaration.getSymbol()) {
-                            is KtFunctionSymbol -> {
+                            is KaFunctionSymbol -> {
                                 val callableId = symbol.callableId
                                     ?: return@firstNotNullOfOrNull null
                                 callableId.className?.pathSegments().orEmpty() + callableId.callableName
                             }
 
-                            is KtClassLikeSymbol -> {
+                            is KaClassLikeSymbol -> {
                                 symbol.classId?.relativeClassName?.pathSegments()
                                     ?: return@firstNotNullOfOrNull null
                             }

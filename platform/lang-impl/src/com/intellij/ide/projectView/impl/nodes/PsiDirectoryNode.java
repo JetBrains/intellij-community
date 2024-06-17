@@ -64,6 +64,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   public PsiDirectoryNode(PsiDirectoryNode original) {
     super(original.getProject(), original.getValue(), original.getSettings());
+    setParent(original.getParent());
     myFilter = original.getFilter();
   }
 

@@ -22,9 +22,9 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
-import com.intellij.platform.workspace.storage.toSnapshot
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.EventDispatcher
 import com.intellij.util.PathUtil
@@ -107,7 +107,13 @@ class LibraryBridgeImpl(
   }
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
-    return getModifiableModel(MutableEntityStorage.from(librarySnapshot.storage.toSnapshot()))
+    val storage = librarySnapshot.storage
+    val immutable = when (storage) {
+      is ImmutableEntityStorage -> storage
+      is MutableEntityStorage -> storage.toSnapshot()
+      else -> error("Unexpected storage $this")
+    }
+    return getModifiableModel(MutableEntityStorage.from(immutable))
   }
 
   override fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx {

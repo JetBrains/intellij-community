@@ -17,6 +17,7 @@ import com.intellij.testFramework.junit5.resources.providers.PathInfo.Companion.
 import com.intellij.testFramework.junit5.resources.providers.ResourceProvider
 import com.intellij.testFramework.junit5.resources.providers.ResourceStorage
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.Extension
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -147,8 +148,9 @@ class ResourceExtensionImpl<R : Any, PR : ResourceProvider<R>>(private val provi
     createNew(context, automatic = true, deleteOnExit = true)
   }
 
+  @Suppress("SSBasedInspection") // Disposing process should never be cancelled nor timed out
   @RequiresBlockingContext
-  private fun destroyAutomatically(context: ExtensionContext): Unit = timeoutRunBlocking {
+  private fun destroyAutomatically(context: ExtensionContext): Unit = runBlocking {
     destroy(context)
   }
 

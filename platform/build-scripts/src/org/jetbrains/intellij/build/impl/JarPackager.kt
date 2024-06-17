@@ -9,7 +9,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.lang.ImmutableZipFile
+import com.intellij.util.lang.ZipFile
 import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
@@ -365,9 +365,6 @@ class JarPackager private constructor(
         val libName = libRef.libraryName
         if (includeProjectLib) {
           if (platformLayout!!.hasLibrary(libName) || layout.hasLibrary(libName)) {
-            //if (item.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
-            //  Span.current().addEvent("$libName is not included into module $moduleName as explicitly included in platform layout")
-            //}
             continue
           }
 
@@ -378,8 +375,8 @@ class JarPackager private constructor(
           projectLibraryData = ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName")
           libToMetadata.put(element.library!!, projectLibraryData)
         }
-        else if (isLibraryAlwaysPackedIntoPlugin(libName)) {
-          platformLayout!!.findProjectLibrary(libName)?.let {
+        else if (platformLayout != null && platformLayout.isLibraryAlwaysPackedIntoPlugin(libName)) {
+          platformLayout.findProjectLibrary(libName)?.let {
             throw IllegalStateException("Library $libName must not be included into platform layout: $it")
           }
 
@@ -653,7 +650,7 @@ private suspend fun isSeparateJar(fileName: String, file: Path, jarPath: String)
 
   val filePreventingMerging = "META-INF/sisu/javax.inject.Named"
   val result = withContext(Dispatchers.IO) {
-    ImmutableZipFile.load(file).use {
+    ZipFile.load(file).use {
       it.getResource(filePreventingMerging) != null
     }
   }

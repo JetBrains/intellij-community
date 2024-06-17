@@ -1,0 +1,10 @@
+interface I {
+}
+
+fun newFun(i: I, s: String){}
+
+fun I.foo() {
+    with("a") {
+        newFun(this@foo, this)
+    }
+}

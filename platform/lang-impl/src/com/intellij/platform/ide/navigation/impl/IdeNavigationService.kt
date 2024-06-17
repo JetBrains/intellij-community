@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation.impl
 
-import com.intellij.codeInsight.navigation.activateFileIfOpen
 import com.intellij.codeInsight.navigation.shouldOpenAsNative
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PsiNavigationSupport
@@ -11,8 +10,12 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.Utils.isAsyncDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
@@ -30,13 +33,10 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
-internal class IdeNavigationService(private val project: Project) : NavigationService {
-
+private class IdeNavigationService(private val project: Project) : NavigationService {
   /**
-   * - `permits = 1` means at any given time only 1 request is being handled.
+   * - `permits = 1` means at any given time only one request is being handled.
    * - [BufferOverflow.DROP_OLDEST] makes each new navigation request cancel the previous one.
    */
   private val semaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.DROP_OLDEST)
@@ -175,15 +175,34 @@ private suspend fun tryActivateOpenFile(project: Project, request: SourceNavigat
   if (!options.preserveCaret && !options.requestFocus) {
     return false
   }
-  if (shouldOpenAsNative(request.file)) {
+
+  val elementRange = request.elementRangeMarker?.takeIf { it.isValid }?.textRange  ?: return false
+
+  val file = request.file
+  if (shouldOpenAsNative(file)) {
     return false
   }
 
-  val elementRange = request.elementRangeMarker?.takeIf { it.isValid }?.textRange  ?: return false
-  return activateFileIfOpen(project = project,
-                            vFile = request.file,
-                            range = elementRange,
-                            openOptions = FileEditorOpenOptions(requestFocus = options.requestFocus, reuseOpen = options.requestFocus))
+  val openOptions = FileEditorOpenOptions(requestFocus = options.requestFocus, reuseOpen = options.requestFocus)
+
+  val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerEx
+  val existingComposite = fileEditorManager.getComposite(file)
+  val fileEditors = existingComposite?.allEditors ?: fileEditorManager.openFile(file = file, options = openOptions).allEditors
+
+  for (editor in fileEditors) {
+    if (editor is TextEditor) {
+      val text = editor.editor
+      val offset = readAction { text.caretModel.offset }
+      if (elementRange.containsOffset(offset)) {
+        if (existingComposite != null) {
+          // select the file
+          fileEditorManager.openFile(file = file, options = openOptions)
+        }
+        return true
+      }
+    }
+  }
+  return false
 }
 
 private suspend fun navigateNonSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl) {

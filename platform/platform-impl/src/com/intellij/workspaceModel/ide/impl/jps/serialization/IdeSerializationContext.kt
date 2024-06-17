@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
-import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -21,7 +21,7 @@ abstract class BaseIdeSerializationContext : SerializationContext {
     get() = CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList
   override val customModuleRootsSerializers: List<CustomModuleRootsSerializer>
     get() = CUSTOM_MODULE_ROOTS_SERIALIZER_EP.extensionList
-  override val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<ModuleSettingsBase>>
+  override val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<ModuleSettingsFacetBridgeEntity>>
     get() = CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensionList
 
   companion object {
@@ -29,13 +29,13 @@ abstract class BaseIdeSerializationContext : SerializationContext {
       ExtensionPointName.create("com.intellij.workspaceModel.customModuleComponentSerializer")
     val CUSTOM_MODULE_ROOTS_SERIALIZER_EP: ExtensionPointName<CustomModuleRootsSerializer> =
       ExtensionPointName.create("com.intellij.workspaceModel.customModuleRootsSerializer")
-    val CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP: ExtensionPointName<CustomFacetRelatedEntitySerializer<ModuleSettingsBase>> =
+    val CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP: ExtensionPointName<CustomFacetRelatedEntitySerializer<ModuleSettingsFacetBridgeEntity>> =
       ExtensionPointName.create("com.intellij.workspaceModel.customFacetRelatedEntitySerializer")
 
   }
 }
 
-open class IdeSerializationContext(
+internal class IdeSerializationContext(
   override val virtualFileUrlManager: VirtualFileUrlManager,
   override val fileContentReader: JpsFileContentReader,
   override val fileInDirectorySourceNames: FileInDirectorySourceNames,

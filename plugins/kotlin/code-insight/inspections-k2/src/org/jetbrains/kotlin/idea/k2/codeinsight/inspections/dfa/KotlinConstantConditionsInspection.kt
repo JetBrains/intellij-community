@@ -25,15 +25,14 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -273,8 +272,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 val right = loopRange.right
                 // Reported separately by EmptyRangeInspection
                 return left != null && right != null &&
-                        left.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null &&
-                        right.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null
+                        left.evaluate() != null &&
+                        right.evaluate() != null
             }
         }
         return false
@@ -440,8 +439,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
 
         private fun isCallToBuiltInMethod(call: KtCallExpression, methodName: String): Boolean {
             return analyze(call) {
-                val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return@analyze false
-                val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return@analyze false
+                val functionCall: KaFunctionCall<*> = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return@analyze false
+                val target: KaFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return@analyze false
                 if (target.name.asString() != methodName) return@analyze false
                 return StandardNames.BUILT_INS_PACKAGE_FQ_NAME == target.callableId?.packageName
             }
@@ -461,7 +460,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return isCallToBuiltInMethod(call, "also")
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun isAssertion(parent: PsiElement?, value: Boolean): Boolean {
             return when (parent) {
                 is KtBinaryExpression ->
@@ -480,8 +479,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     if (!value) return false
                     val valueArgList = parent.parent as? KtValueArgumentList ?: return false
                     val call = valueArgList.parent as? KtCallExpression ?: return false
-                    val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return false
-                    val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return false
+                    val functionCall: KaFunctionCall<*> = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
+                    val target: KaFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return false
                     val name = target.name.asString()
                     if (name != "assert" && name != "require" && name != "check") return false
                     StandardNames.BUILT_INS_PACKAGE_FQ_NAME == target.callableId?.packageName
@@ -528,7 +527,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return true
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
             var parent = expression.parent
             if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
@@ -588,14 +587,14 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         }
                         if (receiver is KtSimpleNameExpression) {
                             val symbol = receiver.mainReference.resolveToSymbol()
-                            if (symbol is KtEnumEntrySymbol) {
+                            if (symbol is KaEnumEntrySymbol) {
                                 // ordinal() call on explicit enum constant
                                 return true
                             }
                         }
                     }
 
-                    if (expression.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null) return true
+                    if (expression.evaluate() != null) return true
                     if (expression is KtSimpleNameExpression &&
                         (parent is KtValueArgument || parent is KtContainerNode && parent.parent is KtArrayAccessExpression)
                     ) {
@@ -662,15 +661,15 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return !expression.isUsedAsExpression()
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun isZero(expression: KtExpression?): Boolean {
             expression ?: return false
-            val constantValue = expression.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)?.value
+            val constantValue = expression.evaluate()?.value
             return constantValue is Number && constantValue.toDouble() == 0.0
         }
 
         // x || return y
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun isAndOrConditionWithNothingOperand(expression: KtExpression, token: KtSingleValueToken): Boolean {
             if (expression !is KtBinaryExpression || expression.operationToken != token) return false
             val type = expression.right?.getKtType()

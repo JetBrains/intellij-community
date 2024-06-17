@@ -5,15 +5,17 @@ import com.intellij.terminal.completion.ShellArgumentSuggestion
 import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
+import com.intellij.terminal.completion.spec.ShellAliasSuggestion
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellOptionSpec
+import com.intellij.util.execution.ParametersListUtil
 
 internal class ShellCommandTreeBuilder private constructor(
   private val contextProvider: ShellRuntimeContextProvider,
   private val generatorsExecutor: ShellDataGeneratorsExecutor,
   private val commandSpecManager: ShellCommandSpecsManager,
-  private val arguments: List<String>
+  initialArguments: List<String>
 ) {
   companion object {
     suspend fun build(
@@ -29,9 +31,24 @@ internal class ShellCommandTreeBuilder private constructor(
       builder.buildSubcommandTree(root)
       return root
     }
+
+    /**
+     * Maximum number of times an alias may be resolved while building the tree.
+     * This limit prevents infinite alias expansion in case of some recursive definition.
+     *
+     * Examples of recursive aliasing:
+     *  - git test1 -> git test2, git test2 -> git test1
+     *  - git test -> git repeat test, git repeat test -> git test
+     *  - git test1 -> git -v test1
+     *    becomes
+     *    git test1 -> git -v test1 -> git -v -v test1 -> git -v -v -v test1 -> ...
+     */
+    private const val MAX_ALIAS_RESOLUTIONS = 10
   }
 
   private var curIndex = 0
+  private var aliasesResolved = 0
+  private var arguments = initialArguments
 
   private suspend fun buildSubcommandTree(root: ShellCommandNode) {
     while (curIndex < arguments.size) {
@@ -50,13 +67,18 @@ internal class ShellCommandTreeBuilder private constructor(
       }
       else {
         val node = suggestion?.let { createChildNode(name, it, root) } ?: ShellUnknownNode(name, root)
-        root.children.add(node)
-        curIndex++
-        if (node is ShellCommandNode) {
-          buildSubcommandTree(node)
+        if (node !is ShellAliasNode) {
+          root.children.add(node)
+          curIndex++
         }
-        else if (node is ShellOptionNode) {
-          buildOptionTree(node)
+        when (node) {
+          is ShellCommandNode -> buildSubcommandTree(node)
+          is ShellOptionNode -> buildOptionTree(node)
+          is ShellAliasNode -> {
+            val newArgs = ParametersListUtil.parse(node.spec.aliasValue)
+            arguments = arguments.take(curIndex) + newArgs + arguments.drop(curIndex + 1)
+            aliasesResolved++
+          }
         }
       }
     }
@@ -133,6 +155,9 @@ internal class ShellCommandTreeBuilder private constructor(
       is ShellCommandSpec -> createSubcommandNode(name, suggestion, parent)
       is ShellOptionSpec -> ShellOptionNode(name, suggestion, parent)
       is ShellArgumentSuggestion -> ShellArgumentNode(name, suggestion.argument, parent)
+      is ShellAliasSuggestion ->
+        if (aliasesResolved < MAX_ALIAS_RESOLUTIONS) ShellAliasNode(name, suggestion, parent)
+        else ShellUnknownNode(name, parent)
       else -> throw IllegalArgumentException("Unknown suggestion: $suggestion")
     }
   }

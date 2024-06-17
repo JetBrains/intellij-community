@@ -92,7 +92,7 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
     }
     configureModules(context.project, data, ideCompilerConfiguration, defaultCompilerExtension)
 
-    MavenProjectImporterBase.removeOutdatedCompilerConfigSettings(context.project)
+    MavenProjectImporterUtil.removeOutdatedCompilerConfigSettings(context.project)
   }
 
   override fun preProcess(module: Module,

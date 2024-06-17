@@ -217,7 +217,23 @@ internal fun generatePluginClassPath(pluginEntries: List<Pair<PluginBuildDescrip
       putMoreLikelyPluginJarsFirst(pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)
     }
 
-    writeEntry(out = out, files = files, pluginDir = pluginDir, pluginDescriptorContent = moduleOutputPatcher.getPatchedPluginXml(pluginAsset.layout.mainModule))
+    var pluginDescriptorContent: ByteArray? = null
+    for (file in files) {
+      if (file.toString().endsWith(".jar")) {
+        pluginDescriptorContent = HashMapZipFile.load(file).use { zip ->
+          zip.getRawEntry("META-INF/plugin.xml")?.getData(zip)
+        }
+        if (pluginDescriptorContent != null) {
+          break
+        }
+      }
+    }
+
+    if (pluginDescriptorContent == null) {
+      pluginDescriptorContent = moduleOutputPatcher.getPatchedPluginXml(pluginAsset.layout.mainModule)
+    }
+
+    writeEntry(out = out, files = files, pluginDir = pluginDir, pluginDescriptorContent = pluginDescriptorContent)
   }
 
   out.close()

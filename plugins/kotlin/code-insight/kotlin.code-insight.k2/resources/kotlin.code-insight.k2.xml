@@ -126,10 +126,17 @@
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2NameValidatorProviderImpl"/>
 
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.KotlinCopyPasteReferenceProcessor"/>
+
     <registryKey key="kotlin.k2.allow.constant.computation.on.EDT" defaultValue="true" description="When enabled, error about analysis on EDT is disabled"/>
 
     <registryKey key="kotlin.k2.kmp.enabled"
                  description="Enable KMP support in the Kotlin K2 plugin for all platforms"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.k2.kmp.wasm.enabled"
+                 description="Enable KMP support in the K2 mode for WASM platform"
                  defaultValue="false"
                  restartRequired="true"/>
 
@@ -211,7 +218,7 @@
       <!--        <option bundle="messages.KotlinBundle"-->
       <!--              optionId="hints.parameters.blacklisted"-->
       <!--              enabledByDefault="false"-->
-      <!--              nameKey="hints.settings.parameters.blacklisted"-->
+      <!--              nameKey="hints.settings.excluded.parameters"-->
       <!--              descriptionKey="inlay.kotlin.parameters.hints.blacklisted"/>-->
     </codeInsight.declarativeInlayProvider>
 
@@ -227,10 +234,16 @@
 
     <vcs.codeVisionLanguageContext language="kotlin"
                                    implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
+
+    <callHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.calls.KotlinCallHierarchyProvider"/>
+    <hierarchy.referenceProcessor implementation="org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.calls.KotlinCallReferenceProcessor"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageQuickFixesRegistrar"/>
 
     <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.MultiplatformSupportAvailability"/>
+    <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.WasmMultiplatformSupportAvailability"/>
   </extensions>
 </idea-plugin>

@@ -23,7 +23,6 @@ import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -198,8 +197,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
       val author = detailsState.value.author
       val potentialReviewersLoadingFlow = flow {
         runCatching {
-          repositoryDataService.loadPotentialReviewersAsync().await()
-            .filter { it.id != author?.id }
+          repositoryDataService.loadPotentialReviewers().filter { it.id != author?.id }
         }.also {
           emit(it)
         }

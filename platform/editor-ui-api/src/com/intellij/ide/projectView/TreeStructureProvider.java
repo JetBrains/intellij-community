@@ -4,6 +4,7 @@ package com.intellij.ide.projectView;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,8 @@ import java.util.Collection;
  * @see ProjectViewNodeDecorator
  */
 public interface TreeStructureProvider extends PossiblyDumbAware {
+
+  @ApiStatus.Internal
   ProjectExtensionPointName<TreeStructureProvider> EP = new ProjectExtensionPointName<>("com.intellij.treeStructureProvider");
 
   /**
@@ -44,7 +47,10 @@ public interface TreeStructureProvider extends PossiblyDumbAware {
    *                 {@link com.intellij.openapi.actionSystem.PlatformDataKeys})
    * @return the data object, or null if no data object can be returned by this provider.
    * @see com.intellij.openapi.actionSystem.DataProvider
+   *
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.EdtDataRule} instead.
    */
+  @Deprecated(forRemoval = true)
   default @Nullable Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
     return null;
   }

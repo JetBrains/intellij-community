@@ -14,7 +14,6 @@ import com.intellij.platform.workspace.storage.impl.asString
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap
 import com.intellij.platform.workspace.storage.impl.containers.putAll
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
@@ -23,6 +22,7 @@ import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -40,6 +40,7 @@ internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl,
 internal typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
 
 @Suppress("UNCHECKED_CAST")
+@ApiStatus.Internal
 public open class VirtualFileIndex internal constructor(
   internal open val entityId2VirtualFileUrl: EntityId2Vfu,
   internal open val vfu2EntityId: Vfu2EntityId,
@@ -81,14 +82,12 @@ public open class VirtualFileIndex internal constructor(
     }
   }
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<WorkspaceEntity> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
       entityData.createEntity(entityStorage)
     } ?: emptySequence()
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   public fun findEntitiesToPropertyNameByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
@@ -138,7 +137,8 @@ public open class VirtualFileIndex internal constructor(
 
   public class MutableVirtualFileIndex private constructor(
     // `@Suppress("RedundantVisibilityModifier")` is used to keep the `internal` modifier and make ApiChecker happy
-    //  Otherwise it thinks that these fields are exposed to the public
+    //  Otherwise it thinks that these fields are exposed to the public.
+    //  This supress can be removed once IJ platform will migrate to kotlin 2.0
     //
     // Do not write to [entityId2VirtualFileUrl] and [vfu2EntityId] directly! Create a dedicated method for that
     // and call [startWrite] before write.

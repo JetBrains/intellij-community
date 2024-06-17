@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.jetbrains.python.packaging.common.PackagesKt.normalizePackageName;
 
 /**
  * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.
@@ -94,6 +95,7 @@ public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferenc
           if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
             return StreamEx
               .of(packageName, PyPsiPackageUtil.INSTANCE.moduleToPackageName(packageName, ""))
+              .map(pkg -> normalizePackageName(pkg))
               .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
               .map(pkg -> new PyPackageRequirementsInspection.InstallPackageQuickFix(pkg));
           }

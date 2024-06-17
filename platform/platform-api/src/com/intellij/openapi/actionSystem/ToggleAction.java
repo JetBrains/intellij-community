@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.NlsActions.ActionDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,14 +42,24 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text, Presentation.NULL_STRING, icon);
   }
 
+  /**
+   * Set {@link Presentation#isMultiChoice()} flag on by default.
+   *
+   * @see #isSoftMultiChoice()
+   */
   @Override
   @NotNull
   Presentation createTemplatePresentation() {
     Presentation presentation = super.createTemplatePresentation();
-    if (ActionUtil.isMakeAllToggleActionsMultiChoice()) {
-      presentation.setMultiChoice(true);
-    }
+    presentation.setMultiChoice(true);
     return presentation;
+  }
+
+  /**
+   * Tells whether multi-choice behavior is activated by Alt modifier (aka "soft multi-choice")
+   * */
+  public boolean isSoftMultiChoice() {
+    return true;
   }
 
   @Override

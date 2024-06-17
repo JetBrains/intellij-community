@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.ContentEntry;
@@ -28,6 +29,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -35,7 +37,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
@@ -69,10 +70,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   protected void tearDown() throws Exception {
     try {
       if (myProject != null) {
-        FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-        for (VirtualFile openFile : editorManager.getOpenFiles()) {
-          editorManager.closeFile(openFile);
-        }
+        FileEditorManagerEx.getInstanceEx(myProject).closeAllFiles();
       }
     }
     catch (Throwable e) {
@@ -404,7 +402,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
       String actualText = StringUtil.convertLineSeparators(myFile.getText());
       if (!Objects.equals(expectedText, actualText)) {
-        throw new FileComparisonFailure("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
+        throw new FileComparisonFailedError("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
       }
 
       EditorTestUtil.verifyCaretAndSelectionState(myEditor, caretState);

@@ -11,11 +11,11 @@ import com.intellij.openapi.ui.Queryable
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.projectView.getStructureDeclarations
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinStructureViewElement
@@ -45,7 +45,7 @@ class KotlinFirStructureViewElement(
     constructor(
         element: NavigatablePsiElement,
         inheritElement: KtElement,
-        descriptor: KtSymbolPointer<*>,
+        descriptor: KaSymbolPointer<*>,
         isInherited: Boolean,
     ) : this(element = element, ktElement = inheritElement, isInherited = isInherited) {
         if (element !is KtElement) {
@@ -119,7 +119,7 @@ class KotlinFirStructureViewElement(
         return result
     }
 
-    private fun <T> createSymbolAndThen(modifier: KtAnalysisSession.(KtSymbol) -> T): T? {
+    private fun <T> createSymbolAndThen(modifier: KaSession.(KtSymbol) -> T): T? {
         val element = element
         return when {
             !element.isValid -> null
@@ -138,7 +138,7 @@ class KotlinFirStructureViewElement(
     }
 
     class Visibility(symbol: KtSymbol?) {
-        private val visibility: org.jetbrains.kotlin.descriptors.Visibility? = (symbol as? KtSymbolWithVisibility)?.visibility
+        private val visibility: org.jetbrains.kotlin.descriptors.Visibility? = (symbol as? KaSymbolWithVisibility)?.visibility
 
         val isPublic: Boolean
             get() = visibility == Visibilities.Public

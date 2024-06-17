@@ -51,6 +51,7 @@ wildcardSegment ::= WILDCARD {
 }
 id ::= IDENTIFIER {
   name="identifier"
+  mixin="com.intellij.jsonpath.psi.JsonPathIdMixin"
 }
 idSegment ::= id
 

@@ -39,7 +39,7 @@ interface SubsetSealedClassEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySubsetSealedClassEntity(
   entity: SubsetSealedClassEntity,
   modification: SubsetSealedClassEntity.Builder.() -> Unit,
 ): SubsetSealedClassEntity {

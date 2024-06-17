@@ -1,4 +1,5 @@
 // FILE: build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "this is module1/build.gradle.kts"
 plugins {
     `kotlin-dsl`
 }
@@ -15,7 +16,8 @@ dependencies {
 include("module1")
 
 // FILE: module1/build.gradle.kts
-// EXPECTED
+
+// this is module1/build.gradle.kts
 
 plugins {
     java

@@ -586,6 +586,11 @@ def tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
     return array_to_xml(tensor.numpy(), name, roffset, coffset, rows, cols, format)
 
 
+def sparse_tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+    import tensorflow as tf
+    return tensor_to_xml(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+
+
 class ExceedingArrayDimensionsException(Exception):
     pass
 
@@ -811,6 +816,7 @@ TYPE_TO_XML_CONVERTERS = {
     "GeoSeries": dataframe_to_xml,
     "EagerTensor": tensor_to_xml,
     "ResourceVariable": tensor_to_xml,
+    "SparseTensor": sparse_tensor_to_xml,
     "Tensor": tensor_to_xml
 }
 

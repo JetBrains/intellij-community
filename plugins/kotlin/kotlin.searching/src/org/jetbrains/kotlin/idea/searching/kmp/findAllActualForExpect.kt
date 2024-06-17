@@ -9,7 +9,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
@@ -82,7 +82,7 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
 private fun KtDeclaration.matchesWithExpect(expectDeclaration: KtDeclaration): Boolean {
     val declaration = this
     return declaration.isEffectivelyActual() && analyze(declaration) {
-        val symbol: KtDeclarationSymbol = declaration.getSymbol()
+        val symbol: KaDeclarationSymbol = declaration.getSymbol()
         return symbol.getExpectsForActual().any { it.psi == expectDeclaration }
     }
 }

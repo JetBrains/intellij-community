@@ -110,8 +110,7 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
   private void showPopup(@NotNull LargeFileEditorAccess largeFileEditorAccess) {
     ChangeLargeFileEncodingAction action = new ChangeLargeFileEncodingAction(myStatusBar);
     JComponent where = getComponent();
-    ListPopup popup = action.createPopup(largeFileEditorAccess.getVirtualFile(), largeFileEditorAccess.getEditor(),
-                                         where);
+    ListPopup popup = action.createPopup(largeFileEditorAccess.getVirtualFile(), largeFileEditorAccess.getEditor());
     RelativePoint pos = JBPopupFactory.getInstance().guessBestPopupLocation(where);
     popup.showInScreenCoordinates(where, pos.getScreenPoint());
   }

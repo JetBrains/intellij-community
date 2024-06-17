@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.ide.FileIconUtil;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -23,7 +24,6 @@ import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
-import com.intellij.util.FileIconUtil;
 import com.intellij.util.PsiIconUtil;
 import com.intellij.util.ui.EDT;
 import kotlin.jvm.functions.Function1;
@@ -101,10 +101,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (element instanceof PsiFileSystemItem) {
       VirtualFile file = PsiUtilCore.getVirtualFile(element);
       if (file != null && icon == null) {
-        icon = FileIconUtil.getIconFromProviders(file, flags, element.getProject());
+        icon = FileIconUtil.INSTANCE.getIconFromProviders(file, flags, element.getProject());
       }
       if (file != null && icon != null) {
-        icon = FileIconUtil.patchIconByIconPatchers(icon, file, flags, element.getProject());
+        icon = FileIconUtil.INSTANCE.patchIconByIconPatchers(icon, file, flags, element.getProject());
       }
       if (icon instanceof RowIcon) {
         return icon;

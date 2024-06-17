@@ -187,8 +187,6 @@
 
     <projectService serviceInterface="org.intellij.lang.xpath.xslt.associations.FileAssociationsManager"
                     serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsManagerImpl"/>
-
-    <iconMapper mappingFile="XpathIconMappings.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">

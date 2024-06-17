@@ -34,10 +34,10 @@ class AbstractEntitiesTest {
     }
 
     val anotherMiddleEntity = MiddleEntity("second", MySource)
-    builder.modifyEntity(leftEntity) {
+    builder.modifyLeftEntity(leftEntity) {
 
     }
-    builder.modifyEntity(leftEntity) {
+    builder.modifyLeftEntity(leftEntity) {
       this.children = listOf(anotherMiddleEntity)
     }
 
@@ -59,7 +59,7 @@ class AbstractEntitiesTest {
     }
 
     val anotherMiddleEntity = MiddleEntity("prop", MySource)
-    builder.modifyEntity(leftEntity) {
+    builder.modifyLeftEntity(leftEntity) {
       this.children = listOf(anotherMiddleEntity)
     }
 
@@ -81,12 +81,12 @@ class AbstractEntitiesTest {
 
     val anotherBuilder = MutableEntityStorage.from(builder.toSnapshot())
     val anotherMiddleEntity = MiddleEntity("Another", MySource)
-    anotherBuilder.modifyEntity(leftEntity.from(anotherBuilder)) {
+    anotherBuilder.modifyLeftEntity(leftEntity.from(anotherBuilder)) {
       this.children = listOf(middleEntity, anotherMiddleEntity)
     }
 
     val initialMiddleEntity = MiddleEntity("Initial", MySource)
-    builder.modifyEntity(leftEntity) {
+    builder.modifyLeftEntity(leftEntity) {
       this.children = listOf(middleEntity, initialMiddleEntity)
     }
 

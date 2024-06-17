@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.helper
 
 import com.intellij.formatting.service.PostQuickFixTaskService
@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
@@ -94,7 +95,9 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
     }
 
     override fun prepareOperation(usages: Array<UsageInfo>, elements: List<PsiElement>): Set<KtFile> {
-        return elements.mapNotNull { it.containingFile as? KtFile }.toSet() + prepareOperation(usages)
+        return prepareOperation(usages) + elements
+            .mapNotNull { it.containingFile as? KtFile }
+            .filter { ProjectFileIndex.getInstance(elements.first().project).isInSourceContent(it.virtualFile) }.toSet()
     }
 
     override fun performOperation(project: Project, operationData: Set<KtFile>) {

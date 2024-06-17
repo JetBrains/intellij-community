@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.psi.KtExpression
 
@@ -20,7 +20,7 @@ internal class KotlinValueClassToStringWrapper : KotlinExpressionWrapper {
     @RequiresReadLock
     override fun isApplicable(expression: KtExpression) = analyze(expression) {
         val ktUsualClassType = expression.getKtType() as? KtUsualClassType
-        val ktNamedClassOrObjectSymbol = ktUsualClassType?.classSymbol as? KtNamedClassOrObjectSymbol
+        val ktNamedClassOrObjectSymbol = ktUsualClassType?.symbol as? KaNamedClassOrObjectSymbol
         ktNamedClassOrObjectSymbol?.isInline ?: false
     }
 }

@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.blockingContext
@@ -32,7 +33,7 @@ import kotlin.time.Duration.Companion.seconds
 private val LOG: Logger
   get() = logger<FileEditorProviderManagerImpl>()
 
-private fun computeKey(providers: List<FileEditorProvider>) = providers.joinToString(separator = ",") { it.editorTypeId }
+private fun computeKey(providers: List<FileEditorWithProvider>) = providers.joinToString(separator = ",") { it.provider.editorTypeId }
 
 @Serializable
 data class FileEditorProviderManagerState(@JvmField val selectedProviders: Map<String, String> = emptyMap())
@@ -185,24 +186,34 @@ class FileEditorProviderManagerImpl
   }
 
   fun providerSelected(composite: EditorComposite) {
-    val providers = composite.allProviders
-    if (providers.size < 2) {
+    val list = composite.allEditorsWithProviders
+    if (list.size < 2) {
       return
     }
 
     updateState {
-      FileEditorProviderManagerState(it.selectedProviders +
-                                     (computeKey(providers) to composite.selectedWithProvider!!.provider.editorTypeId))
+      FileEditorProviderManagerState(it.selectedProviders + (computeKey(list) to composite.selectedWithProvider!!.provider.editorTypeId))
     }
   }
 
   internal fun getSelectedFileEditorProvider(composite: EditorComposite, project: Project): FileEditorProvider? {
-    val provider = EditorHistoryManager.getInstance(project).getSelectedProvider(composite.file)
-    val providers = composite.allProviders
-    if (provider != null || providers.size < 2) {
+    return getSelectedFileEditorProvider(
+      file = composite.file,
+      fileEditorWithProviders = composite.allEditorsWithProviders,
+      editorHistoryManager = EditorHistoryManager.getInstance(project),
+    )
+  }
+
+  internal fun getSelectedFileEditorProvider(
+    file: VirtualFile,
+    fileEditorWithProviders: List<FileEditorWithProvider>,
+    editorHistoryManager: EditorHistoryManager,
+  ): FileEditorProvider? {
+    val provider = editorHistoryManager.getSelectedProvider(file)
+    if (provider != null || fileEditorWithProviders.size < 2) {
       return provider
     }
-    return getProvider(state.selectedProviders.get(computeKey(providers)) ?: return null)
+    return getProvider(state.selectedProviders.get(computeKey(fileEditorWithProviders)) ?: return null)
   }
 
   @TestOnly

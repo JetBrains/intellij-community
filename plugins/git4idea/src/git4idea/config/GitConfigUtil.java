@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
@@ -70,6 +70,12 @@ public final class GitConfigUtil {
 
 
   public static @Nullable String getValue(@NotNull Project project, @NotNull VirtualFile root, @NotNull @NonNls String key)
+    throws VcsException {
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
+    return getValue(h, key);
+  }
+
+  public static @Nullable String getValue(@NotNull Project project, @NotNull File root, @NotNull @NonNls String key)
     throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     return getValue(h, key);

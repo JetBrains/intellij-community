@@ -3,11 +3,13 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class IgnoredPatternSet {
   private final Set<String> masks;
   private final FileTypeAssocTable<Boolean> ignorePatterns = new FileTypeAssocTable<>();

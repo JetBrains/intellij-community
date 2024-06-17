@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide
@@ -206,20 +206,18 @@ class IdeEventQueue private constructor() : EventQueue() {
     return focusEventList.joinToString(separator = ", ") { event -> "[${event.id}; ${event.source.javaClass.name}]" }
   }
 
-  private fun getLastFocusGainedEvent(): AWTEvent? = focusEventList.lastOrNull { it.id == FocusEvent.FOCUS_GAINED }
-
-  private fun ifFocusEventsInTheQueue(yes: (AWTEvent) -> Unit, no: Runnable) {
-    val lastFocusGainedEvent = getLastFocusGainedEvent()
-    if (lastFocusGainedEvent != null) {
+  private inline fun ifFocusEventsInTheQueue(yes: (AWTEvent) -> Unit, no: Runnable) {
+    val lastFocusGainedEvent = focusEventList.lastOrNull { it.id == FocusEvent.FOCUS_GAINED }
+    if (lastFocusGainedEvent == null) {
+      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : ${no.javaClass.name}" }
+      EdtInvocationManager.invokeLaterIfNeeded(no)
+    }
+    else {
       Logs.FOCUS_AWARE_RUNNABLES_LOG.debug {
         "Focus event list (trying to execute runnable): ${runnablesWaitingForFocusChangeState()}\n" +
         "runnable saved for : [${lastFocusGainedEvent.id}; ${lastFocusGainedEvent.source}] -> ${no.javaClass.name}"
       }
       yes(lastFocusGainedEvent)
-    }
-    else {
-      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : ${no.javaClass.name}" }
-      EdtInvocationManager.invokeLaterIfNeeded(no)
     }
   }
 
@@ -569,7 +567,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     if (e is WindowEvent) {
-      processAppActivationEvent(e)
+      // Activation can call methods which needs WriteIntent, like saving project
+      threadingSupport.runWriteIntentReadAction<Unit, Throwable> { processAppActivationEvent(e) }
     }
     if (dispatchByCustomDispatchers(e)) {
       return
@@ -579,8 +578,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     when {
-      e is MouseEvent -> threadingSupport.runWithImplicitRead { dispatchMouseEvent(e) }
-      e is KeyEvent -> threadingSupport.runWithImplicitRead { dispatchKeyEvent(e) }
+      e is MouseEvent -> threadingSupport.runWriteIntentReadAction<Unit, Throwable> { dispatchMouseEvent(e) }
+      e is KeyEvent -> threadingSupport.runWriteIntentReadAction<Unit, Throwable> { dispatchKeyEvent(e) }
       appIsLoaded() -> {
         val app = ApplicationManagerEx.getApplicationEx()
         if (e is ComponentEvent) {
@@ -944,7 +943,7 @@ typealias PostEventHook = (event: AWTEvent) -> Boolean
 
 private val DISPATCHER_EP = ExtensionPointName<IdeEventQueue.EventDispatcher>("com.intellij.ideEventQueueDispatcher")
 
-private const val defaultEventWithWrite = true
+private const val defaultEventWithWrite = false
 
 private val isSkipMetaPressOnLinux = java.lang.Boolean.getBoolean("keymap.skip.meta.press.on.linux")
 
@@ -1033,7 +1032,8 @@ internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
     runnable()
   }
   else {
-    transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnable)
+    val runnableWithWIL = {  WriteIntentReadAction.run(runnable) }
+    transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnableWithWIL)
   }
 }
 

@@ -887,29 +887,10 @@ a:com.intellij.ide.browsers.BrowserLauncher
 - f:browse(java.net.URI):V
 - a:browse(java.nio.file.Path):V
 - bs:browse$default(com.intellij.ide.browsers.BrowserLauncher,java.lang.String,com.intellij.ide.browsers.WebBrowser,com.intellij.openapi.project.Project,I,java.lang.Object):V
-- f:browseUsingPath(java.lang.String,java.lang.String,com.intellij.ide.browsers.WebBrowser,com.intellij.openapi.project.Project,Z,java.lang.String[]):Z
-- bs:browseUsingPath$default(com.intellij.ide.browsers.BrowserLauncher,java.lang.String,java.lang.String,com.intellij.ide.browsers.WebBrowser,com.intellij.openapi.project.Project,Z,java.lang.String[],I,java.lang.Object):Z
 - sf:getInstance():com.intellij.ide.browsers.BrowserLauncher
 - a:open(java.lang.String):V
 f:com.intellij.ide.browsers.BrowserLauncher$Companion
 - f:getInstance():com.intellij.ide.browsers.BrowserLauncher
-c:com.intellij.ide.browsers.BrowserLauncherAppless
-- com.intellij.ide.browsers.BrowserLauncher
-- sf:Companion:com.intellij.ide.browsers.BrowserLauncherAppless$Companion
-- <init>():V
-- browse(java.io.File):V
-- browse(java.lang.String,com.intellij.ide.browsers.WebBrowser,com.intellij.openapi.project.Project):V
-- browse(java.nio.file.Path):V
-- p:canBrowse(com.intellij.openapi.project.Project,java.lang.String):Z
-- sf:canUseSystemDefaultBrowserPolicy():Z
-- p:getDefaultBrowser():com.intellij.ide.browsers.WebBrowser
-- open(java.lang.String):V
-- p:showError(java.lang.String,com.intellij.openapi.project.Project,com.intellij.ide.browsers.WebBrowser,kotlin.jvm.functions.Function0):V
-- bs:showError$default(com.intellij.ide.browsers.BrowserLauncherAppless,java.lang.String,com.intellij.openapi.project.Project,com.intellij.ide.browsers.WebBrowser,kotlin.jvm.functions.Function0,I,java.lang.Object):V
-- p:signUrl(java.lang.String):java.lang.String
-- p:substituteBrowser(java.lang.String):com.intellij.ide.browsers.WebBrowser
-f:com.intellij.ide.browsers.BrowserLauncherAppless$Companion
-- f:canUseSystemDefaultBrowserPolicy():Z
 a:com.intellij.ide.browsers.BrowserSpecificSettings
 - java.lang.Cloneable
 - <init>():V
@@ -1905,6 +1886,7 @@ a:com.intellij.openapi.actionSystem.ToggleAction
 - <init>(java.util.function.Supplier,javax.swing.Icon):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - a:isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- isSoftMultiChoice():Z
 - a:setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.openapi.actionSystem.ToggleOptionAction
@@ -2238,6 +2220,7 @@ a:com.intellij.openapi.editor.actionSystem.EditorActionHandler
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
 - p:<init>():V
 - p:<init>(Z):V
+- s:caretDataContext(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.Caret):com.intellij.openapi.actionSystem.DataContext
 - p:doExecute(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
 - execute(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):V
 - f:execute(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
@@ -2436,9 +2419,8 @@ com.intellij.openapi.fileChooser.PathChooserDialog
 - a:choose(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Consumer):V
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
+- com.intellij.openapi.project.DumbAware
 - createEditorAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.AsyncFileEditorProvider$Builder
-- *:createEditorBuilder(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlin.coroutines.Continuation):java.lang.Object
-- *bs:createEditorBuilder$suspendImpl(com.intellij.openapi.fileEditor.AsyncFileEditorProvider,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.fileEditor.AsyncFileEditorProvider$Builder
 - <init>():V
 - a:build():com.intellij.openapi.fileEditor.FileEditor
@@ -2891,6 +2873,8 @@ f:com.intellij.openapi.observable.operation.core.PromiseUtilKt
 - sf:getOperationStartPromise(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable):org.jetbrains.concurrency.Promise
 - sf:waitForOperation-vLdBGDU(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,J,J,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - sf:waitForOperationCompletion-HG0u8IE(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,J):V
+f:com.intellij.openapi.observable.operation.core.ResultUtilKt
+- sf:onFailureCatching(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
 a:com.intellij.openapi.observable.properties.AbstractObservableBooleanProperty
 - com.intellij.openapi.observable.properties.AbstractObservableProperty
 - com.intellij.openapi.observable.properties.ObservableBooleanProperty
@@ -4700,7 +4684,7 @@ f:com.intellij.openapi.ui.ShadowAction
 - reconnect(com.intellij.openapi.actionSystem.AnAction):V
 c:com.intellij.openapi.ui.SimpleToolWindowPanel
 - com.intellij.ui.components.JBPanelWithEmptyText
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
 - com.intellij.ui.switcher.QuickActionProvider
 - sf:SCROLLED_STATE:com.intellij.openapi.util.Key
 - p:myVertical:Z
@@ -4710,7 +4694,6 @@ c:com.intellij.openapi.ui.SimpleToolWindowPanel
 - getActions(Z):java.util.List
 - getComponent():javax.swing.JComponent
 - getContent():javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - getToolbar():javax.swing.JComponent
 - isToolbarVisible():Z
 - isVertical():Z
@@ -4719,6 +4702,7 @@ c:com.intellij.openapi.ui.SimpleToolWindowPanel
 - setProvideQuickActions(Z):com.intellij.openapi.ui.SimpleToolWindowPanel
 - setToolbar(javax.swing.JComponent):V
 - setVertical(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 com.intellij.openapi.ui.SplitterProportionsData
 - com.intellij.openapi.util.JDOMExternalizable
 - a:externalizeFromDimensionService(java.lang.String):V
@@ -6387,6 +6371,7 @@ c:com.intellij.ui.ContextHelpLabel
 - s:create(java.lang.String):com.intellij.ui.ContextHelpLabel
 - s:create(java.lang.String,java.lang.String):com.intellij.ui.ContextHelpLabel
 - s:createFromTooltip(com.intellij.ide.HelpTooltip):com.intellij.ui.ContextHelpLabel
+- s:createWithBrowserLink(java.lang.String,java.lang.String,java.lang.String,java.net.URL):com.intellij.ui.ContextHelpLabel
 - s:createWithLink(java.lang.String,java.lang.String,java.lang.String,java.lang.Runnable):com.intellij.ui.ContextHelpLabel
 - s:createWithLink(java.lang.String,java.lang.String,java.lang.String,Z,java.lang.Runnable):com.intellij.ui.ContextHelpLabel
 - removeNotify():V
@@ -6483,6 +6468,7 @@ c:com.intellij.ui.EditorNotificationPanel
 - updateUI():V
 - s:wrapPanels(java.util.List,javax.swing.JPanel,com.intellij.ui.EditorNotificationPanel$Status):V
 com.intellij.ui.EditorNotificationPanel$ActionHandler
+- generatePreview(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - a:handlePanelActionClick(com.intellij.ui.EditorNotificationPanel,javax.swing.event.HyperlinkEvent):V
 - a:handleQuickFixClick(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 e:com.intellij.ui.EditorNotificationPanel$Status
@@ -6694,7 +6680,7 @@ f:com.intellij.ui.GuiUtils
 - s:getTextWithoutMnemonicEscaping(java.lang.String):java.lang.String
 - s:installVisibilityReferent(javax.swing.JComponent,javax.swing.JComponent):V
 - s:invokeLaterIfNeeded(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
-- s:iterateChildren(java.awt.Component,com.intellij.util.Consumer,javax.swing.JComponent[]):V
+- s:iterateChildren(java.awt.Component,java.util.function.Consumer,javax.swing.JComponent[]):V
 - s:removePotentiallyLeakingReferences(java.awt.Container):V
 - s:replaceJSplitPaneWithIDEASplitter(javax.swing.JComponent):V
 - s:replaceJSplitPaneWithIDEASplitter(javax.swing.JComponent,Z):V
@@ -8521,6 +8507,7 @@ c:com.intellij.ui.components.JBViewport
 - <init>():V
 - p:computeBlit(I,I,java.awt.Point,java.awt.Point,java.awt.Dimension,java.awt.Rectangle):Z
 - p:createLayoutManager():java.awt.LayoutManager
+- p:createZooming():com.intellij.ui.components.ZoomingDelegate
 - getBackground():java.awt.Color
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getMagnificator():com.intellij.ui.components.Magnificator
@@ -9110,7 +9097,7 @@ c:com.intellij.ui.components.panels.Wrapper
 - setContent(javax.swing.JComponent):V
 - f:setHorizontalSizeReferent(javax.swing.JComponent):com.intellij.ui.components.panels.Wrapper
 - f:setVerticalSizeReferent(javax.swing.JComponent):com.intellij.ui.components.panels.Wrapper
-c:com.intellij.ui.components.panels.Wrapper$North
+f:com.intellij.ui.components.panels.Wrapper$North
 - com.intellij.ui.components.panels.Wrapper
 - <init>(javax.swing.JComponent):V
 c:com.intellij.ui.content.ContentManagerAdapter
@@ -10752,6 +10739,7 @@ f:com.intellij.ui.tabs.TabInfo
 - sf:ALERT_ICON:java.lang.String
 - sf:ALERT_STATUS:java.lang.String
 - sf:COMPONENT:java.lang.String
+- sf:Companion:com.intellij.ui.tabs.TabInfo$Companion
 - sf:ENABLED:java.lang.String
 - sf:HIDDEN:java.lang.String
 - sf:ICON:java.lang.String
@@ -10759,67 +10747,68 @@ f:com.intellij.ui.tabs.TabInfo
 - sf:TAB_COLOR:java.lang.String
 - sf:TEXT:java.lang.String
 - <init>(javax.swing.JComponent):V
-- append(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.ui.tabs.TabInfo
-- canBeDraggedOut():Z
-- clearText(Z):com.intellij.ui.tabs.TabInfo
-- fireAlert():V
-- getActionsContextComponent():javax.swing.JComponent
-- getAlertIcon():com.intellij.ui.content.AlertIcon
-- getBlinkCount():I
-- getChangeSupport():java.beans.PropertyChangeSupport
-- getColoredText():com.intellij.ui.SimpleColoredText
-- getComponent():javax.swing.JComponent
-- getDefaultForeground():java.awt.Color
-- getDragDelegate():com.intellij.ui.tabs.TabInfo$DragDelegate
-- getDragOutDelegate():com.intellij.ui.tabs.TabInfo$DragOutDelegate
-- getForeSideComponent():javax.swing.JComponent
-- getGroup():com.intellij.openapi.actionSystem.ActionGroup
-- getIcon():javax.swing.Icon
-- getLastFocusOwner():javax.swing.JComponent
-- getObject():java.lang.Object
+- f:append(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.ui.tabs.TabInfo
+- f:canBeDraggedOut():Z
+- f:clearText(Z):com.intellij.ui.tabs.TabInfo
+- f:fireAlert():V
+- f:getActionsContextComponent():javax.swing.JComponent
+- f:getAlertIcon():com.intellij.ui.content.AlertIcon
+- f:getBlinkCount():I
+- f:getChangeSupport():java.beans.PropertyChangeSupport
+- f:getColoredText():com.intellij.ui.SimpleColoredText
+- f:getComponent():javax.swing.JComponent
+- f:getDefaultForeground():java.awt.Color
+- f:getDragDelegate():com.intellij.ui.tabs.TabInfo$DragDelegate
+- f:getDragOutDelegate():com.intellij.ui.tabs.TabInfo$DragOutDelegate
+- f:getForeSideComponent():javax.swing.JComponent
+- f:getGroup():com.intellij.openapi.actionSystem.ActionGroup
+- f:getIcon():javax.swing.Icon
+- f:getLastFocusOwner():javax.swing.JComponent
+- f:getObject():java.lang.Object
 - getPlace():java.lang.String
-- getPreferredFocusableComponent():javax.swing.JComponent
-- getPreviousSelection():com.intellij.ui.tabs.TabInfo
-- getSideComponent():javax.swing.JComponent
-- getTabActionPlace():java.lang.String
-- getTabColor():java.awt.Color
-- getTabLabelActions():com.intellij.openapi.actionSystem.ActionGroup
-- getTabPaneActions():com.intellij.openapi.actionSystem.ActionGroup
-- getText():java.lang.String
-- getTooltipText():java.lang.String
-- isAlertRequested():Z
-- isEnabled():Z
-- isHidden():Z
-- isPinned():Z
+- f:getPreferredFocusableComponent():javax.swing.JComponent
+- f:getPreviousSelection():com.intellij.ui.tabs.TabInfo
+- f:getSideComponent():javax.swing.JComponent
+- f:getTabActionPlace():java.lang.String
+- f:getTabColor():java.awt.Color
+- f:getTabLabelActions():com.intellij.openapi.actionSystem.ActionGroup
+- f:getTabPaneActions():com.intellij.openapi.actionSystem.ActionGroup
+- f:getText():java.lang.String
+- f:getTooltipText():java.lang.String
+- f:isAlertRequested():Z
+- f:isEnabled():Z
+- f:isHidden():Z
+- f:isPinned():Z
 - putInfo(java.util.Map):V
-- resetAlertRequest():V
-- revalidate():V
-- setActions(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.tabs.TabInfo
-- setActionsContextComponent(javax.swing.JComponent):com.intellij.ui.tabs.TabInfo
-- setAlertIcon(com.intellij.ui.content.AlertIcon):com.intellij.ui.tabs.TabInfo
-- setBlinkCount(I):V
-- setComponent(java.awt.Component):com.intellij.ui.tabs.TabInfo
-- setDefaultAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.ui.tabs.TabInfo
-- setDefaultForeground(java.awt.Color):com.intellij.ui.tabs.TabInfo
-- setDefaultStyle(I):com.intellij.ui.tabs.TabInfo
-- setDragDelegate(com.intellij.ui.tabs.TabInfo$DragDelegate):V
-- setDragOutDelegate(com.intellij.ui.tabs.TabInfo$DragOutDelegate):com.intellij.ui.tabs.TabInfo
-- setEnabled(Z):V
-- setForeSideComponent(javax.swing.JComponent):com.intellij.ui.tabs.TabInfo
-- setHidden(Z):V
-- setIcon(javax.swing.Icon):com.intellij.ui.tabs.TabInfo
-- setLastFocusOwner(javax.swing.JComponent):V
-- setObject(java.lang.Object):com.intellij.ui.tabs.TabInfo
-- setPreferredFocusableComponent(javax.swing.JComponent):com.intellij.ui.tabs.TabInfo
-- setPreviousSelection(com.intellij.ui.tabs.TabInfo):V
-- setSideComponent(javax.swing.JComponent):com.intellij.ui.tabs.TabInfo
-- setTabColor(java.awt.Color):com.intellij.ui.tabs.TabInfo
-- setTabLabelActions(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.tabs.TabInfo
-- setTabPaneActions(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.ui.tabs.TabInfo
-- setTestableUi(com.intellij.openapi.ui.Queryable):com.intellij.ui.tabs.TabInfo
-- setText(java.lang.String):com.intellij.ui.tabs.TabInfo
-- setTooltipText(java.lang.String):com.intellij.ui.tabs.TabInfo
-- stopAlerting():V
+- f:resetAlertRequest():V
+- f:revalidate():V
+- f:setActions(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.tabs.TabInfo
+- f:setActionsContextComponent(javax.swing.JComponent):com.intellij.ui.tabs.TabInfo
+- f:setAlertIcon(com.intellij.ui.content.AlertIcon):com.intellij.ui.tabs.TabInfo
+- f:setBlinkCount(I):V
+- f:setComponent(java.awt.Component):com.intellij.ui.tabs.TabInfo
+- f:setComponent(javax.swing.JComponent):V
+- f:setDefaultAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.ui.tabs.TabInfo
+- f:setDefaultForeground(java.awt.Color):com.intellij.ui.tabs.TabInfo
+- f:setDefaultStyle(I):com.intellij.ui.tabs.TabInfo
+- f:setDragDelegate(com.intellij.ui.tabs.TabInfo$DragDelegate):V
+- f:setDragOutDelegate(com.intellij.ui.tabs.TabInfo$DragOutDelegate):com.intellij.ui.tabs.TabInfo
+- f:setEnabled(Z):V
+- f:setForeSideComponent(javax.swing.JComponent):com.intellij.ui.tabs.TabInfo
+- f:setHidden(Z):V
+- f:setIcon(javax.swing.Icon):com.intellij.ui.tabs.TabInfo
+- f:setLastFocusOwner(javax.swing.JComponent):V
+- f:setObject(java.lang.Object):com.intellij.ui.tabs.TabInfo
+- f:setPreferredFocusableComponent(javax.swing.JComponent):com.intellij.ui.tabs.TabInfo
+- f:setPreviousSelection(com.intellij.ui.tabs.TabInfo):V
+- f:setSideComponent(javax.swing.JComponent):com.intellij.ui.tabs.TabInfo
+- f:setTabColor(java.awt.Color):com.intellij.ui.tabs.TabInfo
+- f:setTabLabelActions(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.tabs.TabInfo
+- f:setTabPaneActions(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.ui.tabs.TabInfo
+- f:setText(java.lang.String):com.intellij.ui.tabs.TabInfo
+- f:setTooltipText(java.lang.String):com.intellij.ui.tabs.TabInfo
+- f:stopAlerting():V
+f:com.intellij.ui.tabs.TabInfo$Companion
 com.intellij.ui.tabs.TabInfo$DragDelegate
 - a:dragFinishedOrCanceled():V
 - a:dragStarted(java.awt.event.MouseEvent):V
@@ -10881,7 +10870,6 @@ c:com.intellij.ui.tabs.impl.DefaultEditorTabsPainter
 f:com.intellij.ui.tabs.impl.DefaultTabPainterAdapter
 - com.intellij.ui.tabs.impl.TabPainterAdapter
 - <init>(com.intellij.ui.tabs.JBTabPainter):V
-- f:getPainter():com.intellij.ui.tabs.JBTabPainter
 - getTabPainter():com.intellij.ui.tabs.JBTabPainter
 - paintBackground(com.intellij.ui.tabs.impl.TabLabel,java.awt.Graphics,com.intellij.ui.tabs.impl.JBTabsImpl):V
 c:com.intellij.ui.tabs.impl.DragHelper
@@ -10927,8 +10915,10 @@ f:com.intellij.ui.tabs.impl.JBEditorTabPainter
 c:com.intellij.ui.tabs.impl.JBEditorTabs
 - com.intellij.ui.tabs.impl.JBTabsImpl
 - com.intellij.ui.tabs.JBEditorTabsBase
+- sf:Companion:com.intellij.ui.tabs.impl.JBEditorTabs$Companion
 - sf:MARK_MODIFIED_KEY:com.intellij.openapi.util.Key
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.ActionManager,com.intellij.openapi.wm.IdeFocusManager,com.intellij.openapi.Disposable):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.wm.IdeFocusManager,com.intellij.openapi.Disposable):V
 - isAlphabeticalMode():Z
@@ -10937,6 +10927,7 @@ c:com.intellij.ui.tabs.impl.JBEditorTabs
 - shouldPaintBottomBorder():Z
 - uiSettingsChanged(com.intellij.ide.ui.UISettings):V
 - useSmallLabels():Z
+f:com.intellij.ui.tabs.impl.JBEditorTabs$Companion
 f:com.intellij.ui.tabs.impl.JBEditorTabsBorder
 - com.intellij.ui.tabs.JBTabsBorder
 - sf:Companion:com.intellij.ui.tabs.impl.JBEditorTabsBorder$Companion
@@ -10960,8 +10951,7 @@ a:com.intellij.ui.tabs.impl.JBEditorTabsPainter
 c:com.intellij.ui.tabs.impl.JBTabsImpl
 - javax.swing.JComponent
 - com.intellij.ide.ui.UISettingsListener
-- com.intellij.openapi.actionSystem.DataProvider
-- com.intellij.openapi.actionSystem.TimerListener
+- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
 - com.intellij.openapi.ui.Queryable
 - com.intellij.ui.switcher.QuickActionProvider
 - com.intellij.ui.tabs.JBTabsEx
@@ -11011,30 +11001,25 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - getComponent():javax.swing.JComponent
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - sf:getComponentImage(com.intellij.ui.tabs.TabInfo):java.awt.Image
-- getData(java.lang.String):java.lang.Object
 - getDataProvider():com.intellij.openapi.actionSystem.DataProvider
 - f:getDecoration():com.intellij.ui.tabs.UiDecorator$UiDecoration
 - pf:getDragHelper():com.intellij.ui.tabs.impl.DragHelper
 - p:getDraggedTabSelectionInfo():com.intellij.ui.tabs.TabInfo
 - pf:getDropInfo():com.intellij.ui.tabs.TabInfo
-- getDropInfoIndex():I
-- getDropSide():I
+- f:getDropInfoIndex():I
+- f:getDropSide():I
 - p:getEntryPointActionGroup():com.intellij.openapi.actionSystem.DefaultActionGroup
 - f:getEntryPointPreferredSize():java.awt.Dimension
-- f:getEntryPointToolbar():com.intellij.openapi.actionSystem.ActionToolbar
 - f:getFirstTabOffset():I
 - p:getFocusOwnerToStore():javax.swing.JComponent
 - f:getHeaderFitSize():java.awt.Dimension
 - f:getHorizontalSide():Z
-- getIndexOf(com.intellij.ui.tabs.TabInfo):I
-- f:getInfoToForeToolbar():java.util.Map
-- f:getInfoToLabel():java.util.Map
+- f:getIndexOf(com.intellij.ui.tabs.TabInfo):I
 - f:getInfoToToolbar():java.util.Map
 - getJBTabs():com.intellij.ui.tabs.JBTabs
 - f:getLastLayoutPass():com.intellij.ui.tabs.impl.LayoutPassInfo
 - f:getLayoutInsets():java.awt.Insets
 - getMinimumSize():java.awt.Dimension
-- getModalityState():com.intellij.openapi.application.ModalityState
 - f:getMoreToolbar():com.intellij.openapi.actionSystem.ActionToolbar
 - f:getMoreToolbarPreferredSize():java.awt.Dimension
 - f:getNavigationActions():com.intellij.openapi.actionSystem.ActionGroup
@@ -11056,7 +11041,7 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - getTabLabel(com.intellij.ui.tabs.TabInfo):com.intellij.ui.tabs.impl.TabLabel
 - f:getTabPainter():com.intellij.ui.tabs.JBTabPainter
 - getTabs():java.util.List
-- getTabsPosition():com.intellij.ui.tabs.JBTabsPosition
+- f:getTabsPosition():com.intellij.ui.tabs.JBTabsPosition
 - getTargetInfo():com.intellij.ui.tabs.TabInfo
 - f:getTitleWrapper():com.intellij.ui.components.panels.NonOpaquePanel
 - getToSelectOnRemoveOf(com.intellij.ui.tabs.TabInfo):com.intellij.ui.tabs.TabInfo
@@ -11069,15 +11054,14 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - f:isDropTarget(com.intellij.ui.tabs.TabInfo):Z
 - isEditorTabs():Z
 - isEmptyVisible():Z
-- isHideTabs():Z
-- isHideTopPanel():Z
+- f:isHideTabs():Z
+- f:isHideTopPanel():Z
 - f:isHorizontalTabs():Z
 - f:isHoveredTab(com.intellij.ui.tabs.impl.TabLabel):Z
 - f:isMouseInsideTabsArea():Z
 - pf:isNavigatable():Z
 - isOpaque():Z
 - f:isRecentlyActive():Z
-- f:isScrollBarAdjusting():Z
 - sf:isSelectionClick(java.awt.event.MouseEvent):Z
 - f:isSideComponentBefore():Z
 - f:isSideComponentOnTabs():Z
@@ -11115,25 +11099,23 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - f:resetTabsCache():V
 - f:revalidateAndRepaint():V
 - revalidateAndRepaint(Z):V
-- run():V
 - select(com.intellij.ui.tabs.TabInfo,Z):com.intellij.openapi.util.ActionCallback
 - f:setActivePopup(javax.swing.JPopupMenu):V
-- setActiveTabFillIn(java.awt.Color):com.intellij.ui.tabs.JBTabsPresentation
+- f:setActiveTabFillIn(java.awt.Color):com.intellij.ui.tabs.JBTabsPresentation
 - f:setAddNavigationGroup(Z):V
 - setAlphabeticalMode(Z):com.intellij.ui.tabs.JBTabsPresentation
 - setDataProvider(com.intellij.openapi.actionSystem.DataProvider):com.intellij.ui.tabs.impl.JBTabsImpl
 - pf:setDragHelper(com.intellij.ui.tabs.impl.DragHelper):V
 - pf:setDropInfo(com.intellij.ui.tabs.TabInfo):V
-- setDropInfoIndex(I):V
-- setDropSide(I):V
+- f:setDropInfoIndex(I):V
+- f:setDropSide(I):V
 - setEmptyText(java.lang.String):com.intellij.ui.tabs.JBTabsPresentation
-- f:setEntryPointToolbar(com.intellij.openapi.actionSystem.ActionToolbar):V
 - setFirstTabOffset(I):V
 - setFocusCycle(Z):com.intellij.ui.tabs.JBTabsPresentation
 - f:setFocused(Z):V
 - f:setHeaderFitSize(java.awt.Dimension):V
-- setHideTabs(Z):V
-- setHideTopPanel(Z):V
+- f:setHideTabs(Z):V
+- f:setHideTopPanel(Z):V
 - f:setHorizontalSide(Z):V
 - f:setHovered(com.intellij.ui.tabs.impl.TabLabel):V
 - setInnerInsets(java.awt.Insets):com.intellij.ui.tabs.JBTabsPresentation
@@ -11150,19 +11132,21 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - setSideComponentOnTabs(Z):com.intellij.ui.tabs.JBTabsPresentation
 - setSideComponentVertical(Z):com.intellij.ui.tabs.JBTabsPresentation
 - setSingleRow(Z):com.intellij.ui.tabs.JBTabsPresentation
-- setSupportsCompression(Z):com.intellij.ui.tabs.JBTabsPresentation
-- setTabDraggingEnabled(Z):com.intellij.ui.tabs.JBTabsPresentation
+- f:setSupportsCompression(Z):com.intellij.ui.tabs.JBTabsPresentation
+- f:setTabDraggingEnabled(Z):com.intellij.ui.tabs.JBTabsPresentation
 - setTabLabelActionsAutoHide(Z):com.intellij.ui.tabs.JBTabsPresentation
 - setTabLabelActionsMouseDeadzone(com.intellij.util.ui.TimedDeadzone$Length):com.intellij.ui.tabs.JBTabsPresentation
-- setTabsPosition(com.intellij.ui.tabs.JBTabsPosition):com.intellij.ui.tabs.JBTabsPresentation
+- f:setTabsPosition(com.intellij.ui.tabs.JBTabsPosition):com.intellij.ui.tabs.JBTabsPresentation
 - setTitleProducer(kotlin.jvm.functions.Function0):V
 - setToDrawBorderIfTabsHidden(Z):com.intellij.ui.tabs.JBTabsPresentation
 - p:setUI(javax.swing.plaf.ComponentUI):V
 - setUiDecorator(com.intellij.ui.tabs.UiDecorator):com.intellij.ui.tabs.JBTabsPresentation
+- pf:setUiDecoratorWithoutApply(com.intellij.ui.tabs.UiDecorator):V
 - showMorePopup():com.intellij.openapi.ui.popup.JBPopup
 - sortTabs(java.util.Comparator):V
 - startDropOver(com.intellij.ui.tabs.TabInfo,com.intellij.ui.awt.RelativePoint):java.awt.Image
 - f:supportCompression():Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - uiSettingsChanged(com.intellij.ide.ui.UISettings):V
 - f:unHover(com.intellij.ui.tabs.impl.TabLabel):V
 - updateTabActions(Z):V
@@ -11309,51 +11293,50 @@ c:com.intellij.ui.tabs.impl.TabLabel
 - pf:tabs:com.intellij.ui.tabs.impl.JBTabsImpl
 - <init>(com.intellij.ui.tabs.impl.JBTabsImpl,com.intellij.ui.tabs.TabInfo):V
 - f:apply(com.intellij.ui.tabs.UiDecorator$UiDecoration):V
-- p:createLayeredIcon():com.intellij.ui.LayeredIcon
-- editIcon(javax.swing.Icon):javax.swing.Icon
+- pf:createLayeredIcon():com.intellij.ui.LayeredIcon
 - editLabelForeground(java.awt.Color):java.awt.Color
-- enableCompressionMode(Z):V
-- getAccessibleContext():javax.accessibility.AccessibleContext
-- getActionsPosition():com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
-- getData(java.lang.String):java.lang.Object
-- p:getEffectiveBackground():java.awt.Color
-- getInfo():com.intellij.ui.tabs.TabInfo
-- getLabelComponent():javax.swing.JComponent
-- getNotStrictPreferredSize():java.awt.Dimension
+- f:enableCompressionMode(Z):V
+- f:getAccessibleContext():javax.accessibility.AccessibleContext
+- f:getActionsPosition():com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
+- f:getData(java.lang.String):java.lang.Object
+- pf:getEffectiveBackground():java.awt.Color
+- getIconAlpha():F
+- f:getInfo():com.intellij.ui.tabs.TabInfo
+- f:getLabelComponent():javax.swing.JComponent
+- f:getNotStrictPreferredSize():java.awt.Dimension
 - getPreferredSize():java.awt.Dimension
-- getToolTipText(java.awt.event.MouseEvent):java.lang.String
+- f:getToolTipText(java.awt.event.MouseEvent):java.lang.String
 - p:handlePopup(java.awt.event.MouseEvent):V
 - isFocusable():Z
-- isForcePaintBorders():Z
+- f:isForcePaintBorders():Z
 - isHovered():Z
-- isLastInRow():Z
-- isLastPinned():Z
-- isNextToLastPinned():Z
-- isPinned():Z
+- f:isLastInRow():Z
+- f:isLastPinned():Z
+- f:isNextToLastPinned():Z
+- f:isPinned():Z
 - p:isShowTabActions():Z
 - p:isTabActionsOnTheRight():Z
-- s:mergeUiDecorations(com.intellij.ui.tabs.UiDecorator$UiDecoration,com.intellij.ui.tabs.UiDecorator$UiDecoration):com.intellij.ui.tabs.impl.TabLabel$MergedUiDecoration
-- paint(java.awt.Graphics):V
-- p:paintChildren(java.awt.Graphics):V
-- p:paintComponent(java.awt.Graphics):V
-- p:paintFadeout(java.awt.Graphics):V
-- paintOffscreen(java.awt.Graphics):V
-- repaintAttraction():Z
+- f:paint(java.awt.Graphics):V
+- pf:paintChildren(java.awt.Graphics):V
+- pf:paintComponent(java.awt.Graphics):V
+- pf:paintFadeout(java.awt.Graphics):V
+- f:paintOffscreen(java.awt.Graphics):V
+- f:repaintAttraction():Z
 - setAlignmentToCenter(Z):V
-- setForcePaintBorders(Z):V
+- f:setForcePaintBorders(Z):V
 - p:setHovered(Z):V
-- setIcon(javax.swing.Icon):V
-- p:setPlaceholderContent(Z,javax.swing.JComponent):V
+- f:setIcon(javax.swing.Icon):V
+- pf:setPlaceholderContent(Z,javax.swing.JComponent):V
 - setTabActions(com.intellij.openapi.actionSystem.ActionGroup):V
-- setTabActionsAutoHide(Z):V
-- setTabEnabled(Z):V
-- setText(com.intellij.ui.SimpleColoredText):V
+- f:setTabActionsAutoHide(Z):V
+- f:setTabEnabled(Z):V
+- f:setText(com.intellij.ui.SimpleColoredText):V
 - p:shouldPaintFadeout():Z
-- toggleShowActions(Z):V
-- updateTabActions():Z
-pc:com.intellij.ui.tabs.impl.TabLabel$AccessibleTabLabel
+- f:toggleShowActions(Z):V
+- f:updateTabActions():Z
+pf:com.intellij.ui.tabs.impl.TabLabel$AccessibleTabLabel
 - javax.swing.JPanel$AccessibleJPanel
-- p:<init>(com.intellij.ui.tabs.impl.TabLabel):V
+- <init>(com.intellij.ui.tabs.impl.TabLabel):V
 - getAccessibleDescription():java.lang.String
 - getAccessibleName():java.lang.String
 - getAccessibleRole():javax.accessibility.AccessibleRole
@@ -11362,22 +11345,27 @@ e:com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
 - sf:LEFT:com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
 - sf:NONE:com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
 - sf:RIGHT:com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
 - s:values():com.intellij.ui.tabs.impl.TabLabel$ActionsPosition[]
 f:com.intellij.ui.tabs.impl.TabLabel$MergedUiDecoration
-- java.lang.Record
+- f:contentInsetsSupplier:java.util.function.Function
+- f:iconTextGap:I
+- f:labelInsets:java.awt.Insets
 - <init>(java.awt.Insets,java.util.function.Function,I):V
-- contentInsetsSupplier():java.util.function.Function
-- f:equals(java.lang.Object):Z
-- f:hashCode():I
-- iconTextGap():I
-- labelInsets():java.awt.Insets
+- f:component1():java.awt.Insets
+- f:component2():java.util.function.Function
+- f:component3():I
+- f:copy(java.awt.Insets,java.util.function.Function,I):com.intellij.ui.tabs.impl.TabLabel$MergedUiDecoration
+- bs:copy$default(com.intellij.ui.tabs.impl.TabLabel$MergedUiDecoration,java.awt.Insets,java.util.function.Function,I,I,java.lang.Object):com.intellij.ui.tabs.impl.TabLabel$MergedUiDecoration
+- equals(java.lang.Object):Z
+- hashCode():I
 f:com.intellij.ui.tabs.impl.TabLabel$TabLabelLayout
 - java.awt.BorderLayout
 - <init>(com.intellij.ui.tabs.impl.TabLabel):V
 - addLayoutComponent(java.awt.Component,java.lang.Object):V
 - layoutContainer(java.awt.Container):V
-- setRightAlignment(Z):V
+- f:setRightAlignment(Z):V
 a:com.intellij.ui.tabs.impl.TabLayout
 - sf:DEADZONE_FOR_DECLARE_TAB_HIDDEN:I
 - <init>():V
@@ -11403,14 +11391,8 @@ com.intellij.ui.tabs.impl.TabPainterAdapter
 f:com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout
 - com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
 - <init>(com.intellij.ui.tabs.impl.JBTabsImpl,Z):V
-f:com.intellij.ui.tabs.impl.multiRow.CompressibleTabsRow
-- com.intellij.ui.tabs.impl.multiRow.TabsRow
-- sf:Companion:com.intellij.ui.tabs.impl.multiRow.CompressibleTabsRow$Companion
-- <init>(java.util.List,Z,Z):V
-f:com.intellij.ui.tabs.impl.multiRow.CompressibleTabsRow$Companion
 a:com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
 - com.intellij.ui.tabs.impl.table.TableLayout
-- <init>(com.intellij.ui.tabs.impl.JBTabsImpl,Z):V
 - getDropIndexFor(java.awt.Point):I
 - pf:getPrevLayoutPassInfo():com.intellij.ui.tabs.impl.multiRow.MultiRowPassInfo
 - getScrollOffset():I

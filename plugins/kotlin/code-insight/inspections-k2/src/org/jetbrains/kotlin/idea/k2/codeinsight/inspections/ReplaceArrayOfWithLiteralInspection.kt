@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -87,7 +87,7 @@ internal class ReplaceArrayOfWithLiteralInspection : KotlinApplicableInspectionB
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtCallExpression): Unit? =
         element.isArrayOfFunction().asUnit
 }

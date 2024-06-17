@@ -64,7 +64,7 @@ class ExtensionTest {
     }
     val anotherChild = AttachedEntity("abc", MySource)
 
-    builder.modifyEntity(entity) {
+    builder.modifyMainEntity(entity) {
       assertEquals("xyz", this.child!!.data)
       this.child = anotherChild
     }

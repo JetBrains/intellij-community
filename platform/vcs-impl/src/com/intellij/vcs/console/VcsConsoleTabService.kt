@@ -132,7 +132,7 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
 
     if (selectContent) {
       ChangesViewContentManager.getInstance(project).selectContent(ChangesViewContentManager.CONSOLE)
-      ChangesViewContentManager.getToolWindowFor(project, ChangesViewContentManager.CONSOLE)?.show(onShown)
+      ChangesViewContentManager.getToolWindowFor(project, ChangesViewContentManager.CONSOLE)?.activate(onShown)
     }
   }
 

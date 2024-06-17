@@ -3,8 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -33,15 +32,15 @@ data class PrimitiveLiteralData(
     val fixedExpression: String
 )
 
-context(KtAnalysisSession)
+context(KaSession)
 fun preparePrimitiveLiteral(element: KtExpression, type: KtType): PrimitiveLiteralData {
-    val typeName = type.expandedClassSymbol?.classId?.asSingleFqName()?.toUnsafe()
+    val typeName = type.expandedSymbol?.classId?.asSingleFqName()?.toUnsafe()
     val expectedTypeIsFloat = type.isFloat
     val expectedTypeIsDouble = type.isDouble
     val expectedTypeIsUnsigned = type.isUNumberType()
 
     val constValue =
-        element.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)?.value
+        element.evaluate()?.value
 
     val fixedExpression = buildString {
         if (expectedTypeIsFloat || expectedTypeIsDouble) {
@@ -81,21 +80,25 @@ private fun toLong(constValue: Any?): Long? = when (constValue) {
 
 class WrongPrimitiveLiteralFix(element: KtExpression, private val primitiveLiteral: PrimitiveLiteralData) : KotlinQuickFixAction<KtExpression>(element) {
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        with(primitiveLiteral) {
-            if (constValue == null) return false
-            val longValue = toLong(constValue) ?: return false
-            if (expectedTypeIsFloat || expectedTypeIsDouble || expectedTypeIsUnsigned) return true
+    companion object {
+        internal fun isAvailable(primitiveLiteral: PrimitiveLiteralData): Boolean {
+            with(primitiveLiteral) {
+                if (constValue == null) return false
+                val longValue = toLong(constValue) ?: return false
+                if (expectedTypeIsFloat || expectedTypeIsDouble || expectedTypeIsUnsigned) return true
 
-            if (constValue is Float || constValue is Double) {
-                val value = (constValue as? Float)?.toDouble() ?: constValue as Double
-                if (value != floor(value)) return false
-                if (value !in Long.MIN_VALUE.toDouble()..Long.MAX_VALUE.toDouble()) return false
+                if (constValue is Float || constValue is Double) {
+                    val value = (constValue as? Float)?.toDouble() ?: constValue as Double
+                    if (value != floor(value)) return false
+                    if (value !in Long.MIN_VALUE.toDouble()..Long.MAX_VALUE.toDouble()) return false
+                }
+
+                return longValue in (valueRanges[typeName] ?: return false)
             }
-
-            return longValue in (valueRanges[typeName] ?: return false)
         }
     }
+
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = isAvailable(primitiveLiteral)
 
     override fun getFamilyName() = KotlinBundle.message("change.to.correct.primitive.type")
     override fun getText() = KotlinBundle.message("change.to.0", primitiveLiteral.fixedExpression)

@@ -19,12 +19,12 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
+import com.intellij.vcs.log.ui.actions.ShowCommitInLogAction;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitObjectType;
-import git4idea.log.GitShowCommitInLogAction;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
     return new AnAction[]{
       ShowAllAffectedGenericAction.getInstance(),
       ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER),
-      new GitShowCommitInLogAction()};
+      new ShowCommitInLogAction()};
   }
 
   @Override

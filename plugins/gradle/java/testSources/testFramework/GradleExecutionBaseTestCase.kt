@@ -10,9 +10,11 @@ import com.intellij.testFramework.utils.vfs.deleteRecursively
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
 import org.jetbrains.plugins.gradle.testFramework.fixture.*
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.junit.jupiter.api.AfterEach
 
+@GradleProjectTestApplication
 abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
   private var _executionFixture: GradleExecutionTestFixture? = null

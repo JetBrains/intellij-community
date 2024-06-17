@@ -36,8 +36,7 @@ public abstract class FileEditorManager {
   public abstract @Nullable FileEditorComposite getComposite(@NotNull VirtualFile file);
 
   /**
-   * @param file file to open. File should be valid.
-   *             Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   * @param file file to open. The file should be valid.
    * @return array of opened editors
    */
   public abstract FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor);
@@ -259,12 +258,19 @@ public abstract class FileEditorManager {
    */
   public abstract @NotNull Project getProject();
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.EdtDataRule} instead.
+   */
+  @Deprecated(forRemoval = true)
   public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, @Nullable Disposable parentDisposable);
 
   /**
    * Returns data associated with given editor/caret context. Data providers are registered via
    * {@link #registerExtraEditorDataProvider(EditorDataProvider, Disposable)} method.
+   *
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.EdtDataRule} instead.
    */
+  @Deprecated(forRemoval = true)
   public abstract @Nullable Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret);
 
   /**

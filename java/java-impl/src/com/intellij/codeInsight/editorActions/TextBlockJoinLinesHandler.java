@@ -103,7 +103,12 @@ public final class TextBlockJoinLinesHandler implements JoinRawLinesHandlerDeleg
       }
       int nextI = PsiLiteralUtil.parseBackSlash(literal, i);
       if (nextI != -1) {
-        if (sb != null) {
+        if (nextI == i + 1 && literal.charAt(nextI) == 's') {
+          if (sb == null) {
+            sb = new StringBuilder(literal.substring(3, i));
+          }
+          sb.append(' ');
+        } else if (sb != null) {
           sb.append(literal, i + 1, nextI + 1);
         }
         //noinspection AssignmentToForLoopParameter

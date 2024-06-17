@@ -6,11 +6,11 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.conflicts.filterCandidates
@@ -115,7 +115,7 @@ fun checkCallableShadowing(
             //meaning that you can't change it without WA which is here not allowed, because conflict checking is under RA in progress
             val copyCallExpression =
                 PsiTreeUtil.getParentOfType(codeFragment.findElementAt(offsetInCopy.startOffset), false, callExpression.javaClass)
-            val resolveCall = copyCallExpression?.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
+            val resolveCall = copyCallExpression?.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
             val resolvedSymbol = resolveCall?.partiallyAppliedSymbol?.symbol
             if (resolvedSymbol is KtSyntheticJavaPropertySymbol) {
                 val getter = resolvedSymbol.javaGetterSymbol.psi
@@ -124,7 +124,7 @@ fun checkCallableShadowing(
                 getter
             } else {
                 val element = resolvedSymbol?.psi
-                    //callable references are ignored now by resolveCall() in AA, thus they require separate treatment here
+                    //callable references are ignored now by resolveCallOld() in AA, thus they require separate treatment here
                     ?: (copyCallExpression as? KtCallableReferenceExpression)?.callableReference?.mainReference?.resolve()
                 externalDeclarations.addIfNotNull(element)
                 element
@@ -257,29 +257,29 @@ private data class QualifiedState(val expression: KtExpression?, val explicitlyQ
 private fun createQualifiedExpression(callExpression: KtExpression, newName: String): QualifiedState? {
     val psiFactory = KtPsiFactory(callExpression.project)
     analyze(callExpression) {
-        val appliedSymbol = callExpression.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+        val appliedSymbol = callExpression.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
         val receiver = appliedSymbol?.extensionReceiver ?: appliedSymbol?.dispatchReceiver
 
-        fun getThisQualifier(receiverValue: KtImplicitReceiverValue): String {
+        fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
             val symbol = receiverValue.symbol
-            return if ((symbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) {
+            return if ((symbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
                 //specify companion name to avoid clashes with enum entries
                 symbol.name!!.asString()
-            } else if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
+            } else if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
                 "this@" + symbol.name!!.asString()
-            } else if (symbol is KtReceiverParameterSymbol && symbol.owningCallableSymbol is KtNamedSymbol) {
-                receiverValue.type.expandedClassSymbol?.name?.let { "this@$it" } ?: "this"
+            } else if (symbol is KaReceiverParameterSymbol && symbol.owningCallableSymbol is KaNamedSymbol) {
+                receiverValue.type.expandedSymbol?.name?.let { "this@$it" } ?: "this"
             } else {
                 "this"
             }
         }
 
-        fun getExplicitQualifier(receiverValue: KtExplicitReceiverValue): String? {
+        fun getExplicitQualifier(receiverValue: KaExplicitReceiverValue): String? {
             val containingSymbol = appliedSymbol?.symbol?.getContainingSymbol()
             val enumClassSymbol = containingSymbol?.getContainingSymbol()
             //add companion qualifier to avoid clashes with enum entries
-            return if (containingSymbol is KtNamedClassOrObjectSymbol && containingSymbol.classKind == KtClassKind.COMPANION_OBJECT &&
-                enumClassSymbol is KtNamedClassOrObjectSymbol && enumClassSymbol.classKind == KtClassKind.ENUM_CLASS &&
+            return if (containingSymbol is KaNamedClassOrObjectSymbol && containingSymbol.classKind == KaClassKind.COMPANION_OBJECT &&
+                enumClassSymbol is KaNamedClassOrObjectSymbol && enumClassSymbol.classKind == KaClassKind.ENUM_CLASS &&
                 (receiverValue.expression as? KtNameReferenceExpression)?.mainReference?.resolve() == containingSymbol.psi
             ) {
                 containingSymbol.name.asString()
@@ -289,16 +289,16 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
         }
 
         val qualifierText = when (receiver) {
-            is KtImplicitReceiverValue -> getThisQualifier(receiver)
+            is KaImplicitReceiverValue -> getThisQualifier(receiver)
 
-            is KtExplicitReceiverValue -> {
+            is KaExplicitReceiverValue -> {
                 getExplicitQualifier(receiver) ?: return QualifiedState(null, true)
             }
 
-            is KtSmartCastedReceiverValue -> {
+            is KaSmartCastedReceiverValue -> {
                 when (val receiverValue = receiver.original) {
-                    is KtImplicitReceiverValue -> getThisQualifier(receiverValue)
-                    is KtExplicitReceiverValue -> getExplicitQualifier(receiverValue)
+                    is KaImplicitReceiverValue -> getThisQualifier(receiverValue)
+                    is KaExplicitReceiverValue -> getExplicitQualifier(receiverValue)
                     else -> null
                 }
             }
@@ -307,7 +307,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
                 val symbol = appliedSymbol?.symbol
                 val containingSymbol = symbol?.getContainingSymbol()
                 val containerFQN =
-                    if (containingSymbol is KtClassOrObjectSymbol) {
+                    if (containingSymbol is KaClassOrObjectSymbol) {
                         containingSymbol.classId?.asSingleFqName()?.parent()
                     } else if (containingSymbol == null) {
                         (symbol?.psi as? KtElement)?.containingKtFile?.packageFqName
@@ -318,7 +318,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
 
         val qualifiedExpression = psiFactory.createExpressionByPattern("$qualifierText.$0", callExpression)
         getNewCallee(qualifiedExpression)?.getReferencedNameElement()?.replace(psiFactory.createNameIdentifier(newName))
-        return QualifiedState(qualifiedExpression, receiver is KtExplicitReceiverValue)
+        return QualifiedState(qualifiedExpression, receiver is KaExplicitReceiverValue)
     }
 }
 
@@ -337,8 +337,8 @@ private fun reportShadowing(
     result += BasicUnresolvableCollisionUsageInfo(refElement, declaration, message)
 }
 
-context(KtAnalysisSession)
-private fun retargetExternalDeclarations(declaration: KtNamedDeclaration, name: String, retargetJob: (KtDeclarationSymbol) -> Unit) {
+context(KaSession)
+private fun retargetExternalDeclarations(declaration: KtNamedDeclaration, name: String, retargetJob: (KaDeclarationSymbol) -> Unit) {
     val declarationSymbol = declaration.getSymbol()
     registerRetargetJobOnPotentialCandidates(declaration, name, { filterCandidates(declarationSymbol, it) }, retargetJob)
 }

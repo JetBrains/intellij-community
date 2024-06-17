@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.util.ui.EDT.dispatchAllInvocationEvents
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -61,6 +62,8 @@ open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
         newProjectSettings.distributionType = DistributionType.LOCAL
         newProjectSettings.externalProjectPath = settings.virtualFile.parent.path
         ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).linkProject(newProjectSettings)
+
+        dispatchAllInvocationEvents()
 
         testFiles = TestFiles(
             build,

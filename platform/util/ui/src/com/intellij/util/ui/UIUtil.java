@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -1547,11 +1547,17 @@ public final class UIUtil {
    */
   public static boolean isFocusAncestor(@NotNull Component component) {
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (owner == null) return false;
-    if (SwingUtilities.isDescendingFrom(owner, component)) return true;
+    if (owner == null) {
+      return false;
+    }
+    if (SwingUtilities.isDescendingFrom(owner, component) || GraphicsEnvironment.isHeadless()) {
+      return true;
+    }
 
     while (component != null) {
-      if (kindaHasFocus(component)) return true;
+      if (kindaHasFocus(component)) {
+        return true;
+      }
       component = component.getParent();
     }
     return false;
@@ -1620,10 +1626,6 @@ public final class UIUtil {
   }
 
   private static boolean kindaHasFocus(@NotNull Component component) {
-    if (GraphicsEnvironment.isHeadless()) {
-      return true;
-    }
-
     JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
     return jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
   }
@@ -1637,7 +1639,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean hasFocus(@NotNull Component component) {
-    return kindaHasFocus(component) || component.hasFocus();
+    return GraphicsEnvironment.isHeadless() || kindaHasFocus(component) || component.hasFocus();
   }
 
   /**
@@ -1933,23 +1935,23 @@ public final class UIUtil {
    * {@link com.intellij.ui.ScrollPaneFactory#createScrollPane(Component, boolean)}.
    */
   @Deprecated
-  public static void removeScrollBorder(final Component c) {
+  public static void removeScrollBorder(@NotNull Component c) {
     JBIterable<JScrollPane> scrollPanes = uiTraverser(c)
       .expand(o -> o == c || o instanceof JPanel || o instanceof JLayeredPane)
       .filter(JScrollPane.class);
     for (JScrollPane scrollPane : scrollPanes) {
       Integer keepBorderSides = ClientProperty.get(scrollPane, KEEP_BORDER_SIDES);
-      if (keepBorderSides != null) {
-        if (scrollPane.getBorder() instanceof LineBorder) {
-          Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
-          scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
-        }
-        else {
-          scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), keepBorderSides.intValue()));
-        }
+      if (keepBorderSides == null) {
+        scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.NONE));
+      }
+      else if (scrollPane.getBorder() instanceof LineBorder lineBorder) {
+        Color color = lineBorder.getLineColor();
+        //noinspection MagicConstant
+        scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
       }
       else {
-        scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.NONE));
+        //noinspection MagicConstant
+        scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), keepBorderSides.intValue()));
       }
     }
   }
@@ -2139,7 +2141,7 @@ public final class UIUtil {
       result = uiChildren(c);
     }
     if (c instanceof JComponent jc) {
-      Iterable<? extends Component> orphans = ClientProperty.get(jc, NOT_IN_HIERARCHY_COMPONENTS);
+      Iterable<? extends Component> orphans = ClientProperty.get(jc, ComponentUtil.NOT_IN_HIERARCHY_COMPONENTS);
       if (orphans != null) {
         result = result.append(orphans);
       }

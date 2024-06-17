@@ -8,6 +8,7 @@ import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
+import org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy;
 
 import java.util.*;
 import java.util.function.Function;
@@ -17,7 +18,7 @@ import static org.jetbrains.jps.javac.Iterators.*;
 
 public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
 
-  private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(new GeneralJvmDifferentiateStrategy());
+  private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(new KotlinSourceOnlyDifferentiateStrategy(), new GeneralJvmDifferentiateStrategy());
   private final Set<String> myRegisteredIndices;
 
   public DependencyGraphImpl(MapletFactory containerFactory) {
@@ -49,7 +50,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     // do not process 'removed' per-source file. This works when a class comes from exactly one source, but might not work, if a class can be associated with several sources
     // better make a node-diff over all compiled sources => the sets of removed, added, deleted _nodes_ will be more accurate and reflecting reality
-    List<Node<?, ?>> deletedNodes = collect(filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
+    List<Node<?, ?>> deletedNodes = nodesBefore.isEmpty()? Collections.emptyList() : collect(filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
 
     if (!params.isCalculateAffected()) {
       return new DifferentiateResult() {
@@ -232,6 +233,12 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     affectedSources.removeAll(allProcessedSources);
     // ensure sources explicitly marked by strategies are affected, even if these sources were compiled initially
     affectedSources.addAll(diffContext.affectedSources);
+
+    if (!delta.isSourceOnly()) {
+      // complete affected file set with source-delta dependencies
+      collect(differentiate(createDelta(affectedSources, Collections.emptyList(), true), params).getAffectedSources(), affectedSources);
+    }
+
 
     return new DifferentiateResult() {
       @Override

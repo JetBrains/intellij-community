@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -103,7 +103,7 @@ object CastExpressionFixFactories {
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createFixes(
         isDueToNullability: Boolean,
         actualType: KtType,

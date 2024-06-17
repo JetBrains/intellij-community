@@ -20,7 +20,7 @@ final class GitRebaseSkip extends GitAbstractRebaseAction {
 
   @Override
   public @NotNull Icon getMainToolbarIcon() {
-    return DvcsImplIcons.New.SkipCommit;
+    return DvcsImplIcons.SkipCommit;
   }
 
   @Override

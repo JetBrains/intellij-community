@@ -164,6 +164,7 @@ public class SingleClassesTest {
   @Test public void testComplexInstanceOfRecordPatternJavac() { doTest("pkg/TestComplexInstanceOfRecordPatternJavac"); }
   @Test public void testSwitchWithDeconstructionsWithoutNestedJavac() { doTest("pkg/TestSwitchWithDeconstructionsWithoutNestedJavac"); }
   @Test public void testSwitchNestedDeconstructionJavac() { doTest("pkg/TestSwitchNestedDeconstructionsJavac"); }
+  @Test public void testSwitchWrapReturnJavac() { doTest("pkg/TestSwitchWrapReturnJavac"); }
 
   // TODO: fix all below
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
@@ -241,6 +242,11 @@ public class SingleClassesTest {
   @Test public void testInstanceofWithPattern() {
     doTest("patterns/TestInstanceofWithPattern");
   }
+  //it is not actual expressions, but convert expressions into statements
+  @Test public void testSwitchPatternWithExpression() {
+    doTest("patterns/TestSwitchPatternWithExpression");
+  }
+
   @Test public void testInstanceofVarNotSupported() {
     // the bytecode version of this test data doesn't support patterns in `instanceof`, so no modifications regarding that are applied
     doTest("patterns/TestInstanceofPatternNotSupported");

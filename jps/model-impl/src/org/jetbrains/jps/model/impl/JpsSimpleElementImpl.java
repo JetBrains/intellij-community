@@ -19,10 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
-public final class JpsSimpleElementImpl<D> extends JpsElementBase<JpsSimpleElementImpl<D>> implements JpsSimpleElement<D> {
+final class JpsSimpleElementImpl<D> extends JpsElementBase<JpsSimpleElementImpl<D>> implements JpsSimpleElement<D> {
   private D myData;
 
-  public JpsSimpleElementImpl(D data) {
+  JpsSimpleElementImpl(D data) {
     myData = data;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateManagerUtilBase;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
@@ -36,7 +37,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -57,6 +57,7 @@ import java.util.Objects;
  */
 final class BackgroundHighlighter {
   private static final Key<Collection<RangeHighlighter>> SELECTION_HIGHLIGHTS = new Key<>("SELECTION_HIGHLIGHTS");
+  private static final Key<String> HIGHLIGHTED_TEXT = new Key<>("HIGHLIGHTED_TEXT");
   private final Alarm alarm = new Alarm();
 
   public void runActivity(@NotNull Project project) {
@@ -97,7 +98,9 @@ final class BackgroundHighlighter {
           return;
         }
 
-        highlightSelection(project, editor);
+        if (!highlightSelection(project, editor)) {
+          removeSelectionHighlights(editor);
+        }
 
         TextRange oldRange = e.getOldRange();
         TextRange newRange = e.getNewRange();
@@ -131,8 +134,12 @@ final class BackgroundHighlighter {
           clearBraces(project, ((TextEditor)oldEditor).getEditor(), alarm);
         }
         FileEditor newEditor = e.getNewEditor();
-        if (newEditor instanceof TextEditor) {
-          updateHighlighted(project, ((TextEditor)newEditor).getEditor(), alarm);
+        if (newEditor instanceof TextEditor textEditor) {
+          Editor editor = textEditor.getEditor();
+          updateHighlighted(project, editor, alarm);
+          if (!highlightSelection(project, editor)) {
+            removeSelectionHighlights(editor);
+          }
         }
       }
     });
@@ -159,42 +166,39 @@ final class BackgroundHighlighter {
     updateHighlighted(project, editor, alarm);
   }
 
-  private static void highlightSelection(@NotNull Project project, @NotNull Editor editor) {
-    if (!Registry.is("editor.highlight.selected.text.occurrences") || !CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
-      return;
-    }
+  private static boolean highlightSelection(@NotNull Project project, @NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
     Document document = editor.getDocument();
     long stamp = document.getModificationStamp();
-    if (document.isInBulkUpdate()) {
-      return;
+    if (document.isInBulkUpdate() || !BackgroundHighlightingUtil.isValidEditor(editor)) {
+      return false;
     }
-    if (!BackgroundHighlightingUtil.isValidEditor(editor)) {
-      return;
+    if (!editor.getSettings().isHighlightSelectionOccurrences()) {
+      return false;
     }
-    MarkupModel markupModel = editor.getMarkupModel();
-    Collection<RangeHighlighter> oldHighlighters = editor.getUserData(SELECTION_HIGHLIGHTS);
-    if (oldHighlighters != null) {
-      editor.putUserData(SELECTION_HIGHLIGHTS, null);
-      for (RangeHighlighter highlighter : oldHighlighters) {
-        markupModel.removeHighlighter(highlighter);
-      }
+    if (TemplateManagerUtilBase.getTemplateState(editor) != null) {
+      return false; // don't highlight selected text when template is active
     }
     CaretModel caretModel = editor.getCaretModel();
     if (caretModel.getCaretCount() > 1) {
-      return;
+      return false;
     }
     Caret caret = caretModel.getPrimaryCaret();
     if (!caret.hasSelection()) {
-      return;
+      return false;
     }
     int start = caret.getSelectionStart();
     int end = caret.getSelectionEnd();
     CharSequence sequence = document.getCharsSequence();
     String toFind = sequence.subSequence(start, end).toString();
     if (toFind.trim().isEmpty()) {
-      return;
+      return false;
     }
+    String previous = editor.getUserData(HIGHLIGHTED_TEXT);
+    if (toFind.equals(previous)) {
+      return true;
+    }
+    editor.putUserData(HIGHLIGHTED_TEXT, toFind);
     FindManager findManager = FindManager.getInstance(project);
     FindModel findModel = new FindModel();
     EditorSearchSession editorSearchSession = EditorSearchSession.get(editor);
@@ -222,7 +226,9 @@ final class BackgroundHighlighter {
         if (document.getModificationStamp() != stamp || results.isEmpty()) {
           return;
         }
+        removeSelectionHighlights(editor);
         List<RangeHighlighter> highlighters = new ArrayList<>();
+        MarkupModel markupModel = editor.getMarkupModel();
         for (FindResult result : results) {
           highlighters.add(markupModel.addRangeHighlighter(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES, result.getStartOffset(), result.getEndOffset(),
                                                            HighlightManagerImpl.OCCURRENCE_LAYER, HighlighterTargetArea.EXACT_RANGE));
@@ -230,6 +236,19 @@ final class BackgroundHighlighter {
         editor.putUserData(SELECTION_HIGHLIGHTS, highlighters);
       })
       .submit(AppExecutorUtil.getAppExecutorService());
+    return true;
+  }
+
+  private static void removeSelectionHighlights(@NotNull Editor editor) {
+    MarkupModel markupModel = editor.getMarkupModel();
+    Collection<RangeHighlighter> oldHighlighters = editor.getUserData(SELECTION_HIGHLIGHTS);
+    if (oldHighlighters != null) {
+      editor.putUserData(SELECTION_HIGHLIGHTS, null);
+      for (RangeHighlighter highlighter : oldHighlighters) {
+        markupModel.removeHighlighter(highlighter);
+      }
+    }
+    editor.putUserData(HIGHLIGHTED_TEXT, null);
   }
 
   private static void updateHighlighted(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm) {

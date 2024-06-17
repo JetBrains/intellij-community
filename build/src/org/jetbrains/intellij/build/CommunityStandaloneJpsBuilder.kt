@@ -63,6 +63,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
 
 
   layout.withModule("intellij.maven.jps", "maven-jps.jar")
+  layout.withModule("intellij.java.compiler.charts.jps", "java-compiler-charts-jps.jar")
   layout.withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
   layout.withModule("intellij.gradle.jps", "gradle-jps.jar")
 

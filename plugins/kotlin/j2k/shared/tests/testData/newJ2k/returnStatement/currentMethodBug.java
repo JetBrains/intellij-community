@@ -1,15 +1,14 @@
-// IGNORE_K2
 import org.jetbrains.annotations.Nullable;
 
 interface I {
-    int getInt();
+    int returnInt();
 }
 
 class C {
-    @Nullable Object getObject() {
+    @Nullable Object object() {
         foo(new I() {
             @Override
-            public int getInt() {
+            public int returnInt() {
                 return 0;
             }
         });

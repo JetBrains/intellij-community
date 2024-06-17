@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,8 +17,8 @@ import java.awt.event.InputEvent;
 import java.util.List;
 
 /**
- * A manager for actions. Used to register and unregister actions, also
- * contains utility methods to easily fetch action by id and id by action.
+ * A manager for actions.
+ * Used to register and unregister actions, it also contains utility methods to easily fetch action by id and id by action.
  *
  * @see AnAction
  */
@@ -60,7 +61,7 @@ public abstract class ActionManager {
    *
    * @param actionId Id of the registered action
    * @return Action associated with the specified actionId, {@code null} if
-   * there is no actions associated with the specified actionId
+   * there are no actions associated with the specified actionId
    * @throws IllegalArgumentException if {@code actionId} is {@code null}
    * @see com.intellij.openapi.actionSystem.IdeActions
    */
@@ -87,7 +88,7 @@ public abstract class ActionManager {
    *
    * @param actionId Id to associate with the action
    * @param action   Action to register
-   * @param pluginId Identifier of the plugin owning the action. Used to show the actions in the
+   * @param pluginId The identifier of the plugin owning the action. Used to show the actions in the
    *                 correct place under the "Plugins" node in the "Keymap" settings pane and similar dialogs.
    */
   public abstract void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId);
@@ -131,14 +132,6 @@ public abstract class ActionManager {
 
   public abstract void addTimerListener(@NotNull TimerListener listener);
 
-  /**
-   * @deprecated use {@link #addTimerListener(TimerListener)}
-   */
-  @Deprecated(forRemoval = true)
-  public void addTimerListener(int unused, @NotNull TimerListener listener) {
-    addTimerListener(listener);
-  }
-
   public abstract void removeTimerListener(@NotNull TimerListener listener);
 
   public abstract @NotNull ActionCallback tryToExecute(@NotNull AnAction action,
@@ -162,4 +155,8 @@ public abstract class ActionManager {
   }
 
   public abstract @Nullable KeyboardShortcut getKeyboardShortcut(@NonNls @NotNull String actionId);
+
+  @ApiStatus.Internal
+  protected ActionManager() {
+  }
 }

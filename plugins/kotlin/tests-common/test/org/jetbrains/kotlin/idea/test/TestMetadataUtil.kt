@@ -1,17 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.test
 
-import java.io.File
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
+import java.io.File
 
 object TestMetadataUtil {
     @JvmStatic
     fun getTestData(testClass: Class<*>): File? {
         val testRoot = getTestRoot(testClass) ?: return null
-        val testMetadataAnnotation = testClass.getAnnotation(TestMetadata::class.java) ?: return null
-        return File(testRoot, testMetadataAnnotation.value)
+        val testMetadataAnnotationValue = getTestMetadata(testClass) ?: return null
+        return File(testRoot, testMetadataAnnotationValue)
     }
 
     @JvmStatic
@@ -26,13 +26,28 @@ object TestMetadataUtil {
     }
 
     @JvmStatic
-    fun getTestRoot(testClass: Class<*>): File? {
+    fun <A: Annotation> getAnnotationValue(testClass: Class<*>, annotationClass: Class<A>, lookupEnclosingClass: Boolean = true): A? {
         var current = testClass
-        while (true) {
-            current = current.enclosingClass ?: break
+        if (lookupEnclosingClass) {
+            while (true) {
+                current = current.enclosingClass ?: break
+            }
         }
 
-        val testRootAnnotation = current.getAnnotation(TestRoot::class.java) ?: return null
-        return KotlinRoot.DIR.resolve(testRootAnnotation.value)
+        current.getAnnotation(annotationClass)?.let { return it }
+        while (current != Any::class.java) {
+            current = current.superclass
+            current.getAnnotation(annotationClass)?.let { return it }
+        }
+
+        return null
     }
+
+    @JvmStatic
+    fun getTestRoot(testClass: Class<*>): File? =
+        getAnnotationValue(testClass, TestRoot::class.java)?.let { KotlinRoot.DIR.resolve(it.value) }
+
+    @JvmStatic
+    fun getTestMetadata(testClass: Class<*>): String? =
+        getAnnotationValue(testClass, TestMetadata::class.java, lookupEnclosingClass = false)?.let { return it.value }
 }

@@ -217,7 +217,7 @@ private class LibraryRootFileWatcher : LegacyFileWatcher {
                             ?: error("Incorrect state of the VFU index")
       oldLibraryRoots.forEach { oldLibraryRoot ->
         val newLibraryRoot = LibraryRoot(newVFU, oldLibraryRoot.type, oldLibraryRoot.inclusionOptions)
-        diff.modifyEntity(entityWithVFU.entity) {
+        diff.modifyLibraryEntity(entityWithVFU.entity) {
           roots.remove(oldLibraryRoot)
           roots.add(newLibraryRoot)
         }
@@ -247,7 +247,7 @@ private class SdkRootFileWatcher : LegacyFileWatcher {
                             ?: error("Incorrect state of the VFU index")
       oldSdkRoots.forEach { oldSdkRoot ->
         val newSdkRoot = SdkRoot(newVFU, oldSdkRoot.type)
-        diff.modifyEntity(entityWithVFU.entity) {
+        diff.modifySdkEntity(entityWithVFU.entity) {
           roots.remove(oldSdkRoot)
           roots.add(newSdkRoot)
         }

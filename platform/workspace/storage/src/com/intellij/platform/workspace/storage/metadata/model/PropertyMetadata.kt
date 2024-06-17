@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.storage.metadata.model
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.ConnectionId.ConnectionType
+import com.intellij.platform.workspace.storage.ConnectionId.ConnectionType
 import com.intellij.platform.workspace.storage.metadata.StorageMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 

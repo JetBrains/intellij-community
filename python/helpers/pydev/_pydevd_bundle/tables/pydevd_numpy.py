@@ -220,7 +220,12 @@ def _create_table(command, start_index=None, end_index=None):
         np_array = command['data']
         sort_keys = command['sort_keys']
     else:
-        np_array = command
+        try:
+            import tensorflow as tf
+            if isinstance(command, tf.SparseTensor):
+                command = tf.sparse.to_dense(tf.sparse.reorder(command))
+        finally:
+            np_array = command
 
     if is_pd:
         sorting_arr = _sort_df(pd.DataFrame(np_array), sort_keys)

@@ -9,6 +9,7 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jdom.Parent
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
@@ -44,6 +45,7 @@ abstract class SchemeManagerFactory {
                   settingsCategory = settingsCategory)
   }
 
+  @ApiStatus.Internal
   abstract fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(
     directoryName: String,
     processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,

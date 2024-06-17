@@ -5,19 +5,17 @@ import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.metadata.*
-import com.intellij.workspaceModel.codegen.impl.metadata.BuiltPrimitiveType
-import com.intellij.workspaceModel.codegen.impl.metadata.EntityMetadataBuilder
-import com.intellij.workspaceModel.codegen.impl.metadata.PropertyMetadataBuilder
 import com.intellij.workspaceModel.codegen.impl.writer.*
-import com.intellij.workspaceModel.codegen.impl.writer.MetadataStorage
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.allFieldsWithOwnExtensions
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.allFinalSubClasses
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.implPackage
 
 internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<ObjClass<*>>,
                                        abstractTypes: List<ValueType.AbstractClass<*>>): String = lines {
-  line("package ${module.name}")
+  line("package ${module.implPackage}")
   line()
-  section("$generatedCodeVisibilityModifier object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.base}()") {
+  line("@OptIn($WorkspaceEntityInternalApi::class)")
+  section("internal object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.base}()") {
     val builtTypes: MutableList<String> = arrayListOf()
     val builtPrimitiveTypes = linkedSetOf<BuiltPrimitiveType>()
 
@@ -65,9 +63,10 @@ internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<Ob
 
 
 internal fun CompiledObjModule.implWsMetadataStorageBridgeCode(metadataStorageImpl: QualifiedName): String = lines {
-  line("package $name")
+  line("package ${this@implWsMetadataStorageBridgeCode.implPackage}")
   line()
-  line("$generatedCodeVisibilityModifier object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.bridge}($metadataStorageImpl)")
+  line("@OptIn($WorkspaceEntityInternalApi::class)")
+  line("internal object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.bridge}($metadataStorageImpl)")
 }
 
 

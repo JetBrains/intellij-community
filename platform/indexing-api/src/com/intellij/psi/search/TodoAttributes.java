@@ -7,6 +7,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,8 @@ public final class TodoAttributes implements Cloneable {
   private static final @NonNls String ELEMENT_OPTION = "option";
   private static final @NonNls String USE_CUSTOM_COLORS_ATT = "useCustomColors";
 
-  public TodoAttributes(@NotNull Element element, @NotNull TextAttributes defaultTodoAttributes) {
+  @Internal
+  TodoAttributes(@NotNull Element element, @NotNull TextAttributes defaultTodoAttributes) {
     String icon = element.getAttributeValue(ATTRIBUTE_ICON, ICON_DEFAULT);
 
     IconManager iconManager = IconManager.getInstance();
@@ -45,11 +47,13 @@ public final class TodoAttributes implements Cloneable {
     myTextAttributes = myShouldUseCustomColors && element.getChild(ELEMENT_OPTION) != null ? new TextAttributes(element) : defaultTodoAttributes;
   }
 
+  @Internal
   public TodoAttributes(@NotNull Icon icon, @NotNull TextAttributes textAttributes) {
     myIcon = icon;
     myTextAttributes = textAttributes;
   }
 
+  @Internal
   public TodoAttributes(@NotNull TextAttributes textAttributes){
     myTextAttributes = textAttributes;
   }

@@ -10,7 +10,6 @@ import com.intellij.psi.util.startOffset
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import com.intellij.util.ThrowableRunnable
-import junit.framework.ComparisonFailure
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -87,10 +86,13 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
 
         try {
             doTestProvider("${file.name.substringBefore(".")}.kt", fileContents, inlayHintsProvider, options)
-        } catch (e: ComparisonFailure) {
+        } catch (e: FileComparisonFailedError) {
             throw FileComparisonFailedError(
                 e.message,
-                e.expected, e.actual, file.absolutePath, null
+                e.expectedStringPresentation,
+                e.actualStringPresentation,
+                file.absolutePath,
+                null
             )
         }
     }

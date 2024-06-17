@@ -3,8 +3,6 @@ package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.ide.BrowserUtil.browse
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBPasswordField
@@ -58,7 +56,7 @@ internal class GHTokenCredentialsUi(
 
   override suspend fun login(server: GithubServerPath): Pair<String, String> = withContext(Dispatchers.Main.immediate) {
     val token = tokenTextField.text
-    val executor = factory.create(token)
+    val executor = factory.create(server, token)
     val login = acquireLogin(server, executor, isAccountUnique, fixedLogin)
     login to token
   }

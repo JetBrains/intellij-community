@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public abstract class EquivalenceDescriptorProvider {
-  public static final ExtensionPointName<EquivalenceDescriptorProvider> EP_NAME = ExtensionPointName.create("com.intellij.equivalenceDescriptorProvider");
+  private static final ExtensionPointName<EquivalenceDescriptorProvider> EP_NAME = ExtensionPointName.create("com.intellij.equivalenceDescriptorProvider");
 
   // for using in tests only !!!
   @SuppressWarnings("StaticNonFinalField")

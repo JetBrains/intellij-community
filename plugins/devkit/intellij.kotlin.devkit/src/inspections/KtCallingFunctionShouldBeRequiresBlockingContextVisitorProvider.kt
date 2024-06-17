@@ -13,10 +13,10 @@ import org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlocki
 import org.jetbrains.idea.devkit.util.QuickFixWithReferenceToElement
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -39,14 +39,14 @@ internal class KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider :
   ) : BlockingContextFunctionBodyVisitor() {
     override fun visitCallExpression(expression: KtCallExpression) {
       analyze(expression) {
-        val functionCall = expression.resolveCall()?.singleFunctionCallOrNull()
+        val functionCall = expression.resolveCallOld()?.singleFunctionCallOrNull()
         val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
 
-        if (calledSymbol !is KtNamedSymbol) return
+        if (calledSymbol !is KaNamedSymbol) return
         val hasAnnotation = calledSymbol.hasAnnotation(RequiresBlockingContextAnnotationId)
 
         if (!hasAnnotation) {
-          if (calledSymbol is KtFunctionSymbol && calledSymbol.isInline) {
+          if (calledSymbol is KaFunctionSymbol && calledSymbol.isInline) {
             checkInlineLambdaArguments(functionCall)
           }
 

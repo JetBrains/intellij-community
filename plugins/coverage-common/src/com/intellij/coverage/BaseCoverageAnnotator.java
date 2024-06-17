@@ -39,7 +39,8 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, CoverageBundle.message("coverage.view.loading.data"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-            request.run();
+          myModifiedFilesFilter = ModifiedFilesFilter.create(project);
+          request.run();
         }
 
         @Override
@@ -64,9 +65,7 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
 
   @ApiStatus.Internal
   @Override
-  public synchronized @Nullable ModifiedFilesFilter getModifiedFilesFilter() {
-    if (myModifiedFilesFilter != null) return myModifiedFilesFilter;
-    myModifiedFilesFilter = ModifiedFilesFilter.create(myProject);
+  public @Nullable ModifiedFilesFilter getModifiedFilesFilter() {
     return myModifiedFilesFilter;
   }
 

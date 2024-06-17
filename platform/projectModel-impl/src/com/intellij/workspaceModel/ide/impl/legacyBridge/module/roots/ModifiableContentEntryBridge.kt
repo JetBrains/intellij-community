@@ -68,7 +68,7 @@ internal class ModifiableContentEntryBridge(
 
     SourceRootPropertiesHelper.addPropertiesEntity(sourceRootEntity, properties, serializer)
 
-    diff.modifyEntity(contentRootEntity) {
+    diff.modifyContentRootEntity(contentRootEntity) {
       this.sourceRoots += sourceRootEntity
     }
 
@@ -156,7 +156,7 @@ internal class ModifiableContentEntryBridge(
   }
 
   private fun updateContentEntry(updater: ContentRootEntity.Builder.() -> Unit) {
-    diff.modifyEntity(currentContentEntry.value.entity, updater)
+    diff.modifyContentRootEntity(currentContentEntry.value.entity, updater)
   }
 
   override fun removeExcludeFolder(url: String): Boolean {

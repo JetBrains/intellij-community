@@ -40,7 +40,7 @@ interface ExternalProjectsBuildClasspathEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyExternalProjectsBuildClasspathEntity(
   entity: ExternalProjectsBuildClasspathEntity,
   modification: ExternalProjectsBuildClasspathEntity.Builder.() -> Unit,
 ): ExternalProjectsBuildClasspathEntity {

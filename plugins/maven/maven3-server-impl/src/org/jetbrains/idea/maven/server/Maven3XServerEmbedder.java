@@ -109,7 +109,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull private final RepositorySystem myRepositorySystem;
 
-  @NotNull private final Maven3ImporterSpy myImporterSpy;
+  @NotNull protected final Maven3ImporterSpy myImporterSpy;
 
   @NotNull protected final MavenEmbedderSettings myEmbedderSettings;
 
@@ -509,19 +509,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenWorkspaceMap workspaceMap = request.getWorkspaceMap();
     boolean updateSnapshots = myAlwaysUpdateSnapshots || request.updateSnapshots();
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pomHashMap.size(), myConsoleWrapper)) {
-      Maven3XProjectResolver projectResolver = new Maven3XProjectResolver(
-        this,
-        telemetry,
-        updateSnapshots,
-        myImporterSpy,
-        task,
-        pomHashMap,
-        activeProfiles,
-        inactiveProfiles,
-        workspaceMap,
-        request.getUserProperties(),
-        canResolveDependenciesInParallel()
-      );
+      Maven3XProjectResolver projectResolver =
+        createProjectResolver(request, telemetry, updateSnapshots, task, pomHashMap, activeProfiles, inactiveProfiles, workspaceMap);
       try {
         customizeComponents(workspaceMap);
         ArrayList<MavenServerExecutionResult> result = telemetry.callWithSpan(
@@ -533,6 +522,30 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         resetComponents();
       }
     }
+  }
+
+  protected @NotNull Maven3XProjectResolver createProjectResolver(@NotNull ProjectResolutionRequest request,
+                                                                  MavenServerOpenTelemetry telemetry,
+                                                                  boolean updateSnapshots,
+                                                                  LongRunningTask task,
+                                                                  PomHashMap pomHashMap,
+                                                                  List<String> activeProfiles,
+                                                                  List<String> inactiveProfiles,
+                                                                  MavenWorkspaceMap workspaceMap) {
+    Maven3XProjectResolver projectResolver = new Maven3XProjectResolver(
+      this,
+      telemetry,
+      updateSnapshots,
+      myImporterSpy,
+      task,
+      pomHashMap,
+      activeProfiles,
+      inactiveProfiles,
+      workspaceMap,
+      request.getUserProperties(),
+      canResolveDependenciesInParallel()
+    );
+    return projectResolver;
   }
 
   /**
@@ -1161,6 +1174,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     List<String> inactiveProfiles = new ArrayList<>(profiles.getDisabledProfiles());
     MavenExecutionRequest mavenExecutionRequest = createRequest(file, activeProfiles, inactiveProfiles);
     mavenExecutionRequest.setGoals(Collections.singletonList(goal));
+
+    Properties userProperties = request.userProperties();
+    mavenExecutionRequest.setUserProperties(userProperties);
 
     MavenExecutionResult executionResult = safeExecute(mavenExecutionRequest, getComponent(Maven.class));
 

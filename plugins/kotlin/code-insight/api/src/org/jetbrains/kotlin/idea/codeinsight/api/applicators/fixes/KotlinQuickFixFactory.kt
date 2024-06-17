@@ -5,12 +5,12 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 import com.intellij.codeInsight.intention.CommonIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.modcommand.ModCommandAction
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 
 /*sealed*/ fun interface KotlinQuickFixFactory<DIAGNOSTIC : KtDiagnosticWithPsi<*>> {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createQuickFixes(diagnostic: DIAGNOSTIC): List<CommonIntentionAction>
 
     /**
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
      */
     fun interface IntentionBased<DIAGNOSTIC : KtDiagnosticWithPsi<*>> : KotlinQuickFixFactory<DIAGNOSTIC> {
 
-        context(KtAnalysisSession)
+        context(KaSession)
         override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<IntentionAction>
     }
 
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
      */
     fun interface ModCommandBased<DIAGNOSTIC : KtDiagnosticWithPsi<*>> : KotlinQuickFixFactory<DIAGNOSTIC> {
 
-        context(KtAnalysisSession)
+        context(KaSession)
         override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<ModCommandAction>
     }
 }

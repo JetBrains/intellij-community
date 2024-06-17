@@ -24,6 +24,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JList
@@ -90,10 +92,11 @@ object ChooserPopupUtil {
     popup.showAndAwaitSubmission(list, point, popupConfig.showDirection)
   }
 
+  @ApiStatus.Internal
   @JvmOverloads
   suspend fun <T : Any> showAsyncMultipleChooserPopup(
     point: RelativePoint,
-    itemsLoader: Flow<Result<List<T>>>,
+    loadedBatchesFlow: Flow<Result<List<T>>>,
     presenter: (T) -> PopupItemPresentation,
     isOriginallySelected: (T) -> Boolean,
     popupConfig: PopupConfig = PopupConfig.DEFAULT
@@ -102,8 +105,15 @@ object ChooserPopupUtil {
     val list = createSelectableList(listModel, SimpleSelectablePopupItemRenderer.create { item ->
       SelectablePopupItemPresentation.fromPresenter(presenter, item)
     })
-    val loadingListener = SelectableListLoadingListener(
-      this, itemsLoader, list, listModel, isOriginallySelected, popupConfig.errorPresenter
+    val selectableBatchesFlow = loadedBatchesFlow.map { result ->
+      result.map { list ->
+        list.map {
+          SelectableWrapper(it, isOriginallySelected(it))
+        }
+      }
+    }
+    val loadingListener = ListLoadingListener(
+      this, selectableBatchesFlow, list, listModel, popupConfig.errorPresenter
     )
 
     @Suppress("UNCHECKED_CAST")
@@ -186,15 +196,14 @@ enum class ShowDirection {
   BELOW
 }
 
-private abstract class AbstractListLoadingListener<T>(
+private class ListLoadingListener<T>(
   private val parentScope: CoroutineScope,
   private val itemsFlow: Flow<Result<List<T>>>,
-  private val list: JBList<*>,
+  private val list: JBList<T>,
+  private val listModel: CollectionListModel<T>,
+  private val errorPresenter: ErrorStatusPresenter.Text<Throwable>?
 ) : JBPopupListener {
   private var cs: CoroutineScope? = null
-
-  abstract fun onSuccess(items: List<T>)
-  abstract fun onFailure(exception: Throwable)
 
   override fun beforeShown(event: LightweightWindowEvent) {
     val cs = parentScope.childScope()
@@ -207,7 +216,9 @@ private abstract class AbstractListLoadingListener<T>(
         itemsFlow.collect { resultedItems ->
           resultedItems.fold(
             onSuccess = { items -> onSuccess(items) },
-            onFailure = { exception -> onFailure(exception) }
+            onFailure = { exception ->
+              showErrorOnPopupFailure(exception, errorPresenter, list)
+            }
           )
         }
       }
@@ -217,20 +228,7 @@ private abstract class AbstractListLoadingListener<T>(
     }
   }
 
-  override fun onClosed(event: LightweightWindowEvent) {
-    cs?.cancel()
-    cs = null
-  }
-}
-
-private class ListLoadingListener<T : Any>(
-  private val parentScope: CoroutineScope,
-  private val itemsFlow: Flow<Result<List<T>>>,
-  private val list: JBList<*>,
-  private val listModel: CollectionListModel<T>,
-  private val errorPresenter: ErrorStatusPresenter.Text<Throwable>?
-) : AbstractListLoadingListener<T>(parentScope, itemsFlow, list) {
-  override fun onSuccess(items: List<T>) {
+  private fun onSuccess(items: List<T>) {
     val selected = list.selectedIndex
     if (items.size > listModel.size) {
       val newList = items.subList(listModel.size, items.size)
@@ -241,30 +239,9 @@ private class ListLoadingListener<T : Any>(
     }
   }
 
-  override fun onFailure(exception: Throwable) {
-    showErrorOnPopupFailure(exception, errorPresenter, list)
-  }
-}
-
-private class SelectableListLoadingListener<T : Any>(
-  private val parentScope: CoroutineScope,
-  private val itemsFlow: Flow<Result<List<T>>>,
-  private val list: JBList<*>,
-  private val listModel: CollectionListModel<SelectableWrapper<T>>,
-  private val isOriginallySelected: (T) -> Boolean,
-  private val errorPresenter: ErrorStatusPresenter.Text<Throwable>?
-) : AbstractListLoadingListener<T>(parentScope, itemsFlow, list) {
-  override fun onSuccess(items: List<T>) {
-    val newList = items.map { item -> SelectableWrapper(item, isOriginallySelected(item)) }
-    listModel.replaceAll(newList)
-
-    if (list.selectedIndex == -1) {
-      list.selectedIndex = 0
-    }
-  }
-
-  override fun onFailure(exception: Throwable) {
-    showErrorOnPopupFailure(exception, errorPresenter, list)
+  override fun onClosed(event: LightweightWindowEvent) {
+    cs?.cancel()
+    cs = null
   }
 }
 

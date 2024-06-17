@@ -2,7 +2,9 @@
 package com.intellij.platform.workspace.storage.impl.indices
 
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 public interface WorkspaceMutableIndex<D> {
   public fun index(entity: WorkspaceEntityData<*>, data: D)
   public fun remove(entity: WorkspaceEntityData<*>, data: D)

@@ -3,10 +3,7 @@ package com.intellij.platform.workspace.storage.tests.ordering
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
-import com.intellij.platform.workspace.storage.testEntities.entities.MySource
-import com.intellij.platform.workspace.storage.testEntities.entities.NamedChildEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.tests.from
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
@@ -63,7 +60,7 @@ class ChildrenOrderingTest {
       )
     }
 
-    builder.modifyEntity(entity) {
+    builder.modifyNamedEntity(entity) {
       this.children = listOf(this.children[2], this.children[1], this.children[0])
     }
     val newEntity = when (enState) {
@@ -90,7 +87,7 @@ class ChildrenOrderingTest {
     val builder2 = builder.toSnapshot().toBuilder()
 
     builder2.removeEntity(entity.children.first().from(builder2))
-    builder2.modifyEntity(entity.from(builder2)) {
+    builder2.modifyNamedEntity(entity.from(builder2)) {
       this.children += NamedChildEntity("Four", MySource)
     }
 

@@ -133,6 +133,7 @@ final class IncompleteModelUtil {
   }
 
   private static boolean isPotentiallyConvertible(@Nullable PsiType leftType, @Nullable PsiExpression rightExpr, @Nullable PsiType rightType, @NotNull PsiElement context) {
+    if (leftType instanceof PsiLambdaParameterType || rightType instanceof PsiLambdaParameterType) return true;
     boolean pendingLeft = leftType == null || hasUnresolvedComponent(leftType);
     boolean pendingRight =
       rightType == null || (rightExpr == null ? hasUnresolvedComponent(rightType) : mayHaveUnknownTypeDueToPendingReference(rightExpr));

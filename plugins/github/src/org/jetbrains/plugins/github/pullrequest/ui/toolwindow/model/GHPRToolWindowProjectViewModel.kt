@@ -13,7 +13,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import git4idea.GitStandardRemoteBranch
 import git4idea.push.GitPushRepoResult
 import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
@@ -28,6 +30,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainer
@@ -36,6 +39,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorView
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRBranchWidgetViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModelImpl
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -53,7 +57,6 @@ class GHPRToolWindowProjectViewModel internal constructor(
   private val cs = parentCs.childScope()
 
   internal val dataContext: GHPRDataContext = connection.dataContext
-  val defaultBranch: String? = dataContext.repositoryDataService.defaultBranchName
 
   private val repoManager = project.service<GHHostedRepositoriesManager>()
   private val allRepos = repoManager.knownRepositories.map(GHGitRepositoryMapping::repository)
@@ -61,6 +64,10 @@ class GHPRToolWindowProjectViewModel internal constructor(
   override val projectName: String = GHUIUtil.getRepositoryDisplayName(allRepos, repository)
 
   override val listVm: GHPRListViewModel = GHPRListViewModel(project, cs, connection.dataContext)
+
+  private val lazyCreateVm = SynchronizedClearableLazy {
+    GHPRCreateViewModelImpl(project, cs, repoManager, GithubPullRequestsProjectUISettings.getInstance(project), connection.dataContext, this)
+  }
 
   private val pullRequestsVms = Caffeine.newBuilder().build<GHPRIdentifier, DisposalCountingHolder<GHPRViewModelContainer>> { id ->
     DisposalCountingHolder {
@@ -74,16 +81,26 @@ class GHPRToolWindowProjectViewModel internal constructor(
   private fun createVm(tab: GHPRToolWindowTab.PullRequest): GHPRToolWindowTabViewModel.PullRequest =
     GHPRToolWindowTabViewModel.PullRequest(cs, this, tab.prId)
 
-  private fun createVm(tab: GHPRToolWindowTab.NewPullRequest): GHPRToolWindowTabViewModel.NewPullRequest =
-    GHPRToolWindowTabViewModel.NewPullRequest(project, dataContext)
-
   override fun selectTab(tab: GHPRToolWindowTab?) = tabsHelper.select(tab)
   override fun closeTab(tab: GHPRToolWindowTab) = tabsHelper.close(tab)
 
+  fun closeTab(tab: GHPRToolWindowTab.NewPullRequest, reset: Boolean = true) {
+    synchronized(lazyCreateVm) {
+      tabsHelper.close(tab)
+      if (reset) {
+        lazyCreateVm.drop()?.let(Disposer::dispose)
+      }
+    }
+  }
+
   fun createPullRequest(requestFocus: Boolean = true) {
-    tabsHelper.showTab(GHPRToolWindowTab.NewPullRequest, ::createVm) {
-      if (requestFocus) {
-        requestFocus()
+    synchronized(lazyCreateVm) {
+      tabsHelper.showTab(GHPRToolWindowTab.NewPullRequest, {
+        GHPRToolWindowTabViewModel.NewPullRequest(lazyCreateVm.value)
+      }) {
+        if (requestFocus) {
+          requestFocus()
+        }
       }
     }
   }
@@ -110,6 +127,15 @@ class GHPRToolWindowProjectViewModel internal constructor(
     twVm.activate()
     tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       selectCommit(commitOid)
+    }
+  }
+
+  fun openPullRequestInfoAndTimeline(number: Long) {
+    cs.launch {
+      val prId = dataContext.detailsService.findPRId(number) ?: return@launch // It's an issue ID or doesn't exist
+
+      viewPullRequest(prId, true)
+      openPullRequestTimeline(prId, true)
     }
   }
 

@@ -5,10 +5,10 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -53,14 +53,14 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtBinaryExpression): String? {
         val left = element.left
         val right = element.right
 
-        val leftResolvedCall = left?.resolveCall()?.singleVariableAccessCall()
+        val leftResolvedCall = left?.resolveCallOld()?.singleVariableAccessCall()
         val leftCallee = leftResolvedCall?.symbol ?: return null
-        val rightResolvedCall = right?.resolveCall()?.singleVariableAccessCall()
+        val rightResolvedCall = right?.resolveCallOld()?.singleVariableAccessCall()
         val rightCallee = rightResolvedCall?.symbol ?: return null
 
         if (leftCallee != rightCallee) return null
@@ -92,7 +92,7 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         else -> null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression.receiver(
         callSymbol: KtVariableLikeSymbol,
     ): KtSymbol? {
@@ -101,6 +101,6 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
             is KtNameReferenceExpression -> return receiverExpression.mainReference.resolveToSymbol()
         }
 
-        return callSymbol.getContainingSymbol() as? KtClassOrObjectSymbol
+        return callSymbol.getContainingSymbol() as? KaClassOrObjectSymbol
     }
 }

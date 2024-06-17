@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -32,7 +32,7 @@ class KotlinUImportStatement(
         get() {
             if (importRefPart == UNINITIALIZED_UAST_PART) {
                 importRefPart = sourcePsi.importedReference?.let {
-                    ImportReference(it, sourcePsi.name ?: sourcePsi.text, this, sourcePsi)
+                    ImportReference(it, this)
                 }
             }
             return importRefPart as ImportReference?
@@ -44,15 +44,13 @@ class KotlinUImportStatement(
 
     private class ImportReference(
         override val psi: KtExpression,
-        override val identifier: String,
-        givenParent: UElement?,
-        private val importDirective: KtImportDirective
+        givenParent: UElement?
     ) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression {
         override val sourcePsi: KtExpression = psi
 
-        override val resolvedName: String = identifier
+        override val identifier: String = psi.text
 
-        override fun asRenderString(): String = importDirective.importedFqName?.asString() ?: sourcePsi.text
+        override val resolvedName: String = psi.text
 
         override fun resolve(): PsiElement? {
             val reference = sourcePsi.getQualifiedElementSelector() as? KtReferenceExpression ?: return null

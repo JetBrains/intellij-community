@@ -17,11 +17,11 @@ import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -114,7 +114,7 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                             @OptIn(KaAllowAnalysisFromWriteAction::class)
                             allowAnalysisFromWriteAction {
                                 analyze(elt) {
-                                    val annotationSymbol = elt.resolveCall()?.singleConstructorCallOrNull()?.symbol
+                                    val annotationSymbol = elt.resolveCallOld()?.singleConstructorCallOrNull()?.symbol
                                         ?: return false
                                     val annotationType = annotationSymbol.returnType as? KtNonErrorClassType ?: return false
                                     val fqName = annotationType.classId.asFqNameString()

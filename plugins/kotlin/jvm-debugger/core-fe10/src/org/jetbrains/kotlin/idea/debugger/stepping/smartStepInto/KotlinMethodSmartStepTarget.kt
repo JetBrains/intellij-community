@@ -10,7 +10,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
@@ -24,9 +24,9 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -65,8 +65,8 @@ class KotlinMethodSmartStepTarget(
             callableReceiverRenderer = NO_CALLABLE_RECEIVER
         }
 
-        context(KtAnalysisSession)
-        fun calcLabel(symbol: KtDeclarationSymbol): String {
+        context(KaSession)
+        fun calcLabel(symbol: KaDeclarationSymbol): String {
             return symbol.render(renderer)
         }
     }
@@ -116,13 +116,13 @@ internal fun <T : PsiElement> SmartPsiElementPointer<T>?.getElementInReadAction(
 
 
 private val NO_RETURN_TYPE = object : KaCallableReturnTypeFilter {
-    override fun shouldRenderReturnType(analysisSession: KtAnalysisSession, type: KtType, symbol: KtCallableSymbol): Boolean = false
+    override fun shouldRenderReturnType(analysisSession: KaSession, type: KtType, symbol: KaCallableSymbol): Boolean = false
 }
 
 private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
     override fun renderReceiver(
-        analysisSession: KtAnalysisSession,
-        symbol: KtReceiverParameterSymbol,
+        analysisSession: KaSession,
+        symbol: KaReceiverParameterSymbol,
         declarationRenderer: KtDeclarationRenderer,
         printer: PrettyPrinter
     ) {}
@@ -130,8 +130,8 @@ private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
 
 private val NO_MODIFIER_LIST = object : KtModifierListRenderer {
     override fun renderModifiers(
-        analysisSession: KtAnalysisSession,
-        symbol: KtDeclarationSymbol,
+        analysisSession: KaSession,
+        symbol: KaDeclarationSymbol,
         declarationModifiersRenderer: KtDeclarationModifiersRenderer,
         printer: PrettyPrinter
     ) {}

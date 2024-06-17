@@ -6,11 +6,11 @@ import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -48,8 +48,8 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         override fun getName() = KotlinBundle.message("hash.code.text")
     }
 
-    context(KtAnalysisSession)
-    private fun matchesEqualsMethodSignature(function: KtFunctionSymbol): Boolean {
+    context(KaSession)
+    private fun matchesEqualsMethodSignature(function: KaFunctionSymbol): Boolean {
         if (function.modality == Modality.ABSTRACT) return false
         if (function.name != EQUALS) return false
         if (function.typeParameters.isNotEmpty()) return false
@@ -61,8 +61,8 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         }
     }
 
-    context(KtAnalysisSession)
-    private fun matchesHashCodeMethodSignature(function: KtFunctionSymbol): Boolean {
+    context(KaSession)
+    private fun matchesHashCodeMethodSignature(function: KaFunctionSymbol): Boolean {
         if (function.modality == Modality.ABSTRACT) return false
         if (function.name != HASH_CODE) return false
         if (function.typeParameters.isNotEmpty()) return false
@@ -75,21 +75,21 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
      * Finds methods whose name is [methodName] not only from the class [classSymbol] but also its parent classes,
      * and returns method symbols after filtering them using [condition].
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun findMethod(
-        classSymbol: KtClassOrObjectSymbol, methodName: Name, condition: (KtCallableSymbol) -> Boolean
-    ): KtCallableSymbol? = classSymbol.getMemberScope().getCallableSymbols(methodName).filter(condition).singleOrNull()
+        classSymbol: KaClassOrObjectSymbol, methodName: Name, condition: (KaCallableSymbol) -> Boolean
+    ): KaCallableSymbol? = classSymbol.getMemberScope().getCallableSymbols(methodName).filter(condition).singleOrNull()
 
-    context(KtAnalysisSession)
-    private fun findEqualsMethodForClass(classSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
+    context(KaSession)
+    private fun findEqualsMethodForClass(classSymbol: KaClassOrObjectSymbol): KaCallableSymbol? =
         findMethod(classSymbol, EQUALS) { callableSymbol ->
-            (callableSymbol as? KtFunctionSymbol)?.let { matchesEqualsMethodSignature(it) } == true
+            (callableSymbol as? KaFunctionSymbol)?.let { matchesEqualsMethodSignature(it) } == true
         }
 
-    context(KtAnalysisSession)
-    private fun findHashCodeMethodForClass(classSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
+    context(KaSession)
+    private fun findHashCodeMethodForClass(classSymbol: KaClassOrObjectSymbol): KaCallableSymbol? =
         findMethod(classSymbol, HASH_CODE) { callableSymbol ->
-            (callableSymbol as? KtFunctionSymbol)?.let { matchesHashCodeMethodSignature(it) } == true
+            (callableSymbol as? KaFunctionSymbol)?.let { matchesHashCodeMethodSignature(it) } == true
         }
 
     /**
@@ -118,7 +118,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getPropertiesToUseInGeneratedMember(classOrObject: KtClassOrObject): List<KtNamedDeclaration> =
         buildList<KtNamedDeclaration> {
             classOrObject.primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
@@ -131,7 +131,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
 
     private fun KtElement.canUseArrayContentFunctions() = languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_1_1
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun generateArraysEqualsCall(
         type: KtType, canUseContentFunctions: Boolean, arg1: String, arg2: String
     ): String {
@@ -144,7 +144,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun generateArrayHashCodeCall(
         variableType: KtType?, canUseContentFunctions: Boolean, argument: String
     ): String {
@@ -169,7 +169,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         var bodyText = ""
         analyze(targetClass) {
             val classSymbol = targetClass.getClassOrObjectSymbol() ?: return@analyze
-            val equalsMethod = findEqualsMethodForClass(classSymbol) as? KtFunctionSymbol ?: return@analyze
+            val equalsMethod = findEqualsMethodForClass(classSymbol) as? KaFunctionSymbol ?: return@analyze
             val superContainingEqualsMethod = equalsMethod.getContainingSymbol() ?: return@analyze
 
             val parameterName = equalsMethod.valueParameters.singleOrNull()?.name?.asString() ?: return@analyze
@@ -210,7 +210,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
             bodyText = buildString {
                 append("if (this === $parameterName) return true\n")
                 append("if ($isNotInstanceCondition) return false\n")
-                if (superContainingEqualsMethod != builtinTypes.ANY.expandedClassSymbol) {
+                if (superContainingEqualsMethod != builtinTypes.ANY.expandedSymbol) {
                     append("if (!super.equals($parameterName)) return false\n")
                 }
 
@@ -305,7 +305,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
             }
 
             val classSymbol = targetClass.getClassOrObjectSymbol() ?: return@analyze
-            val hashCodeMethod = findHashCodeMethodForClass(classSymbol) as? KtFunctionSymbol ?: return@analyze
+            val hashCodeMethod = findHashCodeMethodForClass(classSymbol) as? KaFunctionSymbol ?: return@analyze
             val superContainingHashCodeMethod = hashCodeMethod.getContainingSymbol() ?: return@analyze
 
             /**
@@ -317,7 +317,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
             val propertyIterator = variablesForHashCode.iterator()
 
             val initialValue = when {
-                superContainingHashCodeMethod != builtinTypes.ANY.expandedClassSymbol -> "super.hashCode()"
+                superContainingHashCodeMethod != builtinTypes.ANY.expandedSymbol -> "super.hashCode()"
                 propertyIterator.hasNext() -> propertyIterator.next().genVariableHashCode(false)
                 else -> generateClassLiteral(targetClass) + ".hashCode()"
             }
@@ -344,11 +344,11 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                 val classOrObjectMemberDeclarations = classOrObject.declarations
                 Pair(
                     classOrObjectMemberDeclarations.singleOrNull {
-                        val function = it.getSymbol() as? KtFunctionSymbol ?: return@singleOrNull false
+                        val function = it.getSymbol() as? KaFunctionSymbol ?: return@singleOrNull false
                         matchesEqualsMethodSignature(function)
                     } as? KtNamedFunction,
                     classOrObjectMemberDeclarations.singleOrNull {
-                        val function = it.getSymbol() as? KtFunctionSymbol ?: return@singleOrNull false
+                        val function = it.getSymbol() as? KaFunctionSymbol ?: return@singleOrNull false
                         matchesHashCodeMethodSignature(function)
                     } as? KtNamedFunction,
                 )

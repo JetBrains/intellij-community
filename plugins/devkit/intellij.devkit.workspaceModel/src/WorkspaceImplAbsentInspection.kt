@@ -63,4 +63,6 @@ private class GenerateWorkspaceModelFix(psiElement: PsiElement) : LocalQuickFixO
     val module = projectFileIndex.getModuleForFile(file.virtualFile)
     WorkspaceModelGenerator.getInstance(project).generate(module!!)
   }
+
+  override fun startInWriteAction(): Boolean = false
 }

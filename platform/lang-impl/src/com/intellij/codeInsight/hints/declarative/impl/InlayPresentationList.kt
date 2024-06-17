@@ -2,13 +2,13 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.InlayHintsUtils
+import com.intellij.codeInsight.hints.declarative.HintColorKind
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.InlayPayload
 import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.codeInsight.hints.presentation.withTranslated
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorColors
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.withTranslated
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics2D
 import java.awt.Point
@@ -29,7 +30,7 @@ import java.awt.geom.Rectangle2D
  */
 class InlayPresentationList(
   private var state: TinyTree<Any?>,
-  @TestOnly var hasBackground: Boolean,
+  @TestOnly var hintColorKind: HintColorKind,
   @TestOnly var isDisabled: Boolean,
   var payloads: Map<String, InlayActionPayload>? = null,
   private val providerClass: Class<*>,
@@ -98,14 +99,14 @@ class InlayPresentationList(
   }
 
   @RequiresEdt
-  fun updateState(state: TinyTree<Any?>, disabled: Boolean, hasBackground: Boolean) {
+  fun updateState(state: TinyTree<Any?>, disabled: Boolean, hintColorKind: HintColorKind) {
     updateStateTree(state, this.state, 0, 0)
     this.state = state
     this.entries = PresentationEntryBuilder(state, providerClass).buildPresentationEntries()
     this.computedWidth = NOT_COMPUTED
     this._partialWidthSums = null
     this.isDisabled = disabled
-    this.hasBackground = hasBackground
+    this.hintColorKind = hintColorKind
   }
 
   private fun updateStateTree(treeToUpdate: TinyTree<Any?>,
@@ -144,7 +145,7 @@ class InlayPresentationList(
         error("Unexpected payload: $payload")
       }
     }
-    updateState(state, isDisabled, hasBackground)
+    updateState(state, isDisabled, hintColorKind)
   }
 
   fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage): Int {
@@ -166,10 +167,14 @@ class InlayPresentationList(
     var xOffset = 0
     val metrics = storage.getFontMetrics(small = false)
     val gap =  if (targetRegion.height.toInt() < metrics.lineHeight + 2) 1 else 2
-    val attrKey = if (hasBackground) DefaultLanguageHighlighterColors.INLAY_DEFAULT else DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND
+    val attrKey = when (hintColorKind) {
+      HintColorKind.Default -> DefaultLanguageHighlighterColors.INLAY_DEFAULT
+      HintColorKind.Parameter -> DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT
+      HintColorKind.TextWithoutBackground -> DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND
+    }
     val attrs = editor.colorsScheme.getAttributes(attrKey)
     g.withTranslated(targetRegion.x, targetRegion.y) {
-      if (hasBackground) {
+      if (hintColorKind.hasBackground()) {
         val rectHeight = targetRegion.height.toInt() - gap * 2
         val rectWidth = getWidthInPixels(storage)
         val config = GraphicsUtil.setupAAPainting(g)
@@ -215,7 +220,7 @@ class InlayPresentationList(
     return InlayData(
       position,
       tooltip,
-      hasBackground,
+      hintColorKind,
       state,
       providerId,
       isDisabled,

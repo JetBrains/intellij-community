@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
@@ -7,13 +8,21 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionId
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionIdCode
 import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 
 fun ObjClass<*>.implWsEntityCode(): String {
+  val inheritanceModifier = when {
+    openness.extendable && !openness.instantiatable -> "abstract"
+    openness.extendable && openness.instantiatable -> "open"
+    else -> ""
+  }
+
   return """
-package ${module.name}    
+package ${module.implPackage}    
 
 ${implWsEntityAnnotations}
-$generatedCodeVisibilityModifier ${if (openness.instantiatable) "open" else "abstract"} class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
+@OptIn($WorkspaceEntityInternalApi::class)
+internal $inheritanceModifier class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
     ${
     """
     private companion object {
@@ -22,7 +31,7 @@ $generatedCodeVisibilityModifier ${if (openness.instantiatable) "open" else "abs
 ${getLinksOfConnectionIds(this)}
     }"""
   }
-        
+    ${allFields.find { it.name == "symbolicId" }?.let { "override val symbolicId: ${it.valueType.javaType} = super.symbolicId\n" } ?: ""}
     ${allFields.filter { it.name !in listOf("entitySource", "symbolicId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
 
     override val entitySource: EntitySource

@@ -8,10 +8,10 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.psi.getReturnTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.parameterInfo.*
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.isComparable
 import org.jetbrains.kotlin.idea.util.isRangeExpression

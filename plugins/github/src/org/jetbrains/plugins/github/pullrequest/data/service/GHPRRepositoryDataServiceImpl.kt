@@ -3,21 +3,18 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.async.awaitCompleted
-import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitRemoteBranch
 import git4idea.remote.GitRemoteUrlCoordinates
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.*
-import org.jetbrains.plugins.github.api.data.GHLabel
-import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
-import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.GithubUserWithPermissions
+import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
@@ -74,7 +71,6 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   override suspend fun loadIssuesAssignees(): List<GHUser> = assigneesRequest.awaitCompleted()
-  override fun loadIssuesAssigneesAsync(): Deferred<List<GHUser>> = cs.async { loadIssuesAssignees() }
 
   private val labelsRequest: MutableStateFlow<Deferred<List<GHLabel>>> by lazy {
     MutableStateFlow(doLoadLabelsAsync())
@@ -88,7 +84,6 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   override suspend fun loadLabels(): List<GHLabel> = labelsRequest.awaitCompleted()
-  override fun loadLabelsAsync(): Deferred<List<GHLabel>> = cs.async { loadLabels() }
 
   private val teamsRequest: MutableStateFlow<Deferred<List<GHTeam>>> by lazy {
     MutableStateFlow(doLoadTeamsAsync())
@@ -121,8 +116,14 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   override suspend fun loadPotentialReviewers(): List<GHPullRequestRequestedReviewer> = potentialReviewersRequest.awaitCompleted()
-  override fun loadPotentialReviewersAsync(): Deferred<List<GHPullRequestRequestedReviewer>> =
-    cs.async { loadPotentialReviewers() }
+
+  private val templatesRequest: Deferred<List<GHRepositoryPullRequestTemplate>> = cs.async(start = CoroutineStart.LAZY) {
+    requestExecutor.executeSuspend(GHGQLRequests.Repo.loadPullRequestTemplates(repositoryCoordinates)).orEmpty()
+  }
+
+  override suspend fun loadTemplate(): String? {
+    return templatesRequest.await().find { it.body.isNotBlank() }?.body
+  }
 
   override fun resetData() {
     collaboratorsRequest.restart(doLoadCollaboratorsAsync())

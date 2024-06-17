@@ -144,7 +144,9 @@ internal class BreakpointVariantPriorityTracker(private val coroutineScope: Coro
       }
 
     readAction {
-      if (lookSimilar(defaultBreakpoint, expectedBreakpoint)) {
+      if (defaultBreakpoint.type == expectedBreakpoint.type &&
+          defaultBreakpoint.highlightRange == expectedBreakpoint.highlightRange &&
+          defaultBreakpoint.generalDescription == expectedBreakpoint.generalDescription) {
         // Added, removed and added again the same breakpoint, not our case.
         return@readAction
       }
@@ -174,21 +176,13 @@ internal class BreakpointVariantPriorityTracker(private val coroutineScope: Coro
   }
 
   @RequiresReadLock
-  private fun <P1 : XBreakpointProperties<*>, P2 : XBreakpointProperties<*>> lookSimilar(b1: XLineBreakpoint<P1>, b2: XLineBreakpoint<P2>): Boolean {
-    return b1.type == b2.type &&
-           b1.type.getHighlightRange(b1) == b2.type.getHighlightRange(b2) &&
-           b1.type.getGeneralDescription(b1) == b2.type.getGeneralDescription(b2)
-  }
-
-  @RequiresReadLock
-  private fun <P : XBreakpointProperties<*>> getDescription(fileUrl: String, b: XLineBreakpoint<P>): String {
-    val t = b.type
-    val kind = t.getGeneralDescription(b)
-    val text = when (val range = t.getHighlightRange(b)) {
+  private fun getDescription(fileUrl: String, b: XLineBreakpoint<*>): String {
+    val kind = b.generalDescription
+    val text = when (val range = b.highlightRange) {
       null -> "<whole line>"
       else -> readDocument(fileUrl) { it.getText(range) }
     }
-    return "${t.id}, $kind: $text"
+    return "${b.type.id}, $kind: $text"
   }
 
   @RequiresReadLock

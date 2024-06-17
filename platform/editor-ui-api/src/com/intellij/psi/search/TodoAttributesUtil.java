@@ -14,4 +14,7 @@ public final class TodoAttributesUtil {
   public static @NotNull TextAttributes getDefaultColorSchemeTextAttributes() {
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES).clone();
   }
+
+  private TodoAttributesUtil() {
+  }
 }

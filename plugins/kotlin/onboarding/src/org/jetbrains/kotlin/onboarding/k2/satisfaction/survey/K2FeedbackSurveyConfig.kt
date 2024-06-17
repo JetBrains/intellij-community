@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.onboarding.FeedbackBundle
 class K2FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
     override val surveyId: String = "k2_feedback"
-    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 7, 27)
-    override val requireIdeEAP: Boolean = true
+    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 11, 1)
+    override val requireIdeEAP: Boolean = false
 
     private val suitableIdeVersion = "2024.2"
 
@@ -25,7 +25,7 @@ class K2FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
     override fun checkExtraConditionSatisfied(project: Project): Boolean {
         return suitableIdeVersion == ApplicationInfo.getInstance().shortVersion &&
-                K2UserTracker.getInstance().shouldShowK2FeedbackDialog()
+                K2UserTracker.getInstance().shouldShowK2FeedbackDialog(project)
     }
 
     override fun updateStateAfterDialogClosedOk(project: Project) {

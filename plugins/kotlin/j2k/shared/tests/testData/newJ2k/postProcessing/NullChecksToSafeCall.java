@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class Foo {
     static class Bar {
         public <T> Comparable<T> bar() {

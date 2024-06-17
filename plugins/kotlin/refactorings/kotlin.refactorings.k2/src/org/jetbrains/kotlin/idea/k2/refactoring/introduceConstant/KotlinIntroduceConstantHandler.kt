@@ -11,9 +11,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionDataAnalyzer
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionEngineHelper
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.validate
+import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.CONTAINER_KEY
+import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.INTRODUCE_PROPERTY
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.KotlinInplacePropertyIntroducer
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
@@ -46,9 +48,12 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class KotlinIntroduceConstantHandler(
     val helper: ExtractionEngineHelper = InteractiveExtractionHelper
 ) : RefactoringActionHandler {
-    object InteractiveExtractionHelper : ExtractionEngineHelper(INTRODUCE_CONSTANT) {
+
+    object InteractiveExtractionHelper : InteractiveExtractionHelperWithOptions()
+
+    open class InteractiveExtractionHelperWithOptions(val currentTarget: ExtractionTarget? = null) : ExtractionEngineHelper(INTRODUCE_PROPERTY) {
         private fun getExtractionTarget(descriptor: ExtractableCodeDescriptor) =
-            propertyTargets.firstOrNull { it.isAvailable(descriptor) }
+            propertyTargets.firstOrNull { it.isAvailable(descriptor) && (currentTarget == null || it == currentTarget) }
 
         override fun validate(descriptor: ExtractableCodeDescriptor) =
             descriptor.validate(getExtractionTarget(descriptor) ?: ExtractionTarget.FUNCTION)
@@ -99,13 +104,14 @@ class KotlinIntroduceConstantHandler(
                         return ExtractionDataAnalyzer(extractionData).performAnalysis()
                     }
                 }
+                val editorState = EditorState(project, editor)
                 engine.run(editor, extractionData) { extractResult ->
                     val property = extractResult.declaration as KtProperty
                     val descriptor = extractResult.config.descriptor
                     val exprType =
                         allowAnalysisOnEdt { analyze(property) { CallableReturnTypeUpdaterUtils.TypeInfo.createByKtTypes(property.getReturnKtType()) } }
 
-                    val introducer = KotlinInplacePropertyIntroducer(
+                    val introducer = object : KotlinInplacePropertyIntroducer(
                         property = property,
                         editor = editor,
                         project = project,
@@ -115,7 +121,14 @@ class KotlinIntroduceConstantHandler(
                         extractionResult = extractResult,
                         availableTargets = listOf(ExtractionTarget.PROPERTY_WITH_GETTER),
                         replaceAllByDefault = helper.replaceAllByDefault()
-                    )
+                    ) {
+                        override fun onCancel(restart: Boolean) {
+                            if (restart) {
+                                property.parent.putUserData(CONTAINER_KEY, Unit)
+                            }
+                            editorState.revert()
+                        }
+                    }
 
                     editor.caretModel.moveToOffset(property.textOffset)
                     editor.selectionModel.removeSelection()
@@ -159,8 +172,15 @@ class KotlinIntroduceConstantHandler(
             listOf(ElementKind.EXPRESSION),
             ::validateElements,
             { _, sibling ->
-                sibling.getExtractionContainers(strict = true, includeAll = true)
+                val containers = sibling.getExtractionContainers(strict = true, includeAll = true)
                     .filter { (it is KtFile && !it.isScript()) }
+                containers.singleOrNull { container ->
+                    val theContainer = container.getUserData(CONTAINER_KEY) != null
+                    if (theContainer) {
+                        container.putUserData(CONTAINER_KEY, null)
+                    }
+                    theContainer
+                }?.let { listOf(it) } ?: containers
             },
             continuation
         )
@@ -186,7 +206,7 @@ class KotlinIntroduceConstantHandler(
             is KtConstantExpression -> false
             else -> {
                 analyzeInModalWindow(this, KotlinBundle.message("fix.change.signature.prepare")) {
-                    this@isNotConst.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
+                    this@isNotConst.evaluate()
                 } == null
             }
         }

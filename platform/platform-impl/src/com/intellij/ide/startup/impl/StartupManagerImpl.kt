@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("OVERRIDE_DEPRECATION")
+@file:Suppress("OVERRIDE_DEPRECATION", "ReplacePutWithAssignment")
 
 package com.intellij.ide.startup.impl
 
@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.isCorePlugin
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.ProjectActivity
@@ -36,7 +37,6 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.ModalityUiUtil
-import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -51,6 +51,7 @@ import java.awt.event.InvocationEvent
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
@@ -240,7 +241,6 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       val counter = AtomicInteger()
       val dumbService = project.serviceAsync<DumbService>()
       val isProjectLightEditCompatible = project is LightEditCompatible
-      project as ComponentManagerImpl
       for (item in StartupActivity.POST_STARTUP_ACTIVITY.filterableLazySequence()) {
         val activity = item.instance ?: continue
         if (isProjectLightEditCompatible && activity !is LightEditCompatible) {
@@ -251,11 +251,27 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
         if (activity is ProjectActivity) {
           if (async) {
-            val job = blockingContext {
+            val job = if (ApplicationManager.getApplication().isUnitTestMode) {
+              blockingContext {
+                // We propagate modality only in unit tests
+                // because in unit tests, activities are often started in a modal context (see TestProjectManager).
+                // Thus, any "invokeAndWait" will hang without modality propagation.
+                // In the future, we aim to avoid .joinAll in runPostStartupActivities altogether.
+                @Suppress("DEPRECATION")
+                val modalityContext = currentThreadContextModality()?.asContextElement() ?: EmptyCoroutineContext
+                launchActivity(
+                  activity = activity,
+                  project = project,
+                  pluginId = pluginDescriptor.pluginId,
+                  additionalContext = modalityContext,
+                )
+              }
+            }
+            else {
               launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
             }
-            if (application.isUnitTestMode) {
-              runningProjectActivities[activity.javaClass] = job
+            if (ApplicationManager.getApplication().isUnitTestMode) {
+              runningProjectActivities.put(activity.javaClass, job)
               job.invokeOnCompletion { runningProjectActivities.remove(activity.javaClass) }
             }
           }
@@ -443,7 +459,7 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
   }
 
   if (activity is ProjectActivity) {
-    launchActivity(activity, project, pluginId)
+    launchActivity(activity = activity, project = project as ProjectImpl, pluginId = pluginId)
     return
   }
 
@@ -466,16 +482,25 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
   }
 }
 
-private fun launchActivity(activity: ProjectActivity, project: Project, pluginId: PluginId): Job {
-  // we propagate modality only in unit tests, because in unit tests activities are often started in modal context (see TestProjectManager),
-  // so any "invokeAndWait" will hang without modality propagation. In the future we want to avoid .joinAll in runPostStartupActivities at all.
-  val launchTaskModality = if (application.isUnitTestMode) currentThreadContextModality() else null
-  val launchTaskModalityContext = launchTaskModality?.asContextElement() ?: EmptyCoroutineContext
-
+private fun launchActivity(
+  activity: ProjectActivity,
+  project: Project,
+  pluginId: PluginId,
+  additionalContext: CoroutineContext = EmptyCoroutineContext,
+): Job {
   return (project as ComponentManagerImpl).pluginCoroutineScope(activity.javaClass.classLoader).launch(
-    launchTaskModalityContext + tracer.rootSpan(name = "run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString)),
+    additionalContext +
+    tracer.rootSpan(name = "run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString)),
   ) {
-    activity.execute(project)
+    try {
+      activity.execute(project = project)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(PluginException(e, pluginId))
+    }
   }
 }
 

@@ -49,6 +49,7 @@
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.IndentHelperImpl"/>
     <applicationService serviceImplementation="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>
     <applicationService serviceInterface="com.intellij.formatting.Formatter" serviceImplementation="com.intellij.formatting.FormatterImpl"/>
+    <applicationService serviceImplementation="com.intellij.formatting.service.AsyncFormattingService"/>
     <formattingService implementation="com.intellij.formatting.service.CoreFormattingService" order="last"/>
     <projectService serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager" preload="true"/>
     <projectService serviceInterface="com.intellij.application.options.codeStyle.cache.CodeStyleCachingService"

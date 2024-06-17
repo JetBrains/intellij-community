@@ -60,6 +60,7 @@ data class BuildRequest(
   @JvmField val generateRuntimeModuleRepository: Boolean = false,
 
   @JvmField val isUnpackedDist: Boolean = System.getProperty("idea.dev.build.unpacked").toBoolean(),
+  @JvmField val scrambleTool: ScrambleTool? = null,
 
   @JvmField val writeCoreClasspath: Boolean = true,
 
@@ -150,11 +151,11 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
       if (request.writeCoreClasspath) {
         launch(Dispatchers.IO) {
-          val cp = classPath
+          val classPathString = classPath
             .asSequence()
             .filter { !excludedLibJars.contains(it.fileName.toString()) }
             .joinToString(separator = "\n")
-          Files.writeString(runDir.resolve("core-classpath.txt"), cp)
+          Files.writeString(runDir.resolve("core-classpath.txt"), classPathString)
         }
       }
 
@@ -202,8 +203,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
     if (context.generateRuntimeModuleRepository) {
       launch {
-        val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
-                                     pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
+        val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() + pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
         spanBuilder("generate runtime repository").useWithScope(Dispatchers.IO) {
           generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
         }
@@ -443,7 +443,7 @@ private suspend fun createBuildContext(
           // will be enabled later in [com.intellij.platform.ide.bootstrap.enableJstack] instead
           enableCoroutinesDump = false,
           options = options,
-          customBuildPaths = result
+          customBuildPaths = result,
         )
       }
     }
@@ -460,8 +460,20 @@ private suspend fun createBuildContext(
       windowsDistributionCustomizer = object : WindowsDistributionCustomizer() {},
       linuxDistributionCustomizer = object : LinuxDistributionCustomizer() {},
       macDistributionCustomizer = object : MacDistributionCustomizer() {},
-      proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-      jarCacheManager = jarCacheManager
+      jarCacheManager = jarCacheManager,
+      proprietaryBuildTools = if (request.scrambleTool == null) {
+        ProprietaryBuildTools.DUMMY
+      }
+      else {
+        ProprietaryBuildTools(
+          scrambleTool = request.scrambleTool,
+          signTool = ProprietaryBuildTools.DUMMY_SIGN_TOOL,
+          macOsCodesignIdentity = null,
+          featureUsageStatisticsProperties = null,
+          artifactsServer = null,
+          licenseServerHost = null,
+        )
+      },
     )
   }
 }

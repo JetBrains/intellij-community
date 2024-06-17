@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringAvailabilityTest
 
+// TODO: Migrate tests relying on the gutter icon indicator, see JavaRenameInlayProviderTest
 class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailabilityTest() {
   override val fileType: LanguageFileType
     get() = JavaFileType.INSTANCE
@@ -67,50 +68,50 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
     }
   }
 
-  fun testChangeParameterTypeOfStaticMethod() {
-    doTest(
-      """
-        class C {
-            public static void foo(<caret>int p) {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("int", "long")
-    }
-  }
+  //fun testChangeParameterTypeOfStaticMethod() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          public static void foo(<caret>int p) {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("int", "long")
+  //  }
+  //}
 
-  fun testChangeReturnTypePrivate() {
-    doTest(
-      """
-        class C {
-            private <caret>void foo() {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("void", "int")
-    }
-  }
+  //fun testChangeReturnTypePrivate() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          private <caret>void foo() {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("void", "int")
+  //  }
+  //}
 
-  fun testAddDeprecatedAnnotation() {
-    doTest(
-      """
-        interface I {<caret>
-            void foo();
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
-      expectedAvailabilityAfterResolve = Availability.NotAvailable
-    ) {
-      performAction(IdeActions.ACTION_EDITOR_ENTER)
-      type("@Deprecated")
-    }
-  }
+  //fun testAddDeprecatedAnnotation() {
+  //  doTest(
+  //    """
+  //      interface I {<caret>
+  //          void foo();
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
+  //    expectedAvailabilityAfterResolve = Availability.NotAvailable
+  //  ) {
+  //    performAction(IdeActions.ACTION_EDITOR_ENTER)
+  //    type("@Deprecated")
+  //  }
+  //}
 
   fun testConvertMethodToField() {
     doTest(
@@ -129,295 +130,295 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
     }
   }
 
-  fun testRemoveAnnotation() {
-    ignoreErrors = true
-    doTest(
-      """
-        interface I {
-        <caret>    @Unknown
-            String foo();
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
-      expectedAvailabilityAfterResolve = Availability.NotAvailable
-    ) {
-      performAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION)
-      performAction(IdeActions.ACTION_EDITOR_DELETE)
-    }
-  }
+  //fun testRemoveAnnotation() {
+  //  ignoreErrors = true
+  //  doTest(
+  //    """
+  //      interface I {
+  //      <caret>    @Unknown
+  //          String foo();
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
+  //    expectedAvailabilityAfterResolve = Availability.NotAvailable
+  //  ) {
+  //    performAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION)
+  //    performAction(IdeActions.ACTION_EDITOR_DELETE)
+  //  }
+  //}
 
-  fun testMakeMethodPrivate() {
-    doTest(
-      """
-        class C {
-            <caret>public void foo() {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("public", "private")
-    }
-  }
+  //fun testMakeMethodPrivate() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          <caret>public void foo() {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("public", "private")
+  //  }
+  //}
 
-  fun testMakeMethodProtected() {
-    doTest(
-      """
-        class C {
-            <caret>public void foo() {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("public", "protected")
-    }
-  }
+  //fun testMakeMethodProtected() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          <caret>public void foo() {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("public", "protected")
+  //  }
+  //}
 
-  fun testChangeReturnType() {
-    doTest(
-      """
-        class C {
-            public <caret>void foo() {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("void", "int")
-    }
-  }
+  //fun testChangeReturnType() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          public <caret>void foo() {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("void", "int")
+  //  }
+  //}
 
-  fun testChangeReturnTypeOfPrivateMethod() {
-    doTest(
-      """
-        class C {
-            private <caret>void foo() {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("void", "int")
-    }
-  }
+  //fun testChangeReturnTypeOfPrivateMethod() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          private <caret>void foo() {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("void", "int")
+  //  }
+  //}
 
-  fun testChangeReturnTypeOfStaticMethod() {
-    doTest(
-      """
-        class C {
-            public static <caret>void foo() {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("void", "int")
-    }
-  }
+  //fun testChangeReturnTypeOfStaticMethod() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          public static <caret>void foo() {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("void", "int")
+  //  }
+  //}
 
-  fun testChangeReturnTypeOfFinalMethod() {
-    doTest(
-      """
-        class C {
-            public final <caret>void foo() {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("void", "int")
-    }
-  }
+  //fun testChangeReturnTypeOfFinalMethod() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          public final <caret>void foo() {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("void", "int")
+  //  }
+  //}
 
-  fun testChangeReturnTypeOfMethodInFinalClass() {
-    doTest(
-      """
-        final class C {
-            public <caret>void foo() {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
-    {
-      replaceTextAtCaret("void", "int")
-    }
-  }
+  //fun testChangeReturnTypeOfMethodInFinalClass() {
+  //  doTest(
+  //    """
+  //      final class C {
+  //          public <caret>void foo() {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  )
+  //  {
+  //    replaceTextAtCaret("void", "int")
+  //  }
+  //}
 
-  fun testChangeReturnTypeNoOverride() {
-    doTest(
-      """
-        class C {
-            <caret>void foo() { }
-        }
-        
-        class D extends C {
-            void foo(int p) { }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("void", "int")
-    }
-  }
+  //fun testChangeReturnTypeNoOverride() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          <caret>void foo() { }
+  //      }
+  //
+  //      class D extends C {
+  //          void foo(int p) { }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("void", "int")
+  //  }
+  //}
 
-  fun testChangeReturnTypeWithOverride() {
-    doTest(
-      """
-        class C {
-            <caret>void foo() { }
-        }
-      
-        class D extends C {
-        }
-        
-        class E extends D {
-            void foo() { }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides"))
-    ) {
-      replaceTextAtCaret("void", "int")
-    }
-  }
+  //fun testChangeReturnTypeWithOverride() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          <caret>void foo() { }
+  //      }
+  //
+  //      class D extends C {
+  //      }
+  //
+  //      class E extends D {
+  //          void foo() { }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides"))
+  //  ) {
+  //    replaceTextAtCaret("void", "int")
+  //  }
+  //}
 
-  fun testSiblingInheritedMethod() {
-    doTest(
-      """
-        interface I {
-            <caret>void foo();
-        }
-      
-        class C {
-            public void foo() {}
-        }
-      
-        class D extends C implements I {
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations"))
-    ) {
-      replaceTextAtCaret("void", "int")
-    }
-  }
+  //fun testSiblingInheritedMethod() {
+  //  doTest(
+  //    """
+  //      interface I {
+  //          <caret>void foo();
+  //      }
+  //
+  //      class C {
+  //          public void foo() {}
+  //      }
+  //
+  //      class D extends C implements I {
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations"))
+  //  ) {
+  //    replaceTextAtCaret("void", "int")
+  //  }
+  //}
 
-  fun testChangeParameterTypeAndName() {
-    doTest(
-      """
-        class C {
-            public void foo(<caret>int p) {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
-    ) {
-      replaceTextAtCaret("int", "long")
-      editor.caretModel.moveToOffset(editor.caretModel.offset + "long ".length)
-      replaceTextAtCaret("p", "pNew")
-    }
-  }
+  //fun testChangeParameterTypeAndName() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          public void foo(<caret>int p) {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
+  //  ) {
+  //    replaceTextAtCaret("int", "long")
+  //    editor.caretModel.moveToOffset(editor.caretModel.offset + "long ".length)
+  //    replaceTextAtCaret("p", "pNew")
+  //  }
+  //}
 
-  fun testChangeParameterTypeAndNameInAbstractMethod() {
-    doTest(
-      """
-        interface I {
-            void foo(<caret>int p);
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("int", "long")
-      editor.caretModel.moveToOffset(editor.caretModel.offset + "long ".length)
-      replaceTextAtCaret("p", "pNew")
-    }
-  }
+  //fun testChangeParameterTypeAndNameInAbstractMethod() {
+  //  doTest(
+  //    """
+  //      interface I {
+  //          void foo(<caret>int p);
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("int", "long")
+  //    editor.caretModel.moveToOffset(editor.caretModel.offset + "long ".length)
+  //    replaceTextAtCaret("p", "pNew")
+  //  }
+  //}
 
-  fun testChangeParameterTypeAndRenameAbstractMethod() {
-    doTest(
-      """
-        interface I {
-            void <caret>foo(int p);
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
-    ) {
-      replaceTextAtCaret("foo", "bar")
-      editor.caretModel.moveToOffset(editor.caretModel.offset + "bar(".length)
-      replaceTextAtCaret("int", "long")
-    }
-  }
+  //fun testChangeParameterTypeAndRenameAbstractMethod() {
+  //  doTest(
+  //    """
+  //      interface I {
+  //          void <caret>foo(int p);
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
+  //  ) {
+  //    replaceTextAtCaret("foo", "bar")
+  //    editor.caretModel.moveToOffset(editor.caretModel.offset + "bar(".length)
+  //    replaceTextAtCaret("int", "long")
+  //  }
+  //}
 
-  fun testRenameTwoParameters() {
-    doTest(
-      """
-        class C {
-            void foo(int <caret>p1, int p2) {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
-    ) {
-      replaceTextAtCaret("p1", "p1New")
-      editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New, int ".length)
-      replaceTextAtCaret("p2", "p2New")
-    }
-  }
+  //fun testRenameTwoParameters() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          void foo(int <caret>p1, int p2) {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
+  //  ) {
+  //    replaceTextAtCaret("p1", "p1New")
+  //    editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New, int ".length)
+  //    replaceTextAtCaret("p2", "p2New")
+  //  }
+  //}
 
-  fun testRenameTwoParametersInAbstractMethod() {
-    doTest(
-      """
-        abstract class C {
-            public abstract void foo(int <caret>p1, int p2);
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("p1", "p1New")
-      editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New, int ".length)
-      replaceTextAtCaret("p2", "p2New")
-    }
-  }
+  //fun testRenameTwoParametersInAbstractMethod() {
+  //  doTest(
+  //    """
+  //      abstract class C {
+  //          public abstract void foo(int <caret>p1, int p2);
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("p1", "p1New")
+  //    editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New, int ".length)
+  //    replaceTextAtCaret("p2", "p2New")
+  //  }
+  //}
 
-  fun testRenameParameterAndAbstractMethod() {
-    doTest(
-      """
-        abstract class C {
-            public abstract void <caret>foo(int p1, int p2);
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
-    ) {
-      replaceTextAtCaret("foo", "bar")
-      editor.caretModel.moveToOffset(editor.caretModel.offset + "bar(".length)
-      replaceTextAtCaret("int", "long")
-    }
-  }
+  //fun testRenameParameterAndAbstractMethod() {
+  //  doTest(
+  //    """
+  //      abstract class C {
+  //          public abstract void <caret>foo(int p1, int p2);
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
+  //  ) {
+  //    replaceTextAtCaret("foo", "bar")
+  //    editor.caretModel.moveToOffset(editor.caretModel.offset + "bar(".length)
+  //    replaceTextAtCaret("int", "long")
+  //  }
+  //}
 
-  fun testChangeConstructorParameterType() {
-    doTest(
-      """
-        class C {
-            public C(<caret>int p) {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("C", "overrides")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      replaceTextAtCaret("int", "long")
-    }
-  }
+  //fun testChangeConstructorParameterType() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          public C(<caret>int p) {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("C", "overrides")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    replaceTextAtCaret("int", "long")
+  //  }
+  //}
 
   fun testDuplicateField() {
     doTest(
@@ -460,36 +461,36 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
     }
   }
 
-  fun testOverrideMethod() {
-    doTest(
-      """
-        interface I {
-            void foo();
-        }
-        
-        class C implements I {
-            public void foo(<caret>) { }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
-      expectedAvailabilityAfterResolve = Availability.NotAvailable
-    ) {
-      type("String s")
-    }
-  }
+  //fun testOverrideMethod() {
+  //  doTest(
+  //    """
+  //      interface I {
+  //          void foo();
+  //      }
+  //
+  //      class C implements I {
+  //          public void foo(<caret>) { }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
+  //    expectedAvailabilityAfterResolve = Availability.NotAvailable
+  //  ) {
+  //    type("String s")
+  //  }
+  //}
 
-  fun testPrivateMethod() {
-    doTest(
-      """
-        class C {
-            private void foo(<caret>) {
-            }
-        }
-      """.trimIndent(),
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
-      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    ) {
-      type("int p")
-    }
-  }
+  //fun testPrivateMethod() {
+  //  doTest(
+  //    """
+  //      class C {
+  //          private void foo(<caret>) {
+  //          }
+  //      }
+  //    """.trimIndent(),
+  //    expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
+  //    expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+  //  ) {
+  //    type("int p")
+  //  }
+  //}
 }

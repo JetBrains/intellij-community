@@ -43,7 +43,7 @@ interface SimpleSealedClassEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySimpleSealedClassEntity(
   entity: SimpleSealedClassEntity,
   modification: SimpleSealedClassEntity.Builder.() -> Unit,
 ): SimpleSealedClassEntity {

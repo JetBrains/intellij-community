@@ -30,7 +30,7 @@ fun getNewJ2KConversions(context: NewJ2kConverterContext): List<Conversion> = li
     ConstructorConversion(context),
     MoveConstructorsAfterFieldsConversion(context),
     ImplicitInitializerConversion(context),
-    ParameterModificationInMethodCallsConversion(context),
+    ParameterModificationConversion(context),
     BlockToRunConversion(context),
     RecordClassConversion(context),
     PrimaryConstructorDetectConversion(context),

@@ -51,10 +51,10 @@ import org.jetbrains.kotlin.idea.configuration.gradle.AbstractGradleConfigurePro
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralKotlinToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralTextToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.coverage.AbstractKotlinCoverageOutputFilesTest
-import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentAutoImportTest
-import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletionHandlerTest
-import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletionTest
-import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentHighlightingTest
+import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentAutoImportTest
+import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentCompletionHandlerTest
+import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentCompletionTest
+import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentHighlightingTest
 import org.jetbrains.kotlin.idea.debugger.test.*
 import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractIrSequenceTraceTestCase
 import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractIrSequenceTraceWithIREvaluatorTestCase
@@ -414,12 +414,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("unifier")
         }
 
-        testClass<AbstractCodeFragmentHighlightingTest> {
+        testClass<AbstractK1CodeFragmentHighlightingTest> {
             model("checker/codeFragments", pattern = KT, isRecursive = false)
             model("checker/codeFragments/imports", testMethodName = "doTestWithImport", pattern = KT)
         }
 
-        testClass<AbstractCodeFragmentAutoImportTest> {
+        testClass<AbstractK1CodeFragmentAutoImportTest> {
             model("quickfix.special/codeFragmentAutoImport", pattern = KT, isRecursive = false)
         }
 
@@ -907,14 +907,8 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractInsertImportOnPasteTest> {
-            model(
-                "copyPaste/imports",
-                pattern = KT_WITHOUT_DOTS,
-                testMethodName = "doTestCopy",
-                testClassName = "Copy",
-                isRecursive = false
-            )
-            model("copyPaste/imports", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestCut", testClassName = "Cut", isRecursive = false)
+            model("copyPaste/imports", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestCopy", testClassName = "Copy", isRecursive = true)
+            model("copyPaste/imports", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestCut", testClassName = "Cut", isRecursive = true)
         }
 
         testClass<AbstractMoveOnCutPasteTest> {
@@ -1383,11 +1377,11 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("idea/tests", testDataPath = "../../completion/testData", category = COMPLETION) {
-        testClass<AbstractCodeFragmentCompletionHandlerTest> {
+        testClass<AbstractK1CodeFragmentCompletionHandlerTest> {
             model("handlers/runtimeCast")
         }
 
-        testClass<AbstractCodeFragmentCompletionTest> {
+        testClass<AbstractK1CodeFragmentCompletionTest> {
             model("basic/codeFragments", pattern = KT)
         }
     }

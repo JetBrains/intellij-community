@@ -12,7 +12,7 @@ class WithNullsOppositeTest {
     val builder = MutableEntityStorage.create()
     val parent = builder addEntity ParentWithNullsOppositeMultiple("Parent", MySource)
 
-    builder.modifyEntity(parent) {
+    builder.modifyParentWithNullsOppositeMultiple(parent) {
       this.children = listOf(ChildWithNullsOppositeMultiple("data", MySource))
     }
 

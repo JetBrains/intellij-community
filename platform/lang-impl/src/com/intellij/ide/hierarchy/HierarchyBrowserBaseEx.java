@@ -546,14 +546,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (HIERARCHY_BROWSER.is(dataId)) {
-      return this;
-    }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return HELP_ID;
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(HIERARCHY_BROWSER, this);
+    sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
   }
 
   @Override

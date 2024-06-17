@@ -412,11 +412,13 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       window.setupNorthPanel()
     }
     container.add(
-      EditorTabbedContainer.createDockableEditor(image = null,
-                                                 file = file,
-                                                 presentation = Presentation(file.name),
-                                                 window = editorWindow,
-                                                 isNorthPanelAvailable = isNorthPanelAvailable),
+      createDockableEditor(
+        image = null,
+        file = file,
+        presentation = Presentation(file.name),
+        window = editorWindow,
+        isNorthPanelAvailable = isNorthPanelAvailable,
+      ),
       null
     )
     SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }

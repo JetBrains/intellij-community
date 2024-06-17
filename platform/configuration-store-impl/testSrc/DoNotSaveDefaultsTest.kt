@@ -5,7 +5,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.ComponentManagerImpl

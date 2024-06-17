@@ -10,19 +10,19 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Abstract
 
 @Abstract
-interface ModuleSettingsBase : WorkspaceEntityWithSymbolicId {
+interface ModuleSettingsFacetBridgeEntity : WorkspaceEntityWithSymbolicId {
   val name: @NlsSafe String
   val moduleId: ModuleId
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder<T : ModuleSettingsBase> : WorkspaceEntity.Builder<T> {
+  interface Builder<T : ModuleSettingsFacetBridgeEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     var name: String
     var moduleId: ModuleId
   }
 
-  companion object : EntityType<ModuleSettingsBase, Builder<ModuleSettingsBase>>() {
+  companion object : EntityType<ModuleSettingsFacetBridgeEntity, Builder<ModuleSettingsFacetBridgeEntity>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -30,8 +30,8 @@ interface ModuleSettingsBase : WorkspaceEntityWithSymbolicId {
       name: String,
       moduleId: ModuleId,
       entitySource: EntitySource,
-      init: (Builder<ModuleSettingsBase>.() -> Unit)? = null,
-    ): Builder<ModuleSettingsBase> {
+      init: (Builder<ModuleSettingsFacetBridgeEntity>.() -> Unit)? = null,
+    ): Builder<ModuleSettingsFacetBridgeEntity> {
       val builder = builder()
       builder.name = name
       builder.moduleId = moduleId

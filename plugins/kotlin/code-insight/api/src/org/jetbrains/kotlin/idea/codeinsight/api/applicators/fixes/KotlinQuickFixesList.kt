@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import kotlin.reflect.KClass
@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 class KotlinQuickFixesList @ForKtQuickFixesListBuilder constructor(
     private val quickFixes: Map<KClass<out KtDiagnosticWithPsi<*>>, List<KotlinQuickFixFactory<*>>>
 ) {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getQuickFixesFor(diagnostic: KtDiagnosticWithPsi<*>): List<IntentionAction> {
         val factories = quickFixes[diagnostic.diagnosticClass]
             ?: return emptyList()

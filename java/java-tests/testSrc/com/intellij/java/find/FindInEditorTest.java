@@ -18,7 +18,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -328,7 +328,7 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
       myFindModel.setReplaceState(true);
       myFindModel.setPromptOnReplace(false);
 
-      PlatformTestUtil.newPerformanceTest("replace", ()->{
+      PerformanceTestUtil.newPerformanceTest("replace", ()->{
         for (int i=0; i<25; i++) {
           myFindModel.   setStringToFind(aas);
           myFindModel.setStringToReplace(bbs);

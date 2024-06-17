@@ -1,6 +1,5 @@
 // "Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'" "true"
 // IGNORE_K2
-// PRIORITY: LOW
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // COMPILER_ARGUMENTS_AFTER: -opt-in=kotlin.RequiresOptIn -opt-in=test.MyExperimentalAPI
 // DISABLE-ERRORS
@@ -23,4 +22,4 @@ class Bar {
     }
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFileLevelFixesFactory$LowPriorityMakeModuleOptInFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeModuleOptInFix

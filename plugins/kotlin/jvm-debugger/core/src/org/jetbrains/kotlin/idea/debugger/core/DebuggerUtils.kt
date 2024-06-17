@@ -22,7 +22,7 @@ import com.sun.jdi.ReferenceType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesWithExactPackage
@@ -56,7 +56,6 @@ object DebuggerUtils {
         scope: GlobalSearchScope,
         className: JvmClassName,
         fileName: String,
-        location: Location? = null
     ): KtFile? {
         return runReadAction {
             findSourceFileForClass(
@@ -64,7 +63,7 @@ object DebuggerUtils {
               listOf(scope, KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)),
               className,
               fileName,
-              location
+              location = null
             )
         }
     }
@@ -76,7 +75,9 @@ object DebuggerUtils {
         fileName: String,
         location: Location?
     ): KtFile? {
-        val files = findSourceFilesForClass(project, scopes, className, fileName, hasLocation = location != null)
+        val files = findSourceFilesForClass(project, scopes, className, fileName,
+                                            hasLocation = location != null,
+                                            classNameResolvesInline = false)
         return chooseApplicableFile(files, location)
     }
 
@@ -86,6 +87,7 @@ object DebuggerUtils {
         className: JvmClassName,
         fileName: String,
         hasLocation: Boolean = true,
+        classNameResolvesInline: Boolean = true,
     ): List<KtFile> {
         if (!isKotlinSourceFile(fileName)) return emptyList()
         if (DumbService.isDumb(project)
@@ -96,6 +98,7 @@ object DebuggerUtils {
         for (scope in scopes) {
             val files = findFilesByNameInPackage(className, fileName, project, scope)
                 .filter { it.platform.isJvm() || it.platform.isCommon() }
+                .run { if (classNameResolvesInline) filter { isApplicable(it, className) } else this }
 
             if (files.isEmpty()) {
                 continue
@@ -161,14 +164,18 @@ object DebuggerUtils {
             val collectedFiles = mutableListOf<KtFile>()
             for (file in files) {
                 if (file !is KtFile) continue
-                val classNames = ClassNameCalculator.getClassNames(file).values.map { it.fqnToInternalName() }
-                if (className.internalName.isInnerClassOfAny(classNames)) {
+                if (isApplicable(file, className)) {
                     collectedFiles.add(file)
                 }
             }
             if (collectedFiles.isNotEmpty()) return collectedFiles
         }
         return emptyList()
+    }
+
+    private fun isApplicable(file: KtFile, className: JvmClassName): Boolean {
+        val classNames = ClassNameCalculator.getClassNames(file).values.map { it.fqnToInternalName() }
+        return className.internalName.isInnerClassOfAny(classNames)
     }
 
     fun isKotlinSourceFile(fileName: String): Boolean {
@@ -244,7 +251,7 @@ object DebuggerUtils {
         val callExpression = KtPsiUtil.getParentCallIfPresent(argumentExpression) ?: return false
 
         return analyze(callExpression) f@ {
-            val call = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return@f false
+            val call = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return@f false
             val parameter = call.argumentMapping[argumentExpression]?.symbol ?: return@f false
             return@f parameter.isCrossinline
         }

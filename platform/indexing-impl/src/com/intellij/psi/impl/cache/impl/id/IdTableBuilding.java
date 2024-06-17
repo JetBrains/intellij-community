@@ -32,7 +32,7 @@ public final class IdTableBuilding {
     void run(CharSequence chars, char @Nullable [] charsArray, int start, int end);
   }
 
-  public static @Nullable IdIndexer getFileTypeIndexer(FileType fileType) {
+  public static @Nullable IdIndexer getFileTypeIndexer(@NotNull FileType fileType) {
     final IdIndexer extIndexer = getIndexer(fileType);
     if (extIndexer != null) {
       return extIndexer;

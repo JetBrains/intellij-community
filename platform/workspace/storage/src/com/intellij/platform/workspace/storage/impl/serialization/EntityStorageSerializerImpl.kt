@@ -30,12 +30,14 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.function.Consumer
 
 private val LOG = logger<EntityStorageSerializerImpl>()
 
+@ApiStatus.Internal
 public class EntityStorageSerializerImpl(
   private val typesResolver: EntityTypesResolver,
   private val virtualFileManager: VirtualFileUrlManager,
@@ -43,7 +45,7 @@ public class EntityStorageSerializerImpl(
   private val ijBuildVersion: String,
 ) : EntityStorageSerializer {
   public companion object {
-    public const val STORAGE_SERIALIZATION_VERSION: String = "version7"
+    public const val STORAGE_SERIALIZATION_VERSION: String = "version8"
 
     private val loadCacheMetadataFromFileTimeMs = MillisecondsMeasurer()
 
@@ -309,4 +311,4 @@ public class EntityStorageSerializerImpl(
   }
 }
 
-public class UnsupportedEntitiesVersionException: Exception("Version of the entities in cache is not supported")
+internal class UnsupportedEntitiesVersionException: Exception("Version of the entities in cache is not supported")

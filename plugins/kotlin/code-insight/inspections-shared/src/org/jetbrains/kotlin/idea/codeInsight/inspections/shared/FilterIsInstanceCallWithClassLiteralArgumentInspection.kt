@@ -5,9 +5,9 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -43,7 +43,7 @@ internal class FilterIsInstanceCallWithClassLiteralArgumentInspection : KotlinAp
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         element.calleeExpression?.text == "filterIsInstance" && element.valueArguments.singleOrNull()?.isClassLiteral() == true
 
-    context(KtAnalysisSession) override fun prepareContext(element: KtCallExpression): Unit? {
+    context(KaSession) override fun prepareContext(element: KtCallExpression): Unit? {
         if (element.resolveToFunctionSymbol()?.callableId != FILTER_IS_INSTANCE_CALLABLE_ID) return null
 
         return element.valueArguments
@@ -89,10 +89,10 @@ private fun KtValueArgument.isClassLiteral(): Boolean =
 private fun KtValueArgument.classLiteral(): KtClassLiteralExpression? =
     (getArgumentExpression() as? KtDotQualifiedExpression)?.receiverExpression as? KtClassLiteralExpression
 
-context(KtAnalysisSession)
-private fun KtElement.resolveToClassSymbol(): KtNamedClassOrObjectSymbol? =
-    mainReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol
+context(KaSession)
+private fun KtElement.resolveToClassSymbol(): KaNamedClassOrObjectSymbol? =
+    mainReference?.resolveToSymbol() as? KaNamedClassOrObjectSymbol
 
-context(KtAnalysisSession)
-private fun KtCallExpression.resolveToFunctionSymbol(): KtFunctionSymbol? =
-    calleeExpression?.mainReference?.resolveToSymbol() as? KtFunctionSymbol
+context(KaSession)
+private fun KtCallExpression.resolveToFunctionSymbol(): KaFunctionSymbol? =
+    calleeExpression?.mainReference?.resolveToSymbol() as? KaFunctionSymbol

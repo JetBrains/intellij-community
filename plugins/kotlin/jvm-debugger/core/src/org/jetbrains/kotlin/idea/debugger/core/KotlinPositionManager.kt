@@ -52,11 +52,11 @@ import com.jetbrains.jdi.ReferenceTypeImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import kotlinx.coroutines.*
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
@@ -342,7 +342,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun <T : KtExpression> List<T>.separateInlinedAndNonInlinedElements(location: Location): Pair<T?, List<T>> {
         val notInlined = mutableListOf<T>()
         var innermostInlinedElement: T? = null
@@ -367,7 +367,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
      * Crossinline lambda generated class name contains $$inlined$<CALL METHOD NAME>$N substring
      * where N is the sequential number of the lambda with the same call method name
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun List<KtFunction>.getAppropriateLiteralForCrossinlineLambda(currentLocationClassName: String): KtFunction? {
         if (isEmpty()) return null
         val crossinlineLambdaPrefix = "\$\$inlined\$"
@@ -406,10 +406,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun KtFunction.getLambdaCallMethod(): KtCallExpression? = parentOfType<KtCallExpression>()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtCallExpression.getBytecodeMethodName(): String? {
-        val resolvedCall = resolveCall()?.successfulFunctionCallOrNull() ?: return null
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
+        val resolvedCall = resolveCallOld()?.successfulFunctionCallOrNull() ?: return null
+        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return null
         return symbol.getByteCodeMethodName()
     }
 
@@ -900,7 +900,7 @@ private fun KtFunction.isSamLambda(): Boolean {
 
     analyze(this) {
         val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return false
-        val call = parentCall.resolveCall()?.successfulFunctionCallOrNull() ?: return false
+        val call = parentCall.resolveCallOld()?.successfulFunctionCallOrNull() ?: return false
         val valueArgument = parentCall.getContainingValueArgument(this@isSamLambda) ?: return false
         val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
         return argument.returnType is KtUsualClassType

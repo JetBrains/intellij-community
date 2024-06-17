@@ -68,7 +68,7 @@ final class MixedResultsSearcher implements SESearcher {
     Function<ProgressIndicator, ResultsAccumulator> accumulatorSupplier = indicator ->
       new ResultsAccumulator(map, myEqualityProvider, myListener, myNotificationExecutor, indicator);
 
-    return performSearch(contributorsAndLimits.keySet(), pattern, accumulatorSupplier);
+    return performSearch(contributorsAndLimits.keySet(), pattern, accumulatorSupplier, myListener);
   }
 
   @Override
@@ -78,13 +78,14 @@ final class MixedResultsSearcher implements SESearcher {
     Function<ProgressIndicator, ResultsAccumulator> accumulatorSupplier = indicator ->
       new ResultsAccumulator(alreadyFound, contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor, indicator);
 
-    return performSearch(contributorsAndLimits.keySet(), pattern, accumulatorSupplier);
+    return performSearch(contributorsAndLimits.keySet(), pattern, accumulatorSupplier, myListener);
   }
 
   @NotNull
   private static ProgressIndicator performSearch(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors,
                                                  @NotNull String pattern,
-                                                 @NotNull Function<? super ProgressIndicator, ? extends ResultsAccumulator> accumulatorSupplier) {
+                                                 @NotNull Function<? super ProgressIndicator, ? extends ResultsAccumulator> accumulatorSupplier,
+                                                 @NotNull SearchListener searchListener) {
     ProgressIndicator indicator;
     ResultsAccumulator accumulator;
     if (!contributors.isEmpty()) {
@@ -95,7 +96,7 @@ final class MixedResultsSearcher implements SESearcher {
 
       for (SearchEverywhereContributor<?> contributor : contributors) {
         Runnable task = createSearchTask(pattern, accumulator,
-                                         indicatorWithCancelListener, contributor, () -> latch.countDown());
+                                         indicatorWithCancelListener, contributor, () -> latch.countDown(), searchListener);
         ApplicationManager.getApplication().executeOnPooledThread(task);
       }
 
@@ -126,11 +127,12 @@ final class MixedResultsSearcher implements SESearcher {
                                            ResultsAccumulator accumulator,
                                            ProgressIndicator indicator,
                                            SearchEverywhereContributor<?> contributor,
-                                           Runnable finalCallback) {
+                                           Runnable finalCallback,
+                                           SearchListener searchListener) {
     //noinspection unchecked
     ContributorSearchTask<?> task = new ContributorSearchTask<>(
       (SearchEverywhereContributor<Object>)contributor, pattern,
-      accumulator, indicator, finalCallback);
+      accumulator, indicator, finalCallback, searchListener);
     return ConcurrencyUtil.underThreadNameRunnable("SE-SearchTask-" + contributor.getSearchProviderId(), task);
   }
 
@@ -157,16 +159,20 @@ final class MixedResultsSearcher implements SESearcher {
     private final SearchEverywhereContributor<Item> myContributor;
     private final String myPattern;
     private final ProgressIndicator myIndicator;
+    private final SearchListener mySearchListener;
 
     private ContributorSearchTask(SearchEverywhereContributor<Item> contributor,
                                   String pattern,
                                   ResultsAccumulator accumulator,
                                   ProgressIndicator indicator,
-                                  Runnable callback) {
+                                  Runnable callback,
+                                  SearchListener searchListener
+    ) {
       myContributor = contributor;
       myPattern = pattern;
       myAccumulator = accumulator;
       myIndicator = indicator;
+      mySearchListener = searchListener;
       finishCallback = callback;
     }
 
@@ -180,6 +186,13 @@ final class MixedResultsSearcher implements SESearcher {
         do {
           ProgressIndicator wrapperIndicator = new SensitiveProgressWrapper(myIndicator);
           try {
+            var effectiveContributor = (myContributor instanceof PSIPresentationBgRendererWrapper wrapper)
+                                       ? wrapper.getDelegate() : myContributor;
+
+            if (effectiveContributor instanceof SearchEverywhereContributorWithListener myContributorWithListener) {
+              myContributorWithListener.setSearchListener(mySearchListener);
+            }
+
             if (myContributor instanceof WeightedSearchEverywhereContributor) {
               ((WeightedSearchEverywhereContributor<Item>)myContributor).fetchWeightedElements(myPattern, wrapperIndicator,
                                                                                                descriptor -> processFoundItem(

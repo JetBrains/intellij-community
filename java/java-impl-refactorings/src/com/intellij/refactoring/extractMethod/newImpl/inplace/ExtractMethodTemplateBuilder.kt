@@ -149,9 +149,9 @@ data class ExtractMethodTemplateBuilder(
     return editorOffsets.all { it in templateRange }
   }
 
-  private fun setTemplateValidator(templateState: TemplateState, validator: (TextRange) -> Boolean){
-    val manager = EditorActionManager.getInstance()
+  private fun setTemplateValidator(templateState: TemplateState, validator: (TextRange) -> Boolean) {
     val actionName = IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE
+    val manager = EditorActionManager.getInstance()
     val defaultHandler = manager.getActionHandler(actionName)
     Disposer.register(templateState) { manager.setActionHandler(actionName, defaultHandler) }
     manager.setActionHandler(actionName, object : EditorActionHandler() {

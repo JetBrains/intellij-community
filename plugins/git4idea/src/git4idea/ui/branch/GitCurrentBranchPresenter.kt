@@ -8,13 +8,16 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import git4idea.GitTag
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.toolbar.GitToolbarWidgetAction
+import icons.DvcsImplIcons
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -59,7 +62,15 @@ private fun calcText(repository: GitRepository): @NlsSafe String =
                                              GitBranchPopupActions.BRANCH_NAME_LENGTH_DELTA)
   })
 
-private fun GitRepository.calcIcon(): Icon? = if (state != Repository.State.NORMAL) AllIcons.General.Warning else null
+private fun GitRepository.calcIcon(): Icon? {
+  if (state == Repository.State.NORMAL) {
+    return null
+  }
+  if (state == Repository.State.DETACHED && GitRefUtil.getCurrentReference(this) is GitTag) {
+    return DvcsImplIcons.BranchLabel
+  }
+  return AllIcons.General.Warning
+}
 
 private fun GitRepository.calcTooltip(): @NlsContexts.Tooltip String {
   if (state == Repository.State.DETACHED) {

@@ -11,10 +11,10 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.util.containers.JBIterable
 
-class VcsLogChangeProcessor(place: String,
-                            val browser: VcsLogChangesBrowser,
-                            handler: ChangesTreeDiffPreviewHandler,
-                            private val isInEditor: Boolean
+internal class VcsLogChangeProcessor(place: String,
+                                     val browser: VcsLogChangesBrowser,
+                                     handler: ChangesTreeDiffPreviewHandler,
+                                     private val isInEditor: Boolean
 ) : TreeHandlerDiffRequestProcessor(place, browser.viewer, handler) {
 
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
@@ -22,10 +22,10 @@ class VcsLogChangeProcessor(place: String,
   }
 }
 
-class VcsLogTreeChangeProcessorTracker(val browser: VcsLogChangesBrowser,
-                                       editorViewer: DiffEditorViewer,
-                                       handler: ChangesTreeDiffPreviewHandler,
-                                       updateWhileShown: Boolean)
+internal class VcsLogTreeChangeProcessorTracker(val browser: VcsLogChangesBrowser,
+                                                editorViewer: DiffEditorViewer,
+                                                handler: ChangesTreeDiffPreviewHandler,
+                                                updateWhileShown: Boolean)
   : TreeHandlerChangesTreeTracker(browser.viewer, editorViewer, handler, updateWhileShown) {
 
   override fun track() {
@@ -35,7 +35,7 @@ class VcsLogTreeChangeProcessorTracker(val browser: VcsLogChangesBrowser,
   }
 }
 
-class VcsLogDiffPreviewHandler(private val browser: VcsLogChangesBrowser) : ChangesTreeDiffPreviewHandler() {
+internal class VcsLogDiffPreviewHandler(private val browser: VcsLogChangesBrowser) : ChangesTreeDiffPreviewHandler() {
   override fun iterateSelectedChanges(tree: ChangesTree): Iterable<Wrapper> {
     return collectWrappers(browser, VcsTreeModelData.selected(tree))
   }

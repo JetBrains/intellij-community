@@ -3,14 +3,13 @@ package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.calls.successfulConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -41,66 +40,66 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
         preparedAction.execute(element, ktPsiFactory)
     }
 
-    private object Resolver : ParcelMigrateToParcelizeResolver<KtAnalysisSession> {
-        context(KtAnalysisSession)
+    private object Resolver : ParcelMigrateToParcelizeResolver<KaSession> {
+        context(KaSession)
         private val KtType.classId: ClassId?
-            get() = expandedClassSymbol?.classId
+            get() = expandedSymbol?.classId
 
-        context(KtAnalysisSession)
+        context(KaSession)
         override val KtCallableDeclaration.returnTypeClassId: ClassId?
-            get() = getSymbolOfType<KtCallableSymbol>().returnType.classId
+            get() = getSymbolOfType<KaCallableSymbol>().returnType.classId
 
-        context(KtAnalysisSession)
+        context(KaSession)
         override val KtCallableDeclaration.receiverTypeClassId: ClassId?
-            get() = getSymbolOfType<KtCallableSymbol>().receiverType?.classId
+            get() = getSymbolOfType<KaCallableSymbol>().receiverType?.classId
 
-        context(KtAnalysisSession)
+        context(KaSession)
         override val KtCallableDeclaration.overrideCount: Int
-            get() = getSymbolOfType<KtCallableSymbol>().getAllOverriddenSymbols().size
+            get() = getSymbolOfType<KaCallableSymbol>().getAllOverriddenSymbols().size
 
-        context(KtAnalysisSession)
+        context(KaSession)
         override val KtProperty.isJvmField: Boolean
             get() {
                 val symbol = getVariableSymbol() as? KtPropertySymbol ?: return false
                 return symbol.hasBackingField && (symbol.backingFieldSymbol?.hasAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) == true)
             }
 
-        context(KtAnalysisSession)
-        private fun KtClassLikeSymbol.buildStarProjectedType(): KtType =
+        context(KaSession)
+        private fun KaClassLikeSymbol.buildStarProjectedType(): KtType =
             buildClassType(this@buildStarProjectedType) {
                 repeat(typeParameters.size) {
                     argument(KtStarTypeProjection(token))
                 }
             }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun KtType.hasSuperTypeClassId(superTypeClassId: ClassId): Boolean {
             val superClassSymbol = getClassOrObjectSymbolByClassId(superTypeClassId) ?: return false
             return isSubTypeOf(superClassSymbol.buildStarProjectedType())
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         override fun KtClassOrObject.hasSuperClass(superTypeClassId: ClassId): Boolean {
             val subClassSymbol = getClassOrObjectSymbol() ?: return false
             return subClassSymbol.buildStarProjectedType().hasSuperTypeClassId(superTypeClassId)
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         override fun KtTypeReference.hasSuperClass(superTypeClassId: ClassId): Boolean =
             getKtType().hasSuperTypeClassId(superTypeClassId)
 
-        context(KtAnalysisSession)
+        context(KaSession)
         override fun KtCallExpression.resolveToConstructedClass(): KtClassOrObject? =
-            resolveCall()
+            resolveCallOld()
                 ?.successfulConstructorCallOrNull()
                 ?.symbol
                 ?.containingClassId
                 ?.let { getClassOrObjectSymbolByClassId(it) }
                 ?.psi as? KtClassOrObject
 
-        context(KtAnalysisSession)
+        context(KaSession)
         override fun KtExpression.evaluateAsConstantInt(): Int? =
-            (evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION) as? KaConstantValue.KaIntConstantValue)?.value
+            (evaluate() as? KaConstantValue.KaIntConstantValue)?.value
     }
 
     companion object {

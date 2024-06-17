@@ -8,13 +8,13 @@ import org.eclipse.aether.resolution.ArtifactResult;
 
 import java.util.List;
 
-class ArtifactResultData {
+public class ArtifactResultData {
   private final Artifact artifact;
   private final ArtifactRepository repository;
   private final List<Exception> exceptions;
   private final ArtifactResolutionException resolutionException;
 
-  ArtifactResultData(ArtifactResult result, ArtifactResolutionException resolutionException) {
+  public ArtifactResultData(ArtifactResult result, ArtifactResolutionException resolutionException) {
     this(result.getArtifact(), result.getRepository(), result.getExceptions(), resolutionException);
   }
 

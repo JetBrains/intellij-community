@@ -38,6 +38,8 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.base.psi.getReturnTypeReference
+import org.jetbrains.kotlin.idea.base.psi.getReturnTypeReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
@@ -1090,20 +1092,12 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             }
         }
     }
-
-
 }
 
-
-fun KtNamedDeclaration.getReturnTypeReference(): KtTypeReference? = getReturnTypeReferences().singleOrNull()
-
-internal fun KtNamedDeclaration.getReturnTypeReferences(): List<KtTypeReference> {
-    return when (this) {
-        is KtCallableDeclaration -> listOfNotNull(typeReference)
-        is KtClassOrObject -> superTypeListEntries.mapNotNull { it.typeReference }
-        is KtScript -> emptyList()
-        else -> throw AssertionError("Unexpected declaration kind: $text")
-    }
-}
+@Deprecated(
+    message = "Use org.jetbrains.kotlin.idea.base.psi.KotlinPsiUtils.getReturnTypeReference instead",
+    ReplaceWith("getReturnTypeReference", "org.jetbrains.kotlin.idea.base.psi.KotlinPsiUtils")
+)
+fun KtNamedDeclaration.getReturnTypeReference(): KtTypeReference? = getReturnTypeReference()
 
 fun CallableBuilderConfiguration.createBuilder(): CallableBuilder = CallableBuilder(this)

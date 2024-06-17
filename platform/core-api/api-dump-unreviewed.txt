@@ -680,6 +680,7 @@ com.intellij.lang.SyntaxTreeBuilder
 - a:getCurrentOffset():I
 - a:getLatestDoneMarker():com.intellij.lang.LighterASTNode
 - a:getOriginalText():java.lang.CharSequence
+- getProductions():java.util.List
 - a:getTokenText():java.lang.String
 - a:getTokenType():com.intellij.psi.tree.IElementType
 - isWhitespaceOrComment(com.intellij.psi.tree.IElementType):Z
@@ -694,6 +695,7 @@ com.intellij.lang.SyntaxTreeBuilder
 - a:setTokenTypeRemapper(com.intellij.lang.ITokenTypeRemapper):V
 - a:setWhitespaceSkippedCallback(com.intellij.lang.WhitespaceSkippedCallback):V
 com.intellij.lang.SyntaxTreeBuilder$Marker
+- com.intellij.lang.SyntaxTreeBuilder$Production
 - a:collapse(com.intellij.psi.tree.IElementType):V
 - a:done(com.intellij.psi.tree.IElementType):V
 - a:doneBefore(com.intellij.psi.tree.IElementType,com.intellij.lang.SyntaxTreeBuilder$Marker):V
@@ -704,6 +706,15 @@ com.intellij.lang.SyntaxTreeBuilder$Marker
 - a:precede():com.intellij.lang.SyntaxTreeBuilder$Marker
 - a:rollbackTo():V
 - a:setCustomEdgeTokenBinders(com.intellij.lang.WhitespacesAndCommentsBinder,com.intellij.lang.WhitespacesAndCommentsBinder):V
+com.intellij.lang.SyntaxTreeBuilder$Production
+- com.intellij.lang.LighterASTNode
+- getEndIndex():I
+- getEndOffset():I
+- getErrorMessage():java.lang.String
+- getStartIndex():I
+- getStartOffset():I
+- getTokenType():com.intellij.psi.tree.IElementType
+- isCollapsed():Z
 com.intellij.lang.TokenSeparatorGenerator
 - a:generateWhitespaceBetweenTokens(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 c:com.intellij.lang.TreeBackedLighterAST
@@ -1669,6 +1680,7 @@ a:com.intellij.openapi.command.CommandProcessor
 - a:setCurrentCommandName(java.lang.String):V
 f:com.intellij.openapi.command.CoroutinesKt
 - *sf:execute(com.intellij.openapi.command.WriteCommandAction$Builder,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:writeCommandAction(com.intellij.openapi.application.ReadAndWriteScope,com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0):com.intellij.openapi.application.ReadResult
 - *sf:writeCommandAction(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 e:com.intellij.openapi.command.UndoConfirmationPolicy
 - java.lang.Enum
@@ -2787,7 +2799,7 @@ com.intellij.openapi.ui.Queryable
 - a:putInfo(java.util.Map):V
 com.intellij.openapi.ui.Queryable$Contributor
 - a:apply(java.util.Map):V
-c:com.intellij.openapi.ui.Queryable$PrintInfo
+f:com.intellij.openapi.ui.Queryable$PrintInfo
 - <init>():V
 - <init>(java.lang.String[]):V
 - <init>(java.lang.String[],java.lang.String[]):V
@@ -4766,6 +4778,7 @@ a:com.intellij.psi.PsiWalkingState
 - p:<init>(com.intellij.psi.PsiElementVisitor):V
 - p:<init>(com.intellij.psi.PsiElementVisitor,com.intellij.util.WalkingState$TreeGuide):V
 - elementStarted(com.intellij.psi.PsiElement):V
+- s:processAll(com.intellij.psi.PsiElement,com.intellij.util.Processor):Z
 - visit(com.intellij.psi.PsiElement):V
 com.intellij.psi.PsiWhiteSpace
 - com.intellij.psi.PsiElement
@@ -5028,6 +5041,7 @@ com.intellij.psi.meta.PsiWritableMetaData
 - a:setName(java.lang.String):V
 com.intellij.psi.scope.PsiScopeProcessor
 - a:execute(com.intellij.psi.PsiElement,com.intellij.psi.ResolveState):Z
+- executeForUnresolved():Z
 - getHint(com.intellij.openapi.util.Key):java.lang.Object
 - handleEvent(com.intellij.psi.scope.PsiScopeProcessor$Event,java.lang.Object):V
 com.intellij.psi.scope.PsiScopeProcessor$Event
@@ -6064,10 +6078,6 @@ f:com.intellij.util.FileContentUtilCore
 - <init>():V
 - s:reparseFiles(java.util.Collection):V
 - s:reparseFiles(com.intellij.openapi.vfs.VirtualFile[]):V
-f:com.intellij.util.FileIconUtil
-- sf:INSTANCE:com.intellij.util.FileIconUtil
-- sf:getIconFromProviders(com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):javax.swing.Icon
-- sf:patchIconByIconPatchers(javax.swing.Icon,com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):javax.swing.Icon
 com.intellij.util.FilePatternFilter
 - sf:Companion:com.intellij.util.FilePatternFilter$Companion
 - s:parseFilter(java.lang.CharSequence,java.lang.String,java.lang.String,I):com.intellij.util.FilePatternFilter

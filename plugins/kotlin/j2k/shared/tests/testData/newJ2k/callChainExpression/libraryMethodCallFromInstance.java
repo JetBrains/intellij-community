@@ -1,17 +1,16 @@
-// IGNORE_K2
 class Library {
   void call() {}
 
-  String getString() { return ""; }
+  String string() { return ""; }
 }
 
 class User {
   void main() {
     Library lib = new Library();
     lib.call();
-    lib.getString().isEmpty();
+    lib.string().isEmpty();
 
     new Library().call();
-    new Library().getString().isEmpty();
+    new Library().string().isEmpty();
   }
 }

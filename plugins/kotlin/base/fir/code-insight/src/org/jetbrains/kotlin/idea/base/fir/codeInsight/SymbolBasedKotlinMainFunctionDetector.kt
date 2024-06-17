@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.codeInsight
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -55,7 +55,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                 }
 
                 val functionSymbol = function.getFunctionLikeSymbol()
-                if (functionSymbol !is KtFunctionSymbol) {
+                if (functionSymbol !is KaFunctionSymbol) {
                     return false
                 }
 
@@ -93,7 +93,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun buildMainParameterType(): KtType {
         return buildClassType(StandardClassIds.Array) {
             val argumentType = buildClassType(StandardClassIds.String) {
@@ -105,7 +105,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtType.isResolvedClassType(): Boolean = when (this) {
         is KtNonErrorClassType -> ownTypeArguments.mapNotNull { it.type }.all { it.isResolvedClassType() }
         else -> false

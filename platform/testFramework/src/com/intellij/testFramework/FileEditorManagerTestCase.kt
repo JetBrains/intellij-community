@@ -94,6 +94,9 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     map.substitute(rootElement, true, true)
     runWithModalProgressBlocking(project, "") {
       manager!!.mainSplitters.restoreEditors(EditorSplitterState(rootElement))
+      manager!!.mainSplitters.windows().flatMap { it.composites() }.forEach {
+        it.waitForAvailable()
+      }
     }
   }
 }

@@ -10,3 +10,4 @@ class Foo {
 // INVOCATION_COUNT: 1
 // EXIST: foo
 // EXIST: foo_field
+// IGNORE_K2

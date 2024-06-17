@@ -37,7 +37,7 @@
   <xi:include href="/META-INF/TypeMigration.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/libraryJarUsage.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/UsageData.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
 
@@ -1471,7 +1471,7 @@
                                           descriptionKey="inlay.MethodChainsInlayProvider.description"/>
     <codeInsight.inlayActionHandler implementationClass="com.intellij.codeInsight.hints.JavaFqnDeclarativeInlayActionHandler"
                                     handlerId="java.fqn.class"/>
-    <refactoring.renameCodeVisionSupport implementation="com.intellij.refactoring.rename.JavaRenameCodeVisionSupport"/>
+    <refactoring.codeVisionSupport implementation="com.intellij.refactoring.rename.JavaRefactoringCodeVisionSupport"/>
 
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.folding.impl.JavaFoldingBuilder"/>
     <lang.braceMatcher language="JAVA" implementationClass="com.intellij.codeInsight.highlighting.JavaPairedBraceMatcher"/>
@@ -1743,6 +1743,12 @@
                      implementationClass="com.intellij.codeInspection.StringTemplateMigrationInspection"
                      bundle="messages.JavaBundle"
                      key="inspection.string.template.migration.name"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.StringTemplateReverseMigrationInspection"
+                     bundle="messages.JavaBundle"
+                     key="inspection.string.template.reverse.migration.name"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="INFORMATION"
@@ -2788,7 +2794,6 @@
 
     <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryChecker"/>
 
-    <iconMapper mappingFile="JavaUIIconsMapping.json"/>
     <optionController implementation="com.intellij.compiler.JavaCompilerConfiguration$Provider"/>
 
     <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
@@ -2818,8 +2823,7 @@
       <add-to-group group-id="Internal" anchor="after" relative-to-action="Internal.Java"/>
     </group>
 
-    <action id="com.intellij.openapi.projectRoots.impl.ParseSdkmanrcAction"
-            class="com.intellij.openapi.projectRoots.impl.ParseSdkmanrcAction">
+    <action id="ParseSdkmanrcAction" class="com.intellij.openapi.projectRoots.impl.ParseSdkmanrcAction" icon="AllIcons.Actions.Refresh">
       <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
     </action>
 

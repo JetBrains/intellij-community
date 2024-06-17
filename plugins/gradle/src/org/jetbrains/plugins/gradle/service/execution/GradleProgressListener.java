@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.intellij.openapi.util.text.StringUtil.formatDuration;
-import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
 
 /**
  * @author Vladislav.Soroka
@@ -225,5 +224,9 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         myListener.onTaskOutput(myTaskId, "\rGradle Daemon started in " + duration + "\n", true);
       }
     }
+  }
+
+  private static @NotNull String formatFileSize(@NotNull Long value) {
+    return StringUtil.formatFileSize(value, " ", -1, true);
   }
 }

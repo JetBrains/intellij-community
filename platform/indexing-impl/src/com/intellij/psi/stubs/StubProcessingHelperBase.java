@@ -18,6 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexD
 /**
  * Author: dmitrylomov
  */
+@ApiStatus.Internal
 public abstract class StubProcessingHelperBase {
   protected static final Logger LOG = Logger.getInstance(StubProcessingHelperBase.class);
 

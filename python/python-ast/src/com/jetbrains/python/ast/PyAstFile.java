@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
+import com.jetbrains.python.ast.docstring.DocStringUtilCore;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.ApiStatus;
@@ -66,5 +67,17 @@ public interface PyAstFile extends PyAstElement, PsiFile, PyAstDocStringOwner, A
   @ApiStatus.Internal
   default boolean isAcceptedFor(@NotNull Class<?> visitorClass) {
     return true;
+  }
+
+  @Nullable
+  @Override
+  default String getDocStringValue() {
+    return DocStringUtilCore.getDocStringValue(this);
+  }
+
+  @Nullable
+  @Override
+  default PyAstStringLiteralExpression getDocStringExpression() {
+    return DocStringUtilCore.findDocStringExpression(this);
   }
 }

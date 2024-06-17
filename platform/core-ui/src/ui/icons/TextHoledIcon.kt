@@ -5,10 +5,12 @@ import com.intellij.ui.BadgeShapeProvider
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Graphics2D
 import javax.swing.Icon
 
+@Internal
 class TextHoledIcon(icon: Icon,
                     val text: String,
                     val fontSize: Float,

@@ -4,7 +4,9 @@ package com.intellij.util.indexing
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.psi.stubs.*
 import com.intellij.util.Base64
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object IndexDataPresenter {
 
   fun <K> getPresentableIndexKey(key: K): String = key.toString()

@@ -5,12 +5,12 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
 import org.jetbrains.kotlin.types.Variance
 
 class TypeLookupElementFactory {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createLookup(type: KtType): LookupElement? {
         val renderedType = type.render(TYPE_RENDERING_OPTIONS_SHORT_NAMES, position = Variance.INVARIANT)
         val lookupObject = TypeLookupObject(type.render(TYPE_RENDERING_OPTIONS, position = Variance.INVARIANT))
@@ -37,7 +37,7 @@ class TypeLookupElementFactory {
             is KtTypeParameterType -> element
 
             is KtUsualClassType -> {
-                val tailText = getTailText(type.classSymbol, usePackageFqName = true, addTypeParameters = false)
+                val tailText = getTailText(type.symbol, usePackageFqName = true, addTypeParameters = false)
                 element.withTailText(tailText)
             }
 
@@ -47,18 +47,18 @@ class TypeLookupElementFactory {
         }
     }
 
-    context(KtAnalysisSession)
-    fun createLookup(symbol: KtClassifierSymbol): LookupElement? {
+    context(KaSession)
+    fun createLookup(symbol: KaClassifierSymbol): LookupElement? {
         val (relativeNameAsString, fqNameAsString) = when (symbol) {
-            is KtTypeParameterSymbol -> symbol.name.asString().let { it to it }
+            is KaTypeParameterSymbol -> symbol.name.asString().let { it to it }
 
-            is KtClassLikeSymbol -> when (val classId = symbol.classId) {
+            is KaClassLikeSymbol -> when (val classId = symbol.classId) {
                 null -> symbol.name?.asString()?.let { it to it }
                 else -> classId.relativeClassName.asString() to classId.asFqNameString()
             }
         } ?: return null
 
-        val tailText = (symbol as? KtClassLikeSymbol)?.let { getTailText(symbol, usePackageFqName = true) }
+        val tailText = (symbol as? KaClassLikeSymbol)?.let { getTailText(symbol, usePackageFqName = true) }
 
         return LookupElementBuilder.create(TypeLookupObject(fqNameAsString), relativeNameAsString)
             .withInsertHandler(TypeInsertHandler)
@@ -66,9 +66,9 @@ class TypeLookupElementFactory {
             .withTailText(tailText)
     }
 
-    private fun KtType.getSymbolIfTypeParameterOrUsualClass(): KtClassifierSymbol? = when (this) {
+    private fun KtType.getSymbolIfTypeParameterOrUsualClass(): KaClassifierSymbol? = when (this) {
         is KtTypeParameterType -> symbol
-        is KtUsualClassType -> classSymbol
+        is KtUsualClassType -> symbol
         else -> null
     }
 

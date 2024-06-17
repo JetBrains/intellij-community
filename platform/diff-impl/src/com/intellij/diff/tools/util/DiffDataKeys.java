@@ -34,6 +34,7 @@ public interface DiffDataKeys {
   DataKey<LineRange> CURRENT_CHANGE_RANGE = DataKey.create("diff_current_change_range");
 
   DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("diff_request");
+  DataKey<DiffRequest> DIFF_REQUEST_TO_COMPARE = DataKey.create("diff_request_to_compare");
   DataKey<DiffContext> DIFF_CONTEXT = DataKey.create("diff_context");
   DataKey<FrameDiffTool.DiffViewer> DIFF_VIEWER = DataKey.create("diff_frame_viewer");
   DataKey<FrameDiffTool.DiffViewer> WRAPPING_DIFF_VIEWER = DataKey.create("main_diff_frame_viewer"); // if DiffViewerWrapper is used

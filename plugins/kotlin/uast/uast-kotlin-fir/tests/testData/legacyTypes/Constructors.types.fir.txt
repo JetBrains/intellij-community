@@ -88,7 +88,7 @@ UFile (package = ) [public final class A {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()] : java.lang.Object
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
                     USimpleNameReferenceExpression (identifier = Object, resolvesTo = PsiClass: Object) [Object]
                 UBinaryExpression (operator = =) [a = i.toString()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
@@ -101,7 +101,7 @@ UFile (package = ) [public final class A {...]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()] : java.lang.Object
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
                     USimpleNameReferenceExpression (identifier = Object, resolvesTo = PsiClass: Object) [Object]
                 UBinaryExpression (operator = =) [a = s] : @org.jetbrains.annotations.NotNull() kotlin.Unit
@@ -118,7 +118,7 @@ UFile (package = ) [public final class A {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()] : java.lang.Object
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
                     USimpleNameReferenceExpression (identifier = Object, resolvesTo = PsiClass: Object) [Object]
                 UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
@@ -134,7 +134,7 @@ UFile (package = ) [public final class A {...]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()] : java.lang.Object
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
                     USimpleNameReferenceExpression (identifier = Object, resolvesTo = PsiClass: Object) [Object]
                 UBinaryExpression (operator = =) [a = s] : @org.jetbrains.annotations.NotNull() kotlin.Unit

@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
-import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySampleEntity2
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -36,7 +36,7 @@ class SampleTest {
     val entity = builder addEntity SampleEntity2("data", true, MySource)
 
     builder.toSnapshot()
-    val updatedEntity = builder.modifyEntity(entity) {
+    val updatedEntity = builder.modifySampleEntity2(entity) {
       this.data = "data2"
     }
 

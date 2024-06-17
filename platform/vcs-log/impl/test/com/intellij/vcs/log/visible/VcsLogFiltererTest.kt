@@ -294,10 +294,6 @@ class VcsLogFiltererTest {
 
     private fun newTrivialDataGetter(): DataGetter<VcsFullCommitDetails> {
       return object : DataGetter<VcsFullCommitDetails> {
-        override fun getCachedDataOrPlaceholder(row: Int): VcsFullCommitDetails {
-          throw UnsupportedOperationException()
-        }
-
         override fun loadCommitsData(hashes: MutableList<Int>,
                                      consumer: Consumer<in MutableList<VcsFullCommitDetails>>,
                                      errorConsumer: Consumer<in Throwable>,

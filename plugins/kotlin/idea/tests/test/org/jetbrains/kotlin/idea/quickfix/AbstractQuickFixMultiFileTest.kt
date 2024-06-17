@@ -18,8 +18,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
-import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
@@ -246,8 +246,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                         val afterMain = findAfterFile(mainFile.path)
                         try {
                             myFixture.checkResultByFile(afterMain.name)
-                        } catch (e: AssertionError) {
-                            if (e !is FileComparisonData) throw e
+                        } catch (e: FileComparisonFailedError) {
                             KotlinTestUtils.assertEqualsToFile(afterMain, editor)
                         }
 

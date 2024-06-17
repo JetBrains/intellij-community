@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.codeWithMe.ClientId
@@ -86,9 +86,7 @@ class VcsEditorTabFilesManager :
 
   private fun FileEditorManagerImpl.selectAndFocusEditor(file: VirtualFile, focusEditor: Boolean) {
     val window = windows.find { it.isFileOpen(file) } ?: return
-    val composite = window.getComposite(file) ?: return
-
-    window.setSelectedComposite(composite, focusEditor)
+    window.setSelectedComposite(file = file, focusEditor = focusEditor)
     if (focusEditor) {
       window.requestFocus(true)
       window.toFront()

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
@@ -58,8 +58,9 @@ public final class GridCellImpl implements GridCell {
     myTabs.setDataProvider(dataId -> {
       if (ViewContext.CONTENT_KEY.is(dataId)) {
         TabInfo target = myTabs.getTargetInfo();
-        if (target != null) {
-          return new Content[]{getContentFor(target)};
+        Content content = target == null ? null : myContents.getKey(target);
+        if (content != null) {
+          return new Content[]{content};
         }
       }
       else if (ViewContext.CONTEXT_KEY.is(dataId)) {

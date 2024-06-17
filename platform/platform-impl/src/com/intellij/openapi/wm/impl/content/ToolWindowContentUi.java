@@ -54,7 +54,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.function.Predicate;
 
-public final class ToolWindowContentUi implements ContentUI, DataProvider {
+public final class ToolWindowContentUi implements ContentUI, EdtCompatibleDataProvider {
   // when client property is put in toolwindow component, hides toolwindow label
   public static final @NonNls String HIDE_ID_LABEL = "HideIdLabel";
   public static final @NonNls Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
@@ -696,27 +696,17 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
-      return window;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.TOOL_WINDOW, window);
+    sink.set(PlatformCoreDataKeys.HELP_ID, window.getHelpId());
+    sink.set(CommonDataKeys.PROJECT, window.getToolWindowManager().getProject());
+    sink.set(CloseAction.CloseTarget.KEY, computeCloseTarget());
+    if (getCurrentLayout() instanceof MorePopupAware o) {
+      sink.set(MorePopupAware.KEY_TOOLWINDOW_TITLE, o);
     }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return window.getHelpId();
+    if (type == ToolWindowContentUiType.TABBED) {
+      sink.set(SELECTED_CONTENT_TAB_LABEL, tabsLayout.findTabLabelByContent(contentManager.getSelectedContent()));
     }
-    else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return window.getToolWindowManager().getProject();
-    }
-    else if (CloseAction.CloseTarget.KEY.is(dataId)) {
-      return computeCloseTarget();
-    }
-    else if (MorePopupAware.KEY_TOOLWINDOW_TITLE.is(dataId)) {
-      ContentLayout layout = getCurrentLayout();
-      return  (layout instanceof MorePopupAware) ? layout : null;
-    }
-    else if (SELECTED_CONTENT_TAB_LABEL.is(dataId) && type == ToolWindowContentUiType.TABBED) {
-      return tabsLayout.findTabLabelByContent(contentManager.getSelectedContent());
-    }
-    return null;
   }
 
   public void setTabActions(@NotNull List<AnAction> actions) {

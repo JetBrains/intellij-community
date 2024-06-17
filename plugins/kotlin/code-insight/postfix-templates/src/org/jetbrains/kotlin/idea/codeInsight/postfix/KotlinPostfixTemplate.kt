@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.endOffset
 import com.intellij.util.Function
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -62,7 +62,7 @@ internal object StatementFilter : (KtExpression) -> Boolean {
     }
 }
 
-internal class ExpressionTypeFilter(val predicate: KtAnalysisSession.(KtType) -> Boolean) : (KtExpression) -> Boolean {
+internal class ExpressionTypeFilter(val predicate: KaSession.(KtType) -> Boolean) : (KtExpression) -> Boolean {
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun invoke(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {

@@ -45,9 +45,6 @@ f:com.intellij.codeInsight.actions.VcsFacadeImpl
 - isFileUnderVcs(com.intellij.psi.PsiFile):java.lang.Boolean
 - markFilesDirty(com.intellij.openapi.project.Project,java.util.List):V
 - runHeavyModificationTask(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,java.lang.Runnable):V
-f:com.intellij.codeInsight.daemon.VcsSilentChangeVetoer
-- <init>():V
-- canChangeFileSilently(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.util.ThreeState
 *f:com.intellij.codeInsight.hints.VcsCodeVisionProvider
 - com.intellij.codeInsight.codeVision.CodeVisionProvider
 - *sf:Companion:com.intellij.codeInsight.hints.VcsCodeVisionProvider$Companion
@@ -157,19 +154,6 @@ f:com.intellij.impl.RunConfigurationVcsSupportImpl
 - isDirectoryVcsIgnored(com.intellij.openapi.project.Project,java.lang.String):Z
 com.intellij.openapi.VcsInternalDataKeys
 - sf:FILE_HISTORY_REFRESHER:com.intellij.openapi.actionSystem.DataKey
-f:com.intellij.openapi.diff.impl.SearchInDiffChangesProvider
-- com.intellij.find.impl.livePreview.EditorSearchAreaProvider
-- <init>():V
-- getSearchArea(com.intellij.openapi.editor.Editor,com.intellij.find.FindModel):com.intellij.find.impl.livePreview.SearchResults$SearchArea
-- isEnabled(com.intellij.openapi.editor.Editor,com.intellij.find.FindModel):Z
-f:com.intellij.openapi.diff.impl.ToggleSearchInChangesAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.openapi.diff.impl.combined.search.CombinedEditorSearchSessionListener
 - java.util.EventListener
 - a:onSearch(Z,com.intellij.openapi.editor.Editor):V
@@ -2248,11 +2232,6 @@ com.intellij.openapi.vcs.changes.VcsAnnotationRefresher
 - a:dirty(com.intellij.openapi.vcs.changes.BaseRevision):V
 - a:dirty(java.lang.String):V
 - a:dirtyUnder(com.intellij.openapi.vfs.VirtualFile):V
-c:com.intellij.openapi.vcs.changes.VcsChangesSelectionRule
-- com.intellij.ide.impl.dataRules.GetDataRule
-- <init>():V
-- getChangesSelection(com.intellij.openapi.actionSystem.DataProvider):com.intellij.openapi.ListSelection
-- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 f:com.intellij.openapi.vcs.changes.VcsCurrentRevisionProxy
 - com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 - s:create(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.VcsCurrentRevisionProxy
@@ -2750,11 +2729,6 @@ com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
 - a:canCreate(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change):Z
 - a:isEquals(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.Change):com.intellij.util.ThreeState
 - a:process(com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer,com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
-f:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffManagerImpl
-- com.intellij.diff.tools.combined.CombinedDiffManager
-- <init>(com.intellij.openapi.project.Project):V
-- createProcessor(java.lang.String):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
-- f:getProject():com.intellij.openapi.project.Project
 f:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffManagerImplKt
 - sf:prepareCombinedBlocksFromProducers(java.util.List):java.util.List
 - sf:prepareCombinedBlocksFromWrappers(com.intellij.openapi.project.Project,java.util.List):java.util.List
@@ -4351,12 +4325,12 @@ a:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesOperationsGroup
 com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
 - a:buildPatchesTree(com.intellij.openapi.vcs.changes.ui.TreeModelBuilder,Z):V
 - a:getApplyAction():com.intellij.openapi.actionSystem.AnAction
-- a:getData(java.lang.String,java.util.stream.Stream):java.lang.Object
 - a:getDataClass():java.lang.Class
 - a:getPopAction():com.intellij.openapi.actionSystem.AnAction
 - a:getTag():com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - a:isEmpty():Z
 - a:subscribeToPatchesListChanges(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Iterable):V
 com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$ChangeObject
 - com.intellij.openapi.vcs.changes.ui.PresentableChange
 - asChange():com.intellij.openapi.vcs.changes.Change
@@ -4383,8 +4357,8 @@ f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesTree
 - com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 - sf:Companion:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesTree$Companion
 - <init>(com.intellij.openapi.project.Project,java.util.List,kotlin.jvm.functions.Function1,com.intellij.openapi.Disposable):V
-- getData(java.lang.String):java.lang.Object
 - getToggleClickCount():I
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesTree$Companion
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesTree$TagWithCounterChangesBrowserNode
 - com.intellij.openapi.vcs.changes.ui.TagChangesBrowserNode
@@ -4427,12 +4401,12 @@ f:com.intellij.openapi.vcs.changes.savedPatches.ShelfProvider
 - buildPatchesTree(com.intellij.openapi.vcs.changes.ui.TreeModelBuilder,Z):V
 - dispose():V
 - getApplyAction():com.intellij.openapi.actionSystem.AnAction
-- getData(java.lang.String,java.util.stream.Stream):java.lang.Object
 - getDataClass():java.lang.Class
 - getPopAction():com.intellij.openapi.actionSystem.AnAction
 - getTag():com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - isEmpty():Z
 - subscribeToPatchesListChanges(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Iterable):V
 f:com.intellij.openapi.vcs.changes.savedPatches.ShelfProvider$ShelfObject
 - com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$PatchObject
 - <init>(com.intellij.openapi.vcs.changes.savedPatches.ShelfProvider,com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList):V
@@ -5281,7 +5255,6 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport$Disabled
 a:com.intellij.openapi.vcs.changes.ui.ChangesListView
 - com.intellij.openapi.vcs.changes.ui.ChangesTree
 - com.intellij.ide.dnd.DnDAware
-- com.intellij.openapi.actionSystem.DataProvider
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:EXACTLY_SELECTED_FILES_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:HELP_ID:java.lang.String
@@ -5300,7 +5273,6 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesListView
 - getAllChangesFromSameChangelist(com.intellij.openapi.vcs.changes.Change):java.util.List
 - getChangesNodes():com.intellij.util.containers.JBIterable
 - getComponent():javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - getModel():javax.swing.tree.DefaultTreeModel
 - getSelectedChanges():com.intellij.util.containers.JBIterable
 - getSelectedChangesNodes():com.intellij.util.containers.JBIterable
@@ -5315,9 +5287,10 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesListView
 - rebuildTree():V
 - setPaintBusy(Z):V
 - s:toHijackedChange(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.changes.Change
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - com.intellij.ui.treeStructure.Tree
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
 - sf:ALWAYS_KEEP:com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy
 - sf:ALWAYS_RESET:com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy
 - sf:DEFAULT_GROUPING_KEYS:java.util.List
@@ -5339,7 +5312,6 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - excludeChanges(java.util.Collection):V
 - expandAll():V
 - expandDefaults():V
-- getData(java.lang.String):java.lang.Object
 - getDoubleClickHandler():com.intellij.util.Processor
 - getEnterKeyHandler():com.intellij.util.Processor
 - getFileColorForPath(javax.swing.tree.TreePath):java.awt.Color
@@ -5398,6 +5370,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - setTreeStateStrategy(com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy):V
 - setUI(javax.swing.plaf.TreeUI):V
 - p:toggleChanges(java.util.Collection):Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateTreeModel(javax.swing.tree.DefaultTreeModel):V
 - p:updateTreeModel(javax.swing.tree.DefaultTreeModel,com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy):V
 com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy

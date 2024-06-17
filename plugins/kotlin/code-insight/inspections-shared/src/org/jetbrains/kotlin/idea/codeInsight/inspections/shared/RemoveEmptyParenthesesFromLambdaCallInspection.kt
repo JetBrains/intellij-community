@@ -5,8 +5,8 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -36,10 +36,10 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : KotlinApplicable
 
     override fun isApplicableByPsi(element: KtValueArgumentList): Boolean = canRemoveByPsi(element)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtValueArgumentList): Unit? =
         ((element.parent as? KtCallExpression)
-            ?.resolveCall() is KtSuccessCallInfo)
+            ?.resolveCallOld() is KaSuccessCallInfo)
             .asUnit
 
     override fun createQuickFix(

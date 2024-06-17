@@ -123,7 +123,6 @@ public final class EvaluationContextImpl implements EvaluationContext {
       assert myThreadForEvaluation == null;
       assert !mySuspendContext.isEvaluating();
       assert !threadForEvaluation.isEvaluating();
-      threadForEvaluation.resumedSuspendThreadContext();
       threadForEvaluation.setEvaluating(true);
       mySuspendContext.setIsEvaluating(this);
     }
@@ -131,7 +130,6 @@ public final class EvaluationContextImpl implements EvaluationContext {
       assert myThreadForEvaluation != null;
       assert myThreadForEvaluation.isEvaluating();
       assert mySuspendContext.getEvaluationContext() == this;
-      myThreadForEvaluation.suspendedThreadContext();
       mySuspendContext.setIsEvaluating(null);
       myThreadForEvaluation.setEvaluating(false);
     }

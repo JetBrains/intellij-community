@@ -5,7 +5,9 @@ import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffTool
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.openapi.diff.DiffBundle
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 internal interface CombinedDiffTool : DiffTool
 
 /**

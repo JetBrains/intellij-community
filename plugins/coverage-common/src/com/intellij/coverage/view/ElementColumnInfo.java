@@ -15,7 +15,7 @@ public final class ElementColumnInfo extends ColumnInfo<NodeDescriptor<?>, Strin
 
   @Override
   public Comparator<NodeDescriptor<?>> getComparator() {
-    return AlphaComparator.INSTANCE;
+    return AlphaComparator.getInstance();
   }
 
   @Override

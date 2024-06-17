@@ -8,15 +8,15 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
@@ -60,9 +60,9 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         })
     }
 
-    context(KtAnalysisSession)
-    private fun callReceiverRefersToCompanionObject(call: KtCall, companionObject: KtObjectDeclaration): Boolean {
-        if (call !is KtCallableMemberCall<*, *>) return false
+    context(KaSession)
+    private fun callReceiverRefersToCompanionObject(call: KaCall, companionObject: KtObjectDeclaration): Boolean {
+        if (call !is KaCallableMemberCall<*, *>) return false
         val implicitReceivers = call.getImplicitReceivers()
         val companionObjectSymbol = companionObject.getSymbol()
         return companionObjectSymbol in implicitReceivers.map { it.symbol }
@@ -104,13 +104,13 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
 
         return withResolvedCall(psiToResolve) { call ->
             when (call) {
-                is KtFunctionCall<*> -> {
-                    val constructorSymbol = call.symbol as? KtConstructorSymbol ?: return@withResolvedCall false
+                is KaFunctionCall<*> -> {
+                    val constructorSymbol = call.symbol as? KaConstructorSymbol ?: return@withResolvedCall false
                     val constructedClassSymbol =
-                        constructorSymbol.getContainingSymbol() as? KtClassLikeSymbol ?: return@withResolvedCall false
+                        constructorSymbol.getContainingSymbol() as? KaClassLikeSymbol ?: return@withResolvedCall false
                     val classOrObjectSymbol = ktClassOrObject.getClassOrObjectSymbol()
 
-                    fun KtClassLikeSymbol.getExpectsOrSelf(): List<KtDeclarationSymbol> = (listOf(this).takeIf { isExpect } ?: getExpectsForActual())
+                    fun KaClassLikeSymbol.getExpectsOrSelf(): List<KaDeclarationSymbol> = (listOf(this).takeIf { isExpect } ?: getExpectsForActual())
 
                     constructedClassSymbol == classOrObjectSymbol ||
                             constructedClassSymbol.getExpectsOrSelf() == classOrObjectSymbol?.getExpectsOrSelf()
@@ -124,7 +124,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return emptyList()
         return analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
-            (declaration.getSymbol() as? KtCallableSymbol)?.getAllOverriddenSymbols()?.mapNotNull { it.psi }?.toList().orEmpty()
+            (declaration.getSymbol() as? KaCallableSymbol)?.getAllOverriddenSymbols()?.mapNotNull { it.psi }?.toList().orEmpty()
         }
     }
 

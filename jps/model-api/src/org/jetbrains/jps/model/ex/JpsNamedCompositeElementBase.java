@@ -28,6 +28,11 @@ public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedComposit
     myName = name;
   }
 
+  /**
+   * @deprecated creating copies isn't supported in for all elements in JPS anymore; if you need to create a copy for your element,
+   * write the corresponding code in your class directly.
+   */
+  @Deprecated
   protected JpsNamedCompositeElementBase(JpsNamedCompositeElementBase<Self> original) {
     super(original);
     myName = original.myName;

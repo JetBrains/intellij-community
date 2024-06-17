@@ -144,7 +144,7 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
     }
 
     @Override
-    protected void addUsagesOptions(JPanel optionsPanel) {
+    protected void addUsagesOptions(@NotNull JPanel optionsPanel) {
         super.addUsagesOptions(optionsPanel);
 
         KtClassOrObject klass = getOriginalClass();

@@ -78,7 +78,7 @@ public final class GrCreateFieldForParameterIntention extends PsiUpdateModComman
 
     PsiVariable variable = createField(project, targetClass, method, parameter, type, uniqueNameInfo.names[0], isMethodStatic, isFinal);
 
-    if (variable != null) {
+    if (variable != null && variable.isValid()) {
       updater.rename(variable, List.of(Objects.requireNonNull(variable.getName())));
     }
   }

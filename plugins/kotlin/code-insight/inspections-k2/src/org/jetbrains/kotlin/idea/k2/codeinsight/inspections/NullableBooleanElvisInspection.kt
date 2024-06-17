@@ -5,7 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -44,7 +44,7 @@ internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.S
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean = element.isTargetOfNullableBooleanElvisInspection()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtBinaryExpression): Unit? {
         return element.left
             ?.getKtType()

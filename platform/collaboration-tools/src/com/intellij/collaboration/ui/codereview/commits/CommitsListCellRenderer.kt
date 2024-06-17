@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.commits
 
+import com.intellij.openapi.components.service
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.speedSearch.SpeedSearchUtil
@@ -14,7 +15,7 @@ import javax.swing.ListCellRenderer
 
 class CommitsListCellRenderer : ListCellRenderer<VcsCommitMetadata>, BorderLayoutPanel() {
   private val nodeComponent = CommitNodeComponent().apply {
-    foreground = DefaultColorGenerator().getColor(1)
+    foreground = service<DefaultColorGenerator>().getColor(1)
   }
   private val messageComponent = SimpleColoredComponent()
 

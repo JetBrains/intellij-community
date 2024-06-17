@@ -16,7 +16,7 @@ class AddChildrenTest {
     val builder = MutableEntityStorage.create()
     val entity = builder.addEntity(ParentEntity("ParentData", MySource))
 
-    builder.modifyEntity(entity) {
+    builder.modifyParentEntity(entity) {
       this.child = ChildEntity("ChildData", MySource)
     }
     assertNotNull(entity.child)
@@ -37,7 +37,7 @@ class AddChildrenTest {
 
     val secondChild = ChildMultipleEntity("ChildTwoData", MySource)
 
-    builder.modifyEntity(addedParentEntity) {
+    builder.modifyParentMultipleEntity(addedParentEntity) {
       children = listOf(firstChild, secondChild)
     }
     val children = builder.entities(ChildMultipleEntity::class.java).toList()
@@ -61,7 +61,7 @@ class AddChildrenTest {
     val childrenFromStore = builder.entities(ChildMultipleEntity::class.java).toList()
     assertEquals(2, childrenFromStore.size)
 
-    builder.modifyEntity(addedParentEntity) {
+    builder.modifyParentMultipleEntity(addedParentEntity) {
       children = listOf(firstChild)
     }
     val existingChild = builder.entities(ChildMultipleEntity::class.java).single()
@@ -76,7 +76,7 @@ class AddChildrenTest {
     }
     val addedEntity = builder.addEntity(entity)
 
-    builder.modifyEntity(addedEntity) {
+    builder.modifyParentEntity(addedEntity) {
       child = null
     }
     assertNull(entity.child)
@@ -99,7 +99,7 @@ class AddChildrenTest {
     val children = builder.entities(ChildEntity::class.java).toList()
     assertEquals(2, children.size)
 
-    builder.modifyEntity(addedEntity.child!!) {
+    builder.modifyChildEntity(addedEntity.child!!) {
       parentEntity = anotherParent
     }
     assertNull(entity.child)
@@ -113,7 +113,7 @@ class AddChildrenTest {
     val builder = createEmptyBuilder()
     val right = builder addEntity RightEntity(MySource)
 
-    builder.modifyEntity(right) {
+    builder.modifyRightEntity(right) {
       this.children = listOf(MiddleEntity("prop", MySource))
     }
 
@@ -125,7 +125,7 @@ class AddChildrenTest {
     val builder = createEmptyBuilder()
     val right = builder addEntity ParentAbEntity(MySource)
 
-    builder.modifyEntity(right) {
+    builder.modifyParentAbEntity(right) {
       this.children = listOf(ChildSecondEntity("data", "Data", MySource))
     }
   }

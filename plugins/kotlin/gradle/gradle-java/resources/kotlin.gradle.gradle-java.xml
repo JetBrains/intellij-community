@@ -110,6 +110,8 @@
 
     <scriptDefinitionContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor" order="first"/>
 
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource"/>
+
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptAdditionalIdeaDependenciesProvider"/>
 
     <experimentalFeature implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsImportingFeature"/>

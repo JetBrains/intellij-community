@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ComponentModuleRegistrationChecker")
 
 package org.jetbrains.idea.devkit.inspections
@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -128,6 +129,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Synchron
   fun checkProperXmlFileForClass(element: DomElement, psiClass: PsiClass?): Boolean {
     if (psiClass == null) return false
     if (ignoredClasses.contains(psiClass.qualifiedName)) return false
+    if (psiClass.hasAnnotation(InternalIgnoreDependencyViolation::class.java.canonicalName)) return false
 
     val definingModule = psiClass.let { ModuleUtilCore.findModuleForPsiElement(it) } ?: return false
 

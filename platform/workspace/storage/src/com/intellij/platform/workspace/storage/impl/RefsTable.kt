@@ -4,104 +4,19 @@ package com.intellij.platform.workspace.storage.impl
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.ConnectionId.ConnectionType
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.ConnectionId.ConnectionType
 import com.intellij.platform.workspace.storage.impl.containers.*
 import com.intellij.platform.workspace.storage.impl.references.*
 import com.intellij.platform.workspace.storage.instrumentation.Modification
-import com.intellij.util.containers.Interner
 import it.unimi.dsi.fastutil.ints.IntArrayList
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.BiConsumer
 import java.util.function.IntConsumer
 import java.util.function.IntFunction
 
-public class ConnectionId private constructor(
-  public val parentClass: Int,
-  public val childClass: Int,
-  public val connectionType: ConnectionType,
-  public val isParentNullable: Boolean
-) {
-  public enum class ConnectionType {
-    ONE_TO_ONE,
-    ONE_TO_MANY,
-    ONE_TO_ABSTRACT_MANY,
-    ABSTRACT_ONE_TO_ONE
-  }
 
-  /**
-   * This function returns true if this connection allows removing parent of child.
-   *
-   * E.g. parent is optional (nullable) for child entity, so the parent can be safely removed.
-   */
-  public fun canRemoveParent(): Boolean = isParentNullable
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as ConnectionId
-
-    if (parentClass != other.parentClass) return false
-    if (childClass != other.childClass) return false
-    if (connectionType != other.connectionType) return false
-    if (isParentNullable != other.isParentNullable) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = parentClass.hashCode()
-    result = 31 * result + childClass.hashCode()
-    result = 31 * result + connectionType.hashCode()
-    result = 31 * result + isParentNullable.hashCode()
-    return result
-  }
-
-  override fun toString(): String {
-    return "Connection(parent=${ClassToIntConverter.getInstance().getClassOrDie(parentClass).simpleName} " +
-           "child=${ClassToIntConverter.getInstance().getClassOrDie(childClass).simpleName} $connectionType)"
-  }
-
-  public fun debugStr(): String = """
-    ConnectionId info:
-      - Parent class: ${this.parentClass.findWorkspaceEntity()}
-      - Child class: ${this.childClass.findWorkspaceEntity()}
-      - Connection type: $connectionType
-      - Parent of child is nullable: $isParentNullable
-  """.trimIndent()
-
-  public companion object {
-    /** This function should be [@Synchronized] because interner is not thread-save */
-    @Synchronized
-    public fun <Parent : WorkspaceEntity, Child : WorkspaceEntity> create(
-      parentClass: Class<Parent>,
-      childClass: Class<Child>,
-      connectionType: ConnectionType,
-      isParentNullable: Boolean
-    ): ConnectionId {
-      val connectionId = ConnectionId(parentClass.toClassId(), childClass.toClassId(), connectionType, isParentNullable)
-      return interner.intern(connectionId)
-    }
-
-    /** This function should be [@Synchronized] because interner is not thread-save */
-    @Synchronized
-    @ApiStatus.Internal
-    public fun create(
-      parentClass: Int,
-      childClass: Int,
-      connectionType: ConnectionType,
-      isParentNullable: Boolean
-    ): ConnectionId {
-      val connectionId = ConnectionId(parentClass, childClass, connectionType, isParentNullable)
-      return interner.intern(connectionId)
-    }
-
-    private val interner = Interner.createInterner<ConnectionId>()
-  }
-}
-
-public val ConnectionId.isOneToOne: Boolean
+internal val ConnectionId.isOneToOne: Boolean
   get() = this.connectionType == ConnectionType.ONE_TO_ONE || this.connectionType == ConnectionType.ABSTRACT_ONE_TO_ONE
 
 /**

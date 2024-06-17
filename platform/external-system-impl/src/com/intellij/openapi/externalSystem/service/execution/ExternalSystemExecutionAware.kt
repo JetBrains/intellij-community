@@ -56,6 +56,7 @@ interface ExternalSystemExecutionAware {
     fun ExternalSystemExecutionSettings.getEnvironmentConfigurationProvider() = getUserData(TARGET_ENVIRONMENT_CONFIGURATION_PROVIDER)
 
     @ApiStatus.Internal
+    @JvmStatic
     fun ExternalSystemExecutionSettings.setEnvironmentConfigurationProvider(configuration: TargetEnvironmentConfigurationProvider?) {
       putUserData(TARGET_ENVIRONMENT_CONFIGURATION_PROVIDER, configuration)
     }

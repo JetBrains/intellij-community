@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.declarative.InlayPayload
-import com.intellij.codeInsight.hints.declarative.InlayPosition
-import com.intellij.codeInsight.hints.declarative.InlayTreeSink
-import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.util.NlsContexts
 
@@ -32,7 +29,7 @@ class InlayTreeSinkImpl(
   override fun addPresentation(position: InlayPosition,
                                payloads: List<InlayPayload>?,
                                @NlsContexts.HintText tooltip: String?,
-                               hasBackground: Boolean,
+                               hintColorKind: HintColorKind,
                                builder: PresentationTreeBuilder.() -> Unit) {
     val b = PresentationTreeBuilderImpl.createRoot()
     b.builder()
@@ -47,7 +44,7 @@ class InlayTreeSinkImpl(
     else {
       false
     }
-    inlayDataToPresentation.add(InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads, providerClass, sourceId))
+    inlayDataToPresentation.add(InlayData(position, tooltip, hintColorKind, tree, providerId, disabled, payloads, providerClass, sourceId))
   }
 
   override fun whenOptionEnabled(optionId: String, block: () -> Unit) {

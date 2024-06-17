@@ -23,6 +23,6 @@ public final class JavaHierarchyUtil {
 
   public static @NotNull Comparator<NodeDescriptor<?>> getComparator(@NotNull Project project) {
     HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(project).getState();
-    return state != null && state.SORT_ALPHABETICALLY ? AlphaComparator.INSTANCE : SourceComparator.INSTANCE;
+    return state != null && state.SORT_ALPHABETICALLY ? AlphaComparator.getInstance() : SourceComparator.INSTANCE;
   }
 }

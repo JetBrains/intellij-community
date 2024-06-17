@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -16,7 +16,7 @@ public class FileUtilPerformanceTest {
   public void toCanonicalPath() {
     assertEquals(myCanonicalPath, FileUtil.toCanonicalPath(myTestPath));
 
-    PlatformTestUtil.newPerformanceTest("toCanonicalPath", () -> {
+    PerformanceTestUtil.newPerformanceTest("toCanonicalPath", () -> {
       for (int i = 0; i < 1000000; ++i) {
         final String canonicalPath = FileUtil.toCanonicalPath(myTestPath, '/');
         assert canonicalPath.length() == 18 : canonicalPath;
@@ -28,7 +28,7 @@ public class FileUtilPerformanceTest {
   public void toCanonicalPathSimple() {
     assertEquals(mySimpleTestPath, FileUtil.toCanonicalPath(mySimpleTestPath));
 
-    PlatformTestUtil.newPerformanceTest("toCanonicalPathSimple", () -> {
+    PerformanceTestUtil.newPerformanceTest("toCanonicalPathSimple", () -> {
       for (int i = 0; i < 1000000; ++i) {
         final String canonicalPath = FileUtil.toCanonicalPath(mySimpleTestPath, '/');
         assert canonicalPath.length() == 8 : canonicalPath;
@@ -40,7 +40,7 @@ public class FileUtilPerformanceTest {
   public void isAncestor() {
     assertTrue(FileUtil.isAncestor(myTestPath, myCanonicalPath, false));
 
-    PlatformTestUtil.newPerformanceTest("isAncestor", () -> {
+    PerformanceTestUtil.newPerformanceTest("isAncestor", () -> {
       for (int i = 0; i < 1000000; ++i) {
         assert FileUtil.isAncestor(myTestPath, myCanonicalPath, false);
         assert !FileUtil.isAncestor(myTestPath, myCanonicalPath, true);

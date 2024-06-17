@@ -10,6 +10,7 @@ internal object AddReturnExpressionFixFactory {
 
     val addReturnExpressionFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoReturnInFunctionWithBlockBody ->
         val function = (diagnostic.psi as? KtNamedFunction) ?: return@ModCommandBased emptyList()
+        if (function.bodyBlockExpression?.rBrace == null) return@ModCommandBased emptyList()
 
         listOf(
             AddReturnExpressionFix(function)

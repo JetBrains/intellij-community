@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote.ext;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -9,8 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class UnknownCredentialsHolder {
-  private @NotNull String mySdkId;
-
+  private String mySdkId;
   private @Nullable Element myElement;
 
   public UnknownCredentialsHolder() {

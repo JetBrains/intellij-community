@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
-final class Maven3Support implements MavenVersionAwareSupportExtension {
+public class Maven3Support implements MavenVersionAwareSupportExtension {
   private static final @NonNls String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
 
   @Override

@@ -3,16 +3,20 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
 import com.intellij.serviceContainer.ComponentManagerImpl
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.io.Writer
 import java.nio.file.Path
 
-const val PROJECT_DEFAULT_FILE_NAME = "project.default.xml"
+@ApiStatus.Internal
+const val PROJECT_DEFAULT_FILE_NAME = StoragePathMacros.PROJECT_DEFAULT_FILE
+@ApiStatus.Internal
 const val PROJECT_DEFAULT_FILE_SPEC = "${APP_CONFIG}/${PROJECT_DEFAULT_FILE_NAME}"
 
 internal class DefaultProjectStoreImpl(override val project: Project) : ComponentStoreWithExtraComponents() {
@@ -72,19 +76,9 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   override fun toString(): String = "default project"
 
-  private class DefaultProjectStorage(
-    file: Path,
-    fileSpec: String,
-    pathMacroManager: PathMacroManager,
-    streamProvider: StreamProvider,
-  ) : FileBasedStorage(
-    file = file,
-    fileSpec = fileSpec,
-    rootElementName = "defaultProject",
-    pathMacroManager = pathMacroManager.createTrackingSubstitutor(),
-    roamingType = RoamingType.DISABLED,
-    provider = streamProvider,
-  ) {
+  private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager, streamProvider: StreamProvider) :
+    FileBasedStorage(file, fileSpec, rootElementName = "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED, streamProvider)
+  {
     override val controller: SettingsController?
       get() = null
 
@@ -113,8 +107,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
             override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
               val lineSeparatorWithIndent = "${lineSeparator}    "
               writer.append("<application>").append(lineSeparator)
-              writer.append("""  <component name="ProjectManager">""")
-              writer.append(lineSeparatorWithIndent)
+              writer.append("""  <component name="ProjectManager">""").append(lineSeparatorWithIndent)
               (dataWriter as StringDataWriter).writeTo(writer, lineSeparatorWithIndent, filter)
               writer.append(lineSeparator)
               writer.append("  </component>").append(lineSeparator)

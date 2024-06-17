@@ -38,6 +38,12 @@ public abstract class JpsModuleOutputPackagingElementBase<Self extends JpsModule
   }
 
   @Override
+  public @NotNull Self createCopy() {
+    //noinspection unchecked
+    return (Self)createElementCopy();
+  }
+
+  @Override
   @NotNull
   public JpsModuleReference getModuleReference() {
     return myContainer.getChild(MODULE_REFERENCE_CHILD_ROLE);

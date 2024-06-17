@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -46,18 +45,9 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
-/**
- * @author oleg
- */
 public class GithubCreateGistAction extends DumbAwareAction {
   private static final Logger LOG = GithubUtil.LOG;
   private static final Condition<@Nullable VirtualFile> FILE_WITH_CONTENT = f -> f != null && !(f.getFileType().isBinary());
-
-  protected GithubCreateGistAction() {
-    super(GithubBundle.messagePointer("create.gist.action.title"),
-          GithubBundle.messagePointer("create.gist.action.description"),
-          AllIcons.Vcs.Vendors.Github);
-  }
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -65,7 +55,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
       e.getPresentation().setEnabledAndVisible(false);
@@ -94,7 +84,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
       return;
@@ -142,7 +132,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       public void run(@NotNull ProgressIndicator indicator) {
         String token = GHCompatibilityUtil.getOrRequestToken(account, project);
         if (token == null) return;
-        GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token);
+        GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.getServer(), token);
 
         List<FileContent> contents = collectContents(project, editor, file, files);
         if (contents.isEmpty()) return;

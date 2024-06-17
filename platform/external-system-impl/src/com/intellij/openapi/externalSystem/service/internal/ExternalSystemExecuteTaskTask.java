@@ -1,27 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
-import com.intellij.internal.statistic.StructuredIdeActivity;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
-import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
-import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,56 +69,50 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     myArguments = myArguments == null ? arguments : myArguments + ' ' + arguments;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   protected void doExecute() throws Exception {
-    ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
-      (ExternalSystemProgressNotificationManagerImpl)ExternalSystemProgressNotificationManager.getInstance();
-    ExternalSystemTaskId id = getId();
-    String projectPath = getExternalProjectPath();
+    var project = getIdeProject();
+    var projectSystemId = getExternalSystemId();
+    var projectPath = getExternalProjectPath();
 
-    ExternalSystemExecutionSettings settings;
-    RemoteExternalSystemTaskManager taskManager;
+    var progressNotificationManager = ExternalSystemProgressNotificationManagerImpl.getInstanceImpl();
+    var progressNotificationListener = wrapWithListener(progressNotificationManager);
+    for (var executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
+      executionAware.prepareExecution(this, projectPath, false, progressNotificationListener, project);
+    }
+
+    var settings = ExternalSystemApiUtil.getExecutionSettings(project, projectPath, projectSystemId)
+      .withVmOptions(parseCmdParameters(myVmOptions))
+      .withArguments(parseCmdParameters(myArguments))
+      .withEnvironmentVariables(myEnv)
+      .passParentEnvs(myPassParentEnvs);
+
+    putUserDataTo(settings);
+
     TargetEnvironmentConfigurationProvider environmentConfigurationProvider = null;
-    try {
-      progressNotificationManager.onStart(id, projectPath);
-
-      Project project = getIdeProject();
-      ProjectSystemId projectSystemId = getExternalSystemId();
-      ExternalSystemTaskNotificationListener progressNotificationListener = wrapWithListener(progressNotificationManager);
-      for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
-        executionAware.prepareExecution(this, projectPath, false, progressNotificationListener, project);
-        if (environmentConfigurationProvider != null) continue;
+    for (var executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
+      if (environmentConfigurationProvider == null) {
         environmentConfigurationProvider = executionAware.getEnvironmentConfigurationProvider(myConfiguration, project);
       }
-
-      final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
-      settings = ExternalSystemApiUtil.getExecutionSettings(project, projectPath, projectSystemId);
-      KeyFMap keyFMap = getUserMap();
-      for (Key key : keyFMap.getKeys()) {
-        settings.putUserData(key, keyFMap.get(key));
-      }
-      ExternalSystemExecutionAware.Companion.setEnvironmentConfigurationProvider(settings, environmentConfigurationProvider);
-
-      RemoteExternalSystemFacade facade = manager.getFacade(project, projectPath, projectSystemId);
-      taskManager = facade.getTaskManager();
-      final List<String> vmOptions = parseCmdParameters(myVmOptions);
-      final List<String> arguments = parseCmdParameters(myArguments);
-      settings
-        .withVmOptions(vmOptions)
-        .withArguments(arguments)
-        .withEnvironmentVariables(myEnv)
-        .passParentEnvs(myPassParentEnvs);
     }
-    catch (Exception e) {
-      progressNotificationManager.onFailure(id, e);
-      progressNotificationManager.onEnd(id);
-      throw e;
-    }
+    ExternalSystemExecutionAware.setEnvironmentConfigurationProvider(settings, environmentConfigurationProvider);
 
-    StructuredIdeActivity activity =
-      externalSystemTaskStarted(getIdeProject(), getExternalSystemId(), ExecuteTask, environmentConfigurationProvider);
+    executeTasks(settings);
+  }
+
+  private void executeTasks(@NotNull ExternalSystemExecutionSettings settings) throws Exception {
+    var id = getId();
+    var project = getIdeProject();
+    var projectSystemId = getExternalSystemId();
+    var projectPath = getExternalProjectPath();
+
+    var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(settings);
+    var activity = externalSystemTaskStarted(project, projectSystemId, ExecuteTask, environmentConfigurationProvider);
     try {
+      var manager = ExternalSystemFacadeManager.getInstance();
+      var facade = manager.getFacade(project, projectPath, projectSystemId);
+      var taskManager = facade.getTaskManager();
+      //noinspection unchecked
       taskManager.executeTasks(id, myTasksToExecute, projectPath, settings, myJvmParametersSetup);
     }
     finally {
@@ -134,12 +120,22 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     }
   }
 
+  /**
+   * @see com.intellij.openapi.util.UserDataHolderBase#copyUserDataTo
+   */
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private void putUserDataTo(@NotNull UserDataHolder dataHolder) {
+    var userMap = getUserMap();
+    for (Key key : userMap.getKeys()) {
+      dataHolder.putUserData(key, userMap.get(key));
+    }
+  }
+
   @Override
   protected boolean doCancel() throws Exception {
-    final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
-    RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
-    RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
-
+    var manager = ExternalSystemFacadeManager.getInstance();
+    var facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
+    var taskManager = facade.getTaskManager();
     return taskManager.cancelTask(getId());
   }
 

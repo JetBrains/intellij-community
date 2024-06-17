@@ -20,7 +20,7 @@ import com.sun.jdi.ClassNotPreparedException
 import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
@@ -69,7 +69,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
             for (symbol in localReferenceExpression.mainReference.resolveToSymbols()) {
                 if (symbol !is KtVariableLikeSymbol) continue
 
-                if (symbol is KtValueParameterSymbol && symbol.isImplicitLambdaParameter) {
+                if (symbol is KaValueParameterSymbol && symbol.isImplicitLambdaParameter) {
                     // symbol.psi is null or lambda, so we need a bit more work to find nearest position.
                     val lambda = symbol.getFunctionLiteralByImplicitLambdaParameterSymbol() ?: continue
                     return when {

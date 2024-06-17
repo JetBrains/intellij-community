@@ -45,7 +45,7 @@ interface MainEntityToParent : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyMainEntityToParent(
   entity: MainEntityToParent,
   modification: MainEntityToParent.Builder.() -> Unit,
 ): MainEntityToParent {
@@ -84,7 +84,7 @@ interface AttachedEntityToParent : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyAttachedEntityToParent(
   entity: AttachedEntityToParent,
   modification: AttachedEntityToParent.Builder.() -> Unit,
 ): AttachedEntityToParent {
@@ -129,7 +129,7 @@ interface AttachedEntityToNullableParent: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyAttachedEntityToNullableParent(
   entity: AttachedEntityToNullableParent,
   modification: AttachedEntityToNullableParent.Builder.() -> Unit,
 ): AttachedEntityToNullableParent {

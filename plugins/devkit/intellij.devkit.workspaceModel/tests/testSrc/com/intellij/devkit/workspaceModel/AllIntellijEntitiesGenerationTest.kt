@@ -17,7 +17,7 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializers
@@ -93,8 +93,8 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   ) {
     // TODO :: Fix detection of entities in modules
     val regexToDetectWsmClasses = Regex(mergePatterns(
-      // Regex for searching entities that implements `ModuleSettingsBase`
-      "interface [a-zA-Z0-9]+\\s*:\\s*ModuleSettingsBase[a-zA-Z0-9]*",
+      // Regex for searching entities that implements `ModuleSettingsFacetBridgeEntity`
+      "interface [a-zA-Z0-9]+\\s*:\\s*ModuleSettingsFacetBridgeEntity[a-zA-Z0-9]*",
       // Regex for searching regular entities in modules
       "interface [a-zA-Z0-9]+\\s*:\\s*WorkspaceEntity[a-zA-Z0-9]*",
       // Regex for searching entity source implementations in modules
@@ -236,7 +236,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
         val genSourceRoot = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }?.sourceRoot ?: run {
           val genFolderVirtualFile = VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
           val javaSourceRoot = sourceRoot.javaSourceRoots.first()
-          val updatedContentRoot = storage.modifyEntity(sourceRoot.contentRoot) {
+          val updatedContentRoot = storage.modifyContentRootEntity(sourceRoot.contentRoot) {
             this.sourceRoots += SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager),
                                                  sourceRoot.rootTypeId, sourceRoot.entitySource) {
               javaSourceRoots = listOf(

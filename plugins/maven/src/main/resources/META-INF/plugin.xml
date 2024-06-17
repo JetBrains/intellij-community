@@ -56,6 +56,8 @@
                     dynamic="true"/>
     <extensionPoint name="versionAwareMavenSupport" interface="org.jetbrains.idea.maven.MavenVersionAwareSupportExtension" dynamic="true"/>
 
+    <extensionPoint name="mavenAdditionalHighlighter" interface="org.jetbrains.idea.maven.dom.MavenAdditionalHightligher" dynamic="true"/>
+
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -95,6 +97,13 @@
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperMapping"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager"/>
+
+    <projectService
+      serviceInterface="org.jetbrains.idea.maven.project.MavenProjectModelReadHelper"
+      serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectModelServerModelReadHelper"/>
+    <projectService
+      serviceInterface="org.jetbrains.idea.maven.server.MavenServerResultTransformer"
+      serviceImplementation="org.jetbrains.idea.maven.server.MavenServerResultTransformerImpl"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
     <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectsManager"
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx" preload="true"/>
@@ -152,6 +161,7 @@
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>
 
     <selectInTarget implementation="org.jetbrains.idea.maven.navigator.SelectInMavenNavigatorTarget"/>
+    <externalSystemRecoveryContributor implementation="org.jetbrains.idea.maven.project.actions.MavenProjectRecoveryContributor$Factory"/>
 
     <fileIconProvider implementation="org.jetbrains.idea.maven.utils.MavenIconProvider"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleProvider"/>
@@ -379,8 +389,8 @@
     <registryKey key="maven.shade.plugin.generate.uber.jar" defaultValue="false"
                  description="During sync, generate uber jars for Maven projects that use Maven Shade plugin"/>
 
-    <registryKey key="maven.legacy.import.available" defaultValue="false"
-                 description="Set to true to enable legacy Maven import. If the value is false, only 'fast' Maven import is available. Legacy import will be removed completely in one of the upcoming releases"/>
+    <registryKey key="maven.shade.plugin.remap.uber.jar" defaultValue="false"
+                 description="During sync, remap classes in uber jars for Maven projects that use Maven Shade plugin"/>
 
     <registryKey key="maven.sync.refresh.resolved.artifacts" defaultValue="false"
                  description="Refresh resolved artifacts after Maven sync"/>
@@ -405,7 +415,6 @@
       implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsLanguageLevelQuickFix"/>
 
     <starter.moduleImporter implementation="org.jetbrains.idea.maven.starters.MavenStarterModuleImporter"/>
-    <openapi.externalSystem.projectSetupExtension implementation="org.jetbrains.idea.maven.starters.MavenStarterProjectConfigurator"/>
 
     <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
     <dependencyCollector kind="maven-packaging" implementation="org.jetbrains.idea.maven.project.MavenPackagingDependencyCollector"/>
@@ -416,7 +425,6 @@
     <workspace.subprojectHandler implementation="org.jetbrains.idea.maven.workspace.MavenSubprojectHandler"/>
 
     <externalSystem.dependencyModifier implementation="org.jetbrains.idea.maven.dsl.MavenDependencyModificator"/>
-    <iconMapper mappingFile="MavenIconMappings.json"/>
 
     <referencesSearch implementation="org.jetbrains.idea.maven.search.MavenModuleReferenceSearcher"/>
   </extensions>
@@ -580,9 +588,12 @@
 
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadePluginConfigurator"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.plugins.buildHelper.MavenBuildHelperPluginConfigurator"/>
-    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeDynamic"/>
-    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeStatic"/>
-    <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadeFacetPostTaskConfigurator"/>
+    <importing.workspaceConfigurator
+      implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeDynamic"/>
+    <importing.workspaceConfigurator
+      implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeStatic"/>
+    <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadeFacetGeneratePostTaskConfigurator"/>
+    <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadeFacetRemapPostTaskConfigurator"/>
 
     <projectResolutionContributor implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorContributor"/>
     <projectResolutionContributor implementation="org.jetbrains.idea.maven.importing.MavenCompilerContributor"/>

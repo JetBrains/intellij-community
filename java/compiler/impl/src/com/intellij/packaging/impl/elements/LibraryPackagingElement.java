@@ -256,10 +256,19 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
   @Nullable
   public Library findLibrary(@NotNull PackagingElementResolvingContext context) {
+    return findLibrary(
+      context.getModulesProvider(),
+      (level, libraryName) -> {
+        return context.findLibrary(level, libraryName);
+      });
+  }
+
+  @Nullable
+  public Library findLibrary(@NotNull ModulesProvider modulesProvider,
+                             @NotNull PackagingElementResolvingContext.LibraryFinder libraryFinder) {
     String level = myLevel;
     String myLibraryName1 = myLibraryName;
     String moduleName = myModuleName;
-
 
     if (myStorage != null) {
       LibraryFilesPackagingElementEntity entity = (LibraryFilesPackagingElementEntity)getThisEntity();
@@ -269,9 +278,8 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     }
 
     if (moduleName == null && level != null && myLibraryName1 != null) {
-      return context.findLibrary(level, myLibraryName1);
+      return libraryFinder.find(level, myLibraryName1);
     }
-    final ModulesProvider modulesProvider = context.getModulesProvider();
     final Module module;
     if (moduleName != null) {
       module = modulesProvider.getModule(moduleName);

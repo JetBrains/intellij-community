@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 object CodeVisionFusCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("daemon.code.vision", 4)
+  private val GROUP = EventLogGroup("daemon.code.vision", 5)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -39,7 +39,7 @@ object CodeVisionFusCollector : CounterUsagesCollector() {
                                                                                                                EventFields.Language,
                                                                                                                EventFields.Size)
 
-  enum class Refactorings { Rename, }
+  enum class Refactorings { Rename, ChangeSignature }
 
   private val REFACTORING_PERFORMED: EventId1<String> = GROUP.registerEvent("refactoring.performed",
                                                                             EventFields.String("refactoring", Refactorings.entries.map { it.name }))

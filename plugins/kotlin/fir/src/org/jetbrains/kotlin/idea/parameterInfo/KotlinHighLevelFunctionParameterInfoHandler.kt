@@ -10,13 +10,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -249,9 +249,9 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             .count { it.node.elementType == KtTokens.COMMA }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun renderParameter(
-        parameter: KtVariableLikeSignature<KtValueParameterSymbol>,
+        parameter: KtVariableLikeSignature<KaValueParameterSymbol>,
         includeName: Boolean
     ): String {
         return buildString {
@@ -288,8 +288,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         arguments: List<KtExpression?>,
         currentArgumentIndex: Int,
         argumentToParameterIndex: Map<KtExpression, Int>,
-        argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
-        parameterToIndex: Map<KtVariableLikeSignature<KtValueParameterSymbol>, Int>
+        argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KaValueParameterSymbol>>,
+        parameterToIndex: Map<KtVariableLikeSignature<KaValueParameterSymbol>, Int>
     ): Int? {
         val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
         val highlightParameterIndex = when {

@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.RemovePartsFromPropertyUtils
@@ -80,7 +81,7 @@ internal object RemovePartsFromPropertyFixFactory {
         elementContext: ElementContext,
     ) : KotlinPsiUpdateModCommandAction.ElementBased<KtProperty, ElementContext>(element, elementContext) {
 
-        override fun getFamilyName(): String = RemovePartsFromPropertyUtils.getFamilyName()
+        override fun getFamilyName(): String = KotlinBundle.message("remove.parts.from.property")
 
         override fun getActionName(
             actionContext: ActionContext,
@@ -88,7 +89,7 @@ internal object RemovePartsFromPropertyFixFactory {
             elementContext: ElementContext,
         ): String {
             val (removeInitializer, removeGetter, removeSetter, _) = elementContext
-            return RemovePartsFromPropertyUtils.getActionName(removeInitializer, removeGetter, removeSetter)
+            return RemovePartsFromPropertyUtils.getRemovePartsFromPropertyActionName(removeInitializer, removeGetter, removeSetter)
         }
 
         override fun invoke(

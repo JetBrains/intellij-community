@@ -6,7 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -41,7 +41,7 @@ private val equalsOperators: TokenSet =
         KtTokens.EXCLEQ
     )
 
-context(KtAnalysisSession)
+context(KaSession)
 fun untilToExpression(
     from: JKExpression,
     to: JKExpression,
@@ -57,7 +57,7 @@ fun untilToExpression(
     )
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun downToExpression(
     from: JKExpression,
     to: JKExpression,
@@ -82,7 +82,7 @@ fun JKBinaryExpression.parenthesizedWithFormatting(): JKParenthesizedExpression 
         JKBinaryExpression(::left.detached(), ::right.detached(), operator)
     ).withFormattingFrom(this)
 
-context(KtAnalysisSession)
+context(KaSession)
 fun rangeExpression(
     from: JKExpression,
     to: JKExpression,
@@ -147,12 +147,12 @@ fun annotationArgumentStringLiteral(content: String): JKExpression {
     return JKLiteralExpression(string, LiteralType.STRING)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun JKVariable.findUsages(scope: JKTreeElement, context: NewJ2kConverterContext): List<JKFieldAccessExpression> {
     val symbol = context.symbolProvider.provideUniverseSymbol(this)
     val usages = mutableListOf<JKFieldAccessExpression>()
     val searcher = object : RecursiveConversion(context) {
-        context(KtAnalysisSession)
+        context(KaSession)
         override fun applyToElement(element: JKTreeElement): JKTreeElement {
             if (element is JKExpression) {
                 element.unboxFieldReference()?.also {
@@ -192,11 +192,11 @@ fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
         else -> false
     }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun JKVariable.hasUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).isNotEmpty()
 
-context(KtAnalysisSession)
+context(KaSession)
 fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).any {
         it.asAssignmentFromTarget() != null
@@ -422,6 +422,12 @@ internal fun JKBinaryExpression.recursivelyContainsNewlineBeforeOperator(): Bool
         if (hasLineBreakAfter) return true
         val lastChild = children.lastOrNull()?.safeAs<JKExpression>() ?: return false
         return lastChild.recursivelyEndsWithNewline()
+    }
+
+    val operator = operator.token.text
+    if (operator == "&&" || operator == "||") {
+        // && and || actually can start on a new line in Kotlin, unlike other operators
+        return false
     }
 
     val left = this.left

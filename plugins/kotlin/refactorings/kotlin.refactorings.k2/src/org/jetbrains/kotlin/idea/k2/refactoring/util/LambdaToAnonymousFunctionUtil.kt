@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -29,7 +29,7 @@ object LambdaToAnonymousFunctionUtil {
      * NB: to perform required calculations, the whole file with the lambda expression is copied!
      * So it should not be used during highlighting or other non-explicitly started activities
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun prepareFunctionText(lambda: KtLambdaExpression, functionName: String = "") : String? {
         val functionLiteral = lambda.functionLiteral
         val psiFactory = KtPsiFactory.contextual(lambda)
@@ -49,7 +49,7 @@ object LambdaToAnonymousFunctionUtil {
             }
         }
 
-        val functionSymbol = functionLiteral.getSymbol() as? KtAnonymousFunctionSymbol ?: return null
+        val functionSymbol = functionLiteral.getSymbol() as? KaAnonymousFunctionSymbol ?: return null
         return KtPsiFactory.CallableBuilder(KtPsiFactory.CallableBuilder.Target.FUNCTION).apply {
             typeParams()
             functionSymbol.receiverType?.let {

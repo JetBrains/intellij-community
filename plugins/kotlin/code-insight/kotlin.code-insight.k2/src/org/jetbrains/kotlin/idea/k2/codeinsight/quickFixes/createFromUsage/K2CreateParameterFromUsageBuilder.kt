@@ -11,14 +11,14 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUtil.convertToClass
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceParameterHandler
@@ -54,7 +54,7 @@ object K2CreateParameterFromUsageBuilder {
         val expression = arg.getArgumentExpression()?: return null
         analyze (arg) {
             val callExpression = (arg.parent?.parent as? KtCallElement) ?: return null
-            val call = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return null
+            val call = callExpression.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
             val namedDeclaration = call.partiallyAppliedSymbol.symbol.psi as? KtNamedDeclaration ?: return null
             val namedDeclClass = if (namedDeclaration is KtConstructor<*>) namedDeclaration.getContainingClassOrObject() else namedDeclaration
             val valVar = if (namedDeclClass is KtClass && (namedDeclClass.isData() || namedDeclClass.isAnnotation()))
@@ -98,7 +98,7 @@ object K2CreateParameterFromUsageBuilder {
         }
         override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun getExpectedType(expression: KtExpression): KtType {
             if (expression is KtDestructuringDeclarationEntry) {
                 val type = expression.getReturnKtType()

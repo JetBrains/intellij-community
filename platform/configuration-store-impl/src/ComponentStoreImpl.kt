@@ -17,6 +17,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -76,6 +77,7 @@ internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
   NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD = thresholdInSeconds
 }
 
+@ApiStatus.Internal
 class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
   override fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {
     val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl

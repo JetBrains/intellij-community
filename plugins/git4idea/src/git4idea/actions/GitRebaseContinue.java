@@ -20,7 +20,7 @@ final class GitRebaseContinue extends GitAbstractRebaseAction {
 
   @Override
   public @NotNull Icon getMainToolbarIcon() {
-    return DvcsImplIcons.New.ResolveContinue;
+    return DvcsImplIcons.ResolveContinue;
   }
 
   @Override

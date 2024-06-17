@@ -1,4 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.ui.tabs.impl
 
 import com.intellij.ui.tabs.JBTabsBorder
@@ -10,7 +12,7 @@ open class JBDefaultTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     g as Graphics2D
 
     val rect = Rectangle(x, y, width, height)
-    val firstLabel = tabs.infoToLabel[tabs.getVisibleInfos()[0]] ?: return
+    val firstLabel = tabs.getTabLabel(tabs.getVisibleInfos().first()) ?: return
     val maxY = firstLabel.bounds.maxY.toInt() - thickness
     tabs.tabPainter.paintBorderLine(g, thickness, Point(rect.x, maxY), Point(rect.maxX.toInt(), maxY))
   }

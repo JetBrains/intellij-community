@@ -54,10 +54,10 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
 
   override suspend fun doExecute(context: PlaybackContext) {
     val arguments = extractCommandArgument(PREFIX)
-    val myOptions = getOptions(arguments)
-    val filePath = (myOptions?.file ?: text.split(' ', limit = 4)[1]).replace("SPACE_SYMBOL", " ")
-    val timeout = myOptions?.timeout ?: 0
-    val suppressErrors = myOptions?.suppressErrors ?: false
+    val options = getOptions(arguments)
+    val filePath = (options?.file ?: text.split(' ', limit = 4)[1]).replace("SPACE_SYMBOL", " ")
+    val timeout = options?.timeout ?: 0
+    val suppressErrors = options?.suppressErrors ?: false
 
     val project = context.project
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
@@ -78,7 +78,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
 
     val fileEditor = (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
       .openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
-    if (myOptions != null && !myOptions.disableCodeAnalysis) {
+    if (options != null && !options.disableCodeAnalysis) {
       waitForFullyCompleted(fileEditor)
     }
 
@@ -87,7 +87,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     }
     job.withErrorMessage("Timeout on open file ${file.path} more than $timeout seconds")
 
-    if (myOptions != null && !myOptions.disableCodeAnalysis) {
+    if (options != null && !options.disableCodeAnalysis) {
       job.waitForComplete()
     }
   }

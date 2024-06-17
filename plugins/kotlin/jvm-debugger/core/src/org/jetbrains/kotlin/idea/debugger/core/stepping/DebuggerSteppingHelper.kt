@@ -49,7 +49,7 @@ object DebuggerSteppingHelper {
     }
   }
 
-  fun createStepOverCommandForSuspendSwitch(suspendContext: SuspendContextImpl): DebugProcessImpl.StepOverCommand {
+  fun createStepOverCommandForSuspendSwitch(suspendContext: SuspendContextImpl, nextCallAfterResume: Int = -1): DebugProcessImpl.StepOverCommand {
     return with(suspendContext.debugProcess) {
       object : DebugProcessImpl.StepOverCommand(suspendContext, false, null, StepRequest.STEP_MIN) {
         override fun getHint(suspendContext: SuspendContextImpl,
@@ -59,9 +59,11 @@ object DebuggerSteppingHelper {
             object : RequestHint(stepThread, suspendContext, StepRequest.STEP_MIN, StepRequest.STEP_OVER, myMethodFilter, parentHint) {
               override fun getNextStepDepth(context: SuspendContextImpl): Int {
                 if (context.frameProxy?.isOnSuspensionPoint() == true) {
-                  return StepRequest.STEP_OVER
+                    // step till the next instruction after the resume location
+                    val currentLocation = context.location ?: return super.getNextStepDepth(context)
+                    if (currentLocation.codeIndex() < nextCallAfterResume) return StepRequest.STEP_OVER
+                    if (currentLocation.codeIndex() == nextCallAfterResume.toLong()) return STOP
                 }
-
                 return super.getNextStepDepth(context)
               }
             }

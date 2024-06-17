@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
@@ -25,7 +25,7 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
      * This is K2 implementation which is very similar to [org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptInAllowed].
      * One difference is that check of [kotlin.SubclassOptInRequired] is not implemented here since it is not needed for current method usages.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean {
         if (annotationClassId.asFqNameString() in element.languageVersionSettings.getFlag(AnalysisFlags.optIn)) return true
 
@@ -46,7 +46,7 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isDeclarationAnnotatedWith(element: PsiElement, annotationClassId: ClassId): Boolean {
         if (element !is KtDeclaration) return false
         return true == (element.getSymbol() as? KtAnnotated)?.hasAnnotation(annotationClassId)
@@ -56,7 +56,7 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
      * Checks whether [element] is annotated with @[OptIn]`(X1::class, X2::class, ..., X_N::class)`,
      * where some of `X1, X2, ..., X_N` is [annotationClassId].
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isElementAnnotatedWithOptIn(element: PsiElement, annotationClassId: ClassId): Boolean {
         return element is org.jetbrains.kotlin.psi.KtAnnotated && element.annotationEntries.any { entry ->
             val ktType = entry.typeReference?.getKtType()
@@ -69,7 +69,7 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isClassLiteralExpressionOfClass(expression: KtExpression, classId: ClassId): Boolean {
         val receiverExpression = (expression as? KtClassLiteralExpression)?.receiverExpression as? KtNameReferenceExpression
         return true == receiverExpression?.getKtType()?.isClassTypeWithClassId(classId)

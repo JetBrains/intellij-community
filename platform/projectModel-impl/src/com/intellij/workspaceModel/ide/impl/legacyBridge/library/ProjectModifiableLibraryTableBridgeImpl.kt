@@ -12,10 +12,10 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
-import com.intellij.platform.workspace.storage.toSnapshot
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
@@ -149,5 +149,13 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   companion object {
     val LOG = logger<ProjectModifiableLibraryTableBridgeImpl>()
+  }
+}
+
+private fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
+  return when (this) {
+    is ImmutableEntityStorage -> this
+    is MutableEntityStorage -> this.toSnapshot()
+    else -> error("Unexpected storage: $this")
   }
 }

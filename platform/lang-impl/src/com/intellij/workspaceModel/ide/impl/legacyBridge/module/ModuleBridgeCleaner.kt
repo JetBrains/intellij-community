@@ -16,7 +16,7 @@ class ModuleBridgeCleaner : WorkspaceModelChangeListener {
       .forEach {
         if (it !is EntityChange.Removed<ModuleEntity>) return@forEach
 
-        val bridge = event.storageBefore.moduleMap.getDataByEntity(it.entity)
+        val bridge = event.storageBefore.moduleMap.getDataByEntity(it.oldEntity)
         bridge?.entityStorage = VersionedEntityStorageOnSnapshot(event.storageBefore)
       }
   }

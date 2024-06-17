@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
 
@@ -9,110 +9,53 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.impl.LightFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toPersistentMap
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 
 /**
  * `Heavy` entries should be disposed with [.destroy] to prevent leak of VirtualFilePointer
  */
-internal class HistoryEntry private constructor(@JvmField val filePointer: VirtualFilePointer,
-                                                /**
-                                                 * can be null when read from XML
-                                                 */
-                                                var selectedProvider: FileEditorProvider?,
-                                                @JvmField var isPreview: Boolean,
-                                                private val disposable: Disposable?) {
+internal class HistoryEntry(
+  @JvmField val filePointer: VirtualFilePointer,
+  /**
+   * can be null when read from XML
+   */
+  @JvmField var selectedProvider: FileEditorProvider?,
+  @JvmField var isPreview: Boolean,
   // ordered
-  private var providerToState = persistentMapOf<FileEditorProvider, FileEditorState>()
-
+  private var providerToState: Map<FileEditorProvider, FileEditorState>,
+  private val disposable: Disposable?,
+) {
   val providers: List<FileEditorProvider>
-    get() = providerToState.keys.toPersistentList()
+    get() = java.util.List.copyOf(providerToState.keys)
 
   companion object {
     const val TAG: @NonNls String = "entry"
     const val FILE_ATTRIBUTE: String = "file"
 
-    fun createLight(file: VirtualFile,
-                    providers: List<FileEditorProvider?>,
-                    states: List<FileEditorState?>,
-                    selectedProvider: FileEditorProvider,
-                    isPreview: Boolean): HistoryEntry {
-      val pointer = LightFilePointer(file)
-      val entry = HistoryEntry(filePointer = pointer,
-                               selectedProvider = selectedProvider,
-                               isPreview = isPreview,
-                               disposable = null)
-      for (i in providers.indices) {
-        entry.putState(providers.get(i) ?: continue, states.get(i) ?: continue)
-      }
-      return entry
-    }
-
-    private fun createLight(project: Project,
-                            element: Element,
-                            fileEditorProviderManager: FileEditorProviderManager): HistoryEntry {
-      val entryData = parseEntry(project = project, element = element, fileEditorProviderManager = fileEditorProviderManager)
-      val pointer = LightFilePointer(entryData.url)
-      val entry = HistoryEntry(filePointer = pointer,
-                               selectedProvider = entryData.selectedProvider,
-                               isPreview = entryData.preview,
-                               disposable = null)
-      for (state in entryData.providerStates) {
-        entry.putState(state.first, state.second)
-      }
-      return entry
-    }
-
-    fun createHeavy(project: Project,
-                    file: VirtualFile,
-                    providers: List<FileEditorProvider?>,
-                    states: List<FileEditorState?>,
-                    selectedProvider: FileEditorProvider,
-                    preview: Boolean): HistoryEntry {
-      if (project.isDisposed) {
-        return createLight(file = file, providers = providers, states = states, selectedProvider = selectedProvider, isPreview = preview)
-      }
-
-      val disposable = Disposer.newDisposable()
-      val pointer = VirtualFilePointerManager.getInstance().create(file, disposable, null)
-
-      val entry = HistoryEntry(filePointer = pointer,
-                               selectedProvider = selectedProvider,
-                               isPreview = preview,
-                               disposable = disposable)
-      for (i in providers.indices) {
-        entry.putState(providers.get(i) ?: continue, states.get(i) ?: continue)
-      }
-      return entry
-    }
-
-    @Throws(InvalidDataException::class)
     fun createHeavy(project: Project, e: Element): HistoryEntry {
-      if (project.isDisposed) {
-        return createLight(project, e, FileEditorProviderManager.getInstance())
-      }
-
-      val entryData = parseEntry(project = project, element = e, fileEditorProviderManager = FileEditorProviderManager.getInstance())
+      val fileEditorProviderManager = FileEditorProviderManager.getInstance()
+      val entryData = parseEntry(project = project, element = e, fileEditorProviderManager = fileEditorProviderManager)
 
       val disposable = Disposer.newDisposable()
       val pointer = VirtualFilePointerManager.getInstance().create(entryData.url, disposable, null)
-      val entry = HistoryEntry(filePointer = pointer,
-                               selectedProvider = entryData.selectedProvider,
-                               isPreview = entryData.preview,
-                               disposable = disposable)
+      val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
       for (state in entryData.providerStates) {
-        entry.putState(state.first, state.second)
+        stateMap.put(state.first, state.second)
       }
-      return entry
+      return HistoryEntry(
+        filePointer = pointer,
+        selectedProvider = entryData.selectedProvider,
+        isPreview = entryData.preview,
+        disposable = disposable,
+        providerToState = stateMap,
+      )
     }
   }
 
@@ -122,11 +65,11 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
   fun getState(provider: FileEditorProvider): FileEditorState? = providerToState.get(provider)
 
   fun putState(provider: FileEditorProvider, state: FileEditorState) {
-    providerToState = providerToState.put(provider, state)
+    providerToState = providerToState.toPersistentMap().put(provider, state)
   }
 
   fun destroy() {
-    if (disposable != null) Disposer.dispose(disposable)
+    disposable?.let { Disposer.dispose(it) }
   }
 
   /**
@@ -164,7 +107,7 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
     if (selectedProvider === provider) {
       selectedProvider = null
     }
-    providerToState = providerToState.remove(provider)
+    providerToState = providerToState.toPersistentMap().remove(provider)
   }
 }
 
@@ -176,9 +119,11 @@ internal const val PREVIEW_ATTRIBUTE: @NonNls String = "preview"
 
 private val EMPTY_ELEMENT = Element("state")
 
-private fun parseEntry(project: Project,
-                       element: Element,
-                       fileEditorProviderManager: FileEditorProviderManager): EntryData {
+private fun parseEntry(
+  project: Project,
+  element: Element,
+  fileEditorProviderManager: FileEditorProviderManager,
+): EntryData {
   if (element.name != HistoryEntry.TAG) {
     throw IllegalArgumentException("unexpected tag: $element")
   }
@@ -202,12 +147,11 @@ private fun parseEntry(project: Project,
     }
   }
 
-  val preview = element.getAttributeValue(PREVIEW_ATTRIBUTE) != null
   return EntryData(
     url = url,
     providerStates = providerStates,
     selectedProvider = selectedProvider,
-    preview = preview,
+    preview = element.getAttributeBooleanValue(PREVIEW_ATTRIBUTE),
   )
 }
 

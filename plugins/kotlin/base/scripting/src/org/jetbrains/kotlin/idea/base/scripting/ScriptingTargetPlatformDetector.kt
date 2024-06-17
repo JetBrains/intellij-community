@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -103,7 +104,8 @@ private inline fun createCachedValue(project: Project, crossinline body: () -> S
 }
 
 private fun getScriptSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): ScriptLanguageSettings {
-    val compilerOptions = definition.defaultCompilerOptions + definition.compilerOptions.addGradleSpecificsIfNeeded(definition)
+    val compilerOptions = definition.defaultCompilerOptions +
+            definition.compilerOptions.addGradleSpecificsIfNeeded(definition)
 
     return if (compilerOptions.isEmpty()) {
         val scriptModule = getScriptModule(project, virtualFile)
@@ -133,15 +135,24 @@ private fun getScriptSettings(project: Project, virtualFile: VirtualFile, defini
 
 private fun Iterable<String>.addGradleSpecificsIfNeeded(definition: ScriptDefinition): Iterable<String> {
     val keyArgumentIsPresent = contains("-XXLanguage:+DisableCompatibilityModeForNewInference")
-    if (keyArgumentIsPresent || (definition.baseClassType.typeName !in gradleTemplatesClasses)) return this
-
-    return listOf(
+    val improvedCapturedTypeApproximationInInferenceLangFeature = "-XXLanguage:+" + LanguageFeature.ImprovedCapturedTypeApproximationInInference
+    return if (keyArgumentIsPresent || (definition.baseClassType.typeName !in gradleTemplatesClasses)) {
+        if (contains(improvedCapturedTypeApproximationInInferenceLangFeature)) {
+            this
+        } else {
+            this + improvedCapturedTypeApproximationInInferenceLangFeature
+        }
+    } else {
+        listOf(
             "-java-parameters",
             "-Xjvm-default=all",
             "-Xjsr305=strict",
             "-Xsam-conversions=class",
             "-XXLanguage:+DisableCompatibilityModeForNewInference",
-            "-XXLanguage:-TypeEnhancementImprovementsInStrictMode")
+            "-XXLanguage:-TypeEnhancementImprovementsInStrictMode",
+            improvedCapturedTypeApproximationInInferenceLangFeature
+        )
+    }
 }
 
 private fun getScriptModule(project: Project, virtualFile: VirtualFile): Module? {

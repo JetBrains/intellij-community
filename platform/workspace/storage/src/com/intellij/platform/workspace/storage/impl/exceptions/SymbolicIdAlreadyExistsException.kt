@@ -3,4 +3,4 @@ package com.intellij.platform.workspace.storage.impl.exceptions
 
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 
-public class SymbolicIdAlreadyExistsException(public val id: SymbolicEntityId<*>) : RuntimeException(("Entity with symbolicId: $id already exist"))
+internal class SymbolicIdAlreadyExistsException(public val id: SymbolicEntityId<*>) : RuntimeException(("Entity with symbolicId: $id already exist"))

@@ -15,7 +15,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
-import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState
@@ -184,9 +183,6 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     readFiles(projectPom)
     assertEquals(1, rootNodes.size)
     MavenUtil.cleanAllRunnables()
-
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
 
     waitForImportWithinTimeout {
       projectsManager.removeManagedFiles(listOf(projectPom))

@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -39,7 +39,7 @@ sealed interface MovePropertyToConstructorInfo {
     fun toWritable(updater: ModPsiUpdater): MovePropertyToConstructorInfo
 
     companion object {
-        context(KtAnalysisSession)
+        context(KaSession)
         fun create(element: KtProperty, initializer: KtExpression? = element.initializer): MovePropertyToConstructorInfo? {
             if (initializer != null && !initializer.isValidInConstructor()) return null
 
@@ -60,14 +60,14 @@ sealed interface MovePropertyToConstructorInfo {
             }
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun KtExpression.isValidInConstructor(): Boolean {
             val parentClassSymbol = getStrictParentOfType<KtClass>()?.getClassOrObjectSymbol() ?: return false
             var isValid = true
             accept(referenceExpressionRecursiveVisitor { expression ->
                 if (!isValid) return@referenceExpressionRecursiveVisitor
                 for (reference in expression.references.filterIsInstance<KtReference>()) {
-                    for (classSymbol in reference.resolveToSymbols().filterIsInstance<KtClassOrObjectSymbol>()) {
+                    for (classSymbol in reference.resolveToSymbols().filterIsInstance<KaClassOrObjectSymbol>()) {
                         if (classSymbol == parentClassSymbol) {
                             isValid = false
                             return@referenceExpressionRecursiveVisitor
@@ -79,17 +79,17 @@ sealed interface MovePropertyToConstructorInfo {
             return isValid
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun KtProperty.collectAnnotationsAsText(): String? = modifierList?.annotationEntries?.joinToString(separator = " ") {
             it.getTextWithUseSite()
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun KtAnnotationEntry.getTextWithUseSite(): String {
             if (useSiteTarget != null) return text
             val typeReference = typeReference ?: return text
 
-            val applicableTargets = typeReference.getKtType().expandedClassSymbol?.annotationApplicableTargets ?: return text
+            val applicableTargets = typeReference.getKtType().expandedSymbol?.annotationApplicableTargets ?: return text
 
             fun AnnotationUseSiteTarget.textWithMe() = "@$renderName:${typeReference.text}${valueArgumentList?.text.orEmpty()}"
 
@@ -108,9 +108,9 @@ sealed interface MovePropertyToConstructorInfo {
             }
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun KtExpression.findConstructorParameter(): KtParameter? {
-            val constructorParam = mainReference?.resolveToSymbol() as? KtValueParameterSymbol ?: return null
+            val constructorParam = mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return null
             return constructorParam.psi as? KtParameter
         }
     }

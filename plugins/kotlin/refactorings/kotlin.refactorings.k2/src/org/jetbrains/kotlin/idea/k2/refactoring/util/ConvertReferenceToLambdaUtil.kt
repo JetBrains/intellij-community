@@ -4,17 +4,17 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -35,13 +35,13 @@ import org.jetbrains.kotlin.types.Variance
 
 object ConvertReferenceToLambdaUtil {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun prepareLambdaExpressionText(
         element: KtCallableReferenceExpression,
     ): String? {
         val valueArgumentParent = element.parent as? KtValueArgument
         val callGrandParent = valueArgumentParent?.parent?.parent as? KtCallExpression
-        val resolvedCall = callGrandParent?.resolveCall()?.successfulFunctionCallOrNull()
+        val resolvedCall = callGrandParent?.resolveCallOld()?.successfulFunctionCallOrNull()
         val matchingParameterType = resolvedCall?.argumentMapping?.get(element)?.returnType
         val matchingParameterIsExtension = matchingParameterType is KtFunctionalType && matchingParameterType.receiverType != null
 
@@ -50,18 +50,18 @@ object ConvertReferenceToLambdaUtil {
 
         val symbol = element.callableReference.mainReference.resolveToSymbol() ?: return null
 
-        val callableSymbol = (symbol as? KtCallableSymbol)?.let {
-            (it as? KtValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: it
+        val callableSymbol = (symbol as? KaCallableSymbol)?.let {
+            (it as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: it
         }
 
         val receiverSymbol = receiverExpression?.getQualifiedElementSelector()?.mainReference?.resolveToSymbol()
-        val acceptsReceiverAsParameter = receiverSymbol is KtClassOrObjectSymbol &&
+        val acceptsReceiverAsParameter = receiverSymbol is KaClassOrObjectSymbol &&
                 !matchingParameterIsExtension &&
-                (callableSymbol as? KtFunctionSymbol)?.isStatic != true && !receiverSymbol.classKind.isObject &&
-                (callableSymbol?.getContainingSymbol() != null || callableSymbol?.isExtension == true || symbol is KtNamedClassOrObjectSymbol && symbol.isInner)
+                (callableSymbol as? KaFunctionSymbol)?.isStatic != true && !receiverSymbol.classKind.isObject &&
+                (callableSymbol?.getContainingSymbol() != null || callableSymbol?.isExtension == true || symbol is KaNamedClassOrObjectSymbol && symbol.isInner)
 
         val parameterNamesAndTypes =
-            if (callableSymbol is KtFunctionLikeSymbol) {
+            if (callableSymbol is KaFunctionLikeSymbol) {
                 val paramNameAndTypes = callableSymbol.valueParameters.map { it.name.asString() to it.returnType }
                 if (matchingParameterType != null) {
                     val parameterSize =

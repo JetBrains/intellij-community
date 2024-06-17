@@ -3,15 +3,15 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.Modality
@@ -76,10 +76,10 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
                 analyze(element) {
                     val type = element.getKtType()
                     if (type is KtNonErrorClassType) {
-                        val klass = type.classSymbol
-                        if (klass is KtNamedClassOrObjectSymbol) {
+                        val klass = type.symbol
+                        if (klass is KaNamedClassOrObjectSymbol) {
                             return when (klass.classKind) {
-                                KtClassKind.ENUM_CLASS -> collectEnumBranches(klass)
+                                KaClassKind.ENUM_CLASS -> collectEnumBranches(klass)
                                 else -> collectSealedClassInheritors(klass)
                             }
                         }
@@ -91,11 +91,11 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
         return emptyList()
     }
 
-    context(KtAnalysisSession)
-    private fun collectEnumBranches(klass: KtNamedClassOrObjectSymbol): List<CaseBranch> {
+    context(KaSession)
+    private fun collectEnumBranches(klass: KaNamedClassOrObjectSymbol): List<CaseBranch> {
         val enumEntries = klass.getStaticDeclaredMemberScope()
             .getCallableSymbols()
-            .filterIsInstance<KtEnumEntrySymbol>()
+            .filterIsInstance<KaEnumEntrySymbol>()
 
         return buildList {
             for (enumEntry in enumEntries) {
@@ -105,16 +105,16 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
         }
     }
 
-    context(KtAnalysisSession)
-    private fun collectSealedClassInheritors(klass: KtNamedClassOrObjectSymbol): List<CaseBranch> {
+    context(KaSession)
+    private fun collectSealedClassInheritors(klass: KaNamedClassOrObjectSymbol): List<CaseBranch> {
         return mutableListOf<CaseBranch>().also { processSealedClassInheritor(klass, it) }
     }
 
-    context(KtAnalysisSession)
-    private fun processSealedClassInheritor(klass: KtNamedClassOrObjectSymbol, consumer: MutableList<CaseBranch>): Boolean {
+    context(KaSession)
+    private fun processSealedClassInheritor(klass: KaNamedClassOrObjectSymbol, consumer: MutableList<CaseBranch>): Boolean {
         val classId = klass.classId ?: return false
 
-        if (klass.classKind == KtClassKind.OBJECT) {
+        if (klass.classKind == KaClassKind.OBJECT) {
             consumer.add(CaseBranch.Object(classId))
             return true
         }
@@ -146,9 +146,9 @@ private sealed class CaseBranch {
 
 private fun isSealedType(type: KtType): Boolean {
     if (type is KtNonErrorClassType) {
-        val symbol = type.classSymbol
-        if (symbol is KtNamedClassOrObjectSymbol) {
-            return symbol.classKind == KtClassKind.ENUM_CLASS || symbol.modality == Modality.SEALED
+        val symbol = type.symbol
+        if (symbol is KaNamedClassOrObjectSymbol) {
+            return symbol.classKind == KaClassKind.ENUM_CLASS || symbol.modality == Modality.SEALED
         }
     }
 

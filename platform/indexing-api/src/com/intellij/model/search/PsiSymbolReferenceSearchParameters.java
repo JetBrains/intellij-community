@@ -4,9 +4,11 @@ package com.intellij.model.search;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-public interface PsiSymbolReferenceSearchParameters extends SearchParameters<PsiSymbolReference> {
+@Internal
+public interface PsiSymbolReferenceSearchParameters extends SearchParameters<PsiSymbolReference> { // todo: drop
 
   /**
    * @return target symbol to search for references

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -299,9 +300,10 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
 
         val supported = kotlinDslScriptsModelImportSupported(version)
 
-        return when {
-            supported -> tryLoadFromFsCache(settings, version) ?: New(settings)
-            else -> Legacy(settings)
+        return if (supported) {
+            tryLoadFromFsCache(settings, version) ?: New(settings)
+        } else {
+            Legacy(settings)
         }
     }
 
@@ -332,7 +334,10 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
 
             return Imported(externalProjectPath, data, lastModifiedFiles)
         } catch (e: Exception) {
-            scriptingErrorLog("Cannot load script configurations from file attributes for $externalProjectPath", e)
+            when (e) {
+                is ReadAction.CannotReadException -> scriptingDebugLog { "tryCreateImportedRoot cancelled" }
+                else -> scriptingErrorLog("Cannot load script configurations from file attributes for $externalProjectPath", e)
+            }
             return null
         }
     }

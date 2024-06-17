@@ -59,6 +59,7 @@ internal class WorkspaceModuleImporter(
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
 
   fun importModule(): ModuleEntity {
+
     val baseModuleDir = importData.mavenProject.directoryFile.toVirtualFileUrl(virtualFileUrlManager)
     val moduleName = importData.moduleData.moduleName
 
@@ -86,7 +87,7 @@ internal class WorkspaceModuleImporter(
     val moduleEntity = builder addEntity ModuleEntity(moduleName, dependencies, entitySource) {
       this.type = JAVA_MODULE_ENTITY_TYPE_ID
     }
-    builder.modifyEntity(moduleEntity) {
+    builder.modifyModuleEntity(moduleEntity) {
       this.exModuleOptions = ExternalSystemModuleOptionsEntity(entitySource) {
         ExternalSystemData(moduleEntity, mavenProject.file.path, mavenModuleType).write(this)
       }
@@ -238,7 +239,7 @@ internal class WorkspaceModuleImporter(
                                                                                     mavenArtifact.classifier)).state) ?: return
     libPropertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG
     val xmlTag = JDOMUtil.writeElement(libPropertiesElement)
-    builder.modifyEntity(libraryEntity) {
+    builder.modifyLibraryEntity(libraryEntity) {
       this.typeId = LibraryTypeId(libraryKind.kindId)
       this.libraryProperties = LibraryPropertiesEntity(libraryEntity.entitySource) {
         propertiesXmlTag = xmlTag
@@ -285,7 +286,7 @@ internal class WorkspaceModuleImporter(
 
     val manifestAttributes = mavenProject.getManifestAttributes()
 
-    builder.modifyEntity(moduleEntity) {
+    builder.modifyModuleEntity(moduleEntity) {
       this.javaSettings = JavaModuleSettingsEntity(inheritCompilerOutput, false, moduleEntity.entitySource) {
         this.compilerOutput = compilerOutputUrl
         this.compilerOutputForTests = compilerOutputUrlForTests

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.*;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,7 @@ import static com.intellij.ide.diff.DirDiffOperation.*;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class DirDiffElementImpl implements DirDiffElement {
   private final DTree myParent;
   private DiffType myType;

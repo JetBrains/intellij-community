@@ -30,11 +30,11 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 
-public final class JpsWrappedJavaSdkReferenceImpl extends JpsCompositeElementBase<JpsWrappedJavaSdkReferenceImpl> implements JpsSdkReference<JpsDummyElement> {
+final class JpsWrappedJavaSdkReferenceImpl extends JpsCompositeElementBase<JpsWrappedJavaSdkReferenceImpl> implements JpsSdkReference<JpsDummyElement> {
   private static final JpsElementChildRoleBase<JpsSdkReference<?>> WRAPPER_ROLE = JpsElementChildRoleBase.create("wrapper reference");
   private final JpsJavaSdkTypeWrapper mySdkType;
 
-  public JpsWrappedJavaSdkReferenceImpl(JpsJavaSdkTypeWrapper sdkType, JpsSdkReference<?> wrapperReference) {
+  JpsWrappedJavaSdkReferenceImpl(JpsJavaSdkTypeWrapper sdkType, JpsSdkReference<?> wrapperReference) {
     mySdkType = sdkType;
     myContainer.setChild(WRAPPER_ROLE, wrapperReference);
   }

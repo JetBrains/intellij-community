@@ -77,14 +77,14 @@ internal class CacheMetadata(
 
 
   internal class MutableCacheMetadata(private val typesResolver: EntityTypesResolver) {
-    private val metadataById: MutableMap<Id, MutableMap<String, StorageTypeMetadata>> = hashMapOf()
+    private val metadataById: MutableMap<Id, MutableMap<String, StorageTypeMetadata>> = linkedMapOf()
 
     fun add(clazz: Class<*>) {
       val pluginId: PluginId = typesResolver.getPluginId(clazz)
       val metadataStorage = TypeMetadataResolver.getInstance().resolveMetadataStorage(typesResolver, clazz.name, pluginId)
       val typeMetadata = TypeMetadataResolver.getInstance().resolveTypeMetadata(metadataStorage, clazz.name)
 
-      val metadataByFqn = metadataById.getOrPut(Id(pluginId, metadataStorage::class.java.name)) { hashMapOf() }
+      val metadataByFqn = metadataById.getOrPut(Id(pluginId, metadataStorage::class.java.name)) { linkedMapOf() }
       typeMetadata.collectTypesByFqn(metadataByFqn, metadataStorage)
     }
 

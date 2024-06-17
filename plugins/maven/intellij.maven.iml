@@ -108,6 +108,7 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="module" module-name="intellij.maven.server.telemetry" />
+    <orderEntry type="library" name="ASM" level="project" />
   </component>
   <component name="copyright">
     <Base>

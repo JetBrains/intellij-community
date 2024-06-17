@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.*;
 import com.intellij.remote.ext.CredentialsCase;
 import com.intellij.remote.ext.CredentialsManager;
-import com.intellij.util.Consumer;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implements PyRemoteSdkAdditionalDataBase {
   private static final String PYCHARM_HELPERS = ".pycharm_helpers";
@@ -206,22 +206,8 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   }
 
   @Override
-  @Deprecated
-  public PyRemoteSdkCredentials getRemoteSdkCredentials() throws InterruptedException, ExecutionException {
-    return getProducer().getRemoteSdkCredentials();
-  }
-
-  @Override
-  public PyRemoteSdkCredentials getRemoteSdkCredentials(boolean allowSynchronousInteraction)
-    throws InterruptedException, ExecutionException {
-    return getProducer().getRemoteSdkCredentials(allowSynchronousInteraction);
-  }
-
-  @Override
-  public PyRemoteSdkCredentials getRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction)
-    throws InterruptedException,
-           ExecutionException {
-    return getProducer().getRemoteSdkCredentials(allowSynchronousInteraction);
+  public PyRemoteSdkCredentials getRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException {
+    return getProducer().getRemoteSdkCredentials(project, allowSynchronousInteraction);
   }
 
   public boolean connectionEquals(PyRemoteSdkAdditionalData data) {
@@ -234,20 +220,12 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   }
 
   @Override
-  public void produceRemoteSdkCredentials(final Consumer<? super PyRemoteSdkCredentials> remoteSdkCredentialsConsumer) {
-    getProducer().produceRemoteSdkCredentials(remoteSdkCredentialsConsumer);
-  }
-
-  @Override
-  public void produceRemoteSdkCredentials(final boolean allowSynchronousInteraction,
-                                          final Consumer<? super PyRemoteSdkCredentials> remoteSdkCredentialsConsumer) {
-    getProducer().produceRemoteSdkCredentials(allowSynchronousInteraction, remoteSdkCredentialsConsumer);
-  }
-
-  @Override
-  public void produceRemoteSdkCredentials(@Nullable Project project, final boolean allowSynchronousInteraction,
-                                          final Consumer<? super PyRemoteSdkCredentials> remoteSdkCredentialsConsumer) {
-    getProducer().produceRemoteSdkCredentials(allowSynchronousInteraction, remoteSdkCredentialsConsumer);
+  public void produceRemoteSdkCredentials(
+    @Nullable Project project,
+    boolean allowSynchronousInteraction,
+    Consumer<? super PyRemoteSdkCredentials> remoteSdkCredentialsConsumer
+  ) {
+    getProducer().produceRemoteSdkCredentials(project, allowSynchronousInteraction, remoteSdkCredentialsConsumer);
   }
 
   @Override
@@ -285,7 +263,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   public static @NotNull PyRemoteSdkAdditionalData loadRemote(@NotNull Sdk sdk, @Nullable Element element) {
     final String path = sdk.getHomePath();
     assert path != null;
-    final PyRemoteSdkAdditionalData data = new PyRemoteSdkAdditionalData(RemoteSdkCredentialsHolder.getInterpreterPathFromFullPath(path), false);
+    final PyRemoteSdkAdditionalData data = new PyRemoteSdkAdditionalData(RemoteSdkProperties.getInterpreterPathFromFullPath(path), false);
     data.load(element);
 
     if (element != null) {

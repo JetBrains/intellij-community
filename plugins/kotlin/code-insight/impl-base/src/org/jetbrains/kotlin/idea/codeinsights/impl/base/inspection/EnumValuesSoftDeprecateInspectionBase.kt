@@ -9,13 +9,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.codeInsight.*
@@ -47,9 +47,9 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
                     return
                 }
                 analyze(callExpression) {
-                    val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return
+                    val resolvedCall = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
                     val resolvedCallSymbol = resolvedCall.partiallyAppliedSymbol.symbol
-                    val enumClassSymbol = (resolvedCallSymbol.getContainingSymbol() as? KtClassOrObjectSymbol) ?: return
+                    val enumClassSymbol = (resolvedCallSymbol.getContainingSymbol() as? KaClassOrObjectSymbol) ?: return
 
                     if (!isSoftDeprecatedEnumValuesMethod(resolvedCallSymbol, enumClassSymbol)) {
                         return
@@ -71,12 +71,12 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
             })
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isOptInRequired(
-        enumEntriesPropertySymbol: KtCallableSymbol,
+        enumEntriesPropertySymbol: KaCallableSymbol,
         moduleApiVersion: ApiVersion,
     ): Boolean? {
-        val enumEntriesClass = enumEntriesPropertySymbol.returnType.expandedClassSymbol
+        val enumEntriesClass = enumEntriesPropertySymbol.returnType.expandedSymbol
             ?: return null
         if (enumEntriesClass.hasAnnotation(EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
             return true
@@ -87,12 +87,12 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         return EXPERIMENTAL_ANNOTATION_CLASS_ID in necessaryOptIns
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected abstract fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
 
-    context(KtAnalysisSession)
-    private fun createQuickFix(callExpression: KtCallExpression, symbol: KtFunctionLikeSymbol): LocalQuickFix? {
-        val enumClassSymbol = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
+    context(KaSession)
+    private fun createQuickFix(callExpression: KtCallExpression, symbol: KaFunctionLikeSymbol): LocalQuickFix? {
+        val enumClassSymbol = symbol.getContainingSymbol() as? KaClassOrObjectSymbol
         val enumClassQualifiedName = enumClassSymbol?.classId?.asFqNameString() ?: return null
         return createQuickFix(getReplaceFixType(callExpression), enumClassQualifiedName)
     }
@@ -101,7 +101,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         return ReplaceFix(fixType, enumClassQualifiedName)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getReplaceFixType(callExpression: KtCallExpression): ReplaceFixType {
         val qualifiedOrSimpleCall = callExpression.qualifiedOrSimpleValuesCall()
         val parent = qualifiedOrSimpleCall.parent
@@ -140,9 +140,9 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         return ReplaceFixType.WITH_CAST
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getCallableMethodIdString(expression: KtElement?): String? {
-        val resolvedCall = expression?.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
+        val resolvedCall = expression?.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
         return resolvedCall?.partiallyAppliedSymbol?.symbol?.callableId?.toString()
     }
 

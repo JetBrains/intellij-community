@@ -7,23 +7,22 @@ import com.intellij.jarFinder.InternetAttachSourceProvider
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.java.library.getMavenCoordinates
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.findFile
 import com.intellij.psi.PsiFile
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
 import java.io.File
-import kotlin.io.path.Path
 
 /**
  * Attaches sources to the IntelliJ Platform dependencies in projects using IntelliJ Platform Gradle Plugin 2.x.
  * Some IDEs, like IntelliJ IDEA Ultimate or PhpStorm, don't provide sources for artifacts published to IntelliJ Repository.
  * To handle such a case, IntelliJ IDEA Community sources are attached.
  */
-class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
+internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
   override fun getActions(orderEntries: MutableList<out LibraryOrderEntry>, psiFile: PsiFile): List<AttachSourcesAction> {
     // Search for a product that matches any of the entry coordinates. Return both product and coordinates, to refer to the same version.
@@ -31,6 +30,7 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       it.library?.getMavenCoordinates()
     }.firstNotNullOfOrNull { coordinates ->
       val product = IntelliJPlatformProduct.fromMavenCoordinates(coordinates.groupId, coordinates.artifactId)
+                    ?: IntelliJPlatformProduct.fromCdnCoordinates(coordinates.groupId, coordinates.artifactId)
       if (product == null) {
         return@firstNotNullOfOrNull null
       }
@@ -74,9 +74,8 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       override fun getBusyText() = DevKitGradleBundle.message("attachSources.action.busyText")
 
       override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
-        val externalProjectPath = orderEntries.first().ownerModule.let {
-          ExternalSystemApiUtil.getExternalRootProjectPath(it)
-        } ?: return ActionCallback.REJECTED
+        val externalProjectPath = CachedModuleDataFinder.getGradleModuleData(orderEntries.first().ownerModule)?.directoryToRunTask
+                                  ?: return ActionCallback.REJECTED
 
         val executionResult = ActionCallback()
         val project = psiFile.project

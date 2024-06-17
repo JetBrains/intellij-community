@@ -76,10 +76,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
@@ -698,7 +696,7 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
     if (!(viewer instanceof EditorDiffViewer)) return;
 
     var editors = ((EditorDiffViewer)viewer).getEditors();
-    var editorStates = processorState.getEmbeddedEditorStates();
+    var editorStates = processorState.embeddedEditorStates;
 
     TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
     for (int i = 0; i < Math.min(editorStates.size(), editors.size()); i++) {
@@ -1321,7 +1319,7 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
   //
 
   @ApiStatus.Internal
-  public class MyPanel extends JBPanelWithEmptyText implements DataProvider {
+  public class MyPanel extends JBPanelWithEmptyText implements EdtDataProvider {
     MyPanel() {
       super(new BorderLayout());
     }
@@ -1338,59 +1336,28 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
     }
 
     @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      Object data;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(OpenInEditorAction.AFTER_NAVIGATE_CALLBACK,
+               () -> DiffUtil.minimizeDiffIfOpenedInWindow(DiffRequestProcessor.this.myPanel));
+
+      for (DataProvider provider : Arrays.asList(DiffRequestProcessor.this::getData,
+                                                 myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER),
+                                                 myActiveRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER),
+                                                 myState::getData)) {
+        DataSink.uiDataSnapshot(sink, provider);
+      }
 
       DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getTargetComponent());
-      if (contentProvider != null) {
-        data = contentProvider.getData(dataId);
-        if (data != null) return data;
-      }
+      DataSink.uiDataSnapshot(sink, contentProvider);
 
-      if (DiffDataKeys.DIFF_REQUEST.is(dataId)) {
-        return myActiveRequest;
-      }
-      else if (ACTIVE_DIFF_TOOL.is(dataId)) {
-        return myState.getActiveTool();
-      }
-      else if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
-      }
-      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-        if (myActiveRequest.getUserData(DiffUserDataKeys.HELP_ID) != null) {
-          return myActiveRequest.getUserData(DiffUserDataKeys.HELP_ID);
-        }
-        else {
-          return "reference.dialogs.diff.file";
-        }
-      }
-      else if (DiffDataKeys.DIFF_CONTEXT.is(dataId)) {
-        return myContext;
-      }
-
-      data = myState.getData(dataId);
-      if (data != null) return data;
-
-      DataProvider requestProvider = myActiveRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER);
-      if (requestProvider != null) {
-        data = requestProvider.getData(dataId);
-        if (data != null) return data;
-      }
-
-      DataProvider contextProvider = myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER);
-      if (contextProvider != null) {
-        data = contextProvider.getData(dataId);
-        if (data != null) return data;
-      }
-
-      data = DiffRequestProcessor.this.getData(dataId);
-      if (data != null) return data;
-
-      if (OpenInEditorAction.AFTER_NAVIGATE_CALLBACK.is(dataId)) {
-        return (Runnable)() -> DiffUtil.minimizeDiffIfOpenedInWindow(DiffRequestProcessor.this.myPanel);
-      }
-
-      return null;
+      sink.set(CommonDataKeys.PROJECT, myProject);
+      sink.set(DiffDataKeys.DIFF_CONTEXT, myContext);
+      sink.set(DiffDataKeys.DIFF_REQUEST, myActiveRequest);
+      sink.set(ACTIVE_DIFF_TOOL, myState.getActiveTool());
+      sink.set(PlatformCoreDataKeys.HELP_ID,
+               myActiveRequest.getUserData(DiffUserDataKeys.HELP_ID) != null
+               ? myActiveRequest.getUserData(DiffUserDataKeys.HELP_ID)
+               : "reference.dialogs.diff.file");
     }
   }
 

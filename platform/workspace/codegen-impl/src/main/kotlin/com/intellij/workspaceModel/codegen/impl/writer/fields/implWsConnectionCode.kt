@@ -4,6 +4,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.getRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.refsFields
 
 val ObjProperty<*, *>.refsConnectionId: String
@@ -18,10 +19,10 @@ val ObjProperty<*, *>.refsConnectionIdCode: String
     val ref = valueType.getRefType()
     append("internal val $refsConnectionId: ${ConnectionId} = ConnectionId.create(")
     if (ref.child) {
-      append("${receiver.name}::class.java, ${ref.javaType}::class.java,")
+      append("${receiver.javaFullName}::class.java, ${ref.javaType}::class.java,")
     }
     else {
-      append("${ref.javaType}::class.java, ${receiver.name}::class.java,")
+      append("${ref.javaType}::class.java, ${receiver.javaFullName}::class.java,")
     }
     val connectionType = this@refsConnectionIdCode.refsConnectionType(ref)
     if (connectionType.isNotEmpty()) {

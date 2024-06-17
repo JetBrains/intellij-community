@@ -31,6 +31,9 @@
     <extensionPoint dynamic="true" name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
+    <extensionPoint dynamic="true" name="inlineCompletionConfigurable" beanClass="com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
+    </extensionPoint>
     <extensionPoint dynamic="true" name="mlCodeCompletionConfigurable" beanClass="com.intellij.application.options.MLCodeCompletionConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
@@ -283,7 +286,6 @@
     <extensionPoint name="runDashboardCustomizer" interface="com.intellij.execution.dashboard.RunDashboardCustomizer" dynamic="true"/>
     <extensionPoint name="runDashboardDefaultTypesProvider" interface="com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider" dynamic="true"/>
     <extensionPoint name="runDashboardGroupingRule" interface="com.intellij.execution.dashboard.RunDashboardGroupingRule" dynamic="true"/>
-    <extensionPoint name="runDashboardChecker" interface="com.intellij.execution.dashboard.RunDashboardChecker" dynamic="true"/>
     <extensionPoint name="serviceViewContributor" interface="com.intellij.execution.services.ServiceViewContributor" dynamic="true"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT" dynamic="true"/>
@@ -412,8 +414,8 @@
                     beanClass="com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsPreviewLanguage"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.refactoring.renameCodeVisionSupport"
-                    interface="com.intellij.refactoring.rename.RenameCodeVisionSupport"
+    <extensionPoint qualifiedName="com.intellij.refactoring.codeVisionSupport"
+                    interface="com.intellij.refactoring.RefactoringCodeVisionSupport"
                     dynamic="true" />
 
     <extensionPoint name="lang.floatingToolbarCustomizer" beanClass="com.intellij.lang.LanguageExtensionPoint"
@@ -695,5 +697,9 @@
     <extensionPoint name="editorSearchAreaProvider" interface="com.intellij.find.impl.livePreview.EditorSearchAreaProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.intentionPopupProvider" dynamic="true"
                     interface="com.intellij.codeInsight.intention.impl.IntentionPopupProvider"/>
+    <extensionPoint qualifiedName="com.intellij.marketplaceLocalRanker" dynamic="true"
+                    interface="com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker"/>
+    <extensionPoint qualifiedName="com.intellij.marketplaceTextualFeaturesProvider" dynamic="true"
+                    interface="com.intellij.ide.plugins.marketplace.statistics.features.MarketplaceTextualFeaturesProvider"/>
   </extensionPoints>
 </idea-plugin>

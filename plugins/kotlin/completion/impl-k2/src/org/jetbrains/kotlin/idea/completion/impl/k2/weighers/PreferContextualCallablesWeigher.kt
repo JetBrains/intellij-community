@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.completion.weighers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
 /**
@@ -35,9 +35,9 @@ internal object PreferContextualCallablesWeigher {
      * Marks [symbol] as contextual if [symbol] or one of its overridden symbols is equal to or overridden by
      * one of the callables containing current position.
      */
-    context(KtAnalysisSession)
-    fun addWeight(lookupElement: LookupElement, symbol: KtCallableSymbol, contextualSymbolsCache: WeighingContext.ContextualSymbolsCache) {
-        if (symbol !is KtNamedSymbol || symbol.name !in contextualSymbolsCache) return
+    context(KaSession)
+    fun addWeight(lookupElement: LookupElement, symbol: KaCallableSymbol, contextualSymbolsCache: WeighingContext.ContextualSymbolsCache) {
+        if (symbol !is KaNamedSymbol || symbol.name !in contextualSymbolsCache) return
 
         val symbolsToCheck = sequence {
             yield(symbol)

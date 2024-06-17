@@ -802,8 +802,10 @@ public final class ControlFlowUtils {
     return statement;
   }
 
+  @Contract("null -> null")
   @Nullable
   private static PsiStatement nextExecutedStatement(PsiStatement statement) {
+    if (statement == null) return null;
     PsiStatement next = firstStatement(PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class));
     if (next == null) {
       PsiElement parent = statement.getParent();

@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributo
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.ide.actions.searcheverywhere.SearchListener
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -25,6 +26,8 @@ class SemanticClassSearchEverywhereContributor(initEvent: AnActionEvent)
 
   override val psiElementsRenderer = elementsRenderer as SearchEverywherePsiRenderer
 
+  override var searchListener: SearchListener? = null
+
   override fun getSearchProviderId(): String = ClassSearchEverywhereContributor::class.java.simpleName
 
   override fun fetchWeightedElements(pattern: String, progressIndicator: ProgressIndicator,
@@ -39,6 +42,10 @@ class SemanticClassSearchEverywhereContributor(initEvent: AnActionEvent)
   override fun defaultFetchElements(pattern: String, progressIndicator: ProgressIndicator,
                                     consumer: Processor<in FoundItemDescriptor<Any>>) {
     super.fetchWeightedElements(pattern, progressIndicator, consumer)
+  }
+
+  override fun onStandardSearchFoundNoResults() {
+    searchListener?.standardSearchFoundNoResults(this)
   }
 
   override fun checkScopeIsDefaultAndAutoSet(): Boolean = isScopeDefaultAndAutoSet

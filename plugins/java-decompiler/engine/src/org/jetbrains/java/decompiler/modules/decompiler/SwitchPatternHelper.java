@@ -1443,12 +1443,79 @@ public final class SwitchPatternHelper {
       }
       extendCases(switchStatement, patternContainer);
       addGuards(switchStatement, patternContainer);
+      Set<Statement> collectedPatterns =
+        patternContainer.patternsByStatement.values().stream().flatMap(t -> t.stream())
+          .map(t -> t.caseStatement)
+          .collect(Collectors.toSet());
       if (upperDoStatement != null) {
-        upperDoStatement.getParent().replaceStatement(upperDoStatement, switchStatement);
+        Optional<Statement> lastStatementOpt = findNestedLastStatement(patternContainer);
+        //try to process fast exit
+        Statement containerStatement = patternContainer.patternsByStatement.keySet().iterator().next();
+        Optional<Statement> baseSwitchStatementOpt =
+          containerStatement.getStats().stream().filter(t -> t instanceof SwitchStatement).findAny();
+        if (lastStatementOpt.isPresent() &&
+            baseSwitchStatementOpt.isPresent() &&
+            new HashSet<>(switchStatement.getCaseStatements()).containsAll(collectedPatterns)) {
+          Statement lastStatement = lastStatementOpt.get();
+          Statement baseSwitchStatement = baseSwitchStatementOpt.get();
+          if (baseSwitchStatement.getFirst() != null &&
+              baseSwitchStatement.getFirst().getExprents() != null &&
+              lastStatement.getExprents() != null &&
+              switchStatement.getFirst() != null &&
+              switchStatement.getFirst().getExprents() != null) {
+            for (Exprent exprent : baseSwitchStatement.getFirst().getExprents()) {
+              if (exprent instanceof VarExprent varExprent &&
+                  varExprent.isDefinition() &&
+                  lastStatement.getExprents().stream().anyMatch(e -> e.containsExprent(varExprent))) {
+                switchStatement.getFirst().getExprents().add(varExprent);
+                break;
+              }
+            }
+          }
+          ArrayList<Statement> lst = new ArrayList<>();
+          lst.add(switchStatement);
+          lst.add(lastStatement);
+          List<StatEdge> edges = new ArrayList<>(lastStatement.getAllPredecessorEdges());
+          for (StatEdge edge : edges) {
+            lastStatement.removePredecessor(edge);
+          }
+          for (Statement statement : switchStatement.getCaseStatements()) {
+            lastStatement.addPredecessor(new StatEdge(EdgeType.BREAK, statement, lastStatement));
+          }
+          SequenceStatement statement = new SequenceStatement(lst);
+          List<StatEdge> lastSuccessors = new ArrayList<>(lastStatement.getAllSuccessorEdges());
+          for (StatEdge edge : lastSuccessors) {
+            statement.addSuccessor(edge);
+            lastStatement.removeSuccessor(edge);
+          }
+          upperDoStatement.getParent().replaceStatement(upperDoStatement, statement);
+        }
+        else {
+          upperDoStatement.getParent().replaceStatement(upperDoStatement, switchStatement);
+        }
         normalizeCaseLabels(switchStatement, upperDoStatement);
       }
       normalizeLabels(switchStatement, tempVarAssignments);
       deleteNullCases(switchStatement);
+    }
+
+    private static @NotNull Optional<Statement> findNestedLastStatement(@NotNull PatternContainer patternContainer) {
+      return Optional.of(patternContainer)
+        .map(c -> c.patternsByStatement)
+        .filter(patterns -> patterns.size() == 1)
+        .map(patterns -> patterns.keySet().iterator().next())
+        .map(p -> {
+          if (p.getStats() != null &&
+              p.getStats().size() >= 2 &&
+              p.getStats().get(p.getStats().size() - 2) instanceof SwitchStatement) {
+            return p.getStats().get(p.getStats().size() - 1);
+          }
+          else {
+            return null;
+          }
+        })
+        .filter(t -> t instanceof BasicBlockStatement basicBlockStatement &&
+                     basicBlockStatement.getExprents() != null);
     }
 
     /**

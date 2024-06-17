@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
@@ -23,14 +23,14 @@ internal open class FirClassifierCompletionContributor(
     priority: Int,
 ) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
 
-    context(KtAnalysisSession)
-    protected open fun filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = true
+    context(KaSession)
+    protected open fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = true
 
-    context(KtAnalysisSession)
-    protected open fun getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
+    context(KaSession)
+    protected open fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy =
         importStrategyDetector.detectImportStrategyForClassifierSymbol(classifierSymbol)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
@@ -49,7 +49,7 @@ internal open class FirClassifierCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeWithReceiver(
         receiver: KtElement,
         visibilityChecker: CompletionVisibilityChecker,
@@ -68,13 +68,13 @@ internal open class FirClassifierCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeWithoutReceiver(
         positionContext: KotlinNameReferencePositionContext,
         visibilityChecker: CompletionVisibilityChecker,
         context: WeighingContext
     ) {
-        val availableFromScope = mutableSetOf<KtClassifierSymbol>()
+        val availableFromScope = mutableSetOf<KaClassifierSymbol>()
         getAvailableClassifiersCurrentScope(
             originalKtFile,
             positionContext.nameExpression,
@@ -109,23 +109,21 @@ internal class FirAnnotationCompletionContributor(
     priority: Int
 ) : FirClassifierCompletionContributor(basicContext, priority) {
 
-    context(KtAnalysisSession)
-    override fun filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = when (classifierSymbol) {
-        is KtAnonymousObjectSymbol -> false
-        is KtTypeParameterSymbol -> false
-        is KtNamedClassOrObjectSymbol -> when (classifierSymbol.classKind) {
-            KtClassKind.ANNOTATION_CLASS -> true
-            KtClassKind.ENUM_CLASS -> false
-            KtClassKind.ANONYMOUS_OBJECT -> false
-            KtClassKind.CLASS, KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT, KtClassKind.INTERFACE -> {
-                // TODO show class if nested classifier is annotation class
-                // classifierSymbol.getDeclaredMemberScope().getClassifierSymbols().any { filterClassifiers(it) }
-                false
+    context(KaSession)
+    override fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = when (classifierSymbol) {
+        is KaAnonymousObjectSymbol -> false
+        is KaTypeParameterSymbol -> false
+        is KaNamedClassOrObjectSymbol -> when (classifierSymbol.classKind) {
+            KaClassKind.ANNOTATION_CLASS -> true
+            KaClassKind.ENUM_CLASS -> false
+            KaClassKind.ANONYMOUS_OBJECT -> false
+            KaClassKind.CLASS, KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.INTERFACE -> {
+                classifierSymbol.getStaticDeclaredMemberScope().getClassifierSymbols().any { filterClassifiers(it) }
             }
         }
 
-        is KtTypeAliasSymbol -> {
-            val expendedClass = (classifierSymbol.expandedType as? KtNonErrorClassType)?.classSymbol
+        is KaTypeAliasSymbol -> {
+            val expendedClass = (classifierSymbol.expandedType as? KtNonErrorClassType)?.symbol
             expendedClass?.let { filterClassifiers(it) } == true
         }
     }
@@ -136,10 +134,10 @@ internal class FirClassifierReferenceCompletionContributor(
     priority: Int
 ) : FirClassifierCompletionContributor(basicContext, priority) {
 
-    context(KtAnalysisSession)
-    override fun getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy = when (classifierSymbol) {
-        is KtTypeParameterSymbol -> ImportStrategy.DoNothing
-        is KtClassLikeSymbol -> {
+    context(KaSession)
+    override fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy = when (classifierSymbol) {
+        is KaTypeParameterSymbol -> ImportStrategy.DoNothing
+        is KaClassLikeSymbol -> {
             classifierSymbol.classId?.let { ImportStrategy.AddImport(it.asSingleFqName()) } ?: ImportStrategy.DoNothing
         }
     }

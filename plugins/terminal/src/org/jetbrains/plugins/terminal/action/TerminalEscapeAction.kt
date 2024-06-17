@@ -6,15 +6,15 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.blockTerminalController
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
-import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
-import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.blockTerminalController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.promptController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.selectionController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
+import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
+import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
 
 internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   // order matters, because only the first enabled handler will be executed

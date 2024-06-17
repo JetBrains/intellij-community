@@ -456,6 +456,9 @@
         <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"/>
         <override-text place="popup@DiffToolbar"/>
       </action>
+      <action id="Vcs.Diff.ResolveConflictsInImports" class="com.intellij.diff.merge.ResolveConflictsInImportsToggleAction">
+        <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"/>
+      </action>
       <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
         <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
         <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
@@ -623,7 +626,6 @@
     <action id="Vcs.ShowConsoleTab" class="com.intellij.vcs.console.ShowVcsConsoleTabAction"/>
 
     <group id="CommitView.GearActions">
-      <action id="CommitView.SwitchToCommitDialog" class="com.intellij.vcs.commit.SwitchToCommitDialogAction"/>
       <group id="CommitView.ShowOnDoubleClick" popup="true" searchable="false">
         <action id="CommitView.ShowOnDoubleClick.EditorPreview"
                 class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$EditorPreview">

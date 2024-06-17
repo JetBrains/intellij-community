@@ -115,12 +115,12 @@ class ImlReplaceBySourceTest {
 
     // Changes 1 & 2 handle source roots ordering [ModuleSerializersFactory.SourceRootOrderEntry]
     @Suppress("USELESS_IS_CHECK")
-    val sourceRootChange = changes.filterIsInstance<EntityChange.Added<SourceRootEntity>>().single { it.entity is SourceRootEntity }
+    val sourceRootChange = changes.filterIsInstance<EntityChange.Added<SourceRootEntity>>().single { it.newEntity is SourceRootEntity }
 
     @Suppress("USELESS_IS_CHECK")
-    val javaSourceRootChange = changes.filterIsInstance<EntityChange.Added<JavaSourceRootPropertiesEntity>>().single { it.entity is JavaSourceRootPropertiesEntity }
-    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).url, sourceRootChange.entity.url.url)
-    Assert.assertEquals(true, javaSourceRootChange.entity.generated)
+    val javaSourceRootChange = changes.filterIsInstance<EntityChange.Added<JavaSourceRootPropertiesEntity>>().single { it.newEntity is JavaSourceRootPropertiesEntity }
+    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).url, sourceRootChange.newEntity.url.url)
+    Assert.assertEquals(true, javaSourceRootChange.newEntity.generated)
   }
 
   private fun replaceBySourceFullReplace(projectFile: File) {

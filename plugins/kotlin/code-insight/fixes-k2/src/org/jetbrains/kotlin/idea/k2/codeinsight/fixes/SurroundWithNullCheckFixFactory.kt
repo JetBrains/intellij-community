@@ -5,9 +5,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -69,7 +69,7 @@ internal object SurroundWithNullCheckFixFactory {
         createQuickFixIfApplicableToUnsafeCall(diagnostic)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createQuickFixIfApplicableToUnsafeCall(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
         val element = when (diagnostic) {
             is KaFirDiagnostic.UnsafeCall -> diagnostic.receiverExpression
@@ -89,7 +89,7 @@ internal object SurroundWithNullCheckFixFactory {
         // Surround declaration (even of local variable) with null check is generally a bad idea
         if (expressionTarget is KtDeclaration) return emptyList()
 
-        val referenceSymbol = nullableExpression.mainReference.resolveToSymbol() as? KtNamedSymbol ?: return emptyList()
+        val referenceSymbol = nullableExpression.mainReference.resolveToSymbol() as? KaNamedSymbol ?: return emptyList()
         val file = expressionTarget.containingKtFile
         val scope = file.getScopeContextForPosition(expressionTarget).getCompositeScope()
 
@@ -102,7 +102,7 @@ internal object SurroundWithNullCheckFixFactory {
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createQuickFixIfApplicableToTypeMismatch(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
         val nullableExpression = diagnostic.psi as? KtReferenceExpression ?: return emptyList()
         val root = SurroundWithNullCheckUtils.getRootExpressionIfApplicable(nullableExpression) ?: return emptyList()

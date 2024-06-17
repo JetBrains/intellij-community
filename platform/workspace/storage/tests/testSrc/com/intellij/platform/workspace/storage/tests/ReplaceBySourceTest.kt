@@ -142,7 +142,7 @@ class ReplaceBySourceTest {
     val entity = builder addEntity NamedEntity("hello2", MySource)
     replacement = createBuilderFrom(builder)
     val replacementEntity = entity.createPointer<NamedEntity>().resolve(replacement)!!
-    val modified = replacement.modifyEntity(replacementEntity) {
+    val modified = replacement.modifyNamedEntity(replacementEntity) {
       myName = "Hello Alex"
     }
 
@@ -189,7 +189,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(parent.from(replacement)) {
+    replacement.modifyNamedEntity(parent.from(replacement)) {
       myName = "newProperty"
     }
 
@@ -209,7 +209,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child.from(replacement)) {
+    replacement.modifyNamedChildEntity(child.from(replacement)) {
       childProperty = "newProperty"
     }
 
@@ -249,7 +249,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child.from(replacement)) {
+    replacement.modifyNamedChildEntity(child.from(replacement)) {
       this.parentEntity = parent2.builderFrom(replacement)
     }
 
@@ -284,7 +284,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child.from(replacement)) {
+    replacement.modifyNamedChildEntity(child.from(replacement)) {
       this.parentEntity = parent.builderFrom(replacement)
     }
 
@@ -303,7 +303,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child.from(replacement)) {
+    replacement.modifyNamedChildEntity(child.from(replacement)) {
       this.parentEntity = parent2.builderFrom(replacement)
     }
 
@@ -426,7 +426,7 @@ class ReplaceBySourceTest {
     builder.assertConsistency()
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(named.from(replacement)) {
+    replacement.modifyNamedEntity(named.from(replacement)) {
       this.myName = "NewName"
     }
 
@@ -450,7 +450,7 @@ class ReplaceBySourceTest {
     builder.assertConsistency()
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(linked.from(replacement)) {
+    replacement.modifyWithListSoftLinksEntity(linked.from(replacement)) {
       this.links = mutableListOf()
     }
 
@@ -487,7 +487,7 @@ class ReplaceBySourceTest {
       children = emptyList()
     }
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(namedEntity.from(replacement)) {
+    replacement.modifyNamedEntity(namedEntity.from(replacement)) {
       this.myName = "AnotherName"
     }
 
@@ -511,7 +511,7 @@ class ReplaceBySourceTest {
     replacement = createBuilderFrom(builder)
 
     val anotherParent = replacement addEntity NamedEntity("Another", MySource)
-    replacement.modifyEntity(childEntity.from(replacement)) {
+    replacement.modifyNamedChildEntity(childEntity.from(replacement)) {
       this.parentEntity = anotherParent.builderFrom(replacement)
     }
 
@@ -1142,7 +1142,7 @@ class ReplaceBySourceTest {
         }
       )
     }
-    builder.modifyEntity(internalChild) {
+    builder.modifyTreeMultiparentLeafEntity(internalChild) {
       this.mainParent = leafsStructure.builderFrom(builder)
     }
 
@@ -1193,7 +1193,7 @@ class ReplaceBySourceTest {
       )
     }
     builder addEntity leafsStructure
-    builder.modifyEntity(internalChild) {
+    builder.modifyTreeMultiparentLeafEntity(internalChild) {
       this.mainParent = leafsStructure
     }
     val root = builder.toSnapshot().entities(TreeMultiparentRootEntity::class.java).single()
@@ -1244,7 +1244,7 @@ class ReplaceBySourceTest {
       )
     }
     builder addEntity leafsStructure
-    builder.modifyEntity(internalChild) {
+    builder.modifyTreeMultiparentLeafEntity(internalChild) {
       this.mainParent = leafsStructure
     }
     val root = builder.toSnapshot().entities(TreeMultiparentRootEntity::class.java).single()

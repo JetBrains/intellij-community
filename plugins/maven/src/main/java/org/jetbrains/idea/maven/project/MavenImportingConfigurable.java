@@ -84,13 +84,13 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
       }
     }
 
-    return mySettingsForm.isModified(myImportingSettings, myProject);
+    return mySettingsForm.isModified(myImportingSettings);
   }
 
   @Override
   public void apply() throws ConfigurationException {
     mySettingsForm.getData(myImportingSettings);
-    ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(mySettingsForm.isStoreExternally());
+    ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true);
 
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       additionalConfigurable.apply();

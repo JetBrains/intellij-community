@@ -77,7 +77,6 @@ public interface CoverageAnnotator {
 
   void onSuiteChosen(@Nullable CoverageSuitesBundle newSuite);
 
-  @ApiStatus.Internal
   void renewCoverageData(@NotNull CoverageSuitesBundle suite, @NotNull CoverageDataManager dataManager);
 
   @ApiStatus.Internal

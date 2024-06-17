@@ -178,7 +178,7 @@ class MutableEntityCollectionTest {
     var virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id)
     if (removeOperation) vfuForAction.forEach { assertTrue(virtualFiles.contains(it)) }
 
-    builder.modifyEntity(entity) {
+    builder.modifySetVFUEntity(entity) {
       operation(this, vfuForAction)
     }
 
@@ -201,7 +201,7 @@ class MutableEntityCollectionTest {
     val builder = createEmptyBuilder()
     builder.addEntity(SetVFUEntity("hello", vfuSet, SampleEntitySource("test")))
     val entity = builder.entities(SetVFUEntity::class.java).first()
-    val entityBuilder = entity.builderFrom(builder) as SetVFUEntityImpl.Builder
+    val entityBuilder = entity.builderFrom(builder) as SetVFUEntity.Builder
     assertThrows<IllegalStateException> {
       entityBuilder.fileProperty.remove(entity.fileProperty.first())
     }
@@ -219,7 +219,7 @@ class MutableEntityCollectionTest {
     builder.addEntity(entity)
     var existingEntity = builder.entities(SetVFUEntity::class.java).first()
     assertNull((existingEntity.fileProperty as MutableWorkspaceSet).getModificationUpdateAction())
-    builder.modifyEntity(existingEntity) {
+    builder.modifySetVFUEntity(existingEntity) {
       assertNotNull((this.fileProperty as MutableWorkspaceSet).getModificationUpdateAction())
     }
     assertNull((existingEntity.fileProperty as MutableWorkspaceSet).getModificationUpdateAction())
@@ -235,7 +235,7 @@ class MutableEntityCollectionTest {
     var virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id)
     vfuForAction.forEach { assertTrue(virtualFiles.contains(it)) }
 
-    builder.modifyEntity(entity) {
+    builder.modifySetVFUEntity(entity) {
       operation(this, vfuForAction)
     }
 
@@ -252,7 +252,7 @@ class MutableEntityCollectionTest {
     var virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id)
     if (removeOperation) vfuForAction.forEach { assertTrue(virtualFiles.contains(it)) }
 
-    builder.modifyEntity(entity) {
+    builder.modifyListVFUEntity(entity) {
       operation(this, vfuForAction)
     }
 
@@ -275,7 +275,7 @@ class MutableEntityCollectionTest {
     var virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id)
     vfuForAction.forEach { assertTrue(virtualFiles.contains(it)) }
 
-    builder.modifyEntity(entity) {
+    builder.modifyListVFUEntity(entity) {
       operation(this, vfuForAction)
     }
 

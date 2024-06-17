@@ -151,7 +151,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition) {
-    final JsonObject object = PsiTreeUtil.getParentOfType(originalPosition, JsonObject.class);
+    final JsonObject object = PsiTreeUtil.getParentOfType(computedPosition, JsonObject.class, false);
     if (object != null) {
       return object.getPropertyList().stream()
         .filter(p -> !requiresNameQuotes() || p.getNameElement() instanceof JsonStringLiteral)
@@ -246,8 +246,14 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
 
     @Override
     public void removeIfComma(PsiElement forward) {
-      if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == JsonElementTypes.COMMA) {
-        forward.delete();
+      if (forward instanceof LeafPsiElement leaf) {
+        if (leaf.getElementType() == JsonElementTypes.COMMA) {
+          forward.delete();
+        }
+        if (leaf.getElementType() == JsonElementTypes.R_CURLY && PsiTreeUtil.skipWhitespacesBackward(leaf) instanceof LeafPsiElement prev &&
+            prev.getElementType() == JsonElementTypes.COMMA) {
+          prev.delete();
+        }
       }
     }
 

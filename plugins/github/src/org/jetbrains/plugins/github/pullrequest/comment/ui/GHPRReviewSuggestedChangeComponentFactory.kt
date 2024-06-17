@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.ClippingRoundedPanel
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -31,6 +32,7 @@ import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -83,7 +85,10 @@ internal object GHPRReviewSuggestedChangeComponentFactory {
       }
 
       add(topPanel, BorderLayout.NORTH)
-      add(SimpleHtmlPane(block.bodyHtml), BorderLayout.CENTER)
+      add(SimpleHtmlPane(addBrowserListener = false).apply {
+        addGithubHyperlinkListener(vm::openPullRequestInfoAndTimeline)
+        setHtmlBody(block.bodyHtml)
+      }, BorderLayout.CENTER)
     }
 
   private fun JBOptionButton.applyApplicability(applicability: GHPRCommentBodyBlock.SuggestionsApplicability) {

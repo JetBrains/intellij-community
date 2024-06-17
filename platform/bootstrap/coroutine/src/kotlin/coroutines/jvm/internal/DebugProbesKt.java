@@ -3,6 +3,8 @@ package kotlin.coroutines.jvm.internal;
 
 import kotlin.coroutines.Continuation;
 
+// API note: this is a substitute for the original class; ApiCheckTest considers it as part of the API due to `public` modifier,
+//           but actually it's part of the library's API
 @SuppressWarnings({"KotlinInternalInJava", "RedundantSuppression", "unchecked", "UnnecessaryFullyQualifiedName", "unused", "rawtypes"})
 public final class DebugProbesKt {
   public static <T> Continuation<T> probeCoroutineCreated(Continuation completion) {

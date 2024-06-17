@@ -1,9 +1,4 @@
 <idea-plugin>
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.dependenciesToolWindow.tabProvider"
-                    interface="com.intellij.dependencytoolwindow.DependenciesToolWindowTabProvider"
-                    dynamic="true"/>
-  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.PlatformLangProjectStoreFactory"
@@ -450,6 +445,8 @@
     <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
                         serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>
     <treeStructureProvider implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider" order="last"/>
+    <edtDataRule implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider$DataRule"/>
+
     <registryKey defaultValue="true" key="scratch.files.use.workspace.model" restartRequired="true"
                  description="Use WorkspaceModel API for scratch files integration"/>
     <postStartupActivity implementation="com.intellij.ide.scratch.workspace.ScratchWorkspaceStartupActivity"/>
@@ -613,7 +610,7 @@
     <getDataRule key="virtualFileArray" implementationClass="com.intellij.ide.impl.dataRules.VirtualFileArrayRule"/>
     <getDataRule key="Navigatable" implementationClass="com.intellij.ide.impl.dataRules.NavigatableRule"/>
     <getDataRule key="usageTarget" implementationClass="com.intellij.ide.impl.dataRules.UsageTargetsRule" injectedContext="true"/>
-    <getDataRule key="UsageInfo.List" implementationClass="com.intellij.ide.impl.dataRules.UsageInfo2ListRule" type="fast"/>
+    <getDataRule key="UsageInfo.List" implementationClass="com.intellij.ide.impl.dataRules.UsageInfo2ListRule"/>
     <getDataRule key="module" implementationClass="com.intellij.ide.impl.dataRules.ModuleRule"/>
     <getDataRule key="symbols" implementationClass="com.intellij.model.psi.impl.TargetSymbolsDataRule" injectedContext="true"/>
     <getDataRule key="search.targets" implementationClass="com.intellij.find.actions.SearchTargetsDataRule"/>
@@ -868,6 +865,8 @@
                            key="group.code.folding" bundle="messages.ApplicationBundle"/>
     <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionConfigurable" id="editor.preferences.completion"
                            key="title.code.completion" bundle="messages.ApplicationBundle"/>
+    <editorOptionsProvider instance="com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable" id="editor.preferences.inline.completion"
+                           key="title.inline.completion" bundle="messages.ApplicationBundle"/>
     <projectConfigurable instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable"
                          id="editor.preferences.import"
                          parentId="preferences.editor"
@@ -1048,10 +1047,6 @@
     <toolWindow id="Project" anchor="left" icon="AllIcons.Toolwindows.ToolWindowProject"
                 factoryClass="com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory"/>
 
-    <postStartupActivity implementation="com.intellij.dependencytoolwindow.DependencyToolWindowFactory"/>
-
-    <toolWindowExtractor implementation="com.intellij.dependencytoolwindow.DependencyToolWindowViewModelExtractor"/>
-
     <toolWindow id="Structure" anchor="left" icon="AllIcons.Toolwindows.ToolWindowStructure" secondary="true"
                 factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
     <toolWindow id="Bookmarks" anchor="left" icon="AllIcons.Toolwindows.ToolWindowBookmarks" secondary="true"
@@ -1224,6 +1219,9 @@
       implementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetUsagesCollector$StatusBarWidgetFactoryValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.usages.impl.ScopeRuleValidator"/>
 
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.IJMapperEventLoggerProvider"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.eventLog.IJFUSMapper"/>
+
     <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetUsagesCollector"/>
@@ -1234,7 +1232,6 @@
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.InspectionUsageFUSCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.KeymapUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.KeymapChangesCollector"/>
-    <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.hints.InlayProviderUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFileCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.ui.tabs.FileColorsUsagesCollector"/>
@@ -1358,31 +1355,10 @@
                     serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager"
                     serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
-
-    <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager"
-                    serviceImplementation="com.intellij.execution.dashboard.RunDashboardManagerImpl"/>
-    <backgroundPostStartupActivity implementation="com.intellij.execution.dashboard.RunDashboardCheckerActivity"/>
-
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" bundle="messages.LangBundle"
                        key="notification.group.jdk.update.error"/>
     <notificationGroup id="ColorSchemeDrop" displayType="BALLOON" hideFromSettings="true"/>
-    <notificationGroup id="Services Tool Window" displayType="BALLOON" isLogByDefault="true" bundle="messages.ExecutionBundle"
-                       key="notification.group.services"
-                       notificationIds="run.dashboard.multiple.run.configurations"/>
     <notificationGroup id="Batch quick fix" displayType="BALLOON" bundle="messages.LangBundle" key="notification.group.batch.quick.fix"/>
-    <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager"
-                    serviceImplementation="com.intellij.execution.services.ServiceViewManagerImpl"/>
-    <postStartupActivity implementation="com.intellij.execution.services.ServiceViewStartupActivity"/>
-    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule"
-                              id="type" order="first"/>
-    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule"
-                              id="status" order="after type"/>
-    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule"
-                              id="folder" order="after status"/>
-    <actionPromoter implementation="com.intellij.execution.dashboard.actions.RunDashboardActionPromoter"/>
-    <actionPromoter implementation="com.intellij.execution.services.ServiceViewActionPromoter"/>
-    <serviceViewContributor implementation="com.intellij.execution.dashboard.RunDashboardServiceViewContributor"/>
-    <navbar implementation="com.intellij.execution.services.ServiceViewNavBarExtension"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
                     serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
 
@@ -1567,6 +1543,7 @@
     <!-- must be first because TextEditorProvider.getInstance search by instance of -->
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider" id="text-editor"
                         order="first"/>
+    <edtDataRule implementation="com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider$DataRule"/>
 
     <fileEditorProvider id="LargeFileEditorProvider" implementation="com.intellij.largeFilesEditor.editor.LargeFileEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.largeFilesEditor.editor.LargeFileNotificationProvider"/>
@@ -1755,7 +1732,11 @@
 
     <projectAttachProcessor implementation="com.intellij.ide.workspace.WorkspaceAttachProcessor" order="last"/>
     <treeStructureProvider implementation="com.intellij.ide.workspace.projectView.WorkspaceTreeStructureProvider" order="last"/>
+    <projectViewNodeDecorator implementation="com.intellij.ide.workspace.projectView.WorkspaceProjectViewNodeDecorator" order="last"/>
     <workspace.subprojectHandler implementation="com.intellij.ide.workspace.DefaultSubprojectHandler" order="last"/>
+
+    <edtDataRule implementation="com.intellij.ide.workspace.projectView.WorkspaceTreeStructureProvider$DataRule"/>
+
     <workspace.settingsImporter implementation="com.intellij.ide.workspace.DefaultWorkspaceSettingsImporter"/>
 
     <postStartupActivity implementation="com.intellij.codeInsight.documentation.DocumentationSettingsListener"/>

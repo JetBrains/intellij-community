@@ -191,7 +191,7 @@ fun loadApplicationInitScript(
         "INTELLIJ_RT_PATH" to if (intelliJRtPath.isNullOrEmpty()) "null" else "mapPath(${intelliJRtPath.toGroovyStringLiteral()})",
         "WORKING_DIRECTORY" to if (workingDirectory.isNullOrEmpty()) "null" else "mapPath(${workingDirectory.toGroovyStringLiteral()})",
         // params should be kept as is; they will be embedded into the init-script directly
-        "PARAMS" to if (params.isNullOrEmpty()) "".toGroovyStringLiteral() else params,
+        "PARAMS" to if (params.isNullOrEmpty()) "// NO PARAMS" else params,
         "USE_MANIFEST_JAR" to useManifestJar.toString(),
         "USE_ARGS_FILE" to useArgsFile.toString(),
         "USE_CLASSPATH_FILE" to useClasspathFile.toString()

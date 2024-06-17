@@ -338,7 +338,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (oldThread == null) {
       switch (suspendContext.getSuspendPolicy()) {
         case EventRequest.SUSPEND_ALL -> suspendContext.getDebugProcess().getVirtualMachineProxy().addedSuspendAllContext();
-        case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(suspendContext.getEventThread()).suspendedThreadContext();
+        case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(suspendContext.getEventThread()).threadWasSuspended();
       }
       //this is the first event in the eventSet that we process
       suspendContext.getDebugProcess().beforeSuspend(suspendContext);
@@ -529,6 +529,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void processStepEvent(SuspendContextImpl suspendContext, StepEvent event) {
+    LOG.debug("processStepEvent on " + event);
     final ThreadReference thread = event.thread();
     //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
@@ -640,6 +641,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+        LOG.debug("processLocatableEvent action on " + event);
         final SuspendManager suspendManager = getSuspendManager();
 
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
@@ -829,7 +831,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
         debugProcess.logError("Many suspend all switch contexts: " + suspendAllContexts);
       }
 
-      // Already stopped, so this is "remaining" event. Need to resume the event.
       noStandardSuspendNeeded = true;
       ThreadReferenceProxyImpl threadProxy = debugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
       if (suspendManager.myExplicitlyResumedThreads.contains(threadProxy)) {
@@ -840,18 +841,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
         suspendManager.myExplicitlyResumedThreads.remove(threadProxy);
         suspendManager.voteResume(suspendContext);
-        SuspendContextImpl suspendAllContext = suspendAllContexts.get(0);
-        debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendAllContext) {
-          @Override
-          public void contextAction(@NotNull SuspendContextImpl c) {
-            DebuggerSession session = debugProcess.getSession();
-            DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(session, suspendAllContext, threadProxy, null);
-            DebuggerInvocationUtil.invokeLater(debugProcess.getProject(),
-                                               () -> session.getContextManager().setState(debuggerContext, DebuggerSession.State.PAUSED, DebuggerSession.Event.CONTEXT, null));
-          }
-        });
+        SuspendManagerUtil.switchToThreadInSuspendAllContext(suspendAllContexts.get(0), threadProxy);
       }
       else {
+        // Already stopped, so this is "remaining" event. Need to resume the event.
         List<SuspendContextImpl> suspendAllSwitchContexts =
           ContainerUtil.filter(suspendManager.getEventContexts(), c -> c.mySuspendAllSwitchedContext);
         if (suspendAllSwitchContexts.size() != 1) {
@@ -861,6 +854,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           // There are some errors in evaluation-resume-suspend logic
           debugProcess.logError("This means resuming thead " + thread + " to the running state for " + suspendContext);
         }
+        LOG.warn("Yet another thread has been stopped: " + suspendContext);
         suspendManager.voteResume(suspendContext);
         debugProcess.notifyStoppedOtherThreads();
       }

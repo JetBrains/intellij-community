@@ -1,40 +1,37 @@
 c:com.intellij.AbstractBundle
+- sf:Companion:com.intellij.AbstractBundle$Companion
 - <init>(java.lang.Class,java.lang.String):V
 - p:<init>(java.lang.String):V
-- clearLocaleCache():V
-- containsKey(java.lang.String):Z
+- f:clearLocaleCache():V
+- f:containsKey(java.lang.String):Z
 - p:findBundle(java.lang.String,java.lang.ClassLoader,java.util.ResourceBundle$Control):java.util.ResourceBundle
 - getLazyMessage(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 - getMessage(java.lang.String,java.lang.Object[]):java.lang.String
-- getPartialMessage(java.lang.String,I,java.lang.Object[]):java.lang.String
-- getResourceBundle():java.util.ResourceBundle
-- s:message(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
+- f:getPartialMessage(java.lang.String,I,java.lang.Object[]):java.lang.String
+- f:getResourceBundle():java.util.ResourceBundle
+- sf:message(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
 - messageOrDefault(java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
-- s:messageOrDefault(java.util.ResourceBundle,java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
+- sf:messageOrDefault(java.util.ResourceBundle,java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
 - messageOrNull(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messageOrNull(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
+- sf:messageOrNull(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
+f:com.intellij.AbstractBundle$Companion
+- f:message(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
+- f:messageOrDefault(java.util.ResourceBundle,java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
+- f:messageOrNull(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
 f:com.intellij.BundleBase
 - sf:INSTANCE:com.intellij.BundleBase
 - sf:L10N_MARKER:java.lang.String
 - sf:MNEMONIC:C
 - sf:MNEMONIC_STRING:java.lang.String
-- sf:SHOW_DEFAULT_MESSAGES:Z
-- sf:SHOW_KEYS:Z
-- sf:SHOW_LOCALIZED_MESSAGES:Z
-- sf:appendLocalizationSuffix(java.lang.String,java.lang.String):java.lang.String
 - f:assertOnMissedKeys(Z):V
 - sf:format(java.lang.String,java.lang.Object[]):java.lang.String
 - sf:getDefaultMessage(java.util.ResourceBundle,java.lang.String):java.lang.String
 - sf:message(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
 - sf:messageOrDefault(java.util.ResourceBundle,java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
 - sf:partialMessage(java.util.ResourceBundle,java.lang.String,I,java.lang.Object[]):java.lang.String
-- sf:postprocessValue(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
 - sf:replaceMnemonicAmpersand(java.lang.String):java.lang.String
 - sf:setTranslationConsumer(java.util.function.BiConsumer):V
 - sf:useDefaultValue(java.util.ResourceBundle,java.lang.String,java.lang.String):java.lang.String
-f:com.intellij.BundleUtil
-- <init>():V
-- s:loadLanguageBundle(java.lang.ClassLoader,java.lang.String):java.util.ResourceBundle
 f:com.intellij.Patches
 - sf:IBM_JDK_DISABLE_COLLECTION_BUG:Z
 - sf:JDK_BUG_ID_21275177:Z
@@ -45,7 +42,6 @@ f:com.intellij.Patches
 - sf:TEXT_LAYOUT_IS_SLOW:Z
 - <init>():V
 f:com.intellij.UtilBundle
-- s:loadBundleFromPlugin(java.lang.ClassLoader):V
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 *f:com.intellij.concurrency.ThreadContext
 - sf:captureThreadContext(java.lang.Runnable):java.lang.Runnable
@@ -1304,6 +1300,7 @@ f:com.intellij.openapi.util.UserDataHolderExKt
 - sf:getOrCreateUserData(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:nullableLazyValue(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
 com.intellij.openapi.util.ValueKey
+- sf:Companion:com.intellij.openapi.util.ValueKey$Companion
 - a:getName():java.lang.String
 - match():com.intellij.openapi.util.ValueKey$BeforeIf
 - s:match(java.lang.String):com.intellij.openapi.util.ValueKey$BeforeIf
@@ -1316,6 +1313,8 @@ com.intellij.openapi.util.ValueKey$BeforeThen
 - a:or(com.intellij.openapi.util.ValueKey):com.intellij.openapi.util.ValueKey$BeforeThen
 - a:then(java.lang.Object):com.intellij.openapi.util.ValueKey$BeforeIf
 - a:thenGet(java.util.function.Supplier):com.intellij.openapi.util.ValueKey$BeforeIf
+f:com.intellij.openapi.util.ValueKey$Companion
+- f:match(java.lang.String):com.intellij.openapi.util.ValueKey$BeforeIf
 c:com.intellij.openapi.util.Version
 - java.io.Serializable
 - java.lang.Comparable
@@ -1606,6 +1605,15 @@ f:com.intellij.openapi.util.io.NioFiles
 - s:setExecutable(java.nio.file.Path):V
 - s:setReadOnly(java.nio.file.Path,Z):V
 - s:toPath(java.lang.String):java.nio.file.Path
+a:com.intellij.openapi.util.io.NioFiles$StatsCollectingVisitor
+- java.nio.file.SimpleFileVisitor
+- <init>():V
+- pa:countDirectory(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):V
+- pa:countFile(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):V
+- postVisitDirectory(java.nio.file.Path,java.io.IOException):java.nio.file.FileVisitResult
+- preVisitDirectory(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):java.nio.file.FileVisitResult
+- visitFile(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):java.nio.file.FileVisitResult
+- visitFileFailed(java.nio.file.Path,java.io.IOException):java.nio.file.FileVisitResult
 f:com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 - com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 - sf:INSTANCE:com.intellij.openapi.util.io.NioPathPrefixTreeFactory
@@ -1897,6 +1905,7 @@ c:com.intellij.openapi.util.text.StringUtil
 - s:formatFileSize(J):java.lang.String
 - s:formatFileSize(J,java.lang.String):java.lang.String
 - s:formatFileSize(J,java.lang.String,I):java.lang.String
+- s:formatFileSize(J,java.lang.String,I,Z):java.lang.String
 - s:formatLinks(java.lang.String):java.lang.String
 - s:getLineBreakCount(java.lang.CharSequence):I
 - s:getLineSeparatorAt(java.lang.CharSequence,I):com.intellij.util.LineSeparator

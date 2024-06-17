@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="studio-test-platform" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:studio-test-platform:2024.1.1-canary8-20">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2024.1.1-canary8-20/studio-test-platform-2024.1.1-canary8-20.jar">
+          <sha256sum>2b568cc2cbc3a193a77dac84d87e992ad30240260906ef046d1b17fc2b698276</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2024.1.1-canary8-20/studio-test-platform-2024.1.1-canary8-20.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2024.1.1-canary8-20/studio-test-platform-2024.1.1-canary8-20-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

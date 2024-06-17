@@ -60,6 +60,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction;
 import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -257,11 +258,11 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
-    return requireJdkHome(gradleVersion, GradleJvmResolver.VersionRestriction.NO);
+    return requireJdkHome(gradleVersion, JavaVersionRestriction.NO);
   }
 
   public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion,
-                                               @NotNull GradleJvmResolver.VersionRestriction javaVersionRestriction) {
+                                               @NotNull JavaVersionRestriction javaVersionRestriction) {
     if (GradleJvmSupportMatrix.isSupported(gradleVersion, JavaVersion.current()) &&
         !javaVersionRestriction.isRestricted(gradleVersion, JavaVersion.current())) {
       return IdeaTestUtil.requireRealJdkHome();

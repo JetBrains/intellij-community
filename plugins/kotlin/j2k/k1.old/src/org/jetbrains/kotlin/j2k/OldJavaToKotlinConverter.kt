@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.DummyHolder
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.j2k.ast.Element
 import org.jetbrains.kotlin.j2k.usageProcessing.ExternalCodeProcessor
@@ -160,7 +160,7 @@ class OldJavaToKotlinConverter(
                 return { processUsages(refs) }
             }
 
-            context(KtAnalysisSession)
+            context(KaSession)
             override fun bindJavaDeclarationsToConvertedKotlinOnes(files: List<KtFile>) {
                 // Do nothing in Old J2K
             }

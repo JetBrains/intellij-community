@@ -6,7 +6,6 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.InjectionEditService;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -303,6 +302,15 @@ final class PsiUpdateImpl {
         return tracker;
       });
     }
+    
+    @Override
+    public @NotNull PsiFile getOriginalFile(@NotNull PsiFile copyFile) throws IllegalArgumentException {
+      Map.Entry<PsiFile, FileTracker> entry = ContainerUtil.find(myChangedFiles.entrySet(), e -> e.getValue().myCopyFile == copyFile);
+      if (entry == null) {
+        throw new IllegalArgumentException("Supplied file is not a writable copy tracked by this tracker: " + copyFile);
+      }
+      return entry.getKey();
+    }
 
     @Override
     public <E extends PsiElement> E getWritable(E element) {
@@ -362,14 +370,6 @@ final class PsiUpdateImpl {
       myTracker.unblock();
       Segment range = pointer.getRange();
       if (range == null) return null;
-      PsiLanguageInjectionHost host = myTracker.getHostCopy();
-      if (host != null) {
-        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myTracker.myProject);
-        PsiFile file = findInjectedFile(instance, host);
-        int start = instance.mapUnescapedOffsetToInjected(file, range.getStartOffset());
-        int end = instance.mapUnescapedOffsetToInjected(file, range.getEndOffset());
-        return ((DocumentWindow)file.getViewProvider().getDocument()).injectedToHost(TextRange.create(start, end));
-      }
       return TextRange.create(range);
     }
 
@@ -421,7 +421,7 @@ final class PsiUpdateImpl {
           Result result = expression.calculateResult(new DummyContext(range, element));
           myTemplateFields.add(new ModStartTemplate.ExpressionField(range, varName, expression));
           if (result != null) {
-            myTracker.myPositionDocument.replaceString(range.getStartOffset(), range.getEndOffset(), result.toString());
+            myTracker.myDocument.replaceString(elementRange.getStartOffset(), elementRange.getEndOffset(), result.toString());
           }
           return this;
         }
@@ -483,7 +483,9 @@ final class PsiUpdateImpl {
       if (range == null) {
         throw new IllegalArgumentException("Element disappeared after postponed operations: " + element);
       }
+      range = mapRange(range);
       TextRange identifierRange = nameIdentifier != null ? getRange(nameIdentifier) : null;
+      identifierRange = identifierRange == null ? null : mapRange(identifierRange);
       myRenameSymbol = new ModStartRename(myNavigationFile, new ModStartRename.RenameSymbolRange(range, identifierRange), suggestedNames);
     }
 
@@ -493,6 +495,7 @@ final class PsiUpdateImpl {
       if (range == null) {
         throw new IllegalArgumentException("Element disappeared after postponed operations: " + declaration);
       }
+      range = mapRange(range);
       String oldText = myTracker.myCopyFile.getText();
       myTrackedDeclarations.add(new ModUpdateReferences(myNavigationFile, oldText, range, range));
     }

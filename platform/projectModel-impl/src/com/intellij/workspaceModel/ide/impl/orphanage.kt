@@ -66,7 +66,7 @@ internal class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrp
   private fun checkIfParentsAlreadyExist(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     val orphanModules = changes[ModuleEntity::class.java]
                           ?.filterIsInstance<EntityChange.Added<ModuleEntity>>()
-                          ?.map { it.entity } ?: return
+                          ?.map { it.newEntity } ?: return
 
     val snapshot = project.workspaceModel.currentSnapshot
     val orphanToSnapshotModule = orphanModules
@@ -165,7 +165,7 @@ private class OrphanListener(private val project: Project) : WorkspaceModelChang
       // Do not move to the field! They should be created every time! (or the code should be refactored)
       val changedModules = event.getChanges(ModuleEntity::class.java)
         .filterIsInstance<EntityChange.Added<ModuleEntity>>()
-        .map { it.entity }
+        .map { it.newEntity }
 
       val orphanage = EntitiesOrphanage.getInstance(project).currentSnapshot
       val orphanModules = changedModules.mapNotNull {
@@ -250,7 +250,7 @@ private class ContentRootAdder : EntityAdder {
     log.info("Move content roots for ${updates.size} modules from orphanage to storage")
     updates.forEach { (snapshotModule, rootsToAdd) ->
       val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
-      builder.modifyEntity(resolvedModule) {
+      builder.modifyModuleEntity(resolvedModule) {
         this.contentRoots += rootsToAdd
       }
     }
@@ -315,7 +315,7 @@ private class SourceRootAdder : EntityAdder {
       val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
       rootsToAdd.forEach { (root, sources) ->
         val contentRoot = resolvedModule.contentRoots.find { it.url == root }!!
-        builder.modifyEntity(contentRoot) {
+        builder.modifyContentRootEntity(contentRoot) {
           this.sourceRoots += sources
         }
       }
@@ -389,7 +389,7 @@ private class ExcludeRootAdder : EntityAdder {
       val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
       rootsToAdd.forEach { (root, excludes) ->
         val contentRoot = resolvedModule.contentRoots.find { it.url == root }!!
-        builder.modifyEntity(contentRoot) {
+        builder.modifyContentRootEntity(contentRoot) {
           this.excludedUrls += excludes
         }
       }

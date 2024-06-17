@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.EdtDataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.presentation.FilePresentationService;
@@ -38,7 +38,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.SpeedSearchLocator {
+public class ProjectViewTree extends DnDAwareTree implements EdtDataProvider, SpeedSearchSupply.SpeedSearchLocator {
 
   private @Nullable ProjectViewDirectoryExpandDurationMeasurer expandMeasurer;
 
@@ -64,15 +64,6 @@ public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.S
     setCellRenderer(createCellRenderer());
     HintUpdateSupply.installDataContextHintUpdateSupply(this);
 
-    DataManager.registerDataProvider(this, new DataProvider() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-          if (PlatformDataKeys.SPEED_SEARCH_LOCATOR.is(dataId)) {
-            return ProjectViewTree.this;
-          }
-          return null;
-        }
-    });
     ClientProperty.put(this, DefaultTreeUI.AUTO_EXPAND_FILTER, node -> {
       var obj = TreeUtil.getUserObject(node);
       if (obj instanceof BasePsiNode<?> pvNode) {
@@ -86,6 +77,11 @@ public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.S
         return false;
       }
     });
+  }
+
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.SPEED_SEARCH_LOCATOR, this);
   }
 
   @Override

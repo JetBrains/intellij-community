@@ -5,7 +5,7 @@ import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.util.ThreeState

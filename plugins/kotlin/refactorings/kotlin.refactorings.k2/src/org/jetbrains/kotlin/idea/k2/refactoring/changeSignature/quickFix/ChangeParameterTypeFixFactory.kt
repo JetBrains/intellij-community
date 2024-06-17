@@ -5,13 +5,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -35,12 +35,12 @@ object ChangeParameterTypeFixFactory {
        createTypeMismatchFixes(diagnostic.psi, diagnostic.expectedType.withNullability(KtTypeNullability.NULLABLE))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createTypeMismatchFixes(psi: PsiElement, targetType: KtType): List<KotlinQuickFixAction<*>> {
         val valueArgument = psi.parent as? KtValueArgument ?: return emptyList()
 
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
-        val memberCall = (callElement.resolveCall() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtFunctionCall<*>
+        val memberCall = (callElement.resolveCallOld() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
         val functionLikeSymbol = memberCall?.symbol ?: return emptyList()
 
         val paramSymbol = memberCall.argumentMapping[valueArgument.getArgumentExpression()]
@@ -57,7 +57,7 @@ object ChangeParameterTypeFixFactory {
             parameter,
             typePresentation,
             typeFQNPresentation,
-            functionLikeSymbol is KtConstructorSymbol && functionLikeSymbol.isPrimary,
+            functionLikeSymbol is KaConstructorSymbol && functionLikeSymbol.isPrimary,
             functionName
         ))
     }

@@ -338,7 +338,7 @@ private val usedCacheVersionPrefixes: List<String> = listOf("v", "version")
 private val expectedKryoRegistration = """
   com.google.common.collect.HashMultimap
   com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap
-  com.intellij.platform.workspace.storage.impl.ConnectionId
+  com.intellij.platform.workspace.storage.ConnectionId
   com.intellij.platform.workspace.storage.impl.ImmutableEntitiesBarrel
   com.intellij.platform.workspace.storage.impl.ChildEntityId
   com.intellij.platform.workspace.storage.impl.ParentEntityId
@@ -423,7 +423,7 @@ private val expectedKryoRegistration = """
   com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#SimpleType#PrimitiveType
   com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#SimpleType#CustomType
   com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#EntityReference
-  com.intellij.platform.workspace.storage.impl.ConnectionId#ConnectionType
+  com.intellij.platform.workspace.storage.ConnectionId#ConnectionType
   java.util.Collections#UnmodifiableCollection
   java.util.Collections#UnmodifiableSet
   java.util.Collections#UnmodifiableRandomAccessList

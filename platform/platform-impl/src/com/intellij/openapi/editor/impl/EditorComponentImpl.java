@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -35,7 +35,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.EditorsSplittersKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
@@ -79,14 +79,14 @@ import java.util.List;
 import java.util.Map;
 
 @DirtyUI
-public final class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible,
+public final class EditorComponentImpl extends JTextComponent implements Scrollable, EdtCompatibleDataProvider, Queryable, TypingTarget, Accessible,
                                                                          UISettingsListener, UiInspectorPreciseContextProvider {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
 
-  private final EditorImpl myEditor;
+  private final EditorImpl editor;
 
   public EditorComponentImpl(@NotNull EditorImpl editor) {
-    myEditor = editor;
+    this.editor = editor;
     enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.INPUT_METHOD_EVENT_MASK);
     enableInputMethods(true);
     // Note: Ideally, we should always set "FocusCycleRoot" to "false", but,
@@ -101,9 +101,9 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
       @Override
       public Point magnify(double scale, Point at) {
-        if (myEditor.isDisposed()) return at;
-        VisualPosition magnificationPosition = myEditor.xyToVisualPosition(at);
-        float currentSize = myEditor.getColorsScheme().getEditorFontSize2D();
+        if (EditorComponentImpl.this.editor.isDisposed()) return at;
+        VisualPosition magnificationPosition = EditorComponentImpl.this.editor.xyToVisualPosition(at);
+        float currentSize = EditorComponentImpl.this.editor.getColorsScheme().getEditorFontSize2D();
         boolean isChangePersistent = EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent();
         float defaultFontSize;
         if (isChangePersistent) {
@@ -114,12 +114,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         }
 
         float size = Math.max((float)(currentSize * scale), defaultFontSize);
-        myEditor.setFontSize(size);
+        EditorComponentImpl.this.editor.setFontSize(size);
         if (isChangePersistent) {
-          myEditor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
+          EditorComponentImpl.this.editor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
         }
 
-        return myEditor.visualPositionToXY(magnificationPosition);
+        return EditorComponentImpl.this.editor.visualPositionToXY(magnificationPosition);
       }
     });
     putClientProperty(UndoRedoAction.IGNORE_SWING_UNDO_MANAGER, Boolean.TRUE);
@@ -143,8 +143,8 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     UISettingsUtils settingsUtils = UISettingsUtils.with(uiSettings);
-    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != settingsUtils.getPresentationModeFontSize()) {
-      myEditor.setFontSize(settingsUtils.getPresentationModeFontSize());
+    if (uiSettings.getPresentationMode() && editor.getFontSize() != settingsUtils.getPresentationModeFontSize()) {
+      editor.setFontSize(settingsUtils.getPresentationModeFontSize());
     }
   }
 
@@ -158,69 +158,52 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   }
 
   public @NotNull EditorImpl getEditor() {
-    return myEditor;
+    return editor;
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (myEditor.isDisposed()) return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (editor.isDisposed()) return;
 
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      // enable copying from editor in renderer mode
-      return myEditor.getCopyProvider();
-    }
+    sink.set(PlatformDataKeys.COPY_PROVIDER, editor.getCopyProvider());
 
-    if (myEditor.isRendererMode()) return null;
+    if (editor.isRendererMode()) return;
 
-    if (CommonDataKeys.EDITOR.is(dataId)) {
-      return myEditor;
+    sink.set(CommonDataKeys.EDITOR, editor);
+    sink.set(CommonDataKeys.CARET, editor.getCaretModel().getCurrentCaret());
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, editor.getDeleteProvider());
+    sink.set(PlatformDataKeys.CUT_PROVIDER, editor.getCutProvider());
+    sink.set(PlatformDataKeys.PASTE_PROVIDER, editor.getPasteProvider());
+
+    LogicalPosition location = editor.myLastMousePressedLocation;
+    if (location == null) {
+        location = editor.getCaretModel().getLogicalPosition();
     }
-    if (CommonDataKeys.CARET.is(dataId)) {
-      return myEditor.getCaretModel().getCurrentCaret();
+    sink.set(CommonDataKeys.EDITOR_VIRTUAL_SPACE, EditorCoreUtil.inVirtualSpace(editor, location));
+    Point point = editor.myLastMousePressedPoint;
+    if (point != null) {
+      sink.set(PlatformDataKeys.EDITOR_CLICK_OVER_TEXT, EditorUtil.isPointOverText(editor, point));
     }
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myEditor.getDeleteProvider();
-    }
-    if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
-      return myEditor.getCutProvider();
-    }
-    if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myEditor.getPasteProvider();
-    }
-    if (CommonDataKeys.EDITOR_VIRTUAL_SPACE.is(dataId)) {
-      LogicalPosition location = myEditor.myLastMousePressedLocation;
-      if (location == null) {
-        location = myEditor.getCaretModel().getLogicalPosition();
-      }
-      return EditorCoreUtil.inVirtualSpace(myEditor, location);
-    }
-    if (PlatformDataKeys.EDITOR_CLICK_OVER_TEXT.is(dataId)) {
-      Point point = myEditor.myLastMousePressedPoint;
-      if (point != null) {
-        return EditorUtil.isPointOverText(myEditor, point);
-      }
-    }
-    return null;
   }
 
   @DirtyUI
   @Override
   public Color getBackground() {
-    return myEditor.getBackgroundColor();
+    return editor.getBackgroundColor();
   }
 
   @DirtyUI
   @Override
   public Dimension getPreferredSize() {
-    return myEditor.getPreferredSize();
+    return editor.getPreferredSize();
   }
 
   @Override
   public void setCursor(Cursor cursor) {
     super.setCursor(cursor);
-    myEditor.myCursorSetExternally = true;
+    editor.myCursorSetExternally = true;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Mouse cursor set to " + cursor + " in " + myEditor, new Throwable());
+      LOG.debug("Mouse cursor set to " + cursor + " in " + editor, new Throwable());
     }
   }
 
@@ -242,11 +225,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     if (!e.isConsumed()) {
       switch (e.getID()) {
         case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
-          myEditor.replaceInputMethodText(e);
+          editor.replaceInputMethodText(e);
           // No breaks over here.
 
         case InputMethodEvent.CARET_POSITION_CHANGED:
-          myEditor.inputMethodCaretPositionChanged(e);
+          editor.inputMethodCaretPositionChanged(e);
           e.consume();
           break;
       }
@@ -258,13 +241,13 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @Override
   public ActionCallback type(String text) {
     ActionCallback result = new ActionCallback();
-    EdtInvocationManager.invokeLaterIfNeeded(() -> myEditor.type(text).notify(result));
+    EdtInvocationManager.invokeLaterIfNeeded(() -> editor.type(text).notify(result));
     return result;
   }
 
   @Override
   public @Nullable InputMethodRequests getInputMethodRequests() {
-    return IdeEventQueue.getInstance().isInputMethodEnabled() ? myEditor.getInputMethodRequests() : null;
+    return IdeEventQueue.getInstance().isInputMethodEnabled() ? editor.getInputMethodRequests() : null;
   }
 
   @DirtyUI
@@ -276,10 +259,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @DirtyUI
   @Override
   public void paintComponent(Graphics g) {
-    myEditor.measureTypingLatency();
+    editor.measureTypingLatency();
 
     Graphics2D gg = (Graphics2D)g;
-    if (myEditor.useEditorAntialiasing()) {
+    if (editor.useEditorAntialiasing()) {
       EditorUIUtil.setupAntialiasing(gg);
     }
     else {
@@ -287,20 +270,20 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
     gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
     AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
-    myEditor.paint(gg);
+    editor.paint(gg);
     if (origTx != null) {
       gg.setTransform(origTx);
     }
 
-    Project project = myEditor.getProject();
+    Project project = editor.getProject();
     if (project != null) {
-      EditorsSplitters.Companion.stopOpenFilesActivity(project);
+      EditorsSplittersKt.stopOpenFilesActivity(project);
     }
   }
 
   public void repaintEditorComponent(int x, int y, int width, int height) {
-    int topOverhang = Math.max(0, myEditor.myView.getTopOverhang());
-    int bottomOverhang = Math.max(0, myEditor.myView.getBottomOverhang());
+    int topOverhang = Math.max(0, editor.myView.getTopOverhang());
+    int bottomOverhang = Math.max(0, editor.myView.getBottomOverhang());
     repaint(x, y - topOverhang, width, height + topOverhang + bottomOverhang);
   }
 
@@ -308,7 +291,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @DirtyUI
   @Override
   public Dimension getPreferredScrollableViewportSize() {
-    return myEditor.getPreferredSize();
+    return editor.getPreferredSize();
   }
 
   @DirtyUI
@@ -316,10 +299,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
     return ReadAction.compute(() -> {
       if (orientation == SwingConstants.VERTICAL) {
-        return myEditor.getLineHeight();
+        return editor.getLineHeight();
       }
       // if orientation == SwingConstants.HORIZONTAL
-      return EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
+      return EditorUtil.getSpaceWidth(Font.PLAIN, editor);
     });
   }
 
@@ -327,7 +310,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @Override
   public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
     if (orientation == SwingConstants.VERTICAL) {
-      int lineHeight = myEditor.getLineHeight();
+      int lineHeight = editor.getLineHeight();
       if (direction > 0) {
         int lineNumber = (visibleRect.y + visibleRect.height) / lineHeight;
         return lineHeight * lineNumber - visibleRect.y;
@@ -353,12 +336,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   @Override
   public void putInfo(@NotNull Map<? super String, ? super String> info) {
-    myEditor.putInfo(info);
+    editor.putInfo(info);
   }
 
   @Override
   public @NonNls String toString() {
-    return "EditorComponent file=" + myEditor.getVirtualFile();
+    return "EditorComponent file=" + editor.getVirtualFile();
   }
 
 
@@ -373,7 +356,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @SuppressWarnings("UnusedReturnValue")
   @RequiresEdt
   private boolean setupEditorSwingCaretUpdatesCourierIfRequired() {
-    if ((myEditorSwingCaretUpdatesCourier != null) || (myEditor == null) || (myEditor.isDisposed()) ) {
+    if ((myEditorSwingCaretUpdatesCourier != null) || (editor == null) || (editor.isDisposed()) ) {
       return false;
     }
 
@@ -425,7 +408,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @RequiresEdt
     private static @Nullable EditorSwingCaretUpdatesCourier create(@NotNull EditorComponentImpl parent) {
-      if ( (parent.myEditor == null) || (parent.myEditor.isDisposed()) ) {
+      if ((parent.editor == null) || (parent.editor.isDisposed()) ) {
         return null;
       }
 
@@ -435,19 +418,19 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     /** Don't use it directly, use {@link #create(EditorComponentImpl)} instead */
     @RequiresEdt
     private EditorSwingCaretUpdatesCourier() {
-      assert(myEditor != null);
-      assert(!myEditor.isDisposed());
+      assert(editor != null);
+      assert(!editor.isDisposed());
 
-      final @NotNull var caretModel = myEditor.getCaretModel();
+      final @NotNull var caretModel = editor.getCaretModel();
       final @NotNull var primaryCaret = caretModel.getPrimaryCaret();
 
       myLastKnownPrimaryCaret = new WeakReference<>(primaryCaret);
       myPrimaryCaretLastKnownDot = primaryCaret.getOffset();
       myPrimaryCaretLastKnownMark = primaryCaret.getLeadSelectionOffset();
 
-      caretModel.addCaretActionListener(this, myEditor.getDisposable());
-      caretModel.addCaretListener(this, myEditor.getDisposable());
-      myEditor.getDocument().addDocumentListener(this, myEditor.getDisposable());
+      caretModel.addCaretActionListener(this, editor.getDisposable());
+      caretModel.addCaretListener(this, editor.getDisposable());
+      editor.getDocument().addDocumentListener(this, editor.getDisposable());
     }
 
 
@@ -468,7 +451,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         return;
       }
 
-      final var currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+      final var currentPrimaryCaret = editor.getCaretModel().getPrimaryCaret();
       primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
     }
 
@@ -483,7 +466,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       }
 
       final Caret changedCaret = event.getCaret();
-      final Caret currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+      final Caret currentPrimaryCaret = editor.getCaretModel().getPrimaryCaret();
 
       if (changedCaret != currentPrimaryCaret) {
         // Filter out changes of secondary carets
@@ -503,7 +486,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       }
 
       final Caret addedCaret = event.getCaret();
-      final Caret currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+      final Caret currentPrimaryCaret = editor.getCaretModel().getPrimaryCaret();
 
       if (addedCaret != currentPrimaryCaret) {
         // The added caret hasn't become primary, so we're not interested in its position
@@ -522,7 +505,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         return;
       }
 
-      final var currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+      final var currentPrimaryCaret = editor.getCaretModel().getPrimaryCaret();
 
       if (myLastKnownPrimaryCaret.refersTo(currentPrimaryCaret)) {
         // The removal of a caret didn't cause a switching of the primary caret, so its position isn't supposed to have changed
@@ -550,7 +533,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         return;
       }
 
-      final Caret currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+      final Caret currentPrimaryCaret = editor.getCaretModel().getPrimaryCaret();
       primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
     }
 
@@ -665,7 +648,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   @Override
   public int getCaretPosition() {
-    return myEditor.getCaretModel().getOffset();
+    return editor.getCaretModel().getOffset();
   }
 
   @DirtyUI
@@ -752,7 +735,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getLength() {
-      return myEditor.getDocument().getTextLength();
+      return editor.getDocument().getTextLength();
     }
 
     @Override
@@ -800,7 +783,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     @Override
     public String getText(final int offset, final int length) {
       return ReadAction
-        .compute(() -> myEditor.getDocument().getText(new TextRange(offset, offset + length)));
+        .compute(() -> editor.getDocument().getText(new TextRange(offset, offset + length)));
     }
 
     @Override
@@ -886,13 +869,13 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     public int getElementIndex(int i) {
       // For the root element this asks for the index of the offset, which
       // means the line number
-      Document document = myEditor.getDocument();
+      Document document = editor.getDocument();
       return document.getLineNumber(i);
     }
 
     @Override
     public int getElementCount() {
-      Document document = myEditor.getDocument();
+      Document document = editor.getDocument();
       return document.getLineCount();
     }
 
@@ -921,13 +904,13 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
         @Override
         public int getStartOffset() {
-          Document document = myEditor.getDocument();
+          Document document = editor.getDocument();
           return document.getLineStartOffset(i);
         }
 
         @Override
         public int getEndOffset() {
-          Document document = myEditor.getDocument();
+          Document document = editor.getDocument();
           return document.getLineEndOffset(i);
         }
 
@@ -961,22 +944,56 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   @Override
   public String getSelectedText() {
-    return myEditor.getSelectionModel().getSelectedText(true);
+    return editor.getSelectionModel().getSelectedText(true);
+  }
+
+  @Override
+  public void select(int startOffset, int endOffset) {
+    // This method is called by the JDK on macOS, when the IME asks us to replace already committed text.
+    // Doing this is a bit complicated, since we have to account for multi-caret.
+
+    String selectedText = editor.getDocument().getText(new TextRange(startOffset, endOffset));
+
+    int length = endOffset - startOffset;
+    int offsetRelativeToCurrentCaret = startOffset - editor.getCaretModel().getCurrentCaret().getOffset();
+
+    boolean allCaretsHaveTheSameText = true;
+
+    for (var caret : editor.getCaretModel().getAllCarets()) {
+      var caretStart = offsetRelativeToCurrentCaret + caret.getOffset();
+      var caretEnd = caretStart + length;
+      String caretText = editor.getDocument().getText(new TextRange(caretStart, caretEnd));
+      if (!selectedText.equals(caretText)) {
+        allCaretsHaveTheSameText = false;
+        break;
+      }
+    }
+
+    if (allCaretsHaveTheSameText) {
+      for (var caret : editor.getCaretModel().getAllCarets()) {
+        var caretStart = offsetRelativeToCurrentCaret + caret.getOffset();
+        var caretEnd = caretStart + length;
+        caret.setSelection(caretStart, caretEnd);
+      }
+    } else {
+      // Fallback to the default implementation
+      editor.getSelectionModel().setSelection(startOffset, endOffset);
+    }
   }
 
   @DirtyUI
   @Override
   public void setText(String text) {
-    editDocumentSafely(0, myEditor.getDocument().getTextLength(), text);
+    editDocumentSafely(0, editor.getDocument().getTextLength(), text);
   }
 
   /** Inserts, removes or replaces the given text at the given offset */
   private void editDocumentSafely(final int offset, final int length, final @Nullable String text) {
-    Document document = myEditor.getDocument();
+    Document document = editor.getDocument();
     RangeMarker marker = document.createRangeMarker(offset, offset + length);
 
-    TransactionGuard.submitTransaction(myEditor.getDisposable(), () -> {
-      Project project = myEditor.getProject();
+    TransactionGuard.submitTransaction(editor.getDisposable(), () -> {
+      Project project = editor.getProject();
       if (!marker.isValid() || !FileDocumentManager.getInstance().requestWriting(document, project)) {
         marker.dispose();
         return;
@@ -1059,25 +1076,25 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getDot() {
-      return myEditor.getCaretModel().getOffset();
+      return editor.getCaretModel().getOffset();
     }
 
     @Override
     public int getMark() {
-      return myEditor.getSelectionModel().getSelectionStart();
+      return editor.getSelectionModel().getSelectionStart();
     }
 
     @Override
     public void setDot(int offset) {
-      if (!myEditor.isDisposed()) {
-        myEditor.getCaretModel().moveToOffset(offset);
+      if (!editor.isDisposed()) {
+        editor.getCaretModel().moveToOffset(offset);
       }
     }
 
     @Override
     public void moveDot(int offset) {
-      if (!myEditor.isDisposed()) {
-        myEditor.getCaretModel().moveToOffset(offset);
+      if (!editor.isDisposed()) {
+        editor.getCaretModel().moveToOffset(offset);
       }
     }
   }
@@ -1085,7 +1102,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @Override
   public @Nullable UiInspectorPreciseContextProvider.UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event) {
     Point point = event.getPoint();
-    Inlay<?> inlay = myEditor.getInlayModel().getElementAt(point);
+    Inlay<?> inlay = editor.getInlayModel().getElementAt(point);
     if (inlay != null) {
       List<PropertyBean> result = new ArrayList<>();
       result.add(new PropertyBean("Inlay Renderer", inlay.getRenderer(), true));
@@ -1104,26 +1121,26 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
    */
   private final class EditorAccessibilityTextUI extends TextUI {
     @Override
-    public @Nullable Rectangle modelToView(JTextComponent tc, int offset) {
+    public @NotNull Rectangle modelToView(JTextComponent tc, int offset) {
       return modelToView(tc, offset, Position.Bias.Forward);
     }
 
     @Override
     public int viewToModel(JTextComponent tc, Point pt) {
-      LogicalPosition logicalPosition = myEditor.xyToLogicalPosition(pt);
-      return myEditor.logicalPositionToOffset(logicalPosition);
+      LogicalPosition logicalPosition = editor.xyToLogicalPosition(pt);
+      return editor.logicalPositionToOffset(logicalPosition);
     }
 
     @Override
-    public @Nullable Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) {
-      LogicalPosition pos = myEditor.offsetToLogicalPosition(offset).leanForward(bias == Position.Bias.Forward);
-      LogicalPosition posNext = myEditor.offsetToLogicalPosition(bias == Position.Bias.Forward ? offset + 1 : offset - 1)
+    public @NotNull Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) {
+      LogicalPosition pos = editor.offsetToLogicalPosition(offset).leanForward(bias == Position.Bias.Forward);
+      LogicalPosition posNext = editor.offsetToLogicalPosition(bias == Position.Bias.Forward ? offset + 1 : offset - 1)
         .leanForward(bias != Position.Bias.Forward);
-      Point point = myEditor.logicalPositionToXY(pos);
-      Point pointNext = myEditor.logicalPositionToXY(posNext);
+      Point point = editor.logicalPositionToXY(pos);
+      Point pointNext = editor.logicalPositionToXY(posNext);
       return point.y == pointNext.y
-             ? new Rectangle(Math.min(point.x, pointNext.x), point.y, Math.abs(point.x - pointNext.x), myEditor.getLineHeight())
-             : new Rectangle(point.x, point.y, 0, myEditor.getLineHeight());
+             ? new Rectangle(Math.min(point.x, pointNext.x), point.y, Math.abs(point.x - pointNext.x), editor.getLineHeight())
+             : new Rectangle(point.x, point.y, 0, editor.getLineHeight());
     }
 
     @Override
@@ -1141,7 +1158,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public void damageRange(JTextComponent t, int p0, int p1) {
-      myEditor.repaint(p0, p1);
+      editor.repaint(p0, p1);
     }
 
     @Override
@@ -1150,13 +1167,13 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
 
     @Override
-    public @Nullable EditorKit getEditorKit(JTextComponent t) {
+    public @NotNull EditorKit getEditorKit(JTextComponent t) {
       notSupported();
       return null;
     }
 
     @Override
-    public @Nullable View getRootView(JTextComponent t) {
+    public @NotNull View getRootView(JTextComponent t) {
       notSupported();
       return null;
     }
@@ -1182,15 +1199,15 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
                  CaretListener, DocumentListener {
 
     AccessibleEditorComponentImpl() {
-      if (myEditor.isDisposed()) return;
+      if (editor.isDisposed()) return;
 
-      myEditor.getCaretModel().addCaretListener(this, myEditor.getDisposable());
-      myEditor.getDocument().addDocumentListener(this);
+      editor.getCaretModel().addCaretListener(this, editor.getDisposable());
+      editor.getDocument().addDocumentListener(this);
 
-      Disposer.register(myEditor.getDisposable(), new Disposable() {
+      Disposer.register(editor.getDisposable(), new Disposable() {
         @Override
         public void dispose() {
-          myEditor.getDocument().removeDocumentListener(AccessibleEditorComponentImpl.this);
+          editor.getDocument().removeDocumentListener(AccessibleEditorComponentImpl.this);
         }
       });
     }
@@ -1204,7 +1221,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     @Override
     public void caretPositionChanged(@NotNull CaretEvent e) {
       Caret caret = e.getCaret();
-      if (caret != myEditor.getCaretModel().getPrimaryCaret()) {
+      if (caret != editor.getCaretModel().getPrimaryCaret()) {
         return;
       }
       int dot = caret.getOffset();
@@ -1257,7 +1274,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         return accessibleName;
       }
 
-      VirtualFile file = myEditor.getVirtualFile();
+      VirtualFile file = editor.getVirtualFile();
       if (file != null) {
         return EditorBundle.message("editor.for.file.accessible.name", file.getName());
       }
@@ -1269,9 +1286,9 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       String description = super.getAccessibleDescription();
       if (description == null && StringUtil.isEmpty(getText())) {
         //noinspection HardCodedStringLiteral
-        String emptyText = getEditor().getPlaceholder().toString();
-        if (!emptyText.isEmpty()) {
-          return AccessibleContextUtil.getUniqueDescription(this, emptyText);
+        CharSequence emptyText = getEditor().getPlaceholder();
+        if (emptyText != null && !emptyText.isEmpty()) {
+          return AccessibleContextUtil.getUniqueDescription(this, emptyText.toString());
         }
       }
       return description;
@@ -1289,20 +1306,20 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public AccessibleText getAccessibleText() {
-      if (myEditor.isDisposed()) return null;
+      if (editor.isDisposed()) return null;
       return this;
     }
 
     @Override
     public AccessibleEditableText getAccessibleEditableText() {
-      if (myEditor.isDisposed()) return null;
+      if (editor.isDisposed()) return null;
       return this;
     }
 
     @Override
     public AccessibleStateSet getAccessibleStateSet() {
       AccessibleStateSet states = super.getAccessibleStateSet();
-      if (myEditor.getDocument().isWritable()) {
+      if (editor.getDocument().isWritable()) {
         states.add(AccessibleState.EDITABLE);
       }
       states.add(AccessibleState.MULTI_LINE);
@@ -1313,32 +1330,32 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getIndexAtPoint(Point point) {
-      LogicalPosition logicalPosition = myEditor.xyToLogicalPosition(point);
-      return myEditor.logicalPositionToOffset(logicalPosition);
+      LogicalPosition logicalPosition = editor.xyToLogicalPosition(point);
+      return editor.logicalPositionToOffset(logicalPosition);
     }
 
     @Override
     public Rectangle getCharacterBounds(int offset) {
       // Since we report the very end of the document as being 1 character past the document
       // length, we need to validate the offset passed back by the screen reader.
-      if (offset < 0 || offset > myEditor.getDocument().getTextLength() - 1) {
+      if (offset < 0 || offset > editor.getDocument().getTextLength() - 1) {
         return null;
       }
-      LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
-      Point point = myEditor.logicalPositionToXY(pos);
-      FontMetrics fontMetrics = myEditor.getFontMetrics(Font.PLAIN);
-      char c = myEditor.getDocument().getCharsSequence().subSequence(offset, offset + 1).charAt(0);
+      LogicalPosition pos = editor.offsetToLogicalPosition(offset);
+      Point point = editor.logicalPositionToXY(pos);
+      FontMetrics fontMetrics = editor.getFontMetrics(Font.PLAIN);
+      char c = editor.getDocument().getCharsSequence().subSequence(offset, offset + 1).charAt(0);
       return new Rectangle(point.x, point.y, fontMetrics.charWidth(c), fontMetrics.getHeight());
     }
 
     @Override
     public int getCharCount() {
-      return myEditor.getDocument().getTextLength();
+      return editor.getDocument().getTextLength();
     }
 
     @Override
     public int getCaretPosition() {
-      return myEditor.getCaretModel().getOffset();
+      return editor.getCaretModel().getOffset();
     }
 
     @Override
@@ -1375,17 +1392,17 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getSelectionStart() {
-      return myEditor.getSelectionModel().getSelectionStart();
+      return editor.getSelectionModel().getSelectionStart();
     }
 
     @Override
     public int getSelectionEnd() {
-      return myEditor.getSelectionModel().getSelectionEnd();
+      return editor.getSelectionModel().getSelectionEnd();
     }
 
     @Override
     public @Nullable String getSelectedText() {
-      return ReadAction.compute(() -> myEditor.getSelectionModel().getSelectedText());
+      return ReadAction.compute(() -> editor.getSelectionModel().getSelectedText());
     }
 
     // ---- Implements AccessibleEditableText ----
@@ -1402,7 +1419,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public String getTextRange(int startIndex, int endIndex) {
-      return myEditor.getDocument().getCharsSequence().subSequence(startIndex, endIndex).toString();
+      return editor.getDocument().getCharsSequence().subSequence(startIndex, endIndex).toString();
     }
 
     @Override
@@ -1412,9 +1429,9 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public void cut(int startIndex, int endIndex) {
-      myEditor.getSelectionModel().setSelection(startIndex, endIndex);
+      editor.getSelectionModel().setSelection(startIndex, endIndex);
       DataContext dataContext = DataManager.getInstance().getDataContext(EditorComponentImpl.this);
-      CutProvider cutProvider = myEditor.getCutProvider();
+      CutProvider cutProvider = editor.getCutProvider();
       if (cutProvider.isCutEnabled(dataContext)) {
         cutProvider.performCut(dataContext);
       }
@@ -1422,9 +1439,9 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public void paste(int startIndex) {
-      myEditor.getCaretModel().moveToOffset(startIndex);
+      editor.getCaretModel().moveToOffset(startIndex);
       DataContext dataContext = DataManager.getInstance().getDataContext(EditorComponentImpl.this);
-      PasteProvider pasteProvider = myEditor.getPasteProvider();
+      PasteProvider pasteProvider = editor.getPasteProvider();
       if (pasteProvider.isPasteEnabled(dataContext)) {
         pasteProvider.performPaste(dataContext);
       }
@@ -1437,8 +1454,8 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public void selectText(int startIndex, int endIndex) {
-      myEditor.getSelectionModel().setSelection(startIndex, endIndex);
-      myEditor.getCaretModel().moveToOffset(endIndex);
+      editor.getSelectionModel().setSelection(startIndex, endIndex);
+      editor.getCaretModel().moveToOffset(endIndex);
     }
 
     @Override
@@ -1495,14 +1512,14 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public @Nullable Rectangle getTextBounds(int startIndex, int endIndex) {
-      LogicalPosition startPos = myEditor.offsetToLogicalPosition(startIndex);
-      Point startPoint = myEditor.logicalPositionToXY(startPos);
+      LogicalPosition startPos = editor.offsetToLogicalPosition(startIndex);
+      Point startPoint = editor.logicalPositionToXY(startPos);
       Rectangle rectangle = new Rectangle(startPoint);
 
-      LogicalPosition endPos = myEditor.offsetToLogicalPosition(endIndex);
-      Point endPoint = myEditor.logicalPositionToXY(endPos);
-      FontMetrics fontMetrics = myEditor.getFontMetrics(Font.PLAIN);
-      char c = myEditor.getDocument().getCharsSequence().subSequence(endIndex - 1, endIndex).charAt(0);
+      LogicalPosition endPos = editor.offsetToLogicalPosition(endIndex);
+      Point endPoint = editor.logicalPositionToXY(endPos);
+      FontMetrics fontMetrics = editor.getFontMetrics(Font.PLAIN);
+      char c = editor.getDocument().getCharsSequence().subSequence(endIndex - 1, endIndex).charAt(0);
       endPoint.x += fontMetrics.charWidth(c);
       endPoint.y += fontMetrics.getHeight();
       rectangle.add(endPoint);
@@ -1516,7 +1533,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       int offset,
       @MagicConstant(intValues = {BEFORE, HERE, AFTER})
       int direction) {
-      DocumentEx document = myEditor.getDocument();
+      DocumentEx document = editor.getDocument();
       if (offset < 0 || offset >= document.getTextLength()) {
         return null;
       }
@@ -1571,7 +1588,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         int direction) {
       assert direction == BEFORE || direction == HERE || direction == AFTER;
 
-      DocumentEx document = myEditor.getDocument();
+      DocumentEx document = editor.getDocument();
       if (offset < 0 || offset >= document.getTextLength()) {
         return null;
       }
@@ -1605,30 +1622,30 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
 
     private int getLineAtOffsetStart(int offset) {
-      Document document = myEditor.getDocument();
+      Document document = editor.getDocument();
       if (offset == 0) {
         return 0;
       }
-      int lineNumber = myEditor.offsetToLogicalPosition(offset).line;
+      int lineNumber = editor.offsetToLogicalPosition(offset).line;
       return document.getLineStartOffset(lineNumber);
     }
 
     private int moveLineOffset(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
       if (direction == AFTER) {
-        int lineNumber = myEditor.offsetToLogicalPosition(offset).line;
+        int lineNumber = editor.offsetToLogicalPosition(offset).line;
         lineNumber++;
-        Document document = myEditor.getDocument();
+        Document document = editor.getDocument();
         if (lineNumber == document.getLineCount()) {
           return -1;
         }
         return document.getLineStartOffset(lineNumber);
       } else if (direction == BEFORE) {
-        int lineNumber = myEditor.offsetToLogicalPosition(offset).line;
+        int lineNumber = editor.offsetToLogicalPosition(offset).line;
         lineNumber--;
         if (lineNumber < 0) {
           return -1;
         }
-        Document document = myEditor.getDocument();
+        Document document = editor.getDocument();
         return document.getLineStartOffset(lineNumber);
       } else {
         assert direction == HERE;
@@ -1646,11 +1663,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
 
     private int getLineAtOffsetEnd(int offset) {
-      Document document = myEditor.getDocument();
+      Document document = editor.getDocument();
       if (offset == 0) {
         return 0;
       }
-      int lineNumber = myEditor.offsetToLogicalPosition(offset).line;
+      int lineNumber = editor.offsetToLogicalPosition(offset).line;
       return document.getLineEndOffset(lineNumber);
     }
 
@@ -1680,7 +1697,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
 
     private AccessibleTextSequence getWordOrLexeme(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
-      boolean isCamel = myEditor.getSettings().isCamelWords();
+      boolean isCamel = editor.getSettings().isCamelWords();
       var caretStopPolicy = resolveCaretStopPolicy(direction);
       offset = moveWordOffset(offset, direction, caretStopPolicy, isCamel);
       var wordStop = caretStopPolicy.getWordStop();
@@ -1690,7 +1707,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         return null;
       }
       return new AccessibleTextSequence(wordStart, wordEnd,
-                                        myEditor.getDocument().getCharsSequence().subSequence(wordStart, wordEnd).toString());
+                                        editor.getDocument().getCharsSequence().subSequence(wordStart, wordEnd).toString());
     }
 
 
@@ -1699,10 +1716,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
                                CaretStopPolicy stopPolicy,
                                boolean isCamel) {
       if (direction == AFTER) {
-        return EditorActionUtil.getNextCaretStopOffset(myEditor, stopPolicy, isCamel);
+        return EditorActionUtil.getNextCaretStopOffset(editor, stopPolicy, isCamel);
       }
       if (direction == BEFORE) {
-        return EditorActionUtil.getPreviousCaretStopOffset(myEditor, stopPolicy, isCamel);
+        return EditorActionUtil.getPreviousCaretStopOffset(editor, stopPolicy, isCamel);
       }
       return offset;
     }
@@ -1712,14 +1729,14 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         return 0;
       }
       if (wordStop.isAtEnd() && !wordStop.isAtStart()) {
-        if (EditorActionUtil.isWordOrLexemeEnd(myEditor, offset, isCamel)) {
+        if (EditorActionUtil.isWordOrLexemeEnd(editor, offset, isCamel)) {
           return getWordAtOffsetStart(offset - 1, isCamel);
         }
         if (offset == getLineAtOffsetStart(offset)) {
           return offset - 1;
         }
       }
-      if (Character.isWhitespace(myEditor.getDocument().getText().charAt(offset))) {
+      if (Character.isWhitespace(editor.getDocument().getText().charAt(offset))) {
         return offset;
       }
       return getWordAtOffsetStart(offset, isCamel);
@@ -1727,15 +1744,15 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     // Based on CaretImpl#getWordAtCaretStart
     private int getWordAtOffsetStart(int offset, boolean isCamel) {
-      Document document = myEditor.getDocument();
+      Document document = editor.getDocument();
       if (offset == 0) {
         return 0;
       }
-      int lineNumber = myEditor.offsetToLogicalPosition(offset).line;
+      int lineNumber = editor.offsetToLogicalPosition(offset).line;
       int newOffset = offset;
       int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
       for (; newOffset > minOffset; newOffset--) {
-        if (EditorActionUtil.isWordOrLexemeStart(myEditor, newOffset, isCamel)) {
+        if (EditorActionUtil.isWordOrLexemeStart(editor, newOffset, isCamel)) {
           break;
         }
       }
@@ -1745,7 +1762,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     private int getWordAtOffsetEnd(int offset, CaretStop stopWord, boolean isCamel) {
       if (stopWord.isAtStart()) {
-        if (Character.isWhitespace(myEditor.getDocument().getText().charAt(offset))) {
+        if (Character.isWhitespace(editor.getDocument().getText().charAt(offset))) {
           return offset + 1;
         }
         return getWordAtOffsetEnd(offset + 1, isCamel);
@@ -1759,12 +1776,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     // Based on CaretImpl#getWordAtCaretEnd
     private int getWordAtOffsetEnd(int offset, boolean isCamel) {
-      Document document = myEditor.getDocument();
+      Document document = editor.getDocument();
       if (offset >= document.getTextLength() - 1 || document.getLineCount() == 0) {
         return offset;
       }
       int newOffset = offset;
-      int lineNumber = myEditor.offsetToLogicalPosition(offset).line;
+      int lineNumber = editor.offsetToLogicalPosition(offset).line;
       int maxOffset = document.getLineEndOffset(lineNumber);
       if (newOffset > maxOffset) {
         if (lineNumber + 1 >= document.getLineCount()) {
@@ -1773,7 +1790,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         maxOffset = document.getLineEndOffset(lineNumber + 1);
       }
       for (; newOffset < maxOffset; newOffset++) {
-        if (EditorActionUtil.isWordOrLexemeEnd(myEditor, newOffset, isCamel)) {
+        if (EditorActionUtil.isWordOrLexemeEnd(editor, newOffset, isCamel)) {
           break;
         }
       }

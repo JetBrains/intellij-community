@@ -4,12 +4,10 @@ package com.intellij.ui;
 import com.intellij.BundleBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
-import static com.intellij.BundleUtil.loadLanguageBundle;
 
 public final class UtilUiBundle {
   private static final String BUNDLE = "messages.UtilUiBundle";
@@ -24,10 +22,5 @@ public final class UtilUiBundle {
   private static ResourceBundle getBundle() {
     if (ourBundle != null) return ourBundle;
     return ourBundle = ResourceBundle.getBundle(BUNDLE);
-  }
-
-  public static void loadBundleFromPlugin(@Nullable ClassLoader pluginClassLoader) {
-    ResourceBundle bundle = loadLanguageBundle(pluginClassLoader, BUNDLE);
-    if (bundle != null) ourBundle = bundle;
   }
 }

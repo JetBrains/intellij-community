@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.applyIf
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -23,11 +23,11 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
  * Implementation in K1: [org.jetbrains.kotlin.idea.actions.ExpressionWeigher]
  */
 interface ExpressionImportWeigher {
-    context(KtAnalysisSession)
-    fun weigh(symbol: KtDeclarationSymbol): Int
+    context(KaSession)
+    fun weigh(symbol: KaDeclarationSymbol): Int
 
     companion object {
-        context(KtAnalysisSession)
+        context(KaSession)
         fun createWeigher(element: PsiElement?): ExpressionImportWeigher =
             when (element) {
                 is KtNameReferenceExpression -> CallExpressionImportWeigher(
@@ -56,7 +56,7 @@ interface ExpressionImportWeigher {
                 else -> Empty
             }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun calculateReceiverTypes(element: KtNameReferenceExpression): List<KtType> {
             val receiverExpression = element.getParentOfType<KtQualifiedExpression>(false)?.receiverExpression
 
@@ -72,7 +72,7 @@ interface ExpressionImportWeigher {
             }
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun calculateValueArgumentTypes(element: KtNameReferenceExpression): List<KtType?> {
             val callExpression = element.getParentOfType<KtCallElement>(strict = false)
             val valueArgumentList = callExpression?.valueArgumentList ?: return emptyList()
@@ -82,25 +82,25 @@ interface ExpressionImportWeigher {
         }
 
         object Empty : ExpressionImportWeigher {
-            context(KtAnalysisSession)
-            override fun weigh(symbol: KtDeclarationSymbol): Int = 0
+            context(KaSession)
+            override fun weigh(symbol: KaDeclarationSymbol): Int = 0
         }
     }
 }
 
 internal abstract class AbstractExpressionImportWeigher : ExpressionImportWeigher {
-    context(KtAnalysisSession)
-    override fun weigh(symbol: KtDeclarationSymbol): Int {
+    context(KaSession)
+    override fun weigh(symbol: KaDeclarationSymbol): Int {
         val fqName = symbol.getFqNameIfPackageOrNonLocal()
         val baseWeight = fqName?.let { ImportFixHelper.calculateWeightBasedOnFqName(it, symbol.sourcePsi<PsiElement>()) } ?: 0
 
         return baseWeight + ownWeigh(symbol)
     }
 
-    context(KtAnalysisSession)
-    protected abstract fun ownWeigh(symbol: KtDeclarationSymbol): Int
+    context(KaSession)
+    protected abstract fun ownWeigh(symbol: KaDeclarationSymbol): Int
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected fun weighType(presentType: KtType, typeFromImport: KtType, baseWeight: Int): Int? {
         val adjustedType: KtType
         val nullablesWeight = if (presentType.nullability.isNullable == typeFromImport.nullability.isNullable) {
@@ -128,12 +128,12 @@ internal class CallExpressionImportWeigher(
     private val valueArgumentTypes: List<KtType?>,
 ) : AbstractExpressionImportWeigher(), KtLifetimeOwner {
 
-    context(KtAnalysisSession)
-    override fun ownWeigh(symbol: KtDeclarationSymbol): Int = withValidityAssertion {
+    context(KaSession)
+    override fun ownWeigh(symbol: KaDeclarationSymbol): Int = withValidityAssertion {
         when {
-            symbol is KtCallableSymbol -> calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
+            symbol is KaCallableSymbol -> calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
             // TODO: some constructors could be not visible
-            symbol is KtClassOrObjectSymbol && presentReceiverTypes.isEmpty() -> {
+            symbol is KaClassOrObjectSymbol && presentReceiverTypes.isEmpty() -> {
                 val constructors = symbol.getDeclaredMemberScope().getConstructors()
                 constructors.maxOfOrNull { calculateWeight(it, presentReceiverTypes = emptyList(), valueArgumentTypes) } ?: 0
             }
@@ -142,9 +142,9 @@ internal class CallExpressionImportWeigher(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun calculateWeight(
-        symbolToBeImported: KtCallableSymbol,
+        symbolToBeImported: KaCallableSymbol,
         presentReceiverTypes: List<KtType>,
         presentValueArgumentTypes: List<KtType?>,
     ): Int {
@@ -155,7 +155,7 @@ internal class CallExpressionImportWeigher(
             weight = presentReceiverTypes.mapNotNull { weighType(it, receiverTypeFromImport, weight) }.maxOrNull() ?: weight
         }
 
-        if (symbolToBeImported is KtFunctionLikeSymbol) {
+        if (symbolToBeImported is KaFunctionLikeSymbol) {
             val symbolValueParameters = symbolToBeImported.valueParameters
             val symbolHasVarargParameter = symbolValueParameters.any { it.isVararg }
             weight += if (symbolValueParameters.size >= presentValueArgumentTypes.size || symbolHasVarargParameter) {
@@ -176,7 +176,7 @@ internal class CallExpressionImportWeigher(
             //  - functional references, e.g. `::foo`
 
             val valueParametersFromImportIterator = symbolValueParameters.iterator()
-            var valueParameterFromImport: KtValueParameterSymbol? = null
+            var valueParameterFromImport: KaValueParameterSymbol? = null
 
             // update weight each time argument type matches the type of parameter from import; break once a mismatch appears
             for (valueArgumentType in presentValueArgumentTypes) {
@@ -203,8 +203,8 @@ internal class CallExpressionImportWeigher(
         return weight
     }
 
-    context(KtAnalysisSession)
-    private fun calculateCallExtensionsWeight(symbolToBeImported: KtCallableSymbol): Int =
+    context(KaSession)
+    private fun calculateCallExtensionsWeight(symbolToBeImported: KaCallableSymbol): Int =
         with(KotlinAutoImportCallableWeigher) { weigh(symbolToBeImported, element) }
 }
 
@@ -215,16 +215,16 @@ internal class OperatorExpressionImportWeigher(
     private val rightOperandType: KtType? = null,
 ) : AbstractExpressionImportWeigher(), KtLifetimeOwner {
 
-    context(KtAnalysisSession)
-    override fun weigh(symbol: KtDeclarationSymbol): Int {
-        val functionSymbol = (symbol as? KtFunctionSymbol)?.takeIf { it.isOperator } ?: return 0
+    context(KaSession)
+    override fun weigh(symbol: KaDeclarationSymbol): Int {
+        val functionSymbol = (symbol as? KaFunctionSymbol)?.takeIf { it.isOperator } ?: return 0
 
         return super.weigh(functionSymbol)
     }
 
-    context(KtAnalysisSession)
-    override fun ownWeigh(symbol: KtDeclarationSymbol): Int = withValidityAssertion {
-        symbol as KtFunctionSymbol
+    context(KaSession)
+    override fun ownWeigh(symbol: KaDeclarationSymbol): Int = withValidityAssertion {
+        symbol as KaFunctionSymbol
 
         val name = symbol.name
 

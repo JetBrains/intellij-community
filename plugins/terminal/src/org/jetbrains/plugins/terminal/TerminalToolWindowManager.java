@@ -63,7 +63,7 @@ import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
-import org.jetbrains.plugins.terminal.exp.BlockTerminalPromotionService;
+import org.jetbrains.plugins.terminal.block.BlockTerminalPromotionService;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 

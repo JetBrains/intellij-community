@@ -88,12 +88,8 @@
 
     <getDataRule
       key="NOTEBOOK_CELL_LINES_INTERVAL"
-      implementationClass="org.jetbrains.plugins.notebooks.visualization.NotebookCellLinesIntervalDataRule"
-      type="context"/>
-    <getDataRule
-      key="EDITORS_WITH_OFFSETS_DATA_KEY"
-      implementationClass="org.jetbrains.plugins.notebooks.visualization.EditorsWithOffsetsDataRule"
-      type="fast"/>
+      implementationClass="org.jetbrains.plugins.notebooks.visualization.NotebookCellLinesIntervalDataRule"/>
+    <edtDataRule implementation="org.jetbrains.plugins.notebooks.visualization.EditorsWithOffsetsDataRule"/>
     <editorFactoryDocumentListener implementation="org.jetbrains.plugins.notebooks.visualization.UndoableActionListener"
                                    order="last"/>
   </extensions>

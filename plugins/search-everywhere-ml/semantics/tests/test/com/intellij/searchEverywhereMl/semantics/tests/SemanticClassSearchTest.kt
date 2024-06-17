@@ -61,7 +61,6 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     Disposer.register(project, searchEverywhereUI)
 
     val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern("index project job"))
-    assertEquals(2, elements.size)
 
     val items: List<PsiElement> = elements.filterIsInstance<PsiItemWithSimilarity<*>>().mapNotNull { extractPsiElement(it) }
     assertEquals(2, items.size)

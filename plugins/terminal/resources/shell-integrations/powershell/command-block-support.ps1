@@ -4,8 +4,22 @@ if ([string]::IsNullOrEmpty($Env:INTELLIJ_TERMINAL_COMMAND_BLOCKS)) {
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-function Global:__JetBrainsIntellijEncode([string]$value) {
-  $Bytes = [System.Text.Encoding]::UTF8.GetBytes($value)
+# Import PSReadLine module forcefully if it was skipped because of active Screen Reader.
+# PowerShell is skipping it when Screen Reader is active because they consider it as not well accessibility friendly.
+# PSReadLine module is required for our shell integration. Namely for command_started event and command history filtering.
+# PSReadLine module is shipped together PowerShell with from version 5.1.
+# Since PowerShell 5.1 is bundled in both Windows 10 and 11, it suits us well and this module must be present.
+if ((Get-Module -Name PSReadLine) -eq $null) {
+  Import-Module PSReadLine
+}
+
+function Global:__JetBrainsIntellijEncode([object]$value) {
+  # Value that we need to encode is not always a string.
+  # Generator result can be an array of objects, for example, type of the `git config --get-regexp "^alias"` command output is Object[].
+  # So, we need to use Out-String cmdlet to transform the Object[] to the string like in the terminal output.
+  # Otherwise GetBytes call will transform it in some other way and we will lose the line brakes.
+  $ValueAsString = if ($value -is [string]) { $value } else { ($value | Out-String).trim() }
+  $Bytes = [System.Text.Encoding]::UTF8.GetBytes($ValueAsString)
   return [System.BitConverter]::ToString($Bytes).Replace("-", "")
 }
 
@@ -175,6 +189,8 @@ function Global:__JetBrainsIntellijGetCompletions([string]$Command, [int]$Cursor
 }
 
 function Global:__jetbrains_intellij_get_directory_files([string]$Path) {
+  # This setting is effective only in the scope of this function.
+  $ErrorActionPreference="Stop"
   $Files = Get-ChildItem -Force -Path $Path | Where { $_ -is [System.IO.FileSystemInfo] }
   $Separator = [System.IO.Path]::DirectorySeparatorChar
   $FileNames = $Files | ForEach-Object { if ($_ -is [System.IO.DirectoryInfo]) { $_.Name + $Separator } else { $_.Name } }
@@ -184,7 +200,7 @@ function Global:__jetbrains_intellij_get_directory_files([string]$Path) {
 
 function Global:__jetbrains_intellij_get_environment() {
   $Global:__JetBrainsIntellijGeneratorRunning = $true
-  $FunctionTypes = @("Function", "Filter", "ExternalScript", "Script", "Workflow")
+  $FunctionTypes = @("Function", "Filter", "ExternalScript", "Script")
   $Functions = Get-Command -CommandType $FunctionTypes
   $Cmdlets = Get-Command -CommandType Cmdlet
   $Commands = Get-Command -CommandType Application
@@ -212,35 +228,33 @@ function Global:Clear-Host() {
   [Console]::Write($OSC)
 }
 
-if (Get-Module -Name PSReadLine) {
-  $Global:__JetBrainsIntellijOriginalPSConsoleHostReadLine = $function:PSConsoleHostReadLine
+$Global:__JetBrainsIntellijOriginalPSConsoleHostReadLine = $function:PSConsoleHostReadLine
 
-  function Global:PSConsoleHostReadLine {
-    $OriginalReadLine = $Global:__JetBrainsIntellijOriginalPSConsoleHostReadLine.Invoke()
-    if (__JetBrainsIntellijIsGeneratorCommand $OriginalReadLine) {
-      return $OriginalReadLine
-    }
-
-    $CurrentDirectory = (Get-Location).Path
-    if ($Env:JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL) {
-      [Console]::WriteLine("command_started $OriginalReadLine")
-    }
-    $CommandStartedOSC = Global:__JetBrainsIntellijOSC "command_started;command=$(__JetBrainsIntellijEncode $OriginalReadLine);current_directory=$(__JetBrainsIntellijEncode $CurrentDirectory)"
-    [Console]::Write($CommandStartedOSC)
-    Global:__JetBrainsIntellij_ClearAllAndMoveCursorToTopLeft
+function Global:PSConsoleHostReadLine {
+  $OriginalReadLine = $Global:__JetBrainsIntellijOriginalPSConsoleHostReadLine.Invoke()
+  if (__JetBrainsIntellijIsGeneratorCommand $OriginalReadLine) {
     return $OriginalReadLine
   }
 
-  $Global:__JetBrainsIntellijOriginalAddToHistoryHandler = (Get-PSReadLineOption).AddToHistoryHandler
-
-  Set-PSReadLineOption -AddToHistoryHandler {
-    param([string]$Command)
-    if (__JetBrainsIntellijIsGeneratorCommand $Command) {
-      return $false
-    }
-    if ($Global:__JetBrainsIntellijOriginalAddToHistoryHandler -ne $null) {
-      return $Global:__JetBrainsIntellijOriginalAddToHistoryHandler.Invoke($Command)
-    }
-    return $true
+  $CurrentDirectory = (Get-Location).Path
+  if ($Env:JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL) {
+    [Console]::WriteLine("command_started $OriginalReadLine")
   }
+  $CommandStartedOSC = Global:__JetBrainsIntellijOSC "command_started;command=$(__JetBrainsIntellijEncode $OriginalReadLine);current_directory=$(__JetBrainsIntellijEncode $CurrentDirectory)"
+  [Console]::Write($CommandStartedOSC)
+  Global:__JetBrainsIntellij_ClearAllAndMoveCursorToTopLeft
+  return $OriginalReadLine
+}
+
+$Global:__JetBrainsIntellijOriginalAddToHistoryHandler = (Get-PSReadLineOption).AddToHistoryHandler
+
+Set-PSReadLineOption -AddToHistoryHandler {
+  param([string]$Command)
+  if (__JetBrainsIntellijIsGeneratorCommand $Command) {
+    return $false
+  }
+  if ($Global:__JetBrainsIntellijOriginalAddToHistoryHandler -ne $null) {
+    return $Global:__JetBrainsIntellijOriginalAddToHistoryHandler.Invoke($Command)
+  }
+  return $true
 }

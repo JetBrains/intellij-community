@@ -76,8 +76,8 @@
                  restartRequired="false"/>
 
     <registryKey key="kotlin.k2.scripting.enabled"
-                 description="Enable scripting support in the Kotlin K2 plugin"
-                 defaultValue="false"
+                 description="Enable scripting support in the K2 mode"
+                 defaultValue="true"
                  restartRequired="true"/>
 
     <registryKey key="kotlin.k2.only.bundled.compiler.plugins.enabled"
@@ -202,8 +202,8 @@
   </extensions>
 
   <content>
-    <module name="kotlin.base.analysis-api-providers"/>
-    <module name="kotlin.base.fir.analysis-api-providers"/>
+    <module name="kotlin.base.analysis-api-platform"/>
+    <module name="kotlin.base.fir.analysis-api-platform"/>
     <module name="kotlin.base.fir.code-insight"/>
     <module name="kotlin.base.fir.project-structure"/>
 
@@ -222,6 +222,7 @@
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.code-insight-common"/>
     <module name="kotlin.gradle.code-insight-groovy"/>
+    <module name="kotlin.gradle.code-insight-toml"/>
     <module name="kotlin.gradle.gradle-java"/>
 
     <module name="kotlin.onboarding"/>
@@ -269,6 +270,8 @@
 
     <module name="kotlin.injection.k2"/>
     <module name="kotlin.base.injection"/>
+
+    <module name="kotlin.j2k.k2"/>
 
     <module name="kotlin.performanceExtendedPlugin"/>
   </content>

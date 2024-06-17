@@ -42,7 +42,7 @@ interface CollectionFieldEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyCollectionFieldEntity(
   entity: CollectionFieldEntity,
   modification: CollectionFieldEntity.Builder.() -> Unit,
 ): CollectionFieldEntity {

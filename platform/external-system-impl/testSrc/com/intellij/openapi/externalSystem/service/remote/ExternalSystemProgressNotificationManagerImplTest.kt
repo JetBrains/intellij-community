@@ -83,11 +83,7 @@ class ExternalSystemProgressNotificationManagerImplTest : UsefulTestCase() {
     override fun doCancel(): Boolean = true
 
     override fun doExecute() {
-      ExternalSystemProgressNotificationManagerImpl.getInstanceImpl().run {
-        onStart(id, "")
-        actionBeforeTaskFinish.invoke(this@MyTestTask)
-        onEnd(id)
-      }
+      actionBeforeTaskFinish.invoke(this@MyTestTask)
     }
   }
 }

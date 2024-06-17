@@ -30,12 +30,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class JpsArtifactOutputPackagingElementImpl extends JpsComplexPackagingElementBase<JpsArtifactOutputPackagingElementImpl>
+class JpsArtifactOutputPackagingElementImpl extends JpsComplexPackagingElementBase<JpsArtifactOutputPackagingElementImpl>
   implements JpsArtifactOutputPackagingElement {
   private static final JpsElementChildRole<JpsArtifactReference>
     ARTIFACT_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("artifact reference");
 
-  public JpsArtifactOutputPackagingElementImpl(@NotNull JpsArtifactReference reference) {
+  JpsArtifactOutputPackagingElementImpl(@NotNull JpsArtifactReference reference) {
     myContainer.setChild(ARTIFACT_REFERENCE_CHILD_ROLE, reference);
   }
 
@@ -45,7 +45,7 @@ public class JpsArtifactOutputPackagingElementImpl extends JpsComplexPackagingEl
 
   @NotNull
   @Override
-  public JpsArtifactOutputPackagingElementImpl createCopy() {
+  public JpsArtifactOutputPackagingElementImpl createElementCopy() {
     return new JpsArtifactOutputPackagingElementImpl(this);
   }
 

@@ -96,10 +96,18 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
             ?: DEFAULT_PARSING_BREAKER
     }
 
+    /**
+     * In the following cases, the elements at caret hold different expectations:
+     * * `@A<caret>.B` - `A` can be regular class, object, interface;
+     * * `@A<caret>` - `A` can be annotation class only.
+     *
+     * To complete element from the first example as though there is no `.B` after,
+     * we need to add parsing breaker to the dummy identifier.
+     */
     private fun isInAnnotationEntry(tokenBefore: PsiElement): String? {
         val typeReference = tokenBefore.parentOfType<KtTypeReference>(true) ?: return null
         return if (typeReference.parentOfType<KtAnnotationEntry>() != null) {
-            EMPTY_SUFFIX
+            DEFAULT_PARSING_BREAKER
         } else {
             null
         }

@@ -73,7 +73,7 @@ class StorageMutabilityTest {
 
     val parent = builder addEntity ParentEntity("123", MySource)
 
-    val updatedParent = builder.modifyEntity(parent) {
+    val updatedParent = builder.modifyParentEntity(parent) {
       this.child = ChildEntity("child", MySource)
     }
 
@@ -88,8 +88,8 @@ class StorageMutabilityTest {
     val parent = builder addEntity SelfLinkedEntity(MySource)
     val child = builder addEntity SelfLinkedEntity(AnotherSource)
 
-    val updatedParent = builder.modifyEntity(parent) parent@{
-      builder.modifyEntity(child) child@{
+    val updatedParent = builder.modifySelfLinkedEntity(parent) parent@{
+      builder.modifySelfLinkedEntity(child) child@{
         this@child.parentEntity = this@parent
       }
     }
@@ -114,8 +114,8 @@ class StorageMutabilityTest {
     val root = builder addEntity TreeMultiparentRootEntity("data", MySource)
     val parent = builder addEntity TreeMultiparentLeafEntity("data", MySource)
 
-    val updatedRoot = builder.modifyEntity(root) root@{
-      builder.modifyEntity(parent) parent@{
+    val updatedRoot = builder.modifyTreeMultiparentRootEntity(root) root@{
+      builder.modifyTreeMultiparentLeafEntity(parent) parent@{
         builder addEntity TreeMultiparentLeafEntity("AnotherData", MySource) child@{
           this@child.mainParent = this@root
           this@child.leafParent = this@parent
@@ -140,7 +140,7 @@ class StorageMutabilityTest {
     val secondBuilder = builder.toSnapshot().toBuilder()
 
     assertThrows<IllegalStateException> {
-      secondBuilder.modifyEntity(parent) {
+      secondBuilder.modifyParentEntity(parent) {
         this.child!!.childData = "NEW_DATA"
       }
     }

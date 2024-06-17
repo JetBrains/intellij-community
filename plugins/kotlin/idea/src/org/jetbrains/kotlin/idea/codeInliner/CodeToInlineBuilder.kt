@@ -286,10 +286,12 @@ class CodeToInlineBuilder(private val targetCallable: CallableDescriptor,
                         ?.fqNameOrNull()
 
                     codeToInline.fqNamesToImport.add(
-                        ImportPath(
-                            fqName = lookupName ?: importableFqName,
-                            isAllUnder = false,
-                            alias = aliasName,
+                        ResolvedImportPath(
+                            ImportPath(
+                                fqName = lookupName ?: importableFqName,
+                                isAllUnder = false,
+                                alias = aliasName,
+                            ), null
                         )
                     )
                 }

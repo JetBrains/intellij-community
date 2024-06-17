@@ -12,11 +12,16 @@ import javax.swing.JPanel
 class NotebookAboveCellDelimiterPanel(
   val editor: Editor,
   val isCodeCell: Boolean,
-  private val isFirstCell: Boolean
+  isFirstCell: Boolean
 ) : JPanel(BorderLayout()) {
   private var backgroundColor: Color = editor.colorsScheme.defaultBackground
   private var cellRoofColor: Color? = null
-  private val standardDelimiterHeight = editor.notebookAppearance.CELL_BORDER_HEIGHT / 2
+  private val standardDelimiterHeight = editor.notebookAppearance.cellBorderHeight / 2
+  private val delimiterPanelHeight = when (isFirstCell) {
+    true -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
+    false ->  standardDelimiterHeight
+  }
+
   val project get() = editor.project ?: ProjectManager.getInstance().defaultProject
 
   init {
@@ -31,11 +36,6 @@ class NotebookAboveCellDelimiterPanel(
 
   private fun createRoofAndDelimiterPanels(cellRoofColor: Color?): Pair<JPanel, JPanel> {
     val delimiterPanel = JPanel()
-    val delimiterPanelHeight = when (isFirstCell) {
-      true -> FIRST_CELL_DELIMITER_HEIGHT
-      false -> standardDelimiterHeight
-    }
-
     delimiterPanel.background = backgroundColor
     delimiterPanel.preferredSize = Dimension(JBUIScale.scale(1), delimiterPanelHeight)
 
@@ -62,9 +62,5 @@ class NotebookAboveCellDelimiterPanel(
       delimiterPanel?.background = backgroundColor
       roofPanel?.background = cellRoofColor
     }
-  }
-
-  companion object {
-    private val FIRST_CELL_DELIMITER_HEIGHT = JBUIScale.scale(24)  // see figma PY-66455
   }
 }

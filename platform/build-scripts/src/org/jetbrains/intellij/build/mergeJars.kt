@@ -4,6 +4,7 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.util.io.toByteArray
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -14,6 +15,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.util.zip.Deflater
+import kotlin.io.path.name
 
 const val UTIL_JAR: String = "util.jar"
 const val PLATFORM_LOADER_JAR: String = "platform-loader.jar"
@@ -228,7 +230,8 @@ internal suspend fun buildJar(
                 sources = sources,
                 packageIndexBuilder = packageIndexBuilder,
                 zipCreator = zipCreator,
-                compress = compress
+                compress = compress,
+                targetFile = targetFile,
               )
             }
             finally {
@@ -251,14 +254,17 @@ internal suspend fun buildJar(
   }
 }
 
-private suspend fun handleZipSource(source: ZipSource,
-                                    sourceFile: Path,
-                                    nativeFileHandler: NativeFileHandler?,
-                                    uniqueNames: MutableMap<String, Path>,
-                                    sources: List<Source>,
-                                    packageIndexBuilder: PackageIndexBuilder?,
-                                    zipCreator: ZipFileWriter,
-                                    compress: Boolean) {
+private suspend fun handleZipSource(
+  source: ZipSource,
+  sourceFile: Path,
+  nativeFileHandler: NativeFileHandler?,
+  uniqueNames: MutableMap<String, Path>,
+  sources: List<Source>,
+  packageIndexBuilder: PackageIndexBuilder?,
+  zipCreator: ZipFileWriter,
+  compress: Boolean,
+  targetFile: Path,
+) {
   val nativeFiles = if (nativeFileHandler == null) {
     null
   }
@@ -273,6 +279,17 @@ private suspend fun handleZipSource(source: ZipSource,
   // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
   // ability to read data without setting channel position, as setting channel position will require synchronization
   suspendAwareReadZipFile(sourceFile) { name, dataSupplier ->
+    fun writeZipData(data: ByteBuffer) {
+      if (compress) {
+        zipCreator.compressedData(name, data)
+      }
+      else {
+        zipCreator.uncompressedData(name, data, indexWriter = packageIndexBuilder?.indexWriter)
+      }
+    }
+
+    if (checkCoverageAgentManifest(name, sourceFile, targetFile, dataSupplier, ::writeZipData)) return@suspendAwareReadZipFile
+
     val filter = source.filter
     val isIncluded = if (filter == null) {
       checkNameForZipSource(name = name, excludes = source.excludes, includeManifest = sources.size == 1)
@@ -292,12 +309,8 @@ private suspend fun handleZipSource(source: ZipSource,
           // sign it
           val file = nativeFileHandler.sign(name, dataSupplier)
           if (file == null) {
-            if (compress) {
-              zipCreator.compressedData(name, dataSupplier())
-            }
-            else {
-              zipCreator.uncompressedData(name, dataSupplier(), indexWriter = packageIndexBuilder?.indexWriter)
-            }
+            val data = dataSupplier()
+            writeZipData(data)
           }
           else {
             zipCreator.file(name, file, indexWriter = packageIndexBuilder?.indexWriter)
@@ -309,15 +322,36 @@ private suspend fun handleZipSource(source: ZipSource,
         packageIndexBuilder?.addFile(name)
 
         val data = dataSupplier()
-        if (compress) {
-          zipCreator.compressedData(name, data)
-        }
-        else {
-          zipCreator.uncompressedData(name, data, indexWriter = packageIndexBuilder?.indexWriter)
-        }
+        writeZipData(data)
       }
     }
   }
+}
+
+/**
+ * Coverage agent uses the Boot-Class-Path jar attribute to instrument class from any class loader.
+ * For the correct work, it is required that the attribute value is the same as the simple jar name.
+ * Here the attribute value is replaced with the target jar name.
+ */
+private fun checkCoverageAgentManifest(
+  name: String, sourceFile: Path, targetFile: Path,
+  dataSupplier: () -> ByteBuffer, writeData: (ByteBuffer) -> Unit,
+): Boolean {
+  if (name != "META-INF/MANIFEST.MF") return false
+
+  val coveragePlatformAgentModuleName = "intellij.platform.coverage.agent"
+  if (!targetFile.name.contains(coveragePlatformAgentModuleName)) return false
+
+  val agentPrefix = "intellij-coverage-agent"
+  if (!sourceFile.name.startsWith(agentPrefix)) return false
+
+  val manifestContent = String(dataSupplier().toByteArray()).run {
+    val bootAttribute = "Boot-Class-Path:"
+    replace("$bootAttribute $agentPrefix-\\d+(\\.\\d+)*\\.jar".toRegex(), "$bootAttribute $coveragePlatformAgentModuleName.jar")
+  }
+  val data = ByteBuffer.wrap(manifestContent.toByteArray())
+  writeData(data)
+  return true
 }
 
 private fun isDuplicated(uniqueNames: MutableMap<String, Path>, name: String, sourceFile: Path): Boolean {

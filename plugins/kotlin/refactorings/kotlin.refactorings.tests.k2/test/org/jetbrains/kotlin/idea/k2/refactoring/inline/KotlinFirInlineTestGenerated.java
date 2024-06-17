@@ -32,6 +32,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("accessToPropertyOfClass.kt")
+        public void testAccessToPropertyOfClass() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/accessToPropertyOfClass.kt");
+        }
+
+        @TestMetadata("accessToPropertyOfClassViaReceiver.kt")
+        public void testAccessToPropertyOfClassViaReceiver() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/accessToPropertyOfClassViaReceiver.kt");
+        }
+
         @TestMetadata("AppendToCollection.kt")
         public void testAppendToCollection() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/AppendToCollection.kt");
@@ -135,6 +145,26 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("noUsages.kt")
         public void testNoUsages() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/noUsages.kt");
+        }
+
+        @TestMetadata("ObjectQualificationByLabeledThis.kt")
+        public void testObjectQualificationByLabeledThis() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/ObjectQualificationByLabeledThis.kt");
+        }
+
+        @TestMetadata("ObjectQualificationByName.kt")
+        public void testObjectQualificationByName() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/ObjectQualificationByName.kt");
+        }
+
+        @TestMetadata("ObjectQualificationByThis.kt")
+        public void testObjectQualificationByThis() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/ObjectQualificationByThis.kt");
+        }
+
+        @TestMetadata("ObjectQualificationImplicit.kt")
+        public void testObjectQualificationImplicit() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/ObjectQualificationImplicit.kt");
         }
 
         @TestMetadata("Parameter.kt")
@@ -784,6 +814,51 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameter.kt");
         }
 
+        @TestMetadata("defaultParameterDiffers.kt")
+        public void testDefaultParameterDiffers() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterDiffers.kt");
+        }
+
+        @TestMetadata("defaultParameterDiffers1.kt")
+        public void testDefaultParameterDiffers1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterDiffers1.kt");
+        }
+
+        @TestMetadata("defaultParameterFromSuper.kt")
+        public void testDefaultParameterFromSuper() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterFromSuper.kt");
+        }
+
+        @TestMetadata("defaultParameterImplicitlyUsed.kt")
+        public void testDefaultParameterImplicitlyUsed() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterImplicitlyUsed.kt");
+        }
+
+        @TestMetadata("defaultParameterImplicitlyUsed1.kt")
+        public void testDefaultParameterImplicitlyUsed1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterImplicitlyUsed1.kt");
+        }
+
+        @TestMetadata("defaultParameterImplicitlyUsed2.kt")
+        public void testDefaultParameterImplicitlyUsed2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterImplicitlyUsed2.kt");
+        }
+
+        @TestMetadata("defaultParameterImplicitlyUsed3.kt")
+        public void testDefaultParameterImplicitlyUsed3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterImplicitlyUsed3.kt");
+        }
+
+        @TestMetadata("defaultParameterImplicitlyUsed4.kt")
+        public void testDefaultParameterImplicitlyUsed4() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterImplicitlyUsed4.kt");
+        }
+
+        @TestMetadata("defaultParameterSubstitution.kt")
+        public void testDefaultParameterSubstitution() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterSubstitution.kt");
+        }
+
         @TestMetadata("delegateToFunctionWithParameter.kt")
         public void testDelegateToFunctionWithParameter() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/delegateToFunctionWithParameter.kt");
@@ -894,6 +969,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/lambdaInsideParentheses2.kt");
         }
 
+        @TestMetadata("lambdaNotCollapsed.kt")
+        public void testLambdaNotCollapsed() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/lambdaNotCollapsed.kt");
+        }
+
         @TestMetadata("let.kt")
         public void testLet() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/let.kt");
@@ -984,6 +1064,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/nameConflictTwice2.kt");
         }
 
+        @TestMetadata("namedArguments.kt")
+        public void testNamedArguments() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/namedArguments.kt");
+        }
+
         @TestMetadata("nested.kt")
         public void testNested() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/nested.kt");
@@ -1039,6 +1124,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/println.kt");
         }
 
+        @TestMetadata("qualifiedThis.kt")
+        public void testQualifiedThis() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/qualifiedThis.kt");
+        }
+
         @TestMetadata("RecursiveFunctionOnDeclaration.kt")
         public void testRecursiveFunctionOnDeclaration() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/RecursiveFunctionOnDeclaration.kt");
@@ -1074,6 +1164,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/ReferenceToReceiverInsideLambdaWithExplicitThis.kt");
         }
 
+        @TestMetadata("replaceReceiverWithReceiver.kt")
+        public void testReplaceReceiverWithReceiver() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/replaceReceiverWithReceiver.kt");
+        }
+
+        @TestMetadata("replaceReceiverWithReceiver1.kt")
+        public void testReplaceReceiverWithReceiver1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/replaceReceiverWithReceiver1.kt");
+        }
+
         @TestMetadata("ReturnNotInTheEnd.kt")
         public void testReturnNotInTheEnd() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/ReturnNotInTheEnd.kt");
@@ -1082,6 +1182,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("runWithComment.kt")
         public void testRunWithComment() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/runWithComment.kt");
+        }
+
+        @TestMetadata("SafeCallWrap.kt")
+        public void testSafeCallWrap() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/SafeCallWrap.kt");
         }
 
         @TestMetadata("sameNameInThisAndParameter.kt")
@@ -1152,6 +1257,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("unresolvedReference.kt")
         public void testUnresolvedReference() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/unresolvedReference.kt");
+        }
+
+        @TestMetadata("varargrs.kt")
+        public void testVarargrs() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/varargrs.kt");
+        }
+
+        @TestMetadata("varargrsWithSpread.kt")
+        public void testVarargrsWithSpread() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/varargrsWithSpread.kt");
         }
 
         @TestMetadata("withImportAlias.kt")

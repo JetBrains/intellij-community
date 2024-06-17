@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DragEditorTabsFusEventFields
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionInvoked
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
@@ -33,6 +34,7 @@ import com.intellij.util.ui.update.Activatable
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Image
@@ -45,6 +47,7 @@ import javax.swing.JLabel
 import javax.swing.JSplitPane
 import javax.swing.SwingConstants
 
+@Internal
 class DockableEditorTabbedContainer internal constructor(
   @JvmField internal val splitters: EditorsSplitters,
   private val disposeWhenEmpty: Boolean,
@@ -71,13 +74,13 @@ class DockableEditorTabbedContainer internal constructor(
     return editors
   }
 
-  fun fireContentClosed(file: VirtualFile) {
+  internal fun fireContentClosed(file: VirtualFile) {
     for (each in listeners) {
       each.contentRemoved(file)
     }
   }
 
-  fun fireContentOpen(file: VirtualFile) {
+  internal fun fireContentOpen(file: VirtualFile) {
     for (each in listeners) {
       each.contentAdded(file)
     }
@@ -94,23 +97,12 @@ class DockableEditorTabbedContainer internal constructor(
     if (content !is DockableEditor) {
       return null
     }
-    val targetTabs = splitters.getTabsAt(point)
-    if (targetTabs != null) {
-      return targetTabs
+
+    splitters.getTabsAt(point)?.let {
+      return it
     }
-    else {
-      val window = splitters.currentWindow
-      if (window != null) {
-        return window.tabbedPane.tabs
-      }
-      else {
-        for (each in splitters.getWindows()) {
-          each.tabbedPane.tabs
-          return each.tabbedPane.tabs
-        }
-      }
-    }
-    return null
+
+    return (splitters.currentWindow ?: splitters.windows().firstOrNull())?.tabbedPane?.tabs
   }
 
   override fun add(content: DockableContent<*>, dropTarget: RelativePoint?) {
@@ -121,10 +113,7 @@ class DockableEditorTabbedContainer internal constructor(
     val sameWindow = currentOver != null && dragStartLocation != null && dragStartLocation == System.identityHashCode(currentOver)
     val dropSide = currentDropSide
     if (currentOver != null) {
-      val provider = currentOver!!.dataProvider
-      if (provider != null) {
-        window = EditorWindow.DATA_KEY.getData(provider)
-      }
+      window = EditorWindow.DATA_KEY.getData(DataManager.getInstance().getDataContext(currentOver!!.component))
       if (window != null && dropSide != -1 && dropSide != SwingConstants.CENTER) {
         window.split(
           orientation = if (dropSide == SwingConstants.BOTTOM || dropSide == SwingConstants.TOP) JSplitPane.VERTICAL_SPLIT else JSplitPane.HORIZONTAL_SPLIT,
@@ -158,7 +147,7 @@ class DockableEditorTabbedContainer internal constructor(
           tabInfo?.isPinned
         }
         if (index > 0 && previousIsPinned) {
-          val previousLabel = currentOver!!.getTabLabel(previousInfo)
+          val previousLabel = currentOver!!.getTabLabel(previousInfo)!!
           val bounds = previousLabel.bounds
           val dropPoint = dropTarget!!.getPoint(previousLabel)
           dropInPinnedRow = (currentOver is JBTabsImpl &&
@@ -181,10 +170,8 @@ class DockableEditorTabbedContainer internal constructor(
     }
     recordDragStats(if (dropIntoNewlyCreatedWindow) -1 else SwingConstants.CENTER, sameWindow)
     coroutineScope.launch {
-      val openOptions = FileEditorOpenOptions(index = index,
-                                              requestFocus = true,
-                                              pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
-      splitters.manager.checkForbidSplitAndOpenFile(window, file, openOptions)
+      val openOptions = FileEditorOpenOptions(index = index, requestFocus = true, pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
+      splitters.manager.checkForbidSplitAndOpenFile(window = window, file = file, options = openOptions)
     }
   }
 
@@ -324,5 +311,5 @@ class DockableEditorTabbedContainer internal constructor(
     }
   }
 
-  override fun toString(): String = "DockableEditorTabbedContainer windows=${splitters.getWindows().joinToString()}"
+  override fun toString(): String = "DockableEditorTabbedContainer windows=${splitters.windows().joinToString()}"
 }

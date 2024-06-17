@@ -7,8 +7,7 @@ import java.util.List;
 
 public class Formatter {
     @NotNull
-    @Nullable
-    <T, V> List<T> getStrangeList() {
+    @Nullable <T, V> List<T> getStrangeList() {
         return List.of();
     }
 

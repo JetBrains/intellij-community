@@ -95,6 +95,7 @@ public final class SwitchHelper {
           }
           return false;
         }
+
         if (right instanceof FunctionExprent functionExprent &&
             functionExprent.getFuncType() == FUNCTION_CAST &&
             functionExprent.getLstOperands().size() == 2 &&
@@ -222,15 +223,21 @@ public final class SwitchHelper {
     return isJavacEnumArray || isEclipseEnumArray;
   }
 
-  record TempVarAssignmentItem(@NotNull VarExprent varExprent, @NotNull Statement statement) {
-
+  record TempVarAssignmentItem(@NotNull VarExprent varExprent,
+                               @NotNull Statement statement,
+                               boolean delete) {
+    TempVarAssignmentItem(@NotNull VarExprent varExprent, @NotNull Statement statement) {
+      this(varExprent, statement, true);
+    }
   }
 
   static void removeTempVariableDeclarations(@NotNull List<TempVarAssignmentItem> tempVarAssignments) {
     if (tempVarAssignments.isEmpty()) return;
     Set<Statement> visited = new HashSet<>();
-    Set<Statement> statements = tempVarAssignments.stream().map(a -> a.statement()).collect(Collectors.toSet());
-    Map<VarExprent, List<VarExprent>> vars = tempVarAssignments.stream().map(a -> a.varExprent()).collect(Collectors.groupingBy(t -> t));
+    Set<Statement> statements = tempVarAssignments.stream().filter(a -> a.delete).map(a -> a.statement()).collect(Collectors.toSet());
+    Map<VarExprent, List<VarExprent>> vars =
+      tempVarAssignments.stream().filter(a -> a.delete).map(a -> a.varExprent()).collect(Collectors.groupingBy(t -> t));
+    Set<VarExprent> preserve = tempVarAssignments.stream().filter(a->!a.delete).map(t->t.varExprent).collect(Collectors.toSet());
     for (Statement statement : statements) {
       Statement parent = statement;
       while (parent != null) {
@@ -268,6 +275,9 @@ public final class SwitchHelper {
             if (exprent.type != Exprent.EXPRENT_VAR) continue;
             VarExprent varExprent = (VarExprent)exprent;
             if (containVar(vars, varExprent) || (varExprent.isDefinition() && vars.containsKey(varExprent))) {
+              if (varExprent.isDefinition() && preserve.contains(varExprent)) {
+                continue;
+              }
               toDelete.add(assignmentExprent == null ? varExprent : assignmentExprent);
             }
           }

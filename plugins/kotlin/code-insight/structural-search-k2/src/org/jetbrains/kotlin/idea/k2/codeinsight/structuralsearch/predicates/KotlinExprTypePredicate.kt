@@ -6,9 +6,9 @@ import com.intellij.structuralsearch.StructuralSearchUtil
 import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.renderNames
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -28,13 +28,13 @@ class KotlinExprTypePredicate(
         if (node !is KtElement) return false
         analyze(node) {
             val type = when {
-                node is KtClassLikeDeclaration -> (node.mainReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol)?.buildSelfClassType()
+                node is KtClassLikeDeclaration -> (node.mainReference?.resolveToSymbol() as? KaNamedClassOrObjectSymbol)?.buildSelfClassType()
                 node is KtCallableDeclaration -> node.getReturnKtType()
                 node is KtExpression -> {
                     // because `getKtType` will return void for enum references we resolve and build type from the resolved class when
                     // possible.
                     val symbol = node.mainReference?.resolveToSymbol()
-                    if (symbol is KtNamedClassOrObjectSymbol) {
+                    if (symbol is KaNamedClassOrObjectSymbol) {
                         symbol.buildSelfClassType()
                     } else {
                         node.getKtType()
@@ -51,7 +51,7 @@ class KotlinExprTypePredicate(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun match(type: KtType): Boolean {
         val typesToTest = mutableListOf(type)
         if (withinHierarchy) typesToTest.addAll(type.getAllSuperTypes())

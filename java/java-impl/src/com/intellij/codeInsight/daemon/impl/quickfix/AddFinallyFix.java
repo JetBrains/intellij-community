@@ -22,9 +22,10 @@ public class AddFinallyFix extends PsiUpdateModCommandAction<PsiTryStatement> {
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiTryStatement tryStatement, @NotNull ModPsiUpdater updater) {
+    if (tryStatement.getFinallyBlock() != null) return;
     PsiStatement replacement =
       JavaPsiFacade.getElementFactory(context.project())
-        .createStatementFromText(tryStatement.getText() + "finally {\n\n}", tryStatement);
+        .createStatementFromText(tryStatement.getText() + "\nfinally {\n\n}", tryStatement);
     PsiTryStatement result = (PsiTryStatement)tryStatement.replace(replacement);
     moveCaretToFinallyBlock(updater, Objects.requireNonNull(result.getFinallyBlock()));
   }

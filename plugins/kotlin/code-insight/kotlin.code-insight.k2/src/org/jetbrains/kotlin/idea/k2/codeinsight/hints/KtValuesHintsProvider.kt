@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeLeftAndRightSigns
@@ -48,9 +48,9 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isApplicable(binaryExpression: KtBinaryExpression, leftExp: KtExpression, rightExp: KtExpression): Boolean {
-        val functionCallOrNull = binaryExpression.resolveCall()?.singleFunctionCallOrNull()
+        val functionCallOrNull = binaryExpression.resolveCallOld()?.singleFunctionCallOrNull()
         functionCallOrNull?.symbol?.takeIf {
             val packageName = it.callableId?.packageName
             packageName == StandardNames.RANGES_PACKAGE_FQ_NAME || packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME
@@ -59,14 +59,14 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         return leftExp.isComparable() && rightExp.isComparable()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression.isComparable(): Boolean =
         when (this) {
             is KtConstantExpression -> true
             is KtBinaryExpression -> left?.isComparable() == true && right?.isComparable() == true
             else -> {
-                val type = resolveCall()?.singleFunctionCallOrNull()?.symbol?.returnType
-                    ?: ((this as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KtCallableSymbol)?.returnType
+                val type = resolveCallOld()?.singleFunctionCallOrNull()?.symbol?.returnType
+                    ?: ((this as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KaCallableSymbol)?.returnType
                 (type is KtNonErrorClassType) && (
                         type.classId in DefaultTypeClassIds.PRIMITIVES ||
                                 type.getAllSuperTypes(true).any {

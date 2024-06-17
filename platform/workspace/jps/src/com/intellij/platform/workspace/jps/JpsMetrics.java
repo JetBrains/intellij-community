@@ -7,7 +7,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.SharedMetrics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal // Just insert this manually. This is needed for correct api surface
+@ApiStatus.Internal
 public final class JpsMetrics extends SharedMetrics {
   private static final @NotNull ClearableLazyValue<JpsMetrics> _instance = ClearableLazyValue.createAtomic(() -> new JpsMetrics());
 

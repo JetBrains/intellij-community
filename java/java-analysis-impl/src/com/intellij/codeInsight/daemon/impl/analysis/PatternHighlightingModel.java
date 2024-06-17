@@ -1036,6 +1036,11 @@ final class PatternHighlightingModel {
         .filter(t -> t != null)
         .forEach(t -> selectorTypes.add(t));
     }
+    if (selectorType instanceof PsiIntersectionType psiIntersectionType) {
+      for (PsiType conjunct : psiIntersectionType.getConjuncts()) {
+        selectorTypes.addAll(getAllTypes(conjunct));
+      }
+    }
     if (selectorTypes.isEmpty()) {
       selectorTypes.add(selectorType);
     }

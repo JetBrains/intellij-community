@@ -14,16 +14,22 @@ object DumbModeStatisticsCollector : CounterUsagesCollector() {
     activity?.finished { listOf(EventPair(FINISH_TYPE, finishType)) }
   }
 
-  val GROUP: EventLogGroup = EventLogGroup("dumb.mode", 1)
+  val GROUP: EventLogGroup = EventLogGroup("dumb.mode", 2)
 
   @JvmField
   val STAGE_CLASS: ClassEventField = EventFields.Class("stage_class")
+
   @JvmField
   val FINISH_TYPE: EnumEventField<IndexingFinishType> = EventFields.Enum("finish_type", IndexingFinishType::class.java)
+
   @JvmField
-  val DUMB_MODE_ACTIVITY: IdeActivityDefinition = GROUP.registerIdeActivity(null, emptyArray(), arrayOf(FINISH_TYPE))
+  val DUMB_MODE_ACTIVITY: IdeActivityDefinition = GROUP.registerIdeActivity("dumb.mode", emptyArray(), arrayOf(FINISH_TYPE))
+
   @JvmField
-  val DUMB_MODE_STAGE: VarargEventId = DUMB_MODE_ACTIVITY.registerStage("stage", arrayOf(STAGE_CLASS, EventFields.PluginInfo))
+  val DUMB_MODE_STAGE_ACTIVITY = GROUP.registerIdeActivity("stage",
+                                                           arrayOf(STAGE_CLASS, EventFields.PluginInfo),
+                                                           arrayOf(STAGE_CLASS, EventFields.PluginInfo, FINISH_TYPE),
+                                                           DUMB_MODE_ACTIVITY)
 
   override fun getGroup(): EventLogGroup = GROUP
 

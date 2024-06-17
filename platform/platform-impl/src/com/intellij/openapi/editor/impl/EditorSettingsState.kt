@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.lang.Language
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorCoreUtil
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesLanguageSupport
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineComponent.Companion.EDITOR_LANGUAGE
 import com.intellij.openapi.editor.state.CustomOutValueModifier
 import com.intellij.openapi.editor.state.ObservableState
@@ -126,6 +128,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
     if (editor != null && rightMargin == CodeStyleConstraints.MAX_RIGHT_MARGIN) false
     else EditorSettingsExternalizable.getInstance().isRightMarginShown
   }
+  var myIsHighlightSelectionOccurrences: Boolean by property { EditorSettingsExternalizable.getInstance().isHighlightSelectionOccurrences }
   var myVerticalScrollOffset: Int by property { EditorSettingsExternalizable.getInstance().verticalScrollOffset }
 
 
@@ -178,7 +181,8 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myStickyLinesShown: Boolean by property { EditorSettingsExternalizable.getInstance().areStickyLinesShown() }
   var myStickyLinesShownForLanguage: Boolean by property {
     this.language?.let {
-      EditorSettingsExternalizable.getInstance().areStickyLinesShownFor(it.id)
+      val lang = project?.service<StickyLinesLanguageSupport>()?.supportedLang(it) ?: it
+      EditorSettingsExternalizable.getInstance().areStickyLinesShownFor(lang.id)
     }
     // Return true to avoid the late appearance of the sticky panel.
     // If the actual value for the language is false,

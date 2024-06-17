@@ -52,7 +52,7 @@ interface ChangedPropsOrderEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChangedPropsOrderEntity(
   entity: ChangedPropsOrderEntity,
   modification: ChangedPropsOrderEntity.Builder.() -> Unit,
 ): ChangedPropsOrderEntity {

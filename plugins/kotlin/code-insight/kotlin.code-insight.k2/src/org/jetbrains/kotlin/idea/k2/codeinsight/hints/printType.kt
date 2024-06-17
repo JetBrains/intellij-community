@@ -8,7 +8,7 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.KtTypeProjection
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtDynamicType
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtIntegerLiteralType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -32,7 +31,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 internal fun PresentationTreeBuilder.printKtType(type: KtType) {
     // See org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer.renderType
@@ -86,10 +85,6 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
                 }
             )
         }
-        is KtIntegerLiteralType -> {
-            // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtIntegerLiteralTypeRenderer.AS_ILT_WITH_VALUE
-            text("ILT(${type.value})")
-        }
         is KtIntersectionType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtIntersectionTypeRenderer.AS_INTERSECTION
             val iterator = type.conjuncts.iterator()
@@ -132,7 +127,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
     if (markedNullable) text("?")
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KtNonErrorClassType, anotherType: KtNonErrorClassType? = null) {
     type.classId.let { printClassId(it, shortNameWithCompanionNameSkip(it)) }
 
@@ -157,7 +152,7 @@ private fun PresentationTreeBuilder.printNonErrorClassType(type: KtNonErrorClass
 }
 
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun PresentationTreeBuilder.printProjection(projection: KtTypeProjection, optionalProjection: Boolean) {
     fun String.asOptional(optional: Boolean): String =
         if (optional) "($this)" else this

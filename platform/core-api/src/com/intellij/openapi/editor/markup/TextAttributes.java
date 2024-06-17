@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 
 /**
- * Defines the visual representation (colors and effects) of text.
+ * Defines the visual representation (colors and effects) of a text.
  */
 public class TextAttributes implements Cloneable {
   private static final Logger LOG = Logger.getInstance(TextAttributes.class);
@@ -33,7 +33,7 @@ public class TextAttributes implements Cloneable {
     }
   };
 
-  @SuppressWarnings("NotNullFieldNotInitialized") private @NotNull AttributesFlyweight myAttrs;
+  @SuppressWarnings("NotNullFieldNotInitialized") private @NotNull AttributesFlyweight attrs;
 
   /**
    * Merges (layers) the two given text attributes.
@@ -66,7 +66,7 @@ public class TextAttributes implements Cloneable {
   }
 
   private TextAttributes(@NotNull AttributesFlyweight attributesFlyweight) {
-    myAttrs = attributesFlyweight;
+    attrs = attributesFlyweight;
   }
 
   public TextAttributes(@NotNull Element element) {
@@ -78,12 +78,18 @@ public class TextAttributes implements Cloneable {
     readExternal(in);
   }
 
-  public TextAttributes(@Nullable Color foregroundColor, @Nullable Color backgroundColor, @Nullable Color effectColor, EffectType effectType, @JdkConstants.FontStyle int fontType) {
+  public TextAttributes(
+    @Nullable Color foregroundColor,
+    @Nullable Color backgroundColor,
+    @Nullable Color effectColor,
+    EffectType effectType,
+    @JdkConstants.FontStyle int fontType
+  ) {
     setAttributes(foregroundColor, backgroundColor, effectColor, null, effectType, fontType);
   }
 
   public void copyFrom(@NotNull TextAttributes other) {
-    myAttrs = other.myAttrs;
+    attrs = other.attrs;
   }
 
   public void setAttributes(Color foregroundColor,
@@ -92,7 +98,7 @@ public class TextAttributes implements Cloneable {
                             Color errorStripeColor,
                             EffectType effectType,
                             @JdkConstants.FontStyle int fontType) {
-    myAttrs = AttributesFlyweight
+    attrs = AttributesFlyweight
       .create(foregroundColor, backgroundColor, fontType, effectColor, effectType, Collections.emptyMap(), errorStripeColor);
   }
 
@@ -101,7 +107,7 @@ public class TextAttributes implements Cloneable {
   }
 
   public @NotNull AttributesFlyweight getFlyweight() {
-    return myAttrs;
+    return attrs;
   }
 
   public static @NotNull TextAttributes fromFlyweight(@NotNull AttributesFlyweight flyweight) {
@@ -109,35 +115,35 @@ public class TextAttributes implements Cloneable {
   }
 
   public Color getForegroundColor() {
-    return myAttrs.getForeground();
+    return attrs.getForeground();
   }
 
   public void setForegroundColor(Color color) {
-    myAttrs = myAttrs.withForeground(color);
+    attrs = attrs.withForeground(color);
   }
 
   public Color getBackgroundColor() {
-    return myAttrs.getBackground();
+    return attrs.getBackground();
   }
 
   public void setBackgroundColor(Color color) {
-    myAttrs = myAttrs.withBackground(color);
+    attrs = attrs.withBackground(color);
   }
 
   public Color getEffectColor() {
-    return myAttrs.getEffectColor();
+    return attrs.getEffectColor();
   }
 
   public void setEffectColor(Color color) {
-    myAttrs = myAttrs.withEffectColor(color);
+    attrs = attrs.withEffectColor(color);
   }
 
   public Color getErrorStripeColor() {
-    return myAttrs.getErrorStripeColor();
+    return attrs.getErrorStripeColor();
   }
 
   public void setErrorStripeColor(Color color) {
-    myAttrs = myAttrs.withErrorStripeColor(color);
+    attrs = attrs.withErrorStripeColor(color);
   }
 
   /**
@@ -145,7 +151,7 @@ public class TextAttributes implements Cloneable {
    */
   @ApiStatus.Experimental
   public boolean hasEffects() {
-    return myAttrs.hasEffects();
+    return attrs.hasEffects();
   }
 
   /**
@@ -154,7 +160,7 @@ public class TextAttributes implements Cloneable {
    */
   @ApiStatus.Experimental
   public void setAdditionalEffects(@NotNull Map<@NotNull EffectType, ? extends @NotNull Color> effectsMap) {
-    myAttrs = myAttrs.withAdditionalEffects(effectsMap);
+    attrs = attrs.withAdditionalEffects(effectsMap);
   }
 
   /**
@@ -171,26 +177,26 @@ public class TextAttributes implements Cloneable {
   }
 
   public @Nullable EffectType getEffectType() {
-    return myAttrs.getEffectType();
+    return attrs.getEffectType();
   }
 
   @ApiStatus.Experimental
   public void forEachAdditionalEffect(@NotNull BiConsumer<? super EffectType, ? super Color> consumer) {
-    myAttrs.getAdditionalEffects().forEach(consumer);
+    attrs.getAdditionalEffects().forEach(consumer);
   }
 
   @ApiStatus.Experimental
   public void forEachEffect(@NotNull BiConsumer<? super EffectType, ? super Color> consumer) {
-    myAttrs.getAllEffects().forEach(consumer);
+    attrs.getAllEffects().forEach(consumer);
   }
 
   public void setEffectType(EffectType effectType) {
-    myAttrs = myAttrs.withEffectType(effectType);
+    attrs = attrs.withEffectType(effectType);
   }
 
   @JdkConstants.FontStyle
   public int getFontType() {
-    return myAttrs.getFontType();
+    return attrs.getFontType();
   }
 
   public void setFontType(@JdkConstants.FontStyle int type) {
@@ -198,13 +204,13 @@ public class TextAttributes implements Cloneable {
       LOG.error("Wrong font type: " + type);
       type = Font.PLAIN;
     }
-    myAttrs = myAttrs.withFontType(type);
+    attrs = attrs.withFontType(type);
   }
 
   /** @noinspection MethodDoesntCallSuperMethod*/
   @Override
   public TextAttributes clone() {
-    return new TextAttributes(myAttrs);
+    return new TextAttributes(attrs);
   }
 
   @Override
@@ -212,35 +218,35 @@ public class TextAttributes implements Cloneable {
     if(!(obj instanceof TextAttributes)) {
       return false;
     }
-    return Objects.equals(myAttrs, ((TextAttributes)obj).myAttrs);
+    return Objects.equals(attrs, ((TextAttributes)obj).attrs);
   }
 
   @Override
   public int hashCode() {
-    return myAttrs.hashCode();
+    return attrs.hashCode();
   }
 
   public void readExternal(@NotNull Element element) {
-    myAttrs = AttributesFlyweight.create(element);
+    attrs = AttributesFlyweight.create(element);
   }
 
   @ApiStatus.Internal
   public void readExternal(@NotNull DataInput in) throws IOException {
-    myAttrs = AttributesFlyweight.create(in);
+    attrs = AttributesFlyweight.create(in);
   }
 
   public void writeExternal(Element element) {
-    myAttrs.writeExternal(element);
+    attrs.writeExternal(element);
   }
 
   @ApiStatus.Internal
   public void writeExternal(@NotNull DataOutput out) throws IOException {
-    myAttrs.writeExternal(out);
+    attrs.writeExternal(out);
   }
 
   @Override
   public String toString() {
     return "[" + getForegroundColor() + "," + getBackgroundColor() + "," + getFontType() + "," + getEffectType() + "," + getEffectColor()
-           + "," + myAttrs.getAdditionalEffects() + "," + getErrorStripeColor() + "]";
+           + "," + attrs.getAdditionalEffects() + "," + getErrorStripeColor() + "]";
   }
 }

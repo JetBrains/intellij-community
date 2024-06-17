@@ -102,7 +102,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
   }
 
   override fun getListCellRendererComponent(list: JList<out T>,
-                                            value: T,
+                                            value: T?,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
@@ -112,7 +112,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
     val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
     val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(isSelected && !ExperimentalUI.isNewUI(), list.hasFocus())
 
-    val presentation = presenter(value)
+    val presentation = value?.let { presenter(it) } ?: return this
 
     unseen.apply {
       isVisible = presentation.seen?.not() ?: false

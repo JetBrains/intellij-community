@@ -20,10 +20,10 @@ import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.MathUtil;
@@ -425,7 +425,7 @@ public class ExpectedHighlightingData {
           filePath = file.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH);
         }
       }
-      throw new FileComparisonFailure(failMessage.toString(), myText, getActualLineMarkerFileText(markerInfos), filePath);
+      throw new FileComparisonFailedError(failMessage.toString(), myText, getActualLineMarkerFileText(markerInfos), filePath);
     }
   }
 
@@ -600,7 +600,7 @@ public class ExpectedHighlightingData {
       // uncomment to overwrite, don't forget to revert on commit!
       //VfsTestUtil.overwriteTestData(filePath, actual);
       //return;
-      throw new FileComparisonFailure(failMessage, myText, actual, filePath);
+      throw new FileComparisonFailedError(failMessage, myText, actual, filePath);
     }
     assertEquals(failMessage + "\n", myText, actual);
     fail(failMessage);

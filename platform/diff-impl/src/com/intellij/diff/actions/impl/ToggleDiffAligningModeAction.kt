@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl
 
 import com.intellij.diff.tools.simple.SimpleDiffViewer
@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
 
-class ToggleDiffAligningModeAction : DumbAwareToggleAction() {
+internal class ToggleDiffAligningModeAction : DumbAwareToggleAction() {
 
   override fun update(e: AnActionEvent) {
     val viewer = e.getData(DIFF_VIEWER)

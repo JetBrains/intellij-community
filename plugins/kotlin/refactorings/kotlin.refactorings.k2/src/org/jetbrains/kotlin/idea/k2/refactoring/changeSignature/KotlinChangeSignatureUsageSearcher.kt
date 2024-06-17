@@ -5,9 +5,9 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
@@ -75,7 +75,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                     super.visitSimpleNameExpression(expression)
 
-                    val call = expression.resolveCall()
+                    val call = expression.resolveCallOld()
 
                     if (call == null && originalReceiverType != null) {
                         //deleted or changed receiver, must be preserved as simple parameter
@@ -96,29 +96,32 @@ internal object KotlinChangeSignatureUsageSearcher {
                         val symbol = partiallyAppliedSymbol.symbol
                         val containingSymbol = symbol.getContainingSymbol()
                         if (receiverValue != null) {
-                            val receiverExpression = (receiverValue as? KtExplicitReceiverValue)?.expression
-                                ?: ((receiverValue as? KtSmartCastedReceiverValue)?.original as? KtExplicitReceiverValue)?.expression
+                            val receiverExpression = (receiverValue as? KaExplicitReceiverValue)?.expression
+                                ?: ((receiverValue as? KaSmartCastedReceiverValue)?.original as? KaExplicitReceiverValue)?.expression
                                 ?: expression
                             if (originalReceiverType != null) {
                                 if (receiverValue.type.isSubTypeOf(originalReceiverType)) {
                                     if (receiverExpression is KtThisExpression) {
-                                        result.add(KotlinParameterUsage(receiverExpression, originalReceiverInfo!!))
+                                        val targetLabel = receiverExpression.getTargetLabel()
+                                        if (targetLabel == null || targetLabel.getKtType()?.let { originalReceiverType.isEqualTo(it) } == true) {
+                                            result.add(KotlinParameterUsage(receiverExpression, originalReceiverInfo!!))
+                                        }
                                     }
-                                    else {
+                                    else if (receiverValue is KaImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null) {
                                         result.add(KotlinImplicitThisToParameterUsage(receiverExpression, originalReceiverInfo!!))
                                     }
                                 }
                             } else {
-                                val name = (containingSymbol as? KtClassOrObjectSymbol)?.name
+                                val name = (containingSymbol as? KaClassOrObjectSymbol)?.name
                                 if (name != null) {
                                     if (receiverExpression is KtThisExpression) {
                                         result.add(KotlinNonQualifiedOuterThisUsage(receiverExpression, name))
-                                    } else if (receiverValue is KtImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null) {
+                                    } else if (receiverValue is KaImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null) {
                                         result.add(KotlinImplicitThisUsage(receiverExpression, name))
                                     }
                                 }
                             }
-                        } else if (symbol !is KtValueParameterSymbol && originalReceiverType == null) {
+                        } else if (symbol !is KaValueParameterSymbol && originalReceiverType == null) {
                             val declaration = symbol.psi
                             val receiverParameterInfo = changeInfo.receiverParameterInfo
                             require(receiverParameterInfo != null)

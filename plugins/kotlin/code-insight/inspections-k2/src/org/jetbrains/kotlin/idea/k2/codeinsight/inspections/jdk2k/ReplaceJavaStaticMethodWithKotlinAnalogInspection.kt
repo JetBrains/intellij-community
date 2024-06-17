@@ -11,10 +11,10 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.toArray
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -34,18 +34,20 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
         val callee = element.calleeExpression ?: return emptyList()
 
         return Holder.REPLACEMENTS[callee.text]?.filter {
-            it.isApplicableByPsi(element) && it.transformation.isApplicableByPsi(element)
+            it.transformation.isApplicableByPsi(element)
         } ?: emptyList()
     }
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         !findReplacementCandidatesByPsi(element).isEmpty()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtCallExpression): List<Replacement>? {
-        val replacements = findReplacementCandidatesByPsi(element)
+        val replacements = findReplacementCandidatesByPsi(element).filter {
+            it.isApplicable(element)
+        }
 
-        val javaMethodFqName = element.resolveCall()
+        val javaMethodFqName = element.resolveCallOld()
             ?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId?.asSingleFqName()
 
         return replacements.filter {
@@ -261,7 +263,7 @@ data class Replacement(
     val kotlinFunctionFqName: String,
     val transformation: Transformation = WithoutAdditionalTransformation,
     val mayChangeSemantics: Boolean = false,
-    val isApplicableByPsi: (KtCallExpression) -> Boolean = { true }
+    val isApplicable: (KtCallExpression) -> Boolean = { true }
 ) {
     private fun String.shortName() = takeLastWhile { it != '.' }
 

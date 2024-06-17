@@ -33,7 +33,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.*
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.NewUI
-import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -248,10 +247,11 @@ private open class TogglePinActionBase(val toolWindowId: String): DumbAwareActio
     ActionToolbarImpl.updateAllToolbarsImmediately()
   }
 }
-private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWindowId), KeepingPopupOpenAction {
+private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWindowId) {
   override fun update(e: AnActionEvent) {
     super.update(e)
     val pinned = Toggleable.isSelected(e.presentation)
+    e.presentation.isMultiChoice = true
     e.presentation.icon = if (!pinned) ExpUiIcons.General.Pin else ExpUiIcons.General.PinSelected
     e.presentation.selectedIcon = if (!pinned) ExpUiIcons.General.PinHovered else ExpUiIcons.General.PinSelectedHovered
     e.presentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, pinned)

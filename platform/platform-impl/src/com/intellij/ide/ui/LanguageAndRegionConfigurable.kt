@@ -15,7 +15,9 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.GroupedComboBoxRenderer
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
@@ -25,6 +27,7 @@ import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.RestartDialog
 import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.net.URL
 import java.util.*
 
 /**
@@ -38,17 +41,21 @@ class LanguageAndRegionUi {
       val comboGroup = "language_and_region_combo"
 
       panel.row(IdeBundle.message("combobox.language")) {
-        val items = LocalizationUtil.getAllAvailableLocales()
+        val locales = LocalizationUtil.getAllAvailableLocales()
         val localizationService = LocalizationStateService.getInstance()!!
-        val selection = Locale.forLanguageTag(localizationService.getSelectedLocale())
-        val model = CollectionComboBoxModel(items, selection)
+        val forcedLocale = LocalizationUtil.getForcedLocale()
+        val model = CollectionComboBoxModel(locales.first, LocalizationUtil.getLocale())
         val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
 
-        if (propertyGraph != null && parentDisposable != null && connection != null) {
-          val property = propertyGraph.lazyProperty { Locale.forLanguageTag(localizationService.getSelectedLocale()) }
+        if (forcedLocale != null) {
+          languageBox.enabled(false)
+            .comment(IdeBundle.message("combobox.language.disable.comment", LocalizationUtil.LOCALIZATION_KEY, forcedLocale))
+        }
+        else if (propertyGraph != null && parentDisposable != null && connection != null) {
+          val property = propertyGraph.lazyProperty { LocalizationUtil.getLocale() }
 
           property.afterChange(parentDisposable) {
-            if (it.toLanguageTag() == localizationService.getSelectedLocale()) {
+            if (it.toLanguageTag() == LocalizationUtil.getLocale().toLanguageTag()) {
               return@afterChange
             }
 
@@ -61,23 +68,22 @@ class LanguageAndRegionUi {
           languageBox.bindItem(property)
 
           connection.subscribe(LocalizationListener.UPDATE_TOPIC, Runnable {
-            model.selectedItem = Locale.forLanguageTag(localizationService.getSelectedLocale())
+            model.selectedItem = LocalizationUtil.getLocale()
           })
         }
         else {
-          languageBox.bindItem({ Locale.forLanguageTag(localizationService.getSelectedLocale()) }, {
+          languageBox.bindItem({ LocalizationUtil.getLocale() }, {
             localizationService.setSelectedLocale((it ?: Locale.ENGLISH).toLanguageTag())
           })
         }
 
         val languageComponent = languageBox.component
         languageComponent.isSwingPopup = false
-        languageComponent.renderer = LanguageComboBoxRenderer(items)
+        languageComponent.renderer = LanguageComboBoxRenderer(locales)
       }
 
       panel.row(IdeBundle.message("combobox.region")) {
         val helpUrl = (HelpManager.getInstance() as HelpManagerImpl).getHelpUrl("preferences.language.and.region")
-        val comment = IdeBundle.message("combobox.region.comment", helpUrl)
 
         val model = CollectionComboBoxModel(Region.entries, RegionSettings.getRegion())
         val regionBox = comboBox(model).accessibleName(IdeBundle.message("combobox.region")).widthGroup(comboGroup)
@@ -101,12 +107,13 @@ class LanguageAndRegionUi {
           connection.subscribe(RegionSettings.UPDATE_TOPIC, Runnable { model.selectedItem = RegionSettings.getRegion() })
 
           regionBox.gap(RightGap.SMALL)
-          contextHelp(comment)
+          cell(ContextHelpLabel.createWithBrowserLink(null, IdeBundle.message("combobox.region.hint"),
+                                                      IdeBundle.message("combobox.region.hint.link"), URL(helpUrl)))
         }
         else {
           regionBox.bindItem({ RegionSettings.getRegion() }, { RegionSettings.setRegion(it ?: Region.NOT_SET) })
 
-          regionBox.comment(comment)
+          regionBox.comment(IdeBundle.message("combobox.region.comment", helpUrl))
         }
 
         val regionComponent = regionBox.component
@@ -119,11 +126,11 @@ class LanguageAndRegionUi {
 
 internal class LanguageAndRegionConfigurable :
   BoundSearchableConfigurable(IdeBundle.message("title.language.and.region"), "preferences.language.and.region") {
-  private lateinit var initSelectionLanguage: String
+  private lateinit var initSelectionLanguage: Locale
   private lateinit var initSelectionRegion: Region
 
   override fun createPanel(): DialogPanel {
-    initSelectionLanguage = LocalizationStateService.getInstance()!!.getSelectedLocale()
+    initSelectionLanguage = LocalizationUtil.getLocale()
     initSelectionRegion = RegionSettings.getRegion()
 
     return panel {
@@ -133,7 +140,7 @@ internal class LanguageAndRegionConfigurable :
 
   override fun apply() {
     super.apply()
-    if (initSelectionLanguage != LocalizationStateService.getInstance()!!.getSelectedLocale() ||
+    if (initSelectionLanguage.toLanguageTag() != LocalizationUtil.getLocale().toLanguageTag() ||
         initSelectionRegion != RegionSettings.getRegion()) {
       ApplicationManager.getApplication().invokeLater {
         RestartDialog.showRestartRequired()
@@ -142,13 +149,22 @@ internal class LanguageAndRegionConfigurable :
   }
 }
 
-private class LanguageComboBoxRenderer(private val allLocales: kotlin.collections.List<Locale>) : GroupedComboBoxRenderer<Locale>() {
-  override fun getText(item: Locale): String {
-    return item.displayLanguage
+private class LanguageComboBoxRenderer(private val locales: Pair<kotlin.collections.List<Locale>, Map<Locale, String>>) :
+  GroupedComboBoxRenderer<Locale>() {
+
+  @Suppress("NonAsciiCharacters")
+  private val names = buildMap<Locale, String> {
+    put(Locale.forLanguageTag("zh-CN"), "Chinese (Simplified) 中文语言包")
+    put(Locale.forLanguageTag("ko"), "Korean 한국어 언어 팩")
+    put(Locale.forLanguageTag("ja"), "Japanese 日本語言語パック")
+  }
+
+  override fun getText(item: Locale): @NlsSafe String {
+    return locales.second[item] ?: names[item] ?: item.getDisplayLanguage(Locale.ENGLISH)
   }
 
   override fun separatorFor(value: Locale): ListSeparator? {
-    if (allLocales.indexOf(value) == 1) {
+    if (locales.first.indexOf(value) == 1) {
       return ListSeparator()
     }
     return null

@@ -13,7 +13,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.io.FileUtil
-import junit.framework.ComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import junit.framework.TestCase
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinDeclarationMover
@@ -114,7 +114,7 @@ abstract class AbstractCodeMoverTest : KotlinLightCodeInsightFixtureTestCase() {
             val afterFile = File("$path.after")
             try {
                 myFixture.checkResultByFile(afterFile.toRelativeString(testDataDirectory))
-            } catch (e: ComparisonFailure) {
+            } catch (e: FileComparisonFailedError) {
                 KotlinTestUtils.assertEqualsToFile(afterFile, editor)
             }
         }

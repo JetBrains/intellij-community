@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.tabs.impl.JBTabsImpl;
@@ -17,7 +17,7 @@ public class WindowTabsLayout extends SingleRowLayout {
 
   @Override
   protected void recomputeToLayout(SingleRowPassInfo data) {
-    data.requiredLength = myTabs.getWidth();
+    data.requiredLength = tabs.getWidth();
     data.toLayout.addAll(data.myVisibleInfos);
   }
 
@@ -28,17 +28,17 @@ public class WindowTabsLayout extends SingleRowLayout {
     if (tabCount > 0) {
       Rectangle bounds = getStrategy().getLayoutRect(data, data.position, length);
 
-      int tabsWidth = myTabs.getWidth();
+      int tabsWidth = tabs.getWidth();
       bounds.width = tabsWidth / tabCount;
 
-      if (myTabs.getIndexOf(label.getInfo()) == myTabs.getTabCount() - 1) {
+      if (tabs.getIndexOf(label.getInfo()) == tabs.getTabCount() - 1) {
         int fullWidth = bounds.width * tabCount;
         if (fullWidth < tabsWidth) {
           bounds.width += tabsWidth - fullWidth;
         }
       }
 
-      myTabs.layout(label, bounds);
+      tabs.layout(label, bounds);
       label.setAlignmentToCenter(true);
 
       return true;
@@ -49,7 +49,7 @@ public class WindowTabsLayout extends SingleRowLayout {
 
   @Override
   public int getDropIndexFor(Point point) {
-    Component component = myTabs.getComponentAt(point);
+    Component component = tabs.getComponentAt(point);
     if (component instanceof TabLabel label && lastSingRowLayout != null) {
       return lastSingRowLayout.myVisibleInfos.indexOf(label.getInfo());
     }

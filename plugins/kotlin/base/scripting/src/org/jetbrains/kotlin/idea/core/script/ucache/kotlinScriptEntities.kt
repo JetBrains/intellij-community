@@ -99,7 +99,7 @@ private fun MutableEntityStorage.syncScriptEntities(
         val refsToRemove = currentLibRefs - actualLibRefs
 
         if (refsToAdd.isNotEmpty() || refsToRemove.isNotEmpty()) {
-            modifyEntity(scriptEntity) {
+            modifyKotlinScriptEntity(scriptEntity) {
                 dependencies.removeAll(refsToRemove)
                 dependencies.addAll(refsToAdd)
             }
@@ -107,7 +107,7 @@ private fun MutableEntityStorage.syncScriptEntities(
 
         actualLibraries.forEach {
             if (!it.usedInScripts.contains(scriptEntity.symbolicId)) {
-                modifyEntity(it) {
+                modifyKotlinScriptLibraryEntity(it) {
                     usedInScripts.add(scriptEntity.symbolicId)
                 }
             }
@@ -129,7 +129,7 @@ private fun MutableEntityStorage.removeOutdatedLibraries(
         if (it.usedInScripts.size == 1) {
             removeEntity(it)
         } else {
-            modifyEntity(it) {
+            modifyKotlinScriptLibraryEntity(it) {
                 usedInScripts.remove(existingScriptEntity.symbolicId)
             }
         }
@@ -157,7 +157,7 @@ private fun MutableEntityStorage.removeOutdatedScripts(removedScriptPaths: List<
                     if (it.usedInScripts.size == 1) {
                         removeEntity(it)
                     } else {
-                        modifyEntity(it) {
+                        modifyKotlinScriptLibraryEntity(it) {
                             usedInScripts.remove(outdatedScript.symbolicId)
                         }
                     }
@@ -198,7 +198,7 @@ private fun MutableEntityStorage.getActualScriptLibraries(scriptFile: VirtualFil
             val existingLibrary = resolve(KotlinScriptLibraryId(library.name))
             if (existingLibrary != null) {
                 if (!existingLibrary.hasSameRootsAs(library)) {
-                    modifyEntity(existingLibrary) {
+                    modifyKotlinScriptLibraryEntity(existingLibrary) {
                         roots = library.roots.toMutableList()
                     }
                 }

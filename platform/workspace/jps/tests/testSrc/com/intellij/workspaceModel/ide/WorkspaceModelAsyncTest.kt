@@ -23,6 +23,7 @@ import com.intellij.testFramework.workspaceModel.update
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.drop
 import org.junit.After
 import org.junit.ClassRule
 import org.junit.Rule
@@ -68,13 +69,13 @@ class WorkspaceModelAsyncTest {
     val job = launch {
       assertEquals(false, application.isWriteAccessAllowed)
       listenerIsReady.send(Unit)
-      workspaceModel.subscribe { _, changes ->
-        changes.collect { event ->
+      workspaceModel.eventLog
+        .drop(1) // Drop the first event form the previous update
+        .collect { event ->
           val entityChange = event.getAllChanges().single()
           assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
           collectedEventsCount.incrementAndGet()
         }
-      }
     }
 
     try {
@@ -100,13 +101,13 @@ class WorkspaceModelAsyncTest {
       val collectedEventsCount = AtomicInteger()
       val workspaceModel = WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl
       val job = launch {
-        workspaceModel.subscribe { _, changes ->
-          changes.collect { event ->
+        workspaceModel.eventLog
+          .drop(1) // Drop the first event form the previous update
+          .collect { event ->
             val entityChange = event.getAllChanges().single()
             assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
             collectedEventsCount.incrementAndGet()
           }
-        }
       }
 
       try {
@@ -182,13 +183,13 @@ class WorkspaceModelAsyncTest {
     val collectedEventsCount = AtomicInteger()
     val job = launch {
       assertEquals(false, application.isWriteAccessAllowed)
-      workspaceModel.subscribe { _, changes ->
-        changes.collect { event ->
+      workspaceModel.eventLog
+        .drop(1) // Drop the first event form the previous update
+        .collect { event ->
           val entityChange = event.getAllChanges().single()
           assertContains(moduleNames, (entityChange.newEntity as ModuleEntity).name)
           collectedEventsCount.incrementAndGet()
         }
-      }
     }
 
     try {

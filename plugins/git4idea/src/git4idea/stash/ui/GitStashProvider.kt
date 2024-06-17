@@ -5,6 +5,7 @@ import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
@@ -26,6 +27,7 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.ui.render.LabelIconCache
@@ -39,12 +41,10 @@ import git4idea.stash.isNotEmpty
 import git4idea.ui.StashInfo
 import git4idea.ui.StashInfo.Companion.branchName
 import git4idea.ui.StashInfo.Companion.subject
-import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
-import java.util.stream.Stream
 import javax.swing.JComponent
 
 class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesProvider<StashInfo>, Disposable {
@@ -82,7 +82,8 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     val stashesMap = stashTracker.stashes
     val stashesRoot = if (showRootNode) {
       SavedPatchesTree.TagWithCounterChangesBrowserNode(tag).also { modelBuilder.insertSubtreeRoot(it) }
-    } else {
+    }
+    else {
       modelBuilder.myRoot
     }
     for ((root, stashesList) in stashesMap) {
@@ -117,11 +118,11 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     insertSubtreeRoot(errorNode, parent)
   }
 
-  override fun getData(dataId: String, selectedObjects: Stream<SavedPatchesProvider.PatchObject<*>>): Any? {
-    if (STASH_INFO.`is`(dataId)) {
-      return StreamEx.of(selectedObjects.map(SavedPatchesProvider.PatchObject<*>::data)).filterIsInstance(dataClass).toList()
-    }
-    return null
+  override fun uiDataSnapshot(sink: DataSink, selectedObjects: Iterable<SavedPatchesProvider.PatchObject<*>>) {
+    sink[STASH_INFO] = JBIterable.from(selectedObjects)
+      .map(SavedPatchesProvider.PatchObject<*>::data)
+      .filter(dataClass)
+      .toList()
   }
 
   override fun dispose() {

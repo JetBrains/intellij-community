@@ -93,18 +93,12 @@ class JKLocalVariable(
     override fun accept(visitor: JKVisitor) = visitor.visitLocalVariable(this)
 }
 
-class JKForLoopVariable(
+class JKForLoopParameter(
     type: JKTypeElement,
     name: JKNameIdentifier,
-    initializer: JKExpression,
-    annotationList: JKAnnotationList = JKAnnotationList()
-) : JKVariable() {
-    override var initializer by child(initializer)
-    override var name by child(name)
-    override var type by child(type)
-    override var annotationList by child(annotationList)
-
-    override fun accept(visitor: JKVisitor) = visitor.visitForLoopVariable(this)
+    annotationList: JKAnnotationList
+) : JKParameter(type, name, annotationList = annotationList) {
+    override fun accept(visitor: JKVisitor) = visitor.visitForLoopParameter(this)
 }
 
 open class JKParameter(

@@ -24,8 +24,14 @@ fun SdkComboBox.getSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvid
 
 fun SdkComboBox.setSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvider, externalProjectPath: String?, jdkReference: String?) {
   when (jdkReference) {
-    USE_GRADLE_JAVA_HOME -> selectedItem = addJdkReferenceItem(GRADLE_JAVA_HOME_PROPERTY, getJavaHome(model.project, externalProjectPath, GradlePropertiesFile))
-    USE_GRADLE_LOCAL_JAVA_HOME -> selectedItem = addJdkReferenceItem(GRADLE_LOCAL_JAVA_HOME, getJavaHome(model.project, externalProjectPath, GradleLocalPropertiesFile))
+    USE_GRADLE_JAVA_HOME -> {
+      val javaHome = GradlePropertiesFile.getJavaHome(model.project, externalProjectPath)
+      selectedItem = addJdkReferenceItem(GRADLE_JAVA_HOME_PROPERTY, javaHome)
+    }
+    USE_GRADLE_LOCAL_JAVA_HOME -> {
+      val javaHome = GradleLocalPropertiesFile.getJavaHome(externalProjectPath)
+      selectedItem = addJdkReferenceItem(GRADLE_LOCAL_JAVA_HOME, javaHome)
+    }
     else -> setSelectedJdkReference(sdkLookupProvider, jdkReference)
   }
 }
@@ -49,14 +55,14 @@ fun SdkLookupProvider.resolveGradleJvmReference(item: SdkListItem?): String? {
 
 private fun SdkComboBox.addGradleJavaHomeReferenceItem(externalProjectPath: String?) {
   if (externalProjectPath == null) return
-  val gradleJavaHome = getJavaHome(model.project, externalProjectPath, GradlePropertiesFile) ?: return
-  addJdkReferenceItem(GRADLE_JAVA_HOME_PROPERTY, gradleJavaHome)
+  val javaHome = GradlePropertiesFile.getJavaHome(model.project, externalProjectPath) ?: return
+  addJdkReferenceItem(GRADLE_JAVA_HOME_PROPERTY, javaHome)
 }
 
 private fun SdkComboBox.addGradleLocalJavaHomeReferenceItem(externalProjectPath: String?) {
   if (externalProjectPath == null) return
-  val gradleLocalJavaHome = getJavaHome(model.project, externalProjectPath, GradleLocalPropertiesFile) ?: return
-  addJdkReferenceItem(GRADLE_LOCAL_JAVA_HOME, gradleLocalJavaHome)
+  val javaHome = GradleLocalPropertiesFile.getJavaHome(externalProjectPath) ?: return
+  addJdkReferenceItem(GRADLE_LOCAL_JAVA_HOME, javaHome)
 }
 
 private fun SdkComboBox.addJavaHomeReferenceItem() {

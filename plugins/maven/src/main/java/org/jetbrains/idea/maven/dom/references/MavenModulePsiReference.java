@@ -18,6 +18,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenAdditionalHightligher;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -42,15 +43,22 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     if (baseDir == null) return null;
 
     String path = FileUtil.toSystemIndependentName(myText);
-    VirtualFile file =  baseDir.findFileByRelativePath(path);
+    VirtualFile file = baseDir.findFileByRelativePath(path);
 
     if (file == null || file.isDirectory()) {
       String relPath = FileUtil.toSystemIndependentName(path + "/" + MavenConstants.POM_XML);
       file = baseDir.findFileByRelativePath(relPath);
     }
 
-    if (file == null) return null;
+    if (file == null) {
+      PsiFile result =
+        MavenAdditionalHightligher.EP.getExtensionList().stream().map(e -> e.resolveModulePsi(myText, myPsiFile, myVirtualFile))
+          .filter(it -> it != null).findFirst().orElse(null);
+      if (result != null) return result;
+    }
 
+
+    if (file == null) return null;
     return getPsiFile(file);
   }
 

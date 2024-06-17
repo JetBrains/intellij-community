@@ -24,6 +24,7 @@ import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumn;
 import com.intellij.vcs.log.util.GraphOptionsUtil;
 import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +38,7 @@ import static com.intellij.vcs.log.ui.AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_E
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.getColumnsOrder;
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
+@ApiStatus.Internal
 public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 8);
   private static final EventId UI_INITIALIZED = GROUP.registerEvent("uiInitialized");

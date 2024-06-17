@@ -161,7 +161,7 @@ class ModifiableRootModelBridgeImpl(
     val newItem = transformer(oldItem)
     if (oldItem == newItem) return
 
-    diff.modifyEntity(moduleEntity) {
+    diff.modifyModuleEntity(moduleEntity) {
       val copy = dependencies.toMutableList()
       copy[index] = newItem
       dependencies = copy
@@ -221,7 +221,7 @@ class ModifiableRootModelBridgeImpl(
       return existingEntry
     }
 
-    diff.modifyEntity(moduleEntity) {
+    diff.modifyModuleEntity(moduleEntity) {
       this.contentRoots += ContentRootEntity(url = virtualFileUrl,
                                              excludedPatterns = emptyList<@NlsSafe String>(),
                                              entitySource = entitySource)
@@ -352,7 +352,7 @@ class ModifiableRootModelBridgeImpl(
   internal fun appendDependency(dependency: ModuleDependencyItem) {
     mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(moduleEntity) {
+    diff.modifyModuleEntity(moduleEntity) {
       dependencies.add(dependency)
     }
   }
@@ -362,7 +362,7 @@ class ModifiableRootModelBridgeImpl(
       mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(moduleEntity) {
+    diff.modifyModuleEntity(moduleEntity) {
       this.dependencies.addAll(dependencies)
     }
   }
@@ -380,7 +380,7 @@ class ModifiableRootModelBridgeImpl(
       }
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(moduleEntity) {
+    diff.modifyModuleEntity(moduleEntity) {
       if (last) {
         dependencies.add(dependency)
       }
@@ -410,7 +410,7 @@ class ModifiableRootModelBridgeImpl(
     mutableOrderEntries.clear()
     mutableOrderEntries.addAll(newOrderEntries)
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(moduleEntity) {
+    diff.modifyModuleEntity(moduleEntity) {
       dependencies = newDependencies
     }
   }
@@ -464,7 +464,7 @@ class ModifiableRootModelBridgeImpl(
       mutableOrderEntries[i].updateIndex(i)
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(moduleEntity) {
+    diff.modifyModuleEntity(moduleEntity) {
       dependencies = newEntities.toMutableList()
     }
   }
@@ -521,7 +521,7 @@ class ModifiableRootModelBridgeImpl(
       if (customImlDataEntity?.rootManagerTagCustomData != elementAsString) {
         when {
           customImlDataEntity == null && !JDOMUtil.isEmpty(element) -> {
-            diff.modifyEntity(moduleEntity) {
+            diff.modifyModuleEntity(moduleEntity) {
               this.customImlData = ModuleCustomImlDataEntity(HashMap(), moduleEntity.entitySource) {
                 rootManagerTagCustomData = elementAsString
               }
@@ -534,11 +534,11 @@ class ModifiableRootModelBridgeImpl(
             diff.removeEntity(customImlDataEntity)
 
           customImlDataEntity != null && customImlDataEntity.customModuleOptions.isNotEmpty() && JDOMUtil.isEmpty(element) ->
-            diff.modifyEntity(customImlDataEntity) {
+            diff.modifyModuleCustomImlDataEntity(customImlDataEntity) {
               rootManagerTagCustomData = null
             }
 
-          customImlDataEntity != null && !JDOMUtil.isEmpty(element) -> diff.modifyEntity(customImlDataEntity) {
+          customImlDataEntity != null && !JDOMUtil.isEmpty(element) -> diff.modifyModuleCustomImlDataEntity(customImlDataEntity) {
             rootManagerTagCustomData = elementAsString
           }
 

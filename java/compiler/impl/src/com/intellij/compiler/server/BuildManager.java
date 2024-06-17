@@ -120,7 +120,8 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1519,16 +1520,18 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
     }
 
-    // DepGraph-based IC implementation
-    if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
-      cmdLine.addParameter("-D" + GlobalOptions.DEPENDENCY_GRAPH_ENABLED + "=true");
-    }
-
     // portable caches
     if (Registry.is("compiler.process.use.portable.caches") &&
         CompilerCacheConfigurator.isServerUrlConfigured(project) &&
         CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
       cmdLine.addParameter("-D" + ProjectStamps.PORTABLE_CACHES_PROPERTY + "=true");
+    }
+    else {
+      // Unified IC implementation is not tested with portable caches yet, so if caches are enabled, stick with the old implementation
+      // DepGraph-based IC implementation
+      if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
+        cmdLine.addParameter("-D" + GlobalOptions.DEPENDENCY_GRAPH_ENABLED + "=true");
+      }
     }
 
     // Java compiler's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language

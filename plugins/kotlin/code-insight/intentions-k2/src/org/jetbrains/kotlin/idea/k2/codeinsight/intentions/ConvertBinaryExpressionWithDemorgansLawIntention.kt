@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils
@@ -30,7 +30,7 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
         else -> throw IllegalArgumentException()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtBinaryExpression): DemorgansLawUtils.Context? {
         val operands = getOperandsIfAllBoolean(element) ?: return null
         return DemorgansLawUtils.prepareContext(operands)

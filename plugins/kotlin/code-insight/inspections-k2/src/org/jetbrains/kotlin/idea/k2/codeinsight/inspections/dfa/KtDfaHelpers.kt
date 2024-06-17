@@ -14,15 +14,14 @@ import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
@@ -30,13 +29,13 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KtType?.toDfType(): DfType {
     if (this == null) return DfType.TOP
     if (canBeNull()) {
         var notNullableType = this.withNullability(KtTypeNullability.NON_NULLABLE).toDfTypeNotNullable()
         if (notNullableType is DfPrimitiveType) {
-            val cls = (this as? KtNonErrorClassType)?.expandedClassSymbol
+            val cls = (this as? KtNonErrorClassType)?.expandedSymbol
             val boxedType = if (cls != null) {
                 TypeConstraints.exactClass(cls.classDef()).asDfType()
             } else {
@@ -53,7 +52,7 @@ internal fun KtType?.toDfType(): DfType {
     return toDfTypeNotNullable()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtType.toDfTypeNotNullable(): DfType {
     return when (this) {
         is KtNonErrorClassType -> {
@@ -89,9 +88,9 @@ private fun KtType.toDfTypeNotNullable(): DfType {
                         DefaultTypeClassIds.CHAR -> TypeConstraints.exact(PsiTypes.charType().createArrayType()).asDfType()
                         DefaultTypeClassIds.BOOLEAN -> TypeConstraints.exact(PsiTypes.booleanType().createArrayType()).asDfType()
                         else -> {
-                            val symbol = expandedClassSymbol ?: return DfType.TOP
+                            val symbol = expandedSymbol ?: return DfType.TOP
                             val classDef = symbol.classDef()
-                            val constraint = if (symbol.classKind == KtClassKind.OBJECT) {
+                            val constraint = if (symbol.classKind == KaClassKind.OBJECT) {
                                 TypeConstraints.singleton(classDef)
                             } else {
                                 TypeConstraints.exactClass(classDef).instanceOf()
@@ -109,7 +108,7 @@ private fun KtType.toDfTypeNotNullable(): DfType {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KtExpression.getKotlinType(): KtType? {
     var parent = this.parent
     if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
@@ -124,9 +123,9 @@ internal fun KtExpression.getKotlinType(): KtType? {
     // So we have to patch the original call type, widening it to its upper bound.
     // Current implementation is not always precise and may result in skipping a useful warning.
     if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.text == "as?") {
-        val call = resolveCall()?.singleFunctionCallOrNull()
+        val call = resolveCallOld()?.singleFunctionCallOrNull()
         if (call != null) {
-            val functionReturnType = (call.partiallyAppliedSymbol.symbol as? KtFunctionSymbol)?.returnType
+            val functionReturnType = (call.partiallyAppliedSymbol.symbol as? KaFunctionSymbol)?.returnType
             if (functionReturnType is KtTypeParameterType) {
                 val upperBound = functionReturnType.symbol.upperBounds.singleOrNull()
                 if (upperBound != null) {
@@ -138,7 +137,7 @@ internal fun KtExpression.getKotlinType(): KtType? {
     return getKtType()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KtType.getJvmAwareArrayElementType(): KtType? {
     if (!isArrayOrPrimitiveArray()) return null
     val type = getArrayElementType() ?: return null
@@ -185,7 +184,7 @@ internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = w
     else -> null
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KtType.toPsiPrimitiveType(): PsiPrimitiveType = when ((this as? KtNonErrorClassType)?.classId) {
     DefaultTypeClassIds.BOOLEAN -> PsiTypes.booleanType()
     DefaultTypeClassIds.BYTE -> PsiTypes.byteType()
@@ -198,13 +197,13 @@ internal fun KtType.toPsiPrimitiveType(): PsiPrimitiveType = when ((this as? KtN
     else -> throw IllegalArgumentException("Not a primitive analog: $this")
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KtType.canBeNull() = isMarkedNullable || hasFlexibleNullability
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun getConstant(expr: KtConstantExpression): DfType {
     val type = expr.getKtType()
-    val constant: KaConstantValue? = if (type == null) null else expr.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
+    val constant: KaConstantValue? = if (type == null) null else expr.evaluate()
     return when (constant) {
         is KaConstantValue.KaNullConstantValue -> DfTypes.NULL
         is KaConstantValue.KaBooleanConstantValue -> DfTypes.booleanValue(constant.value)
@@ -219,18 +218,18 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
     val lambdaArgument = expr.lambdaArguments.singleOrNull() ?: return null
     val lambdaExpression = lambdaArgument.getLambdaExpression() ?: return null
     val index = expr.valueArguments.indexOf(lambdaArgument)
     assert(index >= 0)
-    val resolvedCall = expr.resolveCall()?.singleFunctionCallOrNull() ?: return null
-    val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol
+    val resolvedCall = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
+    val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol
     if (symbol == null || !symbol.isInline) return null
     val parameterSymbol = resolvedCall.argumentMapping[lambdaExpression]?.symbol ?: return null
     if (parameterSymbol.isNoinline) return null
     return LambdaAndParameter(lambdaExpression, parameterSymbol)
 }
 
-internal data class LambdaAndParameter(val lambda: KtLambdaExpression, val descriptor: KtValueParameterSymbol)
+internal data class LambdaAndParameter(val lambda: KtLambdaExpression, val descriptor: KaValueParameterSymbol)

@@ -2,12 +2,17 @@
 package com.intellij.collaboration.ui.codereview.create
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewMarkdownEditor
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.ListCellRenderer
 import javax.swing.text.AttributeSet
@@ -30,6 +35,17 @@ object CodeReviewCreateReviewUIUtil {
   }.also {
     CollaborationToolsUIUtil.registerFocusActions(it)
   }
+
+  fun createTitleEditor(project: Project, emptyText: @Nls String = ""): Editor =
+    CodeReviewMarkdownEditor.create(project, true, true).apply {
+      (this as? EditorEx)?.setPlaceholder(emptyText)
+      component.font = titleFont
+    }
+
+  fun createDescriptionEditor(project: Project, emptyText: @Nls String = ""): Editor =
+    CodeReviewMarkdownEditor.create(project, true, false).apply {
+      (this as? EditorEx)?.setPlaceholder(emptyText)
+    }
 
   fun createCommitListCellRenderer(): ListCellRenderer<VcsCommitMetadata> = CodeReviewTwoLinesCommitRenderer()
 }

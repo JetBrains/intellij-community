@@ -41,7 +41,7 @@ interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyMavenProjectsTreeSettingsEntity(
   entity: MavenProjectsTreeSettingsEntity,
   modification: MavenProjectsTreeSettingsEntity.Builder.() -> Unit,
 ): MavenProjectsTreeSettingsEntity {

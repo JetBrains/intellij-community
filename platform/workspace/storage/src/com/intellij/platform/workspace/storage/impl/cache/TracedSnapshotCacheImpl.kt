@@ -5,7 +5,6 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache.Companion.LOG_QUEUE_MAX_SIZE
 import com.intellij.platform.workspace.storage.impl.query.*
 import com.intellij.platform.workspace.storage.impl.trace.ReadTraceIndex
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
@@ -65,7 +64,6 @@ internal class PropagationResult<T>(
   val subscriptions: List<Pair<ReadTraceHashSet, UpdateType>>,
 )
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   private val lock = Any()
 
@@ -172,7 +170,6 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   }
 
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   override fun <T> diff(query: CollectionQuery<T>,
                         snapshot: ImmutableEntityStorageInstrumentation,
                         prevStorage: ImmutableEntityStorageInstrumentation?): CachedValue<Diff<T>> {

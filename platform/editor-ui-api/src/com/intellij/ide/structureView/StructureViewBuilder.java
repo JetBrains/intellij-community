@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeExtensionFactory;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
  */
 
 public interface StructureViewBuilder {
+
+  @ApiStatus.Internal
   ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.structureViewBuilder");
 
   StructureViewBuilderProvider PROVIDER =

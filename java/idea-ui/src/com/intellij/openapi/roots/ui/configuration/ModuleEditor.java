@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -97,21 +96,15 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
   }
 
+  /**
+   * Listeners are automatically unsubscribed on dispose
+   */
   public void addChangeListener(ChangeListener listener) {
     myEventDispatcher.addListener(listener);
   }
 
-  public void removeChangeListener(ChangeListener listener) {
-    myEventDispatcher.removeListener(listener);
-  }
-
   @Nullable
   public Module getModule() {
-    final Module[] all = myModulesProvider.getModules();
-    if (ArrayUtil.contains(myModule, all)) {
-      return myModule;
-    }
-
     return myModulesProvider.getModule(myName);
   }
 
@@ -292,6 +285,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   @Override
   public void dispose() {
     try {
+      myEventDispatcher.getListeners().clear();
       for (final ModuleConfigurationEditor myEditor : myEditors) {
         myEditor.disposeUIResources();
       }

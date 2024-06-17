@@ -35,6 +35,14 @@ public final class SignatureParsing {
     @NotNull TypeInfo.RefTypeInfo toTypeInfo(@NotNull String jvmClassName);
 
     /**
+     * @param jvmClassName jvmClassName to check
+     * @return true if a given inner class is known to be static
+     */
+    default boolean isKnownStatic(@NotNull String jvmClassName) {
+      return false;
+    }
+
+    /**
      * @param fn function that returns Java-style FQN by JVM class name
      * @return a provider that delegates to the supplied function. Note that the returned provider never has the inner classes' information.
      */

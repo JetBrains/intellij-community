@@ -7,7 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class MavenServerLoggerWrapper extends MavenRemoteObject implements MavenPullServerLogger  {
+public class
+MavenServerLoggerWrapper extends MavenRemoteObject implements MavenPullServerLogger  {
   private final ConcurrentLinkedQueue<ServerLogEvent> myPullingQueue = new ConcurrentLinkedQueue<ServerLogEvent>();
 
   public void info(Throwable e) {

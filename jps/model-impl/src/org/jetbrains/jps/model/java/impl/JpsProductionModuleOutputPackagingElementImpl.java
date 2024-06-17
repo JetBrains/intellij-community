@@ -22,9 +22,9 @@ import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 
-public class JpsProductionModuleOutputPackagingElementImpl extends JpsModuleOutputPackagingElementBase<JpsProductionModuleOutputPackagingElementImpl>
+class JpsProductionModuleOutputPackagingElementImpl extends JpsModuleOutputPackagingElementBase<JpsProductionModuleOutputPackagingElementImpl>
   implements JpsProductionModuleOutputPackagingElement {
-  public JpsProductionModuleOutputPackagingElementImpl(JpsModuleReference moduleReference) {
+  JpsProductionModuleOutputPackagingElementImpl(JpsModuleReference moduleReference) {
     super(moduleReference);
   }
 
@@ -34,7 +34,7 @@ public class JpsProductionModuleOutputPackagingElementImpl extends JpsModuleOutp
 
   @NotNull
   @Override
-  public JpsProductionModuleOutputPackagingElementImpl createCopy() {
+  public JpsProductionModuleOutputPackagingElementImpl createElementCopy() {
     return new JpsProductionModuleOutputPackagingElementImpl(this);
   }
 

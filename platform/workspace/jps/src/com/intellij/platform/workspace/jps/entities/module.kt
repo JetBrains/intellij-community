@@ -4,12 +4,12 @@
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -22,16 +22,15 @@ data class ModuleTypeId(val name: @NonNls String)
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
  */
 interface ModuleEntity : WorkspaceEntityWithSymbolicId {
-  val name: @NlsSafe String
+  override val symbolicId: ModuleId
+    get() = ModuleId(name)
 
+  val name: @NlsSafe String
   val type: ModuleTypeId?
   val dependencies: List<ModuleDependencyItem>
 
   val contentRoots: List<@Child ContentRootEntity>
   val facets: List<@Child FacetEntity>
-
-  override val symbolicId: ModuleId
-    get() = ModuleId(name)
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -67,7 +66,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyModuleEntity(
   entity: ModuleEntity,
   modification: ModuleEntity.Builder.() -> Unit,
 ): ModuleEntity {

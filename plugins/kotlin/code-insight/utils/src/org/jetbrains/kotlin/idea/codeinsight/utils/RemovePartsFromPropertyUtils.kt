@@ -1,17 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 object RemovePartsFromPropertyUtils {
 
-    @IntentionFamilyName
-    fun getFamilyName(): String = KotlinBundle.message("remove.parts.from.property")
-
     @IntentionName
-    fun getActionName(
+    fun getRemovePartsFromPropertyActionName(
         removeInitializer: Boolean,
         removeGetter: Boolean,
         removeSetter: Boolean

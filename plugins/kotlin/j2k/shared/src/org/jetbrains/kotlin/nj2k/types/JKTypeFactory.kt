@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.nj2k.types
 
 import com.intellij.psi.*
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
     fun fromPsiType(type: PsiType): JKType = createPsiType(type)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun fromKtType(type: KtType): JKType = createKtType(type)
 
     inner class DefaultTypes {
@@ -129,7 +129,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         else -> JKNoType
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createKtType(type: KtType): JKType {
         return when (type) {
             is KtTypeParameterType -> {

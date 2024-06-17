@@ -11,6 +11,7 @@ import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * @see IndexPatternProvider
  * @see com.intellij.psi.search.PsiTodoSearchHelper#processFilesWithTodoItems(Processor)
  */
+@Internal
 public abstract class IndexPatternSearch extends ExtensibleQueryFactory<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<IndexPatternOccurrence, IndexPatternSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.indexPatternSearch");
   private static IndexPatternSearch ourInstance;

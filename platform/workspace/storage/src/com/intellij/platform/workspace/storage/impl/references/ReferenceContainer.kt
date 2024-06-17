@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.references
 
-import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.ConnectionId
 import org.jetbrains.annotations.TestOnly
 
 internal abstract class ReferenceContainer<T>(protected open val collection: Map<ConnectionId, T>) {

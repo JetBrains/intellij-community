@@ -34,7 +34,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -844,17 +843,17 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (myEditor.isDisposed()) return null;
 
-    if (EditorGutter.KEY.is(dataId)) {
+    if (KEY.is(dataId)) {
       return this;
     }
     if (CommonDataKeys.EDITOR.is(dataId)) {
       return myEditor;
     }
-    if (EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR.is(dataId)) {
+    if (LOGICAL_LINE_AT_CURSOR.is(dataId)) {
       if (myLastActionableClick == null) return null;
       return myLastActionableClick.myLogicalLineAtCursor;
     }
-    if (EditorGutterComponentEx.ICON_CENTER_POSITION.is(dataId)) {
+    if (ICON_CENTER_POSITION.is(dataId)) {
       if (myLastActionableClick == null) return null;
       return myLastActionableClick.myIconCenterPosition;
     }
@@ -1057,9 +1056,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myLineToGutterRenderers = null;
   }
 
-  private void buildGutterRenderersCache() {
+  private Int2ObjectMap<List<GutterMark>> buildGutterRenderersCache() {
     myLineToGutterRenderersCacheForLogicalLines = logicalLinesMatchVisualOnes();
-    myLineToGutterRenderers = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<List<GutterMark>> lineToGutterRenderers = new Int2ObjectOpenHashMap<>();
     processRangeHighlighters(0, myEditor.getDocument().getTextLength(), highlighter -> {
       GutterMark renderer = highlighter.getGutterIconRenderer();
       if (!shouldBeShown(renderer)) {
@@ -1069,10 +1068,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         return;
       }
       int line = myEditor.offsetToVisualLine(highlighter.getStartOffset());
-      List<GutterMark> renderers = myLineToGutterRenderers.get(line);
+      List<GutterMark> renderers = lineToGutterRenderers.get(line);
       if (renderers == null) {
         renderers = new SmartList<>();
-        myLineToGutterRenderers.put(line, renderers);
+        lineToGutterRenderers.put(line, renderers);
       }
 
       renderers.add(renderer);
@@ -1085,17 +1084,17 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           GutterIconRenderer renderer = ((CustomFoldRegion)region).getGutterIconRenderer();
           int line = myEditor.offsetToVisualLine(region.getStartOffset());
           if (shouldBeShown(renderer)) {
-            myLineToGutterRenderers.put(line, List.of(renderer));
+            lineToGutterRenderers.put(line, List.of(renderer));
           }
           else {
-            myLineToGutterRenderers.remove(line);
+            lineToGutterRenderers.remove(line);
           }
         }
       }
     }
 
     List<GutterMarkPreprocessor> gutterMarkPreprocessors = GutterMarkPreprocessor.EP_NAME.getExtensionList();
-    for (Int2ObjectMap.Entry<List<GutterMark>> entry : Int2ObjectMaps.fastIterable(myLineToGutterRenderers)) {
+    for (Int2ObjectMap.Entry<List<GutterMark>> entry : Int2ObjectMaps.fastIterable(lineToGutterRenderers)) {
       List<GutterMark> newValue = entry.getValue();
       for (GutterMarkPreprocessor preprocessor : gutterMarkPreprocessors) {
         newValue = preprocessor.processMarkers(newValue);
@@ -1103,6 +1102,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       // don't allow more than 4 icons per line
       entry.setValue(ContainerUtil.getFirstItems(newValue, 4));
     }
+    return lineToGutterRenderers;
   }
 
   private boolean shouldBeShown(@Nullable GutterMark gutterIconRenderer) {
@@ -1178,7 +1178,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public @NotNull List<GutterMark> getGutterRenderers(int line) {
     if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
-      buildGutterRenderersCache();
+      myLineToGutterRenderers = buildGutterRenderersCache();
     }
 
     Segment focusModeRange = myEditor.getFocusModeRange();
@@ -1204,7 +1204,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private @NotNull ObjectIterable<Int2ObjectMap.Entry<List<GutterMark>>> processGutterRenderers() {
     if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
-      buildGutterRenderersCache();
+      myLineToGutterRenderers = buildGutterRenderersCache();
     }
     return Int2ObjectMaps.fastIterable(myLineToGutterRenderers);
   }
@@ -2463,16 +2463,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     updateSize();
   }
 
-  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification {
+  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly {
     CloseAnnotationsAction() {
       super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
-    }
-
-    @NotNull
-    @Override
-    public ActionRemoteBehavior getBehavior() {
-      if (PlatformUtils.isRider()) return ActionRemoteBehavior.FrontendThenBackend;
-      else return ActionRemoteBehavior.BackendOnly;
     }
 
     @Override

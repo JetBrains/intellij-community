@@ -108,7 +108,13 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
-    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext(), myDescriptor.getFrameProxy().threadProxy()) {
+    ThreadReferenceProxyImpl thread = myDescriptor.getFrameProxy().threadProxy();
+    DebuggerContextUtil.scheduleWithCorrectPausedDebuggerContext(myDebugProcess, thread, myDescriptor.getFrameProxy(),
+                                                                 c -> scheduleComputeChildrenTask(node, c, thread));
+  }
+
+  private void scheduleComputeChildrenTask(@NotNull XCompositeNode node, DebuggerContextImpl context, ThreadReferenceProxyImpl thread) {
+    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(context, thread) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;
@@ -137,12 +143,16 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       context = myDebugProcess.getDebuggerContext();
     }
     if (context.getFrameProxy() != getStackFrameProxy()) {
+      SuspendManager suspendManager = myDebugProcess.getSuspendManager();
+      ThreadReferenceProxyImpl thread = getStackFrameProxy().threadProxy();
+      SuspendContextImpl pausedSuspendingContext = SuspendManagerUtil.getPausedSuspendingContext(suspendManager, thread);
       SuspendContextImpl threadSuspendContext =
-        SuspendManagerUtil.findContextByThread(myDebugProcess.getSuspendManager(), getStackFrameProxy().threadProxy());
+        pausedSuspendingContext != null ? pausedSuspendingContext : SuspendManagerUtil.findContextByThread(suspendManager, thread);
+
       context = DebuggerContextImpl.createDebuggerContext(
         myDebugProcess.mySession,
         threadSuspendContext,
-        getStackFrameProxy().threadProxy(),
+        thread,
         getStackFrameProxy());
       context.setPositionCache(myDescriptor.getSourcePosition());
       context.initCaches();

@@ -13,14 +13,14 @@ import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -53,7 +53,7 @@ import java.util.*
 
 class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduceParameterHelper<KtNamedDeclaration> = KotlinIntroduceParameterHelper.Default()) : RefactoringActionHandler {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun findInternalUsagesOfParametersAndReceiver(
         targetParent: KtNamedDeclaration
     ): MultiMap<KtElement, KtElement> {
@@ -83,10 +83,10 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
                     override fun visitKtElement(element: KtElement) {
                         super.visitKtElement(element)
 
-                        val symbol = element.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                        val callableSymbol = targetParent.getSymbol() as? KtCallableSymbol
+                        val symbol = element.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                        val callableSymbol = targetParent.getSymbol() as? KaCallableSymbol
                         if (callableSymbol != null) {
-                            if ((symbol?.dispatchReceiver as? KtImplicitReceiverValue)?.symbol == callableSymbol.receiverParameter || (symbol?.extensionReceiver as? KtImplicitReceiverValue)?.symbol == callableSymbol.receiverParameter) {
+                            if ((symbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol == callableSymbol.receiverParameter || (symbol?.extensionReceiver as? KaImplicitReceiverValue)?.symbol == callableSymbol.receiverParameter) {
                                 usages.putValue(receiverTypeRef, element)
                             }
                         }
@@ -98,7 +98,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
     }
 
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getExpressionType(
         physicalExpression: KtExpression,
         expression: KtExpression
@@ -112,11 +112,11 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
     }
 
     operator fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
-        val expressionTypeEvaluator: KtAnalysisSession.() -> KtType? = {
+        val expressionTypeEvaluator: KaSession.() -> KtType? = {
             val physicalExpression = expression.substringContextOrThis
             getExpressionType(physicalExpression, expression)
         }
-        val nameSuggester: KtAnalysisSession.(KtType) -> List<String> = { expressionType ->
+        val nameSuggester: KaSession.(KtType) -> List<String> = { expressionType ->
             val suggestedNames = SmartList<String>()
             val physicalExpression = expression.substringContextOrThis
             val body = when (targetParent) {
@@ -145,7 +145,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
      * run change signature refactoring, just like [invoke], but with configurable expression type, and name
      * (to be reused in "create parameter from usage" where both type and name are fixed, and computed a bit differently from the regular "introduce parameter")
      */
-    fun addParameter(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration, expressionTypeEvaluator: KtAnalysisSession.()->KtType?, nameSuggester:  KtAnalysisSession.(KtType)->List<String>) {
+    fun addParameter(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration, expressionTypeEvaluator: KaSession.()->KtType?, nameSuggester:  KaSession.(KtType)->List<String>) {
         val physicalExpression = expression.substringContextOrThis
         if (physicalExpression is KtProperty && physicalExpression.isLocal && physicalExpression.nameIdentifier == null) {
             showErrorHintByKey(project, editor, "cannot.refactor.no.expression", INTRODUCE_PARAMETER)

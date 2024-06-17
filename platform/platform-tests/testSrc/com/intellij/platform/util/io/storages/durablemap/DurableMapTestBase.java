@@ -97,7 +97,7 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
 
   @Test
   public void compactionReturnsMapWithSameMapping_afterManyDifferentMappingsPut(@TempDir Path tempDir) throws Exception {
-    for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+    for (int substrate : keyValuesSubstrate) {
       Map.Entry<K, V> entry = keyValue(substrate);
       storage.put(entry.getKey(), entry.getValue());
     }
@@ -119,7 +119,7 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
         "Compacted map must have same size"
       );
 
-      for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+      for (int substrate : keyValuesSubstrate) {
         Map.Entry<K, V> entry = keyValue(substrate);
         K key = entry.getKey();
         V value = entry.getValue();
@@ -136,12 +136,12 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
   @Test
   public void compactionReturnsMapWithLastMapping_afterManyManyValuesWereOverwritten(@TempDir Path tempDir) throws Exception {
     //store original values:
-    for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+    for (int substrate : keyValuesSubstrate) {
       Map.Entry<K, V> entry = keyValue(substrate);
       storage.put(entry.getKey(), entry.getValue());
     }
     //overwrite with new values:
-    for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+    for (int substrate : keyValuesSubstrate) {
       Map.Entry<K, V> entry = keyValue(substrate);
       K key = entry.getKey();
       V newValue = differentValue(substrate, 17);
@@ -168,12 +168,12 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
         "Map just compacted must NOT need compaction again: " + compactionScore
       );
       assertEquals(
-        KeyValueStoreTestBase.keyValuesSubstrate.length,
+        keyValuesSubstrate.length,
         compactedStorage.size(),
         "Compacted map must have size of records being put"
       );
 
-      for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+      for (int substrate : keyValuesSubstrate) {
         Map.Entry<K, V> entry = keyValue(substrate);
         K key = entry.getKey();
         V value = differentValue(substrate, 17);
@@ -189,12 +189,12 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
 
   @Test
   public void forManyMappings_Put_ContainsMappingReturnsTrue() throws IOException {
-    for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+    for (int substrate : keyValuesSubstrate) {
       Map.Entry<K, V> entry = keyValue(substrate);
       storage.put(entry.getKey(), entry.getValue());
     }
 
-    for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+    for (int substrate : keyValuesSubstrate) {
       Map.Entry<K, V> entry = keyValue(substrate);
       K key = entry.getKey();
       assertTrue(storage.containsMapping(key),
@@ -203,8 +203,34 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
   }
 
   @Test
+  public void forManyMappings_Put_processKeys_ListsAllTheKeysAdded() throws IOException {
+    Set<K> addedKeys = CollectionFactory.createSmallMemoryFootprintSet();
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<K, V> entry = keyValue(substrate);
+      storage.put(entry.getKey(), entry.getValue());
+      
+      addedKeys.add(entry.getKey());
+    }
+
+    List<K> keysReportedByProcessKeys = new ArrayList<>();
+    storage.processKeys(key -> keysReportedByProcessKeys.add(key));
+    
+    assertEquals(
+      addedKeys.size(),
+      keysReportedByProcessKeys.size(),
+      ".processKeys() must return same number of keys, as were added"
+    );
+
+    assertEquals(
+      addedKeys,
+      CollectionFactory.createSmallMemoryFootprintSet(keysReportedByProcessKeys),
+      ".processKeys() must return same keys, as were added"
+    );
+  }
+
+  @Test
   public void storageIsEmpty_afterManyMappingsPut_AndRemoved() throws IOException {
-    for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+    for (int substrate : keyValuesSubstrate) {
       Map.Entry<K, V> entry = keyValue(substrate);
       K key = entry.getKey();
       V value = entry.getValue();
@@ -241,7 +267,7 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
   @Test
   public void forManyMappings_putWithSameKey_overridesValuesPreviouslyPut() throws IOException {
     //store original values:
-    for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+    for (int substrate : keyValuesSubstrate) {
       Map.Entry<K, V> entry = keyValue(substrate);
       K key = entry.getKey();
       V value = entry.getValue();
@@ -250,7 +276,7 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
     }
 
     //overwrite with new values:
-    for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+    for (int substrate : keyValuesSubstrate) {
       Map.Entry<K, V> entry = keyValue(substrate);
       K key = entry.getKey();
       V newValue = differentValue(substrate, 17);
@@ -259,7 +285,7 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
     }
 
     //check new values is returned:
-    for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+    for (int substrate : keyValuesSubstrate) {
       Map.Entry<K, V> entry = keyValue(substrate);
       K key = entry.getKey();
       V expectedValue = differentValue(substrate, 17);
@@ -271,7 +297,7 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
 
   @Test
   public void forManyMappings_AfterPutAndRemove_containsMappingReturnsFalse() throws IOException {
-    for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+    for (int substrate : keyValuesSubstrate) {
       Map.Entry<K, V> entry = keyValue(substrate);
       K key = entry.getKey();
       V value = entry.getValue();
@@ -290,7 +316,7 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
                  "store[" + key + "] must return null after .remove()");
     }
 
-    for (int substrate : KeyValueStoreTestBase.keyValuesSubstrate) {
+    for (int substrate : keyValuesSubstrate) {
       Map.Entry<K, V> entry = keyValue(substrate);
       K key = entry.getKey();
       assertFalse(storage.containsMapping(key),

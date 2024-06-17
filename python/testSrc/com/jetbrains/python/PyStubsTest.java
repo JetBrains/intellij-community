@@ -1107,6 +1107,14 @@ public class PyStubsTest extends PyTestCase {
     doTestTypeParameterStub(cls, file);
   }
 
+  // PY-61651 Deprecation highlighting with PEP 702 @deprecated decorator
+  public void testDeprecationMessageInClass() {
+    PyFile file = getTestFile();
+    PyClass cls = file.findTopLevelClass("Ham");
+    assertNotNull(cls);
+    assertEquals("Use Spam instead", cls.getDeprecationMessage());
+  }
+
   // PY-62608
   public void testTypeAliasStatement() {
     PyFile file = getTestFile();

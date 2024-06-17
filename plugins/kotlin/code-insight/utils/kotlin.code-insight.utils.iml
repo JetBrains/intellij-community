@@ -26,7 +26,7 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
+    <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
@@ -37,6 +37,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor" />
     <orderEntry type="module" module-name="intellij.java.psi" />
-    <orderEntry type="library" name="kotlinc.high-level-api-impl-base" level="project" />
+    <orderEntry type="library" name="kotlinc.analysis-api-impl-base" level="project" />
   </component>
 </module>

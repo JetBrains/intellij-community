@@ -91,8 +91,13 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
           return true;
         }
 
-        logIfStubTraceEnabled(() -> "Can't build stub using stub file element type " + file.getFileName() +
-                              ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file.getFile()));
+        logIfStubTraceEnabled(() -> {
+          return "Can't build stub" +
+                 ". parserDefinition: " + parserDefinition +
+                 ", elementType: " + elementType +
+                 ", fileName:" + file.getFileName() +
+                 ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file.getFile());
+        });
       }
 
       BinaryFileStubBuilder builder = getBinaryStubBuilder(file.getFileType());
@@ -119,10 +124,12 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   };
   private final @NotNull StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
+  @ApiStatus.Internal
   public StubUpdatingIndex() {
     this(StubForwardIndexExternalizer.getIdeUsedExternalizer(), SerializationManagerEx.getInstanceEx());
   }
 
+  @ApiStatus.Internal
   public StubUpdatingIndex(@NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer,
                            @NotNull SerializationManagerEx serializationManager) {
     myStubIndexesExternalizer = stubIndexesExternalizer;

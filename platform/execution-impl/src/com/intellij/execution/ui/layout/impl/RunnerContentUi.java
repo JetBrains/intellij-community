@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -293,8 +293,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       @Override
       public void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection) {
         if (oldSelection != null && !isStateBeingRestored()) {
-          final GridImpl grid = getGridFor(oldSelection);
-          if (grid != null && getTabFor(grid) != null) {
+          GridImpl grid = getGridFor(oldSelection);
+          if (getTabFor(grid) != null) {
             grid.saveUiState();
           }
         }
@@ -1310,7 +1310,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return (TabImpl)tab.getObject();
   }
 
-  private static GridImpl getGridFor(TabInfo tab) {
+  private static @NotNull GridImpl getGridFor(TabInfo tab) {
     return (GridImpl)tab.getComponent();
   }
 

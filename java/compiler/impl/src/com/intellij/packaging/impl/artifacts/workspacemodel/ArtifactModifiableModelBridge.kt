@@ -239,7 +239,7 @@ class ArtifactModifiableModelBridge(
       when (it) {
         is EntityChange.Removed<*> -> Unit
         is EntityChange.Added -> {
-          val artifactBridge = diff.artifactsMap.getDataByEntity(it.entity)!!
+          val artifactBridge = diff.artifactsMap.getDataByEntity(it.newEntity)!!
           added.add(artifactBridge)
         }
         is EntityChange.Replaced -> {

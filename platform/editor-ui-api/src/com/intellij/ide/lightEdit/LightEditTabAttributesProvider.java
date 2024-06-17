@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface LightEditTabAttributesProvider {
+
+  @ApiStatus.Internal
   ExtensionPointName<LightEditTabAttributesProvider> EP_NAME
     = ExtensionPointName.create("com.intellij.lightEditTabAttributesProvider");
 

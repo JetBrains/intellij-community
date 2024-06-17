@@ -233,7 +233,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     }
   }
 
-  private boolean executeChooseMember(@NotNull ActionContext context, @NotNull ModChooseMember modChooser, @Nullable Editor editor) {
+  private static boolean executeChooseMember(@NotNull ActionContext context, @NotNull ModChooseMember modChooser, @Nullable Editor editor) {
     List<? extends @NotNull MemberChooserElement> result;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       result = modChooser.defaultSelection();

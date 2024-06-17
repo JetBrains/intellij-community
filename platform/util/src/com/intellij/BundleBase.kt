@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij
 
+import com.intellij.BundleBase.replaceMnemonicAmpersand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.text.OrdinalFormat
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
@@ -22,15 +24,23 @@ private val SUFFIXES = arrayOf("</body></html>", "</html>")
 @Volatile
 private var translationConsumer: BiConsumer<String, String>? = null
 
+private val SHOW_DEFAULT_MESSAGES: Boolean = java.lang.Boolean.getBoolean("idea.l10n.english")
+// 0: no, 1: show key, 2: only keys
+private val SHOW_KEYS: Int = System.getProperty("idea.l10n.keys").let {
+  when (it) {
+    "true" -> 1
+    "only" -> 2
+    else -> 0
+  }
+}
+
 object BundleBase {
   const val MNEMONIC: Char = 0x1B.toChar()
   const val MNEMONIC_STRING: @NlsSafe String = MNEMONIC.toString()
   @JvmField
+  @Internal
   val SHOW_LOCALIZED_MESSAGES: Boolean = java.lang.Boolean.getBoolean("idea.l10n")
-  @JvmField
-  val SHOW_DEFAULT_MESSAGES: Boolean = java.lang.Boolean.getBoolean("idea.l10n.english")
-  @JvmField
-  val SHOW_KEYS: Boolean = java.lang.Boolean.getBoolean("idea.l10n.keys")
+
   const val L10N_MARKER: String = "🔅"
 
   fun assertOnMissedKeys(doAssert: Boolean) {
@@ -51,11 +61,13 @@ object BundleBase {
    * @return a template suitable to pass to [MessageFormat.format] having the specified number of placeholders left
    */
   @JvmStatic
-  fun partialMessage(bundle: ResourceBundle, key: String, unassignedParams: Int, params: Array<Any>): @Nls String {
+  fun partialMessage(bundle: ResourceBundle, key: String, unassignedParams: Int, params: Array<Any?>): @Nls String {
     require(unassignedParams > 0)
 
     val newParams = params.copyOf(params.size + unassignedParams)
+    @Suppress("HardCodedStringLiteral")
     val prefix = "#$$\$TemplateParameter$$$#"
+    @Suppress("HardCodedStringLiteral")
     val suffix = "#$$$/TemplateParameter$$$#"
     for (i in 0 until unassignedParams) {
       newParams[i + params.size] = prefix + i + suffix
@@ -67,7 +79,7 @@ object BundleBase {
 
   @JvmStatic
   fun message(bundle: ResourceBundle, key: String, vararg params: Any): @Nls String {
-    return messageOrDefault(bundle = bundle, key = key, defaultValue = null, params = params)!!
+    return messageOrDefault(bundle = bundle, key = key, defaultValue = null, params = params)
   }
 
   @JvmStatic
@@ -85,14 +97,19 @@ object BundleBase {
       useDefaultValue(bundle = bundle, key = key, defaultValue = defaultValue)
     }
 
+    if (SHOW_KEYS == 2) {
+      @Suppress("HardCodedStringLiteral")
+      return key
+    }
+
     val result = postprocessValue(bundle = bundle, value = value, params = params)
     translationConsumer?.accept(key, result)
     return when {
       !resourceFound -> result
-      SHOW_KEYS && SHOW_DEFAULT_MESSAGES -> {
+      SHOW_KEYS == 1 && SHOW_DEFAULT_MESSAGES -> {
         appendLocalizationSuffix(result = result, suffixToAppend = " ($key=${getDefaultMessage(bundle, key)})")
       }
-      SHOW_KEYS -> appendLocalizationSuffix(result = result, suffixToAppend = " ($key)")
+      SHOW_KEYS == 1 -> appendLocalizationSuffix(result = result, suffixToAppend = " ($key)")
       SHOW_DEFAULT_MESSAGES -> {
         appendLocalizationSuffix(result = result, suffixToAppend = " (${getDefaultMessage(bundle, key)})")
       }
@@ -117,7 +134,7 @@ object BundleBase {
     return "undefined"
   }
 
-  @JvmStatic
+  @Internal
   fun appendLocalizationSuffix(result: String, suffixToAppend: String): @NlsSafe String {
     for (suffix in SUFFIXES) {
       if (result.endsWith(suffix)) {
@@ -141,28 +158,9 @@ object BundleBase {
   }
 
   @JvmStatic
-  @Suppress("HardCodedStringLiteral")
-  fun postprocessValue(bundle: ResourceBundle, value: @Nls String, vararg params: Any?): @Nls String {
-    @Suppress("NAME_SHADOWING") var value = value
-    value = replaceMnemonicAmpersand(value)!!
-    if (params.isNotEmpty() && value.contains('{')) {
-      val locale = bundle.locale
-      value = try {
-        val format = if (locale == null) MessageFormat(value) else MessageFormat(value, locale)
-        OrdinalFormat.apply(format)
-        format.format(params)
-      }
-      catch (e: IllegalArgumentException) {
-        "!invalid format: `$value`!"
-      }
-    }
-    return value
-  }
-
-  @JvmStatic
   @Contract(pure = true)
   fun format(value: String, vararg params: Any): String {
-    return if (params.isNotEmpty() && value.indexOf('{') >= 0) MessageFormat.format(value, *params) else value
+    return if (params.isNotEmpty() && value.contains('{')) MessageFormat.format(value, *params) else value
   }
 
   @JvmStatic
@@ -243,4 +241,23 @@ private fun quotePattern(message: String): @NlsSafe String {
     sb.append('\'')
   }
   return sb.toString()
+}
+
+@Suppress("HardCodedStringLiteral")
+internal fun postprocessValue(bundle: ResourceBundle, value: @Nls String, vararg params: Any?): @Nls String {
+  @Suppress("NAME_SHADOWING") var value = value
+  value = replaceMnemonicAmpersand(value)!!
+  if (params.isEmpty() || !value.contains('{')) {
+    return value
+  }
+
+  val locale = bundle.locale
+  return try {
+    val format = if (locale == null) MessageFormat(value) else MessageFormat(value, locale)
+    OrdinalFormat.apply(format)
+    format.format(params)
+  }
+  catch (e: IllegalArgumentException) {
+    "!invalid format: `$value`!"
+  }
 }

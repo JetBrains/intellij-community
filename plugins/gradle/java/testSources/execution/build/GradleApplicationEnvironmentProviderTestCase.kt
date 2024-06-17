@@ -6,7 +6,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.project.DumbService
 import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.*
@@ -35,9 +34,6 @@ abstract class GradleApplicationEnvironmentProviderTestCase : GradleSettingsImpo
   }
 
   private fun runAppAndWait(configurationSettings: RunnerAndConfigurationSettings) {
-    // `waitForSmartMode` should be removed after IDEA-354120. Application run configurations should not rely on Smart-mode.
-    DumbService.getInstance(project).waitForSmartMode()
-
     val executor = DefaultRunExecutor.getRunExecutorInstance()
     val environment = runWriteActionAndWait {
       ExecutionEnvironmentBuilder.create(executor, configurationSettings)

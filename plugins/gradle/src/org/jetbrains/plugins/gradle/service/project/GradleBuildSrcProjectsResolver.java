@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
-import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -169,10 +168,8 @@ public final class GradleBuildSrcProjectsResolver {
 
   private static void reuseTargetEnvironmentConfigurationProvider(@NotNull GradleExecutionSettings buildSrcProjectSettings,
                                                                   @NotNull GradleExecutionSettings mainBuildExecutionSettings) {
-    TargetEnvironmentConfigurationProvider targetEnvironmentConfigurationProvider =
-      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(mainBuildExecutionSettings);
-    ExternalSystemExecutionAware.Companion
-      .setEnvironmentConfigurationProvider(buildSrcProjectSettings, targetEnvironmentConfigurationProvider);
+    var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(mainBuildExecutionSettings);
+    ExternalSystemExecutionAware.setEnvironmentConfigurationProvider(buildSrcProjectSettings, environmentConfigurationProvider);
   }
 
   private void includeRootBuildIncludedBuildsIfNeeded(@NotNull GradleExecutionSettings buildSrcProjectSettings,

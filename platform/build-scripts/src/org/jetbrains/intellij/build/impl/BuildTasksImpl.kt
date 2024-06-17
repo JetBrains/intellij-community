@@ -58,7 +58,6 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       "intellij.tools.launcherGenerator"
     ).let {
       compilationTasks.compileModules(moduleNames = it)
-      localizeModules(moduleNames = it, context = context)
     }
 
     buildProjectArtifacts(
@@ -379,10 +378,8 @@ internal fun collectModulesToCompileForDistribution(context: BuildContext): Muta
 
 private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
   val compilationTasks = CompilationTasks.create(context)
-  val toLocalize = LinkedHashSet<String>()
   collectModulesToCompileForDistribution(context).let {
     compilationTasks.compileModules(moduleNames = it)
-    toLocalize.addAll(it)
   }
 
   val productLayout = context.productProperties.productLayout
@@ -392,8 +389,6 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   var enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
   // computed only based on a bundled and plugins to publish lists, compatible plugins are not taken in an account by intention
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context)
-  val addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
-                            hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = enabledPluginModules, context = context)
 
   if (context.shouldBuildDistributions()) {
     if (context.isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
@@ -404,7 +399,6 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       val platform = createPlatformLayout(context = context)
       getModulesForPluginsToPublish(platform = platform, pluginsToPublish = pluginsToPublish).let {
         compilationTasks.compileModules(moduleNames = it)
-        toLocalize.addAll(it)
       }
 
       val builtinModuleData = spanBuilder("build provided module list").useWithScope {
@@ -438,15 +432,10 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
     }
   }
 
-  val platform = createPlatformLayout(addPlatformCoverage = addPlatformCoverage, projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
+  val platform = createPlatformLayout(projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
   val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
   distState.getModulesForPluginsToPublish().let {
     compilationTasks.compileModules(moduleNames = it)
-    toLocalize.addAll(it)
-  }
-
-  if (toLocalize.isNotEmpty()) {
-    localizeModules(moduleNames = toLocalize, context)
   }
 
   buildProjectArtifacts(platform = distState.platform, enabledPluginModules = enabledPluginModules, compilationTasks = compilationTasks, context = context)

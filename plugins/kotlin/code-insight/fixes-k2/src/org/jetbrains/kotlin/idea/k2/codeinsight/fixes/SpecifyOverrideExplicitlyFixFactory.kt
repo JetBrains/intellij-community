@@ -5,15 +5,15 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -44,9 +44,9 @@ internal object SpecifyOverrideExplicitlyFixFactory {
                 if (specifier is KtDelegatedSuperTypeEntry) {
                     val delegateTargetSymbol = specifier.getSymbol() ?: return@ModCommandBased emptyList()
 
-                    if (delegateTargetSymbol is KtValueParameterSymbol &&
+                    if (delegateTargetSymbol is KaValueParameterSymbol &&
                         delegateTargetSymbol.getContainingSymbol().let {
-                            it is KtConstructorSymbol &&
+                            it is KaConstructorSymbol &&
                                     it.isPrimary &&
                                     it.getContainingSymbol() == delegatedDeclaration.getContainingSymbol()
                         }
@@ -84,10 +84,10 @@ internal object SpecifyOverrideExplicitlyFixFactory {
             listOf(SpecifyOverrideExplicitlyFix(ktClass, elementContext))
         }
 
-    context(KtAnalysisSession)
-    private fun KtDelegatedSuperTypeEntry.getSymbol(): KtNamedSymbol? {
+    context(KaSession)
+    private fun KtDelegatedSuperTypeEntry.getSymbol(): KaNamedSymbol? {
         val nameReferenceExpression = delegateExpression as? KtNameReferenceExpression ?: return null
-        return nameReferenceExpression.mainReference.resolveToSymbol() as? KtNamedSymbol
+        return nameReferenceExpression.mainReference.resolveToSymbol() as? KaNamedSymbol
     }
 
     private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {

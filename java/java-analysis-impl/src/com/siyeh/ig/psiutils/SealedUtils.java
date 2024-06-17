@@ -121,7 +121,7 @@ public final class SealedUtils {
     }
     else if (module == null) {
       PsiJavaFile file = tryCast(inheritor.getContainingFile(), PsiJavaFile.class);
-      if (file == null) {
+      if (file == null || file.getOriginalFile() instanceof PsiCompiledElement) {
         result = "intention.error.make.sealed.class.inheritors.not.in.java.file";
       }
       else if (!parentFile.getPackageName().equals(file.getPackageName())) {

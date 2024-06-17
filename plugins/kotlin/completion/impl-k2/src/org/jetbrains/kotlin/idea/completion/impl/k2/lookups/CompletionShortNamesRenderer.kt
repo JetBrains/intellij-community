@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
@@ -15,30 +15,30 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.types.Variance
 
 internal object CompletionShortNamesRenderer {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun renderFunctionParameters(function: KtFunctionLikeSignature<*>): String {
         return function.valueParameters.joinToString(", ", "(", ")") { renderFunctionParameter(it) }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun renderFunctionalTypeParameters(functionalType: KtFunctionalType): String =
         functionalType.parameterTypes.joinToString(separator = ", ", prefix = "(", postfix = ")") {
             it.render(rendererVerbose, position = Variance.INVARIANT)
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun renderVariable(variable: KtVariableLikeSignature<*>): String {
         return renderReceiver(variable)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun renderReceiver(variable: KtVariableLikeSignature<*>): String {
         val receiverType = variable.receiverType ?: return ""
         return receiverType.render(rendererVerbose, position = Variance.INVARIANT) + "."
     }
 
-    context(KtAnalysisSession)
-    private fun renderFunctionParameter(parameter: KtVariableLikeSignature<KtValueParameterSymbol>): String =
+    context(KaSession)
+    private fun renderFunctionParameter(parameter: KtVariableLikeSignature<KaValueParameterSymbol>): String =
         "${if (parameter.symbol.isVararg) "vararg " else ""}${parameter.name.asString()}: ${
             parameter.returnType.renderNonErrorOrUnsubstituted(parameter.symbol.returnType)
         }${if (parameter.symbol.hasDefaultValue) " = ..." else ""}"
@@ -49,7 +49,7 @@ internal object CompletionShortNamesRenderer {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KtType.renderNonErrorOrUnsubstituted(
     unsubstituted: KtType,
     renderer: KtTypeRenderer = CompletionShortNamesRenderer.rendererVerbose

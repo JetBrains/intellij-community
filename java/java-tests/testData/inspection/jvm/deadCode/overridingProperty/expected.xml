@@ -25,6 +25,13 @@
 
   <problem>
     <file>TC.kt</file>
+    <line>10</line>
+    <entry_point TYPE="class" FQNAME="Nullability" />
+    <description>Class has 3 instantiations, but they are not reachable from entry points.</description>
+  </problem>
+
+  <problem>
+    <file>TC.kt</file>
     <line>11</line>
     <entry_point TYPE="field" FQNAME="Nullability Nullable"/>
     <description>Field has no usages.</description>

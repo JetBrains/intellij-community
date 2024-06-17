@@ -248,6 +248,16 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         public void testKotlin_withoutUsages_WithoutUsages() throws Exception {
             runTest("testData/refactoring/moveFile/kotlin/withoutUsages/withoutUsages.test");
         }
+
+        @TestMetadata("mixed/moveClassWithPackage/moveClassWithPackage.test")
+        public void testMixed_moveClassWithPackage_MoveClassWithPackage() throws Exception {
+            runTest("testData/refactoring/moveFile/mixed/moveClassWithPackage/moveClassWithPackage.test");
+        }
+
+        @TestMetadata("mixed/moveClass/moveClass.test")
+        public void testMixed_moveClass_MoveClass() throws Exception {
+            runTest("testData/refactoring/moveFile/mixed/moveClass/moveClass.test");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

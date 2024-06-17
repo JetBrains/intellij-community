@@ -18,7 +18,7 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
 
   companion object {
     fun getInstance(): NotRoamableUiSettings = ApplicationManager.getApplication().service<NotRoamableUiSettings>()
-    const val COMPONENT_NAME: String = "NotRoamableUiSettings"
+    internal const val COMPONENT_NAME: String = "NotRoamableUiSettings"
   }
 
   var ideScale: Float
@@ -130,7 +130,7 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
   }
 }
 
-data class NotRoamableUiOptions(
+data class NotRoamableUiOptions internal constructor(
   @JvmField @OptionTag val ideAAType: AntialiasingType = if (AntialiasingType.canUseSubpixelAAForIDE()) AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE,
   @JvmField @OptionTag val editorAAType: AntialiasingType = if (AntialiasingType.canUseSubpixelAAForEditor()) AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE,
 

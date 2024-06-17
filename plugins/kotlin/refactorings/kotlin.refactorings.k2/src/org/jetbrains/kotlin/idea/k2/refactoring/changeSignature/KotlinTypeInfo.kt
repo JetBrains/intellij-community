@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.TypeConversionUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaAnalysisNonPublicApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeErrorTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -29,15 +30,16 @@ data class KotlinTypeInfo(var text: String?, val context: KtElement) {
     constructor(ktType: KtType, context: KtElement): this(analyze(context) { ktType.render(errorIgnoringRenderer, Variance.INVARIANT) }, context)
 }
 
+@OptIn(KaAnalysisNonPublicApi::class)
 private val errorIgnoringRenderer: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-    typeErrorTypeRenderer = object : KtTypeErrorTypeRenderer {
+    errorTypeRenderer = object : KtTypeErrorTypeRenderer {
         override fun renderType(
-            analysisSession: KtAnalysisSession,
+            analysisSession: KaSession,
             type: KtTypeErrorType,
             typeRenderer: KtTypeRenderer,
             printer: PrettyPrinter
         ) {
-            type.tryRenderAsNonErrorType()?.let {
+            type.presentableText?.let {
                 printer.append(it)
             }
         }
@@ -91,14 +93,14 @@ internal fun KtPsiFactory.createType(
     return createType(typeText)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun createSubstitutor(inheritorDeclaration: KtDeclaration, baseFunction: PsiElement): KaSubstitutor? {
     val inheritorCallable = inheritorDeclaration.getSymbol()
     val baseCallable = (baseFunction as? KtCallableDeclaration)?.getSymbol()
         ?: (baseFunction as? PsiMember)?.getCallableSymbol() ?: return null
     val inheritor = inheritorCallable.getContainingSymbol()
     val base = baseCallable.getContainingSymbol()
-    return if (inheritor is KtClassOrObjectSymbol && base is KtClassOrObjectSymbol) {
+    return if (inheritor is KaClassOrObjectSymbol && base is KaClassOrObjectSymbol) {
         createInheritanceTypeSubstitutor(inheritor, base)?.let { iSubstitutor ->
             buildSubstitutor {
                 base.typeParameters.forEach {

@@ -7,6 +7,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.backend.documentation.*
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.*
@@ -173,8 +174,7 @@ private fun contentUpdater(target: DocumentationTarget, url: String): ContentUpd
 
 @TestOnly
 fun computeDocumentationBlocking(targetPointer: Pointer<out DocumentationTarget>): DocumentationData? {
-  @Suppress("RAW_RUN_BLOCKING")
-  return runBlocking {
+  return runBlockingMaybeCancellable {
     withTimeout(1000 * 60) {
       computeDocumentation(targetPointer)
     }

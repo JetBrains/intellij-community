@@ -711,8 +711,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       ListSelectionListener selectionListener = e -> {
         Object source = e.getSource();
 
-        if (source instanceof DataProvider dataProvider) {
-          Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData(dataProvider);
+        if (source instanceof JList<?> curList) {
+          Object selectedItem = curList.getSelectedValue();
           if (selectedItem instanceof IntentionActionWithTextCaching actionWithCaching) {
             highlightOnHover(actionWithCaching, context, popup);
             return;

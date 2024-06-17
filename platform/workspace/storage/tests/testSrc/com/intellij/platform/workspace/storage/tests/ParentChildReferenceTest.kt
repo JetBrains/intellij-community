@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
@@ -25,14 +26,15 @@ class ParentChildReferenceTest {
     val parentEntity = ParentEntity("ParentData", MySource) {
       child = ChildEntity("ChildData", MySource)
     }
-    parentEntity as ParentEntityImpl.Builder
+    parentEntity as ModifiableWorkspaceEntityBase<ParentEntity, *>
     assertNotNull(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)])
 
     val childEntity = parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)]
-    childEntity as ChildEntityImpl.Builder
+    childEntity as ModifiableWorkspaceEntityBase<*, *>
     assertNotNull(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)])
 
     assertSame(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)], parentEntity)
+    childEntity as ChildEntity.Builder
     assertSame(childEntity.parentEntity, parentEntity)
 
     val builder = MutableEntityStorage.create()
@@ -47,14 +49,15 @@ class ParentChildReferenceTest {
     val childEntity = ChildEntity("ChildData", MySource) {
       parentEntity = ParentEntity("ParentData", MySource)
     }
-    childEntity as ChildEntityImpl.Builder
+    childEntity as ModifiableWorkspaceEntityBase<ChildEntity, *>
     assertNotNull(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)])
     val parentEntity = childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)]
 
-    parentEntity as ParentEntityImpl.Builder
+    parentEntity as ModifiableWorkspaceEntityBase<*, *>
     assertNotNull(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)])
 
     assertSame(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)], childEntity)
+    parentEntity as ParentEntity.Builder
     assertSame(parentEntity.child, childEntity)
 
     val builder = MutableEntityStorage.create()
@@ -72,10 +75,10 @@ class ParentChildReferenceTest {
       child = childEntity
     }
 
-    childEntity as ChildEntityImpl.Builder
+    childEntity as ModifiableWorkspaceEntityBase<ChildEntity, *>
     assertNotNull(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)])
 
-    parentEntity as ParentEntityImpl.Builder
+    parentEntity as ModifiableWorkspaceEntityBase<*, *>
     assertNotNull(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)])
 
     assertSame(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)], childEntity)
@@ -98,13 +101,13 @@ class ParentChildReferenceTest {
         ChildMultipleEntity("ChildTwoData", MySource)
       )
     }
-    parentEntity as ParentMultipleEntityImpl.Builder
+    parentEntity as ModifiableWorkspaceEntityBase<ParentMultipleEntity, *>
     val children = parentEntity.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildMultipleEntity.Builder>?
     assertNotNull(children)
     assertEquals(2, children.size)
 
     children.forEach { child ->
-      child as ChildMultipleEntityImpl.Builder
+      child as ModifiableWorkspaceEntityBase<*, *>
       assertEquals(child.parentEntity, child.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
       assertEquals(parentEntity, child.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
     }
@@ -114,7 +117,7 @@ class ParentChildReferenceTest {
 
     assertEmpty((parentEntity.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildMultipleEntity.Builder>?)!!)
     children.forEach { child ->
-      child as ChildMultipleEntityImpl.Builder
+      child as ModifiableWorkspaceEntityBase<*, *>
       assertNull(child.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
     }
 
@@ -136,12 +139,12 @@ class ParentChildReferenceTest {
       parentEntity = ParentMultipleEntity("ParentData", MySource)
     }
 
-    childEntity as ChildMultipleEntityImpl.Builder
+    childEntity as ModifiableWorkspaceEntityBase<ChildMultipleEntity, *>
     assertNotNull(childEntity.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
     assertSame(childEntity.parentEntity, childEntity.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
 
     val parentEntity = childEntity.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)]
-    parentEntity as ParentMultipleEntityImpl.Builder
+    parentEntity as ModifiableWorkspaceEntityBase<*, *>
     val children = parentEntity.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildMultipleEntity.Builder>?
     assertNotNull(children)
     assertEquals(1, children.size)
@@ -165,7 +168,7 @@ class ParentChildReferenceTest {
   @Test
   fun `check parent and children both set at field while they are not in the store case three`() {
     val parentEntity = ParentMultipleEntity("ParentData", MySource)
-    parentEntity as ParentMultipleEntityImpl.Builder
+    parentEntity as ModifiableWorkspaceEntityBase<*, *>
 
     val firstChild = ChildMultipleEntity("ChildOneData", MySource) {
       this.parentEntity = parentEntity
@@ -186,7 +189,7 @@ class ParentChildReferenceTest {
     assertEquals(2, children.size)
 
     children.forEach { child ->
-      child as ChildMultipleEntityImpl.Builder
+      child as ModifiableWorkspaceEntityBase<*, *>
       assertEquals(child.parentEntity, child.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
       assertEquals(parentEntity, child.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
       assertTrue(firstChild === child || secondChild === child)
@@ -197,12 +200,12 @@ class ParentChildReferenceTest {
   fun `check parent and children saved to the store`() {
     val builder = MutableEntityStorage.create()
     val parentEntity = ParentMultipleEntity("ParentData", MySource)
-    parentEntity as ParentMultipleEntityImpl.Builder
+    parentEntity as ModifiableWorkspaceEntityBase<ParentMultipleEntity, *>
 
     val firstChild = ChildMultipleEntity("ChildOneData", MySource) {
       this.parentEntity = parentEntity
     }
-    firstChild as ChildMultipleEntityImpl.Builder
+    firstChild as ModifiableWorkspaceEntityBase<*, *>
 
     builder.addEntity(parentEntity)
 
@@ -219,7 +222,7 @@ class ParentChildReferenceTest {
 
     // Set parent from store
     val secondChild = ChildMultipleEntity("ChildTwoData", MySource) child@{
-      builder.modifyEntity(parentEntityFromStore) parent@{
+      builder.modifyParentMultipleEntity(parentEntityFromStore) parent@{
         this@child.parentEntity = this@parent
       }
     }
@@ -229,7 +232,6 @@ class ParentChildReferenceTest {
     var childrenFromStore = builder.entities(ChildMultipleEntity::class.java).toList()
     assertEquals(2, childrenFromStore.size)
     childrenFromStore.forEach { child ->
-      child.parentEntity as ParentMultipleEntityImpl
       assertTrue { child.childData in parentEntity.children.map { it.childData } }
     }
     assertEquals(2, parentEntity.children.size)
@@ -243,7 +245,7 @@ class ParentChildReferenceTest {
     childrenFromStore = builder.entities(ChildMultipleEntity::class.java).toList()
     assertEquals(3, childrenFromStore.size)
     childrenFromStore.forEach { child ->
-      child.parentEntity as ParentMultipleEntityImpl
+      child.parentEntity
       assertTrue { child.childData in parentEntity.children.map { it.childData } }
     }
     assertEquals(3, parentEntity.children.size)

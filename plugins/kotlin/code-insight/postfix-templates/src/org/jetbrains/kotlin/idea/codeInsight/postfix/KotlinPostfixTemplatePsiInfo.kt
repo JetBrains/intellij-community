@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInf
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
@@ -87,8 +87,8 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
             if (calleeExpression is KtNameReferenceExpression) {
                 allowAnalysisOnEdt {
                     analyze(element) {
-                        val call = element.resolveCall()?.singleCallOrNull<KtCall>()
-                        if (call is KtSimpleFunctionCall) {
+                        val call = element.resolveCallOld()?.singleCallOrNull<KaCall>()
+                        if (call is KaSimpleFunctionCall) {
                             val functionSymbol = call.partiallyAppliedSymbol.symbol
                             val callableId = functionSymbol.callableId
                             if (callableId != null && callableId.callableName in MAPPED_CALLABLE_NAMES) {

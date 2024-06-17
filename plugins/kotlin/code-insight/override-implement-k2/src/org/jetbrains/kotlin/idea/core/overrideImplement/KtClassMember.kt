@@ -12,7 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -21,9 +21,9 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMultiplatformSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossibleMultiplatformSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
@@ -40,7 +40,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 data class KtClassMemberInfo internal constructor(
-    val symbolPointer: KtSymbolPointer<KtCallableSymbol>,
+    val symbolPointer: KaSymbolPointer<KaCallableSymbol>,
     @NlsSafe val memberText: String?,
     val memberIcon: Icon?,
     @NlsContexts.Label val containingSymbolText: String?,
@@ -48,9 +48,9 @@ data class KtClassMemberInfo internal constructor(
     val isProperty: Boolean,
 ) {
     companion object {
-        context(KtAnalysisSession)
+        context(KaSession)
         fun create(
-            symbol: KtCallableSymbol,
+            symbol: KaCallableSymbol,
             memberText: @NlsSafe String? = null,
             memberIcon: Icon? = null,
             @NlsContexts.Label containingSymbolText: String? = null,
@@ -76,14 +76,14 @@ data class KtClassMember(
     memberInfo.memberIcon,
 ), ClassMember {
     override fun getParentNodeDelegate(): MemberChooserObject? = memberInfo.containingSymbolText?.let {
-        KtClassOrObjectSymbolChooserObject(
+        KaClassOrObjectSymbolChooserObject(
             memberInfo.containingSymbolText,
             memberInfo.containingSymbolIcon
         )
     }
 }
 
-private data class KtClassOrObjectSymbolChooserObject(
+private data class KaClassOrObjectSymbolChooserObject(
     @NlsContexts.Label val symbolText: String?,
     val symbolIcon: Icon?
 ) :
@@ -95,12 +95,12 @@ internal fun createKtClassMember(
     preferConstructorParameter: Boolean
 ): KtClassMember = KtClassMember(memberInfo, bodyType, preferConstructorParameter)
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun generateMember(
     project: Project,
     ktClassMember: KtClassMember,
-    symbol: KtCallableSymbol,
+    symbol: KaCallableSymbol,
     targetClass: KtClassOrObject?,
     copyDoc: Boolean,
     mode: MemberGenerateMode = MemberGenerateMode.OVERRIDE
@@ -132,19 +132,19 @@ fun generateMember(
 
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
 
-            val containingSymbol = targetClass?.getSymbol() as? KtClassOrObjectSymbol
+            val containingSymbol = targetClass?.getSymbol() as? KaClassOrObjectSymbol
             otherModifiersProvider = object : KtRendererOtherModifiersProvider {
                 //copy from KtRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
                 override fun getOtherModifiers(
-                    analysisSession: KtAnalysisSession,
-                    s: KtDeclarationSymbol
+                    analysisSession: KaSession,
+                    s: KaDeclarationSymbol
                 ): List<KtModifierKeywordToken> = buildList {
-                    if (mode == MemberGenerateMode.OVERRIDE && s is KtPossibleMultiplatformSymbol && containingSymbol?.isActual == true) {
+                    if (mode == MemberGenerateMode.OVERRIDE && s is KaPossibleMultiplatformSymbol && containingSymbol?.isActual == true) {
                         //include actual modifier explicitly when containing class has modifier
                         if (s.isActual) add(KtTokens.ACTUAL_KEYWORD)
                     }
 
-                    if (s is KtFunctionSymbol) {
+                    if (s is KaFunctionSymbol) {
                         if (s.isExternal) add(KtTokens.EXTERNAL_KEYWORD)
                         if (s.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
                         if (s.isInline) add(KtTokens.INLINE_KEYWORD)
@@ -157,7 +157,7 @@ fun generateMember(
                         if (s.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
                     }
 
-                    if (s is KtValueParameterSymbol) {
+                    if (s is KaValueParameterSymbol) {
                         if (s.isVararg) add(KtTokens.VARARG_KEYWORD)
                         if (s.isCrossinline) add(KtTokens.CROSSINLINE_KEYWORD)
                         if (s.isNoinline) add(KtTokens.NOINLINE_KEYWORD)
@@ -168,7 +168,7 @@ fun generateMember(
                         if (s.isLateInit) add(KtTokens.LATEINIT_KEYWORD)
                     }
 
-                    if (s is KtNamedClassOrObjectSymbol) {
+                    if (s is KaNamedClassOrObjectSymbol) {
                         if (s.isExternal) add(KtTokens.EXTERNAL_KEYWORD)
                         if (s.isInline) add(KtTokens.INLINE_KEYWORD)
                         if (s.isData) add(KtTokens.DATA_KEYWORD)
@@ -176,7 +176,7 @@ fun generateMember(
                         if (s.isInner) add(KtTokens.INNER_KEYWORD)
                     }
 
-                    if (s is KtTypeParameterSymbol) {
+                    if (s is KaTypeParameterSymbol) {
                         if (s.isReified) add(KtTokens.REIFIED_KEYWORD)
                         when (s.variance) {
                             Variance.INVARIANT -> {}
@@ -200,7 +200,7 @@ fun generateMember(
 
 
     val newMember: KtCallableDeclaration = when (symbol) {
-        is KtFunctionSymbol -> generateFunction(project, symbol, renderer, bodyType)
+        is KaFunctionSymbol -> generateFunction(project, symbol, renderer, bodyType)
         is KtPropertySymbol -> generateProperty(project, symbol, renderer, bodyType)
         else -> error("Unknown member to override: $symbol")
     }
@@ -238,7 +238,7 @@ fun generateMember(
 /**
  * Returns true if the annotation itself is marked with @RequiresOptIn (or the old @Experimental), or if an extension wants to keep it.
  */
-context(KtAnalysisSession)
+context(KaSession)
 private fun keepAnnotation(annotation: KtAnnotationApplication, file: KtFile?): Boolean {
     val classId = annotation.classId ?: return false
     val symbol = getClassOrObjectSymbolByClassId(classId)
@@ -248,24 +248,24 @@ private fun keepAnnotation(annotation: KtAnnotationApplication, file: KtFile?): 
     return file?.let { OverrideImplementsAnnotationsFilter.keepAnnotationOnOverrideMember(classId.asFqNameString(), it) } == true
 }
 
-context(KtAnalysisSession)
-private fun KtClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annotations.any { annotation ->
+context(KaSession)
+private fun KaClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annotations.any { annotation ->
     isRequiresOptInFqName(annotation.classId?.asSingleFqName())
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun generateConstructorParameter(
     project: Project,
-    symbol: KtCallableSymbol,
+    symbol: KaCallableSymbol,
     renderer: KtDeclarationRenderer,
 ): KtCallableDeclaration {
     return KtPsiFactory(project).createParameter(symbol.render(renderer))
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun generateFunction(
     project: Project,
-    symbol: KtFunctionSymbol,
+    symbol: KaFunctionSymbol,
     renderer: KtDeclarationRenderer,
     bodyType: BodyType,
 ): KtCallableDeclaration {
@@ -284,7 +284,7 @@ private fun generateFunction(
     return factory.createFunction(functionText)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun generateProperty(
     project: Project,
     symbol: KtPropertySymbol,
@@ -307,14 +307,14 @@ private fun generateProperty(
     return KtPsiFactory(project).createProperty(symbol.render(renderer) + body)
 }
 
-private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
+private fun <T> KaSession.generateUnsupportedOrSuperCall(
     project: Project, symbol: T, bodyType: BodyType, canBeEmpty: Boolean = true
-): String where T : KtNamedSymbol, T : KtCallableSymbol {
+): String where T : KaNamedSymbol, T : KaCallableSymbol {
     when (bodyType.effectiveBodyType(canBeEmpty)) {
         BodyType.EmptyOrTemplate -> return ""
         BodyType.FromTemplate -> {
             val templateKind = when (symbol) {
-                is KtFunctionSymbol -> TemplateKind.FUNCTION
+                is KaFunctionSymbol -> TemplateKind.FUNCTION
                 is KtPropertySymbol -> TemplateKind.PROPERTY_INITIALIZER
                 else -> throw IllegalArgumentException("$symbol must be either a function or a property")
             }
@@ -337,7 +337,7 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
             }
             append(".").append(symbol.name.render())
 
-            if (symbol is KtFunctionSymbol) {
+            if (symbol is KaFunctionSymbol) {
                 val paramTexts = symbol.valueParameters.map {
                     val renderedName = it.name.render()
                     if (it.isVararg) "*$renderedName" else renderedName

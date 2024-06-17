@@ -18,7 +18,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
-import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.client.currentSession
@@ -259,8 +258,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     EditSourceOnDoubleClickHandler.install(tree) { editSourceListeners.forEach { it.onEditSource() } }
 
     val group = ContextMenuActionGroup(tree)
-    val handler = PopupHandler.installPopupMenu(tree, group, ActionPlaces.BOOKMARKS_VIEW_POPUP)
-    PopupMenuPreloader.install(tree, ActionPlaces.BOOKMARKS_VIEW_POPUP, handler) { group }
+    PopupHandler.installPopupMenu(tree, group, ActionPlaces.BOOKMARKS_VIEW_POPUP)
 
     project.messageBus.connect(this).subscribe(BookmarksListener.TOPIC, object : BookmarksListener {
       override fun groupsSorted() {

@@ -7,15 +7,15 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -285,7 +285,7 @@ private fun isMultilineLocalProperty(element: PsiElement): Boolean {
     return false
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalProperty: Boolean): KtType? =
     calculateAllTypes<KtType>(element) { declarationType, allTypes, cannotBeNull ->
         if (declarationType is KtErrorType) return@calculateAllTypes null
@@ -319,7 +319,7 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
         }
     }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun isUnclearType(type: KtType, element: KtCallableDeclaration): Boolean {
     if (element !is KtProperty) return true
 
@@ -336,7 +336,7 @@ private fun isUnclearType(type: KtType, element: KtCallableDeclaration): Boolean
         if (type.isEnum()) {
             // Do not show type for enums if initializer has enum entry with explicit enum name: val p = Enum.ENTRY
             val symbol: KtSymbol? = selectorExpression?.mainReference?.resolveToSymbol()
-            if (symbol is KtEnumEntrySymbol) {
+            if (symbol is KaEnumEntrySymbol) {
                 return false
             }
         }
@@ -353,7 +353,7 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
     val functionLiteral = lambdaExpression.getStrictParentOfType<KtFunctionLiteral>() ?: return
 
     analyze(lambdaExpression) {
-        val functionCall = functionLiteral.resolveCall()?.singleFunctionCallOrNull() ?: return
+        val functionCall = functionLiteral.resolveCallOld()?.singleFunctionCallOrNull() ?: return
         sink.addPresentation(InlineInlayPosition(lambdaExpression.endOffset, true), hasBackground = true) {
             text(": ")
             printKtType(functionCall.symbol.returnType)
@@ -362,12 +362,12 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
 
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun isConstructorCall(initializer: KtExpression?): Boolean {
     val callExpression = initializer as? KtCallExpression ?: return false
-    val resolveCall = initializer.resolveCall() ?: return false
+    val resolveCall = initializer.resolveCallOld() ?: return false
     val functionCall = resolveCall.singleFunctionCallOrNull()
-    if (functionCall?.symbol is KtSamConstructorSymbol) {
+    if (functionCall?.symbol is KaSamConstructorSymbol) {
         return true
     }
 
@@ -375,12 +375,12 @@ private fun isConstructorCall(initializer: KtExpression?): Boolean {
     return constructorCall != null && (constructorCall.symbol.typeParameters.isEmpty() || callExpression.typeArgumentList != null)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtExpression.isClassOrPackageReference(): Boolean =
     when (this) {
         is KtNameReferenceExpression ->
             this.mainReference.resolveToSymbol()
-                .let { it is KtClassLikeSymbol || it is KtPackageSymbol }
+                .let { it is KaClassLikeSymbol || it is KtPackageSymbol }
         is KtDotQualifiedExpression -> this.selectorExpression?.isClassOrPackageReference() ?: false
         else -> false
     }

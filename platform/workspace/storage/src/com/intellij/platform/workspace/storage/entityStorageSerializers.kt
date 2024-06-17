@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.nio.file.Path
 
@@ -12,6 +13,7 @@ public interface EntityStorageSerializer {
   public fun deserializeCache(file: Path): Result<MutableEntityStorage?>
 }
 
+@ApiStatus.Internal
 public interface EntityTypesResolver {
   public fun getPluginId(clazz: Class<*>): String?
   public fun resolveClass(name: String, pluginId: String?): Class<*>

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
@@ -21,7 +21,7 @@ internal class FirPackageCompletionContributor(
     priority: Int,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,

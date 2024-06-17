@@ -1,4 +1,3 @@
-// IGNORE_K2
 class A {
     private String s = "";
     private int x = 0;

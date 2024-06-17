@@ -41,7 +41,7 @@ interface BooleanEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyBooleanEntity(
   entity: BooleanEntity,
   modification: BooleanEntity.Builder.() -> Unit,
 ): BooleanEntity {
@@ -80,7 +80,7 @@ interface IntEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyIntEntity(
   entity: IntEntity,
   modification: IntEntity.Builder.() -> Unit,
 ): IntEntity {
@@ -119,7 +119,7 @@ interface StringEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyStringEntity(
   entity: StringEntity,
   modification: StringEntity.Builder.() -> Unit,
 ): StringEntity {
@@ -158,7 +158,7 @@ interface ListEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyListEntity(
   entity: ListEntity,
   modification: ListEntity.Builder.() -> Unit,
 ): ListEntity {
@@ -196,7 +196,7 @@ interface OptionalIntEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOptionalIntEntity(
   entity: OptionalIntEntity,
   modification: OptionalIntEntity.Builder.() -> Unit,
 ): OptionalIntEntity {
@@ -234,7 +234,7 @@ interface OptionalStringEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOptionalStringEntity(
   entity: OptionalStringEntity,
   modification: OptionalStringEntity.Builder.() -> Unit,
 ): OptionalStringEntity {

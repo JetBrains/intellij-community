@@ -16,7 +16,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
@@ -225,14 +224,13 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
                     throw AssertionError("Some line markers are expected, but nothing is present at all")
                 }
             } catch (error: AssertionError) {
-                if (error is FileComparisonData) {
+                if (error is FileComparisonFailedError) {
                     throw error
                 }
                 try {
                     val actualTextWithTestData = TagsTestDataUtil.insertInfoTags(markers, true, documentToAnalyze.text)
                     KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithTestData)
-                } catch (failure: AssertionError) {
-                    if (failure !is FileComparisonData) throw failure
+                } catch (failure: FileComparisonFailedError) {
                     throw FileComparisonFailedError(
                         error.message + "\n" + failure.message,
                         failure.expectedStringPresentation,

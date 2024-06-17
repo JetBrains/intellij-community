@@ -144,6 +144,14 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     state.myIsRightMarginShown = `val`
   }
 
+  override fun isHighlightSelectionOccurrences(): Boolean {
+    return state.myIsHighlightSelectionOccurrences
+  }
+
+  override fun setHighlightSelectionOccurrences(`val`: Boolean) {
+    state.myIsHighlightSelectionOccurrences = `val`;
+  }
+
   override fun isWhitespacesShown(): Boolean {
     return state.myIsWhitespacesShown
   }

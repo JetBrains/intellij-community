@@ -249,11 +249,9 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val continuationObject = extractContinuation(frameProxy) ?: return null
         val executionContext = DefaultExecutionContext(suspendContext, frameProxy)
         val debugMetadata = DebugMetadata.instance(executionContext) ?: return null
-        // At first, try to extract the completion field of the current BaseContinuationImpl instance,
-        // if the completion field is null, then return the object itself and try to extract the StackTraceElement
-        val completionObject = debugMetadata.baseContinuationImpl.getNextContinuation(continuationObject, executionContext) ?: continuationObject
-        val stackTraceElement = debugMetadata.getStackTraceElement(completionObject, executionContext)?.stackTraceElement() ?: return null
-        return DebuggerUtilsEx.findOrCreateLocation(suspendContext.debugProcess, stackTraceElement)
+        val callerFrame = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "getCallerFrame", listOf(continuationObject))?: return null
+        val stackTraceElement = debugMetadata.getStackTraceElement(callerFrame as ObjectReference, executionContext)?.stackTraceElement() ?: return null
+        return stackTraceElement.let { DebuggerUtilsEx.findOrCreateLocation(suspendContext.debugProcess, it) }
     }
 
     private fun SuspendContextImpl.getStackFrameProxyImpl(): StackFrameProxyImpl? =

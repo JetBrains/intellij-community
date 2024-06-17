@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
@@ -43,7 +43,7 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
      * See KTIJ-16225 and KTIJ-15232 for the details about why we have
      * special treatment for enums.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectShortenings(declaration: KtElement): ShortenCommand =
         collectPossibleReferenceShorteningsInElement(
             declaration,
@@ -57,7 +57,7 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
             callableShortenStrategy = { callableSymbol ->
                 val containingSymbol = callableSymbol.getContainingSymbol()
 
-                if (callableSymbol !is KtEnumEntrySymbol && (containingSymbol.isEnumClass() || containingSymbol.isEnumCompanionObject())) {
+                if (callableSymbol !is KaEnumEntrySymbol && (containingSymbol.isEnumClass() || containingSymbol.isEnumCompanionObject())) {
                     ShortenStrategy.DO_NOT_SHORTEN
                 } else {
                     ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
@@ -92,21 +92,21 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
     }
 }
 
-context (KtAnalysisSession)
-private fun KtDeclarationSymbol.getContainingClassForCompanionObject(): KtNamedClassOrObjectSymbol? {
-    if (this !is KtClassOrObjectSymbol || this.classKind != KtClassKind.COMPANION_OBJECT) return null
+context (KaSession)
+private fun KaDeclarationSymbol.getContainingClassForCompanionObject(): KaNamedClassOrObjectSymbol? {
+    if (this !is KaClassOrObjectSymbol || this.classKind != KaClassKind.COMPANION_OBJECT) return null
 
-    val containingClass = getContainingSymbol() as? KtNamedClassOrObjectSymbol
+    val containingClass = getContainingSymbol() as? KaNamedClassOrObjectSymbol
     return containingClass?.takeIf { it.companionObject == this }
 }
 
-private fun KtDeclarationSymbol?.isEnumClass(): Boolean {
-    val classSymbol = this as? KtClassOrObjectSymbol ?: return false
-    return classSymbol.classKind == KtClassKind.ENUM_CLASS
+private fun KaDeclarationSymbol?.isEnumClass(): Boolean {
+    val classSymbol = this as? KaClassOrObjectSymbol ?: return false
+    return classSymbol.classKind == KaClassKind.ENUM_CLASS
 }
 
-context (KtAnalysisSession)
-private fun KtDeclarationSymbol?.isEnumCompanionObject(): Boolean =
+context (KaSession)
+private fun KaDeclarationSymbol?.isEnumCompanionObject(): Boolean =
   this?.getContainingClassForCompanionObject().isEnumClass()
 
 private fun KtDotQualifiedExpression.deleteQualifier(): KtExpression? {

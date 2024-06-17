@@ -12,6 +12,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 final class ReloadProjectAction extends AnAction implements DumbAware {
+  ReloadProjectAction() {
+    getTemplatePresentation().setApplicationScope(true);
+  }
+
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;

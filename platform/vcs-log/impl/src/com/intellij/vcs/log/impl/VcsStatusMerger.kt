@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 
-abstract class VcsStatusMerger<S, Path> {
+internal abstract class VcsStatusMerger<S, Path> {
   fun merge(statuses: List<List<S>>): List<MergedStatusInfo<S>> {
     statuses.singleOrNull()?.let { s -> return s.map { MergedStatusInfo(it) } }
 
@@ -92,7 +92,7 @@ abstract class VcsStatusMerger<S, Path> {
   }
 }
 
-class VcsFileStatusInfoMerger : VcsStatusMerger<VcsFileStatusInfo, CharSequence>() {
+internal class VcsFileStatusInfoMerger : VcsStatusMerger<VcsFileStatusInfo, CharSequence>() {
   override fun createStatus(type: Change.Type, path: CharSequence, secondPath: CharSequence?): VcsFileStatusInfo {
     return VcsFileStatusInfo(type, path, secondPath)
   }
@@ -104,7 +104,7 @@ class VcsFileStatusInfoMerger : VcsStatusMerger<VcsFileStatusInfo, CharSequence>
   override fun getType(info: VcsFileStatusInfo): Change.Type = info.type
 }
 
-abstract class VcsChangesMerger : VcsStatusMerger<Change, FilePath>() {
+internal abstract class VcsChangesMerger : VcsStatusMerger<Change, FilePath>() {
   override fun createStatus(type: Change.Type, path: FilePath, secondPath: FilePath?): Change {
     return when (type) {
       Change.Type.NEW -> createChange(type, null, path)

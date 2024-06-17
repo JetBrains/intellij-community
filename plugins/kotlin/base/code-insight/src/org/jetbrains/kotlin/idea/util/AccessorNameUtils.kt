@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.util
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import java.util.*
@@ -21,7 +21,7 @@ fun KtCallableDeclaration.getAccessorNames(): List<String> {
 
     analyze(ktDeclaration) {
         val symbol = ktDeclaration.getSymbol()
-        val probablePropertySymbol = if (symbol is KtValueParameterSymbol) {
+        val probablePropertySymbol = if (symbol is KaValueParameterSymbol) {
             symbol.generatedPrimaryConstructorProperty
         } else {
             symbol

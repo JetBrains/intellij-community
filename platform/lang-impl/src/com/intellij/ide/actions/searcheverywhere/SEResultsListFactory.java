@@ -62,6 +62,28 @@ abstract class SEResultsListFactory {
     }
   };
 
+  @ApiStatus.Experimental
+  protected static final ListCellRenderer<Object> hasOnlySimilarElementRenderer = new ColoredListCellRenderer<>() {
+    @Override
+    protected int getMinHeight() {
+      return 2 * super.getMinHeight();
+    }
+
+    @Override
+    protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
+      clear();
+      mySelected = false;
+      if (value != SearchListModel.HAS_ONLY_SIMILAR_ELEMENT) {
+        throw new AssertionError(value);
+      }
+      setFont(StartupUiUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.NORMAL)));
+      append(IdeBundle.message("search.everywhere.no.exact.matches"), new SimpleTextAttributes(
+        SimpleTextAttributes.STYLE_PLAIN, UIUtil.getLabelDisabledForeground()));
+      setIpad(JBInsets.create(4, 17));
+      setMyBorder(null);
+    }
+  };
+
   @ApiStatus.Internal
   Component getMoreElementRenderer(@NotNull JList<?> list, int index, boolean selected, boolean hasFocus) {
     Component component = myMoreRenderer.getListCellRendererComponent(list, SearchListModel.MORE_ELEMENT, index, selected, hasFocus);
@@ -75,6 +97,11 @@ abstract class SEResultsListFactory {
       selectablePanel.setSelectionColor(UIUtil.getListBackground(true, true));
     }
     return selectablePanel;
+  }
+
+  @ApiStatus.Internal
+  Component getOnlySimilarElementRenderer(@NotNull JList<?> list, int index, boolean selected, boolean hasFocus) {
+    return hasOnlySimilarElementRenderer.getListCellRendererComponent(list, SearchListModel.HAS_ONLY_SIMILAR_ELEMENT, index, selected, hasFocus);
   }
 
   @ApiStatus.Internal

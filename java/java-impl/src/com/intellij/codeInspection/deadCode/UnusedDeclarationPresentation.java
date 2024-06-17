@@ -41,6 +41,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -579,7 +580,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       return AnalysisBundle.message("inspection.dead.code.safe.delete.quickfix");
     }
 
-
     @Override
     public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
       if (myElement != null && myElement.isValid()) {
@@ -610,7 +610,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
           if (value != null) {
             String objectPackage = (String) value.getAttribute("qualifiedname");
             if (objectPackage != null) {
-              return objectPackage;
+              return XmlStringUtil.escapeString(objectPackage);
             }
           }
         }
@@ -642,7 +642,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     final StyleSheet css = ((HTMLEditorKit)htmlView.getEditorKit()).getStyleSheet();
     css.addRule("p.problem-description-group {text-indent: " + JBUIScale.scale(9) + "px;font-weight:bold;}");
     css.addRule("div.problem-description {margin-left: " + JBUIScale.scale(9) + "px;}");
-    css.addRule("ul {margin-left:" + JBUIScale.scale(10) + "px;text-indent: 0}");
+    css.addRule("ul {margin-left:" + JBUIScale.scale(19) + "px;text-indent: 0}");
     css.addRule("code {font-family:" + StartupUiUtil.getLabelFont().getFamily() + "}");
     final @Nls StringBuilder buf = new StringBuilder();
     ((DeadHTMLComposer)getComposer()).compose(buf, entity, false);

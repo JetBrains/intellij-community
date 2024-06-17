@@ -6,9 +6,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -51,9 +51,9 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
         return referenceExpression.getReferencedNameAsName() == OperatorNameConventions.TO_STRING && callExpression.valueArguments.isEmpty()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
-        val call = element.resolveCall()?.successfulFunctionCallOrNull() ?: return null
+        val call = element.resolveCallOld()?.successfulFunctionCallOrNull() ?: return null
         val allOverriddenSymbols = listOf(call.symbol) + call.symbol.getAllOverriddenSymbols()
         return allOverriddenSymbols.any { it.callableId == TO_STRING_CALLABLE_ID }
             .asUnit

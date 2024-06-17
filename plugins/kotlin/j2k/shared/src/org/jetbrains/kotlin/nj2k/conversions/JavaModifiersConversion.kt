@@ -2,14 +2,17 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_9
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.*
 
+/**
+ * Converts Java-specific modifiers (for example, "volatile") to a Kotlin equivalent (usually an annotation).
+ */
 class JavaModifiersConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKOtherModifiersOwner && element is JKAnnotationListOwner) {
             element.elementByModifier(VOLATILE)?.let { modifierElement ->

@@ -17,11 +17,9 @@ abstract class ScriptAdditionalIdeaDependenciesProvider {
             ExtensionPointName.create("org.jetbrains.kotlin.scriptAdditionalIdeaDependenciesProvider")
 
         fun getRelatedModules(file: VirtualFile, project: Project): List<Module> = EP_NAME.getExtensionList(project)
-            .filterIsInstance<ScriptAdditionalIdeaDependenciesProvider>()
             .flatMap { it.getRelatedModules(file, project) }
 
         fun getRelatedLibraries(file: VirtualFile, project: Project): List<Library> = EP_NAME.getExtensionList(project)
-            .filterIsInstance<ScriptAdditionalIdeaDependenciesProvider>()
             .flatMap { it.getRelatedLibraries(file, project) }
     }
 }

@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.ui.JBColor
+import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearanceSizes
 import java.awt.Color
@@ -20,6 +21,7 @@ object NewUINotebookDiffEditorAppearance: NotebookEditorAppearance,
   override fun shouldShowCellLineNumbers(): Boolean = false
   override fun shouldShowExecutionCounts(): Boolean = false  // not needed for DIFF -> execution does not reach it
   override fun shouldShowOutExecutionCounts(): Boolean = false
+  override fun shouldShowRunButtonInGutter(): Boolean = false
   override fun getCellStripeHoverColor(editor: Editor): Color {
     return editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR) ?: JBColor.BLUE
   }
@@ -39,8 +41,9 @@ object NewUINotebookDiffEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val CODE_AND_CODE_TOP_GRAY_HEIGHT = 60
   override val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT = 60
   override val INNER_CELL_TOOLBAR_HEIGHT = 24
-  override val CELL_BORDER_HEIGHT = 20
-  override val SPACER_HEIGHT = CELL_BORDER_HEIGHT / 2
+  override val cellBorderHeight = JBUI.scale(20)
+  override val aboveFirstCellDelimiterHeight: Int = JBUI.scale(20)
+  override val SPACER_HEIGHT = cellBorderHeight / 2
   override val EXECUTION_TIME_HEIGHT = 0  // not used in the jupyter diff viewer
   override val SPACE_BELOW_CELL_TOOLBAR = 10
   override val CELL_TOOLBAR_TOTAL_HEIGHT = INNER_CELL_TOOLBAR_HEIGHT + SPACE_BELOW_CELL_TOOLBAR
@@ -52,7 +55,6 @@ object NewUINotebookDiffEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val NOTEBOOK_OUTPUT_INLAY_PRIORITY: Int = 5
 
   override val EXTRA_PADDING_EXECUTION_COUNT = 0
-  override val EXTRA_GUTTER_AREA_WIDTH_EXECUTION_COUNT = 0  // not needed, see JupyterEditorGutterExtraSpaceManager
 
   override fun getCellLeftLineWidth(editor: Editor): Int = 10
   override fun getCellLeftLineHoverWidth(): Int = 10

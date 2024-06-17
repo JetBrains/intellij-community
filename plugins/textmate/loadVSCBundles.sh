@@ -106,6 +106,21 @@ cp -r "snippets" "$ROOT/lib/bundles/terraform"
 
 cd ..
 
+# asciidoc
+git clone https://github.com/asciidoctor/asciidoctor-vscode
+cd asciidoctor-vscode
+
+echo "Adding asciidoc"
+mkdir -p "$ROOT/lib/bundles/adoc"
+cp -r "LICENSE" "$ROOT/lib/bundles/adoc"
+cp -r "package.json" "$ROOT/lib/bundles/adoc"
+cp -r "asciidoc-language-configuration.json" "$ROOT/lib/bundles/adoc"
+cp -r "README.md" "$ROOT/lib/bundles/adoc"
+cp -r "syntaxes" "$ROOT/lib/bundles/adoc"
+cp -r "snippets" "$ROOT/lib/bundles/adoc"
+
+cd ..
+
 # hcl
 git clone https://github.com/hashicorp/vscode-hcl
 cd vscode-hcl
@@ -142,6 +157,21 @@ mkdir -p "$ROOT/lib/bundles/erlang/grammar"
 wget -q https://raw.githubusercontent.com/erlang-ls/vscode/main/language-configuration.json -O "$ROOT/lib/bundles/erlang/language-configuration.json"
 wget -q https://raw.githubusercontent.com/erlang-ls/vscode/main/package.json -O "$ROOT/lib/bundles/erlang/package.json"
 wget -q https://raw.githubusercontent.com/erlang-ls/grammar/main/Erlang.plist -O "$ROOT/lib/bundles/erlang/grammar/Erlang.plist"
+
+# Kconfig
+git clone https://github.com/trond-snekvik/vscode-kconfig/
+pushd vscode-kconfig
+
+echo "Adding KConfig"
+declare kconfig_target="$ROOT/lib/bundles/kconfig"
+declare -a kconfig_resources=("LICENSE" "package.json" "language-configuration.json" "syntaxes")
+mkdir -p "$kconfig_target"
+for resource in ${kconfig_resources[@]}
+do
+  cp -r "$resource" "$kconfig_target"
+done
+
+popd
 
 cd $ROOT
 

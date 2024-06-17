@@ -19,20 +19,13 @@ import com.intellij.testFramework.withProjectAsync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
-import org.junit.Assume.assumeTrue
 
 class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
   override fun runInDispatchThread() = false
 
-  private fun isWorkspaceImport(): Boolean {
-    return isImportToWorkspaceModelEnabled(myProject)
-  }
-
   fun `test when module is created then its pom is unignored`() = runBlocking {
-    assumeTrue(isWorkspaceImport())
     // create project
     waitForProjectCreation {
       createProjectFromTemplate(JAVA) {
@@ -71,7 +64,6 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
   }
 
   fun `test new maven module inherits project sdk by default`() = runBlocking {
-    assumeTrue(isWorkspaceImport())
     // create project
     waitForProjectCreation {
       createProjectFromTemplate(JAVA) {
@@ -106,7 +98,6 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
   }
 
   fun `test configurator creates module in project structure modifiable model`() = runBlocking {
-    assumeTrue(isWorkspaceImport())
     waitForProjectCreation {
       createProjectFromTemplate(JAVA) {
         it.baseData!!.name = "project"

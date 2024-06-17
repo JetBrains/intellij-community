@@ -3,7 +3,6 @@
 
 package com.intellij.platform.ide.bootstrap
 
-import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.lang.ZipFile
 import com.intellij.util.lang.ZipFilePool
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +26,7 @@ class ZipFilePoolImpl : ZipFilePool() {
   override fun loadZipFile(file: Path): ZipFile {
     val resolver = pool.get(file)
     // doesn't make sense to use pool for requests from class loader (requested only once per class loader)
-    return resolver?.zipFile ?: ImmutableZipFile.load(file)
+    return resolver?.zipFile ?: ZipFile.load(file)
   }
 
   override fun load(file: Path): EntryResolver {
@@ -36,7 +35,7 @@ class ZipFilePoolImpl : ZipFilePool() {
     val stamp = lock.writeLock()
     try {
       return pool.computeIfAbsent(file) {
-        MyEntryResolver(ImmutableZipFile.load(file))
+        MyEntryResolver(ZipFile.load(file))
       }
     }
     finally {

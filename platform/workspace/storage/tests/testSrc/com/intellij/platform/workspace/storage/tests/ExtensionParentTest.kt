@@ -65,7 +65,7 @@ class ExtensionParentTest {
     }
     val anotherChild = AttachedEntityToParent("abc", MySource)
 
-    builder.modifyEntity(entity) {
+    builder.modifyMainEntityToParent(entity) {
       assertEquals("xyz", this.child!!.data)
       this.child = anotherChild
     }
@@ -100,7 +100,7 @@ class ExtensionParentTest {
     val existingAttachedEntity = builder.entities(AttachedEntityToNullableParent::class.java).single()
     assertNotNull(existingAttachedEntity.nullableRef)
 
-    builder.modifyEntity(existingAttachedEntity) {
+    builder.modifyAttachedEntityToNullableParent(existingAttachedEntity) {
       this.nullableRef = null
     }
 

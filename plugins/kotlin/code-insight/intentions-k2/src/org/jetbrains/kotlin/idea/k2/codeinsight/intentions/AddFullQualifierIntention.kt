@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
@@ -22,7 +22,7 @@ internal class AddFullQualifierIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("add.full.qualifier")
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtNameReferenceExpression): Context? {
         val contextSymbol = element.mainReference.resolveToSymbols().singleOrNull()
         if (contextSymbol != null && AddQualifiersUtil.isApplicableTo(element, contextSymbol)) {

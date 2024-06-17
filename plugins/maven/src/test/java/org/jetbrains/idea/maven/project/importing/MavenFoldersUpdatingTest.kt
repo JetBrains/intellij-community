@@ -165,12 +165,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
 
     updateTargetFolders()
 
-    if (supportsKeepingManualChanges()) {
-      assertSources("project", "target/src")
-    }
-    else {
-      assertSources("project", "src/main/java")
-    }
+    assertSources("project", "src/main/java")
     assertExcludes("project", "target")
   }
 
@@ -228,7 +223,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     })
 
     updateTargetFolders()
-    assertEquals(if (isWorkspaceImport) 0 else 1, count[0])
+    assertEquals(0, count[0])
   }
 
   @Test
@@ -264,8 +259,8 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     eventsTestHelper.setUp(project)
     try {
       updateTargetFolders()
-      eventsTestHelper.assertRootsChanged(if (isWorkspaceImport) 0 else 1)
-      eventsTestHelper.assertWorkspaceModelChanges(if (isWorkspaceImport) 0 else 1)
+      eventsTestHelper.assertRootsChanged(0)
+      eventsTestHelper.assertWorkspaceModelChanges(0)
 
       // let's add some generated folders, what should be picked up on updateTargetFolders
       File(projectRoot.getPath(), "target/generated-sources/foo/z").mkdirs()

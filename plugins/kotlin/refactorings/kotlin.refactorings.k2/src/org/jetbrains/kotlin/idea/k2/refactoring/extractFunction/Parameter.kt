@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
 
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -20,27 +20,27 @@ interface Parameter : IParameter<KtType> {
 }
 
 internal sealed class TypePredicate {
-    context(KtAnalysisSession)
+    context(KaSession)
     abstract fun isApplicable(ktType: KtType): Boolean
 }
 
 internal class SubTypePredicate(private val type: KtType) : TypePredicate() {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun isApplicable(ktType: KtType): Boolean = ktType.isSubTypeOf(type)
 }
 
 internal class SuperTypePredicate(private val type: KtType) : TypePredicate() {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun isApplicable(ktType: KtType): Boolean = ktType.isSubTypeOf(type)
 }
 
 internal class ExactTypePredicate(private val type: KtType) : TypePredicate() {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun isApplicable(ktType: KtType): Boolean = ktType.isEqualTo(type)
 }
 
 internal class AndPredicate(val predicates: Set<TypePredicate>) : TypePredicate() {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun isApplicable(ktType: KtType): Boolean = predicates.all { it.isApplicable(ktType) }
 }
 
@@ -64,7 +64,7 @@ internal class MutableParameter(
 
     override var mirrorVarName: String? = null
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun allParameterTypeCandidates(): List<KtType> {
         val andPredicate = AndPredicate(typePredicates)
         val typeSet = if (originalType is KtFlexibleType) {
@@ -96,7 +96,7 @@ internal class MutableParameter(
     override fun getParameterTypeCandidates(): List<KtType> {
         analyze(scope) {
             return allParameterTypeCandidates().filter {
-                !(it is KtNonErrorClassType && it.classSymbol is KtAnonymousObjectSymbol) &&
+                !(it is KtNonErrorClassType && it.symbol is KaAnonymousObjectSymbol) &&
                         isResolvableInScope(it, scope, mutableSetOf())
             }
         }

@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PlaceProvider;
 import org.intellij.lang.annotations.JdkConstants;
@@ -160,10 +161,11 @@ public class AnActionEvent implements PlaceProvider {
   }
 
   public static @NotNull DataContext getInjectedDataContext(@NotNull DataContext dataContext) {
-    if (dataContext instanceof InjectedDataContextSupplier) {
-      return ((InjectedDataContextSupplier)dataContext).getInjectedDataContext();
+    if (dataContext == DataContext.EMPTY_CONTEXT) return dataContext;
+    if (dataContext instanceof InjectedDataContextSupplier o) {
+      return o.getInjectedDataContext();
     }
-    return dataContext instanceof InjectedDataContext ? dataContext : new InjectedDataContext(dataContext);
+    return new InjectedDataContext(dataContext);
   }
 
   /**
@@ -287,8 +289,12 @@ public class AnActionEvent implements PlaceProvider {
     @NotNull DataContext getInjectedDataContext();
   }
 
-  private static class InjectedDataContext extends DataContextWrapper {
-    InjectedDataContext(@NotNull DataContext context) { super(context); }
+  @Deprecated(forRemoval = true)
+  private static class InjectedDataContext extends CustomizedDataContext {
+    InjectedDataContext(@NotNull DataContext context) {
+      super(context, true);
+      Logger.getInstance(InjectedDataContext.class).error("Unsupported " + context.getClass().getName());
+    }
 
     @Override
     public @Nullable Object getRawCustomData(@NotNull String dataId) {

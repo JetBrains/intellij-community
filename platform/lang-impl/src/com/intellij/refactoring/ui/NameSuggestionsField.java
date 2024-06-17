@@ -3,6 +3,7 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -93,30 +94,32 @@ public class NameSuggestionsField extends JPanel {
     if (editor == null) return;
     // later here because EditorTextField creates Editor during addNotify()
     final Runnable selectionRunnable = () -> {
-      final int offset = editor.getCaretModel().getOffset();
-      List<TextRange> ranges = new ArrayList<>();
-      SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editor.getDocument().getCharsSequence(), offset, ranges);
-      Editor myEditor = getEditor();
-      if (myEditor == null) return;
-      for (TextRange wordRange : ranges) {
-        String word = editor.getDocument().getText(wordRange);
-        if (!word.equals(getEnteredName())) continue;
-        final SelectionModel selectionModel = editor.getSelectionModel();
-        myEditor.getSelectionModel().removeSelection();
-        final int wordRangeStartOffset = wordRange.getStartOffset();
-        int myOffset = offset - wordRangeStartOffset;
-        myEditor.getCaretModel().moveToOffset(myOffset);
-        TextRange selected = new TextRange(Math.max(0, selectionModel.getSelectionStart() - wordRangeStartOffset),
-                                           Math.max(0, selectionModel.getSelectionEnd() - wordRangeStartOffset));
-        selected = selected.intersection(new TextRange(0, myEditor.getDocument().getTextLength()));
-        if (selectionModel.hasSelection() && selected != null && !selected.isEmpty()) {
-          myEditor.getSelectionModel().setSelection(selected.getStartOffset(), selected.getEndOffset());
+      ReadAction.run(() -> {
+        final int offset = editor.getCaretModel().getOffset();
+        List<TextRange> ranges = new ArrayList<>();
+        SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editor.getDocument().getCharsSequence(), offset, ranges);
+        Editor myEditor = getEditor();
+        if (myEditor == null) return;
+        for (TextRange wordRange : ranges) {
+          String word = editor.getDocument().getText(wordRange);
+          if (!word.equals(getEnteredName())) continue;
+          final SelectionModel selectionModel = editor.getSelectionModel();
+          myEditor.getSelectionModel().removeSelection();
+          final int wordRangeStartOffset = wordRange.getStartOffset();
+          int myOffset = offset - wordRangeStartOffset;
+          myEditor.getCaretModel().moveToOffset(myOffset);
+          TextRange selected = new TextRange(Math.max(0, selectionModel.getSelectionStart() - wordRangeStartOffset),
+                                             Math.max(0, selectionModel.getSelectionEnd() - wordRangeStartOffset));
+          selected = selected.intersection(new TextRange(0, myEditor.getDocument().getTextLength()));
+          if (selectionModel.hasSelection() && selected != null && !selected.isEmpty()) {
+            myEditor.getSelectionModel().setSelection(selected.getStartOffset(), selected.getEndOffset());
+          }
+          else if (shouldSelectAll()) {
+            myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
+          }
+          break;
         }
-        else if (shouldSelectAll()) {
-          myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
-        }
-        break;
-      }
+      });
     };
     SwingUtilities.invokeLater(selectionRunnable);
   }

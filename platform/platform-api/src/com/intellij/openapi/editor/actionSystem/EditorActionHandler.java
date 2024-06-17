@@ -4,12 +4,14 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +81,7 @@ public abstract class EditorActionHandler {
   }
 
   private void doIfEnabled(@NotNull Caret hostCaret, @Nullable DataContext context, @NotNull CaretTask task) {
-    DataContext caretContext = context == null ? null : CaretSpecificDataContext.create(context, hostCaret);
+    DataContext caretContext = context == null ? null : caretDataContext(context, hostCaret);
     Editor editor = hostCaret.getEditor();
     if (myWorksInInjected && caretContext != null) {
       DataContext injectedCaretContext = AnActionEvent.getInjectedDataContext(caretContext);
@@ -184,7 +186,7 @@ public abstract class EditorActionHandler {
    * @param editor      the editor in which the action is invoked.
    * @param dataContext the data context for the action.
    */
-  public final void execute(@NotNull Editor editor, final @Nullable Caret contextCaret, final DataContext dataContext) {
+  public final void execute(@NotNull Editor editor, @Nullable Caret contextCaret, @Nullable DataContext dataContext) {
     if (LOG.isDebugEnabled()) {
       // The line will be logged multiple times for the same action. The last event in the chain is, typically, the 'actual event handler'.
       LOG.debug("Invoked handler " + this + " in " + editor + " for the caret " + contextCaret,
@@ -197,21 +199,27 @@ public abstract class EditorActionHandler {
     }
     if (contextCaret == null && runForAllCarets()) {
       hostEditor.getCaretModel().runForEachCaret(caret -> {
-        if (myWorksInInjected) ensureInjectionUpToDate(caret);
-        doIfEnabled(caret, dataContext,
-                    (caret1, dc) -> doExecute(caret1.getEditor(), caret1, dc));
+        DataContext refreshed = commitAndRefreshDataContextIfNeeded(dataContext, caret);
+        doIfEnabled(caret, refreshed,
+                    (c, dc) -> doExecute(c.getEditor(), c, dc));
       });
     }
-    else {
-      if (contextCaret == null) {
-        if (myWorksInInjected) ensureInjectionUpToDate(hostEditor.getCaretModel().getCurrentCaret());
-        doIfEnabled(hostEditor.getCaretModel().getCurrentCaret(), dataContext,
-                    (caret, dc) -> doExecute(caret.getEditor(), null, dc));
-      }
-      else {
-        doExecute(editor, contextCaret, dataContext);
-      }
+    else if (contextCaret == null) {
+      Caret caret = hostEditor.getCaretModel().getCurrentCaret();
+      DataContext refreshed = commitAndRefreshDataContextIfNeeded(dataContext, caret);
+      doIfEnabled(caret, refreshed,
+                  (c, dc) -> doExecute(c.getEditor(), null, dc));
     }
+    else {
+      doExecute(editor, contextCaret, dataContext);
+    }
+  }
+
+  private @Nullable DataContext commitAndRefreshDataContextIfNeeded(@Nullable DataContext dataContext, Caret caret) {
+    // injected computed data must be refreshed after commit,
+    // forced "caret" does that by adding a new snapshot layer
+    return myWorksInInjected && ensureInjectionUpToDate(caret) && dataContext != null ?
+           freshCaretDataContext(dataContext, caret) : dataContext;
   }
 
   void setWorksInInjected(boolean worksInInjected) {
@@ -241,5 +249,19 @@ public abstract class EditorActionHandler {
     protected abstract void doExecute(@NotNull Editor editor,
                                       @SuppressWarnings("NullableProblems") @NotNull Caret caret,
                                       DataContext dataContext);
+  }
+
+  public static @NotNull DataContext caretDataContext(@NotNull DataContext context, @NotNull Caret caret) {
+    if (CommonDataKeys.CARET.getData(context) == caret) return context;
+    return freshCaretDataContext(context, caret);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull DataContext freshCaretDataContext(@NotNull DataContext context, @NotNull Caret caret) {
+    // reset and later recompute keys like injected caret
+    return CustomizedDataContext.withProvider(context, dataId -> {
+      if (CommonDataKeys.CARET.is(dataId)) return caret;
+      return null;
+    });
   }
 }

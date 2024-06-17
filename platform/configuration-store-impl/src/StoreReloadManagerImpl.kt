@@ -12,7 +12,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.options.Scheme
@@ -253,6 +253,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
   }
 }
 
+@ApiStatus.Internal
 fun reloadAppStore(changes: Set<StateStorage>): Boolean {
   val status = reloadStore(changes, ApplicationManager.getApplication().stateStore as ComponentStoreImpl)
   if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
@@ -298,6 +299,7 @@ internal fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentSto
 }
 
 // used in settings repository plugin
+@ApiStatus.Internal
 fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<String>, changedStorages: Set<StateStorage>?, isApp: Boolean): Boolean {
   val firstMessage = if (store is IProjectStore) {
     ConfigurationStoreBundle.message("configuration.project.files.changed.message.start", store.projectName)

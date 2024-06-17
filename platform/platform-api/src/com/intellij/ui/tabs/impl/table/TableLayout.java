@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ide.ui.UISettings;
@@ -17,10 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @deprecated use inheritors of {@link com.intellij.ui.tabs.impl.multiRow.MultiRowLayout} instead
@@ -57,7 +55,7 @@ public class TableLayout extends TabLayout {
     boolean scrollable = UISettings.getInstance().getHideTabsIfNeeded() && singleRow;
     int titleWidth = myTabs.getTitleWrapper().getPreferredSize().width;
 
-    data.titleRect.setBounds(data.toFitRec.x, data.toFitRec.y, titleWidth, myTabs.getHeaderFitSize().height);
+    data.titleRect.setBounds(data.toFitRec.x, data.toFitRec.y, titleWidth, Objects.requireNonNull(myTabs.getHeaderFitSize()).height);
     data.entryPointRect.setBounds(data.toFitRec.x + data.toFitRec.width - myTabs.getEntryPointPreferredSize().width - myTabs.getActionsInsets().right,
                                   data.toFitRec.y,
                                   myTabs.getEntryPointPreferredSize().width,
@@ -131,16 +129,16 @@ public class TableLayout extends TabLayout {
     eachY = -1;
     TableRow eachTableRow = new TableRow(data);
 
-    for (TabInfo eachInfo : data.myVisibleInfos) {
-      final TabLabel eachLabel = myTabs.getTabLabel(eachInfo);
-      if (eachY == -1 || eachY != eachLabel.getY()) {
+    for (TabInfo info : data.myVisibleInfos) {
+      final TabLabel tabLabel = myTabs.getTabLabel(info);
+      if (eachY == -1 || eachY != Objects.requireNonNull(tabLabel).getY()) {
         if (eachY != -1) {
           eachTableRow = new TableRow(data);
         }
-        eachY = eachLabel.getY();
+        eachY = tabLabel.getY();
         data.table.add(eachTableRow);
       }
-      eachTableRow.add(eachInfo, eachLabel.getWidth());
+      eachTableRow.add(info, tabLabel.getWidth());
     }
 
     doScrollToSelectedTab(data);
@@ -211,14 +209,14 @@ public class TableLayout extends TabLayout {
     int lengthEstimation = 0;
 
     for (TabInfo tabInfo : list) {
-      lengthEstimation += Math.max(getMinTabWidth(), myTabs.getInfoToLabel().get(tabInfo).getPreferredSize().width);
+      lengthEstimation += Math.max(getMinTabWidth(), myTabs.getTabLabel(tabInfo).getPreferredSize().width);
     }
 
     final int extraWidth = toFitLength - lengthEstimation;
 
     for (Iterator<TabInfo> iterator = list.iterator(); iterator.hasNext(); ) {
       TabInfo tabInfo = iterator.next();
-      final TabLabel label = myTabs.getInfoToLabel().get(tabInfo);
+      final TabLabel label = myTabs.getTabLabel(tabInfo);
 
       int length;
       int lengthIncrement = label.getPreferredSize().width;
@@ -258,7 +256,7 @@ public class TableLayout extends TabLayout {
     rect.y += myTabs.getBorderThickness();
     myTabs.getMoreToolbar().getComponent().setBounds(rect);
 
-    ActionToolbar entryPointToolbar = myTabs.getEntryPointToolbar();
+    ActionToolbar entryPointToolbar = myTabs.entryPointToolbar;
     if (entryPointToolbar != null) {
       entryPointToolbar.getComponent().setBounds(data.entryPointRect);
     }
@@ -309,7 +307,7 @@ public class TableLayout extends TabLayout {
 
   @Override
   public boolean isTabHidden(@NotNull TabInfo info) {
-    TabLabel label = myTabs.getInfoToLabel().get(info);
+    TabLabel label = myTabs.getTabLabel(info);
     Rectangle bounds = label.getBounds();
     int deadzone = JBUI.scale(DEADZONE_FOR_DECLARE_TAB_HIDDEN);
     return bounds.x < -deadzone || bounds.width < label.getPreferredSize().width - deadzone;
@@ -323,7 +321,7 @@ public class TableLayout extends TabLayout {
 
     Rectangle area = new Rectangle(lastTableLayout.toFitRec.width, tabLabel.getBounds().height);
     for (int i = 0; i < lastTableLayout.myVisibleInfos.size(); i++) {
-      area = area.union(myTabs.getInfoToLabel().get(lastTableLayout.myVisibleInfos.get(i)).getBounds());
+      area = area.union(myTabs.getTabLabel(lastTableLayout.myVisibleInfos.get(i)).getBounds());
     }
     return Math.abs(deltaY) > area.height * getDragOutMultiplier();
   }
@@ -346,10 +344,10 @@ public class TableLayout extends TabLayout {
       for (int i = 0; i < lastTableLayout.myVisibleInfos.size() - 1; i++) {
         TabInfo firstInfo = lastTableLayout.myVisibleInfos.get(i);
         TabInfo secondInfo = lastTableLayout.myVisibleInfos.get(i + 1);
-        TabLabel first = myTabs.getInfoToLabel().get(firstInfo);
-        TabLabel second = myTabs.getInfoToLabel().get(secondInfo);
+        TabLabel first = myTabs.getTabLabel(firstInfo);
+        TabLabel second = myTabs.getTabLabel(secondInfo);
 
-        Rectangle firstBounds = first.getBounds();
+        Rectangle firstBounds = Objects.requireNonNull(first).getBounds();
         Rectangle secondBounds = second.getBounds();
 
         final boolean between = firstBounds.getMaxX() < point.x

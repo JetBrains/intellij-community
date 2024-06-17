@@ -10,11 +10,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FastUtilHashingStrategies;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.IdeUtilIoBundle;
@@ -22,11 +22,12 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
@@ -57,7 +58,7 @@ import java.util.function.Function;
  * the same value should be used on another side of the pipe. Chances are you don't have to mess with the setting -
  * because a platform-dependent guessing behind {@link EncodingManager#getDefaultConsoleEncoding()} is used by default and a child process
  * may happen to use a similar heuristic.
- * If the above automagic fails or more control is needed, the charset may be set explicitly. Again, do not forget the other side -
+ * If the above automagic fails or more control is needed, the charset may be set explicitly. Again, remember the other side -
  * call {@code addParameter("-Dfile.encoding=...")} for Java-based tools, or use {@code withEnvironment("HGENCODING", "...")}
  * for Mercurial, etc.
  *
@@ -66,7 +67,6 @@ import java.util.function.Function;
  */
 public class GeneralCommandLine implements UserDataHolder {
   private static final Logger LOG = Logger.getInstance(GeneralCommandLine.class);
-  private @Nullable Function<ProcessBuilder, Process> myProcessCreator;
 
   /**
    * Determines the scope of a parent environment passed to a child process.
@@ -81,14 +81,15 @@ public class GeneralCommandLine implements UserDataHolder {
   public enum ParentEnvironmentType {NONE, SYSTEM, CONSOLE}
 
   private String myExePath;
-  private File myWorkDirectory;
+  private @Nullable Path myWorkingDirectory;
   private final Map<String, String> myEnvParams = new MyMap();
   private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = defaultCharset();
   private boolean myRedirectErrorStream;
-  private File myInputFile;
+  private @Nullable File myInputFile;
   private Map<Object, Object> myUserData;
+  private @Nullable Function<ProcessBuilder, Process> myProcessCreator;
 
   public GeneralCommandLine() {
     this(Collections.emptyList());
@@ -110,7 +111,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   protected GeneralCommandLine(@NotNull GeneralCommandLine original) {
     myExePath = original.myExePath;
-    myWorkDirectory = original.myWorkDirectory;
+    myWorkingDirectory = original.myWorkingDirectory;
     myEnvParams.putAll(original.myEnvParams);
     myParentEnvironmentType = original.myParentEnvironmentType;
     original.myProgramParams.copyTo(myProgramParams);
@@ -134,33 +135,53 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
+  /** Please use {@link #withExePath}. */
+  @ApiStatus.Obsolete(since = "2024.2")
   public void setExePath(@NotNull String exePath) {
     withExePath(exePath);
   }
 
+  /** Please use {@link #getWorkingDirectory()}. */
+  @ApiStatus.Obsolete(since = "2024.2")
   public File getWorkDirectory() {
-    return myWorkDirectory;
+    return myWorkingDirectory != null ? myWorkingDirectory.toFile() : null;
   }
 
+  /** Please use {@link #withWorkingDirectory(Path)}. */
+  @ApiStatus.Obsolete(since = "2024.2")
   public @NotNull GeneralCommandLine withWorkDirectory(@Nullable String path) {
-    return withWorkDirectory(path != null ? new File(path) : null);
+    return withWorkingDirectory(path != null ? Path.of(path) : null);
   }
 
+  /** Please use {@link #withWorkingDirectory(Path)}. */
+  @ApiStatus.Obsolete(since = "2024.2")
   public @NotNull GeneralCommandLine withWorkDirectory(@Nullable File workDirectory) {
-    myWorkDirectory = workDirectory;
-    return this;
+    return withWorkingDirectory(workDirectory != null ? workDirectory.toPath() : null);
   }
 
+  /** Please use {@link #withWorkingDirectory(Path)}. */
+  @ApiStatus.Obsolete(since = "2024.2")
   public void setWorkDirectory(@Nullable String path) {
     withWorkDirectory(path);
   }
 
+  /** Please use {@link #withWorkingDirectory(Path)}. */
+  @ApiStatus.Obsolete(since = "2024.2")
   public void setWorkDirectory(@Nullable File workDirectory) {
     withWorkDirectory(workDirectory);
   }
 
+  public @Nullable Path getWorkingDirectory() {
+    return myWorkingDirectory;
+  }
+
+  public @NotNull GeneralCommandLine withWorkingDirectory(@Nullable Path workDirectory) {
+    myWorkingDirectory = workDirectory;
+    return this;
+  }
+
   /**
-   * Note: the map returned is forgiving to passing null values into putAll().
+   * Note: the returned map is forgiving to passing {@code null} values into {@link Map#putAll}.
    */
   public @NotNull Map<String, String> getEnvironment() {
     return myEnvParams;
@@ -254,6 +275,8 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
+  /** Please use {@link #withCharset}. */
+  @ApiStatus.Obsolete(since = "2024.2")
   public void setCharset(@NotNull Charset charset) {
     withCharset(charset);
   }
@@ -267,11 +290,13 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
+  /** Please use {@link #withRedirectErrorStream}. */
+  @ApiStatus.Obsolete(since = "2024.2")
   public void setRedirectErrorStream(boolean redirectErrorStream) {
     withRedirectErrorStream(redirectErrorStream);
   }
 
-  public File getInputFile() {
+  public @Nullable File getInputFile() {
     return myInputFile;
   }
 
@@ -301,11 +326,9 @@ public class GeneralCommandLine implements UserDataHolder {
     return ParametersListUtil.join(getCommandLineList(exeName));
   }
 
-  public @NotNull List<String> getCommandLineList(@Nullable String exeName) {
-    List<@NlsSafe String> commands = new ArrayList<>();
-    String exe = StringUtil.notNullize(exeName, StringUtil.notNullize(myExePath, "<null>"));
-    commands.add(exe);
-
+  public @NotNull List<@NlsSafe String> getCommandLineList(@Nullable String exeName) {
+    var commands = new ArrayList<@NlsSafe String>();
+    commands.add(exeName != null ? exeName : myExePath != null ? myExePath : "<null>");
     commands.addAll(myProgramParams.getList());
     return commands;
   }
@@ -328,39 +351,32 @@ public class GeneralCommandLine implements UserDataHolder {
    * @return command as a newline-separated list.
    */
   public @NotNull String getPreparedCommandLine(@NotNull Platform platform) {
-    String exePath = myExePath != null ? myExePath : "";
-    return StringUtil.join(prepareCommandLine(exePath, myProgramParams.getList(), platform), "\n");
+    return String.join("\n", prepareCommandLine(myExePath != null ? myExePath : "", myProgramParams.getList(), platform));
   }
 
   protected @NotNull List<String> prepareCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
     return CommandLineUtil.toCommandLine(command, parameters, platform);
   }
 
+  @ApiStatus.NonExtendable
   public @NotNull Process createProcess() throws ExecutionException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing [" + getCommandLineString() + "]");
-      if (myWorkDirectory != null) {
-        LOG.debug("  working dir: " + myWorkDirectory.getAbsolutePath());
+      if (myWorkingDirectory != null) {
+        LOG.debug("  working dir: " + myWorkingDirectory.toAbsolutePath());
       }
       LOG.debug("  environment: " + myEnvParams + " (+" + myParentEnvironmentType + ")");
       LOG.debug("  charset: " + myCharset);
     }
 
-    List<String> commands;
-    if (myProcessCreator == null) {
-      commands = validateAndPrepareCommandLineForLocalRun();
-    }
-    else {
-      commands = new ArrayList<>(myProgramParams.getList());
-      commands.add(0, myExePath);
-    }
     try {
+      var commands = myProcessCreator == null ? validateAndPrepareCommandLineForLocalRun() : ContainerUtil.concat(List.of(myExePath), myProgramParams.getList());
       return startProcess(commands);
     }
     catch (IOException e) {
       if (SystemInfo.isWindows) {
-        String mode = System.getProperty("jdk.lang.Process.allowAmbiguousCommands");
-        @SuppressWarnings("removal") SecurityManager sm = System.getSecurityManager();
+        var mode = System.getProperty("jdk.lang.Process.allowAmbiguousCommands");
+        @SuppressWarnings("removal") var sm = System.getSecurityManager();
         if ("false".equalsIgnoreCase(mode) || sm != null) {
           e.addSuppressed(new IllegalStateException("Suspicious state: allowAmbiguousCommands=" + mode + " SM=" + (sm != null ? sm.getClass() : null)));
         }
@@ -369,13 +385,8 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
-  @ApiStatus.Internal
-  protected final @Nullable Function<ProcessBuilder, Process> getProcessCreator() {
-    return myProcessCreator;
-  }
-
   /**
-   * Allows to specify a handler for creating processes different from {@link ProcessBuilder#start()}.
+   * Allows specifying a handler for creating processes different from {@link ProcessBuilder#start()}.
    * <p>
    * Quoting, which is required for running processes locally, may be harmful for remote operating systems. F.i., arguments with spaces
    * must be quoted before passing them into {@code CreateProcess} on Windows, and must not be quoted for {@code exec} on a Unix-like OS.
@@ -386,40 +397,28 @@ public class GeneralCommandLine implements UserDataHolder {
     myProcessCreator = processCreator;
   }
 
-  @TestOnly
   @ApiStatus.Internal
   public final boolean isProcessCreatorSet() {
     return myProcessCreator != null;
   }
 
   public @NotNull ProcessBuilder toProcessBuilder() throws ExecutionException {
-    List<String> escapedCommands = validateAndPrepareCommandLineForLocalRun();
-    return toProcessBuilderInternal(escapedCommands);
+    return toProcessBuilder(validateAndPrepareCommandLineForLocalRun());
   }
 
   private List<String> validateAndPrepareCommandLineForLocalRun() throws ExecutionException {
-    try {
-      if (myWorkDirectory != null) {
-        if (!myWorkDirectory.exists()) {
-          throw new WorkingDirectoryNotFoundException(myWorkDirectory.toPath());
-        }
-        if (!myWorkDirectory.isDirectory()) {
-          throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
-        }
-      }
-
-      if (StringUtil.isEmptyOrSpaces(myExePath)) {
-        throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.executable.not.specified"));
-      }
-    }
-    catch (ExecutionException e) {
-      LOG.debug(e);
-      throw e;
+    if (myWorkingDirectory != null && !Files.isDirectory(myWorkingDirectory)) {
+      LOG.debug("Invalid working directory: " + myWorkingDirectory);
+      throw new WorkingDirectoryNotFoundException(myWorkingDirectory);
     }
 
-    for (Map.Entry<String, String> entry : myEnvParams.entrySet()) {
-      String name = entry.getKey();
-      String value = entry.getValue();
+    if (myExePath == null || myExePath.isBlank()) {
+      LOG.debug("Invalid executable: " + myExePath);
+      throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.executable.not.specified"));
+    }
+
+    for (var entry : myEnvParams.entrySet()) {
+      String name = entry.getKey(), value = entry.getValue();
       if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.name", name));
       if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
     }
@@ -447,7 +446,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   /**
    * @implNote for subclasses:
-   * <p>On Windows the escapedCommands argument must never be modified or augmented in any way.
+   * <p>On Windows, the parameters in the {@code builder} argument must never be modified or augmented in any way.
    * Windows command line handling is extremely fragile and vague, and the exact escaping of a particular argument may vary
    * depending on values of the preceding arguments.
    * <pre>
@@ -457,42 +456,30 @@ public class GeneralCommandLine implements UserDataHolder {
    * <pre>
    *   [foo] ["] [^] -> [foo] [\"] ["^"]
    * </pre>
-   * Notice how the last parameter escaping changes after prepending another argument.</p>
+   * Note how the last parameter escaping changes after prepending another argument.</p>
    * <p>If you need to alter the command line passed in, override the {@link #prepareCommandLine(String, List, Platform)} method instead.</p>
    */
-  protected @NotNull Process startProcess(@NotNull List<String> escapedCommands) throws IOException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Building process with commands: " + escapedCommands);
-    }
-
-    return createProcess(toProcessBuilderInternal(escapedCommands));
+  protected @NotNull Process createProcess(@NotNull ProcessBuilder processBuilder) throws IOException {
+    return myProcessCreator != null ? myProcessCreator.apply(processBuilder) : processBuilder.start();
   }
 
-  // This is caused by the fact there are external usages overriding startProcess(List<String>).
-  // Ideally, it should have been startProcess(ProcessBuilder), and the design would be more straightforward.
-  private ProcessBuilder toProcessBuilderInternal(List<String> escapedCommands) {
-    ProcessBuilder builder = new ProcessBuilder(escapedCommands);
+  /** @deprecated please override {@link #createProcess(ProcessBuilder)} instead. */
+  @Deprecated(forRemoval = true)
+  protected @NotNull Process startProcess(@NotNull List<String> escapedCommands) throws IOException {
+    return createProcess(toProcessBuilder(escapedCommands));
+  }
+
+  private ProcessBuilder toProcessBuilder(List<String> escapedCommands) {
+    var builder = new ProcessBuilder(escapedCommands);
     setupEnvironment(builder.environment());
-    builder.directory(myWorkDirectory);
+    if (myWorkingDirectory != null) {
+      builder.directory(myWorkingDirectory.toFile());
+    }
     builder.redirectErrorStream(myRedirectErrorStream);
     if (myInputFile != null) {
       builder.redirectInput(ProcessBuilder.Redirect.from(myInputFile));
     }
-    return buildProcess(builder);
-  }
-
-  /**
-   * Executed with pre-filled ProcessBuilder as the param and
-   * gives the last chance to configure starting process
-   * parameters before a process is started
-   * @param builder filled ProcessBuilder
-   */
-  protected @NotNull ProcessBuilder buildProcess(@NotNull ProcessBuilder builder) {
     return builder;
-  }
-
-  protected @NotNull Process createProcess(ProcessBuilder processBuilder) throws IOException {
-    return myProcessCreator != null ? myProcessCreator.apply(processBuilder) : processBuilder.start();
   }
 
   protected void setupEnvironment(@NotNull Map<String, String> environment) {

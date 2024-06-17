@@ -134,7 +134,7 @@ public class UnimplementInterfaceAction extends PsiUpdateModCommandAction<PsiEle
     for (PsiMethod psiMethod : psiMethods) {
       if (superMethods.contains(psiMethod)) continue;
       final PsiMethod impl = implementations.get(psiMethod);
-      if (impl != null) impl.delete();
+      if (impl != null && !(impl instanceof SyntheticElement)) impl.delete();
     }
   }
 

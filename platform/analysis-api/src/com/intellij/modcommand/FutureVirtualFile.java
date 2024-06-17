@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Virtual file that doesn't exist yet
+ * Virtual file that doesn't exist yet.
  */
 @ApiStatus.Experimental
 public final class FutureVirtualFile extends LightVirtualFile {

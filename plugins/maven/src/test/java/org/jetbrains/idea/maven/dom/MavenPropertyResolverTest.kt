@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.junit.Assume
 import org.junit.Test
 import java.io.File
 
@@ -155,7 +154,6 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotGoIntoInfiniteRecursion() = runBlocking(Dispatchers.EDT) {
-    Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

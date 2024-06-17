@@ -93,7 +93,7 @@ public final class GitConflictsToolWindowManager {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         myProject.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
-      }, ModalityState.nonModal());
+      }, ModalityState.nonModal(), myProject.getDisposed());
     }
   }
 }

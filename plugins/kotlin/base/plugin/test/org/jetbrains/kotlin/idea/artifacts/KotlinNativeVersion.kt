@@ -24,6 +24,14 @@ object KotlinNativeVersion {
      */
     val resolvedKotlinNativeVersion: String by lazy { getKotlinNativeVersionFromKotlinGradlePluginPropertiesFile() }
 
+    /**
+     * Returns a KGP version that corresponds to the [resolvedKotlinNativeVersion]
+     */
+    val resolvedKotlinGradlePluginVersion: String by lazy {
+        resolvedKotlinNativeVersion // force resolution to make sure the K/N version for this KGP version actually exists
+        kotlinGradlePluginVersion
+    }
+
     private fun getKotlinNativeVersionFromKotlinGradlePluginPropertiesFile(): String {
         val outputPath = Paths.get(PathManager.getCommunityHomePath()).resolve("out")
             .resolve("kotlin-gradle-plugin")

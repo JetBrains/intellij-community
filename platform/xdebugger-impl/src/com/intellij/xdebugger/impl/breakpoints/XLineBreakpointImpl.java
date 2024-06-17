@@ -129,6 +129,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         RangeHighlighter highlighter = (RangeHighlighter)myHighlighter;
         if (highlighter != null &&
             (!highlighter.isValid()
+             || !highlighter.getTextRange().equals(range) //breakpoint range marker is out-of-sync with actual breakpoint text range
              || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument)
              || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
              // it seems that this check is not needed - we always update line number from the highlighter
@@ -339,14 +340,10 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     return false;
   }
 
-  int getOffset() {
-    return myHighlighter != null && myHighlighter.isValid() ? myHighlighter.getStartOffset() : -1;
-  }
-
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
       mySourcePosition = null; // reset the source position even if the line number has not changed, as the offset may be cached inside
-      setLine(myHighlighter.getDocument().getLineNumber(getOffset()), false);
+      setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()), false);
     }
   }
 

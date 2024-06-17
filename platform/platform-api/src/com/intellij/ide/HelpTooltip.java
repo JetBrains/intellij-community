@@ -312,6 +312,7 @@ public class HelpTooltip {
   public HelpTooltip setBrowserLink(@NlsContexts.LinkLabel String linkLabel, URL url) {
     link = new BrowserLink(linkLabel, url.toExternalForm());
     link.setHorizontalTextPosition(SwingConstants.LEFT);
+    linkOriginalFontScaler = new JBFontScaler(link.getFont());
     return this;
   }
 

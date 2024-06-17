@@ -112,14 +112,6 @@ class IntentionPreviewComputable(private val project: Project,
       psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
       editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
     }
-    if (psiFileCopy.viewProvider.isEventSystemEnabled) {
-      throw IllegalStateException("""Event system in non-physical copy: 
-        |FileType: ${psiFileCopy.fileType}
-        |Language: ${psiFileCopy.language}
-        |FileClass: ${psiFileCopy::class.java}
-        |ActionName: ${action.familyName}
-        |ActionClass: ${ReportingClassSubstitutor.getClassToReport(action)}""".trimMargin())
-    }
     if (fixOffset >= 0) {
       editorCopy.caretModel.moveToOffset(fixOffset)
     }
@@ -138,8 +130,10 @@ class IntentionPreviewComputable(private val project: Project,
     }
     Reference.reachabilityFence(settings)
     val manager = PsiDocumentManager.getInstance(project)
-    manager.commitDocument(editorCopy.document)
-    manager.doPostponedOperationsAndUnblockDocument(editorCopy.document)
+    if (!psiFileCopy.isPhysical) {
+      manager.commitDocument(editorCopy.document)
+      manager.doPostponedOperationsAndUnblockDocument(editorCopy.document)
+    }
     return convertResult(info, psiFileCopy, fileToCopy, anotherFile)
   }
   

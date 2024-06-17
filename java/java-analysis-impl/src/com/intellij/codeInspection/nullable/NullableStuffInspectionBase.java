@@ -714,9 +714,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                               @Nullable PsiModifierListOwner listOwner,
                                               @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey,
                                               @NotNull LocalQuickFix @NotNull ... additionalFixes) {
-    RemoveAnnotationQuickFix fix = new RemoveAnnotationQuickFix(annotation, listOwner, true);
+    RemoveAnnotationQuickFix removeFix = new RemoveAnnotationQuickFix(annotation, listOwner, true);
+    MoveAnnotationToBoundFix moveToBoundFix = MoveAnnotationToBoundFix.create(annotation);
+    LocalQuickFix[] fixes = moveToBoundFix == null ? new LocalQuickFix[]{removeFix} : new LocalQuickFix[]{moveToBoundFix, removeFix};
     reportProblem(holder, !annotation.isPhysical() && listOwner != null ? listOwner.getNavigationElement() : annotation,
-                  ArrayUtil.append(additionalFixes, fix), messageKey);
+                  ArrayUtil.mergeArrays(additionalFixes, fixes), messageKey);
   }
 
   @Override

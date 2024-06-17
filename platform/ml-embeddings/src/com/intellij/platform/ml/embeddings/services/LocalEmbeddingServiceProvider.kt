@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -124,8 +125,12 @@ class LocalEmbeddingServiceProvider(cs: CoroutineScope) {
     fun getInstance(): LocalEmbeddingServiceProvider = service()
 
     val testDataPath: Path by lazy {
-      File(PathManager.getCommunityHomePath()).resolve("platform/ml-embeddings/tests/testResources").toPath()
+      testDataPathOverride ?: File(PathManager.getCommunityHomePath()).resolve("platform/ml-embeddings/tests/testResources").toPath()
     }
+
+    @get:ApiStatus.Internal
+    @set:ApiStatus.Internal
+    var testDataPathOverride: Path? = null
 
     private val OFFLOAD_TIMEOUT = 10.seconds
   }

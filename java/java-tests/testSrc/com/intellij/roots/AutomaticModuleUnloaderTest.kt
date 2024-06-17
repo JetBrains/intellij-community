@@ -4,7 +4,7 @@ package com.intellij.roots
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.AutomaticModuleUnloader
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager

@@ -28,7 +28,8 @@ fun ObjClass<*>.implWsDataClassCode(): String {
   val hasSoftLinks = hasSoftLinks()
   val softLinkable = if (hasSoftLinks) SoftLinkable else null
   return lines {
-    section("$generatedCodeVisibilityModifier class $javaDataName : ${sups(entityDataBaseClass, softLinkable?.encodedString)}") label@{
+    line("@OptIn($WorkspaceEntityInternalApi::class)")
+    section("internal class $javaDataName : ${sups(entityDataBaseClass, softLinkable?.encodedString)}") label@{
 
       listNl(allFields.noRefs().noEntitySource().noSymbolicId()) { implWsDataFieldCode }
 

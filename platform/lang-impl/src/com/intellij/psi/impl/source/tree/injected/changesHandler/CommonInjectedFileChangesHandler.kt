@@ -109,12 +109,14 @@ open class CommonInjectedFileChangesHandler(
       if (host == null) continue
       val hostRange = host.textRange
       val hostOffset = hostRange.startOffset
-      var currentHost = host
+      var currentHost: PsiLanguageInjectionHost = host
       val hostMarkers = map[host].orEmpty().reversed()
       for ((hostMarker, fragmentMarker, _) in hostMarkers) {
         val localInsideHost = ProperTextRange(hostMarker.startOffset - hostOffset, hostMarker.endOffset - hostOffset)
-        val localInsideFile = ProperTextRange(fragmentMarker.startOffset, fragmentMarker.endOffset)
-        currentHost!! // should never happen
+        val localInsideFile = if (fragmentMarker.isValid) 
+          ProperTextRange(fragmentMarker.startOffset, fragmentMarker.endOffset)
+        else
+          ProperTextRange(0, 0)
 
         // fixme we could optimize here and check if host text has been changed and update only really changed fragments, not all of them
         if (localInsideFile.endOffset <= text.length) {

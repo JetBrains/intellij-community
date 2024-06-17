@@ -604,7 +604,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
       @Override
       public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
-        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, getInfoToLabel().get(info));
+        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, getTabLabel(info));
         info.setHidden(true);
         DockManagerImpl manager = getDockManager();
         updateDockContainers(manager);

@@ -20,11 +20,18 @@ class EditorCellInput(
   private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
 
   val interval: NotebookCellLines.Interval
-    get() = cell.intervalPointer.get()
-            ?: error("Invalid interval")
+    get() = cell.intervalPointer.get() ?: error("Invalid interval")
 
   private var foldRegion: FoldRegion? = null
-  private val runCellButton = EditorCellRunButton(editor)
+
+  private val runCellButton: EditorCellRunButton? =
+    if (editor.notebookAppearance.shouldShowRunButtonInGutter()) EditorCellRunButton(editor)
+    else null
+
+  private val delimiterPanelSize: Int = when (interval.ordinal) {
+    0 -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
+    else -> editor.notebookAppearance.cellBorderHeight / 2
+  }
 
   val bounds: Rectangle
     get() {
@@ -66,7 +73,7 @@ class EditorCellInput(
   }.also {
     cellEventListeners.addListener(object : EditorCellViewComponentListener {
       override fun componentBoundaryChanged(location: Point, size: Dimension) {
-        it.updatePosition(location.y, size.height)
+        it.updatePosition(location.y + delimiterPanelSize, size.height - delimiterPanelSize)
       }
     })
   }
@@ -90,6 +97,7 @@ class EditorCellInput(
     val foldingModel = editor.foldingModel
     val currentFoldingRegion = foldRegion
     if (currentFoldingRegion == null) {
+      if (cell.type == NotebookCellLines.CellType.MARKDOWN) cell.view?.disableMarkdownRenderingIfEnabled()
       foldingModel.runBatchFoldingOperation {
         val text = editor.document.getText(TextRange(startOffset, endOffset))
         val firstNotEmptyString = text.lines().firstOrNull { it.trim().isNotEmpty() }
@@ -102,6 +110,7 @@ class EditorCellInput(
         foldingModel.removeFoldRegion(currentFoldingRegion)
         foldRegion = null
       }
+      if (cell.type == NotebookCellLines.CellType.MARKDOWN) cell.view?.enableMarkdownRenderingIfNeeded()
     }
   }
 
@@ -109,7 +118,7 @@ class EditorCellInput(
 
   fun dispose() {
     folding.dispose()
-    runCellButton.dispose()
+    runCellButton?.dispose()
     _component.dispose()
   }
 
@@ -145,11 +154,13 @@ class EditorCellInput(
   }
 
   fun showRunButton() {
-    runCellButton.showRunButton(interval)
+    try {
+      runCellButton?.showRunButton(interval)
+    } catch (e: IllegalStateException) { return }
   }
 
   fun hideRunButton() {
-    runCellButton.hideRunButton()
+    runCellButton?.hideRunButton()
   }
 
   fun addViewComponentListener(listener: EditorCellViewComponentListener) {

@@ -3,10 +3,12 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.vcs.log.VcsLogProviderRequirementsEx;
 import com.intellij.vcs.log.VcsRef;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+@ApiStatus.Internal
 public class RequirementsImpl implements VcsLogProviderRequirementsEx {
 
   private final int myCommitCount;

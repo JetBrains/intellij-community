@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator
+import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType
 import com.intellij.openapi.project.MergingTaskQueue.QueuedTask
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.project.SingleTaskExecutor.AutoclosableProgressive
@@ -242,19 +243,26 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
 
   open fun runSingleTask(task: QueuedTask<T>, activity: StructuredIdeActivity?) {
     LOG.info("Running task: " + task.infoString)
-    if (activity != null) task.registerStageStarted(activity)
+    val stageActivity = if (activity != null) task.registerStageStarted(activity, project) else null
 
     // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
     ProgressManager.getInstance().runProcess(
       {
+        var taskFinishType = IndexingFinishType.TERMINATED
         try {
           task.executeTask()
+          taskFinishType = IndexingFinishType.FINISHED
         }
-        catch (ignored: ProcessCanceledException) {
+        catch (_: ProcessCanceledException) {
           LOG.info("Task canceled (PCE): ${task.infoString}")
         }
         catch (unexpected: Throwable) {
           LOG.error("Failed to execute task " + task.infoString + ". " + unexpected.message, unexpected)
+        }
+        finally {
+          if (activity != null) {
+            task.registerStageFinished(activity, stageActivity, taskFinishType)
+          }
         }
       }, task.indicator)
     LOG.info("Task finished: " + task.infoString)

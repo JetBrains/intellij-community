@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -165,7 +166,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setTestResultsViewer(this);
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
-    StructureTreeModel structureTreeModel = new StructureTreeModel<>(structure, IndexComparator.INSTANCE, myProject);
+    StructureTreeModel structureTreeModel = new StructureTreeModel<>(structure, IndexComparator.getInstance(), myProject);
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(structureTreeModel, true, myProject);
     myTreeView.setModel(asyncTreeModel);
     myTreeBuilder.setModel(structureTreeModel);
@@ -300,8 +301,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                        myTotalTestCount - myStartedTestCount,
                        myIgnoredTestCount);
     UIUtil.invokeLaterIfNeeded(() -> {
-      TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
-      addToHistory(testsRoot, myProperties, this);
+      WriteIntentReadAction.run((Runnable)() -> {
+        TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
+        addToHistory(testsRoot, myProperties, this);
+      });
     });
 
   }

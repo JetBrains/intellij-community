@@ -15,9 +15,9 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.endOffset
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -136,11 +136,11 @@ object CallableReturnTypeUpdaterUtils {
         override fun getResult(element: TypeInfo.Type): String = element.longTypeRepresentation
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     @ApiStatus.Internal
     fun <T> calculateAllTypes(declaration: KtCallableDeclaration, allTypesConsumer: (KtType, Sequence<KtType>, Boolean) -> T?): T? {
         val declarationType = declaration.getReturnKtType()
-        val overriddenTypes = (declaration.getSymbol() as? KtCallableSymbol)?.getDirectlyOverriddenSymbols()
+        val overriddenTypes = (declaration.getSymbol() as? KaCallableSymbol)?.getDirectlyOverriddenSymbols()
             ?.map { it.returnType }
             ?.distinct()
             ?: emptyList()
@@ -166,7 +166,7 @@ object CallableReturnTypeUpdaterUtils {
         return allTypesConsumer(declarationType, allTypes, cannotBeNull)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getTypeInfo(declaration: KtCallableDeclaration): TypeInfo {
         val calculateAllTypes = calculateAllTypes<TypeInfo>(declaration) { declarationType, allTypes, cannotBeNull ->
             if (isUnitTestMode()) {
@@ -188,7 +188,7 @@ object CallableReturnTypeUpdaterUtils {
 
     // The following logic is copied from FE1.0 at
     // org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention.Companion#createTypeExpressionForTemplate
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun selectForUnitTest(
         declaration: KtCallableDeclaration,
         allTypes: List<KtType>
@@ -220,14 +220,14 @@ object CallableReturnTypeUpdaterUtils {
         class Type(val isUnit: Boolean, val isError: Boolean, val longTypeRepresentation: String, val shortTypeRepresentation: String)
 
         companion object {
-            context(KtAnalysisSession)
+            context(KaSession)
             fun createByKtTypes(
                 ktType: KtType,
                 otherTypes: Sequence<KtType> = emptySequence(),
                 useTemplate: Boolean = false
             ): TypeInfo = TypeInfo(createTypeByKtType(ktType), otherTypes.map { createTypeByKtType(it) }.toList(), useTemplate)
 
-            context(KtAnalysisSession)
+            context(KaSession)
             private fun createTypeByKtType(ktType: KtType): Type = Type(
                 isUnit = ktType.isUnit,
                 isError = ktType is KtErrorType,

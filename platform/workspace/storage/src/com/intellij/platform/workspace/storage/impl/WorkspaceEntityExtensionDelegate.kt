@@ -37,8 +37,8 @@ public class WorkspaceEntityExtensionDelegateMutable<T, W: WorkspaceEntity>(
   }
 }
 
-public open class WorkspaceEntityExtensionDelegate<T> {
-  public open operator fun getValue(thisRef: WorkspaceEntity, property: KProperty<*>): T {
+public class WorkspaceEntityExtensionDelegate<T> {
+  public operator fun getValue(thisRef: WorkspaceEntity, property: KProperty<*>): T {
     thisRef as WorkspaceEntityBase
     val propertyMetadata = computeOrGetCachedMetadata(property)
     val workspaceEntitySequence = thisRef.referrers(propertyMetadata.returnTypeClass)

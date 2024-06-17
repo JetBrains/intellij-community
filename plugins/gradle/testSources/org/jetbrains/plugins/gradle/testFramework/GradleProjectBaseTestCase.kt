@@ -1,15 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
+import com.intellij.openapi.observable.operation.core.onFailureCatching
 import com.intellij.testFramework.common.runAll
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.jetbrains.plugins.gradle.testFramework.util.onFailureCatching
 import org.junit.jupiter.api.AfterAll
 
-@GradleProjectTestApplication
 abstract class GradleProjectBaseTestCase {
+
+  private var _gradleVersion: GradleVersion? = null
+  val gradleVersion: GradleVersion get() = requireNotNull(_gradleVersion) {
+    "Gradle version wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+  }
+
+  private var _fixtureBuilder: GradleTestFixtureBuilder? = null
 
   private var _gradleFixture: GradleProjectTestFixture? = null
   val gradleFixture: GradleProjectTestFixture
@@ -17,20 +22,31 @@ abstract class GradleProjectBaseTestCase {
       "Gradle fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
     }
 
-  open fun setUp() = Unit
+  open fun setUp() {
+    val fixtureBuilder = requireNotNull(_fixtureBuilder) {
+      "Gradle fixture builder wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+    }
+    _gradleFixture = getOrCreateGradleTestFixture(gradleVersion, fixtureBuilder)
+  }
 
-  open fun tearDown() = Unit
+  open fun tearDown() {
+    runAll(
+      { _gradleFixture?.let { rollbackOrDestroyGradleTestFixture(it) } },
+      { _gradleFixture = null }
+    )
+  }
 
   open fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
     runAll(
       {
-        _gradleFixture = getOrCreateGradleTestFixture(gradleVersion, fixtureBuilder)
+        _gradleVersion = gradleVersion
+        _fixtureBuilder = fixtureBuilder
         setUp()
         test()
       },
       { tearDown() },
-      { _gradleFixture?.let { rollbackOrDestroyGradleTestFixture(it) } },
-      { _gradleFixture = null }
+      { _fixtureBuilder = null },
+      { _gradleVersion = null }
     )
   }
 

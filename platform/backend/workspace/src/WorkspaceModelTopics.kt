@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
- * Obsolete listener for the workspace model. Use [WorkspaceModel.subscribe]
+ * Obsolete listener for the workspace model. Use [WorkspaceModel.eventLog]
  */
 @ApiStatus.Obsolete
 public interface WorkspaceModelChangeListener : EventListener {
@@ -34,6 +34,7 @@ public interface WorkspaceModelChangeListener : EventListener {
  *
  * See documentation in [WorkspaceModelChangeListener] to understand how events are constructed
  */
+@ApiStatus.Internal
 public interface WorkspaceModelUnloadedStorageChangeListener : EventListener {
   /**
    * This method is invoked under Write Action after changes are applied.
@@ -43,10 +44,11 @@ public interface WorkspaceModelUnloadedStorageChangeListener : EventListener {
 }
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 public class WorkspaceModelTopics {
   public companion object {
     /**
-     * Obsolete topic for the workspace model. Use [WorkspaceModel.subscribe]
+     * Obsolete topic for the workspace model. Use [WorkspaceModel.eventLog]
      */
     @Topic.ProjectLevel
     @JvmField

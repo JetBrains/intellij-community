@@ -40,7 +40,7 @@ interface ParentChainEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyParentChainEntity(
   entity: ParentChainEntity,
   modification: ParentChainEntity.Builder.() -> Unit,
 ): ParentChainEntity {
@@ -140,7 +140,7 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyCompositeChildAbstractEntity(
   entity: CompositeChildAbstractEntity,
   modification: CompositeChildAbstractEntity.Builder.() -> Unit,
 ): CompositeChildAbstractEntity {
@@ -175,7 +175,7 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySimpleChildAbstractEntity(
   entity: SimpleChildAbstractEntity,
   modification: SimpleChildAbstractEntity.Builder.() -> Unit,
 ): SimpleChildAbstractEntity {

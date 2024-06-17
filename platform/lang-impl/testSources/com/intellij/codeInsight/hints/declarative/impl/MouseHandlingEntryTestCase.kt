@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.CollapseState
 import com.intellij.codeInsight.hints.declarative.CollapsiblePresentationTreeBuilder
+import com.intellij.codeInsight.hints.declarative.HintColorKind
 import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
@@ -175,7 +176,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val state = buildState {
       initialStateBuilder()
     }
-    val presentationList = InlayPresentationList(state, true, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
+    val presentationList = InlayPresentationList(state, HintColorKind.Default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
     val beforeClickEntries = presentationList.getEntries().toList()
     assertEquals(beforeClickText, toText(beforeClickEntries))
     var occurence = 0
@@ -193,7 +194,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val newState = buildState {
       updatedStateBuilder()
     }
-    presentationList.updateState(newState, false, false)
+    presentationList.updateState(newState, false, HintColorKind.TextWithoutBackground)
     val updatedStateEntries = presentationList.getEntries().toList()
     assertEquals(afterUpdateText, toText(updatedStateEntries))
   }
@@ -251,7 +252,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     myFixture.configureByText("test.txt", "my text")
     val root = PresentationTreeBuilderImpl.createRoot()
     b(root)
-    val presentationList = InlayPresentationList(root.complete(), true, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
+    val presentationList = InlayPresentationList(root.complete(), HintColorKind.Default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
     val beforeClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(beforeClick, toText(beforeClickEntries))
     beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!.handleClick(myFixture.editor, presentationList,

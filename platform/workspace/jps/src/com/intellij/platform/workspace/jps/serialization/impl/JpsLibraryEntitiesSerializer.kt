@@ -46,14 +46,14 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
   override fun changeEntitySourcesToDirectoryBasedFormat(builder: MutableEntityStorage, configLocation: JpsProjectConfigLocation) {
     builder.entities(LibraryEntity::class.java).forEach {
       if (it.tableId == LibraryTableId.ProjectLibraryTableId) {
-        builder.modifyEntity(it) {
+        builder.modifyLibraryEntity(it) {
           this.entitySource = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation)
         }
       }
     }
     builder.entities(LibraryPropertiesEntity::class.java).forEach {
       if (it.library.tableId == LibraryTableId.ProjectLibraryTableId) {
-        builder.modifyEntity(it) {
+        builder.modifyLibraryPropertiesEntity(it) {
           this.entitySource = it.library.entitySource
         }
       }

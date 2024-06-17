@@ -56,7 +56,7 @@ interface SimplePropsEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySimplePropsEntity(
   entity: SimplePropsEntity,
   modification: SimplePropsEntity.Builder.() -> Unit,
 ): SimplePropsEntity {

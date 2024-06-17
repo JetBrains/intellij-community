@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableM
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuickfixFactories
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecationFixFactory
 import org.jetbrains.kotlin.idea.quickfix.*
 
 class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
@@ -104,6 +105,16 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(RemoveNoConstructorFixFactory.removeNoConstructorFixFactory)
         registerFactory(ArgumentTypeMismatchFactory.addArrayOfTypeFixFactory)
         registerFactory(ArgumentTypeMismatchFactory.wrapWithArrayLiteralFixFactory)
+        registerFactory(ConvertLateinitPropertyToNotNullDelegateFixFactory.convertLateinitPropertyToNotNullDelegateFixFactory)
+        registerFactory(AddReifiedToTypeParameterOfFunctionFixFactory.addReifiedToTypeParameterOfFunctionFixFactory)
+        registerFactory(ChangeObjectToClassFixFactory.changeObjectToClassFixFactory)
+        registerFactory(RemoveDefaultParameterValueFixFactory.removeDefaultParameterValueFixFactory)
+        registerFactory(AddIsToWhenConditionFixFactory.addIsToWhenConditionFixFactory)
+        registerFactory(MoveTypeAliasToTopLevelFixFactory.moveTypeAliasToTopLevelFixFactory)
+        registerPsiQuickFixes(KaFirDiagnostic.InvalidIfAsExpression::class, AddIfElseBranchFix)
+        registerFactory(RemoveSupertypeFixFactory.removeSupertypeFixFactory)
+        registerFactory(NumberConversionFixFactory.numberConversionFixFactory)
+        registerFactory(ChangeToUseSpreadOperatorFixFactory.changeToUseSpreadOperatorFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -133,6 +144,15 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeToLabeledReturnFixFactory.nullForNonnullType)
         registerFactory(ChangeToLabeledReturnFixFactory.returnNotAllowed)
         registerFactory(ChangeToLabeledReturnFixFactory.returnTypeMismatch)
+    }
+
+    private val convertStringToCharLiteral = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerFactory(ConvertStringToCharLiteralFixFactory.argumentTypeMismatchFactory)
+        registerFactory(ConvertStringToCharLiteralFixFactory.assignmentTypeMismatchFactory)
+        registerFactory(ConvertStringToCharLiteralFixFactory.equalityNotApplicableFactory)
+        registerFactory(ConvertStringToCharLiteralFixFactory.incompatibleTypesFactory)
+        registerFactory(ConvertStringToCharLiteralFixFactory.initializerTypeMismatchFactory)
+        registerFactory(ConvertStringToCharLiteralFixFactory.returnTypeMismatchFactory)
     }
 
     private val insertDelegationCall = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -336,6 +356,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KaFirDiagnostic.RedundantAnnotation::class, RemoveAnnotationFix)
         registerPsiQuickFixes(KaFirDiagnostic.DataClassConsistentCopyWrongAnnotationTarget::class, RemoveAnnotationFix)
         registerPsiQuickFixes(KaFirDiagnostic.DataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations::class, RemoveAnnotationFix)
+
+        registerFactory(DeprecationFixFactory.deprecatedError)
+        registerFactory(DeprecationFixFactory.deprecatedWarning)
     }
 
     private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -397,6 +420,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         addFinal,
         addInline,
         changeToLabeledReturn,
+        convertStringToCharLiteral,
         insertDelegationCall,
         propertyInitialization,
         overrides,

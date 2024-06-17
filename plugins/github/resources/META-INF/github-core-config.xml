@@ -47,6 +47,8 @@
                 factoryClass="org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowFactory"/>
 
     <fileIconProvider implementation="org.jetbrains.plugins.github.extensions.GithubYamlIconProvider"/>
+    <fileTypeUsageSchemaDescriptor schema="github"
+                                   implementationClass="org.jetbrains.plugins.github.extensions.GithubFileTypeSchemaProvider"/>
 
     <registryKey defaultValue="true" description="Applying suggested changes" key="github.suggested.changes.apply"/>
 
@@ -54,8 +56,6 @@
     <registryKey defaultValue="5000"
                  description="Milliseconds margin used when comparing known last seen date with last updated at date for PRs"
                  key="github.last.seen.state.margin.millis"/>
-
-    <iconMapper mappingFile="GithubIconMappings.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -105,7 +105,7 @@
             use-shortcut-of="Refresh"/>
     <action id="Github.PullRequest.Timeline.Show"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestTimelineAction"/>
-    <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
+    <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction" icon="AllIcons.Vcs.Vendors.Github">
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>

@@ -66,13 +66,13 @@ internal class ChangedRepositoryLibraryIdSynchronizer(private val queue: Library
     val libraryIdsToRevoke = mutableListOf<LibraryId>()
     for (change in event.getChanges(LibraryEntity::class.java)) {
       val removed = change as? EntityChange.Removed ?: continue
-      libraryIdsToRevoke.add(removed.entity.symbolicId)
+      libraryIdsToRevoke.add(removed.oldEntity.symbolicId)
     }
 
     for (change in event.getChanges(ModuleEntity::class.java)) {
       val (oldLModuleDeps, newModuleDeps) = when (change) {
         is EntityChange.Added -> continue
-        is EntityChange.Removed -> change.entity.dependencies to emptyList()
+        is EntityChange.Removed -> change.oldEntity.dependencies to emptyList()
         is EntityChange.Replaced -> change.oldEntity.dependencies to change.newEntity.dependencies
       }
 
@@ -94,7 +94,7 @@ internal class ChangedRepositoryLibraryIdSynchronizer(private val queue: Library
 
     for (change in event.getChanges(LibraryEntity::class.java)) {
       val entity = when (change) {
-                     is EntityChange.Added -> change.entity
+                     is EntityChange.Added -> change.newEntity
                      is EntityChange.Replaced -> change.newEntity
                      is EntityChange.Removed -> null
                    } ?: continue
@@ -106,7 +106,7 @@ internal class ChangedRepositoryLibraryIdSynchronizer(private val queue: Library
     for (change in event.getChanges(ModuleEntity::class.java)) {
       val (oldLModuleDeps, newModuleDeps) = when (change) {
         is EntityChange.Removed -> continue
-        is EntityChange.Added -> emptyList<ModuleDependencyItem>() to change.entity.dependencies
+        is EntityChange.Added -> emptyList<ModuleDependencyItem>() to change.newEntity.dependencies
         is EntityChange.Replaced -> change.oldEntity.dependencies to change.newEntity.dependencies
       }
 

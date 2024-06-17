@@ -5,7 +5,9 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesLanguageSupport
 
 internal class StickyLinesDisableForLangAction: StickyLinesAbstractAction() {
 
@@ -27,10 +29,13 @@ internal class StickyLinesDisableForLangAction: StickyLinesAbstractAction() {
   }
 
   private fun stickyLinesLanguage(e: AnActionEvent): Language? {
-    return if (EditorSettingsExternalizable.getInstance().areStickyLinesShown()) {
-      e.getData(CommonDataKeys.PSI_FILE)?.viewProvider?.baseLanguage
-    } else {
-      null
+    val project = e.project
+    if (project != null && EditorSettingsExternalizable.getInstance().areStickyLinesShown()) {
+      val psiFileLang = e.getData(CommonDataKeys.PSI_FILE)?.viewProvider?.baseLanguage
+      if (psiFileLang != null) {
+        return project.service<StickyLinesLanguageSupport>().supportedLang(psiFileLang)
+      }
     }
+    return null
   }
 }

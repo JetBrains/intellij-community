@@ -3,8 +3,7 @@ fragment commit on Commit {
     committer {
         ...gitActorInfo
     }
-    messageHeadline
-    messageBodyHTML
+    messageBody
     committedDate
     parents(first: 100) {
         nodes {

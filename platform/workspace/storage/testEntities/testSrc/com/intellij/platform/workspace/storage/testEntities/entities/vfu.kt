@@ -47,7 +47,7 @@ interface VFUEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyVFUEntity(
   entity: VFUEntity,
   modification: VFUEntity.Builder.() -> Unit,
 ): VFUEntity {
@@ -94,7 +94,7 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyVFUWithTwoPropertiesEntity(
   entity: VFUWithTwoPropertiesEntity,
   modification: VFUWithTwoPropertiesEntity.Builder.() -> Unit,
 ): VFUWithTwoPropertiesEntity {
@@ -135,7 +135,7 @@ interface NullableVFUEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyNullableVFUEntity(
   entity: NullableVFUEntity,
   modification: NullableVFUEntity.Builder.() -> Unit,
 ): NullableVFUEntity {
@@ -178,7 +178,7 @@ interface ListVFUEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyListVFUEntity(
   entity: ListVFUEntity,
   modification: ListVFUEntity.Builder.() -> Unit,
 ): ListVFUEntity {
@@ -220,7 +220,7 @@ interface SetVFUEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySetVFUEntity(
   entity: SetVFUEntity,
   modification: SetVFUEntity.Builder.() -> Unit,
 ): SetVFUEntity {

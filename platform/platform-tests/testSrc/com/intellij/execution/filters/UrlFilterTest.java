@@ -2,7 +2,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.ide.browsers.OpenUrlHyperlinkInfo;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +45,7 @@ public class UrlFilterTest extends BasePlatformTestCase {
   public void testPerformanceSimple() {
     List<LinkInfo> expected = List.of(new FileLinkInfo(7, 30, "/home/file.txt", 3, -1),
                                       new FileLinkInfo(34, 62, "/home/result.txt", 3, 30));
-    PlatformTestUtil.newPerformanceTest("Find file hyperlinks", () -> {
+    PerformanceTestUtil.newPerformanceTest("Find file hyperlinks", () -> {
       for (int i = 0; i < 100_000; i++) {
         Filter.Result result = applyFilter("before file:///home/file.txt:3 -> file:///home/result.txt:3:30 after");
         assertHyperlinks(result, expected);

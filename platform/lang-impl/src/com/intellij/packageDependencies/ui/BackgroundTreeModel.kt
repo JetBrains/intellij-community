@@ -9,9 +9,11 @@ import com.intellij.util.ui.tree.TreeModelListenerList
 import javax.swing.event.TreeModelEvent
 import javax.swing.event.TreeModelListener
 import javax.swing.tree.TreePath
-import kotlin.IllegalStateException
 
-internal class BackgroundTreeModel(delegateProvider: () -> TreeModel) : javax.swing.tree.TreeModel, InvokerSupplier, Disposable {
+internal class BackgroundTreeModel(
+  delegateProvider: () -> TreeModel,
+  private val sortChildren: Boolean,
+) : javax.swing.tree.TreeModel, InvokerSupplier, Disposable {
 
   private val invoker = Invoker.forBackgroundThreadWithReadAction(this)
 
@@ -61,7 +63,12 @@ internal class BackgroundTreeModel(delegateProvider: () -> TreeModel) : javax.sw
 
   override fun getChildCount(parent: Any?): Int {
     reportInvalidThread()
-    (parent as? PackageDependenciesNode?)?.update()
+    if (sortChildren) {
+      (parent as? PackageDependenciesNode?)?.updateAndSortChildren()
+    }
+    else {
+      (parent as? PackageDependenciesNode?)?.update()
+    }
     return delegate.getChildCount(parent)
   }
 

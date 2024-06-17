@@ -11,6 +11,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -235,9 +236,9 @@ public class ThreadBlockedMonitor {
           try {
             if (myObsolete.get()) return;
             if (myThreadBlockedMonitor.myInvocationWatching != null) {
-              DebuggerDiagnosticsUtil.logError(myProcess, "Another invocation on suspend-all thread " + myThread +
-                        " (" + mySuspendAllContext + ") while the previous one was not over yet " +
-                        myThreadBlockedMonitor.myInvocationWatching.mySuspendAllContext);
+              myProcess.logError("Another invocation on suspend-all thread " + myThread +
+                                 " (" + mySuspendAllContext + ") while the previous one was not over yet " +
+                                 myThreadBlockedMonitor.myInvocationWatching.mySuspendAllContext);
               return;
             }
             ThreadReference threadReference = myThread.getThreadReference();
@@ -267,16 +268,19 @@ public class ThreadBlockedMonitor {
     }
 
     private void scheduleDiagnostics() {
-      long delayToDiagnostics = getSingleThreadedEvaluationThreshold() * 3L;
+      long delayToDiagnostics = getSingleThreadedEvaluationThreshold() * 10L;
       myDiagnosticsTask = JobScheduler.getScheduler().schedule(() -> {
         if (myObsolete.get()) return;
         myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             if (myObsolete.get()) return;
-            DebuggerDiagnosticsUtil.logError(myProcess, "Internal error or some deadlock in the code: " +
-                                                        " Long invocation on " + myThread + " for " + mySuspendAllContext +
-                                                        " has not been finished for " + delayToDiagnostics + " ms.");
+            DebuggerDiagnosticsUtil.checkThreadsConsistency(myProcess, false);
+            if (ApplicationManager.getApplication().isInternal()) {
+              myProcess.logError("Internal error, some deadlock or just very long evaluation in the code: " +
+                                 " Long invocation on " + myThread + " for " + mySuspendAllContext +
+                                 " has not been finished for " + delayToDiagnostics + " ms.");
+            }
           }
         });
       }, delayToDiagnostics, TimeUnit.MILLISECONDS);
@@ -326,7 +330,7 @@ public class ThreadBlockedMonitor {
           try {
             if (myObsolete.get()) return;
             if (myThreadBlockedMonitor.myIsInResumeAllMode) {
-              DebuggerDiagnosticsUtil.logError(myProcess, "Another invocation on suspend-all thread while the previous one was not over yet");
+              myProcess.logError("Another invocation on suspend-all thread while the previous one was not over yet");
               return;
             }
             ThreadReference threadReference = myThread.getThreadReference();
@@ -338,7 +342,7 @@ public class ThreadBlockedMonitor {
               virtualMachine.resume();
             }
             else {
-              DebuggerDiagnosticsUtil.logError(myProcess, "Blocked thread detected during invocation on " + myThread);
+              myProcess.logError("Blocked thread detected during invocation on " + myThread);
             }
           }
           finally {

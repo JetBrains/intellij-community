@@ -20,7 +20,7 @@ import java.nio.file.Paths
 
 object TestKotlinArtifacts {
     private val kotlinCLibrariesVersion by lazy {
-        val libraryNameToGetVersionFrom = "kotlinc_high_level_api.xml"
+        val libraryNameToGetVersionFrom = "kotlinc_analysis_api.xml"
         KotlinMavenUtils.findLibraryVersion(libraryNameToGetVersionFrom)
     }
 

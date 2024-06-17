@@ -4,7 +4,10 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.application.writeAction
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
 import com.intellij.testFramework.ApplicationRule
@@ -12,7 +15,7 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.take
 import org.junit.ClassRule
 import org.junit.Rule
@@ -41,9 +44,9 @@ class WorkspaceModelSubscriptionTest {
 
     val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
     val job = launch {
-      workspaceModel.subscribe { starting, flow ->
-        firstStorageChannel.send(starting)
-        firstChange.send(flow.first())
+      workspaceModel.eventLog.take(2).collectIndexed { index, value ->
+        if (index == 0) firstStorageChannel.send(value.storageAfter)
+        else firstChange.send(value)
       }
     }
 
@@ -69,9 +72,9 @@ class WorkspaceModelSubscriptionTest {
 
     val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
     val job = launch {
-      workspaceModel.subscribe { starting, flow ->
-        firstStorageChannel.send(starting)
-        flow.take(5).collect { channelUpdates.send(it) }
+      workspaceModel.eventLog.take(6).collectIndexed { index, value ->
+        if (index == 0) firstStorageChannel.send(value.storageAfter)
+        else channelUpdates.send(value)
       }
     }
 
@@ -99,12 +102,12 @@ class WorkspaceModelSubscriptionTest {
 
   @Test(timeout = 10_000)
   fun `get first state without update`() = runBlocking {
-    val channelUpdates = Channel<EntityStorage>(1)
+    val channelUpdates = Channel<ImmutableEntityStorage>(1)
 
     val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
     val job = launch {
-      workspaceModel.subscribe { starting, _ ->
-        channelUpdates.send(starting)
+      workspaceModel.eventLog.take(1).collectIndexed { index, value ->
+        channelUpdates.send(value.storageAfter)
       }
     }
 
@@ -120,14 +123,14 @@ class WorkspaceModelSubscriptionTest {
     var exception: IllegalStateException? = null
     var checksHappened: Unit? = null
     runBlocking {
-      val channelUpdates = Channel<EntityStorage>(1)
+      val channelUpdates = Channel<ImmutableEntityStorage>(1)
       val fireException = CompletableDeferred<Unit>()
       val stolenScopeOfSubscribe = CompletableDeferred<CoroutineScope>()
 
       val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
       val job = launch {
         try {
-          workspaceModel.subscribe { _, _ ->
+          workspaceModel.eventLog.collect {
             stolenScopeOfSubscribe.complete(this)
             fireException.await()
             error("Fail")
@@ -139,9 +142,8 @@ class WorkspaceModelSubscriptionTest {
       }
 
       val job2 = launch {
-        workspaceModel.subscribe { starting, updates ->
-          channelUpdates.send(starting)
-          updates.collect { channelUpdates.send(it.storageAfter) }
+        workspaceModel.eventLog.collectIndexed { index, value ->
+          channelUpdates.send(value.storageAfter)
         }
       }
 
@@ -172,13 +174,13 @@ class WorkspaceModelSubscriptionTest {
   @Test(timeout = 10_000)
   fun `one listener gets updates even if another is freezed`() {
     runBlocking {
-      val channelUpdates = Channel<EntityStorage>(1)
+      val channelUpdates = Channel<ImmutableEntityStorage>(1)
       val awaitStarted = CompletableDeferred<Unit>()
       val awaitFinished = CompletableDeferred<Unit>()
 
       val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
       val job = launch {
-        workspaceModel.subscribe { _, _ ->
+        workspaceModel.eventLog.collectIndexed { index, _ ->
           awaitStarted.complete(Unit)
           delay(1.seconds)
           awaitFinished.complete(Unit)
@@ -186,8 +188,8 @@ class WorkspaceModelSubscriptionTest {
       }
 
       val job2 = launch {
-        workspaceModel.subscribe { _, updates ->
-          updates.collect { channelUpdates.send(it.storageAfter) }
+        workspaceModel.eventLog.collectIndexed { index, value ->
+          if (index > 0) channelUpdates.send(value.storageAfter)
         }
       }
 

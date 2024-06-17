@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener
@@ -31,6 +31,7 @@ private val model:EditorSettingsExternalizable
 private val myCbBlinkCaret                            get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.caret.blinking.ms"), model::isBlinkCaret, model::setBlinkCaret)
 private val myCbBlockCursor                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.block.caret"), model::isBlockCursor, model::setBlockCursor)
 private val myCbFullLineHeightCursor                  get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.full.line.height.caret"), model::isFullLineHeightCursor, model::setFullLineHeightCursor)
+private val myCbHighlightSelectionOccurrences         get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.highlight.selection.occurrences"), model::isHighlightSelectionOccurrences, model::setHighlightSelectionOccurrences)
 private val myCbRightMargin                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.right.margin"), model::isRightMarginShown, model::setRightMarginShown)
 private val myCbShowLineNumbers                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.line.numbers"), model::isLineNumbersShown, model::setLineNumbersShown)
 private val myCbShowMethodSeparators                  get() = CheckboxDescriptor(if (PlatformUtils.isDataGrip()) ApplicationBundle.message("checkbox.show.method.separators.DataGrip") else  ApplicationBundle.message("checkbox.show.method.separators"), DaemonCodeAnalyzerSettings.getInstance()::SHOW_METHOD_SEPARATORS)
@@ -69,6 +70,9 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
       }
       row {
         checkBox(myCbFullLineHeightCursor)
+      }
+      row {
+        checkBox(myCbHighlightSelectionOccurrences)
       }
       row {
         checkBox(myCbRightMargin)

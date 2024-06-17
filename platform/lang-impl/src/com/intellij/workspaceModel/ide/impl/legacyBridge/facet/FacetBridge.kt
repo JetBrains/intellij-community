@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
  * Most often, its implementation comes together with a corresponding [FacetConfigurationBridge] implementation.
  */
 @ApiStatus.Internal
-interface FacetBridge<T : ModuleSettingsBase, M : ModuleSettingsBase.Builder<T>> {
+interface FacetBridge<T : ModuleSettingsFacetBridgeEntity, M : ModuleSettingsFacetBridgeEntity.Builder<T>> {
   /**
    * Facet configuration
    */
@@ -30,7 +30,7 @@ interface FacetBridge<T : ModuleSettingsBase, M : ModuleSettingsBase.Builder<T>>
    */
   fun addToStorage(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity, entitySource: EntitySource) {
     config.init(moduleEntity, entitySource)
-    mutableStorage.modifyEntity(moduleEntity) module@{
+    mutableStorage.modifyModuleEntity(moduleEntity) module@{
       val settingsEntity = mutableStorage addEntity  config.getEntityBuilder(this@module)
       mutableFacetMapping(mutableStorage).addMapping(settingsEntity, this@FacetBridge as Facet<*>)
     }
@@ -86,7 +86,7 @@ interface FacetBridge<T : ModuleSettingsBase, M : ModuleSettingsBase.Builder<T>>
  * Most often, its implementation comes together with a corresponding [FacetBridge] implementation.
  */
 @ApiStatus.Internal
-interface FacetConfigurationBridge<T : ModuleSettingsBase, M : ModuleSettingsBase.Builder<T>> {
+interface FacetConfigurationBridge<T : ModuleSettingsFacetBridgeEntity, M : ModuleSettingsFacetBridgeEntity.Builder<T>> {
   /**
    * Initializes this config settings with [moduleEntity] and [entitySource]
    */

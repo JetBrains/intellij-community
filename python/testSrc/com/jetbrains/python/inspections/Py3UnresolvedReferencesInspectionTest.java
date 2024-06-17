@@ -331,4 +331,14 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                  MyABC.register(str)
                  """);
   }
+
+  // PY-54356
+  public void testDunderOrResolvedForTypingCallable() {
+    doTestByText("""
+                   from typing import Any, Callable
+                   class C:
+                       def a_method(self, key: str, decoder: Callable | None = None) -> Any | None:
+                           pass
+                   """);
+  }
 }

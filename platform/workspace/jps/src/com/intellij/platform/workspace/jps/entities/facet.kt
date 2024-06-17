@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -15,29 +17,30 @@ data class FacetEntityTypeId(val name: @NonNls String)
  * Describes a [Facet][com.intellij.facet.Facet].
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
  */
-interface FacetEntity: ModuleSettingsBase {
-  val module: ModuleEntity
+interface FacetEntity : ModuleSettingsFacetBridgeEntity {
+  override val symbolicId: FacetId
+    get() = FacetId(name, typeId, moduleId)
   val typeId: FacetEntityTypeId
   val configurationXmlTag: @NonNls String?
 
+  val module: ModuleEntity
+
   // underlyingFacet is a parent facet!!
   val underlyingFacet: FacetEntity?
-  override val symbolicId: FacetId
-    get() = FacetId(name, typeId, moduleId)
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<FacetEntity>, ModuleSettingsBase.Builder<FacetEntity> {
+  interface Builder : WorkspaceEntity.Builder<FacetEntity>, ModuleSettingsFacetBridgeEntity.Builder<FacetEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var moduleId: ModuleId
-    var module: ModuleEntity.Builder
     var typeId: FacetEntityTypeId
     var configurationXmlTag: String?
+    var module: ModuleEntity.Builder
     var underlyingFacet: FacetEntity.Builder?
   }
 
-  companion object : EntityType<FacetEntity, Builder>(ModuleSettingsBase) {
+  companion object : EntityType<FacetEntity, Builder>(ModuleSettingsFacetBridgeEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -62,7 +65,7 @@ interface FacetEntity: ModuleSettingsBase {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyFacetEntity(
   entity: FacetEntity,
   modification: FacetEntity.Builder.() -> Unit,
 ): FacetEntity {

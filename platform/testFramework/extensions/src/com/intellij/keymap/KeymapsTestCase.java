@@ -160,7 +160,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt M",         "Console.TableResult.MaximizeEditingCell", "FullLine.GenerateMarkerAction"},
       {"ctrl alt N",               "Console.TableResult.SetNull", "Git.New.Branch.In.Log", "GitNewBranchAction", "Inline"},
       {"ctrl BACK_SLASH",          "AIAssistant.Editor.GenerateCodeInplace", "FileChooser.GoToRoot"},
-      {"alt BACK_SLASH",           "AIAssistant.Editor.CompleteCodeWithAI", "MainMenuButton.ShowMenu"},
+      {"alt BACK_SLASH",           "AIAssistant.Editor.CompleteCodeWithAI", "MLCompletion.DirectCall", "MainMenuButton.ShowMenu"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
       {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
@@ -275,7 +275,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl MINUS",         "$Undo", "NotebookSplitCellAction"},
     }),
     Map.entry("Visual Studio", new String[][]{
-      {"alt BACK_SLASH",           "AIAssistant.Editor.CompleteCodeWithAI", "FileStructurePopup"},
+      {"alt BACK_SLASH",           "AIAssistant.Editor.CompleteCodeWithAI", "MLCompletion.DirectCall", "FileStructurePopup"},
       {"F5",                       "Graph.RouteEdges", "Resume", "WebInspector.Browser.Refresh"},
       {"F7",                       "CompileDirty", "NextDiff"},
       {"F12",                      "GotoDeclaration", "WebInspector.Browser.Selection.Toggle"},
@@ -319,14 +319,14 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction", "VcsShowPrevChangeMarker"},
       {"shift ctrl alt UP",        "MoveStatementUp", "ResizeToolWindowUp"},
       {"ctrl SLASH",               "AIAssistant.Editor.GenerateCodeInplace", "Graph.ActualSize"},
-      {"alt SLASH",                "AIAssistant.Editor.CompleteCodeWithAI", "HippieCompletion"},
+      {"alt SLASH",                "AIAssistant.Editor.CompleteCodeWithAI", "MLCompletion.DirectCall", "HippieCompletion"},
       {"F8",                       "NextOccurence", "NextDiff"},
       {"shift F8",                 "PreviousOccurence", "PreviousDiff"},
     }),
     Map.entry("Visual Studio OSX", new String[][]{
       {"F12",                      "GotoDeclaration", "WebInspector.Browser.Selection.Toggle"},
       {"meta L",                   "$Cut", "Terminal.ClearBuffer"},
-      {"alt BACK_SLASH",           "AIAssistant.Editor.CompleteCodeWithAI", "FileStructurePopup"},
+      {"alt BACK_SLASH",           "AIAssistant.Editor.CompleteCodeWithAI", "MLCompletion.DirectCall", "FileStructurePopup"},
       {"alt DELETE",               "EditorDeleteToWordEnd", "SafeDelete"},
       {"shift ctrl RIGHT",         "Diff.NextChange", "EditorRightWithSelection"},
       {"meta F10",                 "RunToCursor", "UpdateRunningApplication"},
@@ -361,7 +361,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta R",                   "SECOND_STROKE_SHORTCUT", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
       {"meta E",                   "SECOND_STROKE_SHORTCUT", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox"},
       {"meta T",                   "SearchEverywhere", "Terminal.NewTab"},
-      {"alt SLASH",                "AIAssistant.Editor.CompleteCodeWithAI", "HippieCompletion"},
+      {"alt SLASH",                "AIAssistant.Editor.CompleteCodeWithAI", "MLCompletion.DirectCall", "HippieCompletion"},
     }),
     Map.entry("Default for XWin", new String[][]{
       {"ctrl SLASH",               "CommentByLineComment", "FileChooser.GoToRoot", "Graph.ActualSize"},

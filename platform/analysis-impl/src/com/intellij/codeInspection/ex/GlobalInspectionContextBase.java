@@ -318,6 +318,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                               @NotNull List<Tools> outLocalTools,
                               @NotNull List<? super Tools> outGlobalSimpleTools) {
     List<Tools> usedTools = getUsedTools();
+    for (GlobalInspectionContextExtension<?> extension : myExtensions.values()) {
+      extension.performPreInitToolsActivities(usedTools, this);
+    }
     Map<String, Tools> tools = new HashMap<>(usedTools.size());
     for (Tools currentTools : usedTools) {
       String shortName = currentTools.getShortName();
@@ -334,6 +337,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
         appendJobDescriptor(jobDescriptor);
       }
     }
+    appendPairedInspectionsForUnfairTools(outGlobalTools, outGlobalSimpleTools, outLocalTools, tools);
     myTools = Collections.unmodifiableMap(tools);
     for (GlobalInspectionContextExtension<?> extension : myExtensions.values()) {
       extension.performPreRunActivities(outGlobalTools, outLocalTools, this);
@@ -355,6 +359,52 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     set.addAll(tools);
     set.addAll(ContainerUtil.map(dependentTools, toolWrapper -> new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true)));
     return new ArrayList<>(set);
+  }
+
+  private void appendPairedInspectionsForUnfairTools(@NotNull List<? super Tools> globalTools,
+                                                     @NotNull List<? super Tools> globalSimpleTools,
+                                                     @NotNull List<Tools> localTools,
+                                                     @NotNull Map<String, Tools> toolsMap) {
+    Tools[] lArray = localTools.toArray(new Tools[0]);
+    for (Tools tool : lArray) {
+      LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)tool.getTool();
+      LocalInspectionTool localTool = toolWrapper.getTool();
+      if (localTool instanceof PairedUnfairLocalInspectionTool) {
+        String batchShortName = ((PairedUnfairLocalInspectionTool)localTool).getInspectionForBatchShortName();
+        InspectionProfile currentProfile = getCurrentProfile();
+        InspectionToolWrapper<?, ?> batchInspection;
+        InspectionToolWrapper<?, ?> pairedWrapper = currentProfile.getInspectionTool(batchShortName, getProject());
+        batchInspection = pairedWrapper != null ? pairedWrapper.createCopy() : null;
+        if (batchInspection != null && !toolsMap.containsKey(batchShortName)) {
+          // add to existing inspections to run
+          InspectionProfileEntry batchTool = batchInspection.getTool();
+          ScopeToolState defaultState = tool.getDefaultState();
+          ToolsImpl newTool = new ToolsImpl(batchInspection, defaultState.getLevel(), true, defaultState.isEnabled());
+          for (ScopeToolState state : tool.getTools()) {
+            NamedScope scope = state.getScope(getProject());
+            if (scope != null) {
+              newTool.addTool(scope, batchInspection, state.isEnabled(), state.getLevel());
+            }
+          }
+          if (batchTool instanceof LocalInspectionTool) {
+            localTools.add(newTool);
+          }
+          else if (batchTool instanceof GlobalInspectionTool globalTool) {
+            if (globalTool.isGlobalSimpleInspectionTool()) {
+              globalSimpleTools.add(newTool);
+            }
+            else {
+              globalTools.add(newTool);
+            }
+          }
+          else {
+            throw new AssertionError(batchTool);
+          }
+          toolsMap.put(batchShortName, newTool);
+          batchInspection.initialize(this);
+        }
+      }
+    }
   }
 
   protected void classifyTool(@NotNull List<? super Tools> outGlobalTools,

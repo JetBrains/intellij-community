@@ -409,8 +409,10 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
               myRightPanelUpdater.execute(() -> {
                 final var entity = node.getContainingFileLocalEntity();
                 SwingUtilities.invokeLater(() -> {
-                  TreePath newPath = myTree.getSelectionModel().getLeadSelectionPath();
-                  if (newPath == pathSelected) showInRightPanel(entity);
+                  ReadAction.run(() -> {
+                    TreePath newPath = myTree.getSelectionModel().getLeadSelectionPath();
+                    if (newPath == pathSelected) showInRightPanel(entity);
+                  });
                 });
               });
             }

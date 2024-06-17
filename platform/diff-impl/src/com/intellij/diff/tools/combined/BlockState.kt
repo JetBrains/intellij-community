@@ -4,9 +4,11 @@ package com.intellij.diff.tools.combined
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.properties.Delegates
 
+@ApiStatus.Experimental
 interface BlockOrder {
   fun iterateBlocks(): Iterable<CombinedBlockId>
   fun indexOf(blockId: CombinedBlockId): Int
@@ -14,10 +16,12 @@ interface BlockOrder {
   val blocksCount: Int
 }
 
+@ApiStatus.Experimental
 fun interface BlockStateListener : EventListener {
   fun onCurrentChanged(oldBlockId: CombinedBlockId, newBlockId: CombinedBlockId)
 }
 
+@ApiStatus.Experimental
 class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId) : PrevNextDifferenceIterable, BlockOrder {
 
   private val eventDispatcher = EventDispatcher.create(BlockStateListener::class.java)

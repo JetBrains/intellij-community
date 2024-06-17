@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.url
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.nio.file.Path
@@ -12,6 +13,7 @@ import java.nio.file.Path
 /**
  * Represent a URL (in VFS format) of a file or directory.
  */
+@ApiStatus.Internal
 public open class VirtualFileUrlImpl(public val id: Int, internal val manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
   private var cachedUrl: String? = null
 

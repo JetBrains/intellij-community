@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -121,6 +122,7 @@ open class ExportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
 
 }
 
+@Internal
 fun exportSettings(exportableItems: Set<ExportableItem>,
                    out: OutputStream,
                    exportableThirdPartyFiles: Map<FileSpec, Path> = mapOf(),
@@ -232,6 +234,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
     for (storage in storages) {
       val isRoamable = getEffectiveRoamingType(storage.roamingType, storage.path).isRoamable
       val exportable = isStorageExportable(storage, isRoamable, withExportable)
+                       || (stateAnnotation.exportable && !isSpecialOrNonRoamableStorage(storage.path))
       LOG.debug("Storage for class ${aClass.simpleName} is ${stringify(isRoamable, "roamable")}, ${stringify(exportable, "exportable")}: $storage")
       if (exportable) {
         thereIsExportableStorage = true
@@ -266,7 +269,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
 
 private fun stringify(value: Boolean, name: String): String = if (value) name else "not $name"
 
-fun looksLikeDirectory(storage: Storage): Boolean {
+private fun looksLikeDirectory(storage: Storage): Boolean {
   return storage.stateSplitter.java != StateSplitterEx::class.java
 }
 
@@ -356,7 +359,10 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
 private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, @Nls defaultName: String): String {
   try {
     return AbstractBundle.messageOrDefault(
-      DynamicBundle.getResourceBundle(classLoader, bundleName), "exportable.$defaultName.presentable.name", defaultName)
+      bundle = DynamicBundle.getResourceBundle(classLoader, bundleName),
+      key = "exportable.$defaultName.presentable.name",
+      defaultValue = defaultName,
+    )!!
   }
   catch (e: MissingResourceException) {
     LOG.warn("Missing bundle ${bundleName} at ${classLoader}: ${e.message}")

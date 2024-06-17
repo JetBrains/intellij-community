@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -43,13 +43,13 @@ fun KtModifierKeywordToken.toVisibility(): Visibility = when (this) {
  *
  * Do we need something like @PublicApiFile to disable (or invert) this inspection per-file?
  */
-context(KtAnalysisSession)
-private fun explicitVisibilityRequired(symbol: KtSymbolWithVisibility): Boolean {
-    if ((symbol as? KtConstructorSymbol)?.isPrimary == true) return false // 1
-    if (symbol is KtPropertySymbol && (symbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.isData == true) return false // 2
-    if ((symbol as? KtCallableSymbol)?.getAllOverriddenSymbols()?.isNotEmpty() == true) return false // 3
-    if (symbol is KtPropertyAccessorSymbol) return false // 4
-    if (symbol is KtPropertySymbol && (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind == KtClassKind.ANNOTATION_CLASS) return false // 5
+context(KaSession)
+private fun explicitVisibilityRequired(symbol: KaSymbolWithVisibility): Boolean {
+    if ((symbol as? KaConstructorSymbol)?.isPrimary == true) return false // 1
+    if (symbol is KtPropertySymbol && (symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.isData == true) return false // 2
+    if ((symbol as? KaCallableSymbol)?.getAllOverriddenSymbols()?.isNotEmpty() == true) return false // 3
+    if (symbol is KaPropertyAccessorSymbol) return false // 4
+    if (symbol is KtPropertySymbol && (symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS) return false // 5
     return true
 }
 
@@ -58,7 +58,7 @@ fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken
         val defaultVisibilityKeyword = implicitVisibility()
         if (visibilityModifier == defaultVisibilityKeyword) {
             val explicitVisibilityRequired = languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED
-                    && analyze(this) { explicitVisibilityRequired(getSymbolOfType<KtSymbolWithVisibility>()) }
+                    && analyze(this) { explicitVisibilityRequired(getSymbolOfType<KaSymbolWithVisibility>()) }
             if (!explicitVisibilityRequired) {
                 visibilityModifierType()?.let { removeModifier(it) }
                 return
@@ -99,9 +99,9 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
 
         hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
             analyze(this) {
-                getSymbolOfType<KtCallableSymbol>()
+                getSymbolOfType<KaCallableSymbol>()
                     .getAllOverriddenSymbols()
-                    .mapNotNull { (it as? KtSymbolWithVisibility)?.visibility }
+                    .mapNotNull { (it as? KaSymbolWithVisibility)?.visibility }
                     .maxWithOrNull { v1, v2 -> Visibilities.compare(v1, v2) ?: -1 }
                     ?.toKeywordToken()
             }

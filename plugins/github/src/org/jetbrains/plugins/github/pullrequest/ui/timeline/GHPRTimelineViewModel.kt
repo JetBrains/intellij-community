@@ -8,10 +8,10 @@ import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -25,7 +25,6 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
-import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem as GHPRTimelineItemDTO
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -35,7 +34,9 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.UpdateableGHPRTimelineCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.UpdateableGHPRTimelineReviewViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem as GHPRTimelineItemDTO
 
 interface GHPRTimelineViewModel {
   val ghostUser: GHUser
@@ -62,6 +63,8 @@ interface GHPRTimelineViewModel {
 
   fun showCommit(oid: String)
 
+  fun openPullRequestInfoAndTimeline(number: Long)
+
   companion object {
     val DATA_KEY: DataKey<GHPRTimelineViewModel> = DataKey.create("GitHub.PullRequest.Timeline.ViewModel")
   }
@@ -75,6 +78,7 @@ internal class GHPRTimelineViewModelImpl(
 ) : GHPRTimelineViewModel {
   private val cs = parentCs.childScope("GitHub Pull Request Timeline View Model", Dispatchers.Main)
 
+  private val twVm by lazy { project.service<GHPRToolWindowViewModel>() }
   private val securityService = dataContext.securityService
 
   private val detailsData = dataProvider.detailsData
@@ -229,6 +233,10 @@ internal class GHPRTimelineViewModelImpl(
 
   override fun showCommit(oid: String) {
     showCommitRequests.tryEmit(oid)
+  }
+
+  override fun openPullRequestInfoAndTimeline(number: Long) {
+    twVm.projectVm.value?.openPullRequestInfoAndTimeline(number)
   }
 }
 

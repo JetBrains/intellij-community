@@ -9,15 +9,15 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KtAnalysisNonPublicApi
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
@@ -263,7 +263,7 @@ private data class ExperimentalMarkers(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     fun KtAnnotationApplicationWithArgumentsInfo.isExperimentalMarker(): Boolean {
         val id = classId
@@ -310,7 +310,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
                 override fun visitReferenceExpression(expression: KtReferenceExpression) {
                     super.visitReferenceExpression(expression)
 
-                    fun processSymbolAnnotations(targetSymbol: KtAnnotatedSymbol) {
+                    fun processSymbolAnnotations(targetSymbol: KaAnnotatedSymbol) {
                         for (ann in targetSymbol.annotations) {
                             val fqName = ann.classId?.asSingleFqName() ?: continue
                             if (ann.isExperimentalMarker()) {
@@ -319,10 +319,10 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
                         }
                     }
 
-                    val targetSymbol = expression.mainReference.resolveToSymbol() as? KtAnnotatedSymbol ?: return
+                    val targetSymbol = expression.mainReference.resolveToSymbol() as? KaAnnotatedSymbol ?: return
                     processSymbolAnnotations(targetSymbol)
 
-                    val typeSymbol = (targetSymbol as? KtCallableSymbol)?.returnType?.expandedClassSymbol ?: return
+                    val typeSymbol = (targetSymbol as? KaCallableSymbol)?.returnType?.expandedSymbol ?: return
                     processSymbolAnnotations(typeSymbol)
                 }
             })
@@ -355,7 +355,7 @@ fun ExtractableCodeDescriptor.validate(target: ExtractionTarget = ExtractionTarg
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun ExtractableCodeDescriptor.validateTempResult(
     result: ExtractionResult,
 ): ExtractableCodeDescriptorWithConflicts {

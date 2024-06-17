@@ -24,6 +24,11 @@
     <completion.contributor language="JSONPath" order="last" implementationClass="com.intellij.jsonpath.JsonPathCompletionContributor"/>
     <spellchecker.support language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathSpellcheckerStrategy"/>
 
+    <lang.elementManipulator forClass="com.intellij.jsonpath.psi.JsonPathId"
+                             implementationClass="com.intellij.jsonpath.psi.JsonPathIdManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.jsonpath.psi.JsonPathStringLiteral"
+                             implementationClass="com.intellij.jsonpath.psi.JsonPathStringManipulator"/>
+
     <localInspection language="JSONPath" shortName="JsonPathUnknownFunction"
                      implementationClass="com.intellij.jsonpath.inspections.JsonPathUnknownFunctionInspection"
                      bundle="messages.JsonPathBundle" key="inspection.jsonpath.unknown.function"

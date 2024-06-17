@@ -15,7 +15,7 @@ import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRend
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo.executeListener
@@ -197,7 +197,7 @@ class ImportQuickFix(
             getFixes(diagnostic.psi)
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun getFixes(diagnosticPsi: PsiElement): List<ImportQuickFix> {
             val position = diagnosticPsi.containingFile.findElementAt(diagnosticPsi.startOffset)
             val positionContext = position?.let { KotlinPositionContextDetector.detect(it) }
@@ -238,6 +238,7 @@ class ImportQuickFix(
                     is KotlinImportDirectivePositionContext,
                     is KotlinPackageDirectivePositionContext,
                     is KotlinSuperReceiverNameReferencePositionContext,
+                    is KotlinLabelReferencePositionContext,
                     is KDocParameterNamePositionContext -> {
                     }
                 }
@@ -260,18 +261,18 @@ class ImportQuickFix(
         }
 
 
-        context(KtAnalysisSession)
-        private fun renderSymbol(symbol: KtDeclarationSymbol): String = prettyPrint {
+        context(KaSession)
+        private fun renderSymbol(symbol: KaDeclarationSymbol): String = prettyPrint {
             val fqName = symbol.getFqName()
-            if (symbol is KtNamedClassOrObjectSymbol) {
+            if (symbol is KaNamedClassOrObjectSymbol) {
                 append("class $fqName")
             } else {
                 renderer.renderDeclaration(analysisSession, symbol, printer = this)
             }
 
             when (symbol) {
-                is KtCallableSymbol -> symbol.callableId?.packageName
-                is KtClassLikeSymbol -> symbol.classId?.packageFqName
+                is KaCallableSymbol -> symbol.callableId?.packageName
+                is KaClassLikeSymbol -> symbol.classId?.packageFqName
                 else -> null
             }?.let { packageName ->
                 append(" defined in ${packageName.asString()}")
@@ -279,10 +280,10 @@ class ImportQuickFix(
             }
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun createImportFix(
             position: KtElement,
-            importCandidateSymbols: List<KtDeclarationSymbol>,
+            importCandidateSymbols: List<KaDeclarationSymbol>,
         ): ImportQuickFix? {
             if (importCandidateSymbols.isEmpty()) return null
 
@@ -330,40 +331,40 @@ class ImportQuickFix(
             return ImportQuickFix(position, text, sortedImportVariants)
         }
 
-        context(KtAnalysisSession)
-        private fun KtDeclarationSymbol.doNotImportOnTheFly(doNotImportCallablesOnFly: Boolean): Boolean = when (this) {
+        context(KaSession)
+        private fun KaDeclarationSymbol.doNotImportOnTheFly(doNotImportCallablesOnFly: Boolean): Boolean = when (this) {
             // don't import nested class on the fly because it will probably add qualification and confuse the user
-            is KtNamedClassOrObjectSymbol -> isNested()
-            is KtCallableSymbol -> doNotImportCallablesOnFly
+            is KaNamedClassOrObjectSymbol -> isNested()
+            is KaCallableSymbol -> doNotImportCallablesOnFly
             else -> false
         }
 
-        context(KtAnalysisSession)
-        private fun KtNamedClassOrObjectSymbol.isNested(): Boolean = getContainingSymbol() is KtNamedClassOrObjectSymbol
+        context(KaSession)
+        private fun KaNamedClassOrObjectSymbol.isNested(): Boolean = getContainingSymbol() is KaNamedClassOrObjectSymbol
 
-        context(KtAnalysisSession)
-        private fun KtDeclarationSymbol.getImportKind(): ImportFixHelper.ImportKind? = when {
+        context(KaSession)
+        private fun KaDeclarationSymbol.getImportKind(): ImportFixHelper.ImportKind? = when {
             this is KtPropertySymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_PROPERTY
             this is KtPropertySymbol -> ImportFixHelper.ImportKind.PROPERTY
             this is KtJavaFieldSymbol -> ImportFixHelper.ImportKind.PROPERTY
 
-            this is KtFunctionSymbol && isOperator -> ImportFixHelper.ImportKind.OPERATOR
-            this is KtFunctionSymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
-            this is KtFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
+            this is KaFunctionSymbol && isOperator -> ImportFixHelper.ImportKind.OPERATOR
+            this is KaFunctionSymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
+            this is KaFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
 
-            this is KtNamedClassOrObjectSymbol && classKind.isObject -> ImportFixHelper.ImportKind.OBJECT
-            this is KtNamedClassOrObjectSymbol -> ImportFixHelper.ImportKind.CLASS
-            this is KtTypeAliasSymbol -> ImportFixHelper.ImportKind.TYPE_ALIAS
+            this is KaNamedClassOrObjectSymbol && classKind.isObject -> ImportFixHelper.ImportKind.OBJECT
+            this is KaNamedClassOrObjectSymbol -> ImportFixHelper.ImportKind.CLASS
+            this is KaTypeAliasSymbol -> ImportFixHelper.ImportKind.TYPE_ALIAS
 
             else -> null
         }
 
-        context(KtAnalysisSession)
-        private fun KtDeclarationSymbol.getImportName(): String = buildString {
-            if (this@getImportName !is KtNamedSymbol) error("Unexpected anonymous declaration")
+        context(KaSession)
+        private fun KaDeclarationSymbol.getImportName(): String = buildString {
+            if (this@getImportName !is KaNamedSymbol) error("Unexpected anonymous declaration")
 
-            if (this@getImportName is KtCallableSymbol) {
-                val classSymbol = if (receiverType != null) receiverType?.expandedClassSymbol else originalContainingClassForOverride
+            if (this@getImportName is KaCallableSymbol) {
+                val classSymbol = if (receiverType != null) receiverType?.expandedSymbol else originalContainingClassForOverride
                 classSymbol?.name?.let { append(it.asString()) }
             }
 
@@ -371,15 +372,15 @@ class ImportQuickFix(
             append(name.asString())
         }
 
-        context(KtAnalysisSession)
-        private fun KtDeclarationSymbol.getFqName(): FqName =
+        context(KaSession)
+        private fun KaDeclarationSymbol.getFqName(): FqName =
             getFqNameIfPackageOrNonLocal() ?: error("Unexpected null for fully-qualified name of importable symbol")
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun createPriorityForImportableSymbol(
             prioritizer: ImportPrioritizer,
             expressionImportWeigher: ExpressionImportWeigher,
-            symbol: KtDeclarationSymbol
+            symbol: KaDeclarationSymbol
         ): ImportPrioritizer.Priority =
             prioritizer.Priority(
                 declaration = symbol.psi,

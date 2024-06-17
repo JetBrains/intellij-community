@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
 import com.intellij.diff.DiffContext
@@ -15,7 +15,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl
 internal val IS_DIFF_FILE_EDITOR: Key<Boolean> = Key.create("IS_DEFAULT_DIFF_EDITOR")
 private val CUSTOM_DIFF_ESCAPE_HANDLER: Key<AnAction> = Key.create("CUSTOM_DIFF_ESCAPE_HANDLER")
 
-class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
+internal class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
 
   override fun customize(file: VirtualFile, editor: FileEditor, context: DiffContext) {
     registerEscapeAction(editor)

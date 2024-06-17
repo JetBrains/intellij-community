@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SystemProperties;
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,23 +95,21 @@ public class PtyCommandLine extends GeneralCommandLine {
    *
    * @see com.pty4j.PtyProcessBuilder#setUnixOpenTtyToPreserveOutputAfterTermination(boolean)
    */
-  @NotNull
-  public PtyCommandLine withUnixOpenTtyToPreserveOutputAfterTermination(boolean unixOpenTtyToPreserveOutputAfterTermination) {
+  public @NotNull PtyCommandLine withUnixOpenTtyToPreserveOutputAfterTermination(boolean unixOpenTtyToPreserveOutputAfterTermination) {
     myUnixOpenTtyToPreserveOutputAfterTermination = unixOpenTtyToPreserveOutputAfterTermination;
     return this;
   }
 
-  @NotNull
   @Override
-  protected Process startProcess(@NotNull List<String> commands) throws IOException {
-    if (getInputFile() == null && getProcessCreator() == null) {
+  protected @NotNull Process createProcess(@NotNull ProcessBuilder processBuilder) throws IOException {
+    if (getInputFile() == null && !isProcessCreatorSet()) {
       try {
-        return startProcessWithPty(commands);
+        return startProcessWithPty(processBuilder.command());
       }
       catch (Throwable t) {
-        String message = "Couldn't run process with PTY";
+        var message = "Couldn't run process with PTY";
         if (LOG.isDebugEnabled()) {
-          String logFileContent = loadLogFile();
+          var logFileContent = loadLogFile();
           if (logFileContent != null) {
             LOG.debug(message, t, logFileContent);
           }
@@ -124,19 +122,20 @@ public class PtyCommandLine extends GeneralCommandLine {
         }
       }
     }
-    return super.startProcess(commands);
+    return super.createProcess(processBuilder);
   }
 
-  @Nullable
-  private static String loadLogFile() {
-    Application app = ApplicationManager.getApplication();
-    File logFile = app != null && app.isEAP() ? new File(PathManager.getLogPath(), "pty.log") : null;
-    if (logFile != null && logFile.exists()) {
-      try {
-        return FileUtil.loadFile(logFile);
-      }
-      catch (Exception e) {
-        return "Unable to retrieve pty log: " + e.getMessage();
+  private static @Nullable String loadLogFile() {
+    var app = ApplicationManager.getApplication();
+    if (app != null && app.isEAP()) {
+      var logFile = PathManager.getLogDir().resolve("pty.log");
+      if (Files.exists(logFile)) {
+        try {
+          return Files.readString(logFile);
+        }
+        catch (Exception e) {
+          return "Unable to retrieve PTY log: " + e.getMessage();
+        }
       }
     }
     return null;
@@ -147,15 +146,14 @@ public class PtyCommandLine extends GeneralCommandLine {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public Process startProcessWithPty(@NotNull List<String> commands) throws IOException {
+  public @NotNull Process startProcessWithPty(@NotNull List<String> commands) throws IOException {
     Map<String, String> env = new HashMap<>();
     setupEnvironment(env);
     if (!SystemInfo.isWindows) {
       // Let programs know about the emulator's capabilities to allow them to produce appropriate escape sequences.
       // https://www.gnu.org/software/gettext/manual/html_node/The-TERM-variable.html
-      // Moreover, some programs require TERM set, e.g. `/usr/bin/clear` or Python code `os.system("clear")`.
-      // The following error will be reported if TERM is missing: "TERM environment variable set not set."
+      // Moreover, some programs require `$TERM` to be set, e.g. `/usr/bin/clear` or Python code `os.system("clear")`.
+      // The following error will be reported if `$TERM` is missing: "TERM environment variable set not set."
       if (!getEnvironment().containsKey("TERM")) {
         env.put("TERM", "xterm-256color");
       }
@@ -167,15 +165,11 @@ public class PtyCommandLine extends GeneralCommandLine {
     LocalPtyOptions options = getPtyOptions();
     Application app = ApplicationManager.getApplication();
     return ProcessService.getInstance()
-      .startPtyProcess(command, directory, env, options, app, isRedirectErrorStream(), myWindowsAnsiColorEnabled,
-                       myUnixOpenTtyToPreserveOutputAfterTermination);
+      .startPtyProcess(command, directory, env, options, app, isRedirectErrorStream(), myWindowsAnsiColorEnabled, myUnixOpenTtyToPreserveOutputAfterTermination);
   }
 
   @ApiStatus.Internal
   public static @NotNull LocalPtyOptions getDefaultPtyOptions() {
-    return LocalPtyOptions.DEFAULT.builder()
-      .consoleMode(true)
-      .useWinConPty(LocalPtyOptions.shouldUseWinConPty())
-      .build();
+    return LocalPtyOptions.defaults().builder().consoleMode(true).build();
   }
 }

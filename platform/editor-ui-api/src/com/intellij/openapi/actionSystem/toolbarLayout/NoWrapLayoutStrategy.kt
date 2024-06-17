@@ -9,7 +9,7 @@ import java.awt.Insets
 import java.awt.Rectangle
 import javax.swing.SwingConstants
 
-class NoWrapLayoutStrategy(private val myAdjustTheSameSize: Boolean) : ToolbarLayoutStrategy {
+internal class NoWrapLayoutStrategy(private val myAdjustTheSameSize: Boolean) : ToolbarLayoutStrategy {
 
   private fun doCalculateBounds(toolbar: ActionToolbar): List<Rectangle> {
 

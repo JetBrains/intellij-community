@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil.waitForFuture
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.usages.UsageInfo2UsageAdapter
@@ -23,7 +24,9 @@ class TextSearchContributorTest : BasePlatformTestCase() {
     """.trimIndent())
 
       val contributor = TextSearchContributor(createEvent(project))
+      Disposer.register(testRootDisposable, contributor)
       val ui = SearchEverywhereUI(project, listOf(contributor))
+      Disposer.register(testRootDisposable, ui)
       ui.switchToTab(contributor.searchProviderId)
       val elements = waitForFuture(ui.findElementsForPattern("eedafea0f30d"))
       val element = elements.single() as SearchEverywhereItem

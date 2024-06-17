@@ -84,7 +84,7 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
   }
 
   @Test
-  public void tryAcquireExclusiveAccess_alwaysSucceedWithoutConcurrentRequests() {
+  public void tryAcquireExclusiveAccess_alwaysSucceedWithoutConcurrentRequests() throws IOException {
     int currentPid = 123;
     long acquiringTimestamp = 42;
     OwnershipInfo owner = storage.tryAcquireExclusiveAccess(currentPid, acquiringTimestamp, /*force: */ false);
@@ -101,7 +101,7 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
   }
 
   @Test
-  public void ifStorageIsAcquired_acquireWithDifferentPid_MustFailToChangeOwner() {
+  public void ifStorageIsAcquired_acquireWithDifferentPid_MustFailToChangeOwner() throws IOException {
     int currentPid = 123;
     long acquiringTimestamp = 42;
 
@@ -124,7 +124,7 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
 
 
   @Test
-  public void processAlreadyAcquiredStorage_alwaysSucceedInAcquiringAgain() {
+  public void processAlreadyAcquiredStorage_alwaysSucceedInAcquiringAgain() throws IOException {
     int currentPid = 123;
     long acquiringTimestamp1 = 42;
     long acquiringTimestamp2 = 43;

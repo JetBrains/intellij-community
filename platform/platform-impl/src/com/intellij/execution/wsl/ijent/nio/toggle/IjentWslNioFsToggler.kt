@@ -47,7 +47,11 @@ class IjentWslNioFsToggler(@VisibleForTesting val coroutineScope: CoroutineScope
         null,
       ),
       Triple(
-        "-Xbootclasspath/a:out/classes/production/intellij.platform.core.nio.fs",
+        run {
+          //see idea/nativeHelpers/buildTypes/ijent/performance/IJentWslBenchmarkTests.kt:38
+          val testSubdir = if (ApplicationManager.getApplication().isUnitTestMode) "/tests" else ""
+          "-Xbootclasspath/a:out${testSubdir}/classes/production/intellij.platform.core.nio.fs"
+        },
         "",
         null,
       ),

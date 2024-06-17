@@ -45,7 +45,7 @@ internal class GHCloneDialogRepositoryListLoaderImpl : GHCloneDialogRepositoryLi
 
     ProgressManager.getInstance().submitIOTask(indicator) {
       val token = runBlocking { service<GHAccountManager>().findCredentials(account) } ?: throw GithubMissingTokenException(account)
-      val executor = service<GithubApiRequestExecutor.Factory>().create(token)
+      val executor = service<GithubApiRequestExecutor.Factory>().create(account.server, token)
 
       val details = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
 

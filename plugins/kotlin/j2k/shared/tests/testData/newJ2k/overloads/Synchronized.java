@@ -1,7 +1,6 @@
-// IGNORE_K2
 class A {
     public void foo(int p) {
-        System.out.println("p = [" + p + "]");
+        System.out.println(p);
     }
 
     public synchronized void foo(){

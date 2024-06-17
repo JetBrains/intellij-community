@@ -192,13 +192,26 @@ class JavaToJKTreeBuilder(
             return JKSuperExpression(type.toJK(), superTypeQualifier, outerTypeQualifier)
         }
 
-        private fun PsiConditionalExpression.toJK(): JKIfElseExpression =
-            JKIfElseExpression(
+        private fun PsiConditionalExpression.toJK(): JKIfElseExpression {
+            val expression = JKIfElseExpression(
                 condition.toJK(),
                 thenExpression.toJK(),
                 elseExpression.toJK(),
                 type.toJK()
             )
+
+            // Prettify formatting with inner line breaks:
+            //  - put the close parenthesis of the resulting `if` expression on the same line as the condition
+            //  - put both branches on separate lines
+            if (expression.condition.lineBreaksAfter > 0 || expression.thenBranch.lineBreaksAfter > 0) {
+                expression.condition.lineBreaksAfter = 0
+                expression.thenBranch.lineBreaksBefore = 1
+                expression.thenBranch.lineBreaksAfter = 1
+                expression.elseBranch.lineBreaksBefore = 1
+            }
+
+            return expression
+        }
 
         private fun PsiPolyadicExpression.toJK(): JKExpression {
             val token = JKOperatorToken.fromElementType(operationTokenType)
@@ -948,12 +961,13 @@ class JavaToJKTreeBuilder(
                 if (isVarArgs && rawType is JKJavaArrayType) JKTypeElement(rawType.type, typeElement.annotationList())
                 else rawType.asTypeElement(typeElement.annotationList())
             val name = if (nameIdentifier != null) nameIdentifier.toJK() else JKNameIdentifier(name)
-            return JKParameter(
-                type,
-                name,
-                isVarArgs,
-                annotationList = annotationList(null)
-            ).also {
+
+            val parameter = if (declarationScope is PsiForeachStatement) {
+                JKForLoopParameter(type, name, annotationList = annotationList(null))
+            } else {
+                JKParameter(type, name, isVarArgs, annotationList = annotationList(null))
+            }
+            return parameter.also {
                 symbolProvider.provideUniverseSymbol(this, it)
                 it.psi = this
                 it.updateNullability()
@@ -1030,7 +1044,7 @@ class JavaToJKTreeBuilder(
 
                 is PsiForeachStatement ->
                     JKForInStatement(
-                        iterationParameter.toJK().asForLoopVariable(),
+                        iterationParameter.toJK() as JKForLoopParameter,
                         with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
                         body?.toJK() ?: blockStatement()
                     )
@@ -1140,7 +1154,7 @@ class JavaToJKTreeBuilder(
      * TODO support not only PsiJavaFile but any PsiElement
      */
     private fun collectNullabilityInfo(element: PsiJavaFile) {
-        val nullityInferrer = J2KNullityInferrer(/* annotateLocalVariables = */ true, element.project)
+        val nullityInferrer = J2KNullityInferrer(element.project)
         try {
             nullityInferrer.collect(element)
         } catch (e: ProcessCanceledException) {
@@ -1292,11 +1306,3 @@ class JavaToJKTreeBuilder(
 
 private const val DEPRECATED_ANNOTATION_FQ_NAME = "java.lang.Deprecated"
 private const val NO_NAME_PROVIDED = "NO_NAME_PROVIDED"
-
-private fun JKParameter.asForLoopVariable() =
-    JKForLoopVariable(
-        JKTypeElement(type.type, type::annotationList.detached()),
-        ::name.detached(),
-        JKStubExpression(),
-        ::annotationList.detached()
-    )

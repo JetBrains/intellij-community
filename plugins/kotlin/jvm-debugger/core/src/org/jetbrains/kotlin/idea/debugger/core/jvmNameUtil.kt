@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.core
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 
 @ApiStatus.Internal
-fun KtFunctionSymbol.getByteCodeMethodName(): String {
+fun KaFunctionSymbol.getByteCodeMethodName(): String {
     val jvmName = annotations
         .filter { it.classId?.asFqNameString() == "kotlin.jvm.JvmName" }
         .firstNotNullOfOrNull {
@@ -30,20 +30,20 @@ fun KtFunctionSymbol.getByteCodeMethodName(): String {
     return name.asString()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
-fun KtDeclarationSymbol.isInlineClass(): Boolean = this is KtNamedClassOrObjectSymbol && this.isInline
+fun KaDeclarationSymbol.isInlineClass(): Boolean = this is KaNamedClassOrObjectSymbol && this.isInline
 
 @ApiStatus.Internal
 @RequiresReadLock
 fun KtDeclaration.getClassName(): String? = analyze(this) {
-    val symbol = getSymbol() as? KtFunctionLikeSymbol ?: return@analyze null
+    val symbol = getSymbol() as? KaFunctionLikeSymbol ?: return@analyze null
     symbol.getJvmInternalClassName()?.internalNameToFqn()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
-fun KtFunctionLikeSymbol.getJvmInternalClassName(): String? {
+fun KaFunctionLikeSymbol.getJvmInternalClassName(): String? {
     val classOrObject = getContainingClassOrObjectSymbol()
     return if (classOrObject == null) {
         val fileSymbol = getContainingFileSymbol() ?: return null
@@ -55,12 +55,12 @@ fun KtFunctionLikeSymbol.getJvmInternalClassName(): String? {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
-fun KtFunctionLikeSymbol.getContainingClassOrObjectSymbol(): KtClassOrObjectSymbol? {
+fun KaFunctionLikeSymbol.getContainingClassOrObjectSymbol(): KaClassOrObjectSymbol? {
     var symbol = getContainingSymbol()
     while (symbol != null) {
-        if (symbol is KtClassOrObjectSymbol) return symbol
+        if (symbol is KaClassOrObjectSymbol) return symbol
         symbol = symbol.getContainingSymbol()
     }
     return null

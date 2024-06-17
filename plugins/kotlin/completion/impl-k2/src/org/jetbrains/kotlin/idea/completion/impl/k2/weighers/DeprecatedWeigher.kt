@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.weighers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
@@ -12,7 +12,7 @@ internal object DeprecatedWeigher {
     const val WEIGHER_ID = "kotlin.deprecated"
     private var LookupElement.isDeprecated: Boolean by NotNullableUserDataProperty(Key("KOTLIN_DEPRECATED"), false)
 
-    context(KtAnalysisSession)
+    context(KaSession)
 fun addWeight(lookupElement: LookupElement, symbol: KtSymbol) {
         lookupElement.isDeprecated = symbol.deprecationStatus != null
     }

@@ -152,7 +152,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     public void addNotify() {
       super.addNotify();
       long time = myPopupTriggeredNanos > 0 ? TimeoutUtil.getDurationMillis(myPopupTriggeredNanos) : -1;
-      PsiFile psiFile = (PsiFile)Utils.getRawDataIfCached(myContext, CommonDataKeys.PSI_FILE.getName());
+      PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(Utils.getCachedOnlyDataContext(myContext));
       Language language = psiFile == null ? null : psiFile.getLanguage();
       boolean coldStart = SEEN_ACTION_GROUPS.add(Objects.hash(myGroup, language));
       UILatencyLogger.ACTION_POPUP_LATENCY.log(EventFields.DurationMs.with(time),

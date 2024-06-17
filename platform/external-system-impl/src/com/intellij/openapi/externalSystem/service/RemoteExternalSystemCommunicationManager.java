@@ -28,7 +28,6 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkPr
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -244,12 +243,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
 
   @Override
   public boolean isAlive(@NotNull RemoteExternalSystemFacade facade) {
-    RemoteExternalSystemFacade toCheck = facade;
-    if (facade instanceof ExternalSystemFacadeWrapper) {
-      toCheck = ((ExternalSystemFacadeWrapper)facade).getDelegate();
-
-    }
-    if (toCheck instanceof InProcessExternalSystemFacadeImpl) {
+    if (facade instanceof InProcessExternalSystemFacadeImpl) {
       return false;
     }
     try {

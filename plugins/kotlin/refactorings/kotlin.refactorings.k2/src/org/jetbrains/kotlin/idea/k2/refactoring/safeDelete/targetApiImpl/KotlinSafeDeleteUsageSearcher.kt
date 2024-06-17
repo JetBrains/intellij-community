@@ -16,9 +16,9 @@ import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
@@ -82,12 +82,12 @@ class KotlinSafeDeleteUsageSearcher : SafeDeleteUsageSearcher {
                     return runReadAction {
                         val classOrObject = ktElement.containingClassOrObject
                         analyze(ktElement) {
-                            val elementClassSymbol = classOrObject?.getSymbol() as? KtClassOrObjectSymbol ?: return@analyze
+                            val elementClassSymbol = classOrObject?.getSymbol() as? KaClassOrObjectSymbol ?: return@analyze
                             val superMethods =
-                                (ktElement.getSymbol() as? KtCallableSymbol)?.getDirectlyOverriddenSymbols() ?: return@analyze
+                                (ktElement.getSymbol() as? KaCallableSymbol)?.getDirectlyOverriddenSymbols() ?: return@analyze
                             val abstractExternalSuper = superMethods.find {
-                                val superClassSymbol = it.getContainingSymbol() as? KtClassOrObjectSymbol ?: return@find false
-                                if ((it as? KtSymbolWithModality)?.modality != Modality.ABSTRACT) return@find false
+                                val superClassSymbol = it.getContainingSymbol() as? KaClassOrObjectSymbol ?: return@find false
+                                if ((it as? KaSymbolWithModality)?.modality != Modality.ABSTRACT) return@find false
                                 return@find !superClassSymbol.isSubClassOf(elementClassSymbol)
                             }
 

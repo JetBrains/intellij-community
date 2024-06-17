@@ -16,7 +16,6 @@ import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.listDirectoryEntries
 
 internal data class FileSource(
   @JvmField val relativePath: String,
@@ -72,15 +71,6 @@ internal suspend fun buildSearchableOptions(
   }
 
   val targetDirectory = context.paths.searchableOptionDir
-  val locales = mutableListOf(Locale.ENGLISH.toLanguageTag())
-  if (!context.isStepSkipped(BuildOptions.LOCALIZE_STEP)) {
-    val localizationDir = getLocalizationDir(context)
-    locales.addAll(
-      localizationDir?.resolve("properties")?.listDirectoryEntries()?.map { it.fileName.toString() }
-      ?: emptyList()
-    )
-  }
-
   // bundled maven is also downloaded during traverseUI execution in an external process,
   // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
   // so it's pre-downloaded with proper synchronization
@@ -99,15 +89,13 @@ internal suspend fun buildSearchableOptions(
     }
   }
 
-  for (langTag in locales) {
-    // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-    // It'll process all UI elements in the `Settings` dialog and build an index for them.
-    productRunner.runProduct(
-      args = listOf("traverseUI", targetDirectory.toString(), "true"),
-      additionalVmProperties = systemProperties + getSystemPropertiesForSearchableOptions(langTag),
-      timeout = DEFAULT_TIMEOUT,
-    )
-  }
+  // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
+  // It'll process all UI elements in the `Settings` dialog and build an index for them.
+  productRunner.runProduct(
+    args = listOf("traverseUI", targetDirectory.toString(), "true"),
+    additionalVmProperties = systemProperties + getSystemPropertiesForSearchableOptions(Locale.ENGLISH.toLanguageTag()),
+    timeout = DEFAULT_TIMEOUT,
+  )
 
   val index = readSearchableOptionIndex(targetDirectory)
   span.setAttribute(AttributeKey.longKey("moduleCountWithSearchableOptions"), index.index.size)

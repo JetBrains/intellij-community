@@ -10,7 +10,7 @@ import com.intellij.find.impl.livePreview.SearchResults.SearchArea
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 
-class SearchInDiffChangesProvider : EditorSearchAreaProvider {
+internal class SearchInDiffChangesProvider : EditorSearchAreaProvider {
 
   override fun isEnabled(editor: Editor, findModel: FindModel): Boolean {
     if (editor.isDisposed) return false

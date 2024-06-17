@@ -18,7 +18,7 @@ internal typealias ValueWriter = IonWriter
 internal val defaultWriteConfiguration = WriteConfiguration()
 internal val LOG = logger<ObjectSerializer>()
 
-val defaultReadConfiguration = ReadConfiguration()
+private val defaultReadConfiguration = ReadConfiguration()
 
 /**
  * @see [VersionedFile]
@@ -112,7 +112,7 @@ object SkipNullAndEmptySerializationFilter : SerializationFilter {
     get() = true
 }
 
-class ObjectIdWriter {
+internal class ObjectIdWriter {
   private val map = Reference2IntOpenHashMap<Any>()
   private var counter = 0
 
@@ -131,7 +131,7 @@ class ObjectIdWriter {
   }
 }
 
-class ObjectIdReader {
+internal class ObjectIdReader {
   private val map = Int2ObjectOpenHashMap<Any>()
 
   fun getObject(id: Int): Any {

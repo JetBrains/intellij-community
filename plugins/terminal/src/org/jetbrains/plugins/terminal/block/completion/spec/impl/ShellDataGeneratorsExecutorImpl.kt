@@ -10,9 +10,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
-import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
-import org.jetbrains.plugins.terminal.exp.CommandFinishedEvent
-import org.jetbrains.plugins.terminal.exp.ShellCommandListener
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
+import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import java.time.Duration
 
 internal class ShellDataGeneratorsExecutorImpl(session: BlockTerminalSession) : ShellDataGeneratorsExecutor {

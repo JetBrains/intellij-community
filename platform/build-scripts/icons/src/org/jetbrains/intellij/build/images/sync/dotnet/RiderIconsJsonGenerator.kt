@@ -82,6 +82,7 @@ object RiderIconsJsonGenerator {
 
     tree.toList()
       .filter { it.first.parent == null }
+      .sortedBy { it.first.name }
       .forEach {
         jsonObj.add(it.first.name, it.second)
       }

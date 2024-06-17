@@ -6,8 +6,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -51,14 +51,14 @@ internal class ConvertToForEachFunctionCallIntention :
     }
 
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtForExpression): Unit? {
         val loopRange = element.loopRange ?: return null
 
         val calleeExpression = loopRange.getPossiblyQualifiedCallExpression()?.calleeExpression
         if (calleeExpression?.text == WITH_INDEX_NAME) {
             if (element.loopParameter?.destructuringDeclaration?.entries?.size != 2) return null
-            val symbol = calleeExpression.mainReference?.resolveToSymbol() as? KtFunctionSymbol ?: return null
+            val symbol = calleeExpression.mainReference?.resolveToSymbol() as? KaFunctionSymbol ?: return null
             if (symbol.callableId?.asSingleFqName() !in withIndexedFunctionFqNames) return null
         }
 
@@ -88,7 +88,7 @@ internal class ConvertToForEachFunctionCallIntention :
         commentSaver.restore(result)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtType.isLoopRangeType(): Boolean {
         fun KtType.fqNameMatches() = (this as? KtUsualClassType)?.classId?.asSingleFqName() in loopRangeTypeFqNames
 

@@ -3,7 +3,7 @@ package com.intellij.externalSystem
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.javaSettings
-import com.intellij.java.workspace.entities.modifyEntity
+import com.intellij.java.workspace.entities.modifyJavaModuleSettingsEntity
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -14,7 +14,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataS
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.serialization.PropertyMapping
 
@@ -43,12 +43,12 @@ internal class JarTaskManifestDataService : WorkspaceDataService<JarTaskManifest
     val moduleEntity = mutableStorage.resolve(ModuleId(moduleName)) ?: return
     val javaSettings = moduleEntity.javaSettings
     if (javaSettings != null) {
-      mutableStorage.modifyEntity(javaSettings) {
+      mutableStorage.modifyJavaModuleSettingsEntity(javaSettings) {
         this.manifestAttributes = manifestAttributes
       }
     }
     else {
-      mutableStorage.modifyEntity(moduleEntity) {
+      mutableStorage.modifyModuleEntity(moduleEntity) {
         this.javaSettings = JavaModuleSettingsEntity(inheritedCompilerOutput = true,
                                                      excludeOutput = true,
                                                      entitySource = moduleEntity.entitySource) {

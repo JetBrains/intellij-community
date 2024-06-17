@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -19,7 +19,7 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
 ) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(basicContext, priority) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinImportDirectivePositionContext,
         weighingContext: WeighingContext,

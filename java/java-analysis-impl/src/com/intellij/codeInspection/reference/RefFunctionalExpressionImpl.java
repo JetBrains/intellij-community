@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implements RefFunctionalExpression {
+  private static final int IS_METHOD_REFERENCE_MASK = 0b1_00000000_00000000; // 17th bit
 
   RefFunctionalExpressionImpl(@NotNull UExpression expr, @NotNull PsiElement psi, @NotNull RefManager manager) {
     super(expr, psi, manager);
@@ -39,6 +40,7 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
       if (uMethodRef != null) {
         setParameters(uMethodRef.getUastParameters());
       }
+      setFlag(true, IS_METHOD_REFERENCE_MASK);
     }
     else {
       assert false;
@@ -86,7 +88,7 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
 
   @Override
   public void addDerivedReference(@NotNull RefOverridable reference) {
-    // do nothing
+    throw new AssertionError("Should not be called!");
   }
 
   @NotNull
@@ -106,6 +108,12 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
   public synchronized boolean hasEmptyBody() {
     LOG.assertTrue(isInitialized());
     return checkFlag(RefMethodImpl.IS_BODY_EMPTY_MASK);
+  }
+
+  @Override
+  public boolean isMethodReference() {
+    LOG.assertTrue(isInitialized());
+    return checkFlag(IS_METHOD_REFERENCE_MASK);
   }
 
   @Override

@@ -23,7 +23,7 @@ open class FileDropHandler(myEditor: Editor?) : EditorDropHandler {
 }
 
 // implementation detail, for platform needs only, must not be exposed as API
-internal class FileEditorDropHandler(private val myEditor: Editor?) : EditorDropHandler {
+internal class FileEditorDropHandler(private val editor: Editor?) : EditorDropHandler {
   override fun canHandleDrop(transferFlavors: Array<DataFlavor>): Boolean {
     return containsFileDropTargets(transferFlavors)
   }
@@ -31,6 +31,6 @@ internal class FileEditorDropHandler(private val myEditor: Editor?) : EditorDrop
   override fun handleDrop(t: Transferable, project: Project?, editorWindowCandidate: EditorWindow?) {
     project ?: return
 
-    project.service<FileDropManager>().scheduleDrop(t, myEditor, editorWindowCandidate)
+    project.service<FileDropManager>().scheduleDrop(t, editor, editorWindowCandidate)
   }
 }

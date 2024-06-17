@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 public abstract class SearchListModel extends AbstractListModel<Object> {
 
   static final Object MORE_ELEMENT = new Object();
+  @ApiStatus.Experimental
+  static final Object HAS_ONLY_SIMILAR_ELEMENT = new Object();
 
   protected final List<SearchEverywhereFoundElementInfo> listElements = new ArrayList<>();
   protected boolean resultsExpired = false;
@@ -54,7 +56,9 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
 
   public Collection<Object> getFoundItems(SearchEverywhereContributor contributor) {
     return listElements.stream()
-      .filter(info -> info.getContributor() == contributor && info.getElement() != MORE_ELEMENT)
+      .filter(info -> info.getContributor() == contributor &&
+                      info.getElement() != MORE_ELEMENT &&
+                      info.getElement() != HAS_ONLY_SIMILAR_ELEMENT)
       .map(info -> info.getElement())
       .collect(Collectors.toList());
   }
@@ -73,13 +77,22 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
 
   public abstract void setHasMore(SearchEverywhereContributor<?> contributor, boolean contributorHasMore);
 
+  @ApiStatus.Experimental
+  public void standardSearchFoundNoResults(SearchEverywhereContributor<?> contributor) { }
+
+  @ApiStatus.Experimental
+  public boolean hasOnlySimilarElements(SearchEverywhereContributor<?> contributor) { return false; }
+
+  @ApiStatus.Experimental
+  public void setHasOnlySimilarElements(SearchEverywhereContributor<?> contributor) { }
+
   public abstract void addElements(List<? extends SearchEverywhereFoundElementInfo> items);
 
   public abstract void removeElement(@NotNull Object item, SearchEverywhereContributor<?> contributor);
 
   public abstract void clearMoreItems();
 
-  public void freezeElements() {}
+  public void freezeElements() { }
 
   public abstract int getIndexToScroll(int currentIndex, boolean scrollDown);
 
@@ -107,12 +120,12 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
 
   @NotNull
   public List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
-    return ContainerUtil.filter(listElements, info -> info.element != MORE_ELEMENT);
+    return ContainerUtil.filter(listElements, info -> info.element != MORE_ELEMENT && info.element != HAS_ONLY_SIMILAR_ELEMENT);
   }
 
   public Map<SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> getFoundElementsMap() {
     return listElements.stream()
-      .filter(info -> info.element != MORE_ELEMENT)
+      .filter(info -> info.element != MORE_ELEMENT && info.element != HAS_ONLY_SIMILAR_ELEMENT)
       .collect(Collectors.groupingBy(o -> o.getContributor(), Collectors.toCollection(ArrayList::new)));
   }
 }

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.fir.codeInsight
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementTestMixIn
 import org.jetbrains.kotlin.idea.core.overrideImplement.AbstractGenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
@@ -30,7 +30,7 @@ internal interface FirOverrideImplementTestMixIn : OverrideImplementTestMixIn<Kt
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun getMemberName(parentClass: KtClassOrObject, chooserObject: KtClassMember): String = allowAnalysisOnEdt {
         analyze(parentClass) {
-            (chooserObject.memberInfo.symbolPointer.restoreSymbol() as? KtNamedSymbol)?.name?.asString() ?: ""
+            (chooserObject.memberInfo.symbolPointer.restoreSymbol() as? KaNamedSymbol)?.name?.asString() ?: ""
         }
     }
 

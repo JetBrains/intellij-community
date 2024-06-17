@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState
-import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemTaskManagerWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
@@ -86,7 +85,7 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
              */
             fun processListener(processHandler: ExternalSystemProcessHandler) = object : ProcessListener {
                 /**
-                 * Quirk in [ExternalSystemTaskManagerWrapper.executeTasks]:
+                 * Quirk in [com.intellij.openapi.externalSystem.service.internal.AbstractExternalSystemTask.execute]:
                  * In case of a build failure, the 'onFailure' call will terminate the process and invoke
                  * the 'processTerminated' listeners first.
                  *

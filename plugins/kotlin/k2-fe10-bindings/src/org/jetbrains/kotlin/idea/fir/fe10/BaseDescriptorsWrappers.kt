@@ -7,9 +7,9 @@ import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.*
@@ -49,7 +49,7 @@ internal fun Fe10WrapperContext.containerDeclarationImplementationPostponed(): N
     implementationPostponed("It isn't clear what we really need and how to implement it")
 
 interface KtSymbolBasedNamed : Named {
-    val ktSymbol: KtNamedSymbol
+    val ktSymbol: KaNamedSymbol
     override fun getName(): Name = ktSymbol.name
 }
 
@@ -64,13 +64,13 @@ private fun Visibility.toDescriptorVisibility(): DescriptorVisibility =
         else -> error("Unknown visibility: $this")
     }
 
-private fun KtClassKind.toDescriptorKlassKind(): ClassKind =
+private fun KaClassKind.toDescriptorKlassKind(): ClassKind =
     when (this) {
-        KtClassKind.CLASS -> ClassKind.CLASS
-        KtClassKind.ENUM_CLASS -> ClassKind.ENUM_CLASS
-        KtClassKind.ANNOTATION_CLASS -> ClassKind.ANNOTATION_CLASS
-        KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT, KtClassKind.ANONYMOUS_OBJECT -> ClassKind.OBJECT
-        KtClassKind.INTERFACE -> ClassKind.INTERFACE
+        KaClassKind.CLASS -> ClassKind.CLASS
+        KaClassKind.ENUM_CLASS -> ClassKind.ENUM_CLASS
+        KaClassKind.ANNOTATION_CLASS -> ClassKind.ANNOTATION_CLASS
+        KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.ANONYMOUS_OBJECT -> ClassKind.OBJECT
+        KaClassKind.INTERFACE -> ClassKind.INTERFACE
     }
 
 private fun KtSymbolOrigin.toCallableDescriptorKind(): CallableMemberDescriptor.Kind = when (this) {
@@ -143,7 +143,7 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: Fe10WrapperContex
     abstract val ktSymbol: KtSymbol
     override val annotations: Annotations
         get() {
-            val ktAnnotations = (ktSymbol as? KtAnnotatedSymbol)?.annotations ?: return Annotations.EMPTY
+            val ktAnnotations = (ktSymbol as? KaAnnotatedSymbol)?.annotations ?: return Annotations.EMPTY
             return Annotations.create(ktAnnotations.map { KtSymbolBasedAnnotationDescriptor(it, context) })
         }
 
@@ -230,11 +230,11 @@ class Fe10BindingReceiverParameterDescriptorImpl(
     override fun hashCode(): Int = 31 * containingDeclaration.hashCode() + value.type.hashCode()
 }
 
-class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSymbol, context: Fe10WrapperContext) :
+class KtSymbolBasedClassDescriptor(override val ktSymbol: KaNamedClassOrObjectSymbol, context: Fe10WrapperContext) :
     KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, ClassDescriptor {
 
     override fun isInner(): Boolean = ktSymbol.isInner
-    override fun isCompanionObject(): Boolean = ktSymbol.classKind == KtClassKind.COMPANION_OBJECT
+    override fun isCompanionObject(): Boolean = ktSymbol.classKind == KaClassKind.COMPANION_OBJECT
     override fun isData(): Boolean = ktSymbol.isData
     override fun isInline(): Boolean = ktSymbol.isInline // seems like th`is `flag should be removed in favor of isValue
     override fun isValue(): Boolean = ktSymbol.isInline
@@ -300,7 +300,7 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSy
 }
 
 class KtSymbolBasedTypeParameterDescriptor(
-    override val ktSymbol: KtTypeParameterSymbol, context: Fe10WrapperContext
+    override val ktSymbol: KaTypeParameterSymbol, context: Fe10WrapperContext
 ) : KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, TypeParameterDescriptor {
     override fun isReified(): Boolean = ktSymbol.isReified
     override fun getVariance(): Variance = ktSymbol.variance
@@ -327,7 +327,7 @@ class KtSymbolBasedTypeParameterDescriptor(
 
 abstract class KtSymbolBasedFunctionLikeDescriptor(context: Fe10WrapperContext) :
     KtSymbolBasedDeclarationDescriptor(context), FunctionDescriptor {
-    abstract override val ktSymbol: KtFunctionLikeSymbol
+    abstract override val ktSymbol: KaFunctionLikeSymbol
 
     override fun getReturnType(): KotlinType = ktSymbol.returnType.toKotlinType(context)
 
@@ -360,7 +360,7 @@ abstract class KtSymbolBasedFunctionLikeDescriptor(context: Fe10WrapperContext) 
     ): FunctionDescriptor = noImplementation()
 }
 
-class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KtFunctionSymbol, context: Fe10WrapperContext) :
+class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KaFunctionSymbol, context: Fe10WrapperContext) :
     KtSymbolBasedFunctionLikeDescriptor(context),
     SimpleFunctionDescriptor,
     KtSymbolBasedNamed {
@@ -390,7 +390,7 @@ class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KtFunctionSymbol, c
             ktSymbol.getAllOverriddenSymbols()
         }
 
-        return overriddenKtSymbols.map { KtSymbolBasedFunctionDescriptor(it as KtFunctionSymbol, context) }
+        return overriddenKtSymbols.map { KtSymbolBasedFunctionDescriptor(it as KaFunctionSymbol, context) }
     }
 
     override fun copy(
@@ -408,7 +408,7 @@ class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KtFunctionSymbol, c
 }
 
 class KtSymbolBasedConstructorDescriptor(
-    override val ktSymbol: KtConstructorSymbol,
+    override val ktSymbol: KaConstructorSymbol,
     private val ktSBClassDescriptor: KtSymbolBasedClassDescriptor
 ) : KtSymbolBasedFunctionLikeDescriptor(ktSBClassDescriptor.context),
     ClassConstructorDescriptor {
@@ -455,7 +455,7 @@ class KtSymbolBasedConstructorDescriptor(
 }
 
 class KtSymbolBasedAnonymousFunctionDescriptor(
-    override val ktSymbol: KtAnonymousFunctionSymbol,
+    override val ktSymbol: KaAnonymousFunctionSymbol,
     context: Fe10WrapperContext
 ) : KtSymbolBasedFunctionLikeDescriptor(context), SimpleFunctionDescriptor {
     override fun getName(): Name = SpecialNames.ANONYMOUS
@@ -497,20 +497,20 @@ class KtSymbolBasedAnonymousFunctionDescriptor(
     override fun newCopyBuilder(): FunctionDescriptor.CopyBuilder<out SimpleFunctionDescriptor> = noImplementation()
 }
 
-private fun KtSymbolBasedDeclarationDescriptor.getDispatchReceiverParameter(ktSymbol: KtCallableSymbol): ReceiverParameterDescriptor? {
+private fun KtSymbolBasedDeclarationDescriptor.getDispatchReceiverParameter(ktSymbol: KaCallableSymbol): ReceiverParameterDescriptor? {
     val ktDispatchTypeAndAnnotations = context.withAnalysisSession { ktSymbol.getDispatchReceiverType() } ?: return null
     return KtSymbolStubDispatchReceiverParameterDescriptor(ktDispatchTypeAndAnnotations, context)
 }
 
 private fun <T> T.getExtensionReceiverParameter(
-    ktSymbol: KtCallableSymbol,
+    ktSymbol: KaCallableSymbol,
 ): ReceiverParameterDescriptor? where T : KtSymbolBasedDeclarationDescriptor, T : CallableDescriptor {
     val receiverType = ktSymbol.receiverType ?: return null
     val receiverValue = ExtensionReceiver(this, receiverType.toKotlinType(context), null)
     return Fe10BindingReceiverParameterDescriptorImpl(this, receiverValue, receiverType.getDescriptorsAnnotations(context))
 }
 
-private fun KtSymbolBasedDeclarationDescriptor.getTypeParameters(ktSymbol: KtSymbolWithTypeParameters) =
+private fun KtSymbolBasedDeclarationDescriptor.getTypeParameters(ktSymbol: KaSymbolWithTypeParameters) =
     ktSymbol.typeParameters.map { KtSymbolBasedTypeParameterDescriptor(it, context) }
 
 private class KtSymbolBasedReceiverValue(val ktType: KtType, val context: Fe10WrapperContext) : ReceiverValue {
@@ -534,7 +534,7 @@ private class KtSymbolStubDispatchReceiverParameterDescriptor(
 }
 
 class KtSymbolBasedValueParameterDescriptor(
-    override val ktSymbol: KtValueParameterSymbol,
+    override val ktSymbol: KaValueParameterSymbol,
     context: Fe10WrapperContext,
     val containingDeclaration: KtSymbolBasedFunctionLikeDescriptor,
     index: Int = -1,
@@ -666,7 +666,7 @@ abstract class AbstractKtSymbolBasedPropertyDescriptor(
     override fun getModality(): Modality = when (ktSymbol) {
         is KtJavaFieldSymbol -> (ktSymbol as KtJavaFieldSymbol).modality
         is KtPropertySymbol -> (ktSymbol as KtPropertySymbol).modality
-        is KtLocalVariableSymbol -> Modality.FINAL
+        is KaLocalVariableSymbol -> Modality.FINAL
     }
 
     override fun isExpect(): Boolean = implementationPostponed()
@@ -736,7 +736,7 @@ class KtSymbolBasedPropertyDescriptor(
 }
 
 class KtSymbolBasedLocalVariableDescriptor(
-    override val ktSymbol: KtLocalVariableSymbol,
+    override val ktSymbol: KaLocalVariableSymbol,
     context: Fe10WrapperContext
 ) : AbstractKtSymbolBasedPropertyDescriptor(context), VariableDescriptorWithAccessors {
 
@@ -756,7 +756,7 @@ class KtSymbolBasedLocalVariableDescriptor(
 abstract class KtSymbolBasedVariableAccessorDescriptor(
     val propertyDescriptor: KtSymbolBasedPropertyDescriptor
 ) : KtSymbolBasedDeclarationDescriptor(propertyDescriptor.context), VariableAccessorDescriptor {
-    abstract override val ktSymbol: KtPropertyAccessorSymbol
+    abstract override val ktSymbol: KaPropertyAccessorSymbol
 
     override fun getPackageFqNameIfTopLevel(): FqName = error("should be called")
     override fun getContainingDeclaration(): DeclarationDescriptor = propertyDescriptor
@@ -809,7 +809,7 @@ abstract class KtSymbolBasedVariableAccessorDescriptor(
 }
 
 class KtSymbolBasedPropertyGetterDescriptor(
-    override val ktSymbol: KtPropertyGetterSymbol,
+    override val ktSymbol: KaPropertyGetterSymbol,
     propertyDescriptor: KtSymbolBasedPropertyDescriptor
 ) : KtSymbolBasedVariableAccessorDescriptor(propertyDescriptor), PropertyGetterDescriptor {
     override fun getReturnType(): KotlinType = propertyDescriptor.returnType
@@ -832,7 +832,7 @@ class KtSymbolBasedPropertyGetterDescriptor(
 }
 
 class KtSymbolBasedPropertySetterDescriptor(
-    override val ktSymbol: KtPropertySetterSymbol,
+    override val ktSymbol: KaPropertySetterSymbol,
     propertyDescriptor: KtSymbolBasedPropertyDescriptor
 ) : KtSymbolBasedVariableAccessorDescriptor(propertyDescriptor), PropertySetterDescriptor {
     override fun getReturnType(): KotlinType = propertyDescriptor.returnType
@@ -880,7 +880,7 @@ class KtSymbolBasedPackageFragmentDescriptor(
 }
 
 class KtSymbolBasedTypeAliasDescriptor(
-    override val ktSymbol: KtTypeAliasSymbol,
+    override val ktSymbol: KaTypeAliasSymbol,
     context: Fe10WrapperContext
 ) : KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, TypeAliasDescriptor {
     override val classDescriptor: ClassDescriptor?

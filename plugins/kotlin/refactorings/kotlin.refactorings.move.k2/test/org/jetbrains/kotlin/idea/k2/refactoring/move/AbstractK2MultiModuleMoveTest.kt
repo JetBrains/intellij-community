@@ -9,12 +9,12 @@ import org.jetbrains.kotlin.idea.refactoring.move.AbstractMultiModuleMoveTest
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 
 abstract class AbstractK2MultiModuleMoveTest : AbstractMultiModuleMoveTest() {
-
     override fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
         val action = when (config.getString("type")) {
-            "MOVE_FILES", "MOVE_FILES_WITH_DECLARATIONS" -> K2MoveFileRefactoringAction
-            "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS" -> K2MoveTopLevelRefactoringAction
             "MOVE_PACKAGES" -> K2MovePackageRefactoringAction
+            "MOVE_DIRECTORY_WITH_CLASSES" -> K2MoveDirectoryRefactoringAction
+            "MOVE_FILES", "MOVE_FILES_WITH_DECLARATIONS" -> K2MoveFileOrDirectoriesRefactoringAction
+            "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS" -> K2MoveTopLevelRefactoringAction
             else -> throw IllegalArgumentException("Unsupported move refactoring type")
         }
         runRefactoringTest(path, config, rootDir, project, action)

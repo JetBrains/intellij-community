@@ -28,7 +28,7 @@ object OpenTelemetryRawTraceExporter {
               HttpResponse.BodyHandlers.discarding())
     }
     catch (e: Exception) {
-      LOG.error("Unable to upload performance traces to the OTLP server")
+      LOG.warn("Unable to upload performance traces to the OTLP server ($targetUri)")
     }
   }
 }

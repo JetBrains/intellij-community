@@ -51,16 +51,12 @@ import java.nio.file.Path
 import java.util.function.Function
 import kotlin.coroutines.cancellation.CancellationException
 
-val WORKSPACE_CONFIGURATOR_EP: ExtensionPointName<MavenWorkspaceConfigurator> = ExtensionPointName.create(
-  "org.jetbrains.idea.maven.importing.workspaceConfigurator")
 internal val AFTER_IMPORT_CONFIGURATOR_EP: ExtensionPointName<MavenAfterImportConfigurator> = ExtensionPointName.create(
   "org.jetbrains.idea.maven.importing.afterImportConfigurator")
 
 @TestOnly
 @Internal
 var WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = false
-
-internal val ARTIFACT_MODEL_KEY = Key.create<ImporterModifiableArtifactModel>("ARTIFACT_MODEL_KEY")
 
 @Internal
 val NOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY = Key.create<Boolean>("NOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY")
@@ -76,7 +72,7 @@ internal open class WorkspaceProjectImporter(
   private val createdModulesList = java.util.ArrayList<Module>()
 
   protected open fun workspaceConfigurators(): List<MavenWorkspaceConfigurator> {
-    return WORKSPACE_CONFIGURATOR_EP.extensionList
+    return MavenWorkspaceConfigurator.EXTENSION_POINT_NAME.extensionList
   }
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
@@ -101,13 +97,10 @@ internal open class WorkspaceProjectImporter(
     builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenProjectsTreeEntitySource))
 
     val contextData = UserDataHolderBase()
-    ARTIFACT_MODEL_KEY[contextData] = ImporterModifiableArtifactModel(myProject, builder)
 
     val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
       importModules(storageBeforeImport, builder, allProjectsToChanges, mavenProjectToModuleName, contextData, stats).also {
         beforeModelApplied(it, builder, contextData, stats)
-      }.apply {
-        ARTIFACT_MODEL_KEY[contextData].applyToStorage()
       }
     }
     val appliedProjectsWithModules = stats.recordPhase(MavenImportCollector.WORKSPACE_COMMIT_PHASE) {
@@ -118,7 +111,7 @@ internal open class WorkspaceProjectImporter(
       configLegacyFacets(appliedProjectsWithModules, mavenProjectToModuleName, postTasks, activity)
     }
 
-    MavenProjectImporterBase.scheduleRefreshResolvedArtifacts(postTasks, projectChangesInfo.changedProjectsOnly)
+    MavenProjectImporterUtil.scheduleRefreshResolvedArtifacts(postTasks, projectChangesInfo.changedProjectsOnly)
 
     createdModulesList.addAll(appliedProjectsWithModules.flatMap { it.modules.asSequence().map { it.module } })
 
@@ -424,8 +417,8 @@ internal open class WorkspaceProjectImporter(
           // Move source root if it doesn't exist already
           from.sourceRoots.forEach {
             if (to.sourceRoots.none { root -> root.url == it.url }) {
-              currentStorage.modifyEntity(it) sourceRoot@{
-                currentStorage.modifyEntity(to) contentRoot@{
+              currentStorage.modifySourceRootEntity(it) sourceRoot@{
+                currentStorage.modifyContentRootEntity(to) contentRoot@{
                   this@sourceRoot.contentRoot = this@contentRoot
                 }
               }
@@ -435,8 +428,8 @@ internal open class WorkspaceProjectImporter(
           // Move exclude if it doesn't exist already
           from.excludedUrls.forEach {
             if (to.excludedUrls.none { root -> root.url == it.url }) {
-              currentStorage.modifyEntity(it) sourceRoot@{
-                currentStorage.modifyEntity(to) contentRoot@{
+              currentStorage.modifyExcludeUrlEntity(it) sourceRoot@{
+                currentStorage.modifyContentRootEntity(to) contentRoot@{
                   this@sourceRoot.contentRoot = this@contentRoot
                 }
               }
@@ -547,16 +540,16 @@ internal open class WorkspaceProjectImporter(
     val legacyFacetImporters = mavenProjectsWithModules.flatMap { projectWithModules ->
       projectWithModules.modules.asSequence().mapNotNull { moduleWithType ->
         val importers = MavenImporter.getSuitableImporters(projectWithModules.mavenProject, true)
-        MavenLegacyModuleImporter.ExtensionImporter.createIfApplicable(projectWithModules.mavenProject,
-                                                                       moduleWithType.module,
-                                                                       moduleWithType.type,
-                                                                       myProjectsTree,
-                                                                       projectWithModules.changes,
-                                                                       moduleNameByProject,
-                                                                       importers)
+        MavenProjectImporterUtil.LegacyExtensionImporter.createIfApplicable(projectWithModules.mavenProject,
+                                                                            moduleWithType.module,
+                                                                            moduleWithType.type,
+                                                                            myProjectsTree,
+                                                                            projectWithModules.changes,
+                                                                            moduleNameByProject,
+                                                                            importers)
       }
     }
-    MavenProjectImporterBase.importExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
+    MavenProjectImporterUtil.importLegacyExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
   }
 
   override fun createdModules(): List<Module> {
@@ -599,7 +592,7 @@ internal open class WorkspaceProjectImporter(
                                              workspaceModel.getVirtualFileUrlManager(),
                                              mavenManager.importingSettings,
                                              folderImportingContext,
-                                             WORKSPACE_CONFIGURATOR_EP.extensionList)
+                                             MavenWorkspaceConfigurator.EXTENSION_POINT_NAME.extensionList)
 
       var numberOfModules = 0
       readMavenExternalSystemData(builder).forEach { data ->

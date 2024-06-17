@@ -43,12 +43,10 @@ import com.intellij.ui.GroupedElementsRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
-import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.PopupListElementRenderer
-import com.intellij.util.PlatformUtils
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -83,9 +81,7 @@ private const val TAG_REGULAR_SHOW = "regular-show" // shown regularly
 private const val TAG_REGULAR_DUPE = "regular-dupe" // shown regularly until search (pinned/recent duplicate)
 private const val TAG_HIDDEN = "hidden"             // hidden until search
 
-class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification {
-  override fun getBehavior() = if (PlatformUtils.isRider() || PlatformUtils.isCLion()) ActionRemoteBehavior.FrontendThenBackend else ActionRemoteBehavior.BackendOnly
-
+class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
     val selectedFile = e.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR)?.file
@@ -221,8 +217,8 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
     list.setExpandableItemsEnabled(false)
     (myStep as ActionPopupStep).setSubStepContextAdjuster { context, action ->
       if (action is SelectConfigAction) {
-        CustomizedDataContext.create(context) { dataId ->
-          if (RUN_CONFIGURATION_KEY.`is`(dataId)) action.configuration else null
+        CustomizedDataContext.withSnapshot(context) { sink ->
+          sink[RUN_CONFIGURATION_KEY] = action.configuration
         }
       }
       else context
@@ -333,10 +329,11 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
   }
 }
 
-open class AllRunConfigurationsToggle : DumbAwareToggleAction(), KeepingPopupOpenAction, ActionRemoteBehaviorSpecification {
+open class AllRunConfigurationsToggle : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
   override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
+  override fun isSoftMultiChoice(): Boolean = false
 
   override fun isSelected(e: AnActionEvent): Boolean = RunConfigurationStartHistory.getInstance(e.project!!).state.allConfigurationsExpanded
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.trigger", 8);
   private static final StringEventField CONTEXT = EventFields.String("context", List.of("history", "log"));

@@ -14,11 +14,11 @@ codegen-units = 1
 
 [dependencies]
 log = { version = "0.4.21", features = ["std"] }
-serde = { version = "1.0.200", features = ["derive"] }
-serde_json = "1.0.116"
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
 jni = "0.21.1"
 libloading = "0.8.0"
-anyhow = { version = "1.0.81", features = ["std", "backtrace"] }
+anyhow = { version = "1.0.86", features = ["std", "backtrace"] }
 
 [target.'cfg(not(all(target_os = "windows", target_arch = "aarch64")))'.dependencies]
 va_list = "0.1.4"
@@ -46,7 +46,7 @@ cargo-deny = "0.14.21"  # checks licenses and problematic dependencies
 cargo-about = "0.6.1"   # generates license report
 
 [build-dependencies]
-anyhow = { version = "1.0.82", features = ["std", "backtrace"] }
+anyhow = { version = "1.0.86", features = ["std", "backtrace"] }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 reqwest = { version = "0.12.0", features = ["blocking"] }

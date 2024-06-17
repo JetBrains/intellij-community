@@ -21,6 +21,7 @@ fun stdlibJs() {
 @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 fun stdlibNative(param: kotlinx.cinterop.CFunction<*>) {}
 
+@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 fun nativeDistPosix(param: platform.posix.DIR) {}
 
 fun nativeDistFoundation(param: platform.<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'Foundation'.'")!>Foundation<!>.NSArray) {}

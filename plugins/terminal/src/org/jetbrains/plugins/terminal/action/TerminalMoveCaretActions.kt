@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
-import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
-import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalPromptModel
+import org.jetbrains.plugins.terminal.block.TerminalPromotedEditorAction
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import kotlin.math.max

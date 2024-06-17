@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-class ArtifactDescriptorResultData {
+public class ArtifactDescriptorResultData {
   private final Artifact artifact;
   private final ArtifactRepository repository;
   private final List<Exception> exceptions;
@@ -67,7 +67,7 @@ class ArtifactDescriptorResultData {
     return repository;
   }
 
-  List<Exception> getExceptions() {
+  public List<Exception> getExceptions() {
     return exceptions;
   }
 

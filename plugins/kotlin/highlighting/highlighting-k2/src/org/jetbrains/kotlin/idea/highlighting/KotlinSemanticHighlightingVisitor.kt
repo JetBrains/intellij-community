@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.highlighting.highlighters.*
 import org.jetbrains.kotlin.psi.KtFile
@@ -35,8 +35,8 @@ class KotlinSemanticHighlightingVisitor : HighlightVisitor {
                 action.run()
             } finally {
                 /*
-            `analyzers` store a reference to `KtAnalysisSession`.
-            This hack is needed to avoid `KtAnalysisSession` leak into the project via `HighlightVisitor` EP.
+            `analyzers` store a reference to `KaSession`.
+            This hack is needed to avoid `KaSession` leak into the project via `HighlightVisitor` EP.
              */
                 analyzers = null
             }
@@ -45,7 +45,7 @@ class KotlinSemanticHighlightingVisitor : HighlightVisitor {
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createSemanticAnalyzers(holder: HighlightInfoHolder): Array<KtVisitorVoid> = arrayOf(
         TypeHighlighter(holder),
         FunctionCallHighlighter(holder),

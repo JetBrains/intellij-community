@@ -4,6 +4,7 @@ package com.intellij.ui.components
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.*
@@ -169,7 +170,11 @@ open class JBHtmlPane(
 
   override fun setText(t: @Nls String?) {
     myText = t?.let { service.transpileHtmlPaneInput(it) } ?: ""
-    super.setText(myText)
+    try {
+      super.setText(myText)
+    } catch (e: Throwable) {
+      thisLogger().error("Failed to set contents of the HTML pane", e)
+    }
   }
 
   override fun setEditorKit(kit: EditorKit) {

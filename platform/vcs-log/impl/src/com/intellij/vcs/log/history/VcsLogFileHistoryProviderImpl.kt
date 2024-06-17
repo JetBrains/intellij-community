@@ -20,8 +20,9 @@ import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 
-class VcsLogFileHistoryProviderImpl(private val project: Project) : VcsLogFileHistoryProvider {
+internal class VcsLogFileHistoryProviderImpl(private val project: Project) : VcsLogFileHistoryProvider {
 
   override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean {
     return canShowFileHistory(project, paths, revisionNumber)
@@ -46,11 +47,12 @@ private fun selectProvider(project: Project, paths: Collection<FilePath>, revisi
   }
 }
 
-interface FileHistoryLogUiProvider {
+internal interface FileHistoryLogUiProvider {
   fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean
   fun showFileHistoryUi(project: Project, paths: Collection<FilePath>, revisionNumber: String?, selectRow: Boolean = true): VcsLogUiEx?
 }
 
+@ApiStatus.Internal
 object VcsLogDirectoryHistoryProvider : FileHistoryLogUiProvider {
   override fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
     if (paths.isEmpty()) return false
@@ -161,7 +163,9 @@ private object VcsLogSingleFileHistoryProvider : FileHistoryLogUiProvider {
   }
 }
 
+@ApiStatus.Internal
 fun isNewHistoryEnabled() = Registry.`is`("vcs.new.history")
+@ApiStatus.Internal
 fun isNewFileHistoryAvailable(project: Project, logProvider: VcsLogProvider?): Boolean {
   return logProvider?.diffHandler != null && logProvider.getFileHistoryHandler(project) != null
 }

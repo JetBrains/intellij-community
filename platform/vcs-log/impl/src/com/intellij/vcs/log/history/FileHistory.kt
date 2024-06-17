@@ -146,6 +146,7 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   }
 }
 
+@ApiStatus.Internal
 fun removeTrivialMerges(controller: LinearGraphController,
                         permanentGraphInfo: PermanentGraphInfo<Int>,
                         fileHistoryData: FileHistoryData,

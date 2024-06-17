@@ -1,15 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec
 
-import com.intellij.terminal.completion.spec.ShellCommandSpec
-import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
-import com.intellij.terminal.completion.spec.ShellSuggestionType
+import com.intellij.terminal.completion.spec.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCommandSpecImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandSpecsManagerImpl
+import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import java.io.File
 
 @ApiStatus.Experimental
@@ -32,9 +29,9 @@ object ShellDataGenerators {
     val key = if (onlyDirectories) "directories" else "files"
     return ShellRuntimeDataGenerator(
       debugName = key,
-      getCacheKey = { "$key:${getParentPath(it.typedPrefix)}" }
+      getCacheKey = { "$key:${getParentPath(it.typedPrefix, it.shellName)}" }
     ) { context ->
-      val path = getParentPath(context.typedPrefix)
+      val path = getParentPath(context.typedPrefix, context.shellName)
       val files: List<String> = context.getChildFiles(path, onlyDirectories)
       val prefixReplacementIndex = path.length + if (context.typedPrefix.startsWith('"')) 1 else 0
       val suggestions = files.flatMap {
@@ -116,14 +113,22 @@ object ShellDataGenerators {
    * 1. `file.txt` -> `<empty>`
    * 2. `src/file.txt` -> `src/`
    * 3. `/usr/b` -> `/usr/`
+   *
+   * If [shellName] is PowerShell, then this function considers both slash `/` and backslash `\` as path separators.
    */
-  fun getParentPath(typedPrefix: String): String {
+  fun getParentPath(typedPrefix: String, shellName: ShellName): String {
     val separator = File.separatorChar
+    val pathSeparators = if (shellName.isPowerShell()) {
+      val oppositeSeparator = if (separator == '/') '\\' else '/'
+      charArrayOf(separator, oppositeSeparator)
+    }
+    else charArrayOf(separator)
     // Remove possible quotes before and after
     // TODO: quotes should not be handled there, typed prefix should already contain no quotes.
     val adjustedPrefix = typedPrefix.removePrefix("\"").removeSuffix("'")
-    return if (adjustedPrefix.contains(separator)) {
-      adjustedPrefix.substringBeforeLast(separator) + separator
+    val lastSeparatorIndex = adjustedPrefix.lastIndexOfAny(pathSeparators)
+    return if (lastSeparatorIndex != -1) {
+      adjustedPrefix.substring(0, lastSeparatorIndex + 1)
     }
     else ""
   }

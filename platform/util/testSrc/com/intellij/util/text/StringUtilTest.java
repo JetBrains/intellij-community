@@ -612,6 +612,19 @@ public class StringUtilTest {
     assertFileSizeFormat("1 TB", 999_995_000_000L);
   }
 
+  @Test
+  public void testFormatFileSizeFixedPrecision() {
+    assertEquals("10.00 B", StringUtil.formatFileSize(10, " ", -1, true));
+    assertEquals("100.00 B", StringUtil.formatFileSize(100, " ", -1, true));
+    assertEquals("1.00 kB", StringUtil.formatFileSize(1_000, " ", -1, true));
+    assertEquals("10.00 kB", StringUtil.formatFileSize(10_000, " ", -1, true));
+    assertEquals("100.00 kB", StringUtil.formatFileSize(100_000, " ", -1, true));
+    assertEquals("1.00 MB", StringUtil.formatFileSize(1_000_000, " ", -1, true));
+    assertEquals("10.00 MB", StringUtil.formatFileSize(10_000_000, " ", -1, true));
+    assertEquals("100.00 MB", StringUtil.formatFileSize(100_000_000, " ", -1, true));
+    assertEquals("1.00 GB", StringUtil.formatFileSize(1_000_000_000, " ", -1, true));
+  }
+
   private void assertFileSizeFormat(String expectedFormatted, long sizeBytes) {
     assertEquals(expectedFormatted.replace('.', myDecimalSeparator), StringUtil.formatFileSize(sizeBytes));
   }

@@ -214,9 +214,6 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
 
     WriteCommandAction.writeCommandAction(project).run<IOException> { p1.delete(this) }
 
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-
     importProjects(p1, p2)
 
     assertModules("p2")

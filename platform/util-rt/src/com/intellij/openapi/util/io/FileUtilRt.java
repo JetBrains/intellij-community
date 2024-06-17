@@ -779,63 +779,8 @@ public final class FileUtilRt {
     deleteRecursively(path, null);
   }
 
-  public interface DeleteRecursivelyCallback {
-    void onDelete(Path path) throws IOException;
-  }
-
-  public static class DeleteFileVisitor extends SimpleFileVisitor<Path> {
-    private final @NotNull DeleteRecursivelyCallback callback;
-
-    public DeleteFileVisitor(@NotNull DeleteRecursivelyCallback callback) {
-      this.callback = callback;
-    }
-
-    @Override
-    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-      if (SystemInfoRt.isWindows && attrs.isOther()) {
-        // probably an NTFS reparse point
-        callback.onDelete(dir);
-        return FileVisitResult.SKIP_SUBTREE;
-      }
-      else {
-        return FileVisitResult.CONTINUE;
-      }
-    }
-
-    @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-      callback.onDelete(file);
-      return FileVisitResult.CONTINUE;
-    }
-
-    @Override
-    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-      try {
-        callback.onDelete(dir);
-        return FileVisitResult.CONTINUE;
-      }
-      catch (IOException e) {
-        if (exc != null) {
-          exc.addSuppressed(e);
-          throw exc;
-        }
-        else {
-          throw e;
-        }
-      }
-    }
-
-    @Override
-    public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-      if (SystemInfoRt.isWindows && exc instanceof NoSuchFileException) {
-        // could be an aimless junction
-        callback.onDelete(file);
-        return FileVisitResult.CONTINUE;
-      }
-      else {
-        throw exc;
-      }
-    }
+  interface DeleteRecursivelyCallback {
+    void beforeDeleting(Path path);
   }
 
   static void deleteRecursively(@NotNull Path path, @Nullable final DeleteRecursivelyCallback callback) throws IOException {
@@ -844,13 +789,56 @@ public final class FileUtilRt {
     }
 
     try {
-      Files.walkFileTree(path, new DeleteFileVisitor(new DeleteRecursivelyCallback() {
+      Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
         @Override
-        public void onDelete(Path path) throws IOException {
-          if (callback != null) callback.onDelete(path);
-          doDelete(path);
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+          if (SystemInfoRt.isWindows && attrs.isOther()) {
+            // probably an NTFS reparse point
+            doDelete(dir);
+            return FileVisitResult.SKIP_SUBTREE;
+          }
+          else {
+            return FileVisitResult.CONTINUE;
+          }
         }
-      }));
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          if (callback != null) callback.beforeDeleting(file);
+          doDelete(file);
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+          try {
+            if (callback != null) callback.beforeDeleting(dir);
+            doDelete(dir);
+            return FileVisitResult.CONTINUE;
+          }
+          catch (IOException e) {
+            if (exc != null) {
+              exc.addSuppressed(e);
+              throw exc;
+            }
+            else {
+              throw e;
+            }
+          }
+        }
+
+        @Override
+        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+          if (SystemInfoRt.isWindows && exc instanceof NoSuchFileException) {
+            // could be an aimless junction
+            doDelete(file);
+            return FileVisitResult.CONTINUE;
+          }
+          else {
+            throw exc;
+          }
+        }
+      });
     }
     catch (NoSuchFileException ignored) {
     }

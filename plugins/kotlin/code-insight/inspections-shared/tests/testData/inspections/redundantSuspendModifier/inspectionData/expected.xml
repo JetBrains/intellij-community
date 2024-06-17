@@ -1,7 +1,7 @@
 <problems>
     <problem>
         <file>test.kt</file>
-        <line>13</line>
+        <line>8</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
@@ -9,7 +9,7 @@
     </problem>
     <problem>
         <file>test.kt</file>
-        <line>33</line>
+        <line>22</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
@@ -17,7 +17,7 @@
     </problem>
     <problem>
         <file>test.kt</file>
-        <line>35</line>
+        <line>42</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
@@ -25,7 +25,31 @@
     </problem>
     <problem>
         <file>test.kt</file>
-        <line>40</line>
+        <line>44</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>49</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>56</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>76</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>

@@ -5,11 +5,11 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
     FirCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(basicContext, priority) {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinExpressionNameReferencePositionContext,
         weighingContext: WeighingContext,
@@ -44,7 +44,7 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
         if (valueArgument.getArgumentName() != null) return
 
         val candidates = collectCallCandidates(callElement)
-            .mapNotNull { it.candidate as? KtFunctionCall<*> }
+            .mapNotNull { it.candidate as? KaFunctionCall<*> }
             .filter { it.partiallyAppliedSymbol.symbol.hasStableParameterNames }
 
         val namedArgumentInfos = buildList {
@@ -89,10 +89,10 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
         val indexedTypes: List<IndexedValue<KtType>>
     )
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectNamedArgumentInfos(
         callElement: KtCallElement,
-        candidates: List<KtFunctionCall<*>>,
+        candidates: List<KaFunctionCall<*>>,
         currentArgumentIndex: Int
     ): List<NamedArgumentInfo> {
         val argumentsBeforeCurrent = callElement.valueArgumentList?.arguments?.take(currentArgumentIndex) ?: return emptyList()
@@ -107,12 +107,12 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
         return nameToTypes.map { (name, types) -> NamedArgumentInfo(name, types.toList()) }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectNotUsedIndexedParameterCandidates(
         callElement: KtCallElement,
-        candidate: KtFunctionCall<*>,
+        candidate: KaFunctionCall<*>,
         argumentsBeforeCurrent: List<KtValueArgument>
-    ): List<IndexedValue<KtVariableLikeSignature<KtValueParameterSymbol>>> {
+    ): List<IndexedValue<KtVariableLikeSignature<KaValueParameterSymbol>>> {
         val signature = candidate.partiallyAppliedSymbol.signature
         val argumentMapping = candidate.argumentMapping
 

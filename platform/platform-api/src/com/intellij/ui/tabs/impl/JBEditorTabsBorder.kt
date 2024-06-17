@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ui.tabs.impl
@@ -58,7 +58,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       }
 
       private fun bounds(tabInfo: TabInfo?): Rectangle? {
-        return tabs.infoToLabel.get(tabInfo ?: return null)?.bounds
+        return tabs.getTabLabel(tabInfo ?: return null)?.bounds
       }
     })
   }
@@ -81,8 +81,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       return
     }
 
-    val myInfo2Label = tabs.infoToLabel
-    val firstLabel = myInfo2Label[tabs.getVisibleInfos()[0]] ?: return
+    val firstLabel = tabs.getTabLabel(tabs.getVisibleInfos().first()) ?: return
 
     when (tabs.position) {
       JBTabsPosition.top -> {

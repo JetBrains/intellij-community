@@ -26,7 +26,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,7 +70,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     assertNotNull(getFile().getText()); //to load text
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
-    PlatformTestUtil.newPerformanceTest(getTestName(false), this::doHighlighting)
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), this::doHighlighting)
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
       .start();
   }
@@ -124,7 +124,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     assertNotNull(message, ProjectCoreUtil.theOnlyOpenProject());
     getFile().accept(new PsiRecursiveElementVisitor() {});
     Project myProject = getProject();
-    PlatformTestUtil.newPerformanceTest("getProject() for nested elements", () -> {
+    PerformanceTestUtil.newPerformanceTest("getProject() for nested elements", () -> {
       for (int k=0; k<5; k++) {
         getFile().accept(new PsiRecursiveElementVisitor() {
           int c;

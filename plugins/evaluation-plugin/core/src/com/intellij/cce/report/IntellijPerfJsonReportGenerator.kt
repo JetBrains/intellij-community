@@ -3,12 +3,12 @@ package com.intellij.cce.report
 
 import com.google.gson.GsonBuilder
 import com.intellij.cce.metric.MetricInfo
+import com.intellij.cce.report.ijmetric.AiApplicationMetricDto
+import com.intellij.cce.report.ijmetric.AiPerformanceMetricsDto
 import com.intellij.cce.util.isUnderTeamCity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
-import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
 import java.nio.file.Path
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -35,7 +35,7 @@ class IntellijPerfJsonReportGenerator(
       val perfMetrics = globalMetrics.map { it.toPerfMetric() }
 
 
-      val metricsDto = PerformanceMetricsDto
+      val metricsDto = AiPerformanceMetricsDto
         .create(projectName = "#feature#_#lang#_#model#_#os#", //#**# will be used in TC builds, pls don't change it
                 projectURL = "",
                 projectDescription = "",
@@ -67,10 +67,10 @@ class IntellijPerfJsonReportGenerator(
   }.create()
 }
 
-private fun MetricInfo.toPerfMetric(namePrefix: String = "") = PerformanceMetrics.newCounter(
-  "${namePrefix}${name}",
-  (value * 10_000_000).toLong() //current metrics doesn't have Double type. so temp reuse current metrics.
-)
+private fun MetricInfo.toPerfMetric(namePrefix: String = ""): AiApplicationMetricDto {
+  val metricName = "${namePrefix}${name}"
+  return AiApplicationMetricDto(metricName, value)
+}
 
 
 private interface ReportHelper {

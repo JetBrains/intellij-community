@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.Url;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -52,7 +53,9 @@ final class UpdateCheckerService {
 
   private static final Logger LOG = Logger.getInstance(UpdateCheckerService.class);
 
-  private static final long CHECK_INTERVAL = TimeUnit.DAYS.toMillis(1);
+  private static final long CHECK_INTERVAL_MS = TimeUnit.MINUTES.toMillis(
+    SystemProperties.getLongProperty("ide.updates.check.interval.minutes", TimeUnit.DAYS.toMinutes(1))
+  );
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to 'com.intellij.updater.Runner.ERROR_LOG_FILE_NAME'
   private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
   private static final String OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled";
@@ -72,7 +75,7 @@ final class UpdateCheckerService {
   }
 
   public void queueNextCheck() {
-    queueNextCheck(CHECK_INTERVAL);
+    queueNextCheck(CHECK_INTERVAL_MS);
   }
 
   public void cancelChecks() {
@@ -128,11 +131,11 @@ final class UpdateCheckerService {
     BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
     long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
 
-    if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL) {
+    if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL_MS) {
       checkUpdates();
     }
     else {
-      queueNextCheck(CHECK_INTERVAL - timeSinceLastCheck);
+      queueNextCheck(CHECK_INTERVAL_MS - timeSinceLastCheck);
     }
   }
 

@@ -625,6 +625,38 @@ class DefaultTreeLayoutCacheTest {
   }
 
   @Test
+  fun `swap node children using treeNodesChanged`() {
+    testStructure(
+      initOps = {
+        setModelStructure("""
+          |r
+          | a1
+          |  b11
+          |  b12
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        selectionModel.expect { repeat(2) { resetRowSelection() } }
+      },
+      modOps = {
+        sut.setExpandedState("r/a1", true)
+        node("r/a1").change(0 to "b12", 1 to "b11")
+      },
+      assertions = {
+        assertStructure("""
+          |r
+          | a1
+          |  b12
+          |  b11
+          """.trimMargin()
+        )
+        assertThatExpanded("r").isTrue()
+        assertThatExpanded("r/a1").isTrue()
+      },
+    )
+  }
+
+  @Test
   fun `sparse multiple insertions`() {
     testStructure(
       initOps = {
@@ -1016,6 +1048,14 @@ class DefaultTreeLayoutCacheTest {
       insert(Node(name), i)
     }
     model.nodesWereInserted(this, nodes.map { it.first }.toIntArray())
+  }
+
+  private fun Node.change(vararg nodes: Pair<Int, String>) {
+    for ((i, name) in nodes) {
+      remove(i)
+      insert(Node(name), i)
+    }
+    model.nodesChanged(this, nodes.map { it.first }.toIntArray())
   }
 
   private fun Node.remove() {

@@ -24,7 +24,7 @@ class JavaCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor
 
   override fun visitMethod(method: PsiMethod) {
     codeFragment?.addChild(
-      CodeToken(method.text, method.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {})
+      CodeTokenWithPsi(method.text, method.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {}, method)
     )
   }
 }

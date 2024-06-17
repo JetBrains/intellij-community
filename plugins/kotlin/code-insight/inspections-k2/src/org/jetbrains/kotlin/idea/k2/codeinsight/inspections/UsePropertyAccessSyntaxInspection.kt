@@ -23,17 +23,17 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.startOffset
 import org.jdom.Element
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
@@ -113,12 +113,12 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
             val symbol = mainReferenceOfCallableReference.resolveToSymbol() ?: return
 
-            val symbolPsi = (symbol as? KtCallableSymbol)?.psi ?: return
+            val symbolPsi = (symbol as? KaCallableSymbol)?.psi ?: return
 
             val problemHighlightType = getProblemHighlightType(symbolPsi)
 
             val receiverType =
-                callableReferenceExpression.resolveCall()
+                callableReferenceExpression.resolveCallOld()
                     ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.dispatchReceiver?.type?.lowerBoundIfFlexible()
                     ?: callableReferenceExpression.getReceiverKtType()?.lowerBoundIfFlexible() ?: return
 
@@ -181,7 +181,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         }
 
         analyze(callExpression) {
-            val resolvedCall = callExpression.resolveCall() ?: return
+            val resolvedCall = callExpression.resolveCallOld() ?: return
             val resolvedFunctionCall = resolvedCall.successfulFunctionCallOrNull() ?: return
 
             val successfulFunctionCallSymbol = resolvedFunctionCall.symbol
@@ -392,9 +392,9 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     /**
      * Several checks.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun canConvert(
-        symbol: KtCallableSymbol,
+        symbol: KaCallableSymbol,
         callExpression: KtExpression,
         receiverType: KtType,
         propertyName: String
@@ -420,7 +420,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     /**
      * Fixes the case from KTIJ-21051
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KtType, propertyName: String): Boolean {
         val fieldWithSameName = receiverType.getTypeScope()?.getDeclarationScope()?.getCallableSymbols()
             ?.filter { it is KtJavaFieldSymbol && it.name.toString() == propertyName && !it.visibility.isPrivateOrPrivateToThis() }
@@ -428,7 +428,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return fieldWithSameName != null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getSyntheticProperty(
         propertyNames: List<String>,
         receiverType: KtType
@@ -459,7 +459,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun syntheticPropertyTypeEqualsToExpected(
         syntheticProperty: KtSyntheticJavaPropertySymbol,
         callReturnType: KtType,
@@ -475,7 +475,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return syntheticPropertyReturnType.isEqualTo(propertyExpectedType)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun propertyResolvesToSyntheticProperty(
         callExpression: KtExpression,
         propertyAccessorKind: PropertyAccessorKind,
@@ -525,19 +525,19 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         }
     }
 
-    context(KtAnalysisSession)
-    private fun getSuccessfullyResolvedCall(callExpression: KtExpression, newExpression: KtExpression): KtCallInfo? {
+    context(KaSession)
+    private fun getSuccessfullyResolvedCall(callExpression: KtExpression, newExpression: KtExpression): KaCallInfo? {
         val codeFragment =
             KtPsiFactory(callExpression.project).createExpressionCodeFragment(newExpression.text, callExpression)
         val contentElement = codeFragment.getContentElement() ?: return null
-        val resolvedCall = contentElement.resolveCall() ?: return null
-        if (resolvedCall is KtErrorCallInfo) {
+        val resolvedCall = contentElement.resolveCallOld() ?: return null
+        if (resolvedCall is KaErrorCallInfo) {
             return null
         }
         return resolvedCall
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun receiverTypeOfNewExpressionEqualsToExpectedReceiverType(
         callExpression: KtExpression,
         newExpression: KtExpression,
@@ -550,17 +550,17 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return replacementReceiverType.isEqualTo(expectedReceiverType)
     }
 
-    private fun functionNameIsInNotPropertiesList(symbol: KtCallableSymbol, callExpression: KtExpression): Boolean {
+    private fun functionNameIsInNotPropertiesList(symbol: KaCallableSymbol, callExpression: KtExpression): Boolean {
         val symbolUnsafeName = symbol.callableId?.asSingleFqName()?.toUnsafe()
 
         val notProperties = NotPropertiesService.getNotProperties(callExpression)
         return symbolUnsafeName in notProperties
     }
 
-    context(KtAnalysisSession)
-    private fun functionOriginateNotFromJava(allOverriddenSymbols: List<KtCallableSymbol>): Boolean {
+    context(KaSession)
+    private fun functionOriginateNotFromJava(allOverriddenSymbols: List<KaCallableSymbol>): Boolean {
         for (overriddenSymbol in allOverriddenSymbols) {
-            if (overriddenSymbol.origin == KtSymbolOrigin.JAVA) {
+            if (overriddenSymbol.origin.isJavaSourceOrLibrary()) {
                 val symbolAnnotations = overriddenSymbol.annotationsList.annotations
                 if (symbolAnnotations.any { it.classId?.asFqNameString()?.equals(JAVA_LANG_OVERRIDE) == true }) {
                     // This is Java's @Override, continue searching for Java method but not overridden

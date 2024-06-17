@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
+import com.intellij.openapi.application.readAndWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import kotlinx.coroutines.CoroutineScope
@@ -25,32 +26,16 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
             cs.launch(Dispatchers.IO) {
-                buildRootsManager.add(buildRootsManager.loadLinkedRoot(it))
-            }
-        }
-    }
+                readAndWriteAction {
+                    val newRoot = buildRootsManager.loadLinkedRoot(it)
 
-    override fun onProjectsLoaded(settings: MutableCollection<GradleProjectSettings>) {
-        settings.forEach {
-            cs.launch(Dispatchers.IO) {
-                val newRoot = buildRootsManager.loadLinkedRoot(it)
+                    writeAction {
+                        buildRootsManager.add(newRoot)
 
-                if (newRoot is Imported && KotlinPluginModeProvider.isK2Mode()) {
-                    val definitions = loadGradleDefinitions(it.externalProjectPath, newRoot.data.gradleHome, newRoot.data.javaHome, project)
-
-                    val scripts = newRoot.data.models.mapNotNull {
-                        val path = Paths.get(it.file)
-                        VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
-                            ScriptModel(
-                                virtualFile,
-                                it.classPath,
-                                it.sourcePath,
-                                it.imports
-                            )
+                        if (newRoot is Imported && KotlinPluginModeProvider.isK2Mode()) {
+                            launch { loadScriptConfigurations(newRoot, it) }
                         }
-                    }.toSet()
-
-                    configureGradleScriptsK2(newRoot.data.javaHome, project, scripts, definitions)
+                    }
                 }
             }
         }
@@ -69,5 +54,27 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
 
     override fun onGradleDistributionTypeChange(currentValue: DistributionType?, linkedProjectPath: String) {
         buildRootsManager.reloadBuildRoot(linkedProjectPath, null)
+    }
+
+    private suspend fun loadScriptConfigurations(
+        root: Imported,
+        settings: GradleProjectSettings
+    ) {
+        val definitions = loadGradleDefinitions(settings.externalProjectPath, root.data.gradleHome, root.data.javaHome, project)
+        GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
+
+        val scripts = root.data.models.mapNotNull {
+            val path = Paths.get(it.file)
+            VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
+                ScriptModel(
+                    virtualFile,
+                    it.classPath,
+                    it.sourcePath,
+                    it.imports
+                )
+            }
+        }.toSet()
+
+        configureGradleScriptsK2(root.data.javaHome, project, scripts)
     }
 }

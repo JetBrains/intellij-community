@@ -1120,6 +1120,7 @@
     <inspection_tool class="ExplicitThis" enabled="false" level="INFORMATION" enabled_by_default="false" />
     <inspection_tool class="ExtendsAnnotation" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ExtendsConcreteCollection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ExpressionComparedToItself" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ExtendsObject" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ExtendsTagPositionInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ExtendsThread" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -3543,9 +3544,6 @@
           <module name="intellij.java.ui" />
           <module name="intellij.java.psi.impl" />
           <module name="intellij.java.analysis" />
-          <module name="intellij.xml.dom.impl" />
-          <module name="intellij.xml.dom" />
-          <module name="intellij.xml.psi" />
           <module name="intellij.java.impl.refactorings" />
         </modules-set>
         <modules-set>
@@ -3557,6 +3555,11 @@
           <module name="intellij.properties" />
           <module name="intellij.properties.psi.impl" />
           <module name="intellij.properties.psi" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.xml.dom.impl" />
+          <module name="intellij.xml.dom" />
+          <module name="intellij.xml.psi" />
         </modules-set>
         <modules-set>
           <module name="intellij.xml.impl" />
@@ -3588,7 +3591,6 @@
         <modules-set>
           <module name="intellij.java.testFramework" />
           <module name="intellij.platform.testFramework" />
-          <module name="intellij.platform.vcs.impl" />
           <module name="intellij.platform.execution.impl" />
           <module name="intellij.platform.lang.impl" />
           <module name="intellij.platform.util" />
@@ -3623,9 +3625,9 @@
           <module name="intellij.platform.configurationStore.impl" />
           <module name="intellij.platform.codeStyle" />
           <module name="intellij.platform.codeStyle.impl" />
-          <module name="intellij.platform.vfs.impl" />
           <module name="intellij.platform.lang.core" />
           <module name="intellij.platform.ide.core" />
+          <module name="intellij.platform.ide.core.impl" />
           <module name="intellij.codeServer.db.connectivity" />
           <module name="intellij.codeServer.core" />
           <module name="intellij.platform.refactoring" />
@@ -3664,9 +3666,6 @@
           <module name="intellij.platform.duplicates.analysis" />
         </modules-set>
         <modules-set>
-          <module name="intellij.platform.jps.build.javac.rt" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.vcs.perforce" />
           <module name="intellij.vcs.perforce.util" />
         </modules-set>
@@ -3679,6 +3678,7 @@
           <module name="intellij.python.psi" />
           <module name="intellij.pycharm.community" />
           <module name="intellij.python.psi.impl" />
+          <module name="intellij.python.syntax.core" />
         </modules-set>
         <modules-set>
           <module name="intellij.appcode" />
@@ -3712,10 +3712,17 @@
           <module name="intellij.platform.util.zip" />
         </modules-set>
         <modules-set>
+          <module name="intellij.platform.bootstrap" />
+          <module name="intellij.platform.util.classLoader" />
+          <module name="intellij.platform.boot" />
           <module name="intellij.platform.util.ex" />
           <module name="intellij.platform.util.zip" />
           <module name="intellij.platform.util.rt.java8" />
           <module name="intellij.platform.util.immutableKeyValueStore" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.platform.diagnostic" />
+          <module name="intellij.platform.util.base" />
         </modules-set>
       </option>
     </inspection_tool>

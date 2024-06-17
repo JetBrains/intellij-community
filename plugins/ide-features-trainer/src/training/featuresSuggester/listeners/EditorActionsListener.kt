@@ -224,11 +224,10 @@ class EditorActionsListener : AnActionListener {
   }
 
   private fun getCachedEventData(event: AnActionEvent): Triple<Project?, Editor?, PsiFile?> {
-    val originalContext = event.dataContext
-    val context = if (!ApplicationManager.getApplication().isUnitTestMode) {
-      DataContext { dataId -> Utils.getRawDataIfCached(originalContext, dataId) }
+    val context = when {
+      ApplicationManager.getApplication().isUnitTestMode -> event.dataContext
+      else -> Utils.getCachedOnlyDataContext(event.dataContext)
     }
-    else originalContext
     return context.let {
       Triple(
         CommonDataKeys.PROJECT.getData(it),

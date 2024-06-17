@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -46,7 +46,7 @@ internal class AddNamesToCallArgumentsIntention :
         // Note: `KtCallElement.valueArgumentList` only includes arguments inside parentheses; it doesn't include a trailing lambda.
         element.valueArgumentList?.arguments?.any { !it.isNamed() } ?: false
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtCallElement): Context? {
         val associateArgumentNamesStartingAt = associateArgumentNamesStartingAt(element, null)
         return associateArgumentNamesStartingAt?.let { Context(it) }

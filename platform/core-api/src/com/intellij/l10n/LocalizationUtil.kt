@@ -20,8 +20,9 @@ import kotlin.io.path.pathString
 object LocalizationUtil {
   @Volatile
   private var isL10nInitialized: Boolean = false
-  private const val LOCALIZATION_FOLDER_NAME = "localization"
-  private const val LOCALIZATION_KEY = "i18n.locale"
+  private const val LOCALIZATION_FOLDER_NAME: String = "localization"
+  const val LOCALIZATION_KEY: String = "i18n.locale"
+  val l10nPluginIdToLanguageTag: Map<String, String> = mapOf("com.intellij.ja" to "ja", "com.intellij.ko" to "ko", "com.intellij.zh" to "zh-CN")
 
   @JvmOverloads
   fun getPluginClassLoader(defaultLoader: ClassLoader? = null): ClassLoader? {
@@ -146,10 +147,26 @@ object LocalizationUtil {
     return isL10nInitialized
   }
 
+  fun getForcedLocale(): String? {
+    val languageTag = System.getProperty(LOCALIZATION_KEY)
+    if (languageTag.isNullOrEmpty()) {
+      return null
+    }
+    return languageTag
+  }
+
   fun getLocale(): Locale {
-    val languageTag = if (!System.getProperty(LOCALIZATION_KEY).isNullOrEmpty()) System.getProperty(LOCALIZATION_KEY)
-    else LocalizationStateService.getInstance()?.getSelectedLocale() ?: return Locale.ENGLISH
+    val forcedLocale = getForcedLocale()
+    val languageTag = forcedLocale ?: LocalizationStateService.getInstance()?.getSelectedLocale() ?: return Locale.ENGLISH
     val locale = Locale.forLanguageTag(languageTag)
+
+    if (forcedLocale == null) {
+      val englishTag = Locale.ENGLISH.toLanguageTag()
+      if (languageTag != englishTag && findLanguageBundle(locale) == null) {
+        return Locale.ENGLISH
+      }
+    }
+
     return locale
   }
 
@@ -183,12 +200,22 @@ object LocalizationUtil {
     }
   }
 
-  fun getAllAvailableLocales(): List<Locale> {
-    return buildList {
-      add(Locale.ENGLISH)
-      for (bundleEP in getAllLanguageBundleExtensions()) {
-        add(Locale.forLanguageTag(bundleEP.locale))
+  fun getAllAvailableLocales(): Pair<List<Locale>, Map<Locale, String>> {
+    val list = ArrayList<Locale>()
+    val map = HashMap<Locale, String>()
+
+    list.add(Locale.ENGLISH)
+
+    for (bundleEP in getAllLanguageBundleExtensions()) {
+      val locale = Locale.forLanguageTag(bundleEP.locale)
+      list.add(locale)
+
+      val displayName = bundleEP.displayName
+      if (!displayName.isNullOrEmpty()) {
+        map[locale] = displayName
       }
     }
+
+    return list to map
   }
 }

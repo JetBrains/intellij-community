@@ -32,7 +32,7 @@ class PluginXmlReaderTest {
         """.trimIndent()
     )
     val pluginModules = PluginXmlReader.loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository, 
-                                                          ResourceFileResolver.default(repository))
+                                                          ResourceFileResolver.createDefault(repository))
     val main = pluginModules.single()
     assertEquals("plugin.main", main.moduleId.stringId)
     assertEquals(ModuleImportance.FUNCTIONAL, main.importance)
@@ -65,7 +65,7 @@ class PluginXmlReaderTest {
         """.trimIndent()
     )
     val pluginModules = PluginXmlReader.loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository, 
-                                                          ResourceFileResolver.default(repository))
+                                                          ResourceFileResolver.createDefault(repository))
     assertEquals(3, pluginModules.size)
     val (main, optional, unknown) = pluginModules
     assertEquals("plugin.main", main.moduleId.stringId)

@@ -105,6 +105,20 @@ class JsonPathCompletionTest : LightPlatformCodeInsightFixture4TestCase() {
   }
 
   @Test
+  fun completionForInjectedFragmentsIgnoreSameHost() {
+    val root = "\$"
+    val jsonFile = myFixture.configureByText(JsonFileType.INSTANCE, """
+      {
+        "a": "$root.demo",
+        "b": "$root.second.<caret>"
+      }
+    """.trimIndent()) as JsonFile
+
+    injectJsonPathToProperties(jsonFile, listOf("a", "b"))
+    assertCompletionVariants("demo")
+  }
+
+  @Test
   fun keysCompletionByJsonFile() {
     val jsonFile = myFixture.configureByText(JsonFileType.INSTANCE, """
       {

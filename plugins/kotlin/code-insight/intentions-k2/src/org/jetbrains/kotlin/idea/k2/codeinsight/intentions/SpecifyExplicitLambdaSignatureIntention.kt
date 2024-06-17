@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.refactoring.util.getExplicitLambdaSignature
@@ -20,7 +20,7 @@ internal class SpecifyExplicitLambdaSignatureIntention :
         return element.functionLiteral.arrow == null || !element.valueParameters.all { it.typeReference != null }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtLambdaExpression): String? {
         return getExplicitLambdaSignature(element)
     }

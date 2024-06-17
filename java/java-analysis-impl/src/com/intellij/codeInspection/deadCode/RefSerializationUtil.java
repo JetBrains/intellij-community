@@ -5,6 +5,7 @@ import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,55 +32,68 @@ public final class RefSerializationUtil {
 
   public static boolean isSerializationImplicitlyUsedField(@NotNull UField field) {
     String name = field.getName();
-    if (!CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !"serialPersistentFields".equals(name)) return false;
-    if (!field.isStatic()) return false;
+    if (CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME.equals(name)) {
+      if (!PsiTypes.longType().equals(field.getType())) return false;
+    }
+    else if ("serialPersistentFields".equals(name)) {
+      if (field.getVisibility() != UastVisibility.PRIVATE) return false;
+      if (!(field.getType() instanceof PsiArrayType arrayType) || arrayType.getArrayDimensions() != 1) return false;
+      PsiType componentType = arrayType.getComponentType();
+      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(componentType);
+      if (aClass != null && !"java.io.ObjectStreamField".equals(aClass.getQualifiedName())) return false;
+    }
+    else {
+      return false;
+    }
+    if (!field.isStatic() || !field.isFinal()) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(field, UClass.class);
     return aClass == null || isSerializable(aClass, null);
   }
 
   private static boolean isWriteObjectMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
     if (!"writeObject".equals(method.getName())) return false;
+    if (method.isStatic() || method.getVisibility() != UastVisibility.PRIVATE) return false;
     List<UParameter> parameters = method.getUastParameters();
     if (parameters.size() != 1) return false;
     if (!equalsToText(parameters.get(0).getType(), "java.io.ObjectOutputStream")) return false;
-    if (method.isStatic()) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return aClass == null || isSerializable(aClass, refClass);
   }
 
   private static boolean isReadObjectMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
     if (!"readObject".equals(method.getName())) return false;
+    if (method.isStatic() || method.getVisibility() != UastVisibility.PRIVATE) return false;
     List<UParameter> parameters = method.getUastParameters();
     if (parameters.size() != 1) return false;
     if (!equalsToText(parameters.get(0).getType(), "java.io.ObjectInputStream")) return false;
-    if (method.isStatic()) return false;
+    if (!equalsToText(method.getReturnType(), PsiKeyword.VOID)) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return aClass == null || isSerializable(aClass, refClass);
   }
 
   private static boolean isReadObjectNoDataMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
     if (!"readObjectNoData".equals(method.getName())) return false;
+    if (method.isStatic() || method.getVisibility() != UastVisibility.PRIVATE) return false;
     if (!method.getUastParameters().isEmpty()) return false;
     if (!equalsToText(method.getReturnType(), PsiKeyword.VOID)) return false;
-    if (method.isStatic()) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return aClass == null || isSerializable(aClass, refClass);
   }
 
   private static boolean isWriteReplaceMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
     if (!"writeReplace".equals(method.getName())) return false;
+    if (method.isStatic()) return false;
     if (!method.getUastParameters().isEmpty()) return false;
     if (!equalsToText(method.getReturnType(), CommonClassNames.JAVA_LANG_OBJECT)) return false;
-    if (method.isStatic()) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return aClass == null || isSerializable(aClass, refClass);
   }
 
   private static boolean isReadResolveMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
     if (!"readResolve".equals(method.getName())) return false;
+    if (method.isStatic()) return false;
     if (!method.getUastParameters().isEmpty()) return false;
     if (!equalsToText(method.getReturnType(), CommonClassNames.JAVA_LANG_OBJECT)) return false;
-    if (method.isStatic()) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return aClass == null || isSerializable(aClass, refClass);
   }

@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -17,7 +17,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
 
     val factory = KotlinQuickFixFactory.IntentionBased(::createQuickFixes)
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun createQuickFixes(diagnostic: KaFirDiagnostic.ActualAnnotationsNotMatchExpect): List<QuickFixActionBase<*>> {
         val expectAnnotationEntry = diagnostic.incompatibilityType.expectAnnotation.psi as? KtAnnotationEntry
             ?: return emptyList()
@@ -28,7 +28,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
         return listOfNotNull(removeAnnotationFix) + createCopyAndReplaceAnnotationFixes(diagnostic, expectAnnotationEntry)
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun createCopyAndReplaceAnnotationFixes(
         diagnostic: KaFirDiagnostic.ActualAnnotationsNotMatchExpect,
         expectAnnotationEntry: KtAnnotationEntry,
@@ -48,9 +48,9 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
         )
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun KtAnnotationEntry.getAnnotationClassId(): ClassId? {
-        val resolvedExpectAnnotationCall = resolveCall()?.singleConstructorCallOrNull() ?: return null
+        val resolvedExpectAnnotationCall = resolveCallOld()?.singleConstructorCallOrNull() ?: return null
         return resolvedExpectAnnotationCall.symbol.containingClassId
     }
 }

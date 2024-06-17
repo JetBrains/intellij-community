@@ -16,6 +16,7 @@ import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import de.plushnikov.intellij.plugin.processor.lombok.LombokAnnotationProcessor;
 import de.plushnikov.intellij.plugin.processor.method.ExtensionMethodsHelper;
 import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
+import de.plushnikov.intellij.plugin.util.DumbIncompleteModeUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
   @Override
   protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
     // skip if no lombok library is present
-    if (!hasLombokLibrary(modifierList.getProject())) {
+    if (!hasLombokLibrary(modifierList.getProject()) && !DumbIncompleteModeUtil.isIncompleteModeWithLombokAnnotation(modifierList)) {
       return modifiers;
     }
 
@@ -68,7 +69,6 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
     }
     else {
       runnable.run();
-
     }
     return result;
   }
@@ -154,7 +154,7 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
     }
 
     // skip processing if disabled, or no lombok library is present
-    if (!hasLombokLibrary(element.getProject())) {
+    if (!hasLombokLibrary(element.getProject()) && !DumbIncompleteModeUtil.isIncompleteModeWithLombokAnnotation(psiClass)) {
       return emptyResult;
     }
     if (psiClass.isAnnotationType() && type == PsiMethod.class) {

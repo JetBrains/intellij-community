@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.gradleJava
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractAnnotationBasedCompilerPluginGradleImportHandler
-import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames
 import org.jetbrains.kotlin.idea.gradleTooling.model.samWithReceiver.SamWithReceiverModel
+import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
+import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames
 
 class SamWithReceiverGradleProjectImportHandler : AbstractAnnotationBasedCompilerPluginGradleImportHandler<SamWithReceiverModel>() {
     override val compilerPluginId = SamWithReceiverPluginNames.PLUGIN_ID

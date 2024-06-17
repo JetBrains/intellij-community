@@ -22,7 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import kotlin.system.measureTimeMillis
 
 @ApiStatus.Obsolete
-class DisposableCachedValue<R : Disposable>(
+internal class DisposableCachedValue<R : Disposable>(
   private val entityStorage: () -> VersionedEntityStorage,
   private val cachedValue: CachedValue<R>,
   private val cacheName: String = "-",

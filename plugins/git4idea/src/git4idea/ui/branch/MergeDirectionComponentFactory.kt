@@ -27,11 +27,10 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
+import java.awt.Component
+import java.awt.Container
 import java.awt.event.ActionEvent
-import javax.swing.ComboBoxModel
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
+import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -107,6 +106,11 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
       })
       add(head, CC().minWidth("30"))
       add(changesWarningLabel, CC().gapLeft("10"))
+
+      isFocusTraversalPolicyProvider = true
+      focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
+        override fun getDefaultComponent(aContainer: Container): Component = head
+      }
     }
   }
 

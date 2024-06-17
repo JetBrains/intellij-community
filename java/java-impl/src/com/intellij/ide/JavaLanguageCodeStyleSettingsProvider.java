@@ -79,6 +79,8 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
                                 JavaBundle.message("checkbox.spaces.record.header"), getInstance().SPACES_WITHIN);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_DECONSTRUCTION_LIST",
                                 JavaBundle.message("checkbox.spaces.within.deconstruction.list"), getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT",
+                                JavaBundle.message("checkbox.spaces.inside.block.braces.when.body.is.present"), getInstance().SPACES_WITHIN);
 
       String groupName = getInstance().SPACES_IN_TYPE_ARGUMENTS;
       consumer.moveStandardOption("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", groupName);
@@ -96,6 +98,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
         "checkbox.spaces.before.colon.in.foreach"), groupName);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_INSIDE_ONE_LINE_ENUM_BRACES", JavaBundle.message(
         "checkbox.spaces.inside.one.line.enum"), groupName);
+
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_DECONSTRUCTION_LIST", JavaBundle.message(
         "checkbox.spaces.before.deconstruction.list"), getInstance().SPACES_BEFORE_PARENTHESES);
@@ -624,7 +627,26 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
           }
       }
       interface Abba {}
-      record Rec(String s, int i) {}""";
+      record Rec(String s, int i) {}
+      
+      class SimpleClass {
+        class EmptyClass{}
+      
+        void emptyMethod() {}
+      
+        void complexMethodWithEmptyCodeBlocks() {
+            try {} catch (Exception e) {}
+            Runnable r = () -> {};
+        }
+      
+        void oneLineMethod() {int x = 10;}
+      
+        void complexMethodWithOneLineCodeBlocks() {
+            try {int x = 10;} catch (Exception e) {int y = 10;}
+      
+            Runnable r = () -> {int z = 30;};
+        }
+      }""";
 
   @SuppressWarnings({"UnusedLabel", "InnerClassMayBeStatic"})
   @org.intellij.lang.annotations.Language("JAVA") private static final String WRAPPING_CODE_SAMPLE =

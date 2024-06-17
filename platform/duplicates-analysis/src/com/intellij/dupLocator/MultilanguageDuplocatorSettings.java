@@ -10,11 +10,13 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.TreeMap;
 
+@ApiStatus.Internal
 @State(
   name = "MultiLanguageDuplocatorSettings",
   storages = @Storage("duplocatorSettings.xml"),

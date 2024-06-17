@@ -1737,6 +1737,8 @@ f:com.intellij.codeInspection.DeprecationUtil
 - <init>():V
 - s:getDeprecationDisplayName():java.lang.String
 - s:getForRemovalDisplayName():java.lang.String
+com.intellij.codeInspection.ExportedInspectionsResultModifier
+- a:modifyResult(org.jdom.Element):V
 c:com.intellij.codeInspection.ExternalAnnotatorInspectionVisitor
 - com.intellij.psi.PsiElementVisitor
 - <init>(com.intellij.codeInspection.ProblemsHolder,com.intellij.lang.annotation.ExternalAnnotator,Z):V
@@ -1840,7 +1842,9 @@ c:com.intellij.codeInspection.ProblemDescriptorBase
 - setTextAttributes(com.intellij.openapi.editor.colors.TextAttributesKey):V
 - showTooltip():Z
 f:com.intellij.codeInspection.ProblemDescriptorUtil
+- sf:LOC_REFERENCE:java.lang.String
 - sf:NONE:I
+- sf:REF_REFERENCE:java.lang.String
 - sf:TRIM_AT_TREE_END:I
 - sf:XML_CODE_MARKER:com.intellij.openapi.util.Couple
 - <init>():V
@@ -2208,6 +2212,7 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.UnwrapDerivedVariableInstruction
 c:com.intellij.codeInspection.dataFlow.lang.ir.WrapDerivedVariableInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction
 - <init>(com.intellij.codeInspection.dataFlow.types.DfType,com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor):V
+- <init>(com.intellij.codeInspection.dataFlow.types.DfType,com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor,com.intellij.codeInspection.dataFlow.lang.DfaAnchor):V
 - eval(com.intellij.codeInspection.dataFlow.value.DfaValueFactory,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState,com.intellij.codeInspection.dataFlow.value.DfaValue[]):com.intellij.codeInspection.dataFlow.value.DfaValue
 - getDerivedVariableDescriptor():com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor
 com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
@@ -2623,6 +2628,7 @@ com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 - isCall():Z
 - isImplicitReadPossible():Z
 - a:isStable():Z
+- restrictFromState(com.intellij.codeInspection.dataFlow.value.DfaVariableValue,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.types.DfType
 c:com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase
 - com.intellij.profile.codeInspection.BaseInspectionProfileManager
 - sf:Companion:com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase$Companion
@@ -2746,7 +2752,6 @@ a:com.intellij.codeInspection.ex.HTMLComposerImpl
 - appendElementReference(java.lang.StringBuilder,java.lang.String,java.lang.String,java.lang.String):V
 - appendListItem(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefElement):V
 - appendNoProblems(java.lang.StringBuilder):V
-- appendQualifiedName(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefEntity):V
 - p:appendQuickFix(java.lang.StringBuilder,java.lang.String):V
 - p:appendResolution(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefEntity,java.lang.String[]):V
 - a:compose(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefEntity):V
@@ -2754,10 +2759,12 @@ a:com.intellij.codeInspection.ex.HTMLComposerImpl
 - composeNumereables(I,java.lang.String,java.lang.String,java.lang.String):java.lang.String
 - doneList(java.lang.StringBuilder):V
 - s:doneListItem(java.lang.StringBuilder):V
+- doneProblemDescription(java.lang.StringBuilder):V
 - p:genPageHeader(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefEntity):V
 - getExtension(com.intellij.openapi.util.Key):java.lang.Object
 - startList(java.lang.StringBuilder):V
 - startListItem(java.lang.StringBuilder):V
+- startProblemDescription(java.lang.StringBuilder):V
 a:com.intellij.codeInspection.ex.InspectionElementsMergerBase
 - com.intellij.codeInspection.ex.InspectionElementsMerger
 - <init>():V

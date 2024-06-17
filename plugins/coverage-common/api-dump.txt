@@ -52,6 +52,7 @@ com.intellij.coverage.CoverageAnnotator
 - getFileCoverageInformationString(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):java.lang.String
 - getFileCoverageInformationString(com.intellij.psi.PsiFile,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):java.lang.String
 - a:onSuiteChosen(com.intellij.coverage.CoverageSuitesBundle):V
+- a:renewCoverageData(com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):V
 f:com.intellij.coverage.CoverageBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
@@ -65,6 +66,8 @@ a:com.intellij.coverage.CoverageDataManager
 - a:attachToProcess(com.intellij.execution.process.ProcessHandler,com.intellij.execution.configurations.RunConfigurationBase,com.intellij.execution.configurations.RunnerSettings):V
 - a:chooseSuitesBundle(com.intellij.coverage.CoverageSuitesBundle):V
 - a:closeSuitesBundle(com.intellij.coverage.CoverageSuitesBundle):V
+- coverageDataCalculated(com.intellij.coverage.CoverageSuitesBundle):V
+- a:coverageGathered(com.intellij.coverage.CoverageSuite):V
 - a:doInReadActionIfProjectOpen(com.intellij.openapi.util.Computable):java.lang.Object
 - a:getCurrentSuitesBundle():com.intellij.coverage.CoverageSuitesBundle
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.coverage.CoverageDataManager
@@ -80,6 +83,8 @@ a:com.intellij.coverage.CoverageDataManager
 a:com.intellij.coverage.CoverageEngine
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
+- acceptedByFilters(com.intellij.psi.PsiFile,com.intellij.coverage.CoverageSuitesBundle):Z
+- coverageEditorHighlightingApplicableTo(com.intellij.psi.PsiFile):Z
 - a:createCoverageEnabledConfiguration(com.intellij.execution.configurations.RunConfigurationBase):com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 - a:createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
 - createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,java.lang.String[],J,java.lang.String,Z,Z,Z):com.intellij.coverage.CoverageSuite
@@ -92,6 +97,7 @@ a:com.intellij.coverage.CoverageEngine
 - generateReport(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext,com.intellij.coverage.CoverageSuitesBundle):V
 - a:getCoverageAnnotator(com.intellij.openapi.project.Project):com.intellij.coverage.CoverageAnnotator
 - a:getPresentableText():java.lang.String
+- getQualifiedNames(com.intellij.psi.PsiFile):java.util.Set
 - a:isApplicableTo(com.intellij.execution.configurations.RunConfigurationBase):Z
 - isInLibraryClasses(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - isReportGenerationAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext,com.intellij.coverage.CoverageSuitesBundle):Z
@@ -155,6 +161,10 @@ com.intellij.coverage.CoverageSuite
 - a:isValid():Z
 - a:setCoverageData(com.intellij.rt.coverage.data.ProjectData):V
 com.intellij.coverage.CoverageSuiteListener
+- afterSuiteChosen():V
+- beforeSuiteChosen():V
+- coverageDataCalculated(com.intellij.coverage.CoverageSuitesBundle):V
+- coverageGathered(com.intellij.coverage.CoverageSuite):V
 c:com.intellij.coverage.CoverageSuitesBundle
 - <init>(com.intellij.coverage.CoverageSuite):V
 - <init>(com.intellij.coverage.CoverageSuite[]):V
@@ -230,6 +240,7 @@ f:com.intellij.coverage.lcov.LcovSerializationUtils
 c:com.intellij.coverage.view.CoverageListNode
 - com.intellij.ide.util.treeView.AbstractTreeNode
 - pf:myBundle:com.intellij.coverage.CoverageSuitesBundle
+- pf:myStateBean:com.intellij.coverage.view.CoverageViewManager$StateBean
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean,Z):V

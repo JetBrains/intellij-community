@@ -6,17 +6,17 @@ import org.jetbrains.jps.model.artifact.elements.JpsFileCopyPackagingElement;
 
 import java.util.Objects;
 
-public class JpsFileCopyPackagingElementImpl extends JpsFileCopyPackagingElementBase<JpsFileCopyPackagingElementImpl> implements JpsFileCopyPackagingElement {
+class JpsFileCopyPackagingElementImpl extends JpsFileCopyPackagingElementBase<JpsFileCopyPackagingElementImpl> implements JpsFileCopyPackagingElement {
   private String myRenamedOutputFileName;
 
-  public JpsFileCopyPackagingElementImpl(String filePath, String renamedOutputFileName) {
+  JpsFileCopyPackagingElementImpl(String filePath, String renamedOutputFileName) {
     super(filePath);
     myRenamedOutputFileName = renamedOutputFileName;
   }
 
   @NotNull
   @Override
-  public JpsFileCopyPackagingElementImpl createCopy() {
+  public JpsFileCopyPackagingElementImpl createElementCopy() {
     return new JpsFileCopyPackagingElementImpl(myFilePath, myRenamedOutputFileName);
   }
 

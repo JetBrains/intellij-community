@@ -58,6 +58,33 @@ open class KotlinRequestHint(
     }
 }
 
+class KotlinStepOutRequestHint(
+    private val returnAfterSuspendIndex: Int,
+    stepThread: ThreadReferenceProxyImpl,
+    suspendContext: SuspendContextImpl,
+    stepSize: Int,
+    depth: Int,
+    filter: MethodFilter?,
+    parentHint: RequestHint?
+): KotlinRequestHint(stepThread, suspendContext, stepSize, depth, filter, parentHint) {
+    override fun getNextStepDepth(context: SuspendContextImpl): Int {
+        val currentLocation = context.location
+        if (currentLocation != null) {
+            /*
+               If the coroutine suspends, then the suspending function returns COROUTINE_SUSPENDED:
+               if (foo(arg) == COROUTINE_SUSPENDED) {
+                  return COROUTINE_SUSPENDED // returnAfterSuspendIndex
+               }
+               If the execution reaches this suspend return instruction, the coroutine was suspended ->
+               resume and wait till the resume breakpoint set at the caller method is reached.
+             */
+            if (currentLocation.codeIndex() < returnAfterSuspendIndex) return StepRequest.STEP_OVER
+            if (currentLocation.codeIndex() == returnAfterSuspendIndex.toLong()) return RESUME
+        }
+        return super.getNextStepDepth(context)
+    }
+}
+
 // Originally copied from RequestHint
 class KotlinStepOverRequestHint(
     stepThread: ThreadReferenceProxyImpl,
@@ -183,7 +210,7 @@ class KotlinStepIntoRequestHint(
                 if (frameProxy.isOnSuspensionPoint()) {
                     // Coroutine will sleep now so we can't continue stepping.
                     // Let's put a run-to-cursor breakpoint and resume the debugger.
-                    return if (!CoroutineBreakpointFacility.installCoroutineResumedBreakpoint(context)) STOP else RESUME
+                    return if (!CoroutineBreakpointFacility.installResumeBreakpointInCurrentMethod(context)) STOP else RESUME
                 }
             }
             val location = frameProxy.safeLocation()

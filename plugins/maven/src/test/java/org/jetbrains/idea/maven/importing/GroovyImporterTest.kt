@@ -81,12 +81,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingGroovySpecificSources() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders()
-      createProjectSubDirs("src/main/groovy",
-                           "src/test/groovy")
-    }
-
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -115,12 +109,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingGroovySpecificSources2() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders()
-      createProjectSubDirs("src/main/groovy",
-                           "src/test/groovy")
-    }
-
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -149,12 +137,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingGroovySpecificSources3GmavenPlus() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders()
-      createProjectSubDirs("src/main/groovy",
-                           "src/test/groovy")
-    }
-
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -187,12 +169,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
     batchDir.mkdirs()
     val batchJar = File(batchDir, "groovy-eclipse-batch-2.1.3-01.jar")
     batchJar.createNewFile()
-
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders()
-      createProjectSubDirs("src/main/groovy",
-                           "src/test/groovy")
-    }
 
     importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><dependencies>
@@ -254,12 +230,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testGroovyEclipsePluginWhenOnlyCompilerDependency() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders()
-      createProjectSubDirs("src/main/groovy",
-                           "src/test/groovy")
-    }
-
     val batchDir = File(repoPath, "org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
     batchDir.mkdirs()
     val batchJar = File(batchDir, "groovy-eclipse-batch-2.1.3-01.jar")
@@ -320,16 +290,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingCustomGroovySpecificSources() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders()
-      createProjectSubDirs("src/main/groovy",
-                           "src/foo1",
-                           "src/foo2",
-                           "src/test/groovy",
-                           "src/test-foo1",
-                           "src/test-foo2")
-    }
-
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -394,16 +354,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingCustomGroovySpecificSources2GmavenPlus() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders()
-      createProjectSubDirs("src/main/groovy",
-                           "src/foo1",
-                           "src/foo2",
-                           "src/test/groovy",
-                           "src/test-foo1",
-                           "src/test-foo2")
-    }
-
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -468,11 +418,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingCustomGroovySpecificSourcesByRelativePath() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createProjectSubDirs("src/foo",
-                           "src/test-foo")
-    }
-
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -517,19 +462,13 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project")
 
-    if (supportsImportOfNonExistingFolders()) {
-      assertSources("project", "src/foo", "src/main/java")
-      assertTestSources("project", "src/test-foo", "src/test/java")
-    }
-    else {
-      assertSources("project", "src/foo")
-      assertTestSources("project", "src/test-foo")
-    }
+    assertSources("project", "src/foo", "src/main/java")
+    assertTestSources("project", "src/test-foo", "src/test/java")
   }
 
   @Test
   fun testDoNotAddGroovySpecificGeneratedSources() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
+    if (!true) {
       createStdProjectFolders()
     }
     createProjectSubDirs("target/generated-sources/xxx/yyy",
@@ -562,20 +501,12 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project")
 
-    if (supportsImportOfNonExistingFolders()) {
-      assertSources("project",
-                    "src/main/groovy",
-                    "src/main/java",
-                    "target/generated-sources/xxx")
-      assertTestSources("project", "src/test/groovy", "src/test/java")
-    }
-    else {
-      assertSources("project",
-                    "src/main/java",
-                    "target/generated-sources/xxx")
-      assertTestSources("project",
-                        "src/test/java")
-    }
+    assertSources("project",
+                  "src/main/groovy",
+                  "src/main/java",
+                  "target/generated-sources/xxx")
+    assertTestSources("project", "src/test/groovy", "src/test/java")
+
     assertDefaultResources("project")
     assertDefaultTestResources("project")
 
@@ -584,9 +515,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotAddCustomGroovySpecificGeneratedSources() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders()
-    }
     createProjectSubDirs("target/generated-sources/xxx/yyy",
                          "target/generated-sources/foo/aaa",
                          "target/generated-sources/bar/bbb")
@@ -627,20 +555,12 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project")
 
-    if (supportsImportOfNonExistingFolders()) {
-      assertSources("project",
-                    "src/main/groovy",
-                    "src/main/java",
-                    "target/generated-sources/xxx")
-      assertTestSources("project", "src/test/groovy", "src/test/java")
-    }
-    else {
-      assertSources("project",
-                    "src/main/java",
-                    "target/generated-sources/xxx")
-      assertTestSources("project",
-                        "src/test/java")
-    }
+    assertSources("project",
+                  "src/main/groovy",
+                  "src/main/java",
+                  "target/generated-sources/xxx")
+    assertTestSources("project", "src/test/groovy", "src/test/java")
+
     assertDefaultResources("project")
     assertDefaultTestResources("project")
 
@@ -689,20 +609,13 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project")
 
-    if (supportsImportOfNonExistingFolders()) {
-      assertSources("project",
-                    "src/main/groovy",
-                    "src/main/java",
-                    "target/generated-sources/xxx")
-      assertTestSources("project",
-                        "src/test/groovy",
-                        "src/test/java")
-    }
-    else {
-      assertSources("project",
-                    "target/generated-sources/xxx")
-      assertTestSources("project")
-    }
+    assertSources("project",
+                  "src/main/groovy",
+                  "src/main/java",
+                  "target/generated-sources/xxx")
+    assertTestSources("project",
+                      "src/test/groovy",
+                      "src/test/java")
 
     assertExcludes("project", "target")
   }
@@ -741,20 +654,10 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
         a.rootModel.commit()
       }
 
-      if (supportsImportOfNonExistingFolders()) {
-        assertSources("project", "src/main/groovy", "src/main/java")
-        assertTestSources("project", "src/test/groovy", "src/test/java")
-      }
-      else {
-        assertSources("project")
-        assertTestSources("project")
-      }
-      assertExcludes("project")
+      assertSources("project", "src/main/groovy", "src/main/java")
+      assertTestSources("project", "src/test/groovy", "src/test/java")
 
-      if (!supportsImportOfNonExistingFolders()) {
-        createProjectSubDirs("src/main/groovy",
-                             "src/test/groovy")
-      }
+      assertExcludes("project")
 
       createProjectSubDirs("target/generated-sources/xxx/yyy",
                            "target/generated-sources/groovy-stubs/main/foo",
@@ -763,22 +666,13 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
       val projectsManager = projectsManager
       MavenFolderResolver(projectsManager.project).resolveFoldersAndImport(projectsManager.projects)
 
-      if (supportsImportOfNonExistingFolders()) {
-        assertSources("project",
-                      "src/main/groovy",
-                      "src/main/java",
-                      "target/generated-sources/xxx")
-        assertTestSources("project",
-                          "src/test/groovy",
-                          "src/test/java")
-      }
-      else {
-        assertSources("project",
-                      "src/main/groovy",
-                      "target/generated-sources/xxx")
-        assertTestSources("project",
-                          "src/test/groovy")
-      }
+      assertSources("project",
+                    "src/main/groovy",
+                    "src/main/java",
+                    "target/generated-sources/xxx")
+      assertTestSources("project",
+                        "src/test/groovy",
+                        "src/test/java")
 
       assertExcludes("project", "target")
     }
@@ -790,10 +684,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotAddGroovySpecificGeneratedSourcesForGMaven_1_2() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders()
-    }
-
     createProjectSubDirs("target/generated-sources/xxx/yyy",
                          "target/generated-sources/groovy-stubs/main/foo",
                          "target/generated-sources/groovy-stubs/test/bar")
@@ -825,23 +715,13 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project")
 
-    if (supportsImportOfNonExistingFolders()) {
-      assertSources("project",
-                    "src/main/groovy",
-                    "src/main/java",
-                    "target/generated-sources/xxx")
-      assertDefaultResources("project")
-      assertTestSources("project", "src/test/groovy", "src/test/java")
-      assertDefaultTestResources("project")
-    }
-    else {
-      assertSources("project",
-                    "src/main/java",
-                    "target/generated-sources/xxx")
-      assertDefaultResources("project")
-      assertTestSources("project", "src/test/java")
-      assertDefaultTestResources("project")
-    }
+    assertSources("project",
+                  "src/main/groovy",
+                  "src/main/java",
+                  "target/generated-sources/xxx")
+    assertDefaultResources("project")
+    assertTestSources("project", "src/test/groovy", "src/test/java")
+    assertDefaultTestResources("project")
 
     assertExcludes("project", "target")
   }

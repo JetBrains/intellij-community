@@ -4,6 +4,7 @@ package com.intellij.lang
 import com.intellij.ide.GeneralSettings
 import com.intellij.l10n.LocalizationListener
 import com.intellij.l10n.LocalizationStateService
+import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -15,6 +16,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 internal class LocalizationStateServiceImpl : LocalizationStateService, PersistentStateComponent<LocalizationState> {
 
   private var localizationState = LocalizationState()
+
+  override fun initializeComponent() {
+    val localizationProperty = System.getProperty(LocalizationUtil.LOCALIZATION_KEY)
+    if (!localizationProperty.isNullOrEmpty()) {
+      setSelectedLocale(localizationProperty)
+    }
+  }
 
   override fun getState(): LocalizationState {
     return localizationState

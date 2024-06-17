@@ -1,0 +1,8 @@
+// "Convert string to character literal" "true"
+// ERROR: A 'return' expression required in a function with a block body ('{...}')
+fun bar(): Char {
+    val c: Char
+    c = "."<caret>
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertStringToCharLiteralFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ConvertStringToCharLiteralFixFactory$ConvertStringToCharLiteralFix

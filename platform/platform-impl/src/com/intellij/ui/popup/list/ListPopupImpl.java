@@ -6,8 +6,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.EdtDataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.ClientSystemInfo;
@@ -503,10 +505,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     Object parentValue = selectedValues.length == 1 ? selectedValue : null;
 
     if (nextStep == PopupStep.FINAL_CHOICE &&
-        parentValue instanceof PopupFactoryImpl.ActionItem actionItem &&
-        actionItem.isKeepPopupOpen()) {
+        parentValue instanceof PopupFactoryImpl.ActionItem item &&
+        Utils.isKeepPopupOpen(item.getAction(), item.isKeepPopupOpen(), e)) {
       ActionPopupStep actionPopupStep = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
-      if (actionPopupStep != null && actionPopupStep.isSelectable(actionItem)) {
+      if (actionPopupStep != null && actionPopupStep.isSelectable(item)) {
         actionPopupStep.updateStepItems(getList());
         return false;
       }
@@ -805,7 +807,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     @Nullable Integer getSelectedButtonIndex();
   }
 
-  private final class MyList extends JBList implements DataProvider, ListWithInlineButtons {
+  private final class MyList extends JBList implements ListWithInlineButtons, EdtDataProvider {
 
     private @Nullable Integer selectedButtonIndex;
 
@@ -843,13 +845,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId)) {
-        if (mySpeedSearchPatternField != null && mySpeedSearchPatternField.isVisible()) {
-          return mySpeedSearchPatternField;
-        }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      PopupImplUtil.uiSnapshotForList(myList, sink);
+      if (mySpeedSearchPatternField != null && mySpeedSearchPatternField.isVisible()) {
+        sink.set(PlatformDataKeys.SPEED_SEARCH_COMPONENT, mySpeedSearchPatternField);
       }
-      return PopupImplUtil.getDataImplForList(myList, dataId);
     }
 
     @Override

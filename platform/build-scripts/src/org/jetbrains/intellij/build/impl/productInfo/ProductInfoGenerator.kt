@@ -78,7 +78,7 @@ internal fun generateJetBrainsClientLaunchData(
 ): CustomCommandLaunchData? =
   createJetBrainsClientContextForLaunchers(ideContext)?.let { clientContext ->
     CustomCommandLaunchData(
-      commands = listOf("thinClient", "thinClient-headless"),
+      commands = listOf("thinClient", "thinClient-headless", "installFrontendPlugins"),
       vmOptionsFilePath = vmOptionsFilePath(clientContext),
       bootClassPathJarNames = clientContext.bootClassPathJarNames,
       additionalJvmArguments = clientContext.getAdditionalJvmArguments(os, arch) + ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,

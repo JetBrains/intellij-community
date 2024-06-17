@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.fileEditor.impl.stopOpenFilesActivity
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.blockingContext
@@ -58,7 +59,6 @@ import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Frame
@@ -392,8 +392,7 @@ private suspend fun restoreEditors(project: Project, fileEditorManager: FileEdit
     }
 
     span("editor reopening post-processing", Dispatchers.EDT) {
-      val windows = editorComponent.getWindows()
-      for (window in windows) {
+      for (window in editorComponent.windows().toList()) {
         // clear empty splitters
         if (window.tabCount == 0) {
           window.removeFromSplitter()
@@ -428,7 +427,7 @@ private suspend fun postOpenEditors(
 
   // check after `initDockableContentFactory` - editor in a docked window
   if (!fileEditorManager.hasOpenFiles()) {
-    EditorsSplitters.stopOpenFilesActivity(project)
+    stopOpenFilesActivity(project)
     if (!isNotificationSilentMode(project)) {
       openProjectViewIfNeeded(project, toolWindowInitJob)
       findAndOpenReadmeIfNeeded(project)
@@ -441,6 +440,7 @@ private suspend fun postOpenEditors(
 
 private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   val composite = editorComponent.currentWindow?.selectedComposite ?: return
+  composite.waitForAvailable()
   val textEditor = composite.selectedEditor as? TextEditor
   if (textEditor == null) {
     FUSProjectHotStartUpMeasurer.firstOpenedUnknownEditor(composite.file, System.nanoTime())

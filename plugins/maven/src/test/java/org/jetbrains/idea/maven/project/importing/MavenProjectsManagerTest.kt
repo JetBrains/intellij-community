@@ -24,7 +24,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
@@ -34,7 +33,6 @@ import org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider
 import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction
 import org.jetbrains.idea.maven.project.projectRoot.MavenModuleStructureExtension
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
-import org.junit.Assume
 import org.junit.Test
 
 class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
@@ -73,8 +71,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingAndRemovingManagedFiles() = runBlocking {
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     val m1 = createModulePom("m1",
                              """
                                        <groupId>test</groupId>
@@ -120,7 +116,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     }
     assertModules("m1", "m2")
 
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     waitForImportWithinTimeout {
       projectsManager.removeManagedFiles(listOf(m2))
     }
@@ -309,7 +304,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testIgnoringProjectsForRemovedInUiModules() = runBlocking {
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -371,7 +365,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testWhenDeleteModuleThenChangeModuleDependencyToLibraryDependency() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -416,7 +409,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testWhenDeleteModuleInProjectStructureThenChangeModuleDependencyToLibraryDependency() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -485,8 +477,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     UsefulTestCase.assertSize(1, projectsManager.getRootProjects())
     UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
 
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -500,7 +490,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotIgnoreProjectWhenSeparateMainAndTestModulesDeletedDuringImport() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -573,7 +562,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
           <modules>
               <module>child1</module>
           </modules>
-      </project>""".trimIndent());
+      </project>""".trimIndent())
 
     createProjectSubFile("maven-parent/child1/pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
@@ -668,8 +657,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun shouldUnsetMavenizedIfManagedFilesWasRemoved() = runBlocking {
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>

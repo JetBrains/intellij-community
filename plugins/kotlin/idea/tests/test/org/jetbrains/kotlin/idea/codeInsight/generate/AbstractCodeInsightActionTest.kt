@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestActionEvent
 import junit.framework.TestCase
@@ -95,8 +95,7 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
                 myFixture.checkResult(FileUtil.loadFile(afterFile, true))
                 checkExtra()
             }
-        } catch (e: AssertionError) {
-            if (e !is FileComparisonData) throw e
+        } catch (e: FileComparisonFailedError) {
             KotlinTestUtils.assertEqualsToFile(afterFile, myFixture.editor)
         } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
             KotlinTestUtils.assertEqualsToFile(conflictFile, e.message!!)

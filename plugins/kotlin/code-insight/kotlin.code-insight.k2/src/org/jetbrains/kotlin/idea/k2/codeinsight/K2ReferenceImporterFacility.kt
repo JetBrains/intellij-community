@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
-import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 
 class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
     /**
-     * N.B. This implementation is currently non-lazy, because there is no good way to combine [KtAnalysisSession]
+     * N.B. This implementation is currently non-lazy, because there is no good way to combine [KaSession]
      * with a possibly suspended execution of a lazy sequence.
      *
      * Schematically, the lazy implementation looks like this:
@@ -62,7 +62,7 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
             val quickFixService = KotlinQuickFixService.getInstance()
             val diagnostics = expression
                 .getDiagnostics(KtDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
-                .filter { it.severity == Severity.ERROR && expression.textRange in it.psi.textRange }
+                .filter { it.severity == KaSeverity.ERROR && expression.textRange in it.psi.textRange }
 
             for (diagnostic in diagnostics) {
                 val importFixes = quickFixService.getImportQuickFixesFor(diagnostic)
@@ -79,7 +79,7 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtFile.hasUnresolvedImportWhichCanImport(element: PsiElement): Boolean {
     if (element !is KtSimpleNameExpression) return false
     val referencedName = element.getReferencedName()
@@ -89,7 +89,7 @@ private fun KtFile.hasUnresolvedImportWhichCanImport(element: PsiElement): Boole
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtImportDirective.isResolved(): Boolean {
     val reference = importedReference?.getQualifiedElementSelector()?.mainReference
     return reference?.resolveToSymbol() != null

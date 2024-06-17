@@ -48,10 +48,11 @@ internal val MutableEntityStorage = fqn(workspaceStoragePackageName, "MutableEnt
 internal val EntityStorageInstrumentation = fqn(workspaceStorageInstrumentationPackageName, "EntityStorageInstrumentation")
 internal val MutableEntityStorageInstrumentation = fqn(workspaceStorageInstrumentationPackageName, "MutableEntityStorageInstrumentation")
 internal val EntityStorageInstrumentationApi = fqn(workspaceStorageInstrumentationPackageName, "EntityStorageInstrumentationApi")
+internal val WorkspaceEntityInternalApi = fqn(workspaceStoragePackageName, "WorkspaceEntityInternalApi")
 
 
 internal val EntityType = fqn(workspaceStoragePackageName, "EntityType")
-internal val ConnectionId = fqn(workspaceStorageImplPackageName, "ConnectionId")
+internal val ConnectionId = fqn(workspaceStoragePackageName, "ConnectionId")
 internal val EntityLink = fqn(workspaceStorageImplPackageName, "EntityLink")
 internal val WorkspaceEntityBase = fqn(workspaceStorageImplPackageName, "WorkspaceEntityBase")
 internal val SoftLinkable = fqn(workspaceStorageImplPackageName, "SoftLinkable")

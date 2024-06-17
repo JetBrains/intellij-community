@@ -26,6 +26,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
 import org.jdom.Element
 import org.jdom.JDOMException
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.StringReader
 import java.nio.file.Files
@@ -37,6 +38,7 @@ import javax.xml.stream.XMLStreamException
 @JvmField
 internal val XML_PROLOG: ByteArray = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
+@ApiStatus.Internal
 abstract class FileBasedStorage(
   file: Path,
   fileSpec: String,
@@ -76,6 +78,7 @@ abstract class FileBasedStorage(
 
   override fun createSaveSession(states: StateMap) = FileSaveSessionProducer(storageData = states, storage = this)
 
+  @ApiStatus.Internal
   protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
     XmlElementStorageSaveSessionProducer<FileBasedStorage>(originalStates = storageData, storage = storage) {
 

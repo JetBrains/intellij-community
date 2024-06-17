@@ -5,8 +5,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -40,10 +40,10 @@ internal class CanBePrimaryConstructorPropertyInspection :
 
     override fun isApplicableByPsi(element: KtProperty): Boolean = element.isMovableToConstructorByPsi()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtProperty): MovePropertyToConstructorInfo? {
         val initializer = element.initializer ?: return null
-        val paramSymbol = initializer.mainReference?.resolveToSymbol() as? KtValueParameterSymbol ?: return null
+        val paramSymbol = initializer.mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return null
         if (element.nameAsName != paramSymbol.name) return null
         val propertyType = element.getReturnKtType()
         val isMergeableType = if (paramSymbol.isVararg) {

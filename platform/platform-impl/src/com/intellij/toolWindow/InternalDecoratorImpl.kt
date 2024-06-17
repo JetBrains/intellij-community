@@ -40,7 +40,6 @@ import com.intellij.util.ui.JBUI
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -56,7 +55,7 @@ class InternalDecoratorImpl internal constructor(
   @JvmField internal val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
   private val myDecoratorChild: JComponent
-) : InternalDecorator(), Queryable, DataProvider, ComponentWithMnemonics {
+) : InternalDecorator(), Queryable, EdtDataProvider, ComponentWithMnemonics {
   companion object {
     val SHARED_ACCESS_KEY: Key<Boolean> = Key.create("sharedAccess")
 
@@ -518,8 +517,8 @@ class InternalDecoratorImpl internal constructor(
     return result
   }
 
-  override fun getData(dataId: @NonNls String): Any? {
-    return if (PlatformDataKeys.TOOL_WINDOW.`is`(dataId)) toolWindow else null
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.TOOL_WINDOW] = toolWindow
   }
 
   fun setTitleActions(actions: List<AnAction>) {
@@ -819,6 +818,9 @@ class InternalDecoratorImpl internal constructor(
     }
 
   override fun addNotify() {
+    if (log().isTraceEnabled) {
+      log().trace(Throwable("Tool window $toolWindowId shown"))
+    }
     super.addNotify()
     if (isSplitUnsplitInProgress()) {
       return
@@ -842,6 +844,9 @@ class InternalDecoratorImpl internal constructor(
   }
 
   override fun removeNotify() {
+    if (log().isTraceEnabled) {
+      log().trace(Throwable("Tool window $toolWindowId hidden"))
+    }
     super.removeNotify()
     if (isSplitUnsplitInProgress()) {
       return

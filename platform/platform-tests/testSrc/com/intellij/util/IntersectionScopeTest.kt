@@ -11,6 +11,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import java.lang.IllegalArgumentException
 
 @TestApplication
 class IntersectionScopeTest {
@@ -187,6 +189,30 @@ class IntersectionScopeTest {
     childJob.cancel()
     childHandleJob.join()
     assertNotReferenced(parentJob, childJob)
+  }
+
+  @Test
+  fun `cannot attach to itself`(): Unit = timeoutRunBlocking {
+    val job = Job()
+    assertThrows<IllegalArgumentException> { CoroutineScope(job).attachAsChildTo(CoroutineScope(job)) }
+  }
+
+  @Test
+  fun `cannot create circular dependency - simple`(): Unit = timeoutRunBlocking {
+    val jobA = Job()
+    val jobB = Job()
+    CoroutineScope(jobB).attachAsChildTo(CoroutineScope(jobA))
+    assertThrows<IllegalArgumentException> { CoroutineScope(jobA).attachAsChildTo(CoroutineScope(jobB)) }
+  }
+
+  @Test
+  fun `cannot create circular dependency - intermediary`(): Unit = timeoutRunBlocking {
+    val jobA = Job()
+    val jobB = Job()
+    val jobC = Job()
+    CoroutineScope(jobB).attachAsChildTo(CoroutineScope(jobA))
+    CoroutineScope(jobC).attachAsChildTo(CoroutineScope(jobB))
+    assertThrows<IllegalArgumentException> { CoroutineScope(jobA).attachAsChildTo(CoroutineScope(jobC)) }
   }
 }
 

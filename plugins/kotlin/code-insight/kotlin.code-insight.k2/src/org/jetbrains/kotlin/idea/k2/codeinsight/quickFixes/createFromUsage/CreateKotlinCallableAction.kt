@@ -10,13 +10,13 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUtil.resolveExpression
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUtil.toKtTypeWithNullability
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtTypeWithNullability
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -136,11 +136,11 @@ internal class CreateKotlinCallableAction(
         }
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
         val ktType = if (expectedType is ExpectedKotlinType) expectedType.ktType else expectedType.toKtTypeWithNullability(container)
         if (ktType == null || ktType == builtinTypes.UNIT) return null
-        return ktType.render(renderer = K2CreateFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
+        return ktType.render(renderer = K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
     }
 
     private fun buildCallableAsString(request: CreateMethodRequest): String? {
@@ -187,7 +187,7 @@ internal class CreateKotlinCallableAction(
         if (request is CreateMethodFromKotlinUsageRequest && request.receiverExpression != null && request.isExtension) {
             analyze(call as? KtElement ?: container) {
                 val receiverSymbol = request.receiverExpression.resolveExpression()
-                if (receiverSymbol is KtCallableSymbol && receiverSymbol.returnType is KtTypeParameterType) {
+                if (receiverSymbol is KaCallableSymbol && receiverSymbol.returnType is KtTypeParameterType) {
                     return ("<$receiverTypeText>")
                 }
             }

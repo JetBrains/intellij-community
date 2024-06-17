@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -607,7 +607,7 @@ fun createTextEditorBasedDataContext(
     caret: Caret,
     additionalSteps: SimpleDataContext.Builder.() -> SimpleDataContext.Builder = { this },
 ): DataContext {
-    val parentContext = CaretSpecificDataContext.create(EditorUtil.getEditorDataContext(editor), caret)
+    val parentContext = EditorActionHandler.caretDataContext(EditorUtil.getEditorDataContext(editor), caret)
     assertEquals(project, parentContext.getData(CommonDataKeys.PROJECT))
     assertEquals(editor, parentContext.getData(CommonDataKeys.EDITOR))
     return SimpleDataContext.builder()

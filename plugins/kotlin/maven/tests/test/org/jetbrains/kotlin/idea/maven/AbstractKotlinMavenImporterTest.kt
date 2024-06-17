@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.packaging.impl.artifacts.ArtifactUtil
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
@@ -52,13 +53,12 @@ import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
 import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
+import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.notification.asText
 import org.jetbrains.kotlin.idea.notification.catchNotificationTextAsync
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
 import org.jetbrains.kotlin.idea.test.resetCodeStyle
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.waitIndexingComplete
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -68,7 +68,6 @@ import org.junit.Assert
 import org.junit.Assert.assertNotEquals
 import org.junit.Assume
 import org.junit.Test
-import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolders: Boolean = true) : KotlinMavenImportingTestCase() {
@@ -2919,7 +2918,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             importProjectsAsync(pomMain, pomA, pomB)
             withContext(Dispatchers.EDT) {
-                project.waitIndexingComplete()
+                IndexingTestUtil.waitUntilIndexesAreReady(project)
             }
             assertModules("module-with-kotlin", "module-with-java", "mvnktest")
 
@@ -3981,10 +3980,4 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             }
         }
     }
-}
-
-fun File.toJpsVersionAgnosticKotlinBundledPath(): String {
-    val kotlincDirectory = KotlinPluginLayout.kotlinc
-    require(this.startsWith(kotlincDirectory)) { "$this should start with ${kotlincDirectory}" }
-    return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(kotlincDirectory)}"
 }

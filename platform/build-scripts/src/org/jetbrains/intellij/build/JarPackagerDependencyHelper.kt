@@ -5,15 +5,19 @@ package org.jetbrains.intellij.build
 
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
+import io.ktor.util.decodeString
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.*
 import java.io.StringReader
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.extension
 
 // production-only - JpsJavaClasspathKind.PRODUCTION_RUNTIME
 internal class JarPackagerDependencyHelper(private val context: BuildContext) {
@@ -32,6 +36,9 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
 
   fun getPluginXmlContent(pluginModule: JpsModule): String {
     val moduleOutput = context.getModuleOutputDir(pluginModule)
+    if (moduleOutput.extension == "jar") {
+      return getPluginXmlContentFromJar(moduleOutput)
+    }
     val pluginXmlFile = moduleOutput.resolve("META-INF/plugin.xml")
     try {
       return Files.readString(pluginXmlFile)
@@ -39,6 +46,16 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     catch (e: NoSuchFileException) {
       throw IllegalStateException("${pluginXmlFile.fileName} not found in ${pluginModule.name} module (file=$pluginXmlFile)")
     }
+  }
+
+  private fun getPluginXmlContentFromJar(moduleJar: Path): String {
+    var pluginXmlContent: String? = null
+    readZipFile(moduleJar) { name, data ->
+      if (name == "META-INF/plugin.xml")
+        pluginXmlContent = data().decodeString()
+    }
+
+    return pluginXmlContent ?: throw IllegalStateException("META-INF/plugin.xml not found in ${moduleJar} module")
   }
 
   fun getPluginIdByModule(pluginModule: JpsModule): String {

@@ -6,7 +6,6 @@ import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.execution.CantRunException
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
-import com.intellij.execution.JavaExecutionUtil
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.JavaRunConfigurationModule
@@ -21,7 +20,6 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
@@ -30,21 +28,18 @@ import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaModule
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
-import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @ApiStatus.Experimental
@@ -65,52 +60,29 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val runProfile = executeRunConfigurationTask.runProfile
     if (runProfile !is JavaRunConfigurationBase) return null
 
-    val runClass = runProfile.runClass
-    val mainClass = runProfile.configurationModule.findClass(runClass) ?: return null
-    val mainClassName = JavaExecutionUtil.getRuntimeQualifiedName(mainClass) ?: return null
-    val virtualFile = mainClass.containingFile.virtualFile
-    val module = runReadAction {
-      ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile)
-    } ?: return null
+    val mainClass = runProfile.runClass ?: return null
+    val module = runProfile.configurationModule.module ?: return null
 
+    val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module) ?: return null
+    val externalProjectPath = gradleModuleData.directoryToRunTask
+    val settings = GradleSettings.getInstance(project)
+    val projectSettings = settings.getLinkedProjectSettings(externalProjectPath) ?: return null
+    if (!projectSettings.isResolveModulePerSourceSet) {
+      return null
+    }
     val params = JavaParameters().apply {
       JavaParametersUtil.configureConfiguration(this, runProfile)
       this.vmParametersList.addParametersString(runProfile.vmParameters)
     }
 
-    val javaModuleName: String?
-    val javaExePath: String
-    try {
-      if (getEffectiveConfiguration(runProfile, project) != null) {
-        javaModuleName = null
-        javaExePath = GradleServerEnvironmentSetup.targetJavaExecutablePathMappingKey
-      }
-      else {
-        val jdk = JavaParametersUtil.createProjectJdk(project, runProfile.alternativeJrePath)
-                  ?: throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
-        val type = jdk.sdkType
-        if (type !is JavaSdkType) throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
-        javaExePath = (type as JavaSdkType).getVMExecutablePath(jdk)?.let {
-          FileUtil.toSystemIndependentName(it)
-        } ?: throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
-        javaModuleName = findJavaModuleName(jdk, runProfile.configurationModule, mainClass)
-      }
-    }
-    catch (e: CantRunException) {
-      AppUIExecutor.onUiThread().expireWith(project).submit {
-        ExecutionErrorDialog.show(e, GradleInspectionBundle.message("dialog.title.cannot.use.specified.jre"), project)
-      }
-      throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
-    }
     val taskSettings = ExternalSystemTaskExecutionSettings()
     taskSettings.isPassParentEnvs = params.isPassParentEnvs
     taskSettings.env = if (params.env.isEmpty()) emptyMap() else HashMap(params.env)
     taskSettings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
+    taskSettings.externalProjectPath = externalProjectPath
 
-    val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module)
-    taskSettings.externalProjectPath = gradleModuleData?.directoryToRunTask ?: GradleRunnerUtil.resolveProjectPath(module)
-    val runAppTaskName = mainClass.name!! + ".main()"
-    taskSettings.taskNames = listOf((gradleModuleData?.getTaskPath(runAppTaskName) ?: runAppTaskName))
+    val runAppTaskName = "$mainClass.main()"
+    taskSettings.taskNames = listOf(gradleModuleData.getTaskPath(runAppTaskName))
     customiseTaskExecutionsSettings(taskSettings, module)
 
     val executorId = executor?.id ?: DefaultRunExecutor.EXECUTOR_ID
@@ -120,25 +92,18 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val gradleRunConfiguration = runnerAndConfigurationSettings.configuration as ExternalSystemRunConfiguration
 
     val gradlePath = getGradleIdentityPathOrNull(module) ?: return null
-    val sourceSetName = when {
-                          GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY == ExternalSystemApiUtil.getExternalModuleType(
-                            module) -> GradleProjectResolverUtil.getSourceSetName(module)
-                          ModuleRootManager.getInstance(module).fileIndex.isInTestSourceContent(virtualFile) -> "test"
-                          else -> "main"
-                        } ?: return null
-    val applicationConfiguration = runProfile as T
-    val workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, module.project, module)?.let {
+    val sourceSetName = GradleProjectResolverUtil.getSourceSetName(module) ?: return null
+    val workingDir = ProgramParametersUtil.getWorkingDir(runProfile, module.project, module)?.let {
       FileUtil.toSystemIndependentName(it)
     }
-    val builder = GradleInitScriptParametersBuilder(applicationConfiguration, module)
+    val builder = GradleInitScriptParametersBuilder(runProfile, module)
       .withWorkingDirectory(workingDir)
       .withParams(argsString(params))
       .withGradleTaskPath(gradlePath)
       .withRunAppTaskName(runAppTaskName)
-      .withMainClass(mainClassName)
-      .withJavaExePath(javaExePath)
+      .withMainClass(mainClass)
       .withSourceSetName(sourceSetName)
-      .withJavaModuleName(javaModuleName)
+      .withJavaConfiguration(project, runProfile)
 
     val initScript = generateInitScript(builder.build())
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_KEY, initScript)
@@ -149,6 +114,38 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     gradleRunConfiguration.beforeRunTasks = RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(runProfile)
       .filter { it.providerId !== CompileStepBeforeRun.ID }
     return environment
+  }
+
+  private fun GradleInitScriptParametersBuilder.withJavaConfiguration(project: Project, runProfile: JavaRunConfigurationBase) = apply {
+    if (getEffectiveConfiguration(runProfile, project) != null) {
+      withJavaModuleName(null)
+      withJavaExePath(GradleServerEnvironmentSetup.targetJavaExecutablePathMappingKey)
+    }
+    else {
+      val jdk = resolveRunConfigurationJdk(project, runProfile)
+      val type = jdk.sdkType as JavaSdkType
+
+      val javaExePath = type.getVMExecutablePath(jdk)
+                        ?: throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
+      val javaModuleName = findJavaModuleName(jdk, runProfile.configurationModule, runProfile.runClass!!)
+
+      withJavaModuleName(javaModuleName)
+      withJavaExePath(FileUtil.toSystemIndependentName(javaExePath))
+    }
+  }
+
+  private fun resolveRunConfigurationJdk(project: Project, runProfile: JavaRunConfigurationBase): Sdk {
+    try {
+      return JavaParametersUtil.createProjectJdk(project, runProfile.alternativeJrePath)
+             ?: throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
+    }
+    catch (e: CantRunException) {
+      @Suppress("IncorrectParentDisposable")
+      AppUIExecutor.onUiThread().expireWith(project).submit {
+        ExecutionErrorDialog.show(e, GradleInspectionBundle.message("dialog.title.cannot.use.specified.jre"), project)
+      }
+      throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
+    }
   }
 
   protected open fun customiseTaskExecutionsSettings(taskSettings: ExternalSystemTaskExecutionSettings, module: Module) {}
@@ -164,11 +161,11 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       return result.toString()
     }
 
-    private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: PsiClass): String? {
+    private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: String): String? {
       return if (JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9)) {
         runReadAction {
           DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule?, RuntimeException> {
-            JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.qualifiedName))
+            JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass))
           }?.name
         } ?: return null
       }

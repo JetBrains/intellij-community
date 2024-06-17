@@ -310,16 +310,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
         }
 
         final @NonNls String message = "PEP 8: " + problem.myCode + " " + problem.myDescription;
-        HighlightSeverity severity;
-        if (annotationResult.level == HighlightDisplayLevel.ERROR) {
-          severity = HighlightSeverity.ERROR;
-        }
-        else if (annotationResult.level == HighlightDisplayLevel.WARNING) {
-          severity = HighlightSeverity.WARNING;
-        }
-        else {
-          severity = HighlightSeverity.WEAK_WARNING;
-        }
+        HighlightSeverity severity = annotationResult.level.getSeverity();
         CommonIntentionAction fix;
         boolean universal;
         if (problem.myCode.equals("E401")) {

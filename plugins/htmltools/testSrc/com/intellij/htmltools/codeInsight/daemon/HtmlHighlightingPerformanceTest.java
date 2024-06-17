@@ -5,7 +5,7 @@ import com.intellij.htmltools.codeInspection.htmlInspections.HtmlDeprecatedTagIn
 import com.intellij.htmltools.codeInspection.htmlInspections.HtmlPresentationalElementInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 import com.intellij.xml.util.XmlDuplicatedIdInspection;
@@ -37,14 +37,14 @@ public class HtmlHighlightingPerformanceTest extends BasePlatformTestCase {
 
   public void testPerformance2() {
     myFixture.configureByFiles(getTestName(false) + ".html", "manual.css");
-    PlatformTestUtil.newPerformanceTest("HTML Highlighting 2", () -> doTest())
+    PerformanceTestUtil.newPerformanceTest("HTML Highlighting 2", () -> doTest())
       .warmupIterations(1)
       .start();
   }
 
   public void testPerformance() {
     myFixture.configureByFiles(getTestName(false) + ".html", "stylesheet.css");
-    PlatformTestUtil.newPerformanceTest("HTML Highlighting", () -> doTest())
+    PerformanceTestUtil.newPerformanceTest("HTML Highlighting", () -> doTest())
       .warmupIterations(1)
       .start();
   }

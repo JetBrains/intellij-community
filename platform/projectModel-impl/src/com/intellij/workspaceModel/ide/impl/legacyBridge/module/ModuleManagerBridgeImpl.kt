@@ -567,8 +567,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
 
     private fun EntityChange<LibraryEntity>.isModuleLibrary(): Boolean {
       return when (this) {
-        is EntityChange.Added -> entity.tableId is LibraryTableId.ModuleLibraryTableId
-        is EntityChange.Removed -> entity.tableId is LibraryTableId.ModuleLibraryTableId
+        is EntityChange.Added -> newEntity.tableId is LibraryTableId.ModuleLibraryTableId
+        is EntityChange.Removed -> oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
         is EntityChange.Replaced -> oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
       }
     }
@@ -676,4 +676,12 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
     loadAllModulesTimeCounter, newModuleTimeCounter, newNonPersistentModuleTimeCounter, loadModuleTimeCounter,
     setUnloadedModulesTimeCounter, createModuleInstanceTimeCounter, buildModuleGraphTimeCounter, getModulesTimeCounter
   )
+}
+
+private fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
+  return when (this) {
+    is ImmutableEntityStorage -> this
+    is MutableEntityStorage -> this.toSnapshot()
+    else -> error("Unexpected storage: $this")
+  }
 }

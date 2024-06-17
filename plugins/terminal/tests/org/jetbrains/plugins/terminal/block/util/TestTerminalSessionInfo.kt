@@ -5,8 +5,8 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
-import org.jetbrains.plugins.terminal.exp.prompt.TerminalSessionInfo
-import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
+import org.jetbrains.plugins.terminal.block.prompt.TerminalSessionInfo
+import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 
 internal class TestTerminalSessionInfo(
   override val terminalSize: TermSize = TermSize(80, 20)

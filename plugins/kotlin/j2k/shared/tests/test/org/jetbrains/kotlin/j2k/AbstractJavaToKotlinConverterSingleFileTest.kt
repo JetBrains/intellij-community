@@ -68,18 +68,26 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithoutRedundantImports)
     }
 
-    // For testdata with trivial differences between K1 and K2 (for example, different wording of error messages),
-    // introduce a K1-specific expected file that ends with ".k1.kt".
+    // 1. ".k1.kt" testdata is for trivial differences between K1 and K2 (for example, different wording of error messages).
+    // Such files will be deleted along with the whole K1 plugin.
+    // In such tests, the K2 testdata with the default ".kt" suffix is considered completely correct.
+    //
+    // 2. ".k2.kt" testdata is for tests that are mostly good on K2, but there are differences due to minor missing post-processings
+    // that we may support later in "idiomatic" mode.
+    // Still, we don't want to completely ignore such tests in K2.
+    //
+    // 3. If the test only has a default version of testdata ".kt", then:
+    //   - it may have "IGNORE_K2" directive, in this case the test is completely ignored in K2
+    //   - or, if no IGNORE directives are present, the K1 and K2 results are identical for such a test
     private fun getExpectedFile(javaFile: File): File {
         val defaultFile = File(javaFile.path.replace(".java", ".kt"))
-        return  when (pluginMode) {
-            KotlinPluginMode.K1 -> {
-                val k1File = File(javaFile.path.replace(".java", ".k1.kt")).takeIf(File::exists)
-                k1File ?: defaultFile
-            }
-            KotlinPluginMode.K2 -> defaultFile
-            else -> error("Can't get expected file")
+        val customFileExtension = when (pluginMode) {
+            KotlinPluginMode.K1 -> ".k1.kt"
+            KotlinPluginMode.K2 -> ".k2.kt"
+            else -> error("Can't determine the plugin mode")
         }
+        val customFile = File(javaFile.path.replace(".java", customFileExtension)).takeIf(File::exists)
+        return customFile ?: defaultFile
     }
 
     private fun addDependencies(directives: Directives) {

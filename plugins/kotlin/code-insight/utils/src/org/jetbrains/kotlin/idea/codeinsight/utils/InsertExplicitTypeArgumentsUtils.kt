@@ -5,9 +5,9 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.types.Variance
 
-context(KtAnalysisSession)
+context(KaSession)
 fun getRenderedTypeArguments(element: KtCallElement): String? {
-    val resolvedCall = element.resolveCall()?.singleFunctionCallOrNull() ?: return null
+    val resolvedCall = element.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
     val typeParameterSymbols = resolvedCall.partiallyAppliedSymbol.symbol.typeParameters
     if (typeParameterSymbols.isEmpty()) return null
     val renderedTypeParameters = buildList {
@@ -43,10 +43,9 @@ fun addTypeArguments(element: KtCallElement, context: String, project: Project) 
     ShortenReferencesFacility.getInstance().shorten(newArgumentList)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtType.containsErrorType(): Boolean = when (this) {
-    is KtClassErrorType -> true
-    is KtTypeErrorType -> true
+    is KtErrorType -> true
     is KtFunctionalType -> {
         (receiverType?.containsErrorType() == true)
                 || returnType.containsErrorType()
@@ -58,5 +57,5 @@ private fun KtType.containsErrorType(): Boolean = when (this) {
     is KtDefinitelyNotNullType -> original.containsErrorType()
     is KtFlexibleType -> lowerBound.containsErrorType() || upperBound.containsErrorType()
     is KtIntersectionType -> conjuncts.any { it.containsErrorType() }
-    is KtTypeParameterType, is KtCapturedType, is KtIntegerLiteralType, is KtDynamicType -> false
+    is KtTypeParameterType, is KtCapturedType, is KtDynamicType -> false
 }

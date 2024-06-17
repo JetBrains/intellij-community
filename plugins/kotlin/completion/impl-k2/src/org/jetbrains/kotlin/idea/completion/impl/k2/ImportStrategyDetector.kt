@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -26,10 +26,10 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
 
     private val excludedImports = analyzerServices.excludedImports
 
-    context(KtAnalysisSession)
-    fun detectImportStrategyForCallableSymbol(symbol: KtCallableSymbol, isFunctionalVariableCall: Boolean = false): ImportStrategy {
+    context(KaSession)
+    fun detectImportStrategyForCallableSymbol(symbol: KaCallableSymbol, isFunctionalVariableCall: Boolean = false): ImportStrategy {
         val containingClassIsObject = symbol.originalContainingClassForOverride?.classKind?.isObject == true
-        if (symbol.symbolKind == KtSymbolKind.CLASS_MEMBER && !containingClassIsObject) return ImportStrategy.DoNothing
+        if (symbol.symbolKind == KaSymbolKind.CLASS_MEMBER && !containingClassIsObject) return ImportStrategy.DoNothing
 
         val callableId = symbol.callableId?.asSingleFqName() ?: return ImportStrategy.DoNothing
 
@@ -40,9 +40,9 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
         }
     }
 
-    context (KtAnalysisSession)
-    fun detectImportStrategyForClassifierSymbol(symbol: KtClassifierSymbol): ImportStrategy {
-        if (symbol !is KtClassLikeSymbol) return ImportStrategy.DoNothing
+    context (KaSession)
+    fun detectImportStrategyForClassifierSymbol(symbol: KaClassifierSymbol): ImportStrategy {
+        if (symbol !is KaClassLikeSymbol) return ImportStrategy.DoNothing
 
         val classId = symbol.classId?.asSingleFqName() ?: return ImportStrategy.DoNothing
         return ImportStrategy.InsertFqNameAndShorten(classId)

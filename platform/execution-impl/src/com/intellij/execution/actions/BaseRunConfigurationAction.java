@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public abstract class BaseRunConfigurationAction extends ActionGroup implements ActionRemoteBehaviorSpecification, DumbAware {
+public abstract class BaseRunConfigurationAction extends ActionGroup implements ActionRemoteBehaviorSpecification.BackendOnly, DumbAware {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
 
   protected BaseRunConfigurationAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
@@ -53,11 +53,6 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
-  }
-
-  @Override
-  public @NotNull ActionRemoteBehavior getBehavior() {
-    return ActionRemoteBehavior.BackendOnly;
   }
 
   @Override

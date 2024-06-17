@@ -95,6 +95,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/DataClass.kt");
     }
 
+    @TestMetadata("DataClassOnConstructor.kt")
+    public void testDataClassOnConstructor() throws Exception {
+        runTest("testData/editor/quickDoc/DataClassOnConstructor.kt");
+    }
+
     @TestMetadata("DefinitelyNonNullType.kt")
     public void testDefinitelyNonNullType() throws Exception {
         runTest("testData/editor/quickDoc/DefinitelyNonNullType.kt");
@@ -135,9 +140,24 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/FunctionTypeParameter.kt");
     }
 
+    @TestMetadata("FunctionalReceiver.kt")
+    public void testFunctionalReceiver() throws Exception {
+        runTest("testData/editor/quickDoc/FunctionalReceiver.kt");
+    }
+
     @TestMetadata("IndentedCodeBlock.kt")
     public void testIndentedCodeBlock() throws Exception {
         runTest("testData/editor/quickDoc/IndentedCodeBlock.kt");
+    }
+
+    @TestMetadata("InlineClass.kt")
+    public void testInlineClass() throws Exception {
+        runTest("testData/editor/quickDoc/InlineClass.kt");
+    }
+
+    @TestMetadata("InlineValueClass.kt")
+    public void testInlineValueClass() throws Exception {
+        runTest("testData/editor/quickDoc/InlineValueClass.kt");
     }
 
     @TestMetadata("JavaClassConstructorUsedInKotlin.kt")
@@ -370,6 +390,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/PropertiesInConstructor.kt");
     }
 
+    @TestMetadata("QualifiedNameDocLink.kt")
+    public void testQualifiedNameDocLink() throws Exception {
+        runTest("testData/editor/quickDoc/QualifiedNameDocLink.kt");
+    }
+
     @TestMetadata("renderAnnotatedExtensionFunctionType.kt")
     public void testRenderAnnotatedExtensionFunctionType() throws Exception {
         runTest("testData/editor/quickDoc/renderAnnotatedExtensionFunctionType.kt");
@@ -378,6 +403,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("Samples.kt")
     public void testSamples() throws Exception {
         runTest("testData/editor/quickDoc/Samples.kt");
+    }
+
+    @TestMetadata("SuperConstructorWithArgs.kt")
+    public void testSuperConstructorWithArgs() throws Exception {
+        runTest("testData/editor/quickDoc/SuperConstructorWithArgs.kt");
     }
 
     @TestMetadata("Tailrec.kt")
@@ -408,5 +438,10 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("TypeParameterConstraints.kt")
     public void testTypeParameterConstraints() throws Exception {
         runTest("testData/editor/quickDoc/TypeParameterConstraints.kt");
+    }
+
+    @TestMetadata("UnresolvedAnnotation.kt")
+    public void testUnresolvedAnnotation() throws Exception {
+        runTest("testData/editor/quickDoc/UnresolvedAnnotation.kt");
     }
 }

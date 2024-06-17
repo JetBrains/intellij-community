@@ -65,49 +65,15 @@ class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project1", "project2")
 
     setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     doReadAndImport()
     assertModules("project2")
 
     setIgnoredFilesPathForNextImport(listOf(p2.getPath()))
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     doReadAndImport()
     assertModules("project1")
 
     setIgnoredFilesPathForNextImport(emptyList<String>())
     doReadAndImport()
-    assertModules("project1", "project2")
-  }
-
-  @Test
-  fun testDoNotAskTwiceToRemoveIgnoredModule() = runBlocking {
-    if (!supportsKeepingModulesFromPreviousImport()) return@runBlocking
-
-    val p1 = createModulePom("project1",
-                             """
-                                       <groupId>test</groupId>
-                                       <artifactId>project1</artifactId>
-                                       <version>1</version>
-                                       """.trimIndent())
-
-    val p2 = createModulePom("project2",
-                             """
-                                       <groupId>test</groupId>
-                                       <artifactId>project2</artifactId>
-                                       <version>1</version>
-                                       """.trimIndent())
-    importProjects(p1, p2)
-    assertModules("project1", "project2")
-
-    setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
-    doReadAndImport()
-
-    assertModules("project1", "project2")
-
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
-    doReadAndImport()
-
     assertModules("project1", "project2")
   }
 

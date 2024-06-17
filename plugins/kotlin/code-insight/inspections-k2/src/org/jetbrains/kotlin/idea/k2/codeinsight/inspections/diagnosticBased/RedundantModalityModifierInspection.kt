@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -32,7 +32,7 @@ internal class RedundantModalityModifierInspection :
     override fun getApplicableRanges(element: KtModifierListOwner): List<TextRange> =
         ApplicabilityRanges.modalityModifier(element)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContextByDiagnostic(
         element: KtModifierListOwner,
         diagnostic: KaFirDiagnostic.RedundantModalityModifier,

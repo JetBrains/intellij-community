@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
  * For example, during the project startup, all content files/directories are scanned.
  * Scanned files/directories are under content roots and not excluded or ignored.
  */
+@Internal
+@OverrideOnly
 public interface IndexableFileScanner {
   ExtensionPointName<IndexableFileScanner> EP_NAME = ExtensionPointName.create("com.intellij.projectFileScanner");
 

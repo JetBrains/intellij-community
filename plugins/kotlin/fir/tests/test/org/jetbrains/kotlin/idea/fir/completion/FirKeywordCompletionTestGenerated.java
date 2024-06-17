@@ -617,6 +617,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../../completion/testData/keywords/ReturnSet.kt");
         }
 
+        @TestMetadata("ReturnWithLabelPrefix.kt")
+        public void testReturnWithLabelPrefix() throws Exception {
+            runTest("../../completion/testData/keywords/ReturnWithLabelPrefix.kt");
+        }
+
         @TestMetadata("SealedForAlreadySealed.kt")
         public void testSealedForAlreadySealed() throws Exception {
             runTest("../../completion/testData/keywords/SealedForAlreadySealed.kt");

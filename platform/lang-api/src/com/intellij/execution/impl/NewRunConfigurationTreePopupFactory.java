@@ -30,7 +30,7 @@ public abstract class NewRunConfigurationTreePopupFactory {
     for (Object element : elements) {
       descriptors.add(createDescriptor(project, element, parent));
     }
-    return descriptors.toArray(NodeDescriptor.EMPTY_ARRAY);
+    return descriptors.toArray(NodeDescriptor.getEmptyArray());
   }
 
   //This method is supposed to be called just once for each node, the result goes to cache
@@ -51,7 +51,7 @@ public abstract class NewRunConfigurationTreePopupFactory {
   public final @NotNull NodeDescriptor createDescriptor(@NotNull Project project,
                                                         @NotNull Object element,
                                                         @Nullable NodeDescriptor parentDescriptor) {
-    return createDescriptor(project, element, parentDescriptor, NodeDescriptor.DEFAULT_WEIGHT);
+    return createDescriptor(project, element, parentDescriptor, NodeDescriptor.getDefaultWeight());
   }
 
   public @NotNull NodeDescriptor createDescriptor(@NotNull Project project,

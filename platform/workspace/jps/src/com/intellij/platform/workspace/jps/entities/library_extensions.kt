@@ -15,15 +15,16 @@ import org.jetbrains.annotations.NonNls
  */
 @Internal
 interface LibraryPropertiesEntity : WorkspaceEntity {
-  val library: LibraryEntity
   val propertiesXmlTag: @NonNls String?
+
+  val library: LibraryEntity
 
   //region generated code
   @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<LibraryPropertiesEntity> {
     override var entitySource: EntitySource
-    var library: LibraryEntity.Builder
     var propertiesXmlTag: String?
+    var library: LibraryEntity.Builder
   }
 
   companion object : EntityType<LibraryPropertiesEntity, Builder>() {
@@ -45,7 +46,8 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+@Internal
+fun MutableEntityStorage.modifyLibraryPropertiesEntity(
   entity: LibraryPropertiesEntity,
   modification: LibraryPropertiesEntity.Builder.() -> Unit,
 ): LibraryPropertiesEntity {

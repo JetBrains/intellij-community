@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -36,8 +36,8 @@ public final class ProblemDescriptorUtil {
   static final int APPEND_LINE_NUMBER = 0x00000001;
   public static final int TRIM_AT_TREE_END = 0x00000004;
 
-  private static final @NonNls String LOC_REFERENCE = "#loc";
-  private static final @NonNls String REF_REFERENCE = "#ref";
+  public static final @NonNls String LOC_REFERENCE = "#loc";
+  public static final @NonNls String REF_REFERENCE = "#ref";
 
   @MagicConstant(flags = {NONE, APPEND_LINE_NUMBER, TRIM_AT_TREE_END})
   @interface FlagConstant {

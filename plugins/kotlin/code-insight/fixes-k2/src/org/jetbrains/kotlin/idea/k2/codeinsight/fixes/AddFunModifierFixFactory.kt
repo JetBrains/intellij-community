@@ -5,12 +5,12 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -32,7 +32,7 @@ internal object AddFunModifierFixFactory {
 
         val referrerCall = referrer.parent as? KtCallExpression ?: return@ModCommandBased emptyList()
         if (referrerCall.valueArguments.singleOrNull() !is KtLambdaArgument) return@ModCommandBased emptyList()
-        val referenceClassSymbol = diagnostic.classSymbol as? KtNamedClassOrObjectSymbol ?: return@ModCommandBased emptyList()
+        val referenceClassSymbol = diagnostic.classSymbol as? KaNamedClassOrObjectSymbol ?: return@ModCommandBased emptyList()
         if (referenceClassSymbol.isFun || !referenceClassSymbol.isSamInterface()) return@ModCommandBased emptyList()
 
         val referenceClass = referenceClassSymbol.psi as? KtClass ?: return@ModCommandBased emptyList()
@@ -71,13 +71,13 @@ internal object AddFunModifierFixFactory {
     }
 }
 
-context(KtAnalysisSession)
-private fun KtNamedClassOrObjectSymbol.isSamInterface(): Boolean {
-    if (classKind != KtClassKind.INTERFACE) return false
+context(KaSession)
+private fun KaNamedClassOrObjectSymbol.isSamInterface(): Boolean {
+    if (classKind != KaClassKind.INTERFACE) return false
     val singleAbstractMember = getMemberScope()
         .getCallableSymbols()
-        .filterIsInstance<KtSymbolWithModality>()
+        .filterIsInstance<KaSymbolWithModality>()
         .filter { it.modality == Modality.ABSTRACT }
         .singleOrNull() ?: return false
-    return singleAbstractMember is KtFunctionSymbol && singleAbstractMember.typeParameters.isEmpty()
+    return singleAbstractMember is KaFunctionSymbol && singleAbstractMember.typeParameters.isEmpty()
 }

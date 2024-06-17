@@ -53,7 +53,7 @@ interface ProjectModelTestEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyProjectModelTestEntity(
   entity: ProjectModelTestEntity,
   modification: ProjectModelTestEntity.Builder.() -> Unit,
 ): ProjectModelTestEntity {

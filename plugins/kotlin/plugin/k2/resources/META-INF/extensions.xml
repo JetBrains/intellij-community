@@ -9,7 +9,4 @@
                     interface="org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType" dynamic="true"/>
   </extensionPoints>
 
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <j2kConverterExtension implementation="org.jetbrains.kotlin.j2k.K2J2KConverterExtension"/>
-  </extensions>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.commits
 
 import com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent.Type.*
@@ -23,7 +23,7 @@ open class CommitNodeComponent : JComponent() {
   }
 
   override fun getPreferredSize() = JBDimension(
-    PaintParameters.getNodeWidth(PaintParameters.ROW_HEIGHT),
+    PaintParameters.getElementWidth(PaintParameters.ROW_HEIGHT).toInt(),
     PaintParameters.ROW_HEIGHT
   )
 
@@ -58,7 +58,7 @@ open class CommitNodeComponent : JComponent() {
     g.fill(circle)
   }
 
-  protected open fun calcRadius(rect: Rectangle) = PaintParameters.getCircleRadius(rect.height)
+  protected open fun calcRadius(rect: Rectangle) = PaintParameters.getCircleRadius(rect.height).toInt()
 
   private fun drawEdgeUp(g: Graphics2D, rect: Rectangle) {
     val y1 = 0.0
@@ -79,7 +79,7 @@ open class CommitNodeComponent : JComponent() {
     g.fill(line)
   }
 
-  protected open fun calcLineThickness(rect: Rectangle) = PaintParameters.getLineThickness(rect.height)
+  protected open fun calcLineThickness(rect: Rectangle) = PaintParameters.getLineThickness(rect.height).toFloat()
 
   enum class Type {
     SINGLE, FIRST, MIDDLE, LAST

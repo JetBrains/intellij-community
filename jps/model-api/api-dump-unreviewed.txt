@@ -264,6 +264,7 @@ a:org.jetbrains.jps.model.artifact.elements.ex.JpsComplexPackagingElementBase
 - org.jetbrains.jps.model.artifact.elements.JpsComplexPackagingElement
 - p:<init>():V
 - p:<init>(org.jetbrains.jps.model.artifact.elements.ex.JpsComplexPackagingElementBase):V
+- createCopy():org.jetbrains.jps.model.artifact.elements.ex.JpsComplexPackagingElementBase
 a:org.jetbrains.jps.model.ex.JpsCompositeElementBase
 - org.jetbrains.jps.model.ex.JpsElementBase
 - org.jetbrains.jps.model.JpsCompositeElement

@@ -21,6 +21,7 @@ public abstract class DataViewStrategy {
       ArrayViewStrategy.createInstanceForNumpyArray(),
       ArrayViewStrategy.createInstanceForEagerTensor(),
       ArrayViewStrategy.createInstanceForResourceVariable(),
+      ArrayViewStrategy.createInstanceForSparseTensor(),
       ArrayViewStrategy.createInstanceForTensor(),
       DataFrameViewStrategy.createInstanceForDataFrame(),
       DataFrameViewStrategy.createInstanceForGeoDataFrame(),

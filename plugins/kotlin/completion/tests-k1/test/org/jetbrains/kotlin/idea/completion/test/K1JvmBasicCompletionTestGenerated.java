@@ -90,6 +90,16 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/annotations/FunctionAnnotation2.kt");
             }
 
+            @TestMetadata("NestedAnnotation.kt")
+            public void testNestedAnnotation() throws Exception {
+                runTest("../testData/basic/common/annotations/NestedAnnotation.kt");
+            }
+
+            @TestMetadata("NestedAnnotation2.kt")
+            public void testNestedAnnotation2() throws Exception {
+                runTest("../testData/basic/common/annotations/NestedAnnotation2.kt");
+            }
+
             @TestMetadata("NoCatchParameterAutopopup.kt")
             public void testNoCatchParameterAutopopup() throws Exception {
                 runTest("../testData/basic/common/annotations/NoCatchParameterAutopopup.kt");
@@ -407,6 +417,16 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/boldOrGrayed/AfterNullableAutoCast2.kt");
             }
 
+            @TestMetadata("Deprecated.kt")
+            public void testDeprecated() throws Exception {
+                runTest("../testData/basic/common/boldOrGrayed/Deprecated.kt");
+            }
+
+            @TestMetadata("DeprecatedGetter.kt")
+            public void testDeprecatedGetter() throws Exception {
+                runTest("../testData/basic/common/boldOrGrayed/DeprecatedGetter.kt");
+            }
+
             @TestMetadata("ImmediateExtensionMembers1.kt")
             public void testImmediateExtensionMembers1() throws Exception {
                 runTest("../testData/basic/common/boldOrGrayed/ImmediateExtensionMembers1.kt");
@@ -470,6 +490,16 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("MemberAfterNullable.kt")
             public void testMemberAfterNullable() throws Exception {
                 runTest("../testData/basic/common/boldOrGrayed/MemberAfterNullable.kt");
+            }
+
+            @TestMetadata("NonDeprecatedGetter.kt")
+            public void testNonDeprecatedGetter() throws Exception {
+                runTest("../testData/basic/common/boldOrGrayed/NonDeprecatedGetter.kt");
+            }
+
+            @TestMetadata("NonDeprecatedSetter.kt")
+            public void testNonDeprecatedSetter() throws Exception {
+                runTest("../testData/basic/common/boldOrGrayed/NonDeprecatedSetter.kt");
             }
 
             @TestMetadata("NonPredictableSmartCast.kt")

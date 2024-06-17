@@ -1,4 +1,3 @@
-// ConvertToRawStringTemplateIntention is not applied in K2 basic mode
 class Test {
     var s1: String = """
         asdf

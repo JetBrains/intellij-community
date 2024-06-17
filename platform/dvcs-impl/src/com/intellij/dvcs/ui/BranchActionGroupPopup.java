@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.OpaquePanel;
-import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
@@ -428,7 +427,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
   }
 
-  private static class MoreAction extends DumbAwareAction implements KeepingPopupOpenAction {
+  private static class MoreAction extends DumbAwareAction {
 
     @NotNull private final Project myProject;
     @Nullable private final @NonNls String mySettingName;
@@ -443,6 +442,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                boolean defaultExpandValue,
                boolean hasFavorites) {
       super();
+      getTemplatePresentation().setMultiChoice(true);
       myProject = project;
       mySettingName = settingName;
       myDefaultExpandValue = defaultExpandValue;

@@ -2,13 +2,17 @@
 package org.jetbrains.kotlin.onboarding.k2.satisfaction.survey
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.Callable
 
 internal const val K2_SINCE_NOT_DEFINED = -1L
 
@@ -64,7 +68,8 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
         state.lastSavedPluginMode = KotlinPluginModeProvider.currentPluginMode.name
     }
 
-    internal fun shouldShowK2FeedbackDialog(): Boolean {
+    internal fun shouldShowK2FeedbackDialog(project: Project): Boolean {
+
         LOG.debug("State: ${state}")
         if (!Registry.`is`("test.k2.feedback.survey", false)) {
             if (!forUnitTests) {
@@ -74,6 +79,17 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
         } else {
             state.userSawSurvey = false // We reset this state for manual testing to be able to see the survey more than once
         }
+
+        var projectContainsNonScriptKotlinFile = false
+        if (forUnitTests) {
+            projectContainsNonScriptKotlinFile = true
+        } else {
+            ReadAction.nonBlocking(Callable {
+                projectContainsNonScriptKotlinFile = project.containsNonScriptKotlinFile()
+            })
+        }
+        if (!projectContainsNonScriptKotlinFile) return false
+
         if (switchedToK1) {
             return true
         } else {
@@ -95,8 +111,8 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
 
                 LOG.debug("Duration since user became a K2 Kotlin user: ${durationSinceK2User.toDays()} day(s)")
                 return durationSinceK2User > Duration.ofSeconds(
-                        Registry.intValue("minimum.usage.time.before.showing.k2.survey").toLong()
-                    )
+                    Registry.intValue("minimum.usage.time.before.showing.k2.survey").toLong()
+                )
             }
         }
     }

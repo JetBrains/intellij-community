@@ -12,8 +12,8 @@ import com.intellij.util.ui.StatusText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestErrorUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -65,7 +65,7 @@ internal class GitLabMergeRequestsListController(
   }
 
   private fun createErrorPanel(scope: CoroutineScope, accountVm: GitLabAccountViewModel): JComponent {
-    val errorPresenter = GitLabMergeRequestErrorStatusPresenter(
+    val errorPresenter = GitLabMergeRequestErrorUtil.createErrorStatusPresenter(
       accountVm,
       swingAction(GitLabBundle.message("merge.request.list.reload")) {
         listVm.refresh()

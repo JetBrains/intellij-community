@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -21,14 +21,14 @@ object MakeSuperTypeOpenFixFactory {
         createQuickFixes(diagnostic)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createQuickFixes(
         diagnostic: KaFirDiagnostic<KtTypeReference>,
     ): List<AddModifierFix> {
         val typeRef = diagnostic.psi as? KtTypeReference
             ?: return emptyList()
 
-        val superType = typeRef.getKtType().expandedClassSymbol?.psiSafe<KtClassOrObject>()
+        val superType = typeRef.getKtType().expandedSymbol?.psiSafe<KtClassOrObject>()
             ?: return emptyList()
 
         if (!superType.canRefactorElement())

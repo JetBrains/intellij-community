@@ -48,22 +48,22 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   /* ======== Persistent format: =================================================================== */
 
   // Persistent format: (header) (records)*
-  //  header: storageVersion[int32], safeCloseMagic[int32] ...monitoring fields... dataFormatVersion[int32]
+  //  header: see HeaderLayout for details
   //  record:
   //          recordHeader: recordType[int8], capacity, length?, redirectTo?, recordData[length]?
   //                        First byte of header contains the record type, which defines other header
   //                        fields & their length. A lot of bits wiggling are used to compress header
   //                        into as few bytes as possible -- see RecordLayout for details.
-  //
-  //  1. capacity is the allocated size of the record payload _excluding_ header, so
+  //  Glossary:
+  //  1. capacity: is the _allocated_ size of the record _excluding_ header, so
   //     nextRecordOffset = currentRecordOffset + recordHeader + recordCapacity
   //     (and recordHeader size depends on a record type, which is encoded in a first header byte)
   //
   //  2. actualLength (<=capacity) is the actual size of record payload written into the record, so
   //     recordData[0..actualLength) contains actual data, and recordData[actualLength..capacity)
-  //     contains trash.
+  //     contains garbage.
   //
-  //  3. redirectTo is a 'forwarding pointer' for records that were moved (e.g. re-allocated).
+  //  3. redirectTo: a 'forwarding pointer' for records that were moved (e.g. re-allocated).
   //
   //  4. records are always allocated on a single page: i.e. record never breaks a page boundary.
   //     If a record doesn't fit the current page, it is moved to another page (remaining space on
@@ -207,26 +207,6 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   public boolean hasRecord(int recordId) throws IOException {
     return hasRecord(recordId, null);
   }
-
-  @Override
-  public <Out> Out readRecord(final int recordId,
-                              final @NotNull ByteBufferReader<Out> reader) throws IOException {
-    return readRecord(recordId, reader, null);
-  }
-
-  @Override
-  public int writeToRecord(final int recordId,
-                           final @NotNull ByteBufferWriter writer,
-                           final int expectedRecordSizeHint) throws IOException {
-    return writeToRecord(recordId, writer, expectedRecordSizeHint, /* leaveRedirectOnRecordRelocation: */ false);
-  }
-
-  @Override
-  public int writeToRecord(final int recordId,
-                           final @NotNull ByteBufferWriter writer) throws IOException {
-    return writeToRecord(recordId, writer, /*expectedRecordSizeHint: */ -1);
-  }
-
 
   @Override
   public boolean isRecordActual(int recordActualLength) {

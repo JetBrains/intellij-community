@@ -39,7 +39,7 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
       return new LargeBinaryFileEditor(file);
     }
     else {
-      AsyncEditorLoader asyncLoader = createAsyncEditorLoader(this, project, file);
+      AsyncEditorLoader asyncLoader = createAsyncEditorLoader(this, project, file, null);
       EditorImpl editor = createEditorImpl(project, file, asyncLoader).getFirst();
       editor.setViewer(true);
 

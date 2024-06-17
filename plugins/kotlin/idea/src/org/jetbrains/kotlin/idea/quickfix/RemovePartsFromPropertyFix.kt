@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.RemovePartsFromPropertyUtils
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
@@ -19,9 +20,9 @@ open class RemovePartsFromPropertyFix(
     private val removeGetter: Boolean,
     private val removeSetter: Boolean
 ) : KotlinQuickFixAction<KtProperty>(element) {
-    override fun getText(): String = RemovePartsFromPropertyUtils.getActionName(removeInitializer, removeGetter, removeSetter)
+    override fun getText(): String = RemovePartsFromPropertyUtils.getRemovePartsFromPropertyActionName(removeInitializer, removeGetter, removeSetter)
 
-    override fun getFamilyName(): String = RemovePartsFromPropertyUtils.getFamilyName()
+    override fun getFamilyName(): String = KotlinBundle.message("remove.parts.from.property")
 
     public override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = this.element ?: return

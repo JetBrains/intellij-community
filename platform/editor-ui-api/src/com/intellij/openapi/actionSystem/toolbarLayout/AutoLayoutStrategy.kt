@@ -13,7 +13,7 @@ import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.math.max
 
-class AutoLayoutStrategy(private val myForceShowFirstComponent: Boolean, private val myNoGapMode: Boolean): ToolbarLayoutStrategy {
+internal class AutoLayoutStrategy(private val myForceShowFirstComponent: Boolean, private val myNoGapMode: Boolean): ToolbarLayoutStrategy {
 
   private val expandIcon = AllIcons.Ide.Link
 

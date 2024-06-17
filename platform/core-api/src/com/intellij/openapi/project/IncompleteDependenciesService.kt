@@ -25,7 +25,7 @@ interface IncompleteDependenciesService {
   fun getState(): DependenciesState
 
   @RequiresWriteLock
-  fun enterIncompleteState(): IncompleteDependenciesAccessToken
+  fun enterIncompleteState(requestor: Any): IncompleteDependenciesAccessToken
 
   enum class DependenciesState(val isComplete: Boolean) {
     COMPLETE(true),

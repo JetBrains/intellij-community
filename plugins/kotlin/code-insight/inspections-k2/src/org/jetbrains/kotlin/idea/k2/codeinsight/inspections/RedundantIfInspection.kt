@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -30,7 +30,7 @@ internal class RedundantIfInspection : RedundantIfInspectionBase() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression?.isFloatingPointType(): Boolean {
         val type = this?.getKtType() ?: return false
         return type.isFloat || type.isDouble

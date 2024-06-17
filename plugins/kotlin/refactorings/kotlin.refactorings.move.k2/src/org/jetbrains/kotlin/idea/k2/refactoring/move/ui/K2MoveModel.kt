@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.RefactoringBundle
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import kotlin.reflect.KMutableProperty0
 
 /**
@@ -54,8 +56,8 @@ sealed class K2MoveModel {
         }
         if (source.elements.isEmpty()) return false
         if (target is K2MoveTargetModel.File && !(target as K2MoveTargetModel.File).fileName.isValidKotlinFile()) return false
-        val files = source.elements.map { it.containingKtFile }.toSet()
-        return files.size != 1 || !files.single().isTargetFile()
+        val files = source.elements.map { it.containingFile }.toSet()
+        return files.size != 1 || !(files.single() as KtFile).isTargetFile()
     }
 
     enum class Setting(private val text: @NlsContexts.Checkbox String, val setting: KMutableProperty0<Boolean>) {
@@ -138,33 +140,37 @@ sealed class K2MoveModel {
             @Nls
             get() = KotlinBundle.message("text.move.declarations")
 
+        private fun List<PsiElement>.fileElements() = map { if (it is PsiDirectory) it else it.containingFile }
+
         fun create(
-            elements: Array<out KtElement>,
+            elements: Array<out PsiElement>,
             targetContainer: PsiElement?,
             editor: Editor? = null
         ): K2MoveModel? {
             val project = elements.firstOrNull()?.project ?: error("Elements not part of project")
 
             val elementsToMove = elements.filter { elem ->
-                if (elem !is KtFile) {
-                    val container = elem.parentOfTypes(KtFile::class, KtNamedDeclaration::class) ?: error("Element not in Kotlin file")
-                    container !in elements
-                } else true
+                when (elem) {
+                    is PsiDirectory, is PsiFile -> true
+                    else -> {
+                        val container = elem.parentOfTypes(PsiFile::class, KtNamedDeclaration::class) ?: error("Element not in Kotlin file")
+                        container !in elements
+                    }
+                }
             }
 
-            fun inSourceRoot(declarations: List<KtElement>): Boolean {
-                val sourceFiles = declarations.map { it.containingFile }.toSet()
+            fun inSourceRoot(declarations: List<PsiElement>): Boolean {
                 val fileIndex = ProjectFileIndex.getInstance(project)
-                if (sourceFiles.any { !fileIndex.isInSourceContent(it.virtualFile) }) return false
+                if (declarations.fileElements().toSet().any { !fileIndex.isInSourceContent(it.virtualFile) }) return false
                 if (targetContainer == null || targetContainer is PsiDirectory) return true
                 val targetFile = targetContainer.containingFile?.virtualFile ?: return false
                 return fileIndex.isInSourceContent(targetFile)
             }
 
-            fun isSingleFileMove(movedElements: List<KtElement>) = movedElements.all { it is KtNamedDeclaration }
+            fun isSingleFileMove(movedElements: List<PsiElement>) = movedElements.all { it is KtNamedDeclaration }
                     || movedElements.singleOrNull() is KtFile
 
-            fun isMultiFileMove(movedElements: List<KtElement>) = movedElements.map { it.containingFile }.toSet().size > 1
+            fun isMultiFileMove(movedElements: List<PsiElement>) = movedElements.fileElements().toSet().size > 1
 
             fun PsiElement?.isSingleClassContainer(): Boolean {
                 if (this !is KtClassOrObject) return false
@@ -203,15 +209,16 @@ sealed class K2MoveModel {
 
             val inSourceRoot = inSourceRoot(elementsToMove)
             return when {
-                targetContainer is PsiDirectory || isMultiFileMove(elementsToMove) -> {
-                    val source = K2MoveSourceModel.FileSource(elementsToMove.map { it.containingKtFile }.toSet())
+                targetContainer is PsiDirectory || isMultiFileMove(elementsToMove) -> { // this move can contain foreign language files
+                    val source = K2MoveSourceModel.FileSource(elementsToMove.fileElements().toSet())
                     val target = if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
                         K2MoveTargetModel.SourceDirectory(pkg, targetContainer)
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
-                        val file = elementsToMove.firstOrNull()?.containingKtFile ?: error("No default target found")
+                        val file = elementsToMove.firstOrNull { it.containingFile != null }?.containingFile
+                            ?: error("No default target found")
                         val directory = file.containingDirectory ?: error("No default target found")
-                        val pkgName = elementsToMove.map { it.containingKtFile.packageFqName }.toSet().firstOrNull() ?: FqName.ROOT
+                        val pkgName = elementsToMove.firstIsInstanceOrNull<KtFile>()?.containingKtFile?.packageFqName ?: FqName.ROOT
                         K2MoveTargetModel.SourceDirectory(pkgName, directory)
                     }
                     Files(project, source, target, inSourceRoot)
@@ -229,7 +236,7 @@ sealed class K2MoveModel {
                     val target = if (targetFile is KtFile) {
                         K2MoveTargetModel.File(targetFile)
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
-                        val firstElem = elementsToMove.firstOrNull()
+                        val firstElem = elementsToMove.firstOrNull() as KtElement
                         val fileName = when (firstElem) {
                             is KtFile -> firstElem.name
                             is KtNamedDeclaration -> "${firstElem.name}.${KotlinLanguage.INSTANCE.associatedFileType?.defaultExtension}"

@@ -27,15 +27,13 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
 
   init {
     scope.launch {
-      WorkspaceModel.getInstance(project).subscribe { _, changes ->
-        changes.collect { event ->
-          processingCounter.getAndIncrement()
-          try {
-            updateTreeAndFireChanges(event)
-          }
-          finally {
-            processingCounter.getAndDecrement()
-          }
+      WorkspaceModel.getInstance(project).eventLog.collect { event ->
+        processingCounter.getAndIncrement()
+        try {
+          updateTreeAndFireChanges(event)
+        }
+        finally {
+          processingCounter.getAndDecrement()
         }
       }
     }

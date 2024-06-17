@@ -36,6 +36,7 @@ public abstract class SearchableOptionsRegistrar{
   /**
    * @deprecated Use {@link SearchableOptionContributor}
    */
+  @SuppressWarnings("unused")
   @Deprecated
   public void addOption(@NotNull String option, @Nullable String path, String hit, @NotNull String configurableId, String configurableDisplayName) {
   }
@@ -47,11 +48,6 @@ public abstract class SearchableOptionsRegistrar{
   public abstract @NotNull Set<String> getProcessedWordsWithoutStemming(@NotNull String text);
 
   public abstract Set<String> getProcessedWords(@NotNull String text);
-
-  @ApiStatus.Internal
-  public static String getSearchableOptionsXmlName() {
-    return getSearchableOptionsName() + ".xml";
-  }
 
   @ApiStatus.Internal
   public static String getSearchableOptionsName() {

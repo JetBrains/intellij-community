@@ -368,7 +368,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   /** @deprecated use {@link ProxyUtils#getApplicableProxiesAsJvmProperties(URI, ProxyCredentialProvider, ProxySelector)}.
    * If autodetection really needs to be disallowed, check {@link ProxySettings} first. Keep in mind that
    * proxy configuration depends on the URI, so it cannot be null. If you only care about statically configured proxies, see
-   * {@link ProxyUtils#asJvmProperties(ProxyConfiguration.StaticProxyConfiguration, ProxyCredentialProvider)} */
+   * {@link ProxyUtils#asJvmProperties(ProxyConfiguration.StaticProxyConfiguration, ProxyCredentialProvider)}.
+   * Also, the new util has different properties for user and password that match JDK system properties
+   * (see {@link JavaProxyProperty#HTTP_PROXY_USER}). */
   @Deprecated(forRemoval = true)
   public @NotNull List<Pair<String, String>> getJvmProperties(boolean withAutodetection, @Nullable URI uri) {
     if (!USE_HTTP_PROXY && !USE_PROXY_PAC) {

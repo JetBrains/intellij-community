@@ -363,17 +363,22 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
     for (PsiImportStatement statement : typeImports.get(name)) {
       PsiElement target = statement.resolve();
-      if (target instanceof PsiClass) {
+      if (target == null || target instanceof PsiClass) {
         result.add(new ResultWithContext((PsiNamedElement)target, statement));
       }
     }
     for (PsiImportStaticStatement statement : staticImports.get(name)) {
       PsiJavaCodeReferenceElement reference = statement.getImportReference();
       if (reference != null) {
-        for (JavaResolveResult result1 : reference.multiResolve(false)) {
-          PsiElement element = result1.getElement();
-          if (element instanceof PsiNamedElement) {
-            result.add(new ResultWithContext((PsiNamedElement)element, statement));
+        JavaResolveResult[] targets = reference.multiResolve(false);
+        if (targets.length == 0) {
+          result.add(new ResultWithContext(null, statement));
+        } else {
+          for (JavaResolveResult target : targets) {
+            PsiElement element = target.getElement();
+            if (element instanceof PsiNamedElement) {
+              result.add(new ResultWithContext((PsiNamedElement)element, statement));
+            }
           }
         }
       }
@@ -608,6 +613,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       PsiElement context = result.getFileContext();
       myProcessor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, context);
       PsiNamedElement element = result.getElement();
+
+      if (element == null) {
+        return myProcessor.executeForUnresolved();
+      }
 
       if (element instanceof PsiClass && context instanceof PsiImportStatement) {
         PsiClass containingClass = ((PsiClass)element).getContainingClass();

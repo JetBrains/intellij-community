@@ -44,10 +44,10 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
-import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
+import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -103,38 +103,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   override fun useDirectoryBasedProjectFormat(): Boolean {
     return true
   }
-
-  val isWorkspaceImport: Boolean
-    get() = isImportToWorkspaceModelEnabled(project)
-
-  private fun supportModuleGroups(): Boolean {
-    return !isWorkspaceImport
-  }
-
-  fun supportsKeepingManualChanges(): Boolean {
-    return !isWorkspaceImport
-  }
-
-  fun supportsImportOfNonExistingFolders(): Boolean {
-    return isWorkspaceImport
-  }
-
-  fun supportsKeepingModulesFromPreviousImport(): Boolean {
-    return !isWorkspaceImport
-  }
-
-  fun supportsLegacyKeepingFoldersFromPreviousImport(): Boolean {
-    return !isWorkspaceImport
-  }
-
-  fun supportsKeepingFacetsFromPreviousImport(): Boolean {
-    return !isWorkspaceImport
-  }
-
-  fun supportsCreateAggregatorOption(): Boolean {
-    return !isWorkspaceImport
-  }
-
 
   @Throws(Exception::class)
   override fun setUpInWriteAction() {
@@ -373,7 +341,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
       try {
         MavenProjectStaticImporter.getInstance(project)
-          .syncStatic(files, null, mavenImporterSettings, mavenGeneralSettings, true, activity)
+          .syncStatic(files, null, mavenImporterSettings, mavenGeneralSettings, true, SimpleStructureProjectVisitor(), activity, true)
       }
       finally {
         activity.finished()

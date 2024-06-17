@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
 import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
@@ -43,7 +43,7 @@ internal object OptInFixFactories {
         createQuickFix(diagnostic)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createQuickFix(diagnostic: KaFirDiagnostic<PsiElement>): List<AddAnnotationFix> {
         val element = diagnostic.psi.findParentOfType<KtElement>(strict = false) ?: return emptyList()
         val annotationClassId = OptInFixUtils.optInMarkerClassId(diagnostic) ?: return emptyList()
@@ -98,7 +98,7 @@ private object OptInGeneralUtils : OptInGeneralUtilsBase() {
         analyze(this) {
             return superTypeListEntries.any {
                 val typeReference = it.typeReference
-                val resolvedClass = typeReference?.getKtType()?.expandedClassSymbol ?: return false
+                val resolvedClass = typeReference?.getKtType()?.expandedSymbol ?: return false
                 val classAnnotation = resolvedClass.annotationsByClassId(OptInNames.SUBCLASS_OPT_IN_REQUIRED_CLASS_ID).firstOrNull()
                 classAnnotation != null && findMarkerClassId(classAnnotation)?.asSingleFqName() == annotationFqName
             }

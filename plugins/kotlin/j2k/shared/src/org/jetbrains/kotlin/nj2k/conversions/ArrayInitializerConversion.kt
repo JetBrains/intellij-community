@@ -2,9 +2,10 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.toArgumentList
@@ -13,32 +14,37 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        var newElement = element
-        if (element is JKJavaNewArray) {
-            val primitiveArrayType = element.type.type as? JKJavaPrimitiveType
-            val arrayConstructorName =
-                if (primitiveArrayType != null)
-                    ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[PrimitiveType.valueOf(primitiveArrayType.jvmPrimitiveType.name)]!!.asString()
-                else
-                    ArrayFqNames.ARRAY_OF_FUNCTION.asString()
-            val arguments = element.initializer.also { element.initializer = emptyList() }.toArgumentList()
-            arguments.hasTrailingComma = element.hasTrailingComma
-            val typeArguments =
-                if (primitiveArrayType == null) JKTypeArgumentList(element::type.detached())
-                else JKTypeArgumentList()
+        val newElement = when (element) {
+            is JKJavaNewArray -> {
+                val primitiveArrayType = element.type.type as? JKJavaPrimitiveType
+                val arrayConstructorName =
+                    if (primitiveArrayType != null)
+                        ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[PrimitiveType.valueOf(primitiveArrayType.jvmPrimitiveType.name)]!!.asString()
+                    else
+                        ArrayFqNames.ARRAY_OF_FUNCTION.asString()
+                val arguments = element.initializer.also { element.initializer = emptyList() }.toArgumentList()
+                arguments.hasTrailingComma = element.hasTrailingComma
+                val typeArguments =
+                    if (primitiveArrayType == null) JKTypeArgumentList(element::type.detached())
+                    else JKTypeArgumentList()
 
-            newElement = JKCallExpressionImpl(
-                symbolProvider.provideMethodSymbol("kotlin.$arrayConstructorName"),
-                arguments,
-                typeArguments,
-                canMoveLambdaOutsideParentheses = true
-            )
-        } else if (element is JKJavaNewEmptyArray) {
-            newElement = buildArrayInitializer(
-                element.initializer.also { element.initializer = emptyList() }, element.type.type
-            )
+                JKCallExpressionImpl(
+                    symbolProvider.provideMethodSymbol("kotlin.$arrayConstructorName"),
+                    arguments,
+                    typeArguments,
+                    canMoveLambdaOutsideParentheses = true
+                )
+            }
+
+            is JKJavaNewEmptyArray -> {
+                buildArrayInitializer(
+                    element.initializer.also { element.initializer = emptyList() }, element.type.type
+                )
+            }
+
+            else -> return recurse(element)
         }
 
         return recurse(newElement.withFormattingFrom(element))
@@ -50,7 +56,7 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveCon
                 JKCallExpressionImpl(
                     symbolProvider.provideMethodSymbol("kotlin.arrayOfNulls"),
                     JKArgumentList(dimensions[0]),
-                    JKTypeArgumentList(type)
+                    JKTypeArgumentList(type.updateNullability(NotNull))
                 )
             } else {
                 JKNewExpression(
@@ -87,7 +93,7 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveCon
         return JKCallExpressionImpl(
             symbolProvider.provideMethodSymbol("kotlin.arrayOfNulls"),
             JKArgumentList(dimensions[0]),
-            JKTypeArgumentList(resultType)
+            JKTypeArgumentList(resultType.updateNullability(NotNull))
         )
     }
 }

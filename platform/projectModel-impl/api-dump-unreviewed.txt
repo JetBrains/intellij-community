@@ -88,7 +88,7 @@ c:com.intellij.configurationStore.JbXmlOutputter
 - f:output(org.jdom.Document,java.io.Writer):V
 - f:output(org.jdom.Element,java.io.Writer):V
 - f:printElement(java.io.Writer,org.jdom.Element,I):V
-- p:writeContent(java.io.Writer,org.jdom.Element,I):Z
+- p:writeContent(java.io.Writer,org.jdom.Element,I,Z):Z
 f:com.intellij.configurationStore.JbXmlOutputter$Companion
 - f:collapseMacrosAndWrite(org.jdom.Element,com.intellij.openapi.components.ComponentManager):java.lang.String
 - f:collapseMacrosAndWrite(org.jdom.Element,com.intellij.openapi.components.ComponentManager,java.io.Writer):V
@@ -424,10 +424,8 @@ a:com.intellij.openapi.options.SchemeManagerFactory
 - <init>():V
 - f:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor):com.intellij.openapi.options.SchemeManager
 - f:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor,java.lang.String):com.intellij.openapi.options.SchemeManager
-- a:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor,java.lang.String,com.intellij.openapi.components.RoamingType,kotlin.jvm.functions.Function1,com.intellij.configurationStore.StreamProvider,java.nio.file.Path,Z,com.intellij.openapi.components.SettingsCategory):com.intellij.openapi.options.SchemeManager
 - f:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor,java.lang.String,java.nio.file.Path):com.intellij.openapi.options.SchemeManager
 - f:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor,java.lang.String,java.nio.file.Path,com.intellij.openapi.components.SettingsCategory):com.intellij.openapi.options.SchemeManager
-- bs:create$default(com.intellij.openapi.options.SchemeManagerFactory,java.lang.String,com.intellij.openapi.options.SchemeProcessor,java.lang.String,com.intellij.openapi.components.RoamingType,kotlin.jvm.functions.Function1,com.intellij.configurationStore.StreamProvider,java.nio.file.Path,Z,com.intellij.openapi.components.SettingsCategory,I,java.lang.Object):com.intellij.openapi.options.SchemeManager
 - bs:create$default(com.intellij.openapi.options.SchemeManagerFactory,java.lang.String,com.intellij.openapi.options.SchemeProcessor,java.lang.String,java.nio.file.Path,com.intellij.openapi.components.SettingsCategory,I,java.lang.Object):com.intellij.openapi.options.SchemeManager
 - dispose(com.intellij.openapi.options.SchemeManager):V
 - sf:getInstance():com.intellij.openapi.options.SchemeManagerFactory
@@ -928,15 +926,6 @@ f:com.intellij.workspaceModel.ide.impl.ConstantEntitiesDisposableService
 - com.intellij.openapi.Disposable
 - <init>():V
 - dispose():V
-f:com.intellij.workspaceModel.ide.impl.DisposableCachedValue
-- com.intellij.openapi.Disposable
-- sf:Companion:com.intellij.workspaceModel.ide.impl.DisposableCachedValue$Companion
-- <init>(kotlin.jvm.functions.Function0,com.intellij.platform.workspace.storage.CachedValue,java.lang.String,com.intellij.openapi.project.Project):V
-- b:<init>(kotlin.jvm.functions.Function0,com.intellij.platform.workspace.storage.CachedValue,java.lang.String,com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- dispose():V
-- f:dropCache():V
-- f:getValue():com.intellij.openapi.Disposable
-f:com.intellij.workspaceModel.ide.impl.DisposableCachedValue$Companion
 f:com.intellij.workspaceModel.ide.impl.EntityTracingLogger
 - sf:Companion:com.intellij.workspaceModel.ide.impl.EntityTracingLogger$Companion
 - <init>():V
@@ -947,9 +936,6 @@ f:com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSynchronizerListener
 - com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 - <init>(com.intellij.openapi.project.Project):V
 - changed(com.intellij.platform.workspace.storage.VersionedStorageChange):V
-f:com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
-- com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-- <init>():V
 f:com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
 - com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 - <init>():V
@@ -972,14 +958,6 @@ f:com.intellij.workspaceModel.ide.impl.OrphanService
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:start():V
 f:com.intellij.workspaceModel.ide.impl.OrphanService$Companion
-f:com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-- com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
-- com.intellij.openapi.vfs.pointers.VirtualFilePointer
-- <init>(I,com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl):V
-- equals(java.lang.Object):Z
-- getFile():com.intellij.openapi.vfs.VirtualFile
-- hashCode():I
-- isValid():Z
 f:com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity
 - com.intellij.openapi.startup.ProjectActivity
 - <init>():V
@@ -1073,9 +1051,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryStateSnapshot
 - f:isJarDirectory(java.lang.String,com.intellij.openapi.roots.OrderRootType):Z
 - f:isValid(java.lang.String,com.intellij.openapi.roots.OrderRootType):Z
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryStateSnapshot$Companion
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.MetadataStorageImpl
-- com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
-- sf:INSTANCE:com.intellij.workspaceModel.ide.impl.legacyBridge.library.MetadataStorageImpl
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.roots.libraries.LibraryTable
@@ -1254,6 +1229,7 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCache
 - f:getProject():com.intellij.openapi.project.Project
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper
 - sf:INSTANCE:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper
+- sf:createPropertiesCopy(org.jetbrains.jps.model.JpsElement,org.jetbrains.jps.model.module.JpsModuleSourceRootType):org.jetbrains.jps.model.JpsElement
 - f:findSerializer(org.jetbrains.jps.model.module.JpsModuleSourceRootType):org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 - com.intellij.openapi.roots.TestModuleProperties
@@ -1301,8 +1277,3 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescript
 - f:getDirectoryUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - f:getRecursive():Z
 - hashCode():I
-f:com.intellij.workspaceModel.ide.impl.reactive.WmReactive
-- <init>(com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl):V
-- f:flowOfDiff(com.intellij.platform.workspace.storage.query.CollectionQuery,kotlin.coroutines.Continuation):java.lang.Object
-- f:flowOfNewElements(com.intellij.platform.workspace.storage.query.CollectionQuery,kotlin.coroutines.Continuation):java.lang.Object
-- f:flowOfQuery(com.intellij.platform.workspace.storage.query.StorageQuery,kotlin.coroutines.Continuation):java.lang.Object

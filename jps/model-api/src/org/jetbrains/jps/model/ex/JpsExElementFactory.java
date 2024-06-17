@@ -30,6 +30,11 @@ public abstract class JpsExElementFactory {
 
   public abstract JpsElementContainerEx createContainer(@NotNull JpsCompositeElementBase<?> parent);
 
+  /**
+   * @deprecated creating copies isn't supported in for all elements in JPS anymore; if you need to create a copy for your element,
+   * write the corresponding code in your class directly.
+   */
+  @Deprecated
   public abstract JpsElementContainerEx createContainerCopy(@NotNull JpsElementContainerEx original,
                                                             @NotNull JpsCompositeElementBase<?> parent);
 

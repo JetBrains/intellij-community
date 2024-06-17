@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -8,11 +8,11 @@ import com.intellij.openapi.util.Conditions;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * HighlightingPass performs analysis in the background and highlights found issues in the editor.
+ * Performs analysis in the background and highlights found issues in the editor.
  * <p>
  * Implement {@link com.intellij.openapi.project.DumbAware} to allow highlighting during index updates.
  * If pass is created by {@link TextEditorHighlightingPassFactory},
- * the factory should implement {@link com.intellij.openapi.project.DumbAware} as well
+ * it must implement {@link com.intellij.openapi.project.DumbAware} as well.
  */
 public interface HighlightingPass extends PossiblyDumbAware {
   HighlightingPass[] EMPTY_ARRAY = new HighlightingPass[0];

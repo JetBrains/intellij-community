@@ -25,7 +25,7 @@ class RepairDebuggerViewAction : SessionActionBase(), DumbAware {
 
         val evaluating = eventContexts.filter { it.isEvaluating }
         if (evaluating.isNotEmpty()) {
-          DebuggerDiagnosticsUtil.logError(process, "May be a problem with hanged evaluation: $evaluating")
+          process.logError("May be a problem with hanged evaluation: $evaluating")
         }
 
         thisLogger().warn("All paused contexts: $eventContexts")

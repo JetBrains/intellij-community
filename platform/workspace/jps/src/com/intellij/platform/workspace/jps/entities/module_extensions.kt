@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NonNls
  */
 @Internal
 interface ModuleCustomImlDataEntity : WorkspaceEntity {
-  val module: ModuleEntity
-
   val rootManagerTagCustomData: @NonNls String?
 
   /**
@@ -28,13 +26,15 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
    */
   val customModuleOptions: Map<@NonNls String, @NonNls String>
 
+  val module: ModuleEntity
+
   //region generated code
   @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ModuleCustomImlDataEntity> {
     override var entitySource: EntitySource
-    var module: ModuleEntity.Builder
     var rootManagerTagCustomData: String?
     var customModuleOptions: Map<String, String>
+    var module: ModuleEntity.Builder
   }
 
   companion object : EntityType<ModuleCustomImlDataEntity, Builder>() {
@@ -58,7 +58,8 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+@Internal
+fun MutableEntityStorage.modifyModuleCustomImlDataEntity(
   entity: ModuleCustomImlDataEntity,
   modification: ModuleCustomImlDataEntity.Builder.() -> Unit,
 ): ModuleCustomImlDataEntity {
@@ -109,7 +110,8 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+@Internal
+fun MutableEntityStorage.modifyModuleGroupPathEntity(
   entity: ModuleGroupPathEntity,
   modification: ModuleGroupPathEntity.Builder.() -> Unit,
 ): ModuleGroupPathEntity {
@@ -169,7 +171,8 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+@Internal
+fun MutableEntityStorage.modifyExternalSystemModuleOptionsEntity(
   entity: ExternalSystemModuleOptionsEntity,
   modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit,
 ): ExternalSystemModuleOptionsEntity {
@@ -217,7 +220,8 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+@Internal
+fun MutableEntityStorage.modifyTestModulePropertiesEntity(
   entity: TestModulePropertiesEntity,
   modification: TestModulePropertiesEntity.Builder.() -> Unit,
 ): TestModulePropertiesEntity {

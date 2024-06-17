@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.history.LocalHistory
@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.VcsActivity
 import com.intellij.vcs.commit.AbstractCommitter
 import com.intellij.vcs.commit.commitWithoutChangesRoots
+import com.intellij.vcs.commit.getLocalHistoryEventName
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitUtil.getRepositoryForFile
 import git4idea.checkin.*
@@ -65,7 +66,7 @@ internal class GitStageCommitter(
     }
     finally {
       refreshChanges()
-      LocalHistory.getInstance().putEventLabel(project, VcsBundle.message("activity.name.commit.message", commitMessage), VcsActivity.Commit)
+      LocalHistory.getInstance().putEventLabel(project, getLocalHistoryEventName(commitContext, commitMessage), VcsActivity.Commit)
       stagingAreaActionInvoked()
     }
   }

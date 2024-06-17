@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
@@ -53,21 +52,9 @@ class AsyncEditorLoader internal constructor(
     @JvmField
     val ASYNC_LOADER: Key<AsyncEditorLoader> = Key.create("AsyncEditorLoader.isLoaded")
 
-    @JvmField
-    val OPENED_IN_BULK: Key<Boolean> = Key.create("EditorSplitters.opened.in.bulk")
-
-    @Internal
-    fun isOpenedInBulk(file: VirtualFile): Boolean = file.getUserData(OPENED_IN_BULK) != null
-
-    @JvmField
-    val FIRST_IN_BULK: Key<Boolean> = Key.create("EditorSplitters.first.in.bulk")
-
-    internal fun isFirstInBulk(file: VirtualFile): Boolean = file.getUserData(FIRST_IN_BULK) != null
-
     /**
      * Invoke callback when the editor is successfully loaded. The callback will not be called if the loading was canceled.
      */
-    @JvmStatic
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
       val asyncLoader = editor.getUserData(ASYNC_LOADER)
@@ -127,15 +114,17 @@ class AsyncEditorLoader internal constructor(
     }
 
     coroutineScope.launch(CoroutineName("AsyncEditorLoader.wait")) {
-      // don't show another loading indicator on project open - use 3-second delay yet
       val indicatorJob = showLoadingIndicator(
-        startDelay = if (isOpenedInBulk(textEditor.file)) 3_000.milliseconds else 300.milliseconds,
+        startDelay = 300.milliseconds,
         addUi = textEditor.component::addLoadingDecoratorUi
       )
       // await instead of join to get errors here
-      task.await()
-
-      indicatorJob.cancel()
+      try {
+        task.await()
+      }
+      finally {
+        indicatorJob.cancel()
+      }
 
       // mark as loaded before daemonCodeAnalyzer restart
       val delayedActions = delayedActions.getAndSet(null)
@@ -163,7 +152,7 @@ class AsyncEditorLoader internal constructor(
           scrollingModel.enableAnimation()
         }
       }
-      EditorNotifications.getInstance(project).scheduleUpdateNotifications(textEditor)
+      project.serviceAsync<EditorNotifications>().scheduleUpdateNotifications(textEditor)
     }
       .invokeOnCompletion {
         // make sure that async loaded marked as completed

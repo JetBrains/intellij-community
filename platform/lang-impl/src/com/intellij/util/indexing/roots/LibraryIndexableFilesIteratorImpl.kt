@@ -16,8 +16,10 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
+@Internal
 class LibraryIndexableFilesIteratorImpl
 private constructor(private val libraryName: @NlsSafe String?,
                     private val presentableLibraryName: @Nls String,

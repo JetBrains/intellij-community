@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.EditorHelper;
@@ -231,6 +231,12 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       retargetUsages(usages, oldToNewMap);
 
       for (Map.Entry<PsiFile, List<UsageInfo>> entry : myFoundUsages.entrySet()) {
+        // Before retargeting sort usages by start offset to get consistent results
+        ContainerUtil.sort(entry.getValue(), Comparator.comparingInt(o -> {
+          PsiElement element = o.getElement();
+          if (element == null) return -1;
+          return element.getTextRange().getStartOffset();
+        }));
         MoveFileHandler.forElement(entry.getKey()).retargetUsages(entry.getValue(), oldToNewMap);
       }
 

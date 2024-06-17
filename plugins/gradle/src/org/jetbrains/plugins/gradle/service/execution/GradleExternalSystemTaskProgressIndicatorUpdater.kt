@@ -138,7 +138,7 @@ class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgr
             while (statusEvent != null && statusEvent.total - statusEvent.progress > 0) {
               val fraction = statusEvent.progress.toDouble() / statusEvent.total.toDouble()
               if (fraction > previousFraction) {
-                val text = "${formatFileSize(statusEvent.progress)} / ${formatFileSize(statusEvent.total)}"
+                val text = "${statusEvent.progress.toFileSize()} / ${statusEvent.total.toFileSize()}"
                 reporter.text(text)
                 reporter.fraction(fraction)
                 previousFraction = fraction
@@ -167,6 +167,10 @@ class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgr
 
     fun stop() {
       channel.close()
+    }
+
+    private fun Long.toFileSize(): @NlsSafe String {
+      return formatFileSize(this, " ", -1, true)
     }
   }
 }

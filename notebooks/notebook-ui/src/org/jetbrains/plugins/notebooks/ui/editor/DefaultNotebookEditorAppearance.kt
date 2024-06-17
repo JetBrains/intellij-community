@@ -117,4 +117,6 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
   override fun shouldShowExecutionCounts(): Boolean = true
 
   override fun shouldShowOutExecutionCounts(): Boolean = false
+
+  override fun shouldShowRunButtonInGutter(): Boolean = true
 }

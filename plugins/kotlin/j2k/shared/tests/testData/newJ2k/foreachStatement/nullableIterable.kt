@@ -1,5 +1,5 @@
 internal class A {
-    var list: List<String>? = null
+    var list: ArrayList<String?>? = null
 
     fun foo() {
         for (e in list!!) {

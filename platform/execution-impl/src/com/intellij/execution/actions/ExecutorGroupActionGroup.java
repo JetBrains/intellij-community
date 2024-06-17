@@ -3,10 +3,7 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.ExecutorGroup;
-import com.intellij.ide.actions.NonEmptyActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,7 +14,7 @@ import java.util.List;
 import java.util.function.Function;
 
 @ApiStatus.Internal
-public class ExecutorGroupActionGroup extends NonEmptyActionGroup implements DumbAware {
+public class ExecutorGroupActionGroup extends ActionGroup implements DumbAware {
   protected final ExecutorGroup<?> myExecutorGroup;
   private final Function<? super Executor, ? extends AnAction> myChildConverter;
 
@@ -31,7 +28,16 @@ public class ExecutorGroupActionGroup extends NonEmptyActionGroup implements Dum
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    return getChildren();
+  }
+
+  public AnAction @NotNull [] getChildren() {
     // RunExecutorSettings configurations can be modified, so we request current childExecutors on each call
     List<Executor> childExecutors = myExecutorGroup.childExecutors();
     AnAction[] result = new AnAction[childExecutors.size()];

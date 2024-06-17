@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.completion.engine
 
-import com.intellij.terminal.completion.spec.ShellArgumentSpec
-import com.intellij.terminal.completion.spec.ShellCommandParserOptions
-import com.intellij.terminal.completion.spec.ShellCommandSpec
-import com.intellij.terminal.completion.spec.ShellOptionSpec
+import com.intellij.terminal.completion.spec.*
 
 internal abstract class ShellCommandTreeNode<T>(val text: String, open val spec: T?, val parent: ShellCommandTreeNode<*>?) {
   val children: MutableList<ShellCommandTreeNode<*>> = mutableListOf()
@@ -50,5 +47,11 @@ internal class ShellArgumentNode(
   override val spec: ShellArgumentSpec,
   parent: ShellCommandTreeNode<*>?
 ) : ShellCommandTreeNode<ShellArgumentSpec>(text, spec, parent)
+
+internal class ShellAliasNode(
+  text: String,
+  override val spec: ShellAliasSuggestion,
+  parent: ShellCommandTreeNode<*>?
+) : ShellCommandTreeNode<ShellAliasSuggestion>(text, spec, parent)
 
 internal class ShellUnknownNode(text: String, parent: ShellCommandTreeNode<*>?) : ShellCommandTreeNode<Any>(text, null, parent)

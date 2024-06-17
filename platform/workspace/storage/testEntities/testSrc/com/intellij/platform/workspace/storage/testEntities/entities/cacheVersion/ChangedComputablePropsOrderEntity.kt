@@ -54,7 +54,7 @@ interface ChangedComputablePropsOrderEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChangedComputablePropsOrderEntity(
   entity: ChangedComputablePropsOrderEntity,
   modification: ChangedComputablePropsOrderEntity.Builder.() -> Unit,
 ): ChangedComputablePropsOrderEntity {

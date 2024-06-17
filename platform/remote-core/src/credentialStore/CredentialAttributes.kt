@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.nullize
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
 const val SERVICE_NAME_PREFIX: String = "IntelliJ Platform"
@@ -12,10 +11,11 @@ const val SERVICE_NAME_PREFIX: String = "IntelliJ Platform"
  * The combined name of your service and name of service that requires authentication.
  *
  * Can be specified in:
- * * reverse-DNS format: `com.apple.facetime: registrationV1`
- * * prefixed human-readable format: `IntelliJ Platform Settings Repository — github.com`, where `IntelliJ Platform` is a required prefix. **You must always use this prefix**.
+ * * a reverse-DNS format: `com.apple.facetime: registrationV1`
+ * * a prefixed human-readable format: `IntelliJ Platform Settings Repository — github.com`,
+ * where `IntelliJ Platform` prefix **is mandatory**.
  */
-fun generateServiceName(subsystem: String, key: String): String = "$SERVICE_NAME_PREFIX $subsystem — $key"
+fun generateServiceName(subsystem: String, key: String): String = "${SERVICE_NAME_PREFIX} ${subsystem} — ${key}"
 
 /**
  * Consider using [generateServiceName] to generate [serviceName].
@@ -30,15 +30,8 @@ data class CredentialAttributes(
   val cacheDeniedItems: Boolean = true
 ) {
   @JvmOverloads
-  constructor(serviceName: String,
-              userName: String? = null,
-              requestor: Class<*>? = null,
-              isPasswordMemoryOnly: Boolean = false)
-    : this(serviceName = serviceName,
-           userName = userName,
-           requestor = requestor,
-           isPasswordMemoryOnly = isPasswordMemoryOnly,
-           cacheDeniedItems = true)
+  constructor(serviceName: String, userName: String? = null, requestor: Class<*>? = null, isPasswordMemoryOnly: Boolean = false)
+    : this(serviceName, userName, requestor, isPasswordMemoryOnly, cacheDeniedItems = true)
 }
 
 /**
@@ -47,17 +40,16 @@ data class CredentialAttributes(
  * @param user Account name ("John") or path to SSH key file ("/Users/john/.ssh/id_rsa").
  * @param password Can be empty.
  */
-class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? = null) {
-  constructor(@NlsSafe user: String?, @NlsSafe password: String?) : this(user, password?.let(::OneTimeString))
+class Credentials(user: String?, val password: OneTimeString? = null) {
+  constructor(user: String?, password: String?) : this(user, password?.let(::OneTimeString))
 
-  constructor(@NlsSafe user: String?, password: CharArray?) : this(user, password?.let { OneTimeString(it) })
+  constructor(user: String?, password: CharArray?) : this(user, password?.let { OneTimeString(it) })
 
-  constructor(@NlsSafe user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
+  constructor(user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
 
-  val userName: String? = user.nullize()
+  val userName: @NlsSafe String? = user.nullize()
 
-  @NlsSafe
-  fun getPasswordAsString(): String? = password?.toString()
+  fun getPasswordAsString(): @NlsSafe String? = password?.toString()
 
   override fun equals(other: Any?) = other is Credentials && userName == other.userName && password == other.password
 
@@ -68,14 +60,6 @@ class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? 
 
 val ACCESS_TO_KEY_CHAIN_DENIED: Credentials = Credentials(user = null, password = null as OneTimeString?)
 val CANNOT_UNLOCK_KEYCHAIN: Credentials = Credentials(user = null, password = null as OneTimeString?)
-
-/** @deprecated Use [CredentialAttributes] instead. */
-@Deprecated("Never use it in a new code.")
-@ApiStatus.ScheduledForRemoval
-@Suppress("DeprecatedCallableAddReplaceWith")
-fun CredentialAttributes(requestor: Class<*>, userName: String?): CredentialAttributes {
-  return CredentialAttributes(serviceName = requestor.name, userName = userName, requestor = requestor)
-}
 
 @Contract("null -> false")
 fun Credentials?.isFulfilled(): Boolean = this != null && userName != null && !password.isNullOrEmpty()

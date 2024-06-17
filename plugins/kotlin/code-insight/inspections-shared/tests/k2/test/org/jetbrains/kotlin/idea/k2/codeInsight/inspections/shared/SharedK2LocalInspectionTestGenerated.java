@@ -1607,6 +1607,26 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantSuspend/lambdaCall.kt");
         }
 
+        @TestMetadata("lambdaInline.kt")
+        public void testLambdaInline() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/lambdaInline.kt");
+        }
+
+        @TestMetadata("lambdaInline_anonymousFun.kt")
+        public void testLambdaInline_anonymousFun() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/lambdaInline_anonymousFun.kt");
+        }
+
+        @TestMetadata("lambdaSuspend.kt")
+        public void testLambdaSuspend() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/lambdaSuspend.kt");
+        }
+
+        @TestMetadata("localClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/localClass.kt");
+        }
+
         @TestMetadata("localFunction.kt")
         public void testLocalFunction() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSuspend/localFunction.kt");
@@ -1615,6 +1635,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("localFunction_noSuspend.kt")
         public void testLocalFunction_noSuspend() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSuspend/localFunction_noSuspend.kt");
+        }
+
+        @TestMetadata("localFunction_outer.kt")
+        public void testLocalFunction_outer() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/localFunction_outer.kt");
+        }
+
+        @TestMetadata("localVariable.kt")
+        public void testLocalVariable() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/localVariable.kt");
         }
 
         @TestMetadata("nonSuspendingLoop.kt")

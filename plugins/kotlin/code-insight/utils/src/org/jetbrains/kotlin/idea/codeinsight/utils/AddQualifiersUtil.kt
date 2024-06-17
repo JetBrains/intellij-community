@@ -6,17 +6,17 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -50,7 +50,7 @@ object AddQualifiersUtil {
         return root
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextSymbol: KtSymbol): Boolean {
         if (referenceExpression.parent is KtInstanceExpressionWithLabel) return false
 
@@ -59,18 +59,18 @@ object AddQualifiersUtil {
         }
         if (prevElement.elementType == KtTokens.DOT) return false
         val fqName = getFqName(contextSymbol) ?: return false
-        if (contextSymbol is KtCallableSymbol && contextSymbol.isExtension || fqName.parent().isRoot == true) return false
+        if (contextSymbol is KaCallableSymbol && contextSymbol.isExtension || fqName.parent().isRoot == true) return false
 
         if (prevElement.elementType == KtTokens.COLONCOLON) {
 
             fun isTopLevelCallable(callableSymbol: KtSymbol): Boolean {
-                if (callableSymbol is KtConstructorSymbol) {
+                if (callableSymbol is KaConstructorSymbol) {
                     val containingClassSymbol = callableSymbol.getContainingSymbol()
                     if (containingClassSymbol?.getContainingSymbol() == null) {
                         return true
                     }
                 }
-                return callableSymbol is KtCallableSymbol && callableSymbol.getContainingSymbol() == null
+                return callableSymbol is KaCallableSymbol && callableSymbol.getContainingSymbol() == null
             }
 
             if (isTopLevelCallable(contextSymbol)) return false
@@ -103,9 +103,9 @@ object AddQualifiersUtil {
 
     fun getFqName(symbol: KtSymbol): FqName? {
         return when (symbol) {
-            is KtClassLikeSymbol -> symbol.classId?.asSingleFqName()
-            is KtConstructorSymbol -> symbol.containingClassId?.asSingleFqName()
-            is KtCallableSymbol -> symbol.callableId?.asSingleFqName()
+            is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
+            is KaConstructorSymbol -> symbol.containingClassId?.asSingleFqName()
+            is KaCallableSymbol -> symbol.callableId?.asSingleFqName()
             else -> null
         }
     }
@@ -115,7 +115,7 @@ object AddQualifiersUtil {
         val fqName = allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze(referenceExpression) {
-                    val symbol = referenceExpression.mainReference.resolveToSymbols().singleOrNull() as? KtNamedSymbol ?: return null
+                    val symbol = referenceExpression.mainReference.resolveToSymbols().singleOrNull() as? KaNamedSymbol ?: return null
                     val fqName = getFqName(symbol) ?: return null
                     if (!isApplicableTo(referenceExpression, symbol)) return null
                     fqName

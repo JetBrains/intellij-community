@@ -3,6 +3,7 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,10 @@ public class TreeAnchorizer {
       ourInstance = result == null ? new TreeAnchorizer() : result;
     }
     return result;
+  }
+
+  @ApiStatus.Internal
+  protected TreeAnchorizer() {
   }
 
   public @NotNull Object createAnchor(@NotNull Object element) {

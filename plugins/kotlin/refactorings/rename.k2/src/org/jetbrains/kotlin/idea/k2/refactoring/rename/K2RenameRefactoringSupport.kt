@@ -7,15 +7,15 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getJvmName
@@ -67,7 +67,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
 
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
         return analyze(function) {
-            val overridenFunctions = (function.getSymbol() as? KtCallableSymbol)?.getAllOverriddenSymbols().orEmpty()
+            val overridenFunctions = (function.getSymbol() as? KaCallableSymbol)?.getAllOverriddenSymbols().orEmpty()
             overridenFunctions.mapNotNull { it.psi as? KtNamedFunction }
         }
     }
@@ -84,7 +84,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     override fun getJvmName(element: PsiElement): String? {
         val property = element.unwrapped as? KtDeclaration ?: return null
         analyseOnEdt(property) {
-            val propertySymbol = property.getSymbol() as? KtCallableSymbol
+            val propertySymbol = property.getSymbol() as? KaCallableSymbol
             return propertySymbol?.let { getJvmName(it) }
         }
     }
@@ -110,10 +110,10 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(this) {
-                    val declarationSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
+                    val declarationSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return false
 
                     val callableSymbol = when (declarationSymbol) {
-                        is KtValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
+                        is KaValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
                         else -> declarationSymbol
                     }
                     return callableSymbol.getDirectlyOverriddenSymbols().isEmpty()
@@ -151,7 +151,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         analyseOnEdt(propertyOrParameter) {
             val propertySymbol = when (val symbol = propertyOrParameter.getSymbol()) {
                 is KtKotlinPropertySymbol -> symbol
-                is KtValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty
+                is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty
                 else -> null
             }
 
@@ -175,7 +175,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
      * [allowAnalysisOnEdt] should generally be avoided.
      */
     @OptIn(KaAllowAnalysisOnEdt::class, ExperimentalContracts::class)
-    private inline fun <T> analyseOnEdt(element: KtElement, action: KtAnalysisSession.() -> T) {
+    private inline fun <T> analyseOnEdt(element: KtElement, action: KaSession.() -> T) {
         contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
 
         return allowAnalysisOnEdt { analyze(element, action = action) }

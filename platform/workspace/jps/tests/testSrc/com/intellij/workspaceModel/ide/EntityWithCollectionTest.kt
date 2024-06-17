@@ -9,7 +9,7 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.testEntities.entities.CollectionFieldEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
-import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyCollectionFieldEntity
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
@@ -58,7 +58,7 @@ class EntityWithCollectionTest {
     runWriteActionAndWait {
       model.updateProjectModel {
         val entity = it.entities(CollectionFieldEntity::class.java).single()
-        it.modifyEntity(entity) {
+        it.modifyCollectionFieldEntity(entity) {
           names.add(baz)
         }
       }
@@ -73,7 +73,7 @@ class EntityWithCollectionTest {
     runWriteActionAndWait {
       model.updateProjectModel {
         val entity = it.entities(CollectionFieldEntity::class.java).single()
-        it.modifyEntity(entity) {
+        it.modifyCollectionFieldEntity(entity) {
           names = mutableListOf(baz)
         }
       }

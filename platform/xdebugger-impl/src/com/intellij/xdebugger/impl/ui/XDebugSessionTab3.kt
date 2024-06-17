@@ -6,6 +6,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.actions.CustomContentLayoutSettings
+import com.intellij.ide.DataManager
 import com.intellij.ide.ui.customization.CustomActionsListener
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -124,11 +125,9 @@ class XDebugSessionTab3(
     get() = getView(DebuggerContentInfo.FRAME_CONTENT, XDebugView::class.java)
 
   private fun updateSplitterOrientation() {
-    splitter.orientation = UIUtil.getParentOfType(InternalDecoratorImpl::class.java, splitter)
-                             ?.let(PlatformDataKeys.TOOL_WINDOW::getData)
-                             ?.let {
-                               it.anchor == ToolWindowAnchor.LEFT || it.anchor == ToolWindowAnchor.RIGHT
-                             } ?: false
+    val toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(DataManager.getInstance().getDataContext(
+      UIUtil.getParentOfType(InternalDecoratorImpl::class.java, splitter)))
+    splitter.orientation = toolWindow?.anchor?.let { it == ToolWindowAnchor.LEFT || it == ToolWindowAnchor.RIGHT } == true
   }
 
   internal fun registerThreadsView(session: XDebugSessionImpl, content: Content, view: XDebugView) = registerThreadsView(session, content, view, false)

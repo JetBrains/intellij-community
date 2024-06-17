@@ -202,9 +202,7 @@ open class TextEditorImpl @Internal constructor(
 
   override fun toString(): @NonNls String = "Editor: ${component.file}"
 
-  internal fun isLoaded(): Boolean {
-    return asyncLoader.isLoaded()
-  }
+  final override fun isEditorLoaded(): Boolean = asyncLoader.isLoaded()
 }
 
 private class TransientEditorState {
@@ -226,15 +224,24 @@ private class TransientEditorState {
 private val tracer by lazy { TelemetryManager.getSimpleTracer(Scope("startup")) }
 
 @Internal
-fun createAsyncEditorLoader(provider: TextEditorProvider, project: Project, fileForTelemetry: VirtualFile): AsyncEditorLoader {
+fun createAsyncEditorLoader(
+  provider: TextEditorProvider,
+  project: Project,
+  fileForTelemetry: VirtualFile,
+  editorCoroutineScope: CoroutineScope?,
+): AsyncEditorLoader {
   // `openEditorImpl` uses runWithModalProgressBlocking,
   // but an async editor load is performed in the background, out of the `openEditorImpl` call
-  val coroutineScope = project.service<AsyncEditorLoaderScopeHolder>().coroutineScope.childScope(
-    supervisor = false,
-    // name, not path (privacy)
-    context = tracer.rootSpan("AsyncEditorLoader", arrayOf("file", fileForTelemetry.name)) + ModalityState.any().asContextElement(),
+  return AsyncEditorLoader(
+    project = project,
+    provider = provider,
+    coroutineScope = (editorCoroutineScope ?: project.service<AsyncEditorLoaderScopeHolder>().coroutineScope).childScope(
+      name = "AsyncEditorLoader(file=${fileForTelemetry.name})",
+      supervisor = false,
+      // name, not path (privacy)
+      context = tracer.rootSpan("AsyncEditorLoader", arrayOf("file", fileForTelemetry.name)) + ModalityState.any().asContextElement(),
+    ),
   )
-  return AsyncEditorLoader(project = project, provider = provider, coroutineScope = coroutineScope)
 }
 
 private suspend fun setHighlighterToEditor(project: Project, file: VirtualFile, document: Document, editor: EditorImpl) {

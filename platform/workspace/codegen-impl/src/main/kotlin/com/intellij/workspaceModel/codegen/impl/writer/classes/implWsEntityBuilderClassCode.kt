@@ -9,8 +9,8 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderIsIni
 
 fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
-    $generatedCodeVisibilityModifier class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $javaBuilderName {
-        $generatedCodeVisibilityModifier constructor(): this($javaDataName())
+    internal class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $javaBuilderName {
+        internal constructor(): this($javaDataName())
         
 ${
     lines(2) {

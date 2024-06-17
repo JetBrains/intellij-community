@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Describes a place where an entity came from. 
@@ -38,4 +39,5 @@ public interface EntitySource {
  * file is applied to the model via [MutableEntityStorage.replaceBySource], it won't overwrite actual configuration
  * of `ModuleEntity`.
  */
+@ApiStatus.Internal
 public interface DummyParentEntitySource : EntitySource

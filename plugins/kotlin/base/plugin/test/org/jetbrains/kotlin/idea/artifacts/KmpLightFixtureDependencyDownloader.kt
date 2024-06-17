@@ -25,6 +25,9 @@ import java.util.EnumSet
 object KmpLightFixtureDependencyDownloader {
     private const val MAVEN_CENTRAL_CACHE_REDIRECTOR_URL =
         "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/"
+    // For the sliding kotlin-stdlib version
+    private const val KOTLIN_IDE_PLUGIN_DEPENDENCIES: String =
+        "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/"
 
     /**
      * Download or resolve from local cache a part of a KMP library and transform if necessary.
@@ -78,6 +81,7 @@ object KmpLightFixtureDependencyDownloader {
 
         val remoteRepositories = listOf(
             RemoteRepository.Builder("mavenCentral", "default", MAVEN_CENTRAL_CACHE_REDIRECTOR_URL).build(),
+            RemoteRepository.Builder("kotlinIdePluginDependencies", "default", KOTLIN_IDE_PLUGIN_DEPENDENCIES).build(),
         )
 
         val resolvedDependencyArtifact = ArtifactRepositoryManager(

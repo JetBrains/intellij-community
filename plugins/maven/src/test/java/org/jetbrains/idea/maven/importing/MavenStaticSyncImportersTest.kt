@@ -13,7 +13,6 @@ import com.intellij.util.PairConsumer
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jdom.Element
-import org.jetbrains.idea.maven.importing.workspaceModel.WORKSPACE_CONFIGURATOR_EP
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -30,7 +29,7 @@ class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
     super.setUp()
     myImporter = MyMavenPluginImporter()
     myLegacyImporter = MyLegacyImporter()
-    ExtensionTestUtil.addExtensions(WORKSPACE_CONFIGURATOR_EP, listOf(myImporter, MyAlwaysFailConfigurerDoNotImplementingStaticSyncAware()), testRootDisposable)
+    ExtensionTestUtil.addExtensions(MavenWorkspaceConfigurator.EXTENSION_POINT_NAME, listOf(myImporter, MyAlwaysFailConfigurerDoNotImplementingStaticSyncAware()), testRootDisposable)
     ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, listOf(MyAlwaysFailLegacyImporter(), myLegacyImporter), testRootDisposable)
   }
 

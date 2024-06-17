@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiClass
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinAnnotationTypeNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
@@ -23,17 +23,17 @@ internal open class ClassifierImportCandidatesProvider(
     protected open fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean = kotlinClass.canBeImported()
     protected open fun acceptsJavaClass(javaClass: PsiClass): Boolean = javaClass.canBeImported()
 
-    context(KtAnalysisSession)
-    protected open fun acceptsClassLikeSymbol(symbol: KtClassLikeSymbol): Boolean = true
+    context(KaSession)
+    protected open fun acceptsClassLikeSymbol(symbol: KaClassLikeSymbol): Boolean = true
 
-    context(KtAnalysisSession)
-    protected fun KtClassLikeSymbol.getExpandedClassSymbol(): KtClassOrObjectSymbol? = when (this) {
-        is KtTypeAliasSymbol -> expandedType.expandedClassSymbol
-        is KtClassOrObjectSymbol -> this
+    context(KaSession)
+    protected fun KaClassLikeSymbol.getExpandedClassSymbol(): KaClassOrObjectSymbol? = when (this) {
+        is KaTypeAliasSymbol -> expandedType.expandedSymbol
+        is KaClassOrObjectSymbol -> this
     }
 
-    context(KtAnalysisSession)
-    override fun collectCandidates(): List<KtClassLikeSymbol> {
+    context(KaSession)
+    override fun collectCandidates(): List<KaClassLikeSymbol> {
         if (positionContext.explicitReceiver != null) return emptyList()
 
         val unresolvedName = positionContext.getName()
@@ -63,9 +63,9 @@ internal class AnnotationImportCandidatesProvider(
     override fun acceptsJavaClass(javaClass: PsiClass): Boolean =
         javaClass.isAnnotationType && super.acceptsJavaClass(javaClass)
 
-    context(KtAnalysisSession)
-    override fun acceptsClassLikeSymbol(symbol: KtClassLikeSymbol): Boolean =
-        symbol.getExpandedClassSymbol()?.classKind == KtClassKind.ANNOTATION_CLASS
+    context(KaSession)
+    override fun acceptsClassLikeSymbol(symbol: KaClassLikeSymbol): Boolean =
+        symbol.getExpandedClassSymbol()?.classKind == KaClassKind.ANNOTATION_CLASS
 }
 
 internal class ConstructorReferenceImportCandidatesProvider(
@@ -86,7 +86,7 @@ internal class ConstructorReferenceImportCandidatesProvider(
         !(javaClass.isEnum || javaClass.isInterface || javaClass.isAnnotationType) && super.acceptsJavaClass(javaClass)
 
 
-    context(KtAnalysisSession)
-    override fun acceptsClassLikeSymbol(symbol: KtClassLikeSymbol): Boolean =
-        symbol.getExpandedClassSymbol()?.classKind == KtClassKind.CLASS
+    context(KaSession)
+    override fun acceptsClassLikeSymbol(symbol: KaClassLikeSymbol): Boolean =
+        symbol.getExpandedClassSymbol()?.classKind == KaClassKind.CLASS
 }

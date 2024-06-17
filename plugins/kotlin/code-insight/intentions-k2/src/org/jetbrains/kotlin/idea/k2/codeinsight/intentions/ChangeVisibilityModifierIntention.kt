@@ -5,11 +5,11 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
@@ -85,18 +85,18 @@ sealed class ChangeVisibilityModifierIntention(
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtDeclaration): Unit? {
-        val symbol = element.getSymbolOfTypeSafe<KtSymbolWithVisibility>()
+        val symbol = element.getSymbolOfTypeSafe<KaSymbolWithVisibility>()
         val targetVisibility = modifier.toVisibility()
         if (symbol?.visibility == targetVisibility) return null
         val modifierList = element.modifierList
 
         if (modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true) {
-            val callableDescriptor = symbol as? KtCallableSymbol ?: return null
+            val callableDescriptor = symbol as? KaCallableSymbol ?: return null
             // cannot make visibility less than (or non-comparable with) any of the supers
             if (callableDescriptor.getAllOverriddenSymbols()
-                    .map { (it as? KtSymbolWithVisibility)?.visibility?.compareTo(targetVisibility) }
+                    .map { (it as? KaSymbolWithVisibility)?.visibility?.compareTo(targetVisibility) }
                     .any { it == null || it > 0 }
             ) return null
         }
@@ -106,7 +106,7 @@ sealed class ChangeVisibilityModifierIntention(
             if (targetVisibility == Visibilities.Public) {
                 if (element.modifierList?.visibilityModifierType()?.value == null) return null
             } else {
-                val propVisibility = element.property.getSymbolOfType<KtSymbolWithVisibility>().visibility
+                val propVisibility = element.property.getSymbolOfType<KaSymbolWithVisibility>().visibility
                 if (propVisibility == targetVisibility) return null
                 val compare = targetVisibility.compareTo(propVisibility)
                 if (compare == null || compare > 0) return null

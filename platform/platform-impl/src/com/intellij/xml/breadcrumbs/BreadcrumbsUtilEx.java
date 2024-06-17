@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.lang.Language;
@@ -60,6 +60,14 @@ public final class BreadcrumbsUtilEx {
     Language base = language;
     while (base != null) {
       if (settings.hasBreadcrumbSettings(base.getID())) {
+        return base.getID();
+      }
+      base = base.getBaseLanguage();
+    }
+    // manually changed setting for base language is more important than the default setting for the current language
+    base = language;
+    while (base != null) {
+      if (settings.hasDefaultBreadcrumbSettings(base.getID())) {
         return base.getID();
       }
       base = base.getBaseLanguage();

@@ -7,10 +7,8 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ConfigImportHelper.hasPreviousVersionConfigDirs
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.feedback.aqua.*
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
@@ -24,163 +22,26 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.system.OS
 import kotlinx.datetime.*
 import kotlinx.datetime.TimeZone
-import java.time.Duration
-import java.time.LocalDateTime
 import java.util.*
 
 @Deprecated("Instead use com.intellij.platform.feedback.FeedbackSurvey." +
             "For example see com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey and " +
             "com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey")
 enum class IdleFeedbackTypes {
-  AQUA_NEW_USER_FEEDBACK {
-    override val fusFeedbackId: String = "aqua_new_user_feedback"
-    override val suitableIdeVersion: String = "" // Not suitable for Aqua, because it is in the permanent Preview version
-    private val lastDayCollectFeedback = LocalDate(2024, 8, 29)
-    private val maxNumberNotificationShowed = 2
-
-    override fun isSuitable(): Boolean {
-      val state = AquaNewUserFeedbackService.getInstance().state
-
-      return checkIdeIsSuitable() &&
-             checkIsNoDeadline() &&
-             isAnyProjectOpenNow() &&
-             isUserTypedInEditor(state) &&
-             checkFeedbackNotSent(state) &&
-             checkNotificationNumberNotExceeded(state)
-    }
-
-    override fun createNotification(forTest: Boolean): Notification {
-      return RequestFeedbackNotification(
-        "Feedback In IDE",
-        AquaFeedbackBundle.message("new.user.notification.request.feedback.title"),
-        AquaFeedbackBundle.message("new.user.notification.request.feedback.content"))
-    }
-
-    override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
-      return AquaNewUserFeedbackDialog(project, forTest)
-    }
-
-    override fun updateStateAfterNotificationShowed() {
-      AquaNewUserFeedbackService.getInstance().state.numberNotificationShowed += 1
-    }
-
-    override fun updateStateAfterDialogClosedOk() {
-      AquaNewUserFeedbackService.getInstance().state.feedbackSent = true
-    }
-
-    private fun checkIdeIsSuitable(): Boolean {
-      return PlatformUtils.isAqua()
-    }
-
-    private fun isAnyProjectOpenNow(): Boolean {
-      return ProjectManager.getInstance().openProjects.count {
-        !it.isDisposed
-      } > 0
-    }
-
-    private fun isUserTypedInEditor(state: AquaNewUserInfoState): Boolean {
-      return state.userTypedInEditor
-    }
-
-    private fun checkIsNoDeadline(): Boolean {
-      return Clock.System.todayIn(TimeZone.currentSystemDefault()) < lastDayCollectFeedback
-    }
-
-    private fun checkFeedbackNotSent(state: AquaNewUserInfoState): Boolean {
-      return !state.feedbackSent
-    }
-
-    private fun checkNotificationNumberNotExceeded(state: AquaNewUserInfoState): Boolean {
-      return state.numberNotificationShowed < maxNumberNotificationShowed
-    }
-
-  },
-  AQUA_OLD_USER_FEEDBACK {
-    override val fusFeedbackId: String = "aqua_old_user_feedback"
-    override val suitableIdeVersion: String = "" // Not suitable for Aqua, because it is in the permanent Preview version
-    private val lastDayCollectFeedback = LocalDate(2024, 8, 29)
-    private val maxNumberNotificationShowed = 2
-    private val elapsedMinNumberDaysFromFirstRun = 5
-
-    override fun isSuitable(): Boolean {
-      val state = AquaOldUserFeedbackService.getInstance().state
-
-      return checkIdeIsSuitable() &&
-             checkIsNoDeadline() &&
-             isAnyProjectOpenNow() &&
-             isUserTypedInEditor(state) &&
-             isUsageTimeEnough(state) &&
-             checkFeedbackNotSent(state) &&
-             checkNotificationNumberNotExceeded(state)
-    }
-
-    override fun createNotification(forTest: Boolean): Notification {
-      return RequestFeedbackNotification(
-        "Feedback In IDE",
-        AquaFeedbackBundle.message("old.user.notification.request.feedback.title"),
-        AquaFeedbackBundle.message("old.user.notification.request.feedback.content"))
-    }
-
-    override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
-      return AquaOldUserFeedbackDialog(project, forTest)
-    }
-
-    override fun updateStateAfterNotificationShowed() {
-      AquaOldUserFeedbackService.getInstance().state.numberNotificationShowed += 1
-    }
-
-    override fun updateStateAfterDialogClosedOk() {
-      AquaOldUserFeedbackService.getInstance().state.feedbackSent = true
-    }
-
-    private fun checkIdeIsSuitable(): Boolean {
-      return PlatformUtils.isAqua()
-    }
-
-    private fun checkIsNoDeadline(): Boolean {
-      return Clock.System.todayIn(TimeZone.currentSystemDefault()) < lastDayCollectFeedback
-    }
-
-    private fun isAnyProjectOpenNow(): Boolean {
-      return ProjectManager.getInstance().openProjects.count {
-        !it.isDisposed
-      } > 0
-    }
-
-    private fun isUserTypedInEditor(state: AquaOldUserInfoState): Boolean {
-      return state.userTypedInEditor
-    }
-
-    private fun isUsageTimeEnough(state: AquaOldUserInfoState): Boolean {
-      val firstUsageTime = state.firstUsageTime
-      if (firstUsageTime == null) {
-        return false
-      }
-      return Duration.between(firstUsageTime.toJavaLocalDateTime(), LocalDateTime.now()).toDays() >= elapsedMinNumberDaysFromFirstRun
-    }
-
-    private fun checkFeedbackNotSent(state: AquaOldUserInfoState): Boolean {
-      return !state.feedbackSent
-    }
-
-    private fun checkNotificationNumberNotExceeded(state: AquaOldUserInfoState): Boolean {
-      return state.numberNotificationShowed < maxNumberNotificationShowed
-    }
-  },
   PYCHARM_CE_FEEDBACK {
     override val fusFeedbackId: String = "pycharm_ce_feedback"
-    override val suitableIdeVersion: String = "2023.3"
+    override val suitableIdeVersion: String = "2024.1"
     override fun getWebFormUrl(): String {
       val os = OS.CURRENT.name
       val locale = Locale.getDefault()
       val country = locale.country
       val lang = locale.language
       val ver = ApplicationInfo.getInstance().fullVersion
-      return "https://surveys.jetbrains.com/s3/pc-ccs-23-3?os=${os}&country=${country}&lang=${lang}&ver=${ver}"
+      return "https://surveys.jetbrains.com/s3/pc-ccs-24-1-3?os=${os}&country=${country}&lang=${lang}&ver=${ver}"
     }
 
-    private val firstDayCollectFeedback: LocalDate = LocalDate(2023, Month.DECEMBER, 5)
-    private val lastDayCollectFeedback: LocalDate = LocalDate(2023, Month.DECEMBER, 20)
+    private val firstDayCollectFeedback: LocalDate = LocalDate(2024, Month.JULY, 1)
+    private val lastDayCollectFeedback: LocalDate = LocalDate(2024, Month.JULY, 21)
 
     private val maxNumberNotificationShowed: Int = 1
 

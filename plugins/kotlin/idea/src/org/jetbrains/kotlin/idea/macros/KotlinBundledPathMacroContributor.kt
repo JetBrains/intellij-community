@@ -9,14 +9,13 @@ import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.jps.KOTLIN_BUNDLED
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.extension
 import kotlin.io.path.getLastModifiedTime
-
-const val KOTLIN_BUNDLED: String = "KOTLIN_BUNDLED"
 
 private val NOT_CACHED_YET_FILE_TIME: FileTime = FileTime.fromMillis(0L)
 private val FILE_DOESNT_EXIST_FILE_TIME: FileTime = FileTime.fromMillis(1L)

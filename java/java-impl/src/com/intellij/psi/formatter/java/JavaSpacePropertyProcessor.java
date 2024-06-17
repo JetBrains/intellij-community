@@ -922,7 +922,10 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myRole1 == ChildRole.LBRACE) {
-      int spacesAfterLBrace = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
+      int spacesAfterLBrace;
+      if (myRole2 == ChildRole.RBRACE) spacesAfterLBrace = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
+      else spacesAfterLBrace = mySettings.SPACE_WITHIN_BRACES || myJavaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT ? 1 : 0;
+
       if (!keepInOneLine) {
         int blankLines = 1;
         if (myParent != null) {
@@ -943,7 +946,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myRole2 == ChildRole.RBRACE) {
-      int spacesBeforeRBrace = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
+      int spacesBeforeRBrace = mySettings.SPACE_WITHIN_BRACES || myJavaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT ? 1 : 0;
       if (!keepInOneLine) {
         myResult = Spacing.createSpacing(
           spacesBeforeRBrace, spacesBeforeRBrace, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
@@ -1238,7 +1241,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.PACKAGE_KEYWORD) {
       myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
-    else if ((myRole2 == ChildRole.TYPE || myRole2 == ChildRole.TYPE_PARAMETER_LIST)
+    else if (myRole2 == ChildRole.TYPE
              && myChild1.getLastChildNode() != null
              && myChild1.getLastChildNode().getElementType() == JavaElementType.ANNOTATION
              || myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.RBRACE

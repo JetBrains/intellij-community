@@ -41,7 +41,7 @@ interface OneToManyRefEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOneToManyRefEntity(
   entity: OneToManyRefEntity,
   modification: OneToManyRefEntity.Builder.() -> Unit,
 ): OneToManyRefEntity {
@@ -85,7 +85,7 @@ interface AnotherOneToManyRefEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyAnotherOneToManyRefEntity(
   entity: AnotherOneToManyRefEntity,
   modification: AnotherOneToManyRefEntity.Builder.() -> Unit,
 ): AnotherOneToManyRefEntity {

@@ -40,7 +40,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextConflictIterable;
-  @NotNull protected final MyStatusPanel myStatusPanel;
+  @NotNull protected final StatusPanel myStatusPanel;
 
   @NotNull protected final MyFoldingModel myFoldingModel;
   @NotNull protected final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
@@ -55,7 +55,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     mySyncScrollable2 = new MySyncScrollable(Side.RIGHT);
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myPrevNextConflictIterable = new MyPrevNextConflictIterable();
-    myStatusPanel = new MyStatusPanel();
+    myStatusPanel = createStatusPanel();
     myFoldingModel = new MyFoldingModel(getProject(), getEditors().toArray(new EditorEx[0]), myContentPanel, this);
 
     for (ThreeSide side : ThreeSide.values()) {
@@ -64,6 +64,10 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
     DiffUtil.registerAction(new PrevConflictAction(), myPanel);
     DiffUtil.registerAction(new NextConflictAction(), myPanel);
+  }
+
+  protected @NotNull StatusPanel createStatusPanel() {
+    return new MyStatusPanel();
   }
 
   @Override

@@ -60,9 +60,6 @@ fun KtExpression?.isTrivialStatementBody(): Boolean = when (this?.getSingleUnwra
 
 fun KtExpression?.isNullExpression(): Boolean = isNullExpression()
 
-fun KtExpression?.isNullExpressionOrEmptyBlock(): Boolean =
-    this.isNullExpression() || this is KtBlockExpression && this.statements.isEmpty()
-
 fun KtThrowExpression.throwsNullPointerExceptionWithNoArguments(): Boolean {
     val thrownExpression = this.thrownExpression as? KtCallExpression ?: return false
 

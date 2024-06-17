@@ -281,7 +281,7 @@
                      level="WEAK WARNING"
                      language="kotlin" key="inspection.move.lambda.outside.parentheses.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.NoActualForExpectInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinNoActualForExpectInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
                      enabledByDefault="true"

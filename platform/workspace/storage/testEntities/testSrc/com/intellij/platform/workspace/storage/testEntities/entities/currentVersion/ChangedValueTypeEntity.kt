@@ -47,7 +47,7 @@ interface ChangedValueTypeEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChangedValueTypeEntity(
   entity: ChangedValueTypeEntity,
   modification: ChangedValueTypeEntity.Builder.() -> Unit,
 ): ChangedValueTypeEntity {

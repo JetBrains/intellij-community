@@ -28,62 +28,65 @@
                  description="Enable new terminal for PowerShell on Windows 11"/>
     <registryKey key="terminal.new.ui.powershell.win10" defaultValue="true"
                  description="Enable new terminal for PowerShell on Windows 10"/>
+    <registryKey key="terminal.new.ui.powershell.unix" defaultValue="false"
+                 description="Enable new terminal for PowerShell on Unix"/>
     <registryKey key="terminal.new.ui.show.promotion" defaultValue="true"
                  description="Whether to show the GotIt tooltip with a proposal to try the New Terminal"/>
+    <registryKey key="terminal.new.ui.inline.completion" defaultValue="false"
+                 description="Whether to show the inline (grey text) completion in the New Terminal"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
     <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
-    <iconMapper mappingFile="TerminalIconMappings.json"/>
     <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
 
     <actionPromoter implementation="org.jetbrains.plugins.terminal.action.TerminalCtrlCActionsPromoter"/>
-    <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.exp.prompt.TerminalEnterHandler"
+    <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.block.prompt.TerminalEnterHandler"
                          id="terminalEnter" order="first"/>
-    <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.exp.history.TerminalCaretUpHandler"
+    <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.block.history.TerminalCaretUpHandler"
                          id="terminalUp" order="first"/>
-    <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.exp.history.TerminalCaretDownHandler"
+    <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.block.history.TerminalCaretDownHandler"
                          id="terminalDown" order="first"/>
-    <editorActionHandler action="Find" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindHandler"
+    <editorActionHandler action="Find" implementationClass="org.jetbrains.plugins.terminal.block.output.TerminalFindHandler"
                          id="terminalFind" order="first"/>
-    <editorActionHandler action="FindNext" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindNextHandler"
+    <editorActionHandler action="FindNext" implementationClass="org.jetbrains.plugins.terminal.block.output.TerminalFindNextHandler"
                          id="terminalFindNext" order="first"/>
-    <editorActionHandler action="FindPrevious" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindPreviousHandler"
+    <editorActionHandler action="FindPrevious" implementationClass="org.jetbrains.plugins.terminal.block.output.TerminalFindPreviousHandler"
                          id="terminalFindPrevious" order="first"/>
-    <editorActionHandler action="Replace" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalReplaceHandler"
+    <editorActionHandler action="Replace" implementationClass="org.jetbrains.plugins.terminal.block.output.TerminalReplaceHandler"
                          id="terminalReplace" order="first"/>
     <editorActionHandler action="Terminal.SearchInCommandHistory"
-                         implementationClass="org.jetbrains.plugins.terminal.exp.history.CommandSearchSelectNextHandler"
+                         implementationClass="org.jetbrains.plugins.terminal.block.history.CommandSearchSelectNextHandler"
                          id="terminalCommandSearchSelectNext" order="first"/>
-    <editorActionHandler action="$SelectAll" implementationClass="org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptSelectAllHandler"
+    <editorActionHandler action="$SelectAll" implementationClass="org.jetbrains.plugins.terminal.block.prompt.TerminalPromptSelectAllHandler"
                          id="terminalSelectAll" order="first"/>
-    <typedHandler implementation="org.jetbrains.plugins.terminal.exp.TerminalCompletionAutoPopupHandler"
+    <typedHandler implementation="org.jetbrains.plugins.terminal.block.prompt.TerminalCompletionAutoPopupHandler"
                   id="terminalCompletionAutoPopup" order="first"/>
-    <lookup.charFilter implementation="org.jetbrains.plugins.terminal.exp.TerminalCharFilter"
+    <lookup.charFilter implementation="org.jetbrains.plugins.terminal.block.prompt.TerminalCharFilter"
                        id="terminal" order="first"/>
     <completion.contributor language="any"
                             id="terminalCommandSpec"
-                            implementationClass="org.jetbrains.plugins.terminal.exp.completion.TerminalCommandSpecCompletionContributor"
+                            implementationClass="org.jetbrains.plugins.terminal.block.completion.TerminalCommandSpecCompletionContributor"
                             order="first, before terminalPowerShell, after ml_context"/>
     <completion.contributor language="any"
                             id="terminalPowerShell"
-                            implementationClass="org.jetbrains.plugins.terminal.exp.completion.powershell.PowerShellCompletionContributor"
+                            implementationClass="org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionContributor"
                             order="first, before shShebang, before liveTemplates, after ml_context"/>
-    <completion.ml.model implementation="org.jetbrains.plugins.terminal.exp.completion.ml.ShMLRankingProvider"/>
+    <completion.ml.model implementation="org.jetbrains.plugins.terminal.block.completion.ml.ShMLRankingProvider"/>
     <weigher key="completion"
              id="terminalCommandSpec"
              order="before stats"
-             implementationClass="org.jetbrains.plugins.terminal.exp.completion.ShellCommandSpecCompletionWeigher"/>
+             implementationClass="org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecCompletionWeigher"/>
     <!--suppress PluginXmlValidity -->
-    <inline.completion.provider implementation="org.jetbrains.plugins.terminal.exp.TerminalInlineCompletionProvider"/>
-    <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.exp.feedback.BlockTerminalFeedbackSurvey"/>
+    <inline.completion.provider implementation="org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletionProvider"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurvey"/>
 
     <fileType name="Terminal Prompt" language="Terminal Prompt" extensions="prompt" fieldName="INSTANCE"
-              implementationClass="org.jetbrains.plugins.terminal.exp.prompt.lang.TerminalPromptFileType"/>
+              implementationClass="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileType"/>
     <lang.fileViewProviderFactory language="Terminal Prompt"
-                                  implementationClass="org.jetbrains.plugins.terminal.exp.prompt.lang.TerminalPromptFileViewProviderFactory"/>
-    <highlightErrorFilter implementation="org.jetbrains.plugins.terminal.exp.prompt.lang.TerminalPromptErrorFilter"/>
+                                  implementationClass="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileViewProviderFactory"/>
+    <highlightErrorFilter implementation="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptErrorFilter"/>
 
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
@@ -111,13 +114,15 @@
       <with attribute="implementationClass" implements="org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport"/>
     </extensionPoint>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.promptCustomEnterHandler" dynamic="true"
-                    interface="org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptCustomEnterHandler"/>
+                    interface="org.jetbrains.plugins.terminal.block.prompt.TerminalPromptCustomEnterHandler"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.commandHistoryProvider" dynamic="true"
-                    interface="org.jetbrains.plugins.terminal.exp.history.TerminalCommandHistoryProvider"/>
+                    interface="org.jetbrains.plugins.terminal.block.history.TerminalCommandHistoryProvider"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.exp.commandBlockHighlighterProvider"
+                    interface="org.jetbrains.plugins.terminal.block.output.highlighting.TerminalCommandBlockHighlighterProvider" dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>
-    <listener class="org.jetbrains.plugins.terminal.exp.prompt.TerminalLookupManagerListener"
+    <listener class="org.jetbrains.plugins.terminal.block.prompt.TerminalLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
   </projectListeners>
 

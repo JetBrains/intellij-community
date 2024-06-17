@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.diff.DiffContentFactory;
@@ -65,6 +65,7 @@ import java.util.concurrent.Callable;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 @SuppressWarnings("unchecked")
 public class DirDiffPanel implements Disposable, DataProvider {
   private static final Logger LOG = Logger.getInstance(DirDiffPanel.class);

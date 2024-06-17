@@ -14,7 +14,7 @@ public final class ToolKeymapExtension extends BaseToolKeymapExtension {
 
   @Override
   protected String getGroupIdPrefix() {
-    return ExternalToolsGroup.GROUP_ID_PREFIX;
+    return myToolManager.getGroupIdPrefix();
   }
 
   @Override

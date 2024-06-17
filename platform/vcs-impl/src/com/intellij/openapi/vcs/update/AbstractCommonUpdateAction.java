@@ -9,7 +9,11 @@ import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -186,7 +190,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
   }
 
   public LinkedHashMap<Configurable, AbstractVcs> getConfigurableToEnvMap(Project project) {
-    FilePath[] roots = getRoots(project, dataId -> CommonDataKeys.PROJECT.is(dataId) ? project : null);
+    FilePath[] roots = getRoots(project, SimpleDataContext.getProjectContext(project));
     Map<AbstractVcs, Collection<FilePath>> vcsToFilesMap = createVcsToFilesMap(roots, project);
     return createConfigurableToEnvMap(vcsToFilesMap);
   }

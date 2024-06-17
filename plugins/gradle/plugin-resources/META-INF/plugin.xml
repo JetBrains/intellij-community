@@ -220,7 +220,6 @@
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder"/>
-    <iconMapper mappingFile="GradleIconMappings.json"/>
 
     <!--advanced settings-->
     <advancedSetting id="gradle.download.sources" default="false" bundle="messages.GradleBundle" groupKey="advanced.settings.gradle"/>

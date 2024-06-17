@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ public final class OutsidersPsiFileSupport {
   private static final Key<Boolean> KEY = Key.create("OutsidersPsiFileSupport");
   private static final Key<String> VFS_URL_KEY = Key.create("OutsidersPsiFileSupport.FilePath");
 
+  @ApiStatus.Internal
   public static class HighlightFilter implements HighlightInfoFilter {
     @Override
     public boolean accept(@NotNull HighlightInfo info, @Nullable PsiFile file) {
@@ -39,6 +41,7 @@ public final class OutsidersPsiFileSupport {
     }
   }
 
+  @ApiStatus.Internal
   public static class IntentionFilter implements IntentionActionFilter {
     @Override
     public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
@@ -46,6 +49,7 @@ public final class OutsidersPsiFileSupport {
     }
   }
 
+  @ApiStatus.Internal
   public static class HighlightingSettingProvider extends DefaultHighlightingSettingProvider {
     @Nullable
     @Override

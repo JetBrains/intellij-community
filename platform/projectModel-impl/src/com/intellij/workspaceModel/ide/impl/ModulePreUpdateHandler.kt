@@ -21,8 +21,8 @@ class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
     val removedModuleSymbolicIds = LinkedHashSet<ModuleId>()
     changes[ModuleEntity::class.java]?.asSequence()?.forEach { change ->
       when (change) {
-        is EntityChange.Added -> removedModuleSymbolicIds.remove((change.entity as ModuleEntity).symbolicId)
-        is EntityChange.Removed -> removedModuleSymbolicIds.add((change.entity as ModuleEntity).symbolicId)
+        is EntityChange.Added -> removedModuleSymbolicIds.remove((change.newEntity as ModuleEntity).symbolicId)
+        is EntityChange.Removed -> removedModuleSymbolicIds.add((change.oldEntity as ModuleEntity).symbolicId)
         else -> {
         }
       }

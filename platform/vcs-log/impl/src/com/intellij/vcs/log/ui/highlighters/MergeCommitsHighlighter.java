@@ -5,6 +5,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,7 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
   public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
   }
 
+  @ApiStatus.Internal
   public static class Factory implements VcsLogHighlighterFactory {
     public static final @NotNull @NonNls String ID = "MERGE_COMMITS";
 

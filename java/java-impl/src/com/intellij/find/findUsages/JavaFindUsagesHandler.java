@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -122,7 +123,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
         }
       }
     }
-    else if (element instanceof PsiMethod && myFactory.getFindMethodOptions().isSearchForBaseMethod) {
+    else if (element instanceof PsiMethod && myFactory.getFindMethodOptions().isSearchForBaseMethod &&
+             //temporary workaround
+             !DumbService.isDumb(element.getProject())) {
       return SuperMethodWarningUtil.getTargetMethodCandidates((PsiMethod)element, Collections.emptyList());
     }
     return myElementsToSearch.length == 0 ? new PsiElement[]{element} : myElementsToSearch;

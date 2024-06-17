@@ -613,5 +613,47 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       }
       """.trimIndent())
   }
+
+  fun `test slf4j structured logging`() {
+    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      import static net.logstash.logback.argument.StructuredArguments.kv;
+      class Demo {
+          public static final Logger log = LoggerFactory.getLogger(Demo.class);
+          public void demo() {
+              log.info(<warning descr="More arguments provided (4) than placeholders specified (2)">"Message1 {} {}"</warning>, 1, //should
+                      kv("k1", "v1"), 2,
+                      kv("k2", "v2")
+              );
+              log.info("Message2 {} {}",  1, 2,
+                      kv("k1", "v1"),
+                      kv("k2", "v2")
+              );      
+              log.info("Message3 {} {}", 1, 2,
+                      kv("k1", "v1"),
+                      kv("k2", "v2"), new RuntimeException());
+              log.info(<warning descr="More arguments provided (5) than placeholders specified (2)">"Message4 {} {}"</warning>, 1, 2,   //should
+                      kv("k1", "v1"),
+                      kv("k2", "v2"), 3, new RuntimeException());
+              log.info("Message5 {} {}",
+                      kv("k1", "v1"),
+                      kv("k2", "v2")
+              );
+              log.atInfo().log("Message6 {} {}", 1,
+                      kv("k1", "v1"),
+                      kv("k2", "v2"));
+              log.atInfo().log(<warning descr="More arguments provided (4) than placeholders specified (2)">"Message7 {} {}"</warning>, 1,  //should
+                      kv("k1", "v1"),
+                      kv("k2", "v2"), 2);
+      
+              log.atInfo().log(<warning descr="More arguments provided (5) than placeholders specified (2)">"Message8 {} {}"</warning>, 1, 2, 3, //should
+                      kv("k1", "v1"),
+                      kv("k2", "v2"));
+          }
+      }
+    """.trimIndent())
+  }
 }
 

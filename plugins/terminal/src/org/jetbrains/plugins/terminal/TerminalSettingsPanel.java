@@ -39,7 +39,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.terminal.exp.feedback.BlockTerminalFeedbackSurveyKt;
+import org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurveyKt;
 import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 

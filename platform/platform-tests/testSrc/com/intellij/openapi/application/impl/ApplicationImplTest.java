@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.RunFirst;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -79,7 +78,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     ThreadingAssertions.assertEventDispatchThread();
 
     try {
-      PlatformTestUtil.newPerformanceTest("lock/unlock " + getTestName(false), () -> {
+      PerformanceTestUtil.newPerformanceTest("lock/unlock " + getTestName(false), () -> {
         final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
         List<Job<Void>> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
@@ -476,13 +475,10 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     ThreadingAssertions.assertEventDispatchThread();
     ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
     final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
-    final Field myThreadLocalsField = Objects.requireNonNull(ReflectionUtil.getDeclaredField(Thread.class, "threadLocals"));
     //noinspection Convert2Lambda
     List<Callable<Void>> callables = Collections.nCopies(numOfThreads, new Callable<>() {
       @Override
       public Void call() {
-        // It's critical there are no collisions in the thread-local map
-        ReflectionUtil.resetField(Thread.currentThread(), myThreadLocalsField);
         for (int r = 0; r < readIterations; r++) {
           ReadMostlyRWLock.Reader reader = lock.startRead();
           assertNotNull(reader);
@@ -492,7 +488,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       }
     });
 
-    PlatformTestUtil.newPerformanceTest("RWLock/unlock", ()-> {
+    PerformanceTestUtil.newPerformanceTest("RWLock/unlock", ()-> {
       ThreadingAssertions.assertEventDispatchThread();
       assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
       List<Future<Void>> futures = AppExecutorUtil.getAppExecutorService().invokeAll(callables);

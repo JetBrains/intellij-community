@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.ExpectedHighlightingData;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -25,7 +25,7 @@ public class AntHighlightingPerformanceTest extends DaemonAnalyzerTestCase {
                      findVirtualFile(getTestName(false) + ".xml"),
                      findVirtualFile("buildserver.xml"),
                      findVirtualFile("buildserver.properties"));
-    PlatformTestUtil.newPerformanceTest("Big ant file highlighting", () -> doDoTest(true, false))
+    PerformanceTestUtil.newPerformanceTest("Big ant file highlighting", () -> doDoTest(true, false))
       .setup(getPsiManager()::dropPsiCaches)
       .start();
   }

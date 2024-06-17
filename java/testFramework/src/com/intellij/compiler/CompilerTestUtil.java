@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.compiler.server.BuildManager;
@@ -6,8 +6,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.components.impl.stores.IComponentStoreKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -49,7 +49,7 @@ public final class CompilerTestUtil {
 
   @NotNull
   public static IComponentStore getApplicationStore() {
-    return ServiceKt.getStateStore(ApplicationManager.getApplication());
+    return IComponentStoreKt.getStateStore(ApplicationManager.getApplication());
   }
 
   @TestOnly

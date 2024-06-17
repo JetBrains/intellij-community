@@ -37,6 +37,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -111,6 +112,7 @@ import java.util.function.Consumer;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
+  private static boolean LOG_JDI_LOG_IN_UNIT_TESTS = false;
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
@@ -148,7 +150,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
   protected volatile DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
-  protected final Disposable myDisposable = Disposer.newDisposable();
+  protected final CheckedDisposable myDisposable = Disposer.newCheckedDisposable();
   private final Alarm myStatusUpdateAlarm = new Alarm();
 
   final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
@@ -385,9 +387,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     int mask = getTraceMask();
     if (mask == 0 && vm instanceof VirtualMachineImpl extendedVM) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (LOG_JDI_LOG_IN_UNIT_TESTS && ApplicationManager.getApplication().isUnitTestMode()) {
         mask = VirtualMachine.TRACE_ALL;
-        extendedVM.setDebugTraceConsumer(string -> DebuggerDiagnosticsUtil.logDebug("[JDI: " + string + "]"));
+        extendedVM.setDebugTraceConsumer(string -> LOG.debug("[JDI: " + string + "]"));
       }
     }
     vm.setDebugTraceMode(mask);
@@ -1078,7 +1080,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public @NotNull DebuggerManagerThreadImpl getManagerThread() {
+  public final @NotNull DebuggerManagerThreadImpl getManagerThread() {
     return myDebuggerManagerThread;
   }
 
@@ -1795,6 +1797,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         else {
           // some VMs (like IBM VM 1.4.2 bundled with WebSphere) does not resume threads on dispose() like it should
           try {
+            virtualMachineProxy.addedSuspendAllContext();
             virtualMachineProxy.resume();
           }
           finally {
@@ -2148,10 +2151,18 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       logThreads();
       SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
       myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
-      myDebuggerManagerThread.schedule(PrioritizedTask.Priority.LOWEST, () ->
-        // New events should not come after global pause
-        DebuggerDiagnosticsUtil.checkThreadsConsistency(DebugProcessImpl.this, true)
-      );
+
+      myDebuggerManagerThread.schedule(new SuspendContextCommandImpl(suspendContext) {
+        @Override
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+          // New events should not come after global pause
+          DebuggerDiagnosticsUtil.checkThreadsConsistency(DebugProcessImpl.this, true);
+        }
+        @Override
+        public Priority getPriority() {
+          return Priority.LOWEST;
+        }
+      });
     }
   }
 
@@ -2217,6 +2228,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           }
         }
         mySuspendManager.myExplicitlyResumedThreads.remove(myThread);
+        SuspendManagerUtil.switchToThreadInSuspendAllContext(pausedSuspendAllContexts.get(0), myThread);
         return;
       }
 
@@ -2744,6 +2756,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void showNotification(int number) {
+    if (myDisposable.isDisposed()) {
+      return;
+    }
     String content = JavaDebuggerBundle.message("message.other.threads.reached.breakpoints", number);
     MessageType messageType = MessageType.INFO;
 
@@ -2776,10 +2791,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   String getStateForDiagnostics() {
+    String safeInfo = "myState = " + myState + "\n" +
+                      "myStashedVirtualMachines = " + myStashedVirtualMachines + "\n" +
+                      "myExecutionResult = " + myExecutionResult + "\n";
+    if (DebuggerDiagnosticsUtil.needAnonymizedReports()) {
+      return safeInfo;
+    }
     return "myProject = " + myProject + "\n" +
-           "myState = " + myState + "\n" +
-           "myStashedVirtualMachines = " + myStashedVirtualMachines + "\n" +
-           "myExecutionResult = " + myExecutionResult + "\n" +
+           safeInfo +
            "myConnection = " + myConnection + "\n" +
            "myArguments = " + myArguments + "\n";
   }
@@ -2788,11 +2807,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                     DebuggerManagerThreadImpl debuggerManagerThread) {
   }
 
-  protected void logError(@NotNull String message) {
-    DebuggerDiagnosticsUtil.logError(this, message);
+  public void logError(@NotNull String message, @NotNull Attachment attachment) {
+    LOG.error(message, DebuggerDiagnosticsUtil.getAttachments(this, attachment));
   }
 
-  protected void logError(@NotNull String message, @NotNull Throwable e) {
-    DebuggerDiagnosticsUtil.logError(this, message, e);
+  public void logError(@NotNull String message) {
+    LOG.error(message, DebuggerDiagnosticsUtil.getAttachments(this));
+  }
+
+  public void logError(@NotNull String message, @NotNull Throwable e) {
+    LOG.error(message, e, DebuggerDiagnosticsUtil.getAttachments(this));
   }
 }

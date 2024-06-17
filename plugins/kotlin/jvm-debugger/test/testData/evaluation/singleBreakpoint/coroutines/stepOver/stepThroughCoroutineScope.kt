@@ -30,6 +30,7 @@ suspend fun endMethod(i: Int) {
 
 fun main() {
     runBlocking {
+        foo(-1)
         repeat(100) { i ->
             launch(Dispatchers.Default) {
                 foo(i)

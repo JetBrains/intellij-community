@@ -7,7 +7,7 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -53,7 +53,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
     @OptIn(KaAllowAnalysisOnEdt::class)
     private fun <T : Any> resolveCandidates(
         context: ExpressionContext,
-        mapper: context(KtAnalysisSession) (KtFile, Sequence<KtVariableLikeSymbol>) -> T?
+        mapper: context(KaSession) (KtFile, Sequence<KtVariableLikeSymbol>) -> T?
     ): T? {
         val project = context.project
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
@@ -85,10 +85,10 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun shouldDisplayVariable(variable: KtVariableLikeSymbol, file: KtFile): Boolean {
         return when (variable) {
-            is KtValueParameterSymbol, is KtLocalVariableSymbol -> true
+            is KaValueParameterSymbol, is KaLocalVariableSymbol -> true
             is KtKotlinPropertySymbol -> variable.psi?.containingFile == file
             else -> false
         }

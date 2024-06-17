@@ -243,7 +243,7 @@ abstract class LineLayout {
     if (token1 != TokenType.WHITE_SPACE && token2 != TokenType.WHITE_SPACE && !token1.getLanguage().is(token2.getLanguage())) return true;
     Language language = token1.getLanguage();
     if (language == Language.ANY) language = token2.getLanguage();
-    BidiRegionsSeparator separator = LanguageBidiRegionsSeparator.INSTANCE.forLanguage(language);
+    BidiRegionsSeparator separator = LanguageBidiRegionsSeparator.getInstance().forLanguage(language);
     return separator.createBorderBetweenTokens(token1, token2);
   }
 

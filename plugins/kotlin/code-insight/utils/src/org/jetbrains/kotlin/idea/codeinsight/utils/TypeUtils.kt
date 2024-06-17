@@ -4,27 +4,27 @@
  */
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtType.isNullableAnyType() = isAny && isMarkedNullable
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtType.isNonNullableBooleanType() = isBoolean && !isMarkedNullable
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtType.isEnum(): Boolean {
     if (this !is KtNonErrorClassType) return false
-    val classSymbol = classSymbol
-    return classSymbol is KtClassOrObjectSymbol && classSymbol.classKind == KtClassKind.ENUM_CLASS
+    val classSymbol = symbol
+    return classSymbol is KaClassOrObjectSymbol && classSymbol.classKind == KaClassKind.ENUM_CLASS
 }
 
 /**
@@ -34,7 +34,7 @@ fun KtType.isEnum(): Boolean {
  */
 object KtFlexibleTypeAsUpperBoundRenderer : KtFlexibleTypeRenderer {
     override fun renderType(
-        analysisSession: KtAnalysisSession,
+        analysisSession: KaSession,
         type: KtFlexibleType,
         typeRenderer: KtTypeRenderer,
         printer: PrettyPrinter

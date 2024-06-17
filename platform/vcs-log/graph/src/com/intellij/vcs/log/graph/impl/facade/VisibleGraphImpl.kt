@@ -11,11 +11,11 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetter
+import com.intellij.vcs.log.graph.api.printer.GraphPrintElement
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAnswer
 import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex
 import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl
-import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import java.awt.Cursor
 
@@ -143,7 +143,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
 
     private fun convert(graphAction: GraphAction): LinearGraphAction {
       val printElement = graphAction.affectedElement?.let { affectedElement ->
-        if (affectedElement is PrintElementWithGraphElement) {
+        if (affectedElement is GraphPrintElement) {
           affectedElement
         }
         else {
@@ -184,8 +184,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
     override fun isRepaintRequired() = isRepaintRequired
   }
 
-  data class LinearGraphActionImpl(override val affectedElement: PrintElementWithGraphElement?,
-                                   override val type: GraphAction.Type) : LinearGraphAction
+  data class LinearGraphActionImpl(override val affectedElement: GraphPrintElement?, override val type: GraphAction.Type) : LinearGraphAction
 
   private inner class RowInfoImpl(private val nodeId: Int, private val visibleRow: Int) : RowInfo<CommitId> {
     override fun getCommit(): CommitId {

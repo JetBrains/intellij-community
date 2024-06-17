@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.l10n.LocalizationOrder;
@@ -63,8 +63,13 @@ public class DynamicBundle extends AbstractBundle {
   protected @NotNull ResourceBundle findBundle(@NotNull String pathToBundle,
                                                @NotNull ClassLoader baseLoader,
                                                @NotNull ResourceBundle.Control control) {
-    return resolveResourceBundle(getBundleClassLoader(), baseLoader, pathToBundle, getLocale(),
-                                 (loader, locale) -> super.findBundle(pathToBundle, loader, control, locale));
+    return resolveResourceBundle(
+      getBundleClassLoader(),
+      baseLoader,
+      pathToBundle,
+      getResolveLocale(),
+      (loader, locale) -> super.findBundle(pathToBundle, loader, control, locale)
+    );
   }
 
   private static @NotNull ResourceBundle resolveResourceBundle(@NotNull ClassLoader bundleClassLoader,
@@ -95,7 +100,7 @@ public class DynamicBundle extends AbstractBundle {
     List<ResourceBundle> resourceBundles = new ArrayList<>();
     for (Path path : paths) {
       try {
-        ResourceBundle resourceBundle = resolveBundle(loader, locale, FileUtil.toSystemIndependentName(path.toString()));
+        ResourceBundle resourceBundle = Companion.resolveBundle(loader, locale, FileUtil.toSystemIndependentName(path.toString()));
         resourceBundles.add(resourceBundle);
       }
       catch (MissingResourceException ignored) { }
@@ -235,6 +240,10 @@ public class DynamicBundle extends AbstractBundle {
 
     @Attribute("locale")
     public String locale = Locale.ENGLISH.getLanguage();
+
+    @Attribute("displayName")
+    public String displayName;
+
     public PluginDescriptor pluginDescriptor;
 
     @Override
@@ -249,7 +258,7 @@ public class DynamicBundle extends AbstractBundle {
   public static @NotNull ResourceBundle getResourceBundle(@NotNull ClassLoader loader, @NotNull @NonNls String pathToBundle) {
     return (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
       .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap())
-      .computeIfAbsent(pathToBundle, __ -> resolveResourceBundle(loader, pathToBundle, getLocale()));
+      .computeIfAbsent(pathToBundle, __ -> resolveResourceBundle(loader, pathToBundle, getResolveLocale()));
   }
 
   public static @NotNull ResourceBundle getResourceBundle(@NotNull ClassLoader loader, @NotNull @NonNls String pathToBundle, @NotNull Locale locale) {
@@ -265,13 +274,13 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   private static @NotNull ResourceBundle resolveResourceBundle(@NotNull ClassLoader loader, @NonNls @NotNull String pathToBundle, @NotNull Locale locale) {
-    return resolveResourceBundleWithFallback(loader, pathToBundle, () -> resolveResourceBundle(DynamicBundle.class.getClassLoader(),
+    return Companion.resolveResourceBundleWithFallback(loader, pathToBundle, () -> resolveResourceBundle(DynamicBundle.class.getClassLoader(),
                                                                                                loader, pathToBundle, locale,
                                                                                                bundleResolver(pathToBundle)));
   }
 
   private static @NotNull BiFunction<@NotNull ClassLoader, @NotNull Locale, @NotNull ResourceBundle> bundleResolver(@NonNls @NotNull String pathToBundle) {
-    return (loader, locale) -> resolveBundle(loader, locale, pathToBundle);
+    return (loader, locale) -> Companion.resolveBundle(loader, locale, pathToBundle);
   }
 
   /**
@@ -298,7 +307,7 @@ public class DynamicBundle extends AbstractBundle {
       protected Object handleGetObject(@NotNull String key) {
         Object get = rb.getObject(key);
         assert get instanceof String : "Language bundles should contain only strings";
-        return BundleBase.appendLocalizationSuffix((String)get, BundleBase.L10N_MARKER);
+        return BundleBase.INSTANCE.appendLocalizationSuffix((String)get, BundleBase.L10N_MARKER);
       }
 
       @Override
@@ -310,6 +319,17 @@ public class DynamicBundle extends AbstractBundle {
 
   public static @NotNull Locale getLocale() {
     return LocalizationUtil.INSTANCE.getLocale();
+  }
+
+  /**
+   * @return Locale used to resolve messages
+   */
+  private static @NotNull Locale getResolveLocale() {
+    Locale resolveLocale = getLocale();
+    // we must use Locale.ROOT to get English messages from default bundles
+    if (resolveLocale.equals(Locale.ENGLISH)) return Locale.ROOT;
+
+    return resolveLocale;
   }
 
   @ApiStatus.Internal

@@ -11,7 +11,6 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThrowableConsumer;
@@ -49,12 +48,9 @@ public final class InspectionTreeHtmlWriter {
 
   private void serializeTreeToHtml() {
     HTMLExportUtil.writeFile(myOutputDir, "index.html", myTree.getContext().getProject(), w -> {
-      appendHeader(w);
-      w.append("""
-                 <div style="width:100%;">
-                 <div style="float:left; width:50%;">
-                 <h4>Inspection tree:</h4>
-                 """);
+      String title = myTree.getContext().getView().getViewTitle();
+      appendHeader(w, title);
+      w.append("<div id=\"inspection-tree\">\n<h4>").append(title).append("</h4>\n");
       InspectionTreeTailRenderer<IOException> tailRenderer = new InspectionTreeTailRenderer<>(myTree.getContext()) {
         @Override
         protected void appendText(String text, SimpleTextAttributes attributes) throws IOException {
@@ -97,10 +93,9 @@ public final class InspectionTreeHtmlWriter {
                  
                  </ol>
                  </div>
-                 <div style="float:left; width:50%;">
-                   <h4>Problem description:</h4>
+                 <div id="description">
+                   <h4>Problem description</h4>
                    <div id="preview">Select a problem element in tree</div>
-                 </div>
                  </div>
                  </body>
                  </html>""");
@@ -173,8 +168,7 @@ public final class InspectionTreeHtmlWriter {
     }
   }
 
-  private static void appendHeader(@NotNull Writer writer) throws IOException {
-    String title = ApplicationNamesInfo.getInstance().getFullProductName() + " inspection report";
+  private void appendHeader(@NotNull Writer writer, String title) throws IOException {
     writer.append("""
                     <html>
                     <head>
@@ -188,9 +182,7 @@ public final class InspectionTreeHtmlWriter {
                   </title>
                 </head>
                 <body>
-                <h3>""")
-      .append(title)
-      .append(":</h3>\n");
+                """);
   }
 
   private static String escapeNonBreakingSymbols(@NotNull Object source) {

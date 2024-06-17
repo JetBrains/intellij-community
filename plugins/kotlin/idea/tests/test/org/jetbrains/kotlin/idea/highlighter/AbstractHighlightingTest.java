@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.rt.execution.junit.FileComparisonData;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -74,14 +74,12 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
                     return Unit.INSTANCE;
                 });
             }
-            catch (AssertionError e) {
-                if (e instanceof FileComparisonData) {
-                    List<HighlightInfo> highlights =
-                            DaemonCodeAnalyzerImpl.getHighlights(myFixture.getDocument(myFixture.getFile()), null, myFixture.getProject());
-                    String text = myFixture.getFile().getText();
+            catch (FileComparisonFailedError e) {
+                List<HighlightInfo> highlights =
+                        DaemonCodeAnalyzerImpl.getHighlights(myFixture.getDocument(myFixture.getFile()), null, myFixture.getProject());
+                String text = myFixture.getFile().getText();
 
-                    System.out.println(TagsTestDataUtil.insertInfoTags(highlights, text));
-                }
+                System.out.println(TagsTestDataUtil.insertInfoTags(highlights, text));
                 throw e;
             }
         });

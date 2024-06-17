@@ -77,7 +77,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
     return new TreeHashResult(h, c, fragment);
   }
 
-  protected TreePsiFragment buildFragment(NodeSpecificHasher hasher, PsiElement root,int cost) {
+  protected PsiFragment buildFragment(NodeSpecificHasher hasher, PsiElement root,int cost) {
     if (myForIndexing) {
       return new TreePsiFragment(hasher, root, cost) {
         @Override
@@ -94,7 +94,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
     return new TreePsiFragment(hasher, root, cost);
   }
 
-  protected TreePsiFragment buildFragment(NodeSpecificHasher hasher, List<? extends PsiElement> elements, int from, int to) {
+  protected PsiFragment buildFragment(NodeSpecificHasher hasher, List<? extends PsiElement> elements, int from, int to) {
     if (myForIndexing) {
       return new TreePsiFragment(hasher, elements, from, to) {
         @Override

@@ -160,9 +160,6 @@ internal class ActionUpdater @JvmOverloads constructor(
         }
       }
     }
-    if (PopupMenuPreloader.isToSkipComputeOnEDT(place)) {
-      throw ComputeOnEDTSkipped()
-    }
     @Suppress("removal", "DEPRECATION")
     if (updateThread == ActionUpdateThread.OLD_EDT) {
       ensureSlowDataKeysPreCached(action, operationName)
@@ -213,19 +210,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         LOG.info("$currentEDTWaitMillis ms to grab EDT for $operationName")
       }
       if (currentEDTPerformMillis > 300) {
-        val throwable: Throwable = PluginException.createByClass(
-          elapsedReport(currentEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.javaClass)
-        val edtTraces = edtTraces
-        // do not report pauses without EDT traces (e.g., due to debugging)
-        if (edtTraces != null && !edtTraces.isEmpty() && edtTraces[0].stackTrace.isNotEmpty()) {
-          for (trace in edtTraces) {
-            throwable.addSuppressed(trace)
-          }
-          LOG.error(throwable)
-        }
-        else if (!DebugAttachDetector.isDebugEnabled()) {
-          LOG.warn(throwable)
-        }
+        reportSlowEdtOperation(action, operationName, currentEDTPerformMillis, edtTraces)
       }
     }
   }
@@ -505,7 +490,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     return UpdateSessionImpl(this)
   }
 
-  private suspend fun iterateGroupChildren(group: ActionGroup): Flow<AnAction> = flow {
+  private fun iterateGroupChildren(group: ActionGroup): Flow<AnAction> = flow {
     val tree: suspend (AnAction) -> List<AnAction>? = { o ->
       // in all clients the next call is `update`, let's update both actions and groups here
       val presentation = if (o === group) null else updateAction(o)
@@ -579,29 +564,40 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   @Suppress("UNCHECKED_CAST")
   fun <T : Any?> getSessionDataDeferred(key: Pair<String, Any?>, supplier: suspend () -> T): Deferred<T> {
-    sessionData[key]?.let { return it as Deferred<T> }
+    val chain = currentThreadContext()[SharedDataChain]?.chain ?: FList.emptyList<Any>()
+    val existing = sessionData[key]
+    if (existing != null) {
+      if (chain.contains(key)) {
+        throw AssertionError("Circular dependency: ${chain.prepend(key).joinToString(" <- ")}")
+      }
+      return existing as Deferred<T>
+    }
     val bgtScope = bgtScope
     return if (bgtScope != null) {
       sessionData.computeIfAbsent(key) {
         bgtScope.async(currentThreadContext().minusKey(Job) +
-                       CoroutineName("getSessionDataDeferred#${key.first} ($place)" )) {
+                       CoroutineName("getSessionDataDeferred#${key.first} ($place)" ) +
+                       SharedDataChain(chain.prepend(key))) {
           val spanBuilder = Utils.getTracer(true).spanBuilder("${key.first}@$place")
           spanBuilder.useWithScope(EmptyCoroutineContext) {
             supplier()
           }
         }
-      } as Deferred<T>
+      }
     }
     else {
       // not a good branch to be in, seek ways to get bgtScope
-      CompletableDeferred<T>().apply {
-        completeWith(runCatching {
-          runBlockingForActionExpand {
-            supplier()
-          }
-        })
+      val deferred = CompletableDeferred<T>()
+      sessionData.computeIfAbsent(key) { deferred }.also {
+        if (it == deferred) {
+          deferred.completeWith(runCatching {
+            runBlockingForActionExpand {
+              supplier()
+            }
+          })
+        }
       }
-    }
+    } as Deferred<T>
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -667,10 +663,15 @@ internal class ActionUpdater @JvmOverloads constructor(
     override fun <T> compute(action: Any,
                              op: String,
                              updateThread: ActionUpdateThread,
-                             supplier: Supplier<out T>): T = runBlockingForActionExpand {
-      val operationName = Utils.operationName(action, op, updater.place)
-      withContext(OperationName(operationName) + RecursionElement.next()) {
-        updater.callAction(action, operationName, updateThread) { supplier.get() }
+                             supplier: Supplier<out T>): T {
+      if (updateThread == ActionUpdateThread.EDT && EDT.isCurrentThreadEdt()) {
+        return supplier.get()
+      }
+      return runBlockingForActionExpand {
+        val operationName = Utils.operationName(action, op, updater.place)
+        withContext(OperationName(operationName) + RecursionElement.next()) {
+          updater.callAction(action, operationName, updateThread) { supplier.get() }
+        }
       }
     }
 
@@ -716,6 +717,26 @@ internal class ActionUpdater @JvmOverloads constructor(
     override suspend fun <T> readAction(block: () -> T): T {
       return readActionUndispatchedForActionExpand(block)
     }
+  }
+}
+
+private fun reportSlowEdtOperation(action: Any,
+                                   operationName: String,
+                                   currentEDTPerformMillis: Long,
+                                   edtTraces: List<Throwable>?) {
+  var edtTraces1 = edtTraces
+  val throwable: Throwable = PluginException.createByClass(
+    elapsedReport(currentEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.javaClass)
+  val edtTraces = edtTraces1
+  // do not report pauses without EDT traces (e.g., due to debugging)
+  if (edtTraces != null && !edtTraces.isEmpty() && edtTraces[0].stackTrace.isNotEmpty()) {
+    for (trace in edtTraces) {
+      throwable.addSuppressed(trace)
+    }
+    LOG.error(throwable)
+  }
+  else if (!DebugAttachDetector.isDebugEnabled()) {
+    LOG.warn(throwable)
   }
 }
 
@@ -855,6 +876,12 @@ private class RecursionElement(val level: Int)
     suspend fun level() = currentCoroutineContext()[this]?.level ?: 0
     suspend fun isNested() = level() > 0
   }
+}
+
+private class SharedDataChain(val chain: FList<Any>)
+  : AbstractCoroutineContextElement(SharedDataChain) {
+  override fun toString(): String = "SharedDataChain(${chain.size})"
+  companion object : CoroutineContext.Key<SharedDataChain>
 }
 
 private class OperationName(val name: String)

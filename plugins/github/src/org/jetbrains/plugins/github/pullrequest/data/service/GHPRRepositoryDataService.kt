@@ -3,8 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import git4idea.GitRemoteBranch
 import git4idea.remote.GitRemoteUrlCoordinates
-import kotlinx.coroutines.Deferred
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -24,16 +22,15 @@ interface GHPRRepositoryDataService {
   suspend fun loadCollaborators(): List<GHUser>
 
   suspend fun loadIssuesAssignees(): List<GHUser>
-  @Obsolete
-  fun loadIssuesAssigneesAsync(): Deferred<List<GHUser>>
 
   suspend fun loadLabels(): List<GHLabel>
-  @Obsolete
-  fun loadLabelsAsync(): Deferred<List<GHLabel>>
 
   suspend fun loadPotentialReviewers(): List<GHPullRequestRequestedReviewer>
-  @Obsolete
-  fun loadPotentialReviewersAsync(): Deferred<List<GHPullRequestRequestedReviewer>>
+
+  /**
+   * Find a pull request description template
+   */
+  suspend fun loadTemplate(): String?
 
   fun resetData()
 

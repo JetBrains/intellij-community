@@ -38,17 +38,16 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     if (refEntity instanceof RefElementImpl refElement) {
       if (refElement.isSuspicious() && !refElement.isEntry()) {
         appendHeading(buf, AnalysisBundle.message("inspection.problem.synopsis"));
-        buf.append("<br>");
-        buf.append("<div class=\"problem-description\">");
+        startProblemDescription(buf);
         appendProblemSynopsis(refElement, buf);
-        buf.append("</div>");
+        doneProblemDescription(buf);
 
         if (toExternalHtml) {
-          buf.append("<br><br>");
           appendResolution(buf, refElement, DescriptorComposer.quickFixTexts(refElement, myToolPresentation));
         }
         refElement.accept(new RefJavaVisitor() {
-          @Override public void visitClass(@NotNull RefClass aClass) {
+          @Override
+          public void visitClass(@NotNull RefClass aClass) {
             appendClassInstantiations(buf, aClass);
             myComposer.appendDerivedClasses(buf, aClass);
             myComposer.appendClassExtendsImplements(buf, aClass);
@@ -56,7 +55,8 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
             myComposer.appendTypeReferences(buf, aClass);
           }
 
-          @Override public void visitMethod(@NotNull RefMethod method) {
+          @Override
+          public void visitMethod(@NotNull RefMethod method) {
             appendElementInReferences(buf, method);
             appendElementOutReferences(buf, method);
             myComposer.appendDerivedMethods(buf, method);
@@ -64,7 +64,8 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
             myComposer.appendSuperMethods(buf, method);
           }
 
-          @Override public void visitField(@NotNull RefField field) {
+          @Override
+          public void visitField(@NotNull RefField field) {
             appendElementInReferences(buf, field);
             appendElementOutReferences(buf, field);
           }
@@ -297,7 +298,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       boolean found = false;
 
       appendHeading(buf, AnalysisBundle.message("inspection.dead.code.export.results.instantiated.from.heading"));
-
+      startProblemDescription(buf);
       startList(buf);
       for (RefMethod refMethod : refClass.getConstructors()) {
         for (RefElement refCaller : refMethod.getInReferences()) {
@@ -313,6 +314,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       }
 
       doneList(buf);
+      doneProblemDescription(buf);
     }
   }
 
@@ -321,7 +323,6 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     if (!possibleChildren.isEmpty()) {
       if (appendCallees){
         appendHeading(buf, JavaBundle.message("inspection.export.results.callees"));
-        buf.append("<div class=\"problem-description\">");
       }
       final @NonNls String ul = "<ul>";
       buf.append(ul);
@@ -338,9 +339,6 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       }
       final @NonNls String closeUl = "</ul>";
       buf.append(closeUl);
-      if (appendCallees) {
-        buf.append("</div>");
-      }
     }
   }
 

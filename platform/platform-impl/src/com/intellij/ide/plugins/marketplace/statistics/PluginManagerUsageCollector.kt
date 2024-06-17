@@ -12,6 +12,8 @@ import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 /*
   Collects plugin manager usage statistics:
@@ -26,33 +28,63 @@ internal object PluginManagerUsageCollector {
   private val fusCollector = PluginManagerFUSCollector()
   private val mpCollector = PluginManagerMPCollector()
 
+  // Plugin manager search session identifier which is unique within one IDE session
+  private val sessionId = AtomicInteger(-1)
+  // Search index within one plugin manager search session. The order corresponds to the order of query updates
+  private val searchIndex = AtomicInteger(0)
+
+  private val installedPluginInSession = AtomicBoolean(false)
+
+  @JvmStatic
+  fun sessionStarted(): Int {
+    searchIndex.set(0)
+    installedPluginInSession.set(false)
+    return sessionId.getAndIncrement()
+  }
+
+  /**
+   * Event that happens on search restart intention, before receiving the list with plugins.
+   * Unlike with [performMarketplaceSearch] and [performInstalledTabSearch],
+   * the order of these events corresponds to the order of query updates.
+   */
+  @JvmStatic
+  fun updateAndGetSearchIndex(): Int {
+    // If we perform search after installing a plugin, we consider this as a new search session:
+    if (installedPluginInSession.compareAndSet(true, false)) sessionStarted()
+    return searchIndex.getAndIncrement()
+  }
+
   @JvmStatic
   fun performMarketplaceSearch(
     project: Project?,
     query: SearchQueryParser.Marketplace,
-    results: List<IdeaPluginDescriptor>
-  ) = mpCollector.performMarketplaceSearch(project, query, results)
+    results: List<IdeaPluginDescriptor>,
+    searchIndex: Int,
+    pluginToScore: Map<IdeaPluginDescriptor, Double>? = null
+  ) = mpCollector.performMarketplaceSearch(project, query, results, searchIndex, sessionId.get(), pluginToScore)
 
   @JvmStatic
   fun performInstalledTabSearch(
     project: Project?,
     query: SearchQueryParser.Installed,
-    results: List<IdeaPluginDescriptor>
-  ) = mpCollector.performInstalledTabSearch(project, query, results)
+    results: List<IdeaPluginDescriptor>,
+    searchIndex: Int,
+    pluginToScore: Map<IdeaPluginDescriptor, Double>? = null
+  ) = mpCollector.performInstalledTabSearch(project, query, results, searchIndex, sessionId.get(), pluginToScore)
 
   @JvmStatic
-  fun searchReset() = mpCollector.searchReset()
+  fun searchReset() = mpCollector.searchReset(sessionId.get())
 
   @JvmStatic
   fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroup?) {
-    fusCollector.pluginCardOpened(descriptor, group)
-    mpCollector.pluginCardOpened(descriptor, group)
+    fusCollector.pluginCardOpened(descriptor, group, sessionId.get())
+    mpCollector.pluginCardOpened(descriptor, group, sessionId.get())
   }
 
   @JvmStatic
   fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum) {
-    fusCollector.thirdPartyAcceptanceCheck(result)
-    mpCollector.thirdPartyAcceptanceCheck(result)
+    fusCollector.thirdPartyAcceptanceCheck(result, sessionId.get())
+    mpCollector.thirdPartyAcceptanceCheck(result, sessionId.get())
   }
 
   @JvmStatic
@@ -61,14 +93,14 @@ internal object PluginManagerUsageCollector {
     enable: Boolean,
     project: Project? = null,
   ) {
-    fusCollector.pluginsStateChanged(descriptors, enable, project)
-    mpCollector.pluginsStateChanged(descriptors, enable, project)
+    fusCollector.pluginsStateChanged(descriptors, enable, project, sessionId.get())
+    mpCollector.pluginsStateChanged(descriptors, enable, project, sessionId.get())
   }
 
   @JvmStatic
   fun pluginRemoved(pluginId: PluginId) {
-    fusCollector.pluginRemoved(pluginId)
-    mpCollector.pluginRemoved(pluginId)
+    fusCollector.pluginRemoved(pluginId, sessionId.get())
+    mpCollector.pluginRemoved(pluginId, sessionId.get())
   }
 
   @JvmStatic
@@ -77,23 +109,24 @@ internal object PluginManagerUsageCollector {
     source: InstallationSourceEnum,
     previousVersion: String? = null
   ) {
-    fusCollector.pluginInstallationStarted(descriptor, source, previousVersion)
-    mpCollector.pluginInstallationStarted(descriptor, source, previousVersion)
+    fusCollector.pluginInstallationStarted(descriptor, source, sessionId.get(), previousVersion)
+    mpCollector.pluginInstallationStarted(descriptor, source, sessionId.get(), previousVersion)
   }
 
   @JvmStatic
   fun pluginInstallationFinished(descriptor: IdeaPluginDescriptor) {
-    fusCollector.pluginInstallationFinished(descriptor)
-    mpCollector.pluginInstallationFinished(descriptor)
+    installedPluginInSession.set(true)
+    fusCollector.pluginInstallationFinished(descriptor, sessionId.get())
+    mpCollector.pluginInstallationFinished(descriptor, sessionId.get())
   }
 
   fun signatureCheckResult(descriptor: IdeaPluginDescriptor, result: SignatureVerificationResult) {
-    fusCollector.signatureCheckResult(descriptor, result)
-    mpCollector.signatureCheckResult(descriptor, result)
+    fusCollector.signatureCheckResult(descriptor, result, sessionId.get())
+    mpCollector.signatureCheckResult(descriptor, result, sessionId.get())
   }
 
   fun signatureWarningShown(descriptor: IdeaPluginDescriptor, result: DialogAcceptanceResultEnum) {
-    fusCollector.signatureWarningShown(descriptor, result)
-    mpCollector.signatureWarningShown(descriptor, result)
+    fusCollector.signatureWarningShown(descriptor, result, sessionId.get())
+    mpCollector.signatureWarningShown(descriptor, result, sessionId.get())
   }
 }

@@ -5,6 +5,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import java.util.*
 
@@ -21,14 +23,14 @@ interface NotebookIntervalPointer {
 interface NotebookIntervalPointerFactory {
   /**
    * Interval should be valid, return pointer to it.
-   * Should be called in read-action.
    */
+  @RequiresReadLock
   fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer
 
   /**
-   * Can be called only inside write-action.
    * Undo and redo will be added automatically.
    */
+  @RequiresWriteLock
   fun modifyPointers(changes: Iterable<Change>)
 
   /**

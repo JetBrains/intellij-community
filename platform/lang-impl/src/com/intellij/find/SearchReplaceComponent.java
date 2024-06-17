@@ -135,6 +135,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myReplaceFieldActions = replaceFieldActions;
     myReplaceRunnable = replaceRunnable;
     myCloseRunnable = closeRunnable;
+    myDataProviderDelegate = dataProvider;
     myMultilineEnabled = multilineEnabled;
     myShowNewLineButton = showNewLineButton;
     myAddSearchResultsToGlobalSearch = addSearchResultsToGlobalSearch;
@@ -302,10 +303,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
     }
 
-    update("", "", false, false);
-
-    // it's assigned after all action updates so that actions don't get access to uninitialized components
-    myDataProviderDelegate = dataProvider;
     // A workaround to suppress editor-specific TabAction
     new TransferFocusAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), this);
     new TransferFocusBackwardAction()
@@ -322,6 +319,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       setBackground(JBColor.namedColor("Editor.SearchField.background", JBColor.background()));
     }
 
+    updateInner("", "", false, false);
     updateUI();
   }
 
@@ -505,18 +503,23 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   public void update(@NotNull String findText, @NotNull String replaceText, boolean replaceMode, boolean multiline) {
-    setMultilineInternal(multiline);
+    updateInner(findText, replaceText, replaceMode, multiline);
     boolean needToResetSearchFocus = mySearchTextComponent != null && mySearchTextComponent.hasFocus();
     boolean needToResetReplaceFocus = myReplaceTextComponent != null && myReplaceTextComponent.hasFocus();
-    updateSearchComponent(findText);
-    updateReplaceComponent(replaceText);
-    myReplaceFieldWrapper.setVisible(replaceMode);
-    myReplaceToolbarWrapper.setVisible(replaceMode);
-
     if (needToResetReplaceFocus) myReplaceTextComponent.requestFocusInWindow();
     if (needToResetSearchFocus) mySearchTextComponent.requestFocusInWindow();
     updateBindings();
     updateActions();
+    revalidate();
+    repaint();
+  }
+
+  private void updateInner(@NotNull String findText, @NotNull String replaceText, boolean replaceMode, boolean multiline) {
+    setMultilineInternal(multiline);
+    updateSearchComponent(findText);
+    updateReplaceComponent(replaceText);
+    myReplaceFieldWrapper.setVisible(replaceMode);
+    myReplaceToolbarWrapper.setVisible(replaceMode);
     List<Component> focusOrder = new ArrayList<>();
     focusOrder.add(mySearchTextComponent);
     focusOrder.add(myReplaceTextComponent);
@@ -524,8 +527,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     focusOrder.addAll(myExtraReplaceButtons);
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new ListFocusTraversalPolicy(focusOrder));
-    revalidate();
-    repaint();
   }
 
   public void updateActions() {
@@ -641,6 +642,15 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         finalTextComponent.repaint();
       }
     });
+
+    if (ExperimentalUI.isNewUI()) {
+      SwingUtilities.invokeLater(() -> {
+        JBColor bg = JBColor.namedColor("Editor.SearchField.background", JBColor.background());
+        innerTextComponent.setBackground(bg);
+        outerComponent.setBackground(bg);
+        setBackground(bg);
+      });
+    }
 
     myCloseAction.registerOn(outerComponent);
     return true;

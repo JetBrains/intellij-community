@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -48,7 +48,7 @@ final class LineMarkersUtil {
 
             if (
               // (recycle) zombie line marker immediately because similar-looking line markers don't merge, unlike regular HighlightInfos
-              HighlightingMarkupGrave.isZombieMarkup(highlighter) && highlighter.getGutterIconRenderer() != null
+              HighlightingMarkupGrave.Companion.isZombieMarkup(highlighter) && highlighter.getGutterIconRenderer() != null
                 || group == -1 || info != null && info.updatePass == group) {
               toReuse.recycleHighlighter(highlighter);
             }
@@ -107,7 +107,7 @@ final class LineMarkersUtil {
       if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
         markupModel.changeAttributesInBatch(highlighter, changeAttributes(info, rendererChanged, newRenderer, lineSeparatorColorChanged, lineSeparatorPlacementChanged));
       }
-      HighlightingMarkupGrave.unmarkZombieMarkup(highlighter);
+      HighlightingMarkupGrave.Companion.unmarkZombieMarkup(highlighter);
     }
     highlighter.putUserData(LINE_MARKER_INFO, info);
     info.highlighter = highlighter;
@@ -144,7 +144,7 @@ final class LineMarkersUtil {
       try {
         allIsClear = markupModel.processRangeHighlightersOverlappingWith(marker.startOffset, marker.endOffset,
           highlighter -> {
-            if (HighlightingMarkupGrave.isZombieMarkup(highlighter)) {
+            if (HighlightingMarkupGrave.Companion.isZombieMarkup(highlighter)) {
               toReuse.recycleHighlighter(highlighter);
               return true;
             }

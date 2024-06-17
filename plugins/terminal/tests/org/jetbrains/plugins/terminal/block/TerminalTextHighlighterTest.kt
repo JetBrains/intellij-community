@@ -3,12 +3,12 @@ package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.*
-import org.jetbrains.plugins.terminal.exp.HighlightingInfo
-import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
-import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.plainAttributesProvider
-import org.jetbrains.plugins.terminal.exp.TextAttributesProvider
-import org.jetbrains.plugins.terminal.exp.TextWithHighlightings
-import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
+import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
+import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
+import org.jetbrains.plugins.terminal.block.output.TextWithHighlightings
+import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.plainAttributesProvider
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test

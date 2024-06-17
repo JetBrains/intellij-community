@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiElement
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -59,7 +60,8 @@ class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackag
         val files = descriptor.files
         files.forEach { it.updatePackageDirective(descriptor.target) }
         val oldToNewMap = files.flatMap { it.allDeclarationsToUpdate }.associateWith { it }
-        retargetUsagesAfterMove(usages.toList(), oldToNewMap)
+        @Suppress("UNCHECKED_CAST")
+        retargetUsagesAfterMove(usages.toList(), oldToNewMap as Map<PsiElement, PsiElement>)
     }
 
     override fun getBeforeData(): RefactoringEventData = RefactoringEventData().apply {

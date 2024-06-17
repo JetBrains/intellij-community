@@ -28,11 +28,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleLightBuild;
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.function.Supplier;
 
@@ -206,6 +208,12 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       LOG.debug("The streaming Gradle model fetching isn't applicable: disabled by registry");
       return false;
     }
+    var project = context.getExternalSystemTaskId().findProject();
+    if (project == null) {
+      String projectId = context.getExternalSystemTaskId().getIdeProjectId();
+      LOG.debug("The streaming Gradle model fetching isn't applicable: project is closed: " + projectId);
+      return false;
+    }
     var gradleVersion = context.getProjectGradleVersion();
     if (gradleVersion == null) {
       LOG.debug("The streaming Gradle model fetching isn't applicable: Gradle version cannot be determined");
@@ -214,6 +222,15 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.6")) {
       LOG.debug("The streaming Gradle model fetching isn't applicable: unsupported Gradle version: " + gradleVersion);
       return false;
+    }
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.9")) {
+      var projectPath = Path.of(context.getProjectPath());
+      var properties = GradlePropertiesFile.getProperties(project, projectPath);
+      var isolatedProjects = properties.getIsolatedProjects();
+      if (isolatedProjects != null && isolatedProjects.getValue()) {
+        LOG.debug("The streaming Gradle model fetching isn't applicable: unsupported isolated-projects mode: " + gradleVersion);
+        return false;
+      }
     }
     return true;
   }

@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
  */
 internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("indexable.files.filter",
-                                    9,
+                                    10,
                                     "FUS",
                                     "Collects statistics of ProjectIndexableFilesFilterHealthCheck. " +
                                     "See more here: https://youtrack.jetbrains.com/articles/IJPL-A-300/indexable.files.filter")

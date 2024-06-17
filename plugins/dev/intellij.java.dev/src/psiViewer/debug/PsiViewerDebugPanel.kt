@@ -80,7 +80,7 @@ class PsiViewerDebugPanel(
     setShowTreeNodes(settings.showTreeNodes)
   }
 
-  private val structureTreeModel = StructureTreeModel(treeStructure, IndexComparator.INSTANCE, this)
+  private val structureTreeModel = StructureTreeModel(treeStructure, IndexComparator.getInstance(), this)
 
   private val psiTree = Tree()
 

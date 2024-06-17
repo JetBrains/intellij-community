@@ -62,6 +62,7 @@ class MavenProjectResolver(private val myProject: Project) {
   suspend fun resolve(incrementally: Boolean,
                       mavenProjects: Collection<MavenProject>,
                       tree: MavenProjectsTree,
+                      workspaceMap: MavenWorkspaceMap,
                       generalSettings: MavenGeneralSettings,
                       embeddersManager: MavenEmbeddersManager,
                       progressReporter: RawProgressReporter,
@@ -88,7 +89,7 @@ class MavenProjectResolver(private val myProject: Project) {
             embedder,
             progressReporter,
             eventHandler,
-            tree.workspaceMap,
+            workspaceMap,
             updateSnapshots,
             userProperties)
         }
@@ -154,10 +155,10 @@ class MavenProjectResolver(private val myProject: Project) {
       val groupedProblems = readingProblems.groupBy { FileUtil.toSystemIndependentName(trimLineAndColumn(it.path)) }
       for ((path, projectProblems) in groupedProblems) {
         val mavenProject = pathToMavenProject[path]
-          if (null != mavenProject) {
-            mavenProject.updateState(projectProblems)
-            tree.fireProjectResolved(Pair.create(mavenProject, MavenProjectChanges.ALL), null)
-          }
+        if (null != mavenProject) {
+          mavenProject.updateState(projectProblems)
+          tree.fireProjectResolved(Pair.create(mavenProject, MavenProjectChanges.ALL), null)
+        }
       }
     }
 
@@ -338,6 +339,9 @@ class MavenProjectResolver(private val myProject: Project) {
 
     MavenLog.LOG.debug(
       "Project resolution: updating maven project $mavenProjectCandidate, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
+
+    MavenServerResultTransformer.getInstance(myProject)
+      .transform(result.mavenModel, mavenProjectCandidate.file)
 
     mavenProjectCandidate.updateState(
       result.mavenModel,

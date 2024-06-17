@@ -120,6 +120,7 @@ a:com.intellij.ide.fileTemplates.FileTemplatesScheme
 c:com.intellij.ide.impl.DataManagerImpl
 - com.intellij.ide.DataManager
 - <init>():V
+- customizeDataContext(com.intellij.openapi.actionSystem.DataContext,java.lang.Object):com.intellij.openapi.actionSystem.DataContext
 - getCustomizedData(java.lang.String,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 - getDataContext():com.intellij.openapi.actionSystem.DataContext
 - getDataContext(java.awt.Component):com.intellij.openapi.actionSystem.DataContext
@@ -139,8 +140,6 @@ com.intellij.ide.impl.DataValidators$Registry
 - a:register(com.intellij.openapi.actionSystem.DataKey,com.intellij.ide.impl.DataValidators$Validator):V
 com.intellij.ide.impl.DataValidators$Validator
 - a:checkValid(java.lang.Object,java.lang.String,java.lang.Object):Z
-com.intellij.ide.impl.FreezingDataContext
-- a:isFrozenDataContext():Z
 f:com.intellij.ide.impl.OpenProjectTask
 - sf:Companion:com.intellij.ide.impl.OpenProjectTask$Companion
 - f:asNewProject():com.intellij.ide.impl.OpenProjectTask
@@ -344,17 +343,12 @@ f:com.intellij.notification.impl.NotificationParentGroupBean
 - a:getPermanentComponent():java.awt.Component
 f:com.intellij.openapi.actionSystem.impl.SimpleDataContext
 - com.intellij.openapi.actionSystem.CustomizedDataContext
-- com.intellij.openapi.util.UserDataHolder
 - s:builder():com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
-- getParent():com.intellij.openapi.actionSystem.DataContext
 - s:getProjectContext(com.intellij.openapi.project.Project):com.intellij.openapi.actionSystem.DataContext
-- getRawCustomData(java.lang.String):java.lang.Object
 - s:getSimpleContext(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):com.intellij.openapi.actionSystem.DataContext
 - s:getSimpleContext(com.intellij.openapi.actionSystem.DataKey,java.lang.Object,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
 - s:getSimpleContext(java.lang.String,java.lang.Object,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
 - s:getSimpleContext(java.util.Map,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
-- getUserData(com.intellij.openapi.util.Key):java.lang.Object
-- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 f:com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
 - add(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
 - addAll(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataKey[]):com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
@@ -513,6 +507,7 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - isFoldingOutlineShown():Z
 - isFoldingOutlineShownOnlyOnHover():Z
 - isFullLineHeightCursor():Z
+- isHighlightSelectionOccurrences():Z
 - isIndentGuidesShown():Z
 - isInnerWhitespacesShown():Z
 - isInsertParenthesesAutomatically():Z
@@ -571,6 +566,7 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - setFoldingOutlineShownOnlyOnHover(Z):V
 - setFullLineHeightCursor(Z):V
 - setGutterIconsShown(Z):V
+- setHighlightSelectionOccurrences(Z):V
 - setHorizontalScrollJump(I):V
 - setHorizontalScrollOffset(I):V
 - setIndentGuidesShown(Z):V
@@ -637,6 +633,7 @@ f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
 - IS_FOLDING_OUTLINE_SHOWN:Z
 - IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER:Z
 - IS_FULL_LINE_HEIGHT_CURSOR:Z
+- IS_HIGHLIGHT_SELECTION_OCCURRENCES:Z
 - IS_INDENT_GUIDES_SHOWN:Z
 - IS_INNER_WHITESPACES_SHOWN:Z
 - IS_LEADING_WHITESPACES_SHOWN:Z
@@ -712,6 +709,7 @@ f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$PropNames
 - sf:PROP_IS_FOLDING_OUTLINE_SHOWN:java.lang.String
 - sf:PROP_IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER:java.lang.String
 - sf:PROP_IS_FULL_LINE_HEIGHT_CURSOR:java.lang.String
+- sf:PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES:java.lang.String
 - sf:PROP_IS_INDENT_GUIDES_SHOWN:java.lang.String
 - sf:PROP_IS_INNER_WHITESPACES_SHOWN:java.lang.String
 - sf:PROP_IS_LEADING_WHITESPACES_SHOWN:java.lang.String
@@ -793,11 +791,8 @@ f:com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 - s:setCustomUnlocker(com.intellij.util.NullableFunction):V
 c:com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider
 - com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
-- sf:Companion:com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider$Companion
 - <init>():V
 - getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
-f:com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider$Companion
-- f:getEditorTabText(java.lang.String,java.lang.String,Z):java.lang.String
 a:com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 - com.intellij.openapi.fileTypes.FileTypeManager
 - <init>():V

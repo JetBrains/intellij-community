@@ -4,15 +4,17 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.allConstructors
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 internal object InsertDelegationCallFixFactory {
 
@@ -25,7 +27,11 @@ internal object InsertDelegationCallFixFactory {
     }
 
     val primaryConstructorDelegationCallExpected = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.PrimaryConstructorDelegationCallExpected ->
-        val secondaryConstructor = diagnostic.psi.getNonStrictParentOfType<KtSecondaryConstructor>() ?: return@ModCommandBased emptyList()
+        val secondaryConstructor = diagnostic.psi.getParentOfType<KtSecondaryConstructor>(
+            strict = false,
+            KtClassBody::class.java,
+        ) ?: return@ModCommandBased emptyList()
+
         val containingClass = secondaryConstructor.getContainingClassOrObject()
         if (containingClass.allConstructors.count() <= 1 || !secondaryConstructor.hasImplicitDelegationCall()) {
             return@ModCommandBased emptyList()
@@ -35,7 +41,11 @@ internal object InsertDelegationCallFixFactory {
     }
 
     private fun createQuickFix(diagnostic: KaFirDiagnostic.ExplicitDelegationCallRequired, isThis: Boolean): List<InsertDelegationCallFix> {
-        val secondaryConstructor = diagnostic.psi.getNonStrictParentOfType<KtSecondaryConstructor>() ?: return emptyList()
+        val secondaryConstructor = diagnostic.psi.getParentOfType<KtSecondaryConstructor>(
+            strict = false,
+            KtClassBody::class.java,
+        ) ?: return emptyList()
+
         if (!secondaryConstructor.hasImplicitDelegationCall()) return emptyList()
         val klass = secondaryConstructor.getContainingClassOrObject() as? KtClass ?: return emptyList()
         if (klass.hasPrimaryConstructor()) return emptyList()
@@ -57,15 +67,14 @@ internal object InsertDelegationCallFixFactory {
             val newDelegationCall = element.replaceImplicitDelegationCallWithExplicit(isThis)
 
             analyze(newDelegationCall) {
-                val resolvedCall = newDelegationCall.resolveCall()
+                val resolvedCall = newDelegationCall.resolveCallOld()
 
-                // if the new delegation call contains errors, or if there's a cycle in the delegation call chain,
-                // move the caret inside the parentheses.
-                if (resolvedCall is KtErrorCallInfo || (element.valueParameters.all { it.hasDefaultValue() })) {
-                    val leftParOffset = newDelegationCall.valueArgumentList!!.leftParenthesis!!.textOffset
-                    updater.moveCaretTo(leftParOffset + 1)
-                }
+                // If the new delegation call does not contain errors and there is no cycle in the delegation call chain,
+                // do not move the caret.
+                if (resolvedCall is KtSuccessCallInfo && element.valueParameters.any { !it.hasDefaultValue() }) return
             }
+            val leftParOffset = newDelegationCall.valueArgumentList!!.leftParenthesis!!.textOffset
+            updater.moveCaretTo(leftParOffset + 1)
         }
 
         override fun getActionName(

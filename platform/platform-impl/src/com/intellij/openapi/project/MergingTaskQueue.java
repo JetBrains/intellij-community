@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -354,7 +355,24 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
      * {@link MergingQueueGuiExecutor#processTasksWithProgress(ProgressSuspender, ProgressIndicator, StructuredIdeActivity)} to start
      * FUS activity.
      */
-    void registerStageStarted(@NotNull StructuredIdeActivity activity) {
+    @Nullable
+    StructuredIdeActivity registerStageStarted(@NotNull StructuredIdeActivity activity, @NotNull Project project) {
+      return null;
+    }
+
+    /**
+     * Override in children classes to report finishing a task to FUS.
+     * Note that a task reported as a stage does not need finishing.
+     *
+     * @param parentActivity activity provided to {@link MergingTaskQueue.QueuedTask#registerStageStarted(StructuredIdeActivity, Project)}
+     * @param childActivity  activity returned by {@link MergingTaskQueue.QueuedTask#registerStageStarted(StructuredIdeActivity, Project)}
+     * @param finishType     {@link IndexingFinishType#FINISHED} for correctly finished tasks,
+     *                       {@link IndexingFinishType#TERMINATED} for canceled or failed with exception
+     * @see MergingTaskQueue.QueuedTask#registerStageStarted(StructuredIdeActivity, Project)
+     */
+    void registerStageFinished(@NotNull StructuredIdeActivity parentActivity,
+                               @Nullable StructuredIdeActivity childActivity,
+                               @NotNull IndexingFinishType finishType) {
     }
 
     public void beforeTask() {

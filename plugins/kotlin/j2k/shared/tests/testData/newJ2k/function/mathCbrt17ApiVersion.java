@@ -1,4 +1,3 @@
-// IGNORE_K2
 // API_VERSION: 1.7
 public class J {
     void foo(Double x) {

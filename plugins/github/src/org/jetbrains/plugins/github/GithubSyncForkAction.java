@@ -181,7 +181,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
     public void run(@NotNull ProgressIndicator indicator) {
       String token = GHCompatibilityUtil.getOrRequestToken(myAccount, myProject);
       if (token == null) return;
-      GithubApiRequestExecutor executor = GithubApiRequestExecutor.Factory.getInstance().create(token);
+      GithubApiRequestExecutor executor = GithubApiRequestExecutor.Factory.getInstance().create(myAccount.getServer(), token);
 
       myRepository.update();
 

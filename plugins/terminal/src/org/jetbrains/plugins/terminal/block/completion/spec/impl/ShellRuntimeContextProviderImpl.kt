@@ -7,10 +7,10 @@ import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.util.PathUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
-import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
-import org.jetbrains.plugins.terminal.exp.ShellCommandListener
-import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.toShellName
-import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptState
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
 
 internal class ShellRuntimeContextProviderImpl(
   private val project: Project,

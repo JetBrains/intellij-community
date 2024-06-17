@@ -34,6 +34,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -49,7 +50,6 @@ import com.intellij.platform.ide.bootstrap.createBaseLaF
 import com.intellij.ui.*
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.popup.HeavyWeightPopup
-import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.scaleFontSize
@@ -962,8 +962,14 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       return result
     }
 
-    private inner class SchemeToggleAction(val scheme: EditorColorsScheme, private val isDark: Boolean) : ToggleAction(scheme.displayName),
-                                                                                                          KeepingPopupOpenAction {
+    private inner class SchemeToggleAction(val scheme: EditorColorsScheme,
+                                           private val isDark: Boolean)
+      : DumbAwareToggleAction(scheme.displayName) {
+
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+      override fun isSoftMultiChoice() = false
+
       override fun isSelected(e: AnActionEvent): Boolean {
         return ((if (isDark) preferredDarkEditorSchemeId else preferredLightEditorSchemeId)
                 ?: associatedToPreferredLafOrDefaultEditorColorSchemeName(isDark)) == scheme.baseName
@@ -981,10 +987,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
           detectAndSyncLaf()
         }
       }
-
-      override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-      override fun isDumbAware() = true
     }
   }
 
@@ -995,7 +997,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private inner class LafToggleAction(name: @Nls String?,
                                       private val themeId: String,
                                       private val editorSchemeId: String,
-                                      private val isDark: Boolean) : ToggleAction(name), KeepingPopupOpenAction {
+                                      private val isDark: Boolean) : DumbAwareToggleAction(name) {
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    override fun isSoftMultiChoice() = false
+
     override fun isSelected(e: AnActionEvent): Boolean {
       return if (isDark) {
         (preferredDarkThemeId ?: defaultDarkLaf.id) == themeId
@@ -1017,10 +1022,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         detectAndSyncLaf(false)
       }
     }
-
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-    override fun isDumbAware() = true
   }
 }
 

@@ -66,14 +66,16 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("AppTest") {
+              // temporary solution until IDEA-354299
+              assertNode("(AppTest|Test class org.example.AppTest)".toRegex()) {
                 assertNode("Test test()(org.example.AppTest)")
               }
             }
           }
           assertNode(":additionalTest") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("AppTest") {
+              // temporary solution until IDEA-354299
+              assertNode("(AppTest|Test class org.example.AppTest)".toRegex()) {
                 assertNode("Test test()(org.example.AppTest)") {
                   assertNode("'Test error message'")
                 }
@@ -155,7 +157,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("AppTest") {
+              // temporary solution until IDEA-354299
+              assertNode("(AppTest|Test class org.example.AppTest)".toRegex()) {
                 assertNode("Test test()(org.example.AppTest)")
               }
             }
@@ -243,7 +246,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("TestCase") {
+              // temporary solution until IDEA-354299
+              assertNode("(TestCase|Test class org.example.TestCase)".toRegex()) {
                 assertNode("Test test()(org.example.TestCase)")
               }
             }
@@ -267,7 +271,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("TestCase") {
+              // temporary solution until IDEA-354299
+              assertNode("(TestCase|Test class org.example.TestCase)".toRegex()) {
                 assertNode("Test test()(org.example.TestCase)")
               }
             }
@@ -291,7 +296,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("TestCase") {
+              // temporary solution until IDEA-354299
+              assertNode("(TestCase|Test class org.example.TestCase)".toRegex()) {
                 assertNode("Test test()(org.example.TestCase)")
               }
             }
@@ -348,7 +354,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("TestCase") {
+              // temporary solution until IDEA-354299
+              assertNode("(TestCase|Test class org.example.TestCase)".toRegex()) {
                 assertNode("Test test()(org.example.TestCase)")
               }
             }
@@ -373,7 +380,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("TestCase") {
+              // temporary solution until IDEA-354299
+              assertNode("(TestCase|Test class org.example.TestCase)".toRegex()) {
                 assertNode("Test test()(org.example.TestCase)")
               }
             }
@@ -640,7 +648,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("AppTest") {
+              // temporary solution until IDEA-354299
+              assertNode("(AppTest|Test class org.example.AppTest)".toRegex()) {
                 assertNode("Test test1()(org.example.AppTest)")
               }
             }

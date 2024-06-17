@@ -11,7 +11,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -119,7 +119,7 @@ internal class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostP
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
         error("Not supported in K1 J2K")
     }
@@ -484,14 +484,14 @@ private val redundantGetterModifiers: Set<KtModifierKeywordToken> = redundantSet
 )
 
 private class ExternalProcessingUpdater(private val processing: NewExternalCodeProcessing) {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun update(klass: KtClassOrObject, propertiesWithAccessors: List<PropertyWithAccessors>) {
         for (propertyWithAccessors in propertiesWithAccessors) {
             updateExternalProcessingInfo(klass, propertyWithAccessors)
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun updateExternalProcessingInfo(klass: KtClassOrObject, propertyWithAccessors: PropertyWithAccessors) {
         val (property, getter, setter) = propertyWithAccessors
 

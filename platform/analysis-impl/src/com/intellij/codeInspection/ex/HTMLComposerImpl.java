@@ -9,9 +9,7 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.ProjectUtilCore;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -24,8 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class HTMLComposerImpl extends HTMLComposer {
-  private final Map<Key, HTMLComposerExtension> myExtensions = new HashMap<>();
-  private final Map<Language, HTMLComposerExtension> myLanguageExtensions = new HashMap<>();
+  private final Map<Key<? extends HTMLComposerExtension<?>>, HTMLComposerExtension<?>> myExtensions = new HashMap<>();
+  private final Map<Language, HTMLComposerExtension<?>> myLanguageExtensions = new HashMap<>();
   protected static final @NonNls String BR = "<br>";
   public static final @NonNls String NBSP = "&nbsp;";
   public static final @NonNls String CODE_CLOSING = "</code>";
@@ -61,12 +59,11 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       buf.append("in ");
       appendLocation(buf, refElement);
       buf.append("</div>");
-      buf.append(BR).append(BR);
     }
   }
 
   private void appendLocation(@NotNull StringBuilder buf, final RefElement refElement) {
-    final HTMLComposerExtension extension = getLanguageExtension(refElement);
+    final HTMLComposerExtension<?> extension = getLanguageExtension(refElement);
     if (extension != null) {
       extension.appendLocation(refElement, buf);
     }
@@ -82,13 +79,13 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
-  private @Nullable HTMLComposerExtension getLanguageExtension(final RefElement refElement) {
+  private @Nullable HTMLComposerExtension<?> getLanguageExtension(final RefElement refElement) {
     final PsiElement element = refElement.getPsiElement();
     return element != null ? myLanguageExtensions.get(element.getLanguage()) : null;
   }
 
   private void appendShortName(@NotNull StringBuilder buf, RefElement refElement) {
-    final HTMLComposerExtension extension = getLanguageExtension(refElement);
+    final HTMLComposerExtension<?> extension = getLanguageExtension(refElement);
     if (extension != null) {
       extension.appendShortName(refElement, buf);
     } else {
@@ -103,37 +100,6 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
         }
       });
     }
-  }
-
-  public void appendQualifiedName(@NotNull StringBuilder buf, RefEntity refEntity) {
-    if (refEntity == null) return;
-
-    StringBuilder qName = new StringBuilder();
-
-    while (!(refEntity instanceof RefProject)) {
-      if (!qName.isEmpty()) qName.insert(0, ".");
-
-      String name = null;
-      if (refEntity instanceof RefElement) {
-        final HTMLComposerExtension extension = getLanguageExtension((RefElement)refEntity);
-        if (extension != null) {
-          name = extension.getQualifiedName(refEntity);
-        }
-      }
-
-      if (name == null) {
-        name = refEntity.getName();
-      }
-
-      qName.insert(0, name);
-      if (Comparing.strEqual(refEntity.getName(), refEntity.getQualifiedName())) {
-        buf.append(StringUtil.escapeXmlEntities(qName.toString()));
-        return;
-      }
-      refEntity = refEntity.getOwner();
-    }
-
-    buf.append(StringUtil.escapeXmlEntities(qName.toString()));
   }
 
   @Override
@@ -164,13 +130,14 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     buf.append(A_CLOSING);
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   protected void appendQuickFix(@NotNull StringBuilder buf, String text) {
     buf.append(text);
   }
 
   @Override
   public void appendElementReference(@NotNull StringBuilder buf, RefElement refElement, boolean isPackageIncluded) {
-    final HTMLComposerExtension extension = getLanguageExtension(refElement);
+    final HTMLComposerExtension<?> extension = getLanguageExtension(refElement);
 
     if (extension != null) {
       extension.appendReferencePresentation(refElement, buf, isPackageIncluded);
@@ -193,9 +160,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   @Override
   public String composeNumereables(int n, String statement, String singleEnding, String multipleEnding) {
     final StringBuilder buf = new StringBuilder();
-    buf.append(n);
-    buf.append(' ');
-    buf.append(statement);
+    buf.append(n).append(' ').append(statement);
 
     if (n % 10 == 1 && n % 100 != 11) {
       buf.append(singleEnding);
@@ -208,26 +173,12 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void appendElementInReferences(@NotNull StringBuilder buf, RefElement refElement) {
-    if (!refElement.getInReferences().isEmpty()) {
-      appendHeading(buf, AnalysisBundle.message("inspection.export.results.used.from"));
-      startList(buf);
-      for (RefElement refCaller : refElement.getInReferences()) {
-        appendListItem(buf, refCaller);
-      }
-      doneList(buf);
-    }
+    appendSection(buf, AnalysisBundle.message("inspection.export.results.used.from"), refElement.getInReferences());
   }
 
   @Override
   public void appendElementOutReferences(@NotNull StringBuilder buf, RefElement refElement) {
-    if (!refElement.getOutReferences().isEmpty()) {
-      appendHeading(buf, AnalysisBundle.message("inspection.export.results.uses"));
-      startList(buf);
-      for (RefElement refCallee : refElement.getOutReferences()) {
-        appendListItem(buf, refCallee);
-      }
-      doneList(buf);
-    }
+    appendSection(buf, AnalysisBundle.message("inspection.export.results.uses"), refElement.getOutReferences());
   }
 
   @Override
@@ -282,6 +233,16 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   public static void doneListItem(@NotNull StringBuilder buf) {}
 
   @Override
+  public void startProblemDescription(@NotNull StringBuilder buf) {
+    buf.append("\n<div class=\"problem-description\">");
+  }
+
+  @Override
+  public void doneProblemDescription(@NotNull StringBuilder buf) {
+    buf.append("\n</div>");
+  }
+
+  @Override
   public void appendNoProblems(@NotNull StringBuilder buf) {
     buf.append("<p class=\"problem-description-group\">");
     buf.append(AnalysisBundle.message("inspection.export.results.no.problems.found"));
@@ -290,6 +251,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public <T> T getExtension(Key<T> key) {
+    //noinspection unchecked
     return (T)myExtensions.get(key);
   }
 }

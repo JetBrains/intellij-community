@@ -12,12 +12,12 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.successfulVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -77,7 +77,7 @@ fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>
     )
 
     val analyzeResult = analyzeInModalWindow(declaration, KotlinK2RefactoringsBundle.message("resolving.super.methods.progress.title")) {
-        (declaration.getSymbol() as? KtCallableSymbol)?.let { callableSymbol ->
+        (declaration.getSymbol() as? KaCallableSymbol)?.let { callableSymbol ->
             callableSymbol.originalContainingClassForOverride?.let { containingClass ->
                 val overriddenSymbols = callableSymbol.getAllOverriddenSymbols()
 
@@ -139,7 +139,7 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean =
     if (callee !is KtNameReferenceExpression) return true
 
     analyze(callee) {
-        val resolveCall = callee.resolveCall() ?: return false
+        val resolveCall = callee.resolveCallOld() ?: return false
         val call = resolveCall.successfulFunctionCallOrNull()
 
         fun KtType.isFunctionalType(): Boolean = this is KtTypeParameterType || isSuspendFunctionType || isFunctionType ||  isFunctionalInterfaceType
@@ -149,7 +149,7 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean =
             if (paramType != null && paramType.isFunctionalType()) {
                 return true
             }
-            val calls = (resolveCall as KtErrorCallInfo).candidateCalls.filterIsInstance<KtSimpleFunctionCall>()
+            val calls = (resolveCall as KaErrorCallInfo).candidateCalls.filterIsInstance<KaSimpleFunctionCall>()
 
             return calls.isEmpty() || calls.all { functionalCall ->
                 val lastParameter = functionalCall.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()

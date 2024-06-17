@@ -1,6 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
@@ -416,73 +415,63 @@ private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job {
 
 private suspend fun doCheckSystemDirs(configPath: Path, systemPath: Path): Boolean {
   if (configPath == systemPath) {
-    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.invalid.config.or.system.path"),
-                                     BootstrapBundle.message("bootstrap.error.message.config.0.and.system.1.paths.must.be.different",
-                                                             PathManager.PROPERTY_CONFIG_PATH,
-                                                             PathManager.PROPERTY_SYSTEM_PATH), true)
+    StartupErrorReporter.showError(
+      BootstrapBundle.message("bootstrap.error.title.settings"),
+      BootstrapBundle.message("bootstrap.error.message.same.paths", PathManager.PROPERTY_CONFIG_PATH, PathManager.PROPERTY_SYSTEM_PATH)
+    )
+    return false
+  }
+
+  if (SystemInfoRt.isMac && systemPath.toString().contains(MAGIC_MAC_PATH)) {
+    StartupErrorReporter.showError(
+      BootstrapBundle.message("bootstrap.error.title.settings"),
+      BootstrapBundle.message("bootstrap.error.message.mac.trans")
+    )
     return false
   }
 
   return withContext(Dispatchers.IO) {
     val logPath = Path.of(PathManager.getLogPath()).normalize()
     val tempPath = Path.of(PathManager.getTempPath()).normalize()
-
-    listOf(
-      async {
-        checkDirectory(configPath, kind = "Config", property = PathManager.PROPERTY_CONFIG_PATH, checkWrite = true)
-      },
-      async {
-        checkDirectory(systemPath, kind = "System", property = PathManager.PROPERTY_SYSTEM_PATH, checkWrite = true)
-      },
-      async {
-        checkDirectory(logPath, kind = "Log", property = PathManager.PROPERTY_LOG_PATH, checkWrite = true)
-      },
-      async {
-        checkDirectory(tempPath, kind = "Temp", property = PathManager.PROPERTY_SYSTEM_PATH, checkWrite = !tempPath.startsWith(systemPath))
-      }
-    ).awaitAll().all { it }
+    // directories might be nested, hence should be checked sequentially
+    checkDirectory(configPath, kind = 0, property = PathManager.PROPERTY_CONFIG_PATH) &&
+    checkDirectory(systemPath, kind = 1, property = PathManager.PROPERTY_SYSTEM_PATH) &&
+    checkDirectory(logPath, kind = 2, property = PathManager.PROPERTY_LOG_PATH) &&
+    checkDirectory(tempPath, kind = 3, property = PathManager.PROPERTY_SYSTEM_PATH)
   }
 }
 
-private fun checkDirectory(directory: Path, kind: String, property: String, checkWrite: Boolean): Boolean {
-  var problem = "bootstrap.error.message.check.ide.directory.problem.cannot.create.the.directory"
-  var reason = "bootstrap.error.message.check.ide.directory.possible.reason.path.is.incorrect"
-  var tempFile: Path? = null
+private fun checkDirectory(directory: Path, kind: Int, property: String): Boolean {
   try {
-    if (!Files.isDirectory(directory)) {
-      problem = "bootstrap.error.message.check.ide.directory.problem.cannot.create.the.directory"
-      reason = "bootstrap.error.message.check.ide.directory.possible.reason.directory.is.read.only.or.the.user.lacks.necessary.permissions"
-      Files.createDirectories(directory)
-    }
-    if (checkWrite) {
-      problem = "bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.create.a.temporary.file.in.the.directory"
-      reason = "bootstrap.error.message.check.ide.directory.possible.reason.directory.is.read.only.or.the.user.lacks.necessary.permissions"
-      tempFile = directory.resolve("ij${Random().nextInt(Int.MAX_VALUE)}.tmp")
-      Files.writeString(tempFile, "#!/bin/sh\nexit 0", StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
-    }
-    return true
+    Files.createDirectories(directory)
   }
   catch (e: Exception) {
-    val title = BootstrapBundle.message("bootstrap.error.title.invalid.ide.directory.type.0.directory", kind)
-    val advice = if (SystemInfoRt.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)) {
-      BootstrapBundle.message("bootstrap.error.message.invalid.ide.directory.trans.located.macos.directory.advice")
-    }
-    else {
-      BootstrapBundle.message("bootstrap.error.message.invalid.ide.directory.ensure.the.modified.property.0.is.correct", property)
-    }
-    val message = BootstrapBundle.message(
-      "bootstrap.error.message.invalid.ide.directory.problem.0.possible.reason.1.advice.2.location.3.exception.class.4.exception.message.5",
-      BootstrapBundle.message(problem), BootstrapBundle.message(reason), advice, directory, e.javaClass.name, e.message)
-    StartupErrorReporter.showMessage(title, message, true)
+    val title = BootstrapBundle.message("bootstrap.error.title.invalid.directory", kind)
+    val problem = BootstrapBundle.message("bootstrap.error.problem.dir")
+    val message = BootstrapBundle.message("bootstrap.error.message.dir.problem", problem, property, directory, e.javaClass.name, e.message)
+    StartupErrorReporter.showError(title, message)
+    return false
+  }
+
+  val tempFile = directory.resolve("ij${Random().nextInt(Int.MAX_VALUE)}.tmp")
+  try {
+    Files.writeString(tempFile, "-", StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
+  }
+  catch (e: Exception) {
+    val title = BootstrapBundle.message("bootstrap.error.title.invalid.directory", kind)
+    val problem = BootstrapBundle.message("bootstrap.error.problem.file")
+    val message = BootstrapBundle.message("bootstrap.error.message.dir.problem", problem, property, directory, e.javaClass.name, e.message)
+    StartupErrorReporter.showError(title, message)
     return false
   }
   finally {
     try {
-      tempFile?.let { Files.deleteIfExists(tempFile) }
+      Files.deleteIfExists(tempFile)
     }
-    catch (_: Exception) {
-    }
+    catch (_: Exception) { }
   }
+
+  return true
 }
 
 private suspend fun lockSystemDirs(args: List<String>) {
@@ -490,7 +479,7 @@ private suspend fun lockSystemDirs(args: List<String>) {
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
       try {
-        commandProcessor.get()(processorArgs).await()
+        commandProcessor.get().invoke(processorArgs).await()
       }
       catch (t: Throwable) {
         @Suppress("SSBasedInspection")
@@ -520,7 +509,7 @@ private suspend fun lockSystemDirs(args: List<String>) {
   }
   catch (e: DirectoryLock.CannotActivateException) {
     if (args.isEmpty()) {
-      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e.message, true)
+      StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), e.message)
     }
     else {
       println(e.message)
@@ -528,7 +517,7 @@ private suspend fun lockSystemDirs(args: List<String>) {
     exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
   }
   catch (e: Throwable) {
-    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
+    StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
     exitProcess(AppExitCodes.STARTUP_EXCEPTION)
   }
 }

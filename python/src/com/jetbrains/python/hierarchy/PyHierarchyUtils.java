@@ -17,7 +17,7 @@ public final class PyHierarchyUtils {
 
   public static @NotNull Comparator<NodeDescriptor<?>> getComparator(final Project project) {
     if (HierarchyBrowserManager.getInstance(project).getState().SORT_ALPHABETICALLY) {
-      return AlphaComparator.INSTANCE;
+      return AlphaComparator.getInstance();
     }
     else {
       return NODE_DESCRIPTOR_COMPARATOR;

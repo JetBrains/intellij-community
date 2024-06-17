@@ -227,12 +227,15 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       }
 
       @NlsSafe String firstSdkName = javaSdks.get(0);
-      int choice = Messages.showChooseDialog(
-        DevKitBundle.message("sdk.select.java.sdk"),
-        DevKitBundle.message("sdk.select.java.sdk.title"),
-        ArrayUtilRt.toStringArray(javaSdks), firstSdkName, Messages.getQuestionIcon());
-      if (choice != -1) {
-        String name = javaSdks.get(choice);
+      Ref<Integer> choice = Ref.create();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        choice.set(Messages.showChooseDialog(
+          DevKitBundle.message("sdk.select.java.sdk"),
+          DevKitBundle.message("sdk.select.java.sdk.title"),
+          ArrayUtilRt.toStringArray(javaSdks), firstSdkName, Messages.getQuestionIcon()));
+      });
+      if (choice.get() != -1) {
+        String name = javaSdks.get(choice.get());
         Sdk internalJava = Objects.requireNonNull(sdkModel.findSdk(name));
         //roots from internal jre
         setInternalJdk(sdk, sdkModificator, internalJava);

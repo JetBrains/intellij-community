@@ -13,7 +13,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoVariantsService
@@ -208,7 +208,7 @@ fun KtDeclaration.isExpectDeclaration(): Boolean {
 
 fun hasExpectForActual(declaration: KtDeclaration): Boolean {
     return analyze(declaration) {
-        val symbol: KtDeclarationSymbol = declaration.getSymbol()
+        val symbol: KaDeclarationSymbol = declaration.getSymbol()
         symbol.getExpectsForActual().isNotEmpty()
     }
 }
@@ -220,7 +220,7 @@ fun KtDeclaration.allNavigatableExpectedDeclarations(): List<SmartPsiElementPoin
 internal fun KtDeclaration.expectedDeclarationIfAny(): List<SmartPsiElementPointer<KtDeclaration>> {
     val declaration = this
     return analyze(this) {
-        val symbol: KtDeclarationSymbol = declaration.getSymbol()
+        val symbol: KaDeclarationSymbol = declaration.getSymbol()
         (symbol.getExpectsForActual().mapNotNull { (it.psi as? KtDeclaration)?.createSmartPointer() })
     }
 }

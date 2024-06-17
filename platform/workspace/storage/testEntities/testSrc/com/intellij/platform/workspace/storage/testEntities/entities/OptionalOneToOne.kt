@@ -37,7 +37,7 @@ interface OptionalOneToOneParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOptionalOneToOneParentEntity(
   entity: OptionalOneToOneParentEntity,
   modification: OptionalOneToOneParentEntity.Builder.() -> Unit,
 ): OptionalOneToOneParentEntity {
@@ -77,7 +77,7 @@ interface OptionalOneToOneChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOptionalOneToOneChildEntity(
   entity: OptionalOneToOneChildEntity,
   modification: OptionalOneToOneChildEntity.Builder.() -> Unit,
 ): OptionalOneToOneChildEntity {

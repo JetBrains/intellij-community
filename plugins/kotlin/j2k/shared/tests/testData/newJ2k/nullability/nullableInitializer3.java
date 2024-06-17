@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class Test {
     public String notNullString(int p) {
         return "response";

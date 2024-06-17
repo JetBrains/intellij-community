@@ -13,7 +13,6 @@ import com.intellij.navigation.GotoRelatedItem
 import com.intellij.navigation.GotoRelatedProvider
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.MarkupModelEx
@@ -25,7 +24,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.fileTypes.UnknownFileType
@@ -35,7 +33,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
@@ -51,7 +48,6 @@ import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.Processor
 import com.intellij.util.SlowOperations
 import com.intellij.util.TextWithIcon
-import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
@@ -149,22 +145,22 @@ fun openFileWithPsiElement(element: PsiElement, searchForOpen: Boolean, requestF
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true)
   }
 
-  val resultRef = Ref<Boolean>()
+  var resultRef: Boolean? = null
   // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
   CommandProcessor.getInstance().executeCommand(element.project, {
     if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
       val navigationItem = element as NavigationItem
       if (navigationItem.canNavigate()) {
         navigationItem.navigate(requestFocus)
-        resultRef.set(true)
+        resultRef = true
       }
       else {
-        resultRef.set(false)
+        resultRef = false
       }
     }
   }, "", null)
-  if (!resultRef.isNull) {
-    return resultRef.get()
+  resultRef?.let {
+    return it
   }
   element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
   return false
@@ -190,47 +186,15 @@ private fun activatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean
 
 private fun doActivatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
   @Suppress("NAME_SHADOWING")
-  var element = element
-  if (!element.isValid) {
-    return false
-  }
+  val element = element.takeIf { it.isValid }?.navigationElement ?: return false
+  val vFile = element.containingFile?.takeIf { it.isValid }?.virtualFile ?: return false
+  val range = element.textRange ?: return false
 
-  element = element.navigationElement
-  val file = element.containingFile
-  if (file == null || !file.isValid) {
-    return false
-  }
-
-  val vFile = file.virtualFile ?: return false
-  val project = element.project
-  return activateFileIfOpen(project = project,
-                            vFile = vFile,
-                            range = element.textRange,
-                            searchForOpen = searchForOpen,
-                            requestFocus = requestFocus)
-}
-
-private fun activateFileIfOpen(
-  project: Project,
-  vFile: VirtualFile,
-  range: TextRange?,
-  searchForOpen: Boolean,
-  requestFocus: Boolean
-): Boolean {
-  EDT.assertIsEdt()
-  if (!EditorHistoryManager.getInstance(project).hasBeenOpen(vFile)) {
-    return false
-  }
-
-  val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+  val fileEditorManager = FileEditorManagerEx.getInstanceEx(element.project)
   val wasAlreadyOpen = fileEditorManager.isFileOpen(vFile)
   val openOptions = FileEditorOpenOptions(requestFocus = requestFocus, reuseOpen = searchForOpen)
   if (!wasAlreadyOpen) {
     fileEditorManager.openFile(file = vFile, window = null, options = openOptions)
-  }
-
-  if (range == null) {
-    return false
   }
 
   for (editor in fileEditorManager.getEditorList(vFile)) {
@@ -241,38 +205,6 @@ private fun activateFileIfOpen(
         if (wasAlreadyOpen) {
           // select the file
           fileEditorManager.openFile(file = vFile, window = null, options = openOptions)
-        }
-        return true
-      }
-    }
-  }
-  return false
-}
-
-@ApiStatus.Internal
-suspend fun activateFileIfOpen(project: Project, vFile: VirtualFile, range: TextRange?, openOptions: FileEditorOpenOptions): Boolean {
-  if (!EditorHistoryManager.getInstance(project).hasBeenOpen(vFile)) {
-    return false
-  }
-
-  val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-  val wasAlreadyOpen = fileEditorManager.isFileOpen(vFile)
-  if (!wasAlreadyOpen) {
-    fileEditorManager.openFile(file = vFile, options = openOptions)
-  }
-
-  if (range == null) {
-    return false
-  }
-
-  for (editor in fileEditorManager.getEditorList(vFile)) {
-    if (editor is TextEditor) {
-      val text = editor.editor
-      val offset = readAction { text.caretModel.offset }
-      if (range.containsOffset(offset)) {
-        if (wasAlreadyOpen) {
-          // select the file
-          fileEditorManager.openFile(file = vFile, options = openOptions)
         }
         return true
       }

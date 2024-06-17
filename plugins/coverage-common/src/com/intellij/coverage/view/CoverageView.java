@@ -16,7 +16,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionButtonUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -46,6 +47,7 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +66,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
@@ -182,7 +185,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         final String message = CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName());
         final GotItTooltip gotIt = new GotItTooltip("coverage.view.elements.filter", message, this);
         if (gotIt.canShow()) {
-          final JComponent filterAction = findToolbarActionButtonWithIcon(actionToolbar, FILTER_ICON);
+          final JComponent filterAction = ActionButtonUtil.findToolbarActionButton(actionToolbar, button -> button.getIcon() == FILTER_ICON);
           if (filterAction != null) {
             gotIt.show(filterAction, GotItTooltip.BOTTOM_MIDDLE);
           }
@@ -192,9 +195,13 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   private boolean hasVCSFilteredNodes() {
-    CoverageAnnotator annotator = mySuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject);
-    ModifiedFilesFilter filter = annotator.getModifiedFilesFilter();
+    var filter = getModifiedFilesFilter();
     return filter != null && filter.getHasFilteredFiles();
+  }
+
+  private @Nullable ModifiedFilesFilter getModifiedFilesFilter() {
+    CoverageAnnotator annotator = mySuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject);
+    return annotator.getModifiedFilesFilter();
   }
 
   private void setUpShowRootNode(ActionToolbar actionToolbar) {
@@ -386,8 +393,8 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     boolean hasFilters = false;
     final DefaultActionGroup filtersActionGroup = new DefaultActionGroup();
-    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
-      filtersActionGroup.add(new ShowOnlyModifiedAction());
+    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss() && getModifiedFilesFilter() != null) {
+      filtersActionGroup.add(new ShowOnlyModifiedAction(getModifiedActionName()));
       hasFilters = true;
       myHasVCSFilter = true;
     }
@@ -574,8 +581,8 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
   private final class ShowOnlyModifiedAction extends ToggleAction {
 
-    private ShowOnlyModifiedAction() {
-      super(CoverageBundle.messagePointer("coverage.show.only.modified.elements", myViewExtension.getElementsCapitalisedName()));
+    private ShowOnlyModifiedAction(@NlsActions.ActionText String name) {
+      super(name);
     }
 
     @Override
@@ -591,6 +598,17 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
+    }
+  }
+
+  private @Nls @NotNull String getModifiedActionName() {
+    String elementName = myViewExtension.getElementsCapitalisedName();
+    ModifiedFilesFilter filter = getModifiedFilesFilter();
+    String branchName = Objects.requireNonNull(filter).getBranchName();
+    if (branchName != null) {
+      return CoverageBundle.message("coverage.show.only.elements.in.feature.branch", elementName, branchName);
+    } else {
+      return CoverageBundle.message("coverage.show.only.modified.elements", elementName);
     }
   }
 
@@ -652,12 +670,5 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         }
       }).submit(AppExecutorUtil.getAppExecutorService());
     }
-  }
-
-  private static JComponent findToolbarActionButtonWithIcon(ActionToolbar toolbar, Icon icon) {
-    return UIUtil.uiTraverser(toolbar.getComponent())
-      .filter(ActionButton.class)
-      .filter(button -> button.getIcon() == icon)
-      .first();
   }
 }

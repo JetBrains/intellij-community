@@ -168,6 +168,21 @@ class KotlinCallableReferencePositionContext(
 ) : KotlinSimpleNameReferencePositionContext()
 
 /**
+ * Position in label reference expression, e.g.:
+ * * `break@r<caret>ef`
+ * * `continue@r<caret>ef`
+ * * `this@r<caret>ef`
+ * * `super@r<caret>ef`
+ * * `return@r<caret>ef`
+ */
+class KotlinLabelReferencePositionContext(
+    override val position: PsiElement,
+    override val reference: KtSimpleNameReference,
+    override val nameExpression: KtLabelReferenceExpression,
+    override val explicitReceiver: KtExpression?,
+) : KotlinSimpleNameReferencePositionContext()
+
+/**
  * Position in class body, on which member declaration or class initializer is expected
  *
  * Examples
@@ -247,8 +262,7 @@ object KotlinPositionContextDetector {
     private fun detectForPositionWithSimpleNameReference(position: PsiElement): KotlinRawPositionContext? {
         val reference = (position.parent as? KtSimpleNameExpression)?.mainReference
             ?: return null
-        val nameExpression = reference.expression.takeIf { it !is KtLabelReferenceExpression }
-            ?: return null
+        val nameExpression = reference.expression
         val explicitReceiver = nameExpression.getReceiverExpression()
         val parent = nameExpression.parent
         val subjectExpressionForWhenCondition = (parent as? KtWhenCondition)?.getSubjectExpression()
@@ -311,6 +325,10 @@ object KotlinPositionContextDetector {
                 explicitReceiver,
                 explicitReceiver
             )
+
+            nameExpression is KtLabelReferenceExpression -> {
+                KotlinLabelReferencePositionContext(position, reference, nameExpression, explicitReceiver)
+            }
 
             else -> {
                 KotlinExpressionNameReferencePositionContext(position, reference, nameExpression, explicitReceiver)

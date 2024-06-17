@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -21,7 +22,6 @@ import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SizedIcon;
-import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
@@ -293,7 +293,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
     }
   }
 
-  private final class SelectVisibleRootAction extends ToggleAction implements DumbAware, KeepingPopupOpenAction {
+  private final class SelectVisibleRootAction extends DumbAwareToggleAction {
     final CheckboxIcon.WithColor myIcon;
     final VirtualFile myRoot;
     final List<SelectVisibleRootAction> myAllActions;
@@ -310,6 +310,11 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public boolean isSoftMultiChoice() {
+      return false;
     }
 
     @Override

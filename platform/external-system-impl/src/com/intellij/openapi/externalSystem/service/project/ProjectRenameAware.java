@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class ProjectRenameAware {
   public static void beAware(@NotNull Project project) {
-    final ExternalSystemFacadeManager facadeManager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
+    final ExternalSystemFacadeManager facadeManager = ExternalSystemFacadeManager.getInstance();
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
       AbstractExternalSystemSettings settings = manager.getSettingsProvider().fun(project);
       //noinspection unchecked

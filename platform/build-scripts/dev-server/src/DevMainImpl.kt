@@ -32,7 +32,7 @@ fun buildDevMain(): Collection<Path> {
   var homePath: String? = null
   var newClassPath: Collection<Path>? = null
   runBlocking(Dispatchers.Default) {
-    val batchSpanProcessorScope = childScope()
+    val batchSpanProcessorScope = childScope("BatchSpanProcessor")
     val spanProcessor = BatchSpanProcessor(coroutineScope = batchSpanProcessorScope, spanExporters = java.util.List.of(ConsoleSpanExporter()))
 
     val tracerProvider = SdkTracerProvider.builder()
@@ -60,8 +60,12 @@ fun buildDevMain(): Collection<Path> {
             newClassPath = classPath
             homePath = runDir.toString().replace(File.separator, "/")
 
+            val exceptions = setOf("jna.boot.library.path", "pty4j.preferred.native.folder", "jna.nosys", "jna.noclasspath", "jb.vmOptionsFile")
+            val systemProperties = System.getProperties()
             for ((name, value) in getIdeSystemProperties(runDir).map) {
-              System.setProperty(name, value)
+              if (exceptions.contains(name) || !systemProperties.containsKey(name)) {
+                systemProperties.setProperty(name, value)
+              }
             }
           },
           generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false),

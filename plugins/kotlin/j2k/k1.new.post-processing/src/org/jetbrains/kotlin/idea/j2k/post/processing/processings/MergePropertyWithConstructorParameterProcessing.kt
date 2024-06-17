@@ -8,7 +8,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.childrenOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIELD
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics.findAnnotation
@@ -38,7 +38,7 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
         error("Not supported in K1 J2K")
     }

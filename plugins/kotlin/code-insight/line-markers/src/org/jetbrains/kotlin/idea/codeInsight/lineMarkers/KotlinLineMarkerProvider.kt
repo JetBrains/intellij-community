@@ -17,9 +17,9 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Function
 import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.dsl.collectHighlightingDslMarkers
@@ -101,14 +101,14 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
         }
 
         analyze(declaration) {
-            var callableSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return
-            if (callableSymbol is KtValueParameterSymbol) {
+            var callableSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return
+            if (callableSymbol is KaValueParameterSymbol) {
                 callableSymbol = callableSymbol.generatedPrimaryConstructorProperty ?: return
             }
             val allOverriddenSymbols = callableSymbol.getAllOverriddenSymbols()
             if (allOverriddenSymbols.isEmpty()) return
-            val implements = callableSymbol is KtSymbolWithModality && callableSymbol.modality != Modality.ABSTRACT &&
-                    allOverriddenSymbols.all { it is KtSymbolWithModality && it.modality == Modality.ABSTRACT }
+            val implements = callableSymbol is KaSymbolWithModality && callableSymbol.modality != Modality.ABSTRACT &&
+                    allOverriddenSymbols.all { it is KaSymbolWithModality && it.modality == Modality.ABSTRACT }
             val gutter = if (implements) KotlinLineMarkerOptions.implementingOption else KotlinLineMarkerOptions.overridingOption
             if (!gutter.isEnabled) return
             val anchor = declaration.nameIdentifier ?: declaration
@@ -237,17 +237,17 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
         val declaration = element.getParentOfType<KtCallableDeclaration>(false) ?: return null
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null
         analyze(declaration) {
-            var callableSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return null
-            if (callableSymbol is KtValueParameterSymbol) {
+            var callableSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return null
+            if (callableSymbol is KaValueParameterSymbol) {
                 callableSymbol = callableSymbol.generatedPrimaryConstructorProperty ?: return null
             }
             val allOverriddenSymbols = callableSymbol.getDirectlyOverriddenSymbols()
             if (allOverriddenSymbols.isEmpty()) return ""
-            val isAbstract = callableSymbol is KtSymbolWithModality && callableSymbol.modality == Modality.ABSTRACT
+            val isAbstract = callableSymbol is KaSymbolWithModality && callableSymbol.modality == Modality.ABSTRACT
             val abstracts = hashSetOf<PsiElement>()
             val supers = allOverriddenSymbols.mapNotNull {
                 val superFunction = it.psi
-                if (superFunction != null && it is KtSymbolWithModality && it.modality == Modality.ABSTRACT) {
+                if (superFunction != null && it is KaSymbolWithModality && it.modality == Modality.ABSTRACT) {
                     abstracts.add(superFunction)
                 }
                 superFunction

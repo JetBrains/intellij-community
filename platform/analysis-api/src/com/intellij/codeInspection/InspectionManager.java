@@ -16,6 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * @see ProblemsHolder
+ */
 public abstract class InspectionManager {
   public static final ExtensionPointName<Condition<PsiElement>> CANT_BE_STATIC_EXTENSION =
     ExtensionPointName.create("com.intellij.cantBeStatic");

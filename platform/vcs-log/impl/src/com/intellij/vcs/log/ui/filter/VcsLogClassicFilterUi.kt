@@ -32,6 +32,7 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.xml.util.XmlStringUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -189,6 +190,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
     filterListenerDispatcher.addListener(listener)
   }
 
+  @ApiStatus.Internal
   protected class MainUiActionComponent(dynamicText: Supplier<String>, private val componentCreator: Supplier<out JComponent>) :
     VcsLogPopupComponentAction(dynamicText) {
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent = componentCreator.get()

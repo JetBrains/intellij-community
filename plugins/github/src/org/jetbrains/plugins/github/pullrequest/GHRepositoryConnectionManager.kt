@@ -36,7 +36,7 @@ internal class GHRepositoryConnectionManager(project: Project, parentCs: Corouti
                                        tokenState: StateFlow<String>,
                                        repo: GHGitRepositoryMapping,
                                        account: GithubAccount): GHRepositoryConnection {
-    val tokenSupplier = GithubApiRequestExecutor.MutableTokenSupplier(tokenState.value)
+    val tokenSupplier = GithubApiRequestExecutor.MutableTokenSupplier(account.server, tokenState.value)
     connectionScope.launch {
       tokenState.collect {
         tokenSupplier.token = it

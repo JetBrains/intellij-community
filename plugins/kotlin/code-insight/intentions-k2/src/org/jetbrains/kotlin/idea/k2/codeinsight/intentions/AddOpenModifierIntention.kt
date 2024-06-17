@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -28,17 +28,17 @@ internal class AddOpenModifierIntention :
                 && !element.hasModifier(KtTokens.ABSTRACT_KEYWORD)
                 && !element.hasModifier(KtTokens.PRIVATE_KEYWORD)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtCallableDeclaration): Unit? {
         // The intention's applicability cannot solely depend on the PSI because compiler plugins may introduce modality different from
         // explicit syntax and language defaults.
-        val elementSymbol = element.getSymbol() as? KtSymbolWithModality ?: return null
+        val elementSymbol = element.getSymbol() as? KaSymbolWithModality ?: return null
         if (elementSymbol.modality == Modality.OPEN || elementSymbol.modality == Modality.ABSTRACT) {
             return null
         }
 
         val owner = element.containingClassOrObject ?: return null
-        val ownerSymbol = owner.getSymbol() as? KtSymbolWithModality ?: return null
+        val ownerSymbol = owner.getSymbol() as? KaSymbolWithModality ?: return null
         val isApplicable = (owner.hasModifier(KtTokens.ENUM_KEYWORD)
                 || ownerSymbol.modality == Modality.OPEN
                 || ownerSymbol.modality == Modality.ABSTRACT

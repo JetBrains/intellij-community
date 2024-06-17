@@ -38,7 +38,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     manager.closeAllFiles();
     openFiles(STRING);
-    assertOpenFiles("foo.xml", "1.txt", "2.txt", "3.txt");
+    // regardless of pin, we open files in the same order as it was closed
+    assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
   }
 
   @Override
@@ -97,7 +98,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     openFiles(STRING);
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml");
-    manager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/3.txt"), null, new FileEditorOpenOptions().withRequestFocus());
     // the limit is still 1, but a pinned flag prevents closing the tab, and the actual tab number may exceed the limit
     assertOpenFiles("foo.xml", "3.txt");
 
@@ -198,10 +199,13 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     VirtualFile file2 = getFile("/src/2.txt");
     assertNotNull(file2);
     manager.openFile(file2, true);
-    EditorWindow primaryWindow = manager.getCurrentWindow();//1.txt and selected 2.txt
+    // 1.txt and selected 2.txt
+    EditorWindow primaryWindow = manager.getCurrentWindow();
     assertNotNull(primaryWindow);
-    manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
-    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);//2.txt only, selected and focused
+    primaryWindow.split(SwingConstants.VERTICAL, true, null, true);
+
+    // 2.txt only, selected and focused
+    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
     assertNotNull(secondaryWindow);
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     // here we have to ignore 'searchForSplitter'

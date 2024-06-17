@@ -261,7 +261,7 @@ internal class StorageJpsConfigurationReader(private val project: Project, priva
   }
 }
 
-fun getProjectStateStorage(filePath: String, store: IProjectStore, project: Project): StateStorageBase<StateMap> {
+internal fun getProjectStateStorage(filePath: String, store: IProjectStore, project: Project): StateStorageBase<StateMap> {
   val storageSpec = getStorageSpec(filePath, project)
   @Suppress("UNCHECKED_CAST")
   return store.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>

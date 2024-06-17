@@ -73,6 +73,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/annotations/annotationUsages.java");
         }
 
+        @TestMetadata("annotationWithArrayParameter.java")
+        public void testAnnotationWithArrayParameter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/annotations/annotationWithArrayParameter.java");
+        }
+
         @TestMetadata("annotationWithField.java")
         public void testAnnotationWithField() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/annotations/annotationWithField.java");
@@ -146,6 +151,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("nullabilityAnnotationOnAnnotationMethod.java")
         public void testNullabilityAnnotationOnAnnotationMethod() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/annotations/nullabilityAnnotationOnAnnotationMethod.java");
+        }
+
+        @TestMetadata("overrideCustom.java")
+        public void testOverrideCustom() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/annotations/overrideCustom.java");
+        }
+
+        @TestMetadata("overrideWithUnresolvedBaseMethod.java")
+        public void testOverrideWithUnresolvedBaseMethod() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/annotations/overrideWithUnresolvedBaseMethod.java");
         }
 
         @TestMetadata("primaryConstructorAnnotation.java")
@@ -2284,6 +2299,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/enum/enumValueOf.java");
         }
 
+        @TestMetadata("enumValues.java")
+        public void testEnumValues() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/enum/enumValues.java");
+        }
+
         @TestMetadata("enumValuesOldVersion.java")
         public void testEnumValuesOldVersion() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/enum/enumValuesOldVersion.java");
@@ -2705,6 +2725,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/for/forWithoutBody.java");
         }
 
+        @TestMetadata("foreachParameterReassignment.java")
+        public void testForeachParameterReassignment() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/for/foreachParameterReassignment.java");
+        }
+
         @TestMetadata("incompatibleRightType.java")
         public void testIncompatibleRightType() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/for/incompatibleRightType.java");
@@ -2873,6 +2898,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/formatting/chainedCall.java");
         }
 
+        @TestMetadata("equalsCallToEqEqOperator.java")
+        public void testEqualsCallToEqEqOperator() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/formatting/equalsCallToEqEqOperator.java");
+        }
+
         @TestMetadata("lineBreaksBetweenArguments.java")
         public void testLineBreaksBetweenArguments() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/formatting/lineBreaksBetweenArguments.java");
@@ -2906,6 +2936,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("staticMembersWithComments.java")
         public void testStaticMembersWithComments() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/formatting/staticMembersWithComments.java");
+        }
+
+        @TestMetadata("ternaryLineBreaks.java")
+        public void testTernaryLineBreaks() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/formatting/ternaryLineBreaks.java");
         }
 
         @TestMetadata("trailingComma.java")
@@ -3174,6 +3209,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("AbstractGetterNoFunctionalInterfaceAnnotation.java")
         public void testAbstractGetterNoFunctionalInterfaceAnnotation() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/functionalInterfaces/AbstractGetterNoFunctionalInterfaceAnnotation.java");
+        }
+
+        @TestMetadata("FunctionalInterfaceAcceptor.java")
+        public void testFunctionalInterfaceAcceptor() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/functionalInterfaces/FunctionalInterfaceAcceptor.java");
         }
 
         @TestMetadata("InterfacesHierarchy.java")
@@ -4000,11 +4040,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("qualifyStatic.java")
         public void testQualifyStatic() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/issues/qualifyStatic.java");
-        }
-
-        @TestMetadata("spaceBeforeAssignment.java")
-        public void testSpaceBeforeAssignment() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/issues/spaceBeforeAssignment.java");
         }
     }
 
@@ -5151,6 +5186,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/nullability/autoNotNull.java");
         }
 
+        @TestMetadata("autoUnboxing.java")
+        public void testAutoUnboxing() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/autoUnboxing.java");
+        }
+
         @TestMetadata("FieldAssignedWithNull.java")
         public void testFieldAssignedWithNull() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/FieldAssignedWithNull.java");
@@ -5196,6 +5236,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/nullability/IndirectOverride.java");
         }
 
+        @TestMetadata("instanceOf.java")
+        public void testInstanceOf() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/instanceOf.java");
+        }
+
         @TestMetadata("kt-12050.java")
         public void testKt_12050() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/kt-12050.java");
@@ -5204,6 +5249,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("LocalValReassignment.java")
         public void testLocalValReassignment() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/LocalValReassignment.java");
+        }
+
+        @TestMetadata("localVariableNullabilityFromContext.java")
+        public void testLocalVariableNullabilityFromContext() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/localVariableNullabilityFromContext.java");
         }
 
         @TestMetadata("MethodInvokedWithNullArg.java")
@@ -5271,6 +5321,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/nullability/notNullCast.java");
         }
 
+        @TestMetadata("NullabilityByDfa.java")
+        public void testNullabilityByDfa() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/NullabilityByDfa.java");
+        }
+
         @TestMetadata("nullableBoxedBooleanParameter.java")
         public void testNullableBoxedBooleanParameter() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/nullableBoxedBooleanParameter.java");
@@ -5336,6 +5391,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/nullability/ParameterComparedWithNull.java");
         }
 
+        @TestMetadata("PrivateFieldNullabilityFromContext.java")
+        public void testPrivateFieldNullabilityFromContext() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/PrivateFieldNullabilityFromContext.java");
+        }
+
         @TestMetadata("synchronized.java")
         public void testSynchronized() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/synchronized.java");
@@ -5344,6 +5404,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("throw.java")
         public void testThrow() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/throw.java");
+        }
+
+        @TestMetadata("typeCast.java")
+        public void testTypeCast() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/typeCast.java");
         }
 
         @TestMetadata("VariableAssignedWithNull.java")
@@ -5531,6 +5596,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testRemoveUnnecessaryParentheses() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/removeUnnecessaryParentheses.java");
         }
+
+        @TestMetadata("removeUnnecessaryParenthesesConditionalOperators.java")
+        public void testRemoveUnnecessaryParenthesesConditionalOperators() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/removeUnnecessaryParenthesesConditionalOperators.java");
+        }
+
+        @TestMetadata("removeUnnecessaryParenthesesSpecialContext.java")
+        public void testRemoveUnnecessaryParenthesesSpecialContext() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/removeUnnecessaryParenthesesSpecialContext.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -5688,6 +5763,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("mutablePropertyAnnotatedWithJpaColumn.java")
         public void testMutablePropertyAnnotatedWithJpaColumn() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/postProcessing/mutablePropertyAnnotatedWithJpaColumn.java");
+        }
+
+        @TestMetadata("noDestructuringForPlainVariables.java")
+        public void testNoDestructuringForPlainVariables() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/postProcessing/noDestructuringForPlainVariables.java");
         }
 
         @TestMetadata("NullChecksToSafeCall.java")
@@ -6503,11 +6583,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("beforeDot.java")
-        public void testBeforeDot() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/typeCastExpression/beforeDot.java");
         }
 
         @TestMetadata("byteCasts.java")

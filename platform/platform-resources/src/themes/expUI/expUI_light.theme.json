@@ -784,7 +784,8 @@
         "otherIconColor": "Gray6",
         "remoteBranchIconColor": "Purple4",
         "tagIconColor": "Gray6"
-      }
+      },
+      "Merge.Status.NoConflicts.foreground": "Green2"
     },
 
     "WelcomeScreen.Details.background": "Gray14",

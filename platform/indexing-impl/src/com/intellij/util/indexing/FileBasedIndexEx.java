@@ -634,8 +634,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
     boolean preventCaching = dumbModeAccessTypeStack.empty();
     dumbModeAccessTypeStack.push(dumbModeAccessType);
-    Disposable disposable = Disposer.newDisposable();
+    Disposable disposable = null;
     if (app.isWriteIntentLockAcquired()) {
+      disposable = Disposer.newDisposable();
       app.getMessageBus().connect(disposable).subscribe(PsiModificationTracker.TOPIC,
                                                         () -> RecursionManager.dropCurrentMemoizationCache());
     }
@@ -645,7 +646,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
              : computable.compute();
     }
     finally {
-      Disposer.dispose(disposable);
+      if (disposable != null) {
+        Disposer.dispose(disposable);
+      }
       DumbModeAccessType type = dumbModeAccessTypeStack.pop();
       assert dumbModeAccessType == type;
     }

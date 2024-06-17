@@ -28,6 +28,7 @@ import com.intellij.util.io.write
 import com.intellij.util.text.UniqueNameGenerator
 import org.jdom.Document
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.nio.file.FileSystemException
@@ -42,6 +43,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isHidden
 import kotlin.io.path.readBytes
 
+@ApiStatus.Internal
 class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   val fileSpec: String,
   processor: SchemeProcessor<T, MUTABLE_SCHEME>,

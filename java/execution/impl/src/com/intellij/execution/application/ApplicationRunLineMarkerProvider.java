@@ -7,7 +7,6 @@ import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -20,10 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
 
@@ -94,29 +90,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     }
 
     AnAction[] actions = ExecutorAction.getActions(Integer.MAX_VALUE);
-
-    return new Info(AllIcons.RunConfigurations.TestState.Run, actions, new ActionsTooltipProvider(actions));
-  }
-
-  private record ActionsTooltipProvider(@NotNull AnAction @NotNull [] myActions) implements Function<PsiElement, String> {
-    @Override
-    public String apply(PsiElement element) {
-      AnActionEvent event = createActionEvent(element);
-      return Arrays.stream(myActions)
-            .map(action -> getText(action, event))
-            .filter(Objects::nonNull)
-            .collect(Collectors.joining("\n"));
-    }
-
-    @Override
-    public int hashCode() {
-      return Arrays.hashCode(myActions);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof ActionsTooltipProvider other && Arrays.equals(myActions, other.myActions);
-    }
+    return new Info(AllIcons.RunConfigurations.TestState.Run, actions);
   }
 
   protected boolean isIdentifier(@NotNull PsiElement e) {

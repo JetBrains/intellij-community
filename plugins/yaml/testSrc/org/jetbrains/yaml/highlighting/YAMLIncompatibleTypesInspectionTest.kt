@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.highlighting
 
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
 import org.jetbrains.yaml.YAMLBundle
 import org.jetbrains.yaml.inspections.YAMLIncompatibleTypesInspection
@@ -158,7 +158,7 @@ class YAMLIncompatibleTypesInspectionTest : BasePlatformTestCase() {
     }
         - abc: <warning descr="The type of value is 'boolean' while other values use type 'string'">true</warning>
     """.trimIndent())
-    PlatformTestUtil.newPerformanceTest("Inspection should finish in sane time") {
+    PerformanceTestUtil.newPerformanceTest("Inspection should finish in sane time") {
       myFixture.testHighlighting()
     }.warmupIterations(0).attempts(1).start()
   }

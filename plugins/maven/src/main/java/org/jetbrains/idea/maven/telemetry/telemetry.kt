@@ -16,7 +16,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.net.URI
 
-internal val tracer by lazy { TelemetryManager.getSimpleTracer(Scope(MavenUtil.MAVEN_NAME)) }
+val tracer by lazy { TelemetryManager.getSimpleTracer(Scope(MavenUtil.MAVEN_NAME)) }
 
 internal data class TelemetryIds(@JvmField val traceId: String?, @JvmField val spanId: String?)
 

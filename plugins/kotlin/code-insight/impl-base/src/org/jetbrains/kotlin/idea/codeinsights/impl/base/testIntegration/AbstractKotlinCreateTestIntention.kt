@@ -7,6 +7,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -133,7 +134,7 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
                             Messages.getQuestionIcon()
                         ) != Messages.OK
                     ) return
-
+                    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS)
                     propertiesComponent.setValue("create.test.in.the.same.root", true)
                 }
 

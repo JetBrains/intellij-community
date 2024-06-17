@@ -10,6 +10,7 @@ import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -273,6 +274,27 @@ object PluginManagerCore {
     else {
       return findClassInPluginThatUsesCoreClassloader(className, pluginSet)
     }
+  }
+
+  private fun isVendorItemTrusted(vendorItem: String): Boolean {
+    if (vendorItem.isEmpty()) {
+      return false
+    }
+    return isVendorJetBrains(vendorItem) ||
+           vendorItem == ApplicationInfoImpl.getShadowInstance().companyName ||
+           vendorItem == ApplicationInfoImpl.getShadowInstance().shortCompanyName
+  }
+
+  @JvmStatic
+  fun isVendorTrusted(vendor: String): Boolean {
+    return vendor.splitToSequence(',').any { isVendorItemTrusted(it.trim()) }
+  }
+
+  @JvmStatic
+  fun isVendorTrusted(plugin: PluginDescriptor): Boolean {
+    return isDevelopedByJetBrains(plugin) ||
+           isVendorTrusted(plugin.vendor ?: "") ||
+           isVendorTrusted(plugin.organization ?: "")
   }
 
   @JvmStatic
@@ -664,6 +686,10 @@ object PluginManagerCore {
     return PluginManagerState(pluginSet = pluginSet, pluginIdsToDisable = pluginsToDisable.keys, pluginIdsToEnable = pluginsToEnable.keys)
   }
 
+  /**
+   * processes postponed consent check from the previous run (e.g., when the previous run was headless)
+   * see usages of [write3rdPartyPlugins]
+    */
   private fun check3rdPartyPluginsPrivacyConsent(parentActivity: Activity?, idMap: Map<PluginId, IdeaPluginDescriptorImpl>) {
     val activity = parentActivity?.startChild("3rd-party plugins consent")
 
@@ -788,7 +814,7 @@ object PluginManagerCore {
   private fun ask3rdPartyPluginsPrivacyConsent(descriptors: List<IdeaPluginDescriptorImpl>): Boolean {
     val title = CoreBundle.message("third.party.plugins.privacy.note.title")
     val pluginList = descriptors.joinToString(separator = "<br>") { "&nbsp;&nbsp;&nbsp;${getPluginNameAndVendor(it)}" }
-    val text = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList)
+    val text = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList, ApplicationInfo.getInstance().shortCompanyName)
     val buttons = arrayOf(CoreBundle.message("third.party.plugins.privacy.note.accept"),
                           CoreBundle.message("third.party.plugins.privacy.note.disable"))
     val choice = JOptionPane.showOptionDialog(null, text, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,

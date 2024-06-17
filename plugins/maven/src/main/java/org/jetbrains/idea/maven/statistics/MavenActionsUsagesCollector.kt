@@ -11,7 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 
-internal object MavenActionsUsagesCollector : CounterUsagesCollector() {
+object MavenActionsUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private val GROUP = EventLogGroup("build.maven.actions", 4)

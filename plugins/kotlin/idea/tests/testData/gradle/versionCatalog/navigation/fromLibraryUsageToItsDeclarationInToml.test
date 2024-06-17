@@ -1,0 +1,17 @@
+// FILE: build.gradle.kts
+plugins {
+    id("java")
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+    testImplementation(libs.some.t<caret>est.library)
+}
+
+// FILE: gradle/libs.versions.toml
+# EXPECTED
+[libraries]
+some_test-library = { module = "org.junit.jupiter:junit-jupiter"}
+
+// FILE: settings.gradle.kts

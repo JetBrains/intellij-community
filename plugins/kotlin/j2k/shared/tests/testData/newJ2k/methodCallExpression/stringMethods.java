@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 import java.nio.charset.Charset;
 import java.util.*;
 

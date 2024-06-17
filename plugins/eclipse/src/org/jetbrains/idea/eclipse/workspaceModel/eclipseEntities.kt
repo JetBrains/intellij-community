@@ -83,7 +83,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyEclipseProjectPropertiesEntity(
   entity: EclipseProjectPropertiesEntity,
   modification: EclipseProjectPropertiesEntity.Builder.() -> Unit,
 ): EclipseProjectPropertiesEntity {

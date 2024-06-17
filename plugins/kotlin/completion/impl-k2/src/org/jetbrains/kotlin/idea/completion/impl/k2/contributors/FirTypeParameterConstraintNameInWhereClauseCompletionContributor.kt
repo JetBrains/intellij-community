@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeConstraintNameInWhereClausePositionContext
@@ -23,13 +23,13 @@ internal class FirTypeParameterConstraintNameInWhereClauseCompletionContributor(
     priority: Int
 ) : FirCompletionContributorBase<KotlinTypeConstraintNameInWhereClausePositionContext>(basicContext, priority) {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinTypeConstraintNameInWhereClausePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
-        val ownerSymbol = positionContext.typeParametersOwner.getSymbol() as? KtSymbolWithTypeParameters ?: return
+        val ownerSymbol = positionContext.typeParametersOwner.getSymbol() as? KaSymbolWithTypeParameters ?: return
         ownerSymbol.typeParameters.forEach { typeParameter ->
             val name = typeParameter.name
             val icon = getIconFor(typeParameter)

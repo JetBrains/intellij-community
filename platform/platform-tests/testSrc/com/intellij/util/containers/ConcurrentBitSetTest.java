@@ -19,6 +19,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -92,7 +93,7 @@ class ConcurrentBitSetTest {
     PlatformTestUtil.assumeEnoughParallelism();
     int L = 128;
     int N = 10_000;
-    PlatformTestUtil.newPerformanceTest("testStressFineGrainedSmallSetModifications", () -> tortureParallelSetClear(L, N)).start();
+    PerformanceTestUtil.newPerformanceTest("testStressFineGrainedSmallSetModifications", () -> tortureParallelSetClear(L, N)).start();
   }
 
   @Test
@@ -102,7 +103,7 @@ class ConcurrentBitSetTest {
     // todo ARM64 is slow for some reason
     int N = CpuArch.isArm64() ? 300 : 1000;
 
-    PlatformTestUtil.newPerformanceTest("testStressCoarseGrainedBigSet", () -> tortureParallelSetClear(L, N)).start();
+    PerformanceTestUtil.newPerformanceTest("testStressCoarseGrainedBigSet", () -> tortureParallelSetClear(L, N)).start();
   }
 
   private static void tortureParallelSetClear(int L, int N) {
@@ -196,7 +197,7 @@ class ConcurrentBitSetTest {
     int N = 100_000;
 
     ExecutorService executor = create4ThreadsExecutor();
-    PlatformTestUtil.newPerformanceTest("testParallelReadPerformance", ()-> {
+    PerformanceTestUtil.newPerformanceTest("testParallelReadPerformance", ()-> {
       Semaphore threadReady = new Semaphore();
       Set<Thread> threadUsed = ConcurrentCollectionFactory.createConcurrentSet();
       boundedParallelRun(executor, threadUsed, threadReady, N, __-> {

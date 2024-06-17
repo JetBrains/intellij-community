@@ -255,6 +255,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   public boolean isEntryPoint(@NotNull PsiElement element) {
+    return isStrictEntryPoint(element) || RefUtil.isImplicitUsage(element);
+  }
+
+  public boolean isStrictEntryPoint(@NotNull PsiElement element) {
     if (element instanceof PsiMethod && isAddMainsEnabled() && PsiClassImplUtil.isMainOrPremainMethod((PsiMethod)element)) {
       return true;
     }
@@ -285,7 +289,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         return true;
       }
     }
-    return RefUtil.isImplicitUsage(element);
+    return false;
   }
 
   private static boolean hasMainMethodDeep(@NotNull PsiClass aClass) {

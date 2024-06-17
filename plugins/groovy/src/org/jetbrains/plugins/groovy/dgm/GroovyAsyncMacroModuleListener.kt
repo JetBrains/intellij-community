@@ -14,17 +14,15 @@ import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroRegistrySer
 class GroovyAsyncMacroModuleListener(private val project: Project, private val cs: CoroutineScope) {
   internal fun subscribe() {
     cs.launch {
-      WorkspaceModel.getInstance(project).subscribe { _, changes ->
-        changes.collect { event ->
-          val moduleChanges = event.getChanges(ModuleEntity::class.java)
-          if (moduleChanges.none()) {
-            return@collect
-          }
-          for (moduleEntity in moduleChanges) {
-            val entityToFlush = moduleEntity.oldEntity ?: continue
-            val bridge = event.storageBefore.moduleMap.getDataByEntity(entityToFlush) ?: continue
-            project.service<GroovyMacroRegistryService>().asSafely<GroovyMacroRegistryServiceImpl>()?.refreshModule(bridge)
-          }
+      WorkspaceModel.getInstance(project).eventLog.collect { event ->
+        val moduleChanges = event.getChanges(ModuleEntity::class.java)
+        if (moduleChanges.none()) {
+          return@collect
+        }
+        for (moduleEntity in moduleChanges) {
+          val entityToFlush = moduleEntity.oldEntity ?: continue
+          val bridge = event.storageBefore.moduleMap.getDataByEntity(entityToFlush) ?: continue
+          project.service<GroovyMacroRegistryService>().asSafely<GroovyMacroRegistryServiceImpl>()?.refreshModule(bridge)
         }
       }
     }

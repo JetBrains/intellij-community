@@ -23,7 +23,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import one.util.streamex.IntStreamEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -32,19 +32,19 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/performance";
 
   public void testPolyMethodCallArgumentPassedToVarargs() {
-    PlatformTestUtil.newPerformanceTest("50 poly method calls passed to Arrays.asList", this::doTest).start();
+    PerformanceTestUtil.newPerformanceTest("50 poly method calls passed to Arrays.asList", this::doTest).start();
   }
 
   public void testDiamondConstructorCallPassedToVarargs() {
-    PlatformTestUtil.newPerformanceTest("50 diamond constructor calls passed to Arrays.asList", this::doTest).start();
+    PerformanceTestUtil.newPerformanceTest("50 diamond constructor calls passed to Arrays.asList", this::doTest).start();
   }
 
   public void testDiamondConstructorCallPassedToEnumConstantWithVarargs() {
-    PlatformTestUtil.newPerformanceTest("10 enum constants with vararg diamonds", this::doTest).start();
+    PerformanceTestUtil.newPerformanceTest("10 enum constants with vararg diamonds", this::doTest).start();
   }
 
   public void testLeastUpperBoundWithLotsOfSupers() {
-    PlatformTestUtil.newPerformanceTest("7 unrelated intersection conjuncts", this::doTest).start();
+    PerformanceTestUtil.newPerformanceTest("7 unrelated intersection conjuncts", this::doTest).start();
   }
 
   public void testVarArgPoly() {
@@ -66,18 +66,18 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
     int count = 70;
     String entries = IntStreamEx.range(count).mapToObj(i -> "entry(" + i + ", String.class)").joining(",\n      ");
     configureFromFileText("Test.java", template.replace("$entries$", entries));
-    PlatformTestUtil.newPerformanceTest(count + " arguments to Map.ofEntries", () -> doHighlighting())
+    PerformanceTestUtil.newPerformanceTest(count + " arguments to Map.ofEntries", () -> doHighlighting())
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
       .start();
     assertEmpty(highlightErrors());
   }
 
   public void testLongQualifierChainInsideLambda() {
-    PlatformTestUtil.newPerformanceTest("long qualifier chain", this::doTest).start();
+    PerformanceTestUtil.newPerformanceTest("long qualifier chain", this::doTest).start();
   }
 
   public void testLongQualifierChainInsideLambdaWithOverloads() {
-    PlatformTestUtil.newPerformanceTest("long qualifier chain", () -> {
+    PerformanceTestUtil.newPerformanceTest("long qualifier chain", () -> {
       configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
       PsiMethodCallExpression callExpression =
         PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
@@ -117,7 +117,7 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
     String entries = "foo(snippet.valueOf(foo))\n" +//to trick injection 
                      StringUtil.repeat(".foo(snippet.valueOf(foo))\n", count);
     configureFromFileText("Test.java", template.replace("$chain$", entries));
-    PlatformTestUtil.newPerformanceTest(count + " chain in type cast", () -> doHighlighting())
+    PerformanceTestUtil.newPerformanceTest(count + " chain in type cast", () -> doHighlighting())
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
       .start();
     assertEmpty(highlightErrors());

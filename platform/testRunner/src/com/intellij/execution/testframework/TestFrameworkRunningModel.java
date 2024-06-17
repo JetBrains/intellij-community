@@ -47,7 +47,7 @@ public interface TestFrameworkRunningModel extends Disposable {
       };
     }
     else {
-      comparator = TestConsoleProperties.SORT_ALPHABETICALLY.value(properties) ? AlphaComparator.INSTANCE : null;
+      comparator = TestConsoleProperties.SORT_ALPHABETICALLY.value(properties) ? AlphaComparator.getInstance() : null;
     }
     return comparator;
   }

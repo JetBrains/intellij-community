@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.analysis-api-fe10" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-fe10-for-ide:2.0.20-dev-6258">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.0.20-dev-6258/analysis-api-fe10-for-ide-2.0.20-dev-6258.jar">
+          <sha256sum>07d81b39e21755773365a14b0ca5762e9be91fe5a7b841edd60abcfce2a56692</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.0.20-dev-6258/analysis-api-fe10-for-ide-2.0.20-dev-6258.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.0.20-dev-6258/analysis-api-fe10-for-ide-2.0.20-dev-6258-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

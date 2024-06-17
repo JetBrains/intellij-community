@@ -1,13 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionalType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -22,13 +25,13 @@ fun KtDotQualifiedExpression.isToString(): Boolean {
     if (referenceExpression.getReferencedName() != OperatorNameConventions.TO_STRING.asString()) return false
     return analyze(callExpression) {
         referenceExpression.mainReference.resolveToSymbols().any { symbol ->
-            val functionSymbol = symbol as? KtFunctionSymbol ?: return@any false
+            val functionSymbol = symbol as? KaFunctionSymbol ?: return@any false
             functionSymbol.valueParameters.isEmpty() && functionSymbol.returnType.isString
         }
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtDeclaration.isFinalizeMethod(): Boolean {
     if (containingClass() == null) return false
     val function = this as? KtNamedFunction ?: return false
@@ -37,21 +40,21 @@ fun KtDeclaration.isFinalizeMethod(): Boolean {
             && function.getReturnKtType().isUnit
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
     is KtPackageSymbol -> fqName
-    is KtCallableSymbol -> callableId?.asSingleFqName()
-    is KtClassLikeSymbol -> classId?.asSingleFqName()
+    is KaCallableSymbol -> callableId?.asSingleFqName()
+    is KaClassLikeSymbol -> classId?.asSingleFqName()
     else -> null
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtCallExpression.isArrayOfFunction(): Boolean {
     val functionNames = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values.toSet() +
             ArrayFqNames.ARRAY_OF_FUNCTION +
             ArrayFqNames.EMPTY_ARRAY
 
-    val call = resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId ?: return false
+    val call = resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId ?: return false
 
     return call.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME &&
             functionNames.contains(call.callableName)
@@ -63,10 +66,47 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
  * @return `true` if the expression is an implicit `invoke` call, `false` if it is not,
  * and `null` if the function resolve was unsuccessful.
  */
-context(KtAnalysisSession)
+context(KaSession)
 fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
-    val functionCall = this.resolveCall()?.singleFunctionCallOrNull() ?: return null
+    val functionCall = this.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
 
-    return functionCall is KtSimpleFunctionCall && functionCall.isImplicitInvoke
+    return functionCall is KaSimpleFunctionCall && functionCall.isImplicitInvoke
 }
 
+/**
+ * Returns containing class symbol, if [reference] is a short reference to a companion object. Otherwise, returns null.
+ * For example:
+ * ```
+ * class A {
+ *      companion object {
+ *           fun foo() {}
+ *      }
+ * }
+ *
+ * fun main() {
+ *      A.foo() // symbol for `A`, and not for `A.Companion`, is returned
+ * }
+ * ```
+ */
+context(KaSession)
+fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): KaNamedClassOrObjectSymbol? {
+    if (this !is KtSimpleNameReference) return null
+
+    val symbol = this.resolveToSymbol()
+    if (symbol !is KaClassOrObjectSymbol || symbol.classKind != KaClassKind.COMPANION_OBJECT) return null
+
+    // class name reference resolves to companion
+    if (expression.name == symbol.name?.asString()) return null
+
+    val containingSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol
+    return containingSymbol?.takeIf { it.companionObject == symbol }
+}
+
+/**
+ * Checks whether [this] is one of the following:
+ * * extension
+ * * variable having a return type with a receiver
+ */
+context(KaSession)
+fun KaCallableSymbol.canBeUsedAsExtension(): Boolean =
+    isExtension || this is KaVariableLikeSymbol && (returnType as? KaFunctionalType)?.hasReceiver == true

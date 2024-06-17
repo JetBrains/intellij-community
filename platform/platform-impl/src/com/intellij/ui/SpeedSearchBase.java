@@ -22,6 +22,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -72,7 +73,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private SearchPopup mySearchPopup;
   private JLayeredPane myPopupLayeredPane;
   protected final Comp myComponent;
-  private final ToolWindowManagerListener myWindowManagerListener = new ToolWindowManagerListener() {
+  private final ToolWindowManagerListener myToolWindowListener = new ToolWindowManagerListener() {
     @Override
     public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
       if (!isInsideActiveToolWindow(toolWindowManager)) {
@@ -186,6 +187,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         String prefix = getEnteredPrefix();
+        if (prefix == null) return;
         String[] strings = NameUtilCore.splitNameIntoWords(prefix);
         if (strings.length == 0) return; // "__" has no words
         String last = strings[strings.length - 1];
@@ -920,14 +922,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
 
   private void manageSearchPopup(@Nullable SearchPopup searchPopup) {
-    Project project = null;
-    if (ApplicationManager.getApplication() != null && !ApplicationManager.getApplication().isDisposed()) {
-      project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
-    }
-    if (project != null && project.isDefault()) {
-      project = null;
-    }
     if (mySearchPopup != null) {
+      Project project = CommonDataKeys.PROJECT.getData(
+        DataManager.getInstance().getDataContext(myComponent.getRootPane()));
       UIEventLogger.IncrementalSearchCancelled.log(project, myComponent.getClass());
       if (myPopupLayeredPane != null) {
         myPopupLayeredPane.remove(mySearchPopup);
@@ -945,6 +942,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }
     else if (searchPopup != null) {
+      Project project = CommonDataKeys.PROJECT.getData(
+        DataManager.getInstance().getDataContext(myComponent.getRootPane()));
       FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.tree.speedsearch");
       UIEventLogger.IncrementalSearchActivated.log(project, myComponent.getClass());
     }
@@ -957,11 +956,12 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
     if (mySearchPopup == null || !myComponent.isDisplayable()) return;
 
-    if (project != null) {
-      myListenerDisposable = Disposer.newDisposable();
-      project.getMessageBus().connect(myListenerDisposable).subscribe(ToolWindowManagerListener.TOPIC, myWindowManagerListener);
-    }
     JRootPane rootPane = myComponent.getRootPane();
+    Project project = rootPane != null && rootPane.getParent() instanceof IdeFrame o ? o.getProject() : null;
+    if (project != null && !project.isDefault() && !project.isDisposed()) {
+      myListenerDisposable = Disposer.newDisposable();
+      project.getMessageBus().connect(myListenerDisposable).subscribe(ToolWindowManagerListener.TOPIC, myToolWindowListener);
+    }
     myPopupLayeredPane = rootPane == null ? null : rootPane.getLayeredPane();
     if (myPopupLayeredPane == null) {
       LOG.error(this + " in " + myComponent);

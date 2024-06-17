@@ -7,7 +7,7 @@ import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.directoryStreamIfExists
 import org.jetbrains.annotations.VisibleForTesting

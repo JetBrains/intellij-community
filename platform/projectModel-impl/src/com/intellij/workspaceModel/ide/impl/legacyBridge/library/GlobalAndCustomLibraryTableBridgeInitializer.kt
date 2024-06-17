@@ -27,11 +27,11 @@ class GlobalAndCustomLibraryTableBridgeInitializer : BridgeInitializer {
 
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
-      builder.mutableLibraryMap.getOrPutDataByEntity(addChange.entity) {
+      builder.mutableLibraryMap.getOrPutDataByEntity(addChange.newEntity) {
         LibraryBridgeImpl(
-          libraryTable = getGlobalOrCustomLibraryTable(addChange.entity.symbolicId.tableId.level),
+          libraryTable = getGlobalOrCustomLibraryTable(addChange.newEntity.symbolicId.tableId.level),
           project = null,
-          initialId = addChange.entity.symbolicId,
+          initialId = addChange.newEntity.symbolicId,
           initialEntityStorage = entityStorage,
           targetBuilder = builder
         )
@@ -51,8 +51,8 @@ class GlobalAndCustomLibraryTableBridgeInitializer : BridgeInitializer {
 private fun List<EntityChange<LibraryEntity>>.filterGlobalOrCustomLibraryChanges(): List<EntityChange<LibraryEntity>> {
   return filter {
     when (it) {
-      is EntityChange.Added -> it.entity.tableId is LibraryTableId.GlobalLibraryTableId
-      is EntityChange.Removed -> it.entity.tableId is LibraryTableId.GlobalLibraryTableId
+      is EntityChange.Added -> it.newEntity.tableId is LibraryTableId.GlobalLibraryTableId
+      is EntityChange.Removed -> it.oldEntity.tableId is LibraryTableId.GlobalLibraryTableId
       is EntityChange.Replaced -> it.oldEntity.tableId is LibraryTableId.GlobalLibraryTableId
     }
   }

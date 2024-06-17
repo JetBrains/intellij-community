@@ -46,7 +46,7 @@ interface ComputablePropEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyComputablePropEntity(
   entity: ComputablePropEntity,
   modification: ComputablePropEntity.Builder.() -> Unit,
 ): ComputablePropEntity {

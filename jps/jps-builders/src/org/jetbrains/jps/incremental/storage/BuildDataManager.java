@@ -83,10 +83,12 @@ public final class BuildDataManager {
       if (JavaBuilderUtil.isDepGraphEnabled()) {
         myMappings = null;
         createDependencyGraph(mappingsRoot, false);
+        FileUtil.delete(getMappingsRoot(myDataPaths.getDataStorageRoot(), false)); // delete older mappings data if available
         LOG.info("Using DependencyGraph-based build incremental analysis");
       }
       else {
         myMappings = new Mappings(mappingsRoot, relativizer);
+        FileUtil.delete(getMappingsRoot(myDataPaths.getDataStorageRoot(), true)); // delete dep-graph data if available
         myMappings.setProcessConstantsIncrementally(isProcessConstantsIncrementally());
       }
     }
@@ -357,7 +359,11 @@ public final class BuildDataManager {
   }
 
   public static File getMappingsRoot(final File dataStorageRoot) {
-    return new File(dataStorageRoot, JavaBuilderUtil.isDepGraphEnabled()? MAPPINGS_STORAGE + "-graph" : MAPPINGS_STORAGE);
+    return getMappingsRoot(dataStorageRoot, JavaBuilderUtil.isDepGraphEnabled());
+  }
+
+  private static File getMappingsRoot(final File dataStorageRoot, boolean forDepGraph) {
+    return new File(dataStorageRoot, forDepGraph? MAPPINGS_STORAGE + "-graph" : MAPPINGS_STORAGE);
   }
 
   private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {

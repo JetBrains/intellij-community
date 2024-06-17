@@ -2,7 +2,9 @@
 package com.intellij.ide.workspace
 
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.project.stateStore
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import kotlinx.coroutines.launch
@@ -15,14 +17,25 @@ internal class WorkspaceAttachProcessor : ProjectAttachProcessor() {
       return false
     }
     getCoroutineScope(project).launch {
+      val modules = ModuleManager.getInstance(project).modules.toSet()
       linkToWorkspace(project, projectDir.pathString)
+      if (callback != null) {
+        ModuleManager.getInstance(project).modules.subtract(modules).firstOrNull()?.let {
+          module -> callback.projectOpened(project, module)
+        }
+      }
     }
     return true
   }
 
-  override fun isEnabled(project: Project?, path: Path?): Boolean =
+  override suspend fun beforeAttach(project: Project?) {
+    project?.stateStore?.save(true)
+  }
+
+  override fun isEnabled(project: Project?, path: Path?, newProject: Project?): Boolean =
     isWorkspaceSupportEnabled && project?.isWorkspace == true &&
-    (path == null || !getAllSubprojects(project).any { it.projectPath == path.pathString })
+    (path == null || !getAllSubprojects(project).any { it.projectPath == path.pathString }) &&
+    (newProject == null || !newProject.isWorkspace)
 
   override fun getActionText(project: Project): String {
     if (project.isWorkspace) {

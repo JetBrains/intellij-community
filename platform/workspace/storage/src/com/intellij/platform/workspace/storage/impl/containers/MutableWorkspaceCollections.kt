@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.containers
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Predicate
 import java.util.function.UnaryOperator
@@ -9,6 +10,7 @@ import kotlin.math.max
 /**
  * Sublist isn't update indexes for now
  */
+@ApiStatus.Internal
 public class MutableWorkspaceList<E>(collection: Collection<E>) : ArrayList<E>(collection) {
   private var updateAction: ((value: List<E>) -> Unit)? = null
 
@@ -112,6 +114,7 @@ public class MutableWorkspaceList<E>(collection: Collection<E>) : ArrayList<E>(c
   }
 }
 
+@ApiStatus.Internal
 public fun <T> Collection<T>.toMutableWorkspaceList(): MutableWorkspaceList<T> {
   return MutableWorkspaceList(this)
 }
@@ -119,6 +122,7 @@ public fun <T> Collection<T>.toMutableWorkspaceList(): MutableWorkspaceList<T> {
 /**
  * [MutableIterable.removeAll] and [MutableIterator.remove]  aren't update indexes for now
  */
+@ApiStatus.Internal
 public class MutableWorkspaceSet<E>(collection: Collection<E>) : LinkedHashSet<E>(max(2 * collection.size, 11)) {
   private var updateAction: ((Set<E>) -> Unit)? = null
 
@@ -198,6 +202,7 @@ public class MutableWorkspaceSet<E>(collection: Collection<E>) : LinkedHashSet<E
   }
 }
 
+@ApiStatus.Internal
 public fun <T> Collection<T>.toMutableWorkspaceSet(): MutableWorkspaceSet<T> {
   return MutableWorkspaceSet(this)
 }

@@ -34,8 +34,6 @@ import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
 
-data class ReplaceWithData(val pattern: String, val imports: List<String>, val replaceInWholeProject: Boolean)
-
 @OptIn(FrontendInternals::class)
 object ReplaceWithAnnotationAnalyzer {
     fun analyzeCallableReplacement(

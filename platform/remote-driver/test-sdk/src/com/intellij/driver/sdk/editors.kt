@@ -18,7 +18,7 @@ interface Editor {
   fun getLineHeight(): Int
   fun offsetToVisualPosition(offset: Int): VisualPosition
   fun visualPositionToXY(visible: VisualPosition): Point
-
+  fun getInlayModel(): InlayModel
 }
 @Remote("com.intellij.openapi.editor.VisualPosition")
 interface VisualPosition {
@@ -36,6 +36,38 @@ interface CaretModel {
   fun moveToLogicalPosition(position: LogicalPosition)
   fun moveToVisualPosition(pos: VisualPosition)
   fun getLogicalPosition(): LogicalPosition
+}
+
+@Remote("com.intellij.openapi.editor.InlayModel")
+interface InlayModel {
+  fun getInlineElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
+}
+
+@Remote("com.intellij.openapi.editor.Inlay")
+interface Inlay {
+  fun getRenderer(): EditorCustomElementRenderer
+  fun getOffset(): Int
+}
+
+@Remote("com.intellij.openapi.editor.EditorCustomElementRenderer")
+interface EditorCustomElementRenderer{
+  fun getText(): String?
+}
+
+@Remote("com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer")
+interface DeclarativeInlayRenderer{
+  fun getPresentationList(): InlayPresentationList
+}
+
+@Remote("com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList")
+interface InlayPresentationList{
+  fun getEntries(): Array<TextInlayPresentationEntry>
+}
+
+
+@Remote("com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry")
+interface TextInlayPresentationEntry{
+  fun getText(): String
 }
 
 @Remote("com.intellij.openapi.editor.LogicalPosition")

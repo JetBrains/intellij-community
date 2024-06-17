@@ -140,14 +140,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myManagerListeners.clear();
   }
 
-  public static void setupCreatedMavenProject(@NotNull Project project) {
-    setupCreatedMavenProject(getInstance(project).getImportingSettings());
-  }
-
-  public static void setupCreatedMavenProject(@NotNull MavenImportingSettings settings) {
-    settings.setWorkspaceImportEnabled(true);
-  }
-
   public ModificationTracker getModificationTracker() {
     return myModificationTracker;
   }
@@ -182,8 +174,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void doInit() {
-    forceWorkspaceImportIfNeeded();
-
     initLock.lock();
     try {
       if (isInitialized.getAndSet(true)) {
@@ -191,23 +181,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       }
       initPreloadMavenServices();
       initWorkers();
-      listenForSettingsChanges();
       updateTabTitles();
     }
     finally {
       initLock.unlock();
-    }
-  }
-
-  private void forceWorkspaceImportIfNeeded() {
-    var importingSettings = getImportingSettings();
-    if (!importingSettings.isWorkspaceImportForciblyTurnedOn()) {
-      if (!importingSettings.isWorkspaceImportEnabled()) {
-        importingSettings.setWorkspaceImportEnabled(true);
-        myProject.putUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY(), true);
-      }
-      // turn workspace import on if it is turned off once for each existing project
-      importingSettings.setWorkspaceImportForciblyTurnedOn(true);
     }
   }
 
@@ -352,7 +329,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public Path getProjectsTreeFile() {
-    return getProjectsTreesDir().resolve(myProject.getLocationHash()).resolve("tree.dat");
+    return getProjectCacheDir().resolve("tree.dat");
+  }
+
+  @ApiStatus.Internal
+  public Path getProjectCacheDir() {
+    return getProjectsTreesDir().resolve(myProject.getLocationHash());
   }
 
   @NotNull
@@ -364,8 +346,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private void initWorkers() {
     myWatcher = new MavenProjectManagerWatcher(myProject, myProjectsTree);
   }
-
-  protected abstract void listenForSettingsChanges();
 
   public void listenForExternalChanges() {
     myWatcher.start();

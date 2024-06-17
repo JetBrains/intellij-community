@@ -30,18 +30,17 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 public final class EditorModel {
   private static final Logger LOG = Logger.getInstance(EditorModel.class);
 
   private static final int EDITOR_LINE_BEGINNING_INDENT = 5;
-  private static final int PAGES_CASH_CAPACITY = 10;
+  private static final int PAGES_CACHE_CAPACITY = 10;
   private static final int MAX_AVAILABLE_LINE_LENGTH = 1000;
 
   private final DataProvider dataProvider;
@@ -50,7 +49,7 @@ public final class EditorModel {
   private final DocumentOfPagesModel documentOfPagesModel;
   private final Collection<RangeHighlighter> pageRangeHighlighters;
 
-  private final EvictingQueue<Page> pagesCash = EvictingQueue.create(PAGES_CASH_CAPACITY);
+  private final EvictingQueue<Page> pagesCache = EvictingQueue.create(PAGES_CACHE_CAPACITY);
   private final List<Long> numbersOfRequestedForReadingPages = new LinkedList<>();
   private final AtomicBoolean isUpdateRequested = new AtomicBoolean(false);
   private boolean isBrokenMode = false;
@@ -309,15 +308,25 @@ public final class EditorModel {
     if (documentOfPagesModel.getPagesAmount() == 0) {
       long pageNumber = targetVisiblePosition.pageNumber == 0
                         ? 0
-                        : targetVisiblePosition.pageNumber == pagesAmountInFile  // to avoid redundant document rebuilding
-                          ? targetVisiblePosition.pageNumber - 2
-                          : targetVisiblePosition.pageNumber - 1;
-      Page page = tryGetPageFromCash(pageNumber);
-      if (page != null) {
-        setNextPageIntoDocument(page);
+                        : targetVisiblePosition.pageNumber - 1;
+      long prevPageNumber = pageNumber - 1;
+      boolean isPrevPageNeeded = prevPageNumber >= 0;
+      long nextPageNumber = pageNumber + 1;
+      boolean isNextPageNeeded = nextPageNumber < pagesAmountInFile;
+
+      int expectedNumberOfPages = 1 + (isPrevPageNeeded ? 1 : 0) + (isNextPageNeeded ? 1 : 0);
+      List<Page> pagesFromCache = Stream.of(
+        tryGetPageFromCache(prevPageNumber), tryGetPageFromCache(pageNumber), tryGetPageFromCache(nextPageNumber)
+      ).toList();
+      boolean allRequestedPagesAreCached = pagesFromCache.stream().filter(Objects::nonNull).count() == expectedNumberOfPages;
+
+      if (allRequestedPagesAreCached) {
+        pagesFromCache.stream().filter(Objects::nonNull).forEach(this::setNextPageIntoDocument);
       }
       else {
-        requestReadPage(pageNumber);
+        if (isPrevPageNeeded && pagesFromCache.get(0) == null) requestReadPage(prevPageNumber);
+        if (pagesFromCache.get(1) == null) requestReadPage(pageNumber);
+        if (isNextPageNeeded && pagesFromCache.get(2) == null) requestReadPage(nextPageNumber);
         return;
       }
     }
@@ -351,7 +360,7 @@ public final class EditorModel {
 
     long nextPageNumberToAdd = tryGetNextPageNumberToAdd(pagesAmountInFile);
     if (nextPageNumberToAdd != -1) {
-      Page nextPageToAdd = tryGetPageFromCash(nextPageNumberToAdd);
+      Page nextPageToAdd = tryGetPageFromCache(nextPageNumberToAdd);
       if (nextPageToAdd != null) {
         setNextPageIntoDocument(nextPageToAdd);
         requestUpdate();
@@ -362,7 +371,7 @@ public final class EditorModel {
       return;
     }
 
-    pagesCash.clear();
+    pagesCache.clear();
 
     if (isNeedToShowCaret) {
       if (isLocalScrollBarStabilized) {
@@ -393,12 +402,14 @@ public final class EditorModel {
     Page lastPageInDocument = documentOfPagesModel.getLastPage();
     if (lastPageInDocument.isLastInFile() != (lastPageInDocument.getPageNumber() == pagesAmountInFile - 1)) {
       removeLastPageFromDocument();
-      pagesCash.removeIf(page -> lastPageInDocument.getPageNumber() == page.getPageNumber());
+      pagesCache.removeIf(page -> lastPageInDocument.getPageNumber() == page.getPageNumber());
     }
   }
 
   private boolean isNeedToTurnOnSoftWrapping() {
-    return !editor.getSettings().isUseSoftWraps() && isExistLineWithTooLargeLength();
+    return Boolean.TRUE.equals(editor.getUserData(LargeFileEditor.LARGE_FILE_EDITOR_SOFT_WRAP_KEY)) &&
+           !editor.getSettings().isUseSoftWraps() &&
+           isExistLineWithTooLargeLength();
   }
 
   // TODO: 2019-05-13 can be optimized by checking lines only for last added page
@@ -887,7 +898,7 @@ public final class EditorModel {
         return;
       }
 
-      pagesCash.add(page);
+      pagesCache.add(page);
       numbersOfRequestedForReadingPages.remove(pageNumber);
       requestUpdate();
     });
@@ -900,14 +911,14 @@ public final class EditorModel {
 
   private void removeLastPageFromDocument() {
     if (documentOfPagesModel.getPagesAmount() > 0) {
-      pagesCash.add(documentOfPagesModel.getLastPage());
+      pagesCache.add(documentOfPagesModel.getLastPage());
       runCaretAndSelectionListeningTransparentCommand(
         () -> documentOfPagesModel.removeLastPage(dataProvider.getProject()));
     }
   }
 
   private void deleteAllPagesFromDocument() {
-    pagesCash.addAll(documentOfPagesModel.getPagesList());
+    pagesCache.addAll(documentOfPagesModel.getPagesList());
     runCaretAndSelectionListeningTransparentCommand(
       () -> documentOfPagesModel.removeAllPages(dataProvider.getProject()));
   }
@@ -918,8 +929,8 @@ public final class EditorModel {
     isRealCaretAndSelectionCanAffectOnTarget = true;
   }
 
-  private Page tryGetPageFromCash(long pageNumber) {
-    for (Page page : pagesCash) {
+  private Page tryGetPageFromCache(long pageNumber) {
+    for (Page page : pagesCache) {
       if (page.getPageNumber() == pageNumber) {
         return page;
       }
@@ -1068,7 +1079,7 @@ public final class EditorModel {
   @RequiresEdt
   public void onFileChanged(Page lastPage, boolean isLengthIncreased) {
     isLocalScrollBarStabilized = false;
-    pagesCash.clear();
+    pagesCache.clear();
 
     if (isLengthIncreased) {
       runCaretAndSelectionListeningTransparentCommand(() -> {
@@ -1083,7 +1094,7 @@ public final class EditorModel {
     }
 
     if (lastPage != null) {
-      pagesCash.add(lastPage);
+      pagesCache.add(lastPage);
     }
     update();
   }
@@ -1091,7 +1102,7 @@ public final class EditorModel {
   @RequiresEdt
   public void onEncodingChanged() {
     isLocalScrollBarStabilized = false;
-    pagesCash.clear();
+    pagesCache.clear();
     runCaretAndSelectionListeningTransparentCommand(() -> {
       documentOfPagesModel.removeAllPages(dataProvider.getProject());
     });

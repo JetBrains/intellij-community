@@ -62,8 +62,8 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   companion object {
     // XmlExtensionAdapter.createInstance takes a lock on itself.
     // If it's called without EP lock and tries to add an EP listener, we can get a deadlock because of lock ordering violation
-    // (EP->adapter in one thread, adapter->EP in the other thread)
-    // Could happen if extension constructor called addExtensionPointListener on EP.
+    // (EP->adapter in one thread, adapter->EP in the other thread).
+    // Could happen if an extension constructor calls addExtensionPointListener on EP.
     // So, updating of listeners is a lock-free as a solution.
     private val listenerUpdater =
       AtomicReferenceFieldUpdater.newUpdater(ExtensionPointImpl::class.java, PersistentList::class.java, "listeners")
@@ -442,7 +442,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
 
   /**
    * Put extension point in read-only mode and replace existing extensions by supplied.
-   * For tests this method is more preferable than [.registerExtension] because makes registration more isolated and strict
+   * For tests this method is more preferable than [registerExtension] because makes registration more isolated and strict
    * (no one can modify extension point until `parentDisposable` is not disposed).
    *
    *
@@ -827,8 +827,8 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
                              componentManager: ComponentManager): ExtensionComponentAdapter
 
   /**
-   * [.clearCache] is not called.
-   * `adapters` is modified directly without copying - method must be called only during start-up.
+   * [clearCache] is not called.
+   * `adapters` is modified directly without copying - the method must be called only during start-up.
    */
   @Synchronized
   fun registerExtensions(descriptors: List<ExtensionDescriptor>,
@@ -1048,7 +1048,7 @@ private fun isInsideClassInitializer(trace: Array<StackTraceElement>): Boolean {
   }
 }
 
-// the instantiation of extension is done in a safe manner always — will be logged as error with a plugin id
+// the instantiation of an extension is done in a safe manner always — will be logged as an error with a plugin id
 private fun <T : Any> getOrCreateExtensionInstance(adapter: ExtensionComponentAdapter, componentManager: ComponentManager): T? {
   if (!checkThatClassloaderIsActive(adapter)) {
     return null

@@ -23,7 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.inspections.*;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
 
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
     int[] toIgnore = ignoreEverythingExceptInspections();
-    PlatformTestUtil.newPerformanceTest("many typos highlighting", () -> {
+    PerformanceTestUtil.newPerformanceTest("many typos highlighting", () -> {
       assertSize(typoCount, CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), toIgnore, false));
     }).start();
   }
@@ -79,7 +79,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     assertEmpty(infos);
     LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
-    PlatformTestUtil.newPerformanceTest("many whitespaces highlighting", () -> {
+    PerformanceTestUtil.newPerformanceTest("many whitespaces highlighting", () -> {
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       assertEmpty(runLocalInspections());
     }).start();
@@ -123,7 +123,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
   }
 
   private static void doSplitterPerformanceTest(String text, Splitter splitter) {
-    PlatformTestUtil.newPerformanceTest("long word for spelling", () -> {
+    PerformanceTestUtil.newPerformanceTest("long word for spelling", () -> {
       try {
         splitter.split(text, TextRange.allOf(text), (textRange) -> {});
       }

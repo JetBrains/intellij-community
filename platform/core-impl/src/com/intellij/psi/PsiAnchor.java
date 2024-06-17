@@ -5,6 +5,7 @@ package com.intellij.psi;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
+import com.intellij.model.Pointer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -33,12 +34,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public abstract class PsiAnchor {
-  private static final Logger LOG = Logger.getInstance(PsiAnchor.class);
+public abstract class PsiAnchor implements Pointer<PsiElement> {
+
   public abstract @Nullable PsiElement retrieve();
   public abstract PsiFile getFile();
   public abstract int getStartOffset();
   public abstract int getEndOffset();
+
+  @Override
+  public @Nullable PsiElement dereference() {
+    return retrieve();
+  }
 
   public static @NotNull PsiAnchor create(@NotNull PsiElement element) {
     PsiUtilCore.ensureValid(element);
@@ -47,7 +53,9 @@ public abstract class PsiAnchor {
     if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
       PsiElement restored = anchor.retrieve();
       if (!element.equals(restored)) {
-        LOG.error("Cannot restore element " + element + " of " + element.getClass() + " from anchor " + anchor + ", getting " + restored + " instead");
+        Logger.getInstance(PsiAnchor.class)
+          .error("Cannot restore element " + element  + " of " + element.getClass()
+                 + " from anchor " + anchor + ", getting " + restored + " instead");
       }
     }
     return anchor;
@@ -151,7 +159,7 @@ public abstract class PsiAnchor {
   }
 
   /**
-   * Retrieves PSI element from anchor or throws {@link PsiInvalidElementAccessException} in case anchor has not survived.
+   * Retrieves a PSI element from anchor or throws {@link PsiInvalidElementAccessException} in case anchor has not survived.
    */
   public @NotNull PsiElement retrieveOrThrow() {
     PsiElement element = retrieve();

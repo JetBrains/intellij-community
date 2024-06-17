@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.url
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 // TODO to make architecture extensible by other plugins, we should make extension points mechanism
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.TestOnly
  *                          If provided, these base paths will be added during object initialization.
  *                          Defaults to an empty list.
  */
+@ApiStatus.Internal
 public open class UrlRelativizerImpl(basePathNameToUrl: List<Pair<String, String>> = listOf()) : UrlRelativizer {
 
   internal val basePaths = mutableListOf<BasePath>()

@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.kryo5.objenesis.instantiator.ObjectInstantiator
 import com.esotericsoftware.kryo.kryo5.serializers.DefaultSerializers
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.ImmutableEntitiesBarrel

@@ -19,7 +19,7 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 
 class GradleJvmResolver(
   private val gradleVersion: GradleVersion,
-  private val versionRestriction: VersionRestriction
+  private val javaVersionRestriction: JavaVersionRestriction
 ) {
 
   private val sdkType = JavaSdk.getInstance()
@@ -33,7 +33,7 @@ class GradleJvmResolver(
     return GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)
            && GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
            && isJavaSupportedByGradleToolingApi(gradleVersion, javaVersion)
-           && !versionRestriction.isRestricted(gradleVersion, javaVersion)
+           && !javaVersionRestriction.isRestricted(gradleVersion, javaVersion)
   }
 
   private fun throwSdkNotFoundException(): Nothing {
@@ -126,27 +126,17 @@ class GradleJvmResolver(
     return sdk
   }
 
-  fun interface VersionRestriction {
-
-    fun isRestricted(gradleVersion: GradleVersion, source: JavaVersion): Boolean
-
-    companion object {
-      @JvmField
-      val NO = VersionRestriction { _, _ -> false }
-    }
-  }
-
   companion object {
+
     @JvmStatic
-    fun resolveGradleJvm(gradleVersion: GradleVersion, parentDisposable: Disposable): Sdk {
-      return GradleJvmResolver(gradleVersion, VersionRestriction.NO)
+    fun resolveGradleJvm(gradleVersion: GradleVersion, parentDisposable: Disposable, javaVersionRestriction: JavaVersionRestriction): Sdk {
+      return GradleJvmResolver(gradleVersion, javaVersionRestriction)
         .resolveGradleJvmImpl(parentDisposable)
     }
 
     @JvmStatic
-    @JvmOverloads
-    fun resolveGradleJvmHomePath(gradleVersion: GradleVersion, versionRestriction: VersionRestriction = VersionRestriction.NO): String {
-      return GradleJvmResolver(gradleVersion, versionRestriction)
+    fun resolveGradleJvmHomePath(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction): String {
+      return GradleJvmResolver(gradleVersion, javaVersionRestriction)
         .resolveGradleJvmHomePathImpl()
     }
   }

@@ -135,6 +135,53 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
     doTest(schema, text, "Add missing property 'baz'", afterFix);
   }
 
+  public void testAddPropInHashMapping() {
+    @Language("JSON") String schema = """
+      {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "addresses": {
+             "type": "array",
+             "items": {
+               "type": "object",
+               "properties": {
+                 "street": {
+                   "type": "string"
+                 },
+                 "city": {
+                   "type": "string"
+                 },
+                 "postalCode": {
+                   "type": "string",
+                   "pattern": "\\\\d{5}"
+                 }
+               },
+               "required": ["street", "city", "postalCode"]
+             }
+          }
+        },
+        "required": ["name", "age"]
+      }""";
+    String text = """
+      name: masha
+      age: 18
+      addresses:
+        - <warning>{ city: DefaultCity<caret> }</warning>""";
+    String afterFix = """
+      name: masha
+      age: 18
+      addresses:
+        - { city: DefaultCity, street:,postalCode: }""";
+    doTest(schema, text, "Add missing properties 'postalCode', 'street'", afterFix);
+  }
+
   public void testAddPropAfterObjectProp_wrongFormatting() {
     @Language("JSON") String schema = """
       {
@@ -235,6 +282,48 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
     doTest(SCHEMA_WITH_NESTING, "image: \n" +
                                 "<warning descr=\"Schema validation: Missing required property 'tag'\"> <caret>  </warning>", "Add missing property 'tag'", "image:\n" +
                                                                                                                                            "  tag: ");
+  }
+
+  public void testSuggestEnumValuesFix() {
+    @Language("JSON") String schema = """
+      {
+        "required": ["x", "y"],
+        "properties": {
+          "x": {
+            "enum": ["xxx", "yyy", "zzz"]
+          },
+          "y": {
+            "enum": [1, 2, 3, 4, 5]
+          }
+        }
+      }""";
+    doTest(schema, """
+      "x"<warning descr="Schema validation: Value should be one of: \\"xxx\\", \\"yyy\\", \\"zzz\\""><caret>:</warning>
+      """, "Replace with allowed value", "\"x\": xxx\n");
+    doTest(schema, """
+      "y": <warning descr="Schema validation: Value should be one of: 1, 2, 3, 4, 5"><caret>no</warning>
+      """, "Replace with allowed value", "\"y\": 1\n");
+  }
+  
+  public void testSuggestEnumValuesFixInjection() {
+    myFixture.setCaresAboutInjection(false);
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "inner": {
+            "enum": ["xxx", "yyy", "zzz"]
+          },
+          "outer": {
+            "x-intellij-language-injection": "yaml"
+          }
+        }
+      }""";
+    doTest(schema, """
+      "outer": |
+        "inner": <warning descr="Schema validation: Value should be one of: \\"xxx\\", \\"yyy\\", \\"zzz\\""><caret>"oops"</warning>""",
+           "Replace with allowed value", """
+             "outer": |
+               "inner": xxx""");
   }
 
   @Language("JSON") private static final String SCHEMA_WITH_NESTING = """

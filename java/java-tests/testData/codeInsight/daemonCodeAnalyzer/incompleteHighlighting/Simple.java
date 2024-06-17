@@ -1,4 +1,5 @@
 import java.util.Map;
+import java.util.Set;
 import java.io.IOException;
 import java.util.function.IntFunction;
 import <info descr="Not resolved until the project is fully loaded">my</info>.<info descr="Not resolved until the project is fully loaded">unknown</info>.<info descr="Not resolved until the project is fully loaded">pkg</info>.<info descr="Not resolved until the project is fully loaded">Anno</info>;
@@ -82,9 +83,33 @@ public class Simple {
     if (<error descr="Inconvertible types; cannot cast 'java.lang.String' to 'Unknown'">s instanceof <info descr="Not resolved until the project is fully loaded">Unknown</info></error>) {}
   }
   
+  void testEquality(<info descr="Not resolved until the project is fully loaded">Unknown</info> u, <info descr="Not resolved until the project is fully loaded">Unknown2</info> u2,
+                    char c, boolean b) {
+    if (u == u2) {}
+    if (u != u2) {}
+    if (<error descr="Operator '==' cannot be applied to 'char', 'boolean'">c == b</error>) {}
+  }
+  
+  @<info descr="Not resolved until the project is fully loaded">Anno</info>(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">CONST</info>)
+  void testAssign(<info descr="Not resolved until the project is fully loaded">Unknown</info> u) {
+    u.<info descr="Not resolved until the project is fully loaded">field</info> = 2;
+  }
+  
   void callOnArray(<info descr="Not resolved until the project is fully loaded">Unknown</info> u) {
     u.<info descr="Not resolved until the project is fully loaded">foo</info>()[0].<info descr="Not resolved until the project is fully loaded">blah</info>();
   }
+  
+  void initArray() {
+    <info descr="Not resolved until the project is fully loaded">Cls</info>[] array = {<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">createCls</info>()};
+  }
+  
+  void callOverloaded(Set<<info descr="Not resolved until the project is fully loaded">Cls</info>> mySet) {
+    overloaded(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">getValue</info>());
+    mySet.toArray(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">EMPTY_ARRAY</info>);
+  }
+  
+  void overloaded(int x) {}
+  void overloaded(boolean x) {}
   
   static class Clss implements <info descr="Not resolved until the project is fully loaded">MyInterface</info> {
     void run() {

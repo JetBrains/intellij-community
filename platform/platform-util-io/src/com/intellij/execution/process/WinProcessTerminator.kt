@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("WinProcessTerminator")
+@file:Internal
 
 package com.intellij.execution.process
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 

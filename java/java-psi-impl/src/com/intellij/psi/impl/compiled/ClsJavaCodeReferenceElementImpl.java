@@ -20,10 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiAnnotatedJavaCodeReferenceElement {
   private final PsiElement myParent;
@@ -92,7 +89,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @Override
   public @NotNull String getCanonicalText(boolean annotated, PsiAnnotation @Nullable [] annotations) {
     String text = getCanonicalText();
-    if (!annotated || annotations == null) return text;
+    if (!annotated) return text;
 
     StringBuilder sb = new StringBuilder();
 
@@ -108,7 +105,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       simpleNamePos = prefix.length() + 1;
     }
 
-    PsiNameHelper.appendAnnotations(sb, Arrays.asList(annotations), true);
+    PsiNameHelper.appendAnnotations(sb, annotations == null ? Collections.emptyList() : Arrays.asList(annotations), true);
 
     int typeArgPos = text.indexOf('<', simpleNamePos);
     if (typeArgPos == -1) {

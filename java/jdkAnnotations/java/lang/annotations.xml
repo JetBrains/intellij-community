@@ -499,6 +499,9 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.lang.Double java.lang.Double valueOf(double)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -524,6 +527,9 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+  </item>
+  <item name='java.lang.Float java.lang.Float valueOf(float)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.Integer int bitCount(int)'>
     <annotation name='org.jetbrains.annotations.Range'>
@@ -572,7 +578,10 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
-  <item name='java.lang.Integer java.lang.Integer valueOf(java.lang.String)'>
+    <item name='java.lang.Integer java.lang.Integer valueOf(int)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.Integer java.lang.Integer valueOf(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.Integer java.lang.Integer valueOf(java.lang.String, int)'>

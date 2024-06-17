@@ -8,7 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl
+import org.jetbrains.plugins.terminal.block.TerminalWidgetImpl
 
 /**
  * Terminal runner that runs the terminal with the new block UI if [isBlockTerminalEnabled] is true.
@@ -43,6 +43,7 @@ open class LocalBlockTerminalRunner(project: Project) : LocalTerminalDirectRunne
     const val BLOCK_TERMINAL_FISH_REGISTRY: String = "terminal.new.ui.fish"
     const val BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY: String = "terminal.new.ui.powershell.win11"
     const val BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY: String = "terminal.new.ui.powershell.win10"
+    const val BLOCK_TERMINAL_POWERSHELL_UNIX_REGISTRY: String = "terminal.new.ui.powershell.unix"
     private const val BLOCK_TERMINAL_SHOW_PROMOTION: String = "terminal.new.ui.show.promotion"
   }
 }

@@ -51,7 +51,11 @@ internal object K2MoveTopLevelRefactoringAction : KotlinMoveRefactoringAction {
             val targetSourceRoot = config.getNullableString("targetSourceRoot") ?: ""
             val targetPackage = config.getNullableString("targetPackage")
             val targetDescriptor = if (targetPackage != null) {
-                val fileName = sourceDescriptor.elements.first().name?.capitalizeAsciiOnly() + ".kt"
+                val fileName = if (sourceDescriptor.elements.size == 1) {
+                    sourceDescriptor.elements.first().name?.capitalizeAsciiOnly() + ".kt"
+                } else {
+                    sourceDescriptor.elements.first().containingKtFile.name
+                }
                 K2MoveTargetDescriptor.File(fileName, FqName(targetPackage), rootDir.findDirectory(targetSourceRoot)?.toPsiDirectory(project)!!)
             } else {
                 val targetFile = PsiManager.getInstance(project).findFile(rootDir.findFileByRelativePath(config.getString("targetFile"))!!)

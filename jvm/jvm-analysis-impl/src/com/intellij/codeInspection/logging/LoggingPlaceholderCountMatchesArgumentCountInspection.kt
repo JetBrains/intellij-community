@@ -8,11 +8,14 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
+
+private const val STRUCTURED_ARGUMENT_CLASS = "net.logstash.logback.argument.StructuredArgument"
 
 class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
@@ -73,12 +76,22 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
             if (placeholderCountHolder.count <= finalArgumentCount) ResultType.SUCCESS else ResultType.PARTIAL_PLACE_HOLDER_MISMATCH
           }
           else {
-            if (placeholderCountHolder.count == finalArgumentCount) ResultType.SUCCESS else ResultType.PLACE_HOLDER_MISMATCH
+            if (placeholderCountHolder.count == finalArgumentCount) ResultType.SUCCESS else calculateSlf4jStructureLogging(placeholderCountHolder, context, finalArgumentCount)
           }
         }
         PlaceholderLoggerType.SLF4J_EQUAL_PLACEHOLDERS, PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS, PlaceholderLoggerType.AKKA_PLACEHOLDERS -> {
           if (placeholderCountHolder.status == PlaceholdersStatus.PARTIAL) {
-            if (placeholderCountHolder.count <= finalArgumentCount) ResultType.SUCCESS else ResultType.PARTIAL_PLACE_HOLDER_MISMATCH
+            if (placeholderCountHolder.count <= finalArgumentCount) {
+              ResultType.SUCCESS
+            }
+            else {
+              if (context.loggerType == PlaceholderLoggerType.SLF4J_EQUAL_PLACEHOLDERS) {
+                calculateSlf4jStructureLogging(placeholderCountHolder, context, finalArgumentCount)
+              }
+              else {
+                ResultType.PARTIAL_PLACE_HOLDER_MISMATCH
+              }
+            }
           }
           else {
             if (placeholderCountHolder.count == finalArgumentCount) ResultType.SUCCESS else ResultType.PLACE_HOLDER_MISMATCH
@@ -110,6 +123,31 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       registerProblem(holder, context.logStringArgument, Result(finalArgumentCount, placeholderCountHolder.count, resultType))
 
       return true
+    }
+
+    /**
+     * Calculate results for SLF4J if previous calculation failed and check if arguments can be `StructuredArgument`.
+     * In this case, IDEA shouldn't highlight it because these arguments can be used in json events only
+     */
+    private fun calculateSlf4jStructureLogging(placeholderCountHolder: PlaceholderCountResult, context: PlaceholderContext, finalArgumentCount: Int): ResultType {
+      if (placeholderCountHolder.count >= finalArgumentCount) {
+        //by default
+        return ResultType.PLACE_HOLDER_MISMATCH
+      }
+      if (placeholderCountHolder.count < 0 || context.placeholderParameters.size < finalArgumentCount) {
+        return ResultType.PLACE_HOLDER_MISMATCH
+      }
+
+      for (argumentIndex in (placeholderCountHolder.count)..<finalArgumentCount) {
+        val argument = context.placeholderParameters.getOrNull(argumentIndex) ?: continue
+        val argumentType = argument.getExpressionType() ?: continue
+        if (argumentType.equalsToText(STRUCTURED_ARGUMENT_CLASS) ||
+            InheritanceUtil.isInheritor(argumentType, STRUCTURED_ARGUMENT_CLASS)) {
+          continue
+        }
+        return ResultType.PLACE_HOLDER_MISMATCH
+      }
+      return ResultType.SUCCESS
     }
 
     private fun registerProblem(holder: ProblemsHolder, logStringArgument: UExpression, result: Result) {

@@ -6,9 +6,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -29,7 +29,7 @@ internal fun getK2FileTextWithErrors(file: KtFile): String {
             diagnostics
                 // TODO: For some reason, there is a "redeclaration" error on every declaration for K2 tests
                 .filter { it.factoryName != "CLASSIFIER_REDECLARATION" && it.factoryName != "PACKAGE_CONFLICTS_WITH_CLASSIFIER" }
-                .filter { it.severity == Severity.ERROR }
+                .filter { it.severity == KaSeverity.ERROR }
                 .map { it.defaultMessage.replace(oldChar = '\n', newChar = ' ') }
                 .toList()
         }

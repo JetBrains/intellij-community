@@ -6,6 +6,7 @@ import com.intellij.ide.bookmark.providers.LineBookmarkProvider
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileFeaturesProvider.Fields.FILETYPE_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileFeaturesProvider.Fields.FILETYPE_MATCHES_QUERY_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileFeaturesProvider.Fields.IS_BOOKMARK_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileFeaturesProvider.Fields.IS_DIRECTORY_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileFeaturesProvider.Fields.IS_EXACT_MATCH_DATA_KEY
@@ -88,6 +89,26 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
       .withQuery("${testFile.virtualFile.parent.name.last()}\\${testFile.virtualFile.name}")
       .isEqualTo(true)
+  }
+
+  fun `test file type extension matches`() {
+    checkThatFeature(FILETYPE_MATCHES_QUERY_DATA_KEY)
+      .ofElement(testFile)
+      .withQuery("unrelated.txt")
+      .isEqualTo(true)
+  }
+
+  fun `test file type extension matches case insensitive`() {
+    checkThatFeature(FILETYPE_MATCHES_QUERY_DATA_KEY)
+      .ofElement(testFile)
+      .withQuery("UNRELATED.TXT")
+      .isEqualTo(true)
+  }
+  fun `test file type extension doesnt match double extension`() {
+    checkThatFeature(FILETYPE_MATCHES_QUERY_DATA_KEY)
+      .ofElement(testFile)
+      .withQuery("test.File")
+      .isEqualTo(false)
   }
 
   fun `test exact relative path is true with slash`() {

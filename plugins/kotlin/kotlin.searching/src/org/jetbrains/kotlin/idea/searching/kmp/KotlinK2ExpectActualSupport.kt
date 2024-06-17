@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.searching.kmp
 
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.ExpectActualSupport
@@ -27,7 +27,7 @@ class KotlinK2ExpectActualSupport: ExpectActualSupport {
         if (declaration.isExpectDeclaration()) return declaration
         if (!declaration.isEffectivelyActual()) return null
         return analyze(declaration) {
-            val symbol: KtDeclarationSymbol = declaration.getSymbol()
+            val symbol: KaDeclarationSymbol = declaration.getSymbol()
             (symbol.getExpectsForActual().mapNotNull { (it.psi as? KtDeclaration) }).firstOrNull()
         }
     }

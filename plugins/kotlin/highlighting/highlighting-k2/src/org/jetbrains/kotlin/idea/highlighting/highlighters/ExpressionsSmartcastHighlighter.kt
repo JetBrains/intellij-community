@@ -3,14 +3,14 @@ package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiverSmartCastKind
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.psi.*
 
-context(KtAnalysisSession)
+context(KaSession)
 internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
     override fun visitExpression(expression: KtExpression) {
         highlightExpression(expression)
@@ -29,7 +29,7 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
               KotlinBaseHighlightingBundle.message(
                 "0.smart.cast.to.1",
                 receiverName,
-                it.type.asStringForDebugging()
+                it.type.toString()
               )
             )
             if (builder != null) {
@@ -42,7 +42,7 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
               KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
               KotlinBaseHighlightingBundle.message(
                 "smart.cast.to.0",
-                info.smartCastType.asStringForDebugging()
+                info.smartCastType.toString()
               )
             )
             if (builder != null) {

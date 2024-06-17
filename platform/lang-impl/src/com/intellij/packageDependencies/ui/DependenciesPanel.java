@@ -399,7 +399,8 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     return new AsyncTreeModel(
       new BackgroundTreeModel(
         () -> Objects.requireNonNull(PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE))
-          .createTreeModel(myProject, deps, marker, mySettings)
+          .createTreeModel(myProject, deps, marker, mySettings),
+        false
       ), this
     );
   }

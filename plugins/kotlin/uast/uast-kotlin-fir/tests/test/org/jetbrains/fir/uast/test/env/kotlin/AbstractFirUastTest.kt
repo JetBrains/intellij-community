@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.fir.uast.test.env.kotlin
 
@@ -46,9 +46,9 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun registerExtensionPointAndServiceIfNeeded() {
         val area = Extensions.getRootArea()
         CoreApplicationEnvironment.registerExtensionPoint(
-            area,
-            UastLanguagePlugin.extensionPointName,
-            UastLanguagePlugin::class.java
+          area,
+          UastLanguagePlugin.EP,
+          UastLanguagePlugin::class.java
         )
         area.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME).registerExtension(KotlinEvaluatorExtension(), project)
         val service = FirCliKotlinUastResolveProviderService()

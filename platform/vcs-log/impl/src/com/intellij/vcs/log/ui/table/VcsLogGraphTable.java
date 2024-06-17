@@ -43,7 +43,6 @@ import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -485,11 +484,18 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
   @NotNull
   Point getPointInCell(@NotNull Point clickPoint, @NotNull VcsLogColumn<?> vcsLogColumn) {
     int columnIndex = getColumnViewIndex(vcsLogColumn);
-    int width = getColumnDataRectLeftX(columnIndex);
-    return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, getRowHeight()));
+    int left = getColumnDataRectLeft(columnIndex);
+    int top = getCellRectTop(clickPoint.y);
+    return new Point(clickPoint.x - left, clickPoint.y - top);
   }
 
-  int getColumnDataRectLeftX(int viewColumnIndex) {
+  private int getCellRectTop(int y) {
+    int rowHeight = getRowHeight();
+    int rowIndex = y / rowHeight;
+    return rowIndex * rowHeight;
+  }
+
+  int getColumnDataRectLeft(int viewColumnIndex) {
     int x = getCellRect(0, viewColumnIndex, false).x;
     if (!ExperimentalUI.isNewUI()) return x;
     return x + VcsLogNewUiTableCellRenderer.getAdditionalOffset(viewColumnIndex);

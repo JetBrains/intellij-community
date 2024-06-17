@@ -303,7 +303,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     List<Tools> localTools = new ArrayList<>();
     List<Tools> globalSimpleTools = new ArrayList<>();
     initializeTools(globalTools, localTools, globalSimpleTools);
-    appendPairedInspectionsForUnfairTools(globalTools, globalSimpleTools, localTools);
 
     runGlobalTools(scope, inspectionManager, globalTools, isOfflineInspections);
     TraceUtil.runWithSpanThrows(tracer, "externalInspectionsAnalysis", (__) -> {
@@ -877,51 +876,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       callback.setDone();
     });
     return callback;
-  }
-
-  private void appendPairedInspectionsForUnfairTools(@NotNull List<? super Tools> globalTools,
-                                                     @NotNull List<? super Tools> globalSimpleTools,
-                                                     @NotNull List<Tools> localTools) {
-    Tools[] lArray = localTools.toArray(new Tools[0]);
-    for (Tools tool : lArray) {
-      LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)tool.getTool();
-      LocalInspectionTool localTool = toolWrapper.getTool();
-      if (localTool instanceof PairedUnfairLocalInspectionTool) {
-        String batchShortName = ((PairedUnfairLocalInspectionTool)localTool).getInspectionForBatchShortName();
-        InspectionProfile currentProfile = getCurrentProfile();
-        InspectionToolWrapper<?, ?> batchInspection;
-        InspectionToolWrapper<?, ?> pairedWrapper = currentProfile.getInspectionTool(batchShortName, getProject());
-        batchInspection = pairedWrapper != null ? pairedWrapper.createCopy() : null;
-        if (batchInspection != null && !getTools().containsKey(batchShortName)) {
-          // add to existing inspections to run
-          InspectionProfileEntry batchTool = batchInspection.getTool();
-          ScopeToolState defaultState = tool.getDefaultState();
-          ToolsImpl newTool = new ToolsImpl(batchInspection, defaultState.getLevel(), true, defaultState.isEnabled());
-          for (ScopeToolState state : tool.getTools()) {
-            NamedScope scope = state.getScope(getProject());
-            if (scope != null) {
-              newTool.addTool(scope, batchInspection, state.isEnabled(), state.getLevel());
-            }
-          }
-          if (batchTool instanceof LocalInspectionTool) {
-            localTools.add(newTool);
-          }
-          else if (batchTool instanceof GlobalInspectionTool globalTool) {
-            if (globalTool.isGlobalSimpleInspectionTool()) {
-              globalSimpleTools.add(newTool);
-            }
-            else {
-              globalTools.add(newTool);
-            }
-          }
-          else {
-            throw new AssertionError(batchTool);
-          }
-          getTools().put(batchShortName, newTool);
-          batchInspection.initialize(this);
-        }
-      }
-    }
   }
 
   public EnabledInspectionsProvider.ToolWrappers getWrappersFromTools(

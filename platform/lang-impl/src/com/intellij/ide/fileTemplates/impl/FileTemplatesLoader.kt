@@ -13,7 +13,7 @@ import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.ComponentStoreOwner
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor

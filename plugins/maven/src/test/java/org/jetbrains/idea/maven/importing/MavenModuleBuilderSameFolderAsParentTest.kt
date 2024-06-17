@@ -59,19 +59,10 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
     setModuleNameAndRoot("module", projectPath)
     setParentProject(customPomXml)
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    if (supportsImportOfNonExistingFolders()) {
-      val contentRoots = ArrayUtil.mergeArrays(allDefaultResources(),
-                                               "src/main/java",
-                                               "src/test/java")
-      assertRelativeContentRoots("project", *contentRoots)
-    }
-    else {
-      assertRelativeContentRoots("project",
-                                 "src/main/java",
-                                 "src/main/resources",
-                                 "src/test/java"
-      )
-    }
+    val contentRoots = ArrayUtil.mergeArrays(allDefaultResources(),
+                                             "src/main/java",
+                                             "src/test/java")
+    assertRelativeContentRoots("project", *contentRoots)
     assertRelativeContentRoots("module", "")
     val module = MavenProjectsManager.getInstance(project).findProject(getModule("module"))
     readAction {

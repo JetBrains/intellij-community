@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -1296,7 +1295,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
       try {
         EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-        DataContext context = AnActionEvent.getInjectedDataContext(CaretSpecificDataContext.create(myEditor.getDataContext(), this));
+        DataContext context = AnActionEvent.getInjectedDataContext(EditorActionHandler.caretDataContext(myEditor.getDataContext(), this));
         Caret caret = context.getData(CommonDataKeys.CARET);
         assert caret != null;
         handler.execute(caret.getEditor(), caret, context);
@@ -1376,12 +1375,12 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   @Override
   public @NotNull CaretVisualAttributes getVisualAttributes() {
     CaretVisualAttributes attrs = getUserData(VISUAL_ATTRIBUTES_KEY);
-    return attrs == null ? CaretVisualAttributes.DEFAULT : attrs;
+    return attrs == null ? CaretVisualAttributes.getDefault() : attrs;
   }
 
   @Override
   public void setVisualAttributes(@NotNull CaretVisualAttributes attributes) {
-    putUserData(VISUAL_ATTRIBUTES_KEY, attributes == CaretVisualAttributes.DEFAULT ? null : attributes);
+    putUserData(VISUAL_ATTRIBUTES_KEY, attributes == CaretVisualAttributes.getDefault() ? null : attributes);
     requestRepaint(myVerticalInfo);
   }
 

@@ -112,7 +112,7 @@ class ExpressionsOfTypeProcessor(
     }
 
     private val tasks = ArrayDeque<Task>()
-    private val taskElementSet = HashSet<PsiElement>()
+    private val tasksSet = HashSet<Task>()
 
     private val scopesToUsePlainSearch = LinkedHashMap<KtFile, ArrayList<PsiElement>>()
 
@@ -166,8 +166,8 @@ class ExpressionsOfTypeProcessor(
         return searchScope is LocalSearchScope && searchScope.virtualFiles.none { it.fileType == KotlinFileType.INSTANCE }
     }
 
-    private fun addTask(task: Task, element: PsiElement? = null) {
-        if (element == null || taskElementSet.add(element)) {
+    private fun addTask(task: Task) {
+        if (tasksSet.add(task)) {
             tasks.push(task)
         }
     }
@@ -206,8 +206,8 @@ class ExpressionsOfTypeProcessor(
         addClassToProcess(classToSearch)
     }
 
-    private fun addClassToProcess(classToSearch: PsiElement) {
-        class ProcessClassUsagesTask : Task {
+    private fun addClassToProcess(cls: PsiElement) {
+        data class ProcessClassUsagesTask(val classToSearch: PsiElement) : Task {
             override fun perform() {
                 val debugInfo: StringBuilder? = if (isUnitTestMode()) StringBuilder() else null
                 testLog { "Searched references to ${logPresentation(classToSearch)}" }
@@ -252,7 +252,7 @@ class ExpressionsOfTypeProcessor(
                 ((classToSearch as? KtLightClass)?.kotlinOrigin ?: classToSearch as? KtElement)?.let { usePlainSearch(it) }
             }
         }
-        addTask(ProcessClassUsagesTask(), classToSearch)
+        addTask(ProcessClassUsagesTask(cls))
     }
 
     private fun getFallbackDiagnosticsMessage(reference: PsiReference, debugInfo: StringBuilder? = null): String {
@@ -480,7 +480,7 @@ class ExpressionsOfTypeProcessor(
                 }
             }
         }
-        addTask(ProcessSamInterfaceTask(psiClass), psiClass)
+        addTask(ProcessSamInterfaceTask(psiClass))
     }
 
     private fun processClassUsageInKotlin(element: PsiElement, debugInfo: StringBuilder?): Boolean {

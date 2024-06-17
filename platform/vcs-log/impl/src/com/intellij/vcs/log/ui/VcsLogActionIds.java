@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
+@ApiStatus.Internal
 public final @NonNls class VcsLogActionIds {
   // action groups
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";

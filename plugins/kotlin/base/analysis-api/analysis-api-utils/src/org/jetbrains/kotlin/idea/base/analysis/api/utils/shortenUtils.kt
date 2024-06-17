@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -31,8 +31,8 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 fun shortenReferences(
     element: KtElement,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
-    callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? = shortenReferencesInRange(
     element,
     element.textRange,
@@ -60,8 +60,8 @@ fun shortenReferences(
 fun shortenReferences(
     elements: Iterable<KtElement>,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
-    callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ) {
     val elementPointers = elements.map { it.createSmartPointer() }
     elementPointers.forEach { ptr ->
@@ -80,8 +80,8 @@ fun shortenReferences(
 private fun shortenReferencesIfValid(
     ptr: SmartPsiElementPointer<KtElement>,
     shortenOptions: ShortenOptions,
-    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy,
-    callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy,
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy
 ): PsiElement? = ptr.element?.let { elem ->
     shortenReferences(elem, shortenOptions, classShortenStrategy, callableShortenStrategy)
 }
@@ -100,8 +100,8 @@ fun shortenReferencesInRange(
     file: KtFile,
     range: TextRange = file.textRange,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
-    callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? {
     val shortenCommand = allowAnalysisOnEdt {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
@@ -119,8 +119,8 @@ fun shortenReferencesInRange(
     element: KtElement,
     range: TextRange = element.containingFile.originalFile.textRange,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
-    callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? {
     val ktFile = element.containingKtFile
     return shortenReferencesInRange(ktFile, range, shortenOptions, classShortenStrategy, callableShortenStrategy)

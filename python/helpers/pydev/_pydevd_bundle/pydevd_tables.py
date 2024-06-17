@@ -10,6 +10,7 @@ class TableCommandType:
     DF_INFO = "DF_INFO"
     SLICE = "SLICE"
     DESCRIBE = "DF_DESCRIBE"
+    HISTOGRAM_DATA = "HISTOGRAM_DATA"
 
 
 def is_error_on_eval(val):
@@ -48,10 +49,10 @@ def exec_table_command(init_command, command_type, start_index, end_index, f_glo
         res.append(table_provider.get_column_descriptions(table))
         res.append(NEXT_VALUE_SEPARATOR)
         res.append(table_provider.get_value_counts(table))
-        res.append(NEXT_VALUE_SEPARATOR)
+
+    elif command_type == TableCommandType.HISTOGRAM_DATA:
         res.append(table_provider.get_value_occurrences_count(table))
         res.append(NEXT_VALUE_SEPARATOR)
-
 
     elif command_type == TableCommandType.SLICE:
         res.append(table_provider.get_data(table, start_index, end_index))
@@ -68,12 +69,14 @@ def __get_table_provider(output):
     type_qualified_name = '{}.{}'.format(output_type.__module__, output_type.__name__)
     if type_qualified_name in ['pandas.core.frame.DataFrame',
                                'pandas.core.series.Series',
-                               'geopandas.geoseries.GeoSeries']:
+                               'geopandas.geoseries.GeoSeries',
+                               'pandera.typing.pandas.DataFrame']:
         import _pydevd_bundle.tables.pydevd_pandas as table_provider
     # dict is needed for sort commands
     elif type_qualified_name in ['numpy.ndarray',
                                  'tensorflow.python.framework.ops.EagerTensor',
                                  'tensorflow.python.ops.resource_variable_ops.ResourceVariable',
+                                 'tensorflow.python.framework.sparse_tensor.SparseTensor',
                                  'torch.Tensor',
                                  'builtins.dict']:
         import _pydevd_bundle.tables.pydevd_numpy as table_provider

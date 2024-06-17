@@ -179,7 +179,7 @@
                  restartRequired="false"
                  description="New inspection widget with pencils functionality"
                  defaultValue="false"/>
-    <registryKey key="ide.welcom.screen.branch.name"
+    <registryKey key="ide.welcome.screen.branch.name"
                  restartRequired="true"
                  description="New inspection widget with pencils functionality"
                  defaultValue="false"/>
@@ -365,7 +365,7 @@
 
     <dataValidators implementation="com.intellij.ide.impl.PlatformDataValidators"/>
 
-    <getDataRule key="diff_navigatable_array" implementationClass="com.intellij.diff.actions.impl.DiffNavigatableArrayRule" type="fast"/>
+    <edtDataRule implementation="com.intellij.diff.actions.impl.DiffEdtDataRule"/>
     <actionPromoter implementation="com.intellij.diff.DiffActionPromoter"/>
 
     <projectService serviceInterface="com.intellij.openapi.diff.DirDiffManager"
@@ -547,6 +547,8 @@
 
     <applicationService serviceInterface="com.intellij.execution.process.ProcessService"
                         serviceImplementation="com.intellij.execution.process.ProcessServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.sudo.SudoCommandProvider"
+                        serviceImplementation="com.intellij.execution.sudo.LocalSudoCommandProvider"/>
 
     <applicationService serviceInterface="com.intellij.util.io.IoService"
                         serviceImplementation="com.intellij.util.io.IoServiceImpl"/>
@@ -653,7 +655,7 @@
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
     <bundledColorScheme id="High contrast" path="themes/highContrastScheme.xml"/>
 
-    <iconMapper mappingFile="PlatformIconMappings.json"/>
+    <iconMapper mappingFile="CrossModuleIcons.json"/>
 
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
@@ -885,8 +887,6 @@
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector$FacetTypeUtilValidator"/>
     <statistics.validation.customValidationRule
-      implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector$RunConfigurationTypeValidator"/>
-    <statistics.validation.customValidationRule
       implementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl$ProductivityUtilValidator"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector$RegistryUtilValidator"/>
@@ -910,6 +910,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.os.SystemRuntimeCollector"
                                            allowOnStartup="true"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.LocalizationUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.UpdateManagerUsagesCollector"
                                            allowOnStartup="true"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.settings.ProxySettingsCollector"/>
@@ -940,6 +941,7 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.navigation.actions.GTDUCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.navigation.actions.GoToDeclarationCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.accessibility.AccessibilityUsageTrackerCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector"/>
@@ -948,7 +950,7 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerFUSCollector"/>
     <statistics.validation.customValidationRule
-      implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceTagsListValidator"/>
+      implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceTagValidator"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceVendorsListValidator"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger"/>
@@ -1099,12 +1101,8 @@
     <editorNotificationProvider implementation="com.intellij.ide.CommandLineWaitingManager$MyNotification"/>
     <editorNotificationProvider implementation="com.intellij.ide.trustedProjects.impl.UntrustedProjectNotificationProvider"/>
 
-    <getDataRule key="copyProvider" implementationClass="com.intellij.ide.impl.dataRules.CopyProviderRule" type="fast"/>
-    <getDataRule key="cutProvider" implementationClass="com.intellij.ide.impl.dataRules.CutProviderRule" type="fast"/>
-    <getDataRule key="pasteProvider" implementationClass="com.intellij.ide.impl.dataRules.PasteProviderRule" type="fast"/>
-    <getDataRule key="fileEditor" implementationClass="com.intellij.ide.impl.dataRules.FileEditorRule" type="fast"/>
-    <getDataRule key="NavigatableArray" implementationClass="com.intellij.ide.impl.dataRules.NavigatableArrayRule" type="fast"/>
-    <getDataRule key="editor.even.if.inactive" implementationClass="com.intellij.ide.impl.dataRules.InactiveEditorRule" type="fast"/>
+    <edtDataRule implementation="com.intellij.ide.impl.dataRules.BasicEdtDataRule"/>
+    <getDataRule key="NavigatableArray" implementationClass="com.intellij.ide.impl.dataRules.NavigatableArrayRule"/>
     <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
 
     <localInspection shortName="InconsistentLineSeparators" bundle="messages.LangBundle" key="inconsistent.line.separators"
@@ -1228,6 +1226,7 @@
     <registryKey key="jdk.downloader.reuse.downloading" defaultValue="true"
                  description="Allow to reuse currently downloading with the JDK Downloader JDK instead of downloading it again"/>
     <registryKey key="jdk.auto.run.configurations" defaultValue="true" description="Tries to find an SDK for a run configuration"/>
+    <registryKey key="jdk.installer.logs" defaultValue="false" description="Log the stacktrace for JDK downloads"/>
 
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
     <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
@@ -1442,6 +1441,7 @@
     <intentionMenuContributor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringIntentionContributor"/>
     <gutterMarkPreprocessor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringGutterMarkPreprocessor"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.suggested.SuggestedRefactoringFeatureUsage"/>
+    <codeInsight.codeVisionProvider implementation="com.intellij.refactoring.changeSignature.ChangeSignatureCodeVisionProvider"/>
     <codeInsight.codeVisionProvider implementation="com.intellij.refactoring.rename.RenameCodeVisionProvider"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.refactoring.rename.RenameCodeVisionSettingProvider"/>
 
@@ -1633,8 +1633,10 @@
     <advancedSetting id="documentation.auto.show.in.modal.dialogs" default="false"
                      groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="search.everywhere.wait.for.contributors" default="true" groupKey="group.advanced.settings.se"/>
+    <advancedSetting id="search.everywhere.show.only.similar.indicator" default="true" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="search.everywhere.contributors.wait.timeout" default="2000" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="search.everywhere.recent.at.top" default="true" groupKey="group.advanced.settings.se"/>
+    <advancedSetting id="search.everywhere.send.search.history.statistics" default="true" groupKey="group.advanced.settings.se"/>
 
     <applicationInitializedListener implementation="com.intellij.lang.documentation.ide.impl.QuickDocAutoPopupInEAPInitializer"/>
 
@@ -1847,8 +1849,6 @@
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsActivity"
               topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener"
-              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.CurrentActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.ide.trustedProjects.impl.UntrustedProjectNotificationProvider$TrustedListener"
@@ -1892,16 +1892,19 @@
   </applicationListeners>
 
   <projectListeners>
+    <listener class="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$MyEditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+
     <listener class="com.intellij.notification.impl.NotificationsListener"
               activeInHeadlessMode="false"
               activeInTestMode="false"
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.formatting.EditorFormatterListener"
               topic="com.intellij.psi.codeStyle.CodeStyleManager$Listener"/>
-    <listener class="com.intellij.openapi.project.RefreshIconsOnEndOfDumbModeListener"
-              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTemplateListener"
               topic="com.intellij.codeInsight.template.TemplateManagerListener"/>
+    <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
   </projectListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml">

@@ -57,7 +57,7 @@ internal object ITNProxy {
   private const val DEFAULT_USER = "idea_anonymous"
   private const val DEFAULT_PASS = "guest"
   private const val DEVELOPERS_LIST_URL = "https://ea-report.jetbrains.com/developer/list"
-  private const val OLD_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/"
+  // private const val OLD_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/"
   private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
 
   private val TEMPLATE: Map<String, String?> by lazy {
@@ -123,9 +123,9 @@ internal object ITNProxy {
     return postNewThread(loginAdjusted, passwordAdjusted, error, newThreadPostUrl)
   }
 
-  fun getBrowseUrl(threadId: Int): String {
+  fun getBrowseUrl(threadId: Int): String? {
     val isEAPluginInstalled = PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID))
-    return (if (isEAPluginInstalled) NEW_THREAD_VIEW_URL else OLD_THREAD_VIEW_URL) + threadId
+    return if (isEAPluginInstalled) NEW_THREAD_VIEW_URL + threadId else null
   }
 
   private val ourSslContext: SSLContext by lazy { initContext() }

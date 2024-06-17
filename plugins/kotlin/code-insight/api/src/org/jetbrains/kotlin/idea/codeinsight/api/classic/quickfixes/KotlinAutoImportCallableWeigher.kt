@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 /**
@@ -22,8 +22,8 @@ interface KotlinAutoImportCallableWeigher {
      * @param unresolvedReferenceExpression the expression where this import can be applied.
      * @return extra weight to add. Can be any number.
      */
-    fun KtAnalysisSession.weigh(
-        symbolToBeImported: KtCallableSymbol,
+    fun KaSession.weigh(
+        symbolToBeImported: KaCallableSymbol,
         unresolvedReferenceExpression: KtNameReferenceExpression
     ): Int
 
@@ -31,8 +31,8 @@ interface KotlinAutoImportCallableWeigher {
         val EP_NAME: ExtensionPointName<KotlinAutoImportCallableWeigher> =
             ExtensionPointName.create("com.intellij.kotlin.autoImportCallableWeigher")
 
-        fun KtAnalysisSession.weigh(
-            symbolToBeImported: KtCallableSymbol,
+        fun KaSession.weigh(
+            symbolToBeImported: KaCallableSymbol,
             unresolvedReferenceExpression: KtNameReferenceExpression
         ): Int {
             return EP_NAME.extensionList.sumOf { with(it) { weigh(symbolToBeImported, unresolvedReferenceExpression) } }

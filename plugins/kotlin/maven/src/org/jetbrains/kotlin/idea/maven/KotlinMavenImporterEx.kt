@@ -1,13 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven
 
-import com.intellij.openapi.externalSystem.project.PackagingModel
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.ArrayUtil
 import org.jetbrains.idea.maven.execution.MavenRunner
@@ -15,8 +12,6 @@ import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
 import org.jetbrains.idea.maven.importing.MavenWorkspaceFacetConfigurator
 import org.jetbrains.idea.maven.importing.workspaceModel.getSourceRootUrls
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
-import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.platforms.IdePlatformKindProjectStructure
@@ -72,11 +67,10 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
         storage: MutableEntityStorage,
         module: ModuleEntity,
         project: Project,
-        mavenProject: MavenProject,
-        artifactModel: ModifiableArtifactModel
+        mavenProject: MavenProject
     ) {
         if (!isMigratedToConfigurator) return
-        storage.modifyEntity(module) {
+        storage.modifyModuleEntity(module) {
             this.kotlinSettings += createWorkspaceEntity(module)
         }
 
@@ -90,12 +84,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
         storage: MutableEntityStorage,
         module: ModuleEntity,
         project: Project,
-        mavenProject: MavenProject,
-        mavenTree: MavenProjectsTree,
-        mavenProjectToModuleName: Map<MavenProject, String>,
-        packagingModel: PackagingModel,
-        postTasks: MutableList<MavenProjectsProcessorTask>,
-        userDataHolder: UserDataHolderEx
+        mavenProject: MavenProject
     ) {
         if (!isMigratedToConfigurator) return
 
@@ -222,7 +211,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
         }
 
         val kotlinSettingsEntity = storage.entities(KotlinSettingsEntity::class.java).first { it.module.name == moduleName }
-        storage.modifyEntity(kotlinSettingsEntity) {
+        storage.modifyKotlinSettingsEntity(kotlinSettingsEntity) {
             this.sourceRoots = sourceRoots.toMutableList()
             this.useProjectSettings = kotlinFacetSettings.useProjectSettings
             this.implementedModuleNames = kotlinFacetSettings.implementedModuleNames.toMutableList()

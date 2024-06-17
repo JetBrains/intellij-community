@@ -135,7 +135,7 @@ class JupyterToolbarManager(
 
   companion object {
     private const val TOOLBAR_HIDE_DELAY = 800
-    private val DELIMITER_SIZE = DefaultNotebookEditorAppearanceSizes.CELL_BORDER_HEIGHT / 2
+    private val DELIMITER_SIZE = DefaultNotebookEditorAppearanceSizes.cellBorderHeight / 2
 
     fun calculateToolbarBounds(
       editor: EditorImpl,

@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.ui.*
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
-import com.intellij.util.containers.orNull
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ProportionKey
 import com.intellij.util.ui.TwoKeySplitter
@@ -180,7 +179,7 @@ open class SavedPatchesUi(project: Project,
     return null
   }
 
-  private fun selectedPatchObjectOrNull() = patchesTree.selectedPatchObjects().findAny().orNull()
+  private fun selectedPatchObjectOrNull() = patchesTree.selectedPatchObjects().firstOrNull()
 
   private fun selectedProvider(): SavedPatchesProvider<*> {
     val selectedPatch = selectedPatchObjectOrNull() ?: return providers.first()

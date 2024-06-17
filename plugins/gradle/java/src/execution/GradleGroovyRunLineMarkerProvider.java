@@ -5,14 +5,11 @@ import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.Strings.isNotEmpty;
-import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 import static org.jetbrains.plugins.gradle.execution.GradleGroovyRunnerUtil.getTaskNameIfContains;
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.isFromGroovyGradleScript;
 
@@ -25,12 +22,9 @@ public final class GradleGroovyRunLineMarkerProvider extends RunLineMarkerContri
   public Info getInfo(@NotNull final PsiElement element) {
     if (!isFromGroovyGradleScript(element)) return null;
     String taskName = getTaskNameIfContains(element);
-    if (isNotEmpty(taskName)) {
-      AnAction[] actions = ExecutorAction.getActions();
-      AnActionEvent event = createActionEvent(element);
-      return new Info(AllIcons.RunConfigurations.TestState.Run, actions,
-                      e -> join(mapNotNull(actions, action -> getText(action, event)), "\n"));
-    }
-    return null;
+    if (!isNotEmpty(taskName)) return null;
+
+    AnAction[] actions = ExecutorAction.getActions();
+    return new Info(AllIcons.RunConfigurations.TestState.Run, actions);
   }
 }

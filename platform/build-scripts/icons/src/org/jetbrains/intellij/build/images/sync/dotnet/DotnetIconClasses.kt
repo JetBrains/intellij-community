@@ -6,7 +6,7 @@ import org.jetbrains.intellij.build.images.IconClassInfo
 
 internal object DotnetIconClasses {
   fun transformIconClassInfo(riderIconClassInfo: IconClassInfo): List<IconClassInfo> =
-    splitRiderAndReSharper(riderIconClassInfo).removeExpUi()
+    splitRiderAndReSharper(riderIconClassInfo)
 
   fun isInlineClass(name: CharSequence): Boolean =
     // inline redundant classes ReSharperIcons.Resharper and RiderIcons.Rider
@@ -23,8 +23,4 @@ internal object DotnetIconClasses {
       className = className,
       outFile = info.outFile.parent.resolve("${className}.java"),
       images = info.images.filter { it.id.startsWith(imageIdPrefix) })
-
-  private fun Iterable<IconClassInfo>.removeExpUi() = map { info ->
-    info.copy(images = info.images.filterNot { it.id.contains("/expui/", true) || it.id.contains("\\expui\\", true) })
-  }
 }

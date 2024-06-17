@@ -7,16 +7,12 @@ import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
@@ -242,37 +238,24 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
         Project project = myProject;
         return project == null || project.isDisposed() ? null : FileEditorManager.getInstance(project).getSelectedTextEditor();
       }
-      else {
-        Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());
-        if (editor != null) {
-          if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-            return TextEditorProvider.getInstance().getTextEditor(editor);
-          }
-          else {
-            FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
-            return manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
-          }
-        }
-        if (LangDataKeys.IDE_VIEW.is(dataId)) {
-          Project project = myProject;
-          VirtualFile[] contentRoots = project == null ? VirtualFile.EMPTY_ARRAY : ProjectRootManager.getInstance(myProject).getContentRoots();
-          if (contentRoots.length > 0 && project != null) {
-            PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(contentRoots[0]);
-            return new IdeView() {
-              @Override
-              public PsiDirectory @NotNull [] getDirectories() {
-                return new PsiDirectory[] {psiDirectory};
-              }
+      if (LangDataKeys.IDE_VIEW.is(dataId)) {
+        Project project = myProject;
+        VirtualFile[] contentRoots = project == null ? VirtualFile.EMPTY_ARRAY : ProjectRootManager.getInstance(myProject).getContentRoots();
+        if (contentRoots.length > 0 && project != null) {
+          return new IdeView() {
+            @Override
+            public PsiDirectory @NotNull [] getDirectories() {
+              return new PsiDirectory[]{PsiManager.getInstance(project).findDirectory(contentRoots[0])};
+            }
 
-              @Override
-              public PsiDirectory getOrChooseDirectory() {
-                return psiDirectory;
-              }
-            };
-          }
+            @Override
+            public PsiDirectory getOrChooseDirectory() {
+              return PsiManager.getInstance(project).findDirectory(contentRoots[0]);
+            }
+          };
         }
-        return null;
       }
+      return null;
     }
   }
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.components.JsonSchemaType
 import com.intellij.openapi.components.StoredProperty
 import com.intellij.openapi.components.StoredPropertyBase
 import com.intellij.openapi.util.ModificationTracker
+import org.jetbrains.annotations.ApiStatus
 
 // Technically, it is not possible to proxy write operations because a collection can be mutated via iterator.
 // So, even if Kotlin could create a delegate for us to track mutations via an iterator, we have to re-implement collection/map.
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.ModificationTracker
 /**
  * `AbstractCollectionBinding` modifies a collection directly, so we cannot use `null` as a default value and have to return an empty list.
  */
+@ApiStatus.Internal
 open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(
   protected val value: C,
   private val defaultValue: String?,

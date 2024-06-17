@@ -8,7 +8,7 @@ import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellGeneratorCommandsRunner
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandSpecsManagerImpl
+import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 
 /**
  * Fixture for testing shell command specification-based completion in a New Terminal.

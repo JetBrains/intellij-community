@@ -72,34 +72,29 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
 
     val tab = SearchEverywhereTabWithMlRanking.findById(state.tabId)
-    tab?.let {
-      if (experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.NO_ML_FEATURES)
-        return foundElementInfoWithoutMl
+    if (tab != null && experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.NO_ML_FEATURES) {
+      return foundElementInfoWithoutMl
     }
-
 
     val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
     val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.mixedListInfo, session.cachedContextInfo)
 
-    val mlWeight = if (shouldCalculateMlWeight(contributor, state)) {
-      state.getMLWeight(session.cachedContextInfo, mlElementInfo)
-    } else {
-      null
-    }
+    val effectiveContributor = if (contributor is PSIPresentationBgRendererWrapper) contributor.delegate else contributor
+    val mlWeight = if (shouldCalculateMlWeight(effectiveContributor, state, element)) state.getMLWeight(session.cachedContextInfo, mlElementInfo) else null
 
-    return if (isShowDiff() || (contributor is SemanticSearchEverywhereContributor && contributor.isElementSemantic(element))) {
-      SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features)
-    }
-    else {
-      SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlElementInfo.features)
-    }
+    return if (isShowDiff()) SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features)
+    else SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlElementInfo.features)
   }
 
-  private fun shouldCalculateMlWeight(contributor: SearchEverywhereContributor<*>, searchState: SearchEverywhereMlSearchState): Boolean {
+  private fun shouldCalculateMlWeight(contributor: SearchEverywhereContributor<*>,
+                                      searchState: SearchEverywhereMlSearchState,
+                                      element: Any): Boolean {
     // Don't calculate ML weight for typo fix, as otherwise it will affect the ranking priority, which is meant to be Int.MAX_VALUE
     if (contributor is SearchEverywhereSpellingCorrectorContributor) return false
     // If we're showing recently used actions (empty query) then we don't want to apply ML sorting either
     if (searchState.tabId == ActionSearchEverywhereContributor::class.simpleName && searchState.searchQuery.isEmpty()) return false
+    // Do not calculate machine learning weight for semantic items until the ranking models know how to treat them
+    if ((contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(element) == true) return false
 
     return searchState.orderByMl
   }
@@ -143,7 +138,8 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
   override fun onItemSelected(project: Project?, tabId: String, indexes: IntArray, selectedItems: List<Any>,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                              closePopup: Boolean) {
+                              closePopup: Boolean,
+                              query: String) {
     getCurrentSession()?.onItemSelected(project, experiment, indexes, selectedItems, closePopup, mapElementsProvider(elementsProvider))
   }
 

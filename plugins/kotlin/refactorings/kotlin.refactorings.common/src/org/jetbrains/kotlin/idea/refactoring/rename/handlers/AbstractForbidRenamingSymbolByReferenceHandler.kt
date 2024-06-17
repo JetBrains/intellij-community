@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -34,7 +34,7 @@ internal abstract class AbstractForbidRenamingSymbolByReferenceHandler : RenameH
     }
   }
 
-  context(KtAnalysisSession)
+  context(KaSession)
   abstract fun shouldForbidRenaming(symbol: KtSymbol): Boolean
 
   abstract fun getErrorMessage(): @DialogMessage String

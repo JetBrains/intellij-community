@@ -24,20 +24,18 @@ fun Proxy.asJvmProperties(): Map<String, String> {
   if (address !is InetSocketAddress) {
     return emptyMap()
   }
-  return buildMap {
-    when (type()) {
-      Proxy.Type.SOCKS -> {
-        put(JavaProxyProperty.SOCKS_HOST, address.hostString)
-        put(JavaProxyProperty.SOCKS_PORT, address.port.toString())
-      }
-      Proxy.Type.HTTP -> {
-        put(JavaProxyProperty.HTTP_HOST, address.hostString)
-        put(JavaProxyProperty.HTTP_PORT, address.port.toString())
-        put(JavaProxyProperty.HTTPS_HOST, address.hostString)
-        put(JavaProxyProperty.HTTPS_PORT, address.port.toString())
-      }
-      else -> {}
-    }
+  return when (type()) {
+    Proxy.Type.SOCKS -> mapOf(
+      JavaProxyProperty.SOCKS_HOST to address.hostString,
+      JavaProxyProperty.SOCKS_PORT to address.port.toString(),
+    )
+    Proxy.Type.HTTP -> mapOf(
+      JavaProxyProperty.HTTP_HOST to address.hostString,
+      JavaProxyProperty.HTTP_PORT to address.port.toString(),
+      JavaProxyProperty.HTTPS_HOST to address.hostString,
+      JavaProxyProperty.HTTPS_PORT to address.port.toString(),
+    )
+    else -> emptyMap()
   }
 }
 
@@ -52,6 +50,10 @@ fun ProxyConfiguration.StaticProxyConfiguration.asJavaProxy(): Proxy = Proxy(
   InetSocketAddress.createUnresolved(host, port)
 )
 
+/**
+ * @param credentialProvider known credentials will be added as properties to the resulting map.
+ *                           Please, consider the security implications of using credentials as properties, given that they are in plain text form.
+ */
 fun ProxyConfiguration.StaticProxyConfiguration.asJvmProperties(credentialProvider: ProxyCredentialProvider?): Map<String, String> {
   val javaProxy = asJavaProxy()
   val jvmPropertiesWithCredentials = javaProxy.asJvmPropertiesWithCredentials(credentialProvider)
@@ -108,22 +110,32 @@ fun URI.getApplicableProxiesAsJvmProperties(
 }
 
 private fun Proxy.asJvmPropertiesWithCredentials(credentialProvider: ProxyCredentialProvider?): Map<String, String> {
-  val props = asJvmProperties().toMutableMap()
-  if (credentialProvider == null || props.isEmpty()) {
-    return props
-  }
+  val props = asJvmProperties()
   val address = address()
-  if (address !is InetSocketAddress) {
+  if (props.isEmpty() || address !is InetSocketAddress || credentialProvider == null) {
     return props
   }
-  val credentials = credentialProvider.getCredentials(address.hostString, address.port)
+  return props + credentialProvider.getCredentialsAsJvmProperties(address.hostString, address.port, type())
+}
+
+private fun ProxyCredentialProvider.getCredentialsAsJvmProperties(host: String, port: Int, proxyType: Proxy.Type): Map<String, String> {
+  val credentials = getCredentials(host, port)
   if (credentials == null || !credentials.isFulfilled()) {
-    return props
+    return emptyMap()
   }
-  val proxyType = type()
-  val usernameProp = if (proxyType == Proxy.Type.SOCKS) JavaProxyProperty.SOCKS_USERNAME else JavaProxyProperty.HTTP_USERNAME
-  val passwordProp = if (proxyType == Proxy.Type.SOCKS) JavaProxyProperty.SOCKS_PASSWORD else JavaProxyProperty.HTTP_PASSWORD
-  props[usernameProp] = credentials.userName!!
-  props[passwordProp] = credentials.password!!.toString()
-  return props
+  val username = credentials.userName!!
+  val password = credentials.password!!.toString()
+  return when (proxyType) {
+    Proxy.Type.SOCKS -> mapOf(
+      JavaProxyProperty.SOCKS_USERNAME to username,
+      JavaProxyProperty.SOCKS_PASSWORD to password,
+    )
+    Proxy.Type.HTTP -> mapOf(
+      JavaProxyProperty.HTTP_PROXY_USER to username,
+      JavaProxyProperty.HTTP_PROXY_PASSWORD to password,
+      JavaProxyProperty.HTTPS_PROXY_USER to username,
+      JavaProxyProperty.HTTPS_PROXY_PASSWORD to password,
+    )
+    else -> emptyMap()
+  }
 }

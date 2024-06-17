@@ -7,7 +7,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
@@ -49,7 +49,7 @@ internal class RemoveSingleArgumentNameIntention :
         return (element.parent as? KtValueArgumentList)?.parent is KtCallElement
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtValueArgument): SingleArgumentContext? {
         val callElement = element.getStrictParentOfType<KtCallElement>() ?: return null
         val (sortedArguments, vararg, varargIsArrayOfCall) = collectSortedArgumentsThatCanBeUnnamed(callElement) ?: return null

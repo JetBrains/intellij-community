@@ -52,7 +52,7 @@ interface LinkedListEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyLinkedListEntity(
   entity: LinkedListEntity,
   modification: LinkedListEntity.Builder.() -> Unit,
 ): LinkedListEntity {

@@ -109,7 +109,7 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction, Po
    * @return an object that describes the action preview to display
    */
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    var copy = ObjectUtils.tryCast(getFileModifierForPreview(file), IntentionAction.class);
+    IntentionAction copy = ObjectUtils.tryCast(getFileModifierForPreview(file), IntentionAction.class);
     if (copy == null) return IntentionPreviewInfo.FALLBACK_DIFF;
     PsiElement writable = copy.getElementToMakeWritable(file);
     if (writable == null || writable.getContainingFile() != file) return IntentionPreviewInfo.FALLBACK_DIFF;

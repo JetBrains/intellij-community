@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable

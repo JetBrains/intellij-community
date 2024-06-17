@@ -52,7 +52,8 @@ final class NativeFileChooserDialogImpl implements FileChooserDialog, PathChoose
         hints |= JBRFileDialog.SELECT_FILES_HINT;
       }
       jbrDialog.setHints(hints);
-      jbrDialog.setLocalizationStrings(IdeBundle.message("windows.native.common.dialog.open"), IdeBundle.message("windows.native.common.dialog.select.folder"));
+      jbrDialog.setLocalizationString(JBRFileDialog.OPEN_FILE_BUTTON_KEY, IdeBundle.message("windows.native.common.dialog.open"));
+      jbrDialog.setLocalizationString(JBRFileDialog.OPEN_DIRECTORY_BUTTON_KEY, IdeBundle.message("windows.native.common.dialog.select.folder"));
     }
   }
 

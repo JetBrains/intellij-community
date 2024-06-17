@@ -5,8 +5,8 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
@@ -26,7 +26,7 @@ import org.jetbrains.uast.kotlin.internal.analyzeForUast
  * Analysis API symbol if it's resolved.
  */
 internal class UastFakeDeserializedSymbolLightMethod(
-    private val original: KtSymbolPointer<KtFunctionSymbol>,
+    private val original: KaSymbolPointer<KaFunctionSymbol>,
     name: String,
     containingClass: PsiClass,
     private val context: KtElement,

@@ -3,12 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -49,12 +49,12 @@ internal object AddSuspendModifierFixFactory {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtElement.containingFunction(): KtNamedFunction? {
     return when (val containingFunction = getParentOfTypes2<KtFunctionLiteral, KtNamedFunction>()) {
         is KtFunctionLiteral -> {
             val call = containingFunction.getStrictParentOfType<KtCallExpression>()
-            val resolvedCall = call?.resolveCall()?.successfulFunctionCallOrNull()
+            val resolvedCall = call?.resolveCallOld()?.successfulFunctionCallOrNull()
             if (resolvedCall?.partiallyAppliedSymbol?.symbol?.isInlineOrInsideInline() == true) {
                 containingFunction.containingFunction()
             } else {
@@ -67,15 +67,15 @@ private fun KtElement.containingFunction(): KtNamedFunction? {
     }
 }
 
-context(KtAnalysisSession)
-private fun KtDeclarationSymbol?.isInlineOrInsideInline(): Boolean = getInlineCallSiteVisibility() != null
+context(KaSession)
+private fun KaDeclarationSymbol?.isInlineOrInsideInline(): Boolean = getInlineCallSiteVisibility() != null
 
-context(KtAnalysisSession)
-private fun KtDeclarationSymbol?.getInlineCallSiteVisibility(): Visibility? {
-    var declaration: KtDeclarationSymbol? = this
+context(KaSession)
+private fun KaDeclarationSymbol?.getInlineCallSiteVisibility(): Visibility? {
+    var declaration: KaDeclarationSymbol? = this
     var result: Visibility? = null
     while (declaration != null) {
-        if (declaration is KtFunctionSymbol && declaration.isInline) {
+        if (declaration is KaFunctionSymbol && declaration.isInline) {
             val visibility = declaration.visibility
             if (Visibilities.isPrivate(visibility)) {
                 return visibility

@@ -97,7 +97,7 @@ public interface DataExternalizerEx<T> {
 
     KnownSizeRecordWriter NOTHING = new KnownSizeRecordWriter() {
       @Override
-      public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
+      public ByteBuffer write(@NotNull ByteBuffer data) {
         return data;
       }
 
@@ -112,12 +112,18 @@ public interface DataExternalizerEx<T> {
     return new ByteArrayWriter(bytes);
   }
 
-  //MAYBE RC: append marker-interface, like ByteArrayExposingWriter,
-  //          so implementation could use appendOnlyLog.append(byte[])
-  //          method for such writers, which is slightly faster/cheaper
+  /**
+   * Some implementations could operate faster with {@code byte[]}, then with
+   * generic {@link KnownSizeRecordWriter} -- give them an option to recognize
+   * writers that are just wrappers around byte[]
+   */
+  interface ByteArrayExposingWriter extends KnownSizeRecordWriter {
+    /** returns underlying array -- do not modify! */
+    byte[] rawBytes();
+  }
 
   /** Simplest implementation: writer over the record already serialized into a byte[] */
-  class ByteArrayWriter implements KnownSizeRecordWriter {
+  class ByteArrayWriter implements ByteArrayExposingWriter {
     private final byte[] bytes;
 
     public ByteArrayWriter(byte @NotNull [] bytes) {
@@ -132,6 +138,11 @@ public interface DataExternalizerEx<T> {
     @Override
     public int recordSize() {
       return bytes.length;
+    }
+
+    @Override
+    public byte[] rawBytes() {
+      return bytes;
     }
 
     @Override

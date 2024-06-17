@@ -34,7 +34,6 @@ com/intellij/internal/statistic/eventLog/events/EventId1
 com/intellij/internal/statistic/eventLog/events/EventId2
 com/intellij/internal/statistic/eventLog/events/EventId3
 com/intellij/internal/statistic/eventLog/events/IntListEventField
-com/intellij/internal/statistic/eventLog/events/ObjectEventData
 com/intellij/internal/statistic/eventLog/events/ObjectEventField
 com/intellij/internal/statistic/eventLog/events/PrimitiveEventField
 com/intellij/internal/statistic/eventLog/events/StringEventField
@@ -95,8 +94,6 @@ com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory$JAction
 com/intellij/patterns/compiler/PatternCompilerImpl$Node
 com/intellij/platform/diagnostic/telemetry/Scope
 com/intellij/platform/ide/menu/ActionAwareIdeMenuBar
-com/intellij/platform/workspace/jps/serialization/impl/FileInDirectorySourceNames
-com/intellij/platform/workspace/jps/serialization/impl/JpsFileContentReader
 com/intellij/platform/workspace/jps/serialization/impl/JpsFileContentWriter
 com/intellij/platform/workspace/jps/serialization/impl/JpsProjectSerializersImpl
 com/intellij/platform/workspace/storage/VersionedEntityStorage

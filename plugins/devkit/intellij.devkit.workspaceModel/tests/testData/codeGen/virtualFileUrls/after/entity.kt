@@ -48,7 +48,7 @@ interface EntityWithUrls : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyEntityWithUrls(
   entity: EntityWithUrls,
   modification: EntityWithUrls.Builder.() -> Unit,
 ): EntityWithUrls {

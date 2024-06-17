@@ -15,7 +15,7 @@ class MutableStorageTest {
     val sampleEntity = builder addEntity SampleEntity2("ParentData", true, MySource)
 
     val simpleEntityFromStore = builder.entities(SampleEntity2::class.java).single()
-    builder.modifyEntity(sampleEntity) {
+    builder.modifySampleEntity2(sampleEntity) {
       entitySource = AnotherSource
       data = "NewParentData"
     }
@@ -31,7 +31,7 @@ class MutableStorageTest {
     val entityFromStoreTwo = newBuilder.entities(SampleEntity2::class.java).single()
     val entityTwoBuilder = entityFromStoreTwo.builderFrom(newBuilder) as SampleEntity2.Builder
 
-    newBuilder.modifyEntity(entityFromStoreOne) {
+    newBuilder.modifySampleEntity2(entityFromStoreOne) {
       entitySource = MySource
       data = "ParentData"
     }
@@ -55,7 +55,7 @@ class MutableStorageTest {
 
     val parentEntityFromStore = builder.entities(ParentMultipleEntity::class.java).single()
     val child = ChildMultipleEntity("ChildData", MySource) child@{
-      builder.modifyEntity(parentEntityFromStore) parent@{
+      builder.modifyParentMultipleEntity(parentEntityFromStore) parent@{
         this@child.parentEntity = this@parent
 
       }
@@ -66,7 +66,7 @@ class MutableStorageTest {
     assertEquals(parentEntity, childEntity.parentEntity)
     assertEquals(parentEntityFromStore, childEntity.parentEntity)
 
-    builder.modifyEntity(parentEntityFromStore) {
+    builder.modifyParentMultipleEntity(parentEntityFromStore) {
       parentData = "AnotherParentData"
     }
     assertEquals("AnotherParentData", parentEntityFromStore.parentData)
@@ -104,7 +104,7 @@ class MutableStorageTest {
     val entity = snapshot.entities(SampleEntity2::class.java).single()
     val builder2 = snapshot.toBuilder()
     val builder3 = snapshot.toBuilder()
-    builder2.modifyEntity(entity) {
+    builder2.modifySampleEntity2(entity) {
       entitySource = AnotherSource
     }
     builder3.applyChangesFrom(builder2)
@@ -124,7 +124,7 @@ class MutableStorageTest {
     assertEquals("One", entity.children[0].childProperty)
     assertEquals("Two", entity.children[1].childProperty)
 
-    builder.modifyEntity(entity) {
+    builder.modifyNamedEntity(entity) {
       this.children = listOf(this.children[1], this.children[0])
     }
 
@@ -145,7 +145,7 @@ class MutableStorageTest {
     assertEquals(MySource, entity.children[0].entitySource)
     assertEquals(AnotherSource, entity.children[1].entitySource)
 
-    builder.modifyEntity(entity) {
+    builder.modifyLeftEntity(entity) {
       this.children = listOf(this.children[1], this.children[0])
     }
 

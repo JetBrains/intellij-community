@@ -192,6 +192,9 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
                                BlockTerminalColors.SEARCH_ENTRY),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.currentSearchEntry"),
                                BlockTerminalColors.CURRENT_SEARCH_ENTRY),
+
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.generateCommand.promptText"),
+                               BlockTerminalColors.GENERATE_COMMAND_PROMPT_TEXT),
     };
   }
 
@@ -217,6 +220,10 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
                           BlockTerminalColors.ERROR_BLOCK_STROKE_COLOR, ColorDescriptor.Kind.FOREGROUND),
       new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.promptSeparator"),
                           BlockTerminalColors.PROMPT_SEPARATOR_COLOR, ColorDescriptor.Kind.FOREGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.generateCommand.placeholderForeground"),
+                          BlockTerminalColors.GENERATE_COMMAND_PLACEHOLDER_FOREGROUND, ColorDescriptor.Kind.FOREGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.generateCommand.caretColor"),
+                          BlockTerminalColors.GENERATE_COMMAND_CARET_COLOR, ColorDescriptor.Kind.FOREGROUND),
     };
   }
 

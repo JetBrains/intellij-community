@@ -73,7 +73,7 @@ interface NamedEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyNamedEntity(
   entity: NamedEntity,
   modification: NamedEntity.Builder.() -> Unit,
 ): NamedEntity {
@@ -122,7 +122,7 @@ interface NamedChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyNamedChildEntity(
   entity: NamedChildEntity,
   modification: NamedChildEntity.Builder.() -> Unit,
 ): NamedChildEntity {
@@ -164,7 +164,7 @@ interface WithSoftLinkEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyWithSoftLinkEntity(
   entity: WithSoftLinkEntity,
   modification: WithSoftLinkEntity.Builder.() -> Unit,
 ): WithSoftLinkEntity {
@@ -203,7 +203,7 @@ interface ComposedLinkEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyComposedLinkEntity(
   entity: ComposedLinkEntity,
   modification: ComposedLinkEntity.Builder.() -> Unit,
 ): ComposedLinkEntity {
@@ -250,7 +250,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyWithListSoftLinksEntity(
   entity: WithListSoftLinksEntity,
   modification: WithListSoftLinksEntity.Builder.() -> Unit,
 ): WithListSoftLinksEntity {
@@ -298,7 +298,7 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyComposedIdSoftRefEntity(
   entity: ComposedIdSoftRefEntity,
   modification: ComposedIdSoftRefEntity.Builder.() -> Unit,
 ): ComposedIdSoftRefEntity {

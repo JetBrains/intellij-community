@@ -130,7 +130,28 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public int CLASS_NAMES_IN_JAVADOC = FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED;
   public boolean SPACE_BEFORE_COLON_IN_FOREACH = true;
   public boolean SPACE_INSIDE_ONE_LINE_ENUM_BRACES = false;
-
+  /**
+   * "Java | Spaces | Within | Code Braces" option provides a way to regulate spaces in simple (one-line) code blocks with empty body
+   * This option gives a more customizable behavior of formatting simple nonempty code blocks in cases when the
+   * "Code Braces" option is disabled.
+   * <p>
+   * Example: <br>
+   * 1) SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT is disabled && SPACE_WITHIN_BRACES is disabled
+   *
+   * <p>
+   * public void fun() {int x = 1; } will be formatted to fun() {int x = 1;}
+   * </p>
+   * 2) SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT is enabled && SPACE_WITHIN_BRACES is disabled
+   * <p>
+   * "public void fun() {int x = 1; }" will be formatted to "fun() { int x = 1; }"
+   * </p>
+   * </p>
+   * <p>
+   * This option doesn't take any effect in cases when SPACE_WITHIN_BRACES is enabled
+   * </p>
+   * @see CommonCodeStyleSettings#SPACE_WITHIN_BRACES
+   */
+  public boolean SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = false;
   public boolean NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
 
   public boolean useFqNamesInJavadocAlways() {

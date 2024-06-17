@@ -37,9 +37,8 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
   public static boolean initiateTransferToSuspendAll(@NotNull SuspendContextImpl suspendContext,
                                                      @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     if (suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_EVENT_THREAD) {
-      DebuggerDiagnosticsUtil.logError(suspendContext.getDebugProcess(),
-                                       "Replacing for all-thread mode can be done only from the suspend-thread mode. " +
-                                       "suspendContext = " + suspendContext);
+      suspendContext.getDebugProcess().logError("Replacing for all-thread mode can be done only from the suspend-thread mode. " +
+                                                "suspendContext = " + suspendContext);
       return false;
     }
     @NotNull DebugProcessImpl process = suspendContext.getDebugProcess();
@@ -63,63 +62,32 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
       }
     }
     else {
-      suspendWhenNoEvaluation(suspendContext, performOnSuspendAll);
+      switchToSuspendAll(suspendContext, performOnSuspendAll);
     }
     return true;
   }
 
-  /**
-   * We do vm suspend to reduce the need for synchronization:
-   * while vm is fully stopped, we may be sure that there will be no changes in evaluation
-   * if getNumberOfEvaluations is not 0, we resume, see {@link #switchContextWithSuspend}
-   */
-  private static void suspendWhenNoEvaluation(@NotNull SuspendContextImpl suspendContext,
-                                              @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
+  private static void switchToSuspendAll(@NotNull SuspendContextImpl suspendContext,
+                                         @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     DebugProcessImpl process = suspendContext.getDebugProcess();
-    if (!switchContextWithSuspend(process, suspendContext, performOnSuspendAll)) {
-      process.addEvaluationListener(new EvaluationListener() {
+    process.getVirtualMachineProxy().suspend();
+    SuspendManager suspendManager = process.getSuspendManager();
+    SuspendContextImpl newSuspendContext = suspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 1);
+    // It is an optimization to reduce the synchronous packets number
+    newSuspendContext.setEventSet(suspendContext.getEventSet());
+    newSuspendContext.setThread(suspendContext.getEventThread().getThreadReference());
+    if (processSuspendAll(newSuspendContext, suspendContext, performOnSuspendAll)) {
+      process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
         @Override
-        public void evaluationFinished(SuspendContextImpl context) {
-          if (!process.myPreparingToSuspendAll) {
-            process.removeEvaluationListener(this);
-            return;
-          }
-          if (switchContextWithSuspend(process, suspendContext, performOnSuspendAll)) {
-            process.removeEvaluationListener(this);
-          }
-          else {
-            process.getVirtualMachineProxy().resume();
-          }
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+          // Note, pause listener in the DebugProcessImpl will resume suspended evaluations
+          suspendManager.voteSuspend(newSuspendContext);
         }
       });
-      process.getVirtualMachineProxy().resume();
     }
-  }
-
-  private static boolean switchContextWithSuspend(@NotNull DebugProcessImpl process,
-                                                  @NotNull SuspendContextImpl suspendContext,
-                                                  @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
-    process.getVirtualMachineProxy().suspend();
-    if (getNumberOfEvaluations(process) == 0) {
-      SuspendManager suspendManager = process.getSuspendManager();
-      SuspendContextImpl newSuspendContext = suspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 1);
-      // It is an optimization to reduce the synchronous packets number
-      newSuspendContext.setEventSet(suspendContext.getEventSet());
-      newSuspendContext.setThread(suspendContext.getEventThread().getThreadReference());
-      if (processSuspendAll(newSuspendContext, suspendContext, performOnSuspendAll)) {
-        process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
-          @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-            suspendManager.voteSuspend(newSuspendContext);
-          }
-        });
-      }
-      else {
-        suspendManager.resume(newSuspendContext);
-      }
-      return true;
+    else {
+      suspendManager.resume(newSuspendContext);
     }
-    return false;
   }
 
   private static void enableRequest(DebugProcessImpl process, @NotNull ParametersForSuspendAllReplacing parameters) {

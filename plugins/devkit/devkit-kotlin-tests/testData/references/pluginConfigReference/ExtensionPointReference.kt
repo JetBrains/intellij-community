@@ -13,6 +13,10 @@ class ExtensionPointReference {
   val EPN_CTOR= ExtensionPointName<String>("plugin.id.ep.name")
   val INVALID_EPN_CTOR = ExtensionPointName<String>("<error descr="Cannot resolve extension point 'INVALID_VALUE'">INVALID_VALUE</error>")
 
+  val EP_SHORT_NAME = "ep.name"
+  val EP_VIA_INTERPOLATION = ExtensionPointName.create<String>("plugin.id.$EP_SHORT_NAME")
+  val INVALID_EP_VIA_INTERPOLATION = ExtensionPointName.create<String>("<error descr="Cannot resolve extension point 'INVALID_VALUE.$EP_SHORT_NAME'">INVALID_VALUE.$EP_SHORT_NAME</error>")
+
   val LANGUAGE_EXTENSION = LanguageExtension<String>("plugin.id.ep.name")
   val INVALID_LANGUAGE_EXTENSION = LanguageExtension<String>("<error descr="Cannot resolve extension point 'INVALID_VALUE'">INVALID_VALUE</error>")
 

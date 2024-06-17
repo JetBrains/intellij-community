@@ -160,12 +160,8 @@ open class EditorHighlighterUpdater(
   }
 
   private fun updateHighlightersSynchronously() {
-    if (!project.isDisposed && !editor.isDisposed) {
-      if (asyncLoader != null && !asyncLoader.isLoaded()) {
-        return
-      }
-
-      setupHighlighter(createHighlighter(false))
+    if (!project.isDisposed && !editor.isDisposed && (asyncLoader == null || asyncLoader.isLoaded())) {
+      setupHighlighter(createHighlighter(forceEmpty = false))
     }
   }
 

@@ -15,6 +15,7 @@ import com.intellij.util.xmlb.XmlSerializerImpl.createClassBinding
 import kotlinx.serialization.Serializable
 import org.jdom.Element
 import org.jdom.JDOMException
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.lang.ref.SoftReference
@@ -136,6 +137,7 @@ private class JdomSerializerImpl : JdomSerializer {
   }
 }
 
+@Internal
 fun deserializeBaseStateWithCustomNameFilter(state: BaseState, excludedPropertyNames: Collection<String>): Element? {
   val binding = serializer.getRootBinding(state.javaClass) as KotlinAwareBeanBinding
   return binding.serializeBaseStateInto(
@@ -202,6 +204,7 @@ fun __platformSerializer(): Serializer = serializer
 /**
  * Used by MPS. Do not use if not approved.
  */
+@Internal
 fun clearBindingCache() {
   serializer.clearBindingCache()
 }

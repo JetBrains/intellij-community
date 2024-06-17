@@ -706,6 +706,7 @@ f:com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager
 - doInvoke(com.intellij.openapi.externalSystem.util.IntegrationKey,com.intellij.openapi.project.Project,java.lang.reflect.Method,java.lang.Object[],I):java.lang.Object
 - getCommunicationManager(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.ExternalSystemCommunicationManager
 - getFacade(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
+- s:getInstance():com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager
 - isTaskActive(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
 - onProjectRename(java.lang.String,java.lang.String):V
 a:com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater
@@ -1914,38 +1915,6 @@ c:com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskMan
 - <init>(com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager):V
 - cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
 - executeTasks(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.util.List,java.lang.String,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,java.lang.String):V
-a:com.intellij.openapi.externalSystem.service.remote.wrapper.AbstractRemoteExternalSystemServiceWrapper
-- com.intellij.openapi.externalSystem.service.RemoteExternalSystemService
-- <init>(com.intellij.openapi.externalSystem.service.RemoteExternalSystemService):V
-- getDelegate():com.intellij.openapi.externalSystem.service.RemoteExternalSystemService
-- getTasksInProgress():java.util.Map
-- isTaskInProgress(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-- setNotificationListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V
-- setSettings(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):V
-c:com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper
-- com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
-- <init>(com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade,com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager):V
-- applyProgressManager(com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager):V
-- applySettings(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):V
-- cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-- getDelegate():com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
-- getRawProjectResolver():com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolver
-- getResolver():com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver
-- getTaskManager():com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager
-- getTasksInProgress():java.util.Map
-- isTaskInProgress(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-c:com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemProjectResolverWrapper
-- com.intellij.openapi.externalSystem.service.remote.wrapper.AbstractRemoteExternalSystemServiceWrapper
-- com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver
-- <init>(com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver,com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager):V
-- cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-- resolveProjectInfo(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy):com.intellij.openapi.externalSystem.model.DataNode
-c:com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemTaskManagerWrapper
-- com.intellij.openapi.externalSystem.service.remote.wrapper.AbstractRemoteExternalSystemServiceWrapper
-- com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager
-- <init>(com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager,com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager):V
-- cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-- executeTasks(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.util.List,java.lang.String,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,java.lang.String):V
 a:com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl
 - com.intellij.openapi.externalSystem.service.settings.AbstractSettingsControl
 - com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl
@@ -2718,7 +2687,6 @@ f:com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl
 - addListener(com.intellij.openapi.externalSystem.view.ExternalProjectsView$Listener):V
 - createNodes(com.intellij.openapi.externalSystem.view.ExternalProjectsView,com.intellij.openapi.externalSystem.view.ExternalSystemNode,com.intellij.openapi.externalSystem.model.DataNode):java.util.List
 - dispose():V
-- getData(java.lang.String):java.lang.Object
 - getDisplayName(com.intellij.openapi.externalSystem.model.DataNode):java.lang.String
 - getErrorLevelRecursively(com.intellij.openapi.externalSystem.model.DataNode):com.intellij.openapi.externalSystem.view.ExternalProjectsStructure$ErrorLevel
 - getGroupModules():Z
@@ -2742,6 +2710,7 @@ f:com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl
 - setShowIgnored(Z):V
 - setShowInheritedTasks(Z):V
 - showInheritedTasks():Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateUpTo(com.intellij.openapi.externalSystem.view.ExternalSystemNode):V
 - useTasksNode():Z
 a:com.intellij.openapi.externalSystem.view.ExternalSystemNode

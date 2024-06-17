@@ -19,6 +19,7 @@ class ReferencingWebSymbol private constructor(
   override val origin: WebSymbolOrigin,
   vararg references: WebSymbolQualifiedKind,
   override val priority: WebSymbol.Priority?,
+  location: List<WebSymbolQualifiedName> = emptyList(),
 ) : WebSymbol {
 
   companion object {
@@ -29,9 +30,13 @@ class ReferencingWebSymbol private constructor(
       name: String,
       origin: WebSymbolOrigin,
       vararg qualifiedKinds: WebSymbolQualifiedKind,
-      priority: WebSymbol.Priority? = null
+      priority: WebSymbol.Priority? = null,
+      location: List<WebSymbolQualifiedName> = emptyList(),
     ): ReferencingWebSymbol =
-      ReferencingWebSymbol(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *qualifiedKinds, priority = priority)
+      ReferencingWebSymbol(
+        qualifiedKind.namespace, qualifiedKind.kind, name,
+        origin, *qualifiedKinds, priority = priority, location = location
+      )
   }
 
   override val pattern: WebSymbolsPattern =
@@ -40,7 +45,7 @@ class ReferencingWebSymbol private constructor(
         priority = priority,
         symbolsResolver = WebSymbolsPatternReferenceResolver(
           *references.map {
-            WebSymbolsPatternReferenceResolver.Reference(qualifiedKind = it)
+            WebSymbolsPatternReferenceResolver.Reference(qualifiedKind = it, location = location)
           }.toTypedArray()
         )), false,
       WebSymbolsPatternFactory.createPatternSequence(

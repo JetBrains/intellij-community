@@ -4,10 +4,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.config.AnalysisFlags
@@ -54,7 +53,7 @@ internal class RemoveExplicitTypeIntention :
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtDeclaration): Unit? = when {
         element is KtParameter -> true
         element is KtNamedFunction && element.hasBlockBody() -> element.getReturnKtType().isUnit
@@ -72,7 +71,7 @@ internal class RemoveExplicitTypeIntention :
     private fun isApplicableByTypeReference(element: KtDeclaration, typeReference: KtTypeReference): Boolean =
         !typeReference.isAnnotatedDeep() && !element.isExplicitTypeReferenceNeededForTypeInferenceByPsi(typeReference)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun publicReturnTypeShouldBePresentInApiMode(declaration: KtCallableDeclaration): Boolean {
         if (declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED) return false
 
@@ -80,11 +79,11 @@ internal class RemoveExplicitTypeIntention :
         if (declaration is KtFunction && declaration.isLocal) return false
         if (declaration is KtProperty && declaration.isLocal) return false
 
-        val symbolWithVisibility = declaration.getSymbol() as? KtSymbolWithVisibility ?: return false
+        val symbolWithVisibility = declaration.getSymbol() as? KaSymbolWithVisibility ?: return false
         return isPublicApi(symbolWithVisibility)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtDeclaration.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze(): Boolean {
         val typeReference = typeReference ?: return false
         val initializer = getInitializerOrGetterInitializer() ?: return true
@@ -113,7 +112,7 @@ internal class RemoveExplicitTypeIntention :
      * Currently we don't use on-air resolve in the implementation, therefore the function might return false negative results
      * for expressions that are not covered.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isInitializerTypeContextIndependent(
         initializer: KtExpression,
         typeReference: KtTypeReference,
@@ -121,20 +120,26 @@ internal class RemoveExplicitTypeIntention :
         is KtStringTemplateExpression -> true
         // `val n: Int = 1` - type of `1` is context-independent
         // `val n: Long = 1` - type of `1` is context-dependent
-        is KtConstantExpression -> initializer.getClassId()?.let { buildClassType(it) }?.isSubTypeOf(typeReference.getKtType()) == true
+        is KtConstantExpression -> {
+            val classId = initializer.getClassId()
+            val let = classId?.let { buildClassType(it) }
+            val superType = typeReference.getKtType()
+            val subTypeOf = let?.isSubTypeOf(superType)
+            subTypeOf == true
+        }
         is KtCallExpression -> initializer.typeArgumentList != null || !returnTypeOfCallDependsOnTypeParameters(initializer)
         is KtArrayAccessExpression -> !returnTypeOfCallDependsOnTypeParameters(initializer)
         is KtCallableReferenceExpression -> isCallableReferenceExpressionTypeContextIndependent(initializer)
-        is KtQualifiedExpression -> initializer.callExpression?.let { isInitializerTypeContextIndependent(it, typeReference) } == true
+        is KtQualifiedExpression -> ((initializer as? KtDotQualifiedExpression)?.selectorExpression ?: initializer.callExpression)?.let { isInitializerTypeContextIndependent(it, typeReference) } == true
         is KtLambdaExpression -> isLambdaExpressionTypeContextIndependent(initializer, typeReference)
         is KtNamedFunction -> isAnonymousFunctionTypeContextIndependent(initializer, typeReference)
-        is KtSimpleNameExpression -> true
+        is KtSimpleNameExpression, is KtBinaryExpression -> true
 
         // consider types of expressions that the compiler views as constants, e.g. `1 + 2`, as independent
-        else -> initializer.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null
+        else -> initializer.evaluate() != null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isLambdaExpressionTypeContextIndependent(lambdaExpression: KtLambdaExpression, typeReference: KtTypeReference): Boolean {
         val lastStatement = lambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return false
 
@@ -142,7 +147,7 @@ internal class RemoveExplicitTypeIntention :
         return isInitializerTypeContextIndependent(lastStatement, returnTypeReference)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isAnonymousFunctionTypeContextIndependent(anonymousFunction: KtNamedFunction, typeReference: KtTypeReference): Boolean {
         if (anonymousFunction.hasDeclaredReturnType() || anonymousFunction.hasBlockBody()) return true
 
@@ -150,7 +155,7 @@ internal class RemoveExplicitTypeIntention :
         return anonymousFunction.initializer?.let { isInitializerTypeContextIndependent(it, returnTypeReference) } == true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isCallableReferenceExpressionTypeContextIndependent(callableReferenceExpression: KtCallableReferenceExpression): Boolean {
         val resolved = callableReferenceExpression.callableReference.references.firstNotNullOfOrNull { it.resolve() } ?: return false
         if (resolved !is KtNamedFunction) return true

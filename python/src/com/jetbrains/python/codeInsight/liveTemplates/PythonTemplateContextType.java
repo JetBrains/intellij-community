@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.liveTemplates;
 
 import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiComment;
@@ -16,6 +17,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +44,11 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
       }
     }
     return false;
+  }
+
+  @Override
+  public @NotNull SyntaxHighlighter createHighlighter() {
+    return new PyHighlighter(LanguageLevel.getLatest());
   }
 
   protected abstract boolean isInContext(@NotNull PsiElement element);

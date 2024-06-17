@@ -38,8 +38,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ModuleRootListe
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.nio.file.Path
@@ -93,25 +91,23 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
     val moduleChanges = (event[ModuleEntity::class.java] as? List<EntityChange<ModuleEntity>>) ?: emptyList()
     // `runBlocking` usage approved: https://jetbrains.team/im/thread/2dJ00M3nYBxT/DA2Jg0U6sRs?message=D9Bh40U795a&channel=1Dx4720YRoCU
     runBlocking {
-      val moduleFutures = moduleChanges.mapNotNull {
+      val moduleBridgeAndEntityList = moduleChanges.mapNotNull {
         if (it !is EntityChange.Added<ModuleEntity>) return@mapNotNull null
-        if (it.entity.findModule(builder) != null) return@mapNotNull null
+        if (it.newEntity.findModule(builder) != null) return@mapNotNull null
 
-        async(Dispatchers.Default) {
-          val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
-          val bridge = createModuleInstance(moduleEntity = it.entity,
-                                            versionedStorage = entityStore,
-                                            diff = builder,
-                                            isNew = true,
-                                            precomputedExtensionModel = null,
-                                            plugins = plugins,
-                                            corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID })
-          bridge to it.entity
-        }
+        val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+        val bridge = createModuleInstance(moduleEntity = it.newEntity,
+                                          versionedStorage = entityStore,
+                                          diff = builder,
+                                          isNew = true,
+                                          precomputedExtensionModel = null,
+                                          plugins = plugins,
+                                          corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID })
+        bridge to it.newEntity
       }
 
-      for (moduleFuture in moduleFutures) {
-        val (bridge, entity) = moduleFuture.await()
+      for (moduleBridgeAndEntity in moduleBridgeAndEntityList) {
+        val (bridge, entity) = moduleBridgeAndEntity
         builder.mutableModuleMap.addMapping(entity, bridge)
       }
     }
@@ -119,15 +115,15 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
 
   private fun initializeModuleLibraryBridge(change: EntityChange<LibraryEntity>, builder: MutableEntityStorage) {
     if (change is EntityChange.Added) {
-      val tableId = change.entity.tableId as LibraryTableId.ModuleLibraryTableId
+      val tableId = change.newEntity.tableId as LibraryTableId.ModuleLibraryTableId
       val moduleEntity = builder.resolve(tableId.moduleId)
-                         ?: error("Could not find module for module library: ${change.entity.symbolicId}")
-      val library = builder.libraryMap.getDataByEntity(change.entity)
+                         ?: error("Could not find module for module library: ${change.newEntity.symbolicId}")
+      val library = builder.libraryMap.getDataByEntity(change.newEntity)
       if (library == null) {
         val module = moduleEntity.findModule(builder)
                      ?: error("Could not find module bridge for module entity $moduleEntity")
         val moduleRootComponent = ModuleRootComponentBridge.getInstance(module)
-        (moduleRootComponent.getModuleLibraryTable() as ModuleLibraryTableBridgeImpl).addLibrary(change.entity, builder)
+        (moduleRootComponent.getModuleLibraryTable() as ModuleLibraryTableBridgeImpl).addLibrary(change.newEntity, builder)
       }
     }
   }

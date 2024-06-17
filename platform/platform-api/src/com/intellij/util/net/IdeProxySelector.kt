@@ -43,7 +43,7 @@ class IdeProxySelector(
         return selectUsingPac((conf as? ProxyConfiguration.ProxyAutoConfiguration)?.pacUrl, uri)
       }
       is ProxyConfiguration.StaticProxyConfiguration -> {
-        if (getExceptionsMatcher(conf.exceptions).test(uri.host)) {
+        if (getExceptionsMatcher(conf.exceptions).test(uri.host ?: "")) {
           logger.debug { "$uri: no proxy, uri is in exception list" }
           return NO_PROXY_LIST
         }

@@ -17,87 +17,92 @@ class IncompleteDependenciesModeStatisticsCollectorTest : LightPlatformTestCase(
   override fun runInDispatchThread(): Boolean = false
 
   fun testConsecutiveIncompleteMode() {
+    val duration1: Long = 100
+    val duration2: Long = 200
     val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       runBlocking(Dispatchers.EDT) {
         performInIncompleteMode {
-          delay(100)
+          delay(duration1)
         }
         performInIncompleteMode {
-          delay(100)
+          delay(duration2)
         }
       }
     }
 
-    assertThat(events).hasSize(4)
     assertThat(events).allMatch { event ->
       event.group.id == IncompleteDependenciesModeStatisticsCollector.GROUP.id
     }
-    val activityId = events.first().event.data["ide_activity_id"] as Int
-    assertThat(events.take(2)).allMatch { event ->
-      event.event.data["ide_activity_id"] == activityId
+    assertThat(events).hasSize(8)
+    checkIncompleteMode(events.take(4), minimumDuration = duration1)
+    checkIncompleteMode(events.drop(4), minimumDuration = duration2)
+  }
+
+  private fun checkIncompleteMode(events: List<LogEvent>, minimumDuration: Long) {
+    assertThat(events.first().event.id).isEqualTo("incomplete_dependencies_mode.started")
+    assertThat(events.last().event.id).isEqualTo("incomplete_dependencies_mode.finished")
+    assertThat(events.last().event.data["duration_ms"] as Long).isGreaterThanOrEqualTo(minimumDuration)
+
+    val activityEvents = events.drop(1).dropLast(1)
+    val seenIds = mutableSetOf<Int>()
+    val ids = mutableSetOf<Int>()
+    for (event in activityEvents) {
+      val id = event.event.data["step_id"] as Int
+      if (ids.contains(id)) ids.remove(id)
+      else {
+        assertThat(seenIds).doesNotContain(id)
+        seenIds.add(id)
+        ids.add(id)
+      }
+
+      assertThat(event.event.data["requestor"]).isEqualTo(IncompleteDependenciesModeStatisticsCollectorTest::class.java.name)
     }
-    assertThat(events.drop(2)).allMatch { event ->
-      event.event.data["ide_activity_id"] == activityId + 1
+    assertThat(ids).isEmpty()
+
+    assertModeChanged(activityEvents.first(), DependenciesState.COMPLETE, DependenciesState.INCOMPLETE)
+    for (middleActivity in activityEvents.drop(1).dropLast(1)) {
+      assertModeChanged(middleActivity, DependenciesState.INCOMPLETE, DependenciesState.INCOMPLETE)
     }
-    assertModeChanged(events[0], DependenciesState.COMPLETE, DependenciesState.INCOMPLETE)
-    assertModeChanged(events[1], DependenciesState.INCOMPLETE, DependenciesState.COMPLETE)
-    assertModeChanged(events[2], DependenciesState.COMPLETE, DependenciesState.INCOMPLETE)
-    assertModeChanged(events[3], DependenciesState.INCOMPLETE, DependenciesState.COMPLETE)
+    assertModeChanged(activityEvents.last(), DependenciesState.INCOMPLETE, DependenciesState.COMPLETE)
   }
 
   fun testRecursiveIncompleteMode() {
+    val duration: Long = 100
     val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       runBlocking(Dispatchers.EDT) {
         performInIncompleteMode {
           performInIncompleteMode {
             performInIncompleteMode {
-              delay(100)
+              delay(duration)
             }
           }
         }
       }
     }
-    assertThat(events).hasSize(6)
     assertThat(events).allMatch { event ->
       event.group.id == IncompleteDependenciesModeStatisticsCollector.GROUP.id
     }
-    val activityIdStack = mutableListOf<Int>()
-    for (event in events) {
-      val activityId = event.event.data["ide_activity_id"] as Int
-      if (activityIdStack.lastOrNull() == activityId) {
-        activityIdStack.removeLast()
-      }
-      else activityIdStack.add(activityId)
-    }
-    assertThat(activityIdStack).isEmpty()
-    assertModeChanged(events.first(), DependenciesState.COMPLETE, DependenciesState.INCOMPLETE)
-    assertModeChanged(events.last(), DependenciesState.INCOMPLETE, DependenciesState.COMPLETE)
-
-    assertThat(events.drop(1).dropLast(1)).allMatch { event ->
-      event.event.data["state_before"] == "INCOMPLETE"
-      event.event.data["state_after"] == "INCOMPLETE"
-    }
+    assertThat(events).hasSize(8)
+    checkIncompleteMode(events, minimumDuration = duration)
   }
 
   fun testIntertwinedIncompleteMode() {
+    val duration: Long = 100
     val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       runBlocking(Dispatchers.EDT) {
-        val token1 = writeAction { project.service<IncompleteDependenciesService>().enterIncompleteState() }
-        val token2 = writeAction { project.service<IncompleteDependenciesService>().enterIncompleteState() }
-        delay(100)
+        val token1 = writeAction { project.service<IncompleteDependenciesService>().enterIncompleteState(this@IncompleteDependenciesModeStatisticsCollectorTest) }
+        val token2 = writeAction { project.service<IncompleteDependenciesService>().enterIncompleteState(this@IncompleteDependenciesModeStatisticsCollectorTest) }
+        delay(duration)
         writeAction { token1.finish() }
         writeAction { token2.finish() }
       }
     }
 
-    assertThat(events).hasSize(4)
     assertThat(events).allMatch { event ->
       event.group.id == IncompleteDependenciesModeStatisticsCollector.GROUP.id
     }
-    assertModeChanged(events[0], DependenciesState.COMPLETE, DependenciesState.INCOMPLETE)
-    assertModeChanged(events[1], DependenciesState.INCOMPLETE, DependenciesState.INCOMPLETE)
-    assertModeChanged(events[2], DependenciesState.INCOMPLETE, DependenciesState.INCOMPLETE)
-    assertModeChanged(events[3], DependenciesState.INCOMPLETE, DependenciesState.COMPLETE)
+    assertThat(events).hasSize(6)
+    checkIncompleteMode(events, minimumDuration = duration)
   }
 
   private fun assertModeChanged(event: LogEvent, before: DependenciesState, after: DependenciesState) {
@@ -106,7 +111,7 @@ class IncompleteDependenciesModeStatisticsCollectorTest : LightPlatformTestCase(
   }
 
   private suspend fun performInIncompleteMode(action: suspend () -> Unit) {
-    val token = writeAction { project.service<IncompleteDependenciesService>().enterIncompleteState() }
+    val token = writeAction { project.service<IncompleteDependenciesService>().enterIncompleteState(this@IncompleteDependenciesModeStatisticsCollectorTest) }
     action()
     writeAction { token.finish() }
   }

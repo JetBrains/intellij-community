@@ -1,6 +1,7 @@
 package com.intellij.searchEverywhereMl.typos
 
 import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.testFramework.LightPlatformTestCase
@@ -19,7 +20,7 @@ class SearchEverywhereTyposUITest : LightPlatformTestCase() {
     val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern ("colop"))
     assert(elements.size == 2)
 
-    val selected = searchEverywhereUI.getData(PlatformDataKeys.SELECTED_ITEM.name)
+    val selected = (searchEverywhereUI.getData(PlatformDataKeys.BGT_DATA_PROVIDER.name) as DataProvider).getData(PlatformDataKeys.SELECTED_ITEM.name)
     Assert.assertEquals("Show Color Picker", selected)
   }
 }

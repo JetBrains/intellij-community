@@ -48,8 +48,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * This is high-performance Swing component that represents an icon with a colored text.
- * The text consists of fragments. Each  text fragment has its own color (foreground) and font style.
+ * This is a high-performance Swing component that represents an icon with a colored text.
+ * The text consists of fragments. Each text fragment has its own color (foreground) and font style.
  */
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
 public class SimpleColoredComponent extends JComponent implements Accessible, ColoredTextContainer {
@@ -91,7 +91,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * if the component represents a selected item in a focused JList.
    * Border can be {@code null}.
    */
-  private Border myBorder;
+  private Border border;
 
   private int myMainTextLastIndex = -1;
 
@@ -109,7 +109,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myFragments = new ArrayList<>(3);
     myIpad = JBInsets.create(1, 2);
     myIconTextGap = JBUIScale.scale(2);
-    myBorder = JBUI.Borders.empty(1);
+    border = JBUI.Borders.empty(1);
     setOpaque(true);
     updateUI();
   }
@@ -356,15 +356,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   public Border getMyBorder() {
-    return myBorder;
+    return border;
   }
 
   public void setMyBorder(@Nullable Border border) {
-    myBorder = border;
+    this.border = border;
   }
 
   /**
-   * Sets whether focus border is painted or not
+   * Sets whether a focus border is painted or not
    *
    * @param paintFocusBorder {@code true} or {@code false}
    */
@@ -376,8 +376,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   /**
-   * Sets whether focus border extends to icon or not. If so then
-   * component also extends the selection.
+   * Sets whether a focus border extends to icon or not. If so, then the component also extends the selection.
    *
    * @param focusBorderAroundIcon {@code true} or {@code false}
    */
@@ -434,7 +433,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         width += myIcon.getIconWidth() + myIconTextGap;
       }
 
-      final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBInsets.emptyInsets();
+      final Insets borderInsets = border != null ? border.getBorderInsets(this) : JBInsets.emptyInsets();
       width += borderInsets.left;
 
       Font font = getBaseFont();
@@ -462,7 +461,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     final FontMetrics metrics = getFontMetrics(font);
     int textHeight = Math.max(getMinHeight(), metrics.getHeight()); //avoid too narrow rows
 
-    Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBInsets.emptyInsets();
+    Insets borderInsets = border != null ? border.getBorderInsets(this) : JBInsets.emptyInsets();
     textHeight += borderInsets.top + borderInsets.bottom;
 
     height += myIcon == null ? textHeight : Math.max(myIcon.getIconHeight(), textHeight);
@@ -604,8 +603,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    */
   public int findFragmentAt(int x) {
     float curX = myIpad.left; //added even if no icon, see com.intellij.ui.SimpleColoredComponent.doPaintText
-    if (myBorder != null) {
-      curX += myBorder.getBorderInsets(this).left;
+    if (border != null) {
+      curX += border.getBorderInsets(this).left;
     }
     curX += getInsets().left;
 
@@ -810,8 +809,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
 
       float offset = textStart;
-      if (myBorder != null) {
-        offset += myBorder.getBorderInsets(this).left;
+      if (border != null) {
+        offset += border.getBorderInsets(this).left;
       }
       offset += getInsets().left;
 
@@ -910,13 +909,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
 
       // Paint focus border around the text and icon (if necessary)
-      if (myPaintFocusBorder && myBorder != null) {
+      if (myPaintFocusBorder && border != null) {
         int width = getWidth();
         if (focusAroundIcon) {
-          myBorder.paintBorder(this, g, 0, 0, width, height);
+          border.paintBorder(this, g, 0, 0, width, height);
         }
         else {
-          myBorder.paintBorder(this, g, textStart, 0, width - textStart, height);
+          border.paintBorder(this, g, textStart, 0, width - textStart, height);
         }
       }
 
@@ -1136,7 +1135,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected void setBorderInsets(Insets insets) {
-    myBorder = new JBEmptyBorder(insets);
+    border = new JBEmptyBorder(insets);
     revalidateAndRepaint();
   }
 

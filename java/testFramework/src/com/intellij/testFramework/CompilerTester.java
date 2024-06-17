@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
@@ -13,8 +13,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.components.impl.stores.IComponentStoreKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -215,7 +215,7 @@ public final class CompilerTester {
           LOG.warn(message);
 
           String fakeMacroName = "__remove_me__";
-          IComponentStore appStore = ServiceKt.getStateStore(ApplicationManager.getApplication());
+          IComponentStore appStore = IComponentStoreKt.getStateStore(ApplicationManager.getApplication());
           pathMacroManager.setMacro(fakeMacroName, fakeMacroName);
           appStore.saveComponent((PersistentStateComponent<?>)pathMacroManager);
           pathMacroManager.setMacro(fakeMacroName, null);

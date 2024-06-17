@@ -658,6 +658,7 @@
     </group>
 
     <action id="ToggleInlayHintsGloballyAction" class="com.intellij.codeInsight.hints.ToggleInlayHintsGloballyAction"/>
+    <action id="CodeVisionToggleAction" class="com.intellij.codeInsight.hints.codeVision.CodeVisionToggleAction" />
 
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
@@ -913,7 +914,7 @@
     </group>
 
     <group id="ProjectView.ToolWindow.SecondaryActions">
-      <group id="ProjectView.ToolWindow.Appearance.Actions" popup="true">
+      <group id="ProjectView.ToolWindow.Behavior.Actions" popup="true">
         <action id="ProjectView.OpenInPreviewTab"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenInPreviewTab"/>
         <action id="ProjectView.AutoscrollToSource"
@@ -924,28 +925,9 @@
         <action id="ProjectView.AutoscrollFromSource"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollFromSource"
                 icon="AllIcons.General.AutoscrollFromSource"/>
-        <separator/>
-        <action id="ProjectView.FlattenModules"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenModules"
-                icon="AllIcons.ObjectBrowser.FlattenModules"/>
-        <action id="ProjectView.FlattenPackages"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenPackages"
-                icon="AllIcons.ObjectBrowser.FlattenPackages"/>
-        <action id="ProjectView.AbbreviatePackageNames"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AbbreviatePackageNames"
-                icon="AllIcons.ObjectBrowser.AbbreviatePackageNames"/>
-        <action id="ProjectView.HideEmptyMiddlePackages"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$HideEmptyMiddlePackages"/>
-        <action id="ProjectView.CompactDirectories"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
-        <separator/>
-        <action id="ProjectView.FileNesting"
-                class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
-        <separator/>
-        <action id="ProjectView.CustomizeTrees"
-                class="com.intellij.ide.projectView.impl.CustomizeTreesAction"/>
       </group>
-      <group id="ProjectView.ToolWindow.Show.Actions" popup="true">
+      <group id="ProjectView.ToolWindow.Appearance.Actions" popup="true">
+        <separator key="group.ProjectView.ToolWindow.Appearance.Show.text"/>
         <action id="ProjectView.ShowModules"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowModules"
                 icon="AllIcons.Actions.GroupByModule">
@@ -974,6 +956,26 @@
           <override-text place="ToolwindowPopup"/>
         </action>
         <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
+        <separator/>
+        <action id="ProjectView.FlattenModules"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenModules"
+                icon="AllIcons.ObjectBrowser.FlattenModules"/>
+        <action id="ProjectView.FlattenPackages"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenPackages"
+                icon="AllIcons.ObjectBrowser.FlattenPackages"/>
+        <action id="ProjectView.AbbreviatePackageNames"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AbbreviatePackageNames"
+                icon="AllIcons.ObjectBrowser.AbbreviatePackageNames"/>
+        <action id="ProjectView.HideEmptyMiddlePackages"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$HideEmptyMiddlePackages"/>
+        <action id="ProjectView.CompactDirectories"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
+        <separator/>
+        <action id="ProjectView.FileNesting"
+                class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
+        <separator/>
+        <action id="ProjectView.CustomizeTrees"
+                class="com.intellij.ide.projectView.impl.CustomizeTreesAction"/>
       </group>
       <group id="ProjectView.ToolWindow.Sort.Actions" popup="true">
         <action id="ProjectView.ManualOrder"
@@ -1526,92 +1528,6 @@
       <reference ref="EditSource"/>
       <reference ref="TreeNodeExclusion"/>
     </group>
-
-    <group id="RunDashboardContentToolbar">
-      <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass">
-        <add-to-group anchor="first" group-id="RunTab.TopToolbar"/>
-        <add-to-group anchor="first" group-id="RunTab.TopToolbar.Old"/>
-        <add-to-group anchor="first" group-id="XDebugger.ToolWindow.TopToolbar3"/>
-      </action>
-      <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass">
-        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar"/>
-        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar.Old"/>
-        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="XDebugger.ToolWindow.TopToolbar3"/>
-      </action>
-      <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction" icon="AllIcons.Actions.Suspend"
-              use-shortcut-of="Stop"/>
-    </group>
-    <group id="RunDashboardPopup">
-      <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSourceInNewWindow"/>
-      <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction" icon="AllIcons.Actions.Copy" use-shortcut-of="EditorDuplicate"/>
-      <separator/>
-      <action id="RunDashboard.HideConfiguration" class="com.intellij.execution.dashboard.actions.HideConfigurationAction"/>
-      <action id="RunDashboard.RestoreHiddenConfigurations" class="com.intellij.execution.dashboard.actions.RestoreHiddenConfigurationsAction"/>
-      <action id="RunDashboard.RemoveType" class="com.intellij.execution.dashboard.actions.RemoveRunConfigurationTypeAction"/>
-      <action id="RunDashboard.OpenRunningConfigInNewTab" class="com.intellij.execution.dashboard.actions.OpenRunningConfigInNewTabAction"/>
-      <separator/>
-      <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction" icon="AllIcons.Actions.Cancel"/>
-      <action id="RunDashboard.RestoreConfiguration" class="com.intellij.execution.dashboard.actions.RestoreConfigurationAction" icon="AllIcons.Actions.Rollback"/>
-      <separator/>
-      <action id="RunDashboard.GroupConfigurations" class="com.intellij.execution.dashboard.actions.GroupConfigurationsAction" icon="AllIcons.Actions.GroupByPackage"/>
-      <action id="RunDashboard.UngroupConfigurations" class="com.intellij.execution.dashboard.actions.UngroupConfigurationsActions" icon="AllIcons.General.Remove" use-shortcut-of="$Delete"/>
-      <separator/>
-    </group>
-
-    <group id="ServiceViewTreeToolbar">
-      <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
-             class="com.intellij.execution.services.AddServiceActionGroup">
-      </group>
-      <group id="ServiceView.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy"
-             class="com.intellij.ide.actions.NonEmptyActionGroup">
-        <action id="ServiceView.GroupByContributor" class="com.intellij.execution.services.GroupByContributorAction"/>
-        <separator/>
-      </group>
-      <group id="ServiceView.OpenInNewTabGroup" popup="true" icon="AllIcons.Actions.OpenNewTab"
-             class="com.intellij.execution.services.OpenInNewTabActionGroup">
-        <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"/>
-        <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"/>
-        <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"/>
-      </group>
-    </group>
-    <group id="ServiceViewItemToolbar">
-      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup" id="ServiceViewItemToolbarGroup"/>
-      <separator/>
-    </group>
-    <group id="ServiceViewItemPopup">
-      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup" id="ServiceViewItemPopupGroup"/>
-      <separator/>
-      <reference id="ServiceView.OpenInNewTab"/>
-      <reference id="ServiceView.OpenEachInNewTab"/>
-      <reference id="ServiceView.SplitByType"/>
-      <action id="ServiceView.OpenInToolWindow" class="com.intellij.execution.services.OpenInToolWindowAction"/>
-      <separator/>
-      <reference id="$Delete"/>
-      <separator/>
-      <reference id="EditSource"/>
-      <action id="ServiceView.JumpToServices" class="com.intellij.execution.services.JumpToServicesAction" use-shortcut-of="ShowNavBar"/>
-    </group>
-    <action id="ServiceView.SelectActiveService" class="com.intellij.execution.services.SelectActiveServiceAction"/>
-    <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction" icon="AllIcons.Actions.ShowAsTree"/>
-    <action id="ServiceView.ConfigureServices" class="com.intellij.execution.services.ConfigureServicesAction" icon="AllIcons.General.GearPlain"/>
-    <group id="RunDashboard.ViewOptions" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
-      <separator key="separator.RunDashboard.GroupBy"/>
-      <action id="RunDashboard.GroupByType" class="com.intellij.execution.dashboard.actions.GroupByConfigurationTypeAction"/>
-      <action id="RunDashboard.GroupByStatus" class="com.intellij.execution.dashboard.actions.GroupByConfigurationStatusAction"/>
-      <separator/>
-      <separator key="separator.RunDashboard.Filter"/>
-      <group id="RunDashboard.Filter" class="com.intellij.execution.dashboard.actions.RunDashboardFilterActionGroup"/>
-      <add-to-group group-id="ServiceView.ViewOptions"/>
-    </group>
-    <action id="RunDashboard.AddType" class="com.intellij.execution.dashboard.actions.AddRunConfigurationTypeAction">
-      <add-to-group group-id="ServiceView.AddService"/>
-    </action>
-    <reference id="RunDashboard.RestoreHiddenConfigurations">
-      <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddType"/>
-    </reference>
-
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
     </action>
@@ -1740,17 +1656,8 @@
       <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
     </group>
 
-    <group id="WorkspaceProjectGroup">
-      <separator/>
-      <action id="ManageWorkspace" class="com.intellij.ide.workspace.ManageWorkspaceAction"/>
-      <action id="CreateWorkspace" class="com.intellij.ide.workspace.CreateWorkspaceAction"/>
-      <separator/>
-      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
-    </group>
-
     <group id="WorkspaceContextMenuGroup">
-      <action id="AddToWorkspace" class="com.intellij.ide.workspace.AddProjectsToWorkspaceAction"/>
-      <action id="ManageWorkspacePopup" class="com.intellij.ide.workspace.ManageWorkspacePopupAction" use-shortcut-of="EditSource"/>
+      <action id="AddToWorkspace" class="com.intellij.ide.workspace.configuration.AddProjectsToWorkspaceAction"/>
       <separator/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
     </group>

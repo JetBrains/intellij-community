@@ -122,7 +122,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
         assert lookupItem != null : expressionNode;
       }
 
-      AsyncEditorLoader.performWhenLoaded(editor, () ->
+      AsyncEditorLoader.Companion.performWhenLoaded(editor, () ->
         runLookup(state, lookupItems, project, editor, expressionNode.getAdvertisingText(), expressionNode.getLookupFocusDegree()));
     }
   }

@@ -109,12 +109,12 @@ internal class IdeaFreezeReporter : PerformanceListener {
       dumpTask = object : SamplingTask(100, maxDumpDuration, coroutineScope) {
         override fun stop() {
           super.stop()
-          EP_NAME.forEachExtensionSafe(FreezeProfiler::stop)
+          EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
         }
 
         override suspend fun stopDumpingThreads() {
           super.stopDumpingThreads()
-          EP_NAME.forEachExtensionSafe(FreezeProfiler::stop)
+          EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
         }
       }
       EP_NAME.forEachExtensionSafe { it.start(reportDir) }

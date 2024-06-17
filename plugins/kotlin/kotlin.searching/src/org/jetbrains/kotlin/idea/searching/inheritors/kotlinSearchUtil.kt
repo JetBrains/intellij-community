@@ -11,7 +11,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.mappingNotNull
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
@@ -71,7 +71,7 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean,
                     }
                     if (withFullHierarchy) {
                         analyze(currentMethod) {
-                            val ktCallableSymbol = currentMethod.getSymbol() as? KtCallableSymbol ?: return@analyze
+                            val ktCallableSymbol = currentMethod.getSymbol() as? KaCallableSymbol ?: return@analyze
                             ktCallableSymbol.getDirectlyOverriddenSymbols()
                                 .mapNotNull { it.psi }
                                 .forEach { queue.offer(it) }

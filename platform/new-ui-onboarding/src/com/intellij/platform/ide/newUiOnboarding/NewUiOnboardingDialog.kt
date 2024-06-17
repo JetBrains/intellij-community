@@ -32,7 +32,7 @@ import javax.swing.JRootPane
 import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
 
-class NewUiOnboardingDialog(private val project: Project)
+internal class NewUiOnboardingDialog(private val project: Project)
   : DialogWrapper(project, null, false, IdeModalityType.IDE, false) {
   private val backgroundColor: Color
     get() = JBColor.namedColor("NewUiOnboarding.Dialog.background", UIUtil.getPanelBackground())

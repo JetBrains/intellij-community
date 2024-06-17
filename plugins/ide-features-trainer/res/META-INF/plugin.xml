@@ -209,7 +209,6 @@
                  key="feature.suggester.enable.suggesters" restartRequired="true"/>
     <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"
         bundle="messages.FeatureSuggesterBundle" key="notification.group.feature.suggester"/>
-    <iconMapper mappingFile="FeaturesTrainerIconMappings.json"/>
 
     <newProject.onboarding.tips implementation="training.onboarding.NewProjectOnboardingTipsImpl"/>
     <postStartupActivity implementation="training.onboarding.InstallOnboardingTooltip"/>

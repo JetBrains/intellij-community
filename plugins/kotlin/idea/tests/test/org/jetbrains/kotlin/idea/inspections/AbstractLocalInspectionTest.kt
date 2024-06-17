@@ -16,8 +16,8 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
-import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
@@ -351,8 +351,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         dispatchAllEventsInIdeEventQueue()
         try {
             myFixture.checkResultByFile("${afterFileAbsolutePath.fileName}")
-        } catch (e: AssertionError) {
-            if (e !is FileComparisonData) throw e
+        } catch (e: FileComparisonFailedError) {
             KotlinTestUtils.assertEqualsToFile(
                 File(testDataDirectory, "${afterFileAbsolutePath.fileName}"),
                 editor.document.text

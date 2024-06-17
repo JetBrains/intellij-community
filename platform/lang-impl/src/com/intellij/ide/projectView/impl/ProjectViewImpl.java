@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.bookmark.BookmarksListener;
-import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
@@ -46,7 +45,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.GeneralModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareToggleAction;
@@ -107,6 +105,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final Logger LOG = Logger.getInstance(ProjectViewImpl.class);
   private static final Key<String> ID_KEY = Key.create("pane-id");
   private static final Key<String> SUB_ID_KEY = Key.create("pane-sub-id");
+  public static final @NonNls String ANDROID_VIEW_ID = "AndroidView";
 
   private final CopyPasteDelegator copyPasteDelegator;
   private boolean isInitialized;
@@ -1378,7 +1377,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return ActionCallback.REJECTED;
   }
 
-  private final class MyPanel extends JPanel implements DataProvider {
+  private final class MyPanel extends JPanel implements EdtDataProvider {
     MyPanel() {
       super(new BorderLayout());
       Collection<AbstractProjectViewPane> snapshot = new ArrayList<>(idToPane.values());
@@ -1397,50 +1396,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.CUT_PROVIDER, copyPasteDelegator.getCutProvider());
+      sink.set(PlatformDataKeys.COPY_PROVIDER, copyPasteDelegator.getCopyProvider());
+      sink.set(PlatformDataKeys.PASTE_PROVIDER, copyPasteDelegator.getPasteProvider());
+      sink.set(LangDataKeys.IDE_VIEW, myIdeView);
+      sink.set(PlatformCoreDataKeys.HELP_ID, HelpID.PROJECT_VIEWS);
+      sink.set(QuickActionProvider.KEY, ProjectViewImpl.this);
       AbstractProjectViewPane selectedPane = getCurrentProjectViewPane();
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        DataProvider paneProvider = selectedPane == null ? null : PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(selectedPane);
-        return CompositeDataProvider.compose(slowId -> getSlowData(slowId, paneProvider), paneProvider);
+      if (selectedPane != null) {
+        DataSink.uiDataSnapshot(sink, selectedPane);
       }
-      Object paneData = selectedPane == null ? null : selectedPane.getData(dataId);
-      if (paneData != null) {
-        return DataValidators.validOrNull(paneData, dataId, selectedPane);
-      }
-      if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
-        return copyPasteDelegator.getCutProvider();
-      }
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return copyPasteDelegator.getCopyProvider();
-      }
-      if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-        return copyPasteDelegator.getPasteProvider();
-      }
-      if (LangDataKeys.IDE_VIEW.is(dataId)) {
-        return myIdeView;
-      }
-      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-        return HelpID.PROJECT_VIEWS;
-      }
-      if (QuickActionProvider.KEY.is(dataId)) {
-        return ProjectViewImpl.this;
-      }
-
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NotNull String dataId, @Nullable DataProvider paneSlowProvider) {
-      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
-        VirtualFile[] virtualFiles = paneSlowProvider == null ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(paneSlowProvider);
-        if (virtualFiles == null || virtualFiles.length < 1) return null;
-        if (virtualFiles.length == 1) return ModuleUtilCore.findModuleForFile(virtualFiles[0], project);
-        Set<Module> modules = new HashSet<>();
-        for (VirtualFile virtualFile : virtualFiles) {
-          ContainerUtil.addIfNotNull(modules, ModuleUtilCore.findModuleForFile(virtualFile, project));
-        }
-        return ContainerUtil.getOnlyItem(modules);
-      }
-      return null;
     }
   }
 
@@ -1480,7 +1446,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     //noinspection SpellCheckingInspection
     if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix()) && !Boolean.getBoolean("studio.projectview")) {
       // the default in Android Studio unless studio.projectview is set: issuetracker.google.com/37091465
-      return "AndroidView";
+      return ANDROID_VIEW_ID;
     }
     else {
       for (AbstractProjectViewPane extension : AbstractProjectViewPane.EP.getExtensions(project)) {

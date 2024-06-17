@@ -40,7 +40,7 @@ interface ParentAbEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyParentAbEntity(
   entity: ParentAbEntity,
   modification: ParentAbEntity.Builder.() -> Unit,
 ): ParentAbEntity {
@@ -117,7 +117,7 @@ interface ChildFirstEntity : ChildAbstractBaseEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChildFirstEntity(
   entity: ChildFirstEntity,
   modification: ChildFirstEntity.Builder.() -> Unit,
 ): ChildFirstEntity {
@@ -164,7 +164,7 @@ interface ChildSecondEntity : ChildAbstractBaseEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChildSecondEntity(
   entity: ChildSecondEntity,
   modification: ChildSecondEntity.Builder.() -> Unit,
 ): ChildSecondEntity {

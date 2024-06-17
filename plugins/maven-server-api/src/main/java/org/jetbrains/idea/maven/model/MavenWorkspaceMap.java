@@ -13,6 +13,7 @@ import java.util.function.Function;
 
 public class MavenWorkspaceMap implements Serializable {
   private final Map<MavenId, Data> myMapping = new HashMap<MavenId, Data>();
+  private final Map<String, Serializable> myAdditionalContext = new HashMap<>();
 
   public void register(@NotNull MavenId id, @NotNull File file) {
     register(id, file, null);
@@ -22,6 +23,19 @@ public class MavenWorkspaceMap implements Serializable {
     for (MavenId each : getAllIDs(id)) {
       myMapping.put(each, new Data(id, file, outputFile));
     }
+  }
+
+  public void addContext(String id, Serializable contextData) {
+    myAdditionalContext.put(id, contextData);
+  }
+
+  public @Nullable Serializable getAdditionalContext(String id) {
+    return myAdditionalContext.get(id);
+  }
+
+  @NotNull
+  public Set<String> getAvailableContextIds() {
+    return myAdditionalContext.keySet();
   }
 
   public void unregister(@NotNull MavenId id) {

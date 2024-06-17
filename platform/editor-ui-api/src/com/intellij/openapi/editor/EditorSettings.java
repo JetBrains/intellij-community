@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
@@ -12,6 +12,9 @@ import java.util.function.Supplier;
 public interface EditorSettings {
   boolean isRightMarginShown();
   void setRightMarginShown(boolean val);
+  
+  boolean isHighlightSelectionOccurrences();
+  void setHighlightSelectionOccurrences(boolean val);
 
   boolean isWhitespacesShown();
   void setWhitespacesShown(boolean val);

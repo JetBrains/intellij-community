@@ -10,12 +10,19 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : UiComponent(data) {
   val projectButton = stripeButton(Locators.byAccessibleName("Project"))
   val buildButton = stripeButton(Locators.byAccessibleName("Build"))
   val gitButton = stripeButton(Locators.byAccessibleName("Git"))
+  val commitButton = stripeButton(Locators.byAccessibleName("Commit"))
+  val structureButton = stripeButton(Locators.byAccessibleName("Structure"))
+  val servicesButton = stripeButton(Locators.byAccessibleName("Services"))
+  val terminalButton = stripeButton(Locators.byAccessibleName("Terminal"))
+  val problemsButton = stripeButton(Locators.byAccessibleName("Problems"))
+  val moreButton = stripeButton(Locators.byAccessibleName("More"))
 }
 
 class ToolWindowRightToolbarUi(data: ComponentData) : UiComponent(data) {
   val notificationsButton = stripeButton(Locators.byAccessibleName("Notifications"))
   val gradleButton = stripeButton(Locators.byAccessibleName("Gradle"))
   val mavenButton = stripeButton(Locators.byAccessibleName("Maven"))
+  val databaseButton = stripeButton(Locators.byAccessibleName("Database"))
 }
 
 class StripeButtonUi(data: ComponentData) : UiComponent(data) {

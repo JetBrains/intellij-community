@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="kotlin.project-configuration" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-toml" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.analysis" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.migration" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java" scope="TEST" />
@@ -53,5 +54,6 @@
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
   </component>
 </module>

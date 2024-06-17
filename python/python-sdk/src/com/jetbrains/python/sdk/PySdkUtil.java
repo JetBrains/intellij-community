@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -124,7 +125,7 @@ public final class PySdkUtil {
     if (homePath == null || !new File(homePath).exists()) {
       return new ProcessOutput();
     }
-    final Map<String, String> systemEnv = System.getenv();
+    final Map<String, String> systemEnv = EnvironmentUtil.getEnvironmentMap();
     final Map<String, String> expandedCmdEnv = mergeEnvVariables(systemEnv, cmd.getEnvironment());
     final Map<String, String> env = extraEnv != null ? mergeEnvVariables(expandedCmdEnv, extraEnv) : expandedCmdEnv;
     PythonEnvUtil.resetHomePathChanges(homePath, env);

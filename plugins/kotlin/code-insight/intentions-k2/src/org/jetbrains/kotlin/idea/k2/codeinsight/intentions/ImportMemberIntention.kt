@@ -5,12 +5,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -41,7 +39,7 @@ internal class ImportMemberIntention :
         // Ignore simple name expressions or already imported names.
         element.getQualifiedElement() != element && !element.isInImportDirective()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtNameReferenceExpression): Context? {
         val symbol = element.mainReference.resolveToSymbol() ?: return null
         return computeContext(element, symbol)
@@ -57,15 +55,15 @@ internal class ImportMemberIntention :
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): ImportMemberIntention.Context? {
     return when (symbol) {
-        is KtConstructorSymbol,
-        is KtClassOrObjectSymbol -> {
-            val classId = if (symbol is KtClassOrObjectSymbol) {
+        is KaConstructorSymbol,
+        is KaClassOrObjectSymbol -> {
+            val classId = if (symbol is KaClassOrObjectSymbol) {
                 symbol.classId
             } else {
-                (symbol as KtConstructorSymbol).containingClassId
+                (symbol as KaConstructorSymbol).containingClassId
             } ?: return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
@@ -75,7 +73,7 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
                     else
                         ShortenStrategy.DO_NOT_SHORTEN
                 }, callableShortenStrategy = {
-                    if (it is KtConstructorSymbol && it.containingClassId == classId)
+                    if (it is KaConstructorSymbol && it.containingClassId == classId)
                         ShortenStrategy.SHORTEN_AND_IMPORT
                     else
                         ShortenStrategy.DO_NOT_SHORTEN
@@ -84,10 +82,10 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
             ImportMemberIntention.Context(classId.asSingleFqName(), shortenCommand)
         }
 
-        is KtCallableSymbol -> {
+        is KaCallableSymbol -> {
             val callableId = symbol.callableId ?: return null
             if (callableId.callableName.isSpecial) return null
-            if (!canBeImported(symbol)) return null
+            if (symbol.getImportableName() == null) return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
                 classShortenStrategy = { ShortenStrategy.DO_NOT_SHORTEN },
@@ -103,22 +101,5 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
         }
 
         else -> return null
-    }
-}
-
-context(KtAnalysisSession)
-private fun canBeImported(symbol: KtCallableSymbol): Boolean {
-    if (symbol is KtEnumEntrySymbol) return true
-    if (symbol.origin == KtSymbolOrigin.JAVA) {
-        return when (symbol) {
-            is KtFunctionSymbol -> symbol.isStatic
-            is KtPropertySymbol -> symbol.isStatic
-            is KtJavaFieldSymbol -> symbol.isStatic
-            else -> false
-        }
-    } else {
-        if ((symbol as? KtSymbolWithKind)?.symbolKind == KtSymbolKind.TOP_LEVEL) return true
-        val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return true
-        return containingClass.classKind == KtClassKind.OBJECT || containingClass.classKind == KtClassKind.COMPANION_OBJECT
     }
 }

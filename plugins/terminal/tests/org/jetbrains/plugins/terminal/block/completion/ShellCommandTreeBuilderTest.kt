@@ -5,7 +5,9 @@ import com.intellij.terminal.completion.ShellCommandTreeAssertions
 import com.intellij.terminal.completion.ShellCommandTreeBuilderFixture
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandResult
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellAliasSuggestion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
 import org.jetbrains.plugins.terminal.block.util.TestCommandSpecsManager
@@ -16,6 +18,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.File
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 @RunWith(JUnit4::class)
 internal class ShellCommandTreeBuilderTest {
@@ -38,6 +42,34 @@ internal class ShellCommandTreeBuilderTest {
     }
 
     subcommands {
+      subcommand("with-alias") {
+        subcommands {
+          subcommand("al") {
+            option("--manyArgs") {
+              argument()
+              argument {
+                isOptional = true
+                suggestions("a2")
+              }
+            }
+          }
+        }
+
+        option("-a")
+
+        argument {
+          isOptional = true
+          suggestions {
+            listOf(
+              ShellAliasSuggestion("alias-1", "al --manyArgs somearg"),
+              ShellAliasSuggestion("alias-2", "-a"),
+              ShellAliasSuggestion("recurse-1", "recurse-1"),
+              ShellAliasSuggestion("recurse-2", "-a recurse-2"),
+            )
+          }
+        }
+      }
+
       subcommand("sub") {
         option("-o", "--opt1")
         option("-a")
@@ -281,16 +313,67 @@ internal class ShellCommandTreeBuilderTest {
     }
   }
 
-  private fun doTest(vararg arguments: String, assertions: ShellCommandTreeAssertions.() -> Unit) = runBlocking {
+  @Test
+  fun `recursive alias 1 isn't expanding infinitely`() {
+    doTestWithTimeout("with-alias", "recurse-1") {
+    }
+  }
+
+  @Test
+  fun `recursive alias 2 isn't expanding infinitely`() {
+    doTestWithTimeout("with-alias", "recurse-2") {
+    }
+  }
+
+  @Test
+  fun `subcommand alias resolves`() {
+    doTest("with-alias", "alias-1") {
+      assertSubcommandOf("with-alias", commandName)
+      assertSubcommandOf("al", "with-alias")
+      assertOptionOf("--manyArgs", "al")
+      assertArgumentOfOption("somearg", "--manyArgs")
+    }
+  }
+
+  @Test
+  fun `subcommand alias resolves arguments`() {
+    doTest("with-alias", "alias-1", "a2") {
+      assertSubcommandOf("with-alias", commandName)
+      assertSubcommandOf("al", "with-alias")
+      assertOptionOf("--manyArgs", "al")
+      assertArgumentOfOption("somearg", "--manyArgs")
+      assertArgumentOfOption("a2", "--manyArgs")
+    }
+  }
+
+  @Test
+  fun `option alias resolves`() {
+    doTest("with-alias", "alias-2") {
+      assertSubcommandOf("with-alias", commandName)
+      assertOptionOf("-a", "with-alias")
+    }
+  }
+
+  private fun doTest(vararg arguments: String, assertions: ShellCommandTreeAssertions.() -> Unit) =
+    runBlocking {
+      doTestImpl(arguments.toList(), assertions)
+    }
+
+  private fun doTestWithTimeout(vararg arguments: String, timeout: Duration = 500.milliseconds, assertions: ShellCommandTreeAssertions.() -> Unit) =
+    timeoutRunBlocking(timeout) {
+      doTestImpl(arguments.toList(), assertions)
+    }
+
+  private suspend fun doTestImpl(arguments: List<String>, assertions: ShellCommandTreeAssertions.() -> Unit) {
     // Mock fileSuggestionsGenerator result
     val generatorCommandsRunner = TestGeneratorCommandsRunner { command ->
       if (command.startsWith("__jetbrains_intellij_get_directory_files")) {
         val path = command.removePrefix("__jetbrains_intellij_get_directory_files").trim()
-        val files = filePathSuggestions[path]
+      val files = filePathSuggestions[path]
         if (files != null) {
           ShellCommandResult.create(files.joinToString("\n"), exitCode = 0)
         }
-        else ShellCommandResult.create("", exitCode = 0)
+      else ShellCommandResult.create("", exitCode = 0)
       }
       else ShellCommandResult.create("", exitCode = 1)
     }

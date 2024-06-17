@@ -134,8 +134,12 @@ public class BreakpointsDialog extends DialogWrapper {
   private JComponent createDetailView() {
     DetailViewImpl detailView = new DetailViewImpl(myProject);
     detailView.setEmptyLabel(XDebuggerBundle.message("xbreakpoint.label.empty"));
+    detailView.addEditorChangedListener(newEditor -> {
+      if (newEditor != null) {
+        registerEditSourceAction(newEditor.getComponent());
+      }
+    });
     myDetailController.setDetailView(detailView);
-    registerEditSourceAction(detailView);
 
     return detailView;
   }

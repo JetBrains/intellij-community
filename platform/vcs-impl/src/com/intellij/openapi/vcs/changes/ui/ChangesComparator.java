@@ -38,7 +38,7 @@ public final class ChangesComparator {
 
   private static int comparePaths(@NotNull FilePath filePath1, @NotNull FilePath filePath2, boolean flattened) {
     if (flattened) {
-      int delta = FileNameComparator.INSTANCE.compare(filePath1.getName(), filePath2.getName());
+      int delta = FileNameComparator.getInstance().compare(filePath1.getName(), filePath2.getName());
       if (delta != 0) return delta;
     }
     return HierarchicalFilePathComparator.NATURAL.compare(filePath1, filePath2);

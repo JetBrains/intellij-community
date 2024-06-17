@@ -45,7 +45,7 @@ interface ParentWithNulls : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyParentWithNulls(
   entity: ParentWithNulls,
   modification: ParentWithNulls.Builder.() -> Unit,
 ): ParentWithNulls {
@@ -84,7 +84,7 @@ interface ChildWithNulls : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChildWithNulls(
   entity: ChildWithNulls,
   modification: ChildWithNulls.Builder.() -> Unit,
 ): ChildWithNulls {

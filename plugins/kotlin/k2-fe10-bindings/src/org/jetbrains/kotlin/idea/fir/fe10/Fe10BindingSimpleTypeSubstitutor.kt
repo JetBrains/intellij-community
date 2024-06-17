@@ -4,14 +4,14 @@
  */
 package org.jetbrains.kotlin.idea.fir.fe10
 
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.getVariance
 import org.jetbrains.kotlin.types.model.TypeVariance
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
 class Fe10BindingSimpleTypeSubstitutor private constructor(
-  private val map: Map<KtTypeParameterSymbol, TypeProjection>
+  private val map: Map<KaTypeParameterSymbol, TypeProjection>
 ) {
     private fun substitute(kotlinType: KotlinType): KotlinType? {
         when (val unwrappedType = kotlinType.unwrap()) {
@@ -91,7 +91,7 @@ class Fe10BindingSimpleTypeSubstitutor private constructor(
     }
 
     companion object {
-        fun substitute(map: Map<KtTypeParameterSymbol, TypeProjection>, type: UnwrappedType) : UnwrappedType {
+        fun substitute(map: Map<KaTypeParameterSymbol, TypeProjection>, type: UnwrappedType) : UnwrappedType {
             if (map.isEmpty()) return type
             return Fe10BindingSimpleTypeSubstitutor(map).substitute(type)?.unwrap() ?: type
         }

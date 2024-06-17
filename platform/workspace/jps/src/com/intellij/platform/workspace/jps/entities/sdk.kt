@@ -12,16 +12,16 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 import java.io.Serializable
 
-interface SdkEntity: WorkspaceEntityWithSymbolicId {
+interface SdkEntity : WorkspaceEntityWithSymbolicId {
+  override val symbolicId: SdkId
+    get() = SdkId(name, type)
+
   val name: String
   val type: String
   val version: String?
   val homePath: VirtualFileUrl?
   val roots: List<SdkRoot>
   val additionalData: String
-
-  override val symbolicId: SdkId
-    get() = SdkId(name, type)
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -61,7 +61,7 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySdkEntity(
   entity: SdkEntity,
   modification: SdkEntity.Builder.() -> Unit,
 ): SdkEntity {

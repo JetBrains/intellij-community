@@ -4,7 +4,6 @@ package com.intellij.vcs.commit
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
@@ -48,7 +47,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     val modalityState = coroutineContext.contextModality()
     val canAwaitChanges = modalityState == ModalityState.nonModal() || modalityState == null
 
-    val actionsOnSaveManager = service<ActionsOnSaveManager>()
+    val actionsOnSaveManager = ActionsOnSaveManager.getInstance(project)
     if (canAwaitChanges) {
       if (actionsOnSaveManager.hasPendingActions()) {
         logger<NonModalCommitWorkflow>().info("Awaiting for 'Actions on Save' on commit")

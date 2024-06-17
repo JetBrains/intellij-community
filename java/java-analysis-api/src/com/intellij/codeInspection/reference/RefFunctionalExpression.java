@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import org.jetbrains.annotations.NotNull;
@@ -29,4 +29,6 @@ public interface RefFunctionalExpression extends RefJavaElement, RefOverridable 
    * Note that a method reference always contains a body.
    */
   boolean hasEmptyBody();
+  
+  boolean isMethodReference();
 }

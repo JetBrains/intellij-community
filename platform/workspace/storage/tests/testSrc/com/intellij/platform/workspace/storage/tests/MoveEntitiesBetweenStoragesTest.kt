@@ -29,7 +29,7 @@ class MoveEntitiesBetweenStoragesTest {
   fun `move entity with child`() {
     val snapshot = createEmptyBuilder().also {
       val parent = it addEntity XParentEntity("parent", MySource)
-      it.modifyEntity(parent) parent@{
+      it.modifyXParentEntity(parent) parent@{
         it addEntity XChildEntity("child", MySource) {
           parentEntity = this@parent
         }
@@ -53,13 +53,13 @@ class MoveEntitiesBetweenStoragesTest {
     val snapshot = createEmptyBuilder().also {
       val parentEntity = it addEntity XParentEntity("parent", MySource)
       val childEntity = it addEntity XChildEntity("child", MySource) {
-        it.modifyEntity(parentEntity) parent@{
+        it.modifyXParentEntity(parentEntity) parent@{
           this@XChildEntity.parentEntity = this@parent
         }
       }
       it addEntity XChildChildEntity(MySource) {
-        it.modifyEntity(parentEntity) parent@{
-          it.modifyEntity(childEntity) child@{
+        it.modifyXParentEntity(parentEntity) parent@{
+          it.modifyXChildEntity(childEntity) child@{
             parent1 = this@parent
             parent2 = this@child
           }
@@ -89,7 +89,7 @@ class MoveEntitiesBetweenStoragesTest {
     val sameChild = child.from(newBuilder)
     assertIsNot<ModifiableWorkspaceEntityBase<*, *>>(sameChild)
     newBuilder addEntity OptionalOneToOneParentEntity(MySource) parent@{
-      newBuilder.modifyEntity(sameChild) child@{
+      newBuilder.modifyOptionalOneToOneChildEntity(sameChild) child@{
         this@parent.child = this@child
       }
     }

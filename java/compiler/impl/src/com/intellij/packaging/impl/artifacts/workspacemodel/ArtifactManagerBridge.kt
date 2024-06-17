@@ -5,7 +5,7 @@ import com.intellij.compiler.server.BuildManager
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.java.workspace.entities.CustomPackagingElementEntity
-import com.intellij.java.workspace.entities.modifyEntity
+import com.intellij.java.workspace.entities.modifyCustomPackagingElementEntity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -180,7 +180,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
     changes.forEach {
       when (it) {
-        is EntityChange.Removed<*> -> current.artifactsMap.getDataByEntity(it.entity)?.let { it1 -> removed.add(it1) }
+        is EntityChange.Removed<*> -> current.artifactsMap.getDataByEntity(it.oldEntity)?.let { it1 -> removed.add(it1) }
         is EntityChange.Added -> Unit
         is EntityChange.Replaced -> {
           // Collect changes and transfer info from the modifiable bridge artifact to the original artifact
@@ -218,7 +218,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     changes.forEach {
       when (it) {
         is EntityChange.Added<*> -> {
-          val artifactBridge = artifactModel.diff.artifactsMap.getDataByEntity(it.entity)!!
+          val artifactBridge = artifactModel.diff.artifactsMap.getDataByEntity(it.newEntity)!!
           added.add(artifactBridge)
           artifactBridge.setActualStorage()
         }
@@ -265,7 +265,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
       val state = packagingElement.state ?: continue
       val newState = JDOMUtil.write(XmlSerializer.serialize(state))
       if (newState != customEntity.propertiesXmlTag) {
-        diff.modifyEntity(customEntity) {
+        diff.modifyCustomPackagingElementEntity(customEntity) {
           this.propertiesXmlTag = newState
         }
       }

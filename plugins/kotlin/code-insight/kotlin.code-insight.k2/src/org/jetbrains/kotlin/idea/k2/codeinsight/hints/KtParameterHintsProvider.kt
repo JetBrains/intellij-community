@@ -12,12 +12,12 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
 import org.jetbrains.kotlin.name.Name
@@ -57,7 +57,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectFromParameters(
         valueArgumentList: KtValueArgumentList,
         callElement: KtCallElement,
@@ -65,9 +65,9 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         val arguments = valueArgumentList.arguments
 
-        val functionCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return
-        val functionSymbol: KtFunctionLikeSymbol = functionCall.symbol
-        val valueParameters: List<KtValueParameterSymbol> = functionSymbol.valueParameters
+        val functionCall = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return
+        val functionSymbol: KaFunctionLikeSymbol = functionCall.symbol
+        val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
 
         val blackListed = functionSymbol.isBlackListed(valueParameters)
         // TODO: IDEA-347315 has to be fixed
@@ -82,8 +82,8 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    context(KtAnalysisSession)
-    private fun KtFunctionLikeSymbol.isBlackListed(valueParameters: List<KtValueParameterSymbol>): Boolean {
+    context(KaSession)
+    private fun KaFunctionLikeSymbol.isBlackListed(valueParameters: List<KaValueParameterSymbol>): Boolean {
         val blackListed = callableId?.let {
             val callableId = it.asSingleFqName().toString()
             val parameterNames = valueParameters.map { it.name.asString() }
@@ -92,9 +92,9 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         return blackListed == true
     }
 
-    context(KtAnalysisSession)
-    private fun KtFunctionLikeSymbol.collectFromParameters(
-        valueParameters: List<KtValueParameterSymbol>,
+    context(KaSession)
+    private fun KaFunctionLikeSymbol.collectFromParameters(
+        valueParameters: List<KaValueParameterSymbol>,
         arguments: MutableList<KtValueArgument>,
         sink: InlayTreeSink
     ) {
@@ -129,7 +129,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    private fun KtValueArgument.isArgumentNamed(symbol: KtValueParameterSymbol): Boolean {
+    private fun KtValueArgument.isArgumentNamed(symbol: KaValueParameterSymbol): Boolean {
         // avoid cases like "`value:` value"
         if (this.text == symbol.name.asString()) return true
 

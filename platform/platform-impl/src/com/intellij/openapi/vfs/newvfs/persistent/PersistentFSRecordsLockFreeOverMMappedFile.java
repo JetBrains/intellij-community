@@ -177,26 +177,18 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     wasClosedProperly = (ownerProcessId == NULL_OWNER_PID);
 
 
-    //MAYBE RC: make checkUnAllocatedRegionIsZeroed() public, and instead of ctor -- call it explicitly in NotClosedProperlyRecoverer,
-    //          or even during quick self-check?
-    //          The issue is: we want to check _some_ records even if wasClosedProperly=true, but NotClosedProperlyRecoverer
-    //          is not triggered in this case.
-    //          If wasClosedProperly=false, we want not only to check, but maybe even to 'fix' -- i.e. invalidate all fileIds
-    //          that are found to be allocated beyond maxAllocatedID -- this is there NotClosedProperlyRecoverer comes handy.
-    //          I postpone the decision: right now I think the reason for the non-zero records in >maxAllocateID region is OS
-    //          crash. If that is true (will be checked by EA reports in a few months) => better to avoid trying to recover
-    //          after these cases since:
-    //          a) these cases are too rare
-    //          b) too risky to recover: too many invariants are not guaranteed to hold after OS crash
-    if (wasClosedProperly) {
-      if (UNALLOCATED_RECORDS_TO_CHECK_ZEROED_REGULAR > 0) {
-        checkUnAllocatedRegionIsZeroed(UNALLOCATED_RECORDS_TO_CHECK_ZEROED_REGULAR);
-      }
-    }
-    else {
-      if (UNALLOCATED_RECORDS_TO_CHECK_ZEROED_CRASHED > 0) {
-        checkUnAllocatedRegionIsZeroed(UNALLOCATED_RECORDS_TO_CHECK_ZEROED_CRASHED);
-      }
+    //MAYBE RC: We may try to 'fix' this error, i.e. invalidate all the fileIds that are found to be allocated beyond
+    //          maxAllocatedID, and fill the region > maxAllocatedID with zeroes. But right now I believe the reason
+    //          for the non-zero records in >maxAllocateID region is OS crash (IJPL-1016).
+    //          If this is true, better to avoid trying to recover after such crashes since an attempt to recover is
+    //          too risky: too many invariants are not guaranteed to hold after OS crash, and it is easy to leave VFS
+    //          in an inconsistent state, while being sure everything is successfully recovered.
+    //          Also, OS crashes are rare, so they are not worth the (significant) effort to recover from.
+    int unAllocatedRecordsToCheck = wasClosedProperly ?
+                                    UNALLOCATED_RECORDS_TO_CHECK_ZEROED_REGULAR :
+                                    UNALLOCATED_RECORDS_TO_CHECK_ZEROED_CRASHED;
+    if (unAllocatedRecordsToCheck > 0) {
+      checkUnAllocatedRegionIsZeroed(unAllocatedRecordsToCheck);
     }
   }
 
@@ -645,7 +637,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
    */
   public @NotNull OwnershipInfo tryAcquireExclusiveAccess(int acquiringProcessId,
                                                           long acquiringTimestampMs,
-                                                          boolean forcibly) {
+                                                          boolean forcibly) throws IOException {
     if (acquiringProcessId == NULL_OWNER_PID) {
       throw new IllegalArgumentException("acquiringPid(=" + acquiringProcessId + ") must be !=0");
     }
@@ -666,6 +658,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
       if (INT_HANDLE.compareAndSet(headerPageBuffer, FileHeader.OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, acquiringProcessId)) {
         owningProcessId = acquiringProcessId;
         LONG_HANDLE.setVolatile(headerPageBuffer, FileHeader.OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET, acquiringTimestampMs);
+        storage.fsync();//ensure status is persisted
         return new OwnershipInfo(acquiringProcessId, acquiringTimestampMs);
       }
     }

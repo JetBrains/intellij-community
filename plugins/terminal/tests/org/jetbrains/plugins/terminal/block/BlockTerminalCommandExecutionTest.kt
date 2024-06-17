@@ -14,12 +14,16 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.TerminalTitle
 import com.intellij.testFramework.*
 import com.jediterm.core.util.TermSize
+import com.jediterm.terminal.TerminalCustomCommandListener
+import junit.framework.TestCase.failNotEquals
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
-import org.jetbrains.plugins.terminal.exp.*
-import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
-import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil.toCommandLine
+import org.jetbrains.plugins.terminal.block.output.*
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil
+import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil.toCommandLine
 import org.junit.Assert
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -60,6 +64,50 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
     awaitBlocksFinalized(view.outputView.controller.outputModel, count)
     val actual = view.outputView.controller.outputModel.collectCommandResults()
     Assert.assertEquals(expected, actual)
+  }
+
+  @Test
+  fun `multiline commands with bracketed mode`() {
+    val (session, view) = startSessionAndCreateView()
+    Assume.assumeTrue(session.model.isBracketedPasteMode)
+    val expected = listOf(
+      CommandResult("echo 1\necho 2", "1\n2")
+    )
+    expected.forEach {
+      session.commandExecutionManager.sendCommandToExecute(it.command)
+    }
+    awaitBlocksFinalized(view.outputView.controller.outputModel, expected.size)
+    val actual = view.outputView.controller.outputModel.collectCommandResults()
+    Assert.assertEquals(expected, actual)
+  }
+
+  @Test
+  fun `shell integration sends correct events`() {
+    val actual = mutableListOf<String?>()
+    val session = startBlockTerminalSession(disableSavingHistory = false) {
+      val eventName = it.getOrNull(0)
+      actual.add(eventName)
+    }
+
+    session.commandExecutionManager.sendCommandToExecute("echo 1")
+    session.commandExecutionManager.sendCommandToExecute("echo 2")
+    session.commandExecutionManager.sendCommandToExecute("exit")
+
+    session.terminalStarterFuture.get()!!.ttyConnector.waitFor()
+
+    val expected = listOf(
+      "prompt_state_updated",
+      "command_history",
+      "initialized",
+      "command_started",
+      "prompt_state_updated",
+      "command_finished",
+      "command_started",
+      "prompt_state_updated",
+      "command_finished",
+      "command_started",
+    )
+    assertListEquals(expected, actual, ignoreUnexpectedEntriesOf = listOf("prompt_shown"))
   }
 
   @Test
@@ -120,8 +168,18 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
     PlatformTestUtil.waitWithEventsDispatching(error, { latch.count.toInt() == 0 }, duration.inWholeSeconds.toInt())
   }
 
-  private fun startBlockTerminalSession(termSize: TermSize = TermSize(80, 24)) =
-    TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath.toString(), disposableRule.disposable, termSize)
+  private fun startBlockTerminalSession(
+    termSize: TermSize = TermSize(80, 24),
+    disableSavingHistory: Boolean = true,
+    terminalCustomCommandListener: TerminalCustomCommandListener = TerminalCustomCommandListener { }
+  ) = TerminalSessionTestUtil.startBlockTerminalSession(
+    projectRule.project,
+    shellPath.toString(),
+    disposableRule.disposable,
+    termSize,
+    disableSavingHistory,
+    terminalCustomCommandListener
+  )
 
 }
 
@@ -157,5 +215,33 @@ private open class MyHyperlinkFilter(val linkText: String) : Filter, DumbAware {
 
   private object NopHyperlinkInfo : HyperlinkInfo {
     override fun navigate(project: Project) {}
+  }
+}
+
+/**
+ * Works almost as `assertEquals`.
+ * Skips unexpected entries if they accidentally appear in [actual] and listed in [ignoreUnexpectedEntriesOf].
+ */
+private fun assertListEquals(expected: List<String?>, actual: List<String?>, ignoreUnexpectedEntriesOf: Collection<String>) {
+  var actualIndex = 0
+  var expectedIndex = 0
+  while (actualIndex < actual.size && expectedIndex < expected.size) {
+    if (expected[expectedIndex] == actual[actualIndex]) {
+      expectedIndex++
+      actualIndex++
+    }
+    else if (actual[actualIndex] in ignoreUnexpectedEntriesOf) {
+      actualIndex++
+    }
+    else {
+      failNotEquals(null, expected, actual)
+    }
+  }
+  while (actualIndex < actual.size && actual[actualIndex] in ignoreUnexpectedEntriesOf) {
+    actualIndex++
+  }
+  // fail if some list is not ingested yet
+  if (actualIndex < actual.size || expectedIndex < expected.size) {
+    failNotEquals(null, expected, actual)
   }
 }

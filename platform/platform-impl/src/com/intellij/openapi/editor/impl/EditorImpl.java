@@ -18,7 +18,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -38,7 +37,9 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.impl.stickyLines.*;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
+import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.EditorView;
@@ -476,9 +477,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, myFocusModeModel);
 
     myPopupHandlers.add(new DefaultPopupHandler());
-    PopupMenuPreloader.install(myEditorComponent, ActionPlaces.EDITOR_POPUP, null, () -> {
-      return ContextMenuPopupHandler.getGroupForId(myState.getContextMenuGroupId());
-    });
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);

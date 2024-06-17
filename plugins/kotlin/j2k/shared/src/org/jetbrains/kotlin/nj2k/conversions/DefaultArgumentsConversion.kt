@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.Nullability.*
 import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.nj2k.types.JKType
  * with default parameters and `JvmOverloads` annotation.
  */
 class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClassBody) return recurse(element)
         val methods = element.declarations.filterIsInstance<JKMethod>().sortedBy { it.parameters.size }

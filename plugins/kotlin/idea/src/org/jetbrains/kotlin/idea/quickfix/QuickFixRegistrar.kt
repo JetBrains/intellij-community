@@ -117,8 +117,8 @@ class QuickFixRegistrar : QuickFixContributor {
 
         USELESS_IS_CHECK.registerFactory(RemoveUselessIsCheckFix, RemoveUselessIsCheckFixForWhen)
 
-        WRONG_SETTER_PARAMETER_TYPE.registerFactory(ChangeAccessorTypeFix)
-        WRONG_GETTER_RETURN_TYPE.registerFactory(ChangeAccessorTypeFix)
+        WRONG_SETTER_PARAMETER_TYPE.registerFactory(ChangeAccessorTypeFixFactory)
+        WRONG_GETTER_RETURN_TYPE.registerFactory(ChangeAccessorTypeFixFactory)
 
         USELESS_ELVIS.registerFactory(RemoveUselessElvisFix)
         USELESS_ELVIS_RIGHT_IS_NULL.registerFactory(RemoveUselessElvisFix)
@@ -360,7 +360,7 @@ class QuickFixRegistrar : QuickFixContributor {
         PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT.registerFactory(RemoveModifierFixBase.createRemoveProjectionFactory(false))
         PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE.registerFactory(RemoveModifierFixBase.createRemoveProjectionFactory(false))
 
-        NOT_AN_ANNOTATION_CLASS.registerFactory(MakeClassAnAnnotationClassFix)
+        NOT_AN_ANNOTATION_CLASS.registerFactory(MakeClassAnAnnotationClassFixFactory)
 
         val changeVariableTypeFix = ChangeVariableTypeFix.PropertyOrReturnTypeMismatchOnOverrideFactory
         RETURN_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(changeVariableTypeFix)
@@ -466,7 +466,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         PLATFORM_CLASS_MAPPED_TO_KOTLIN.registerFactory(MapPlatformClassToKotlinFix)
 
-        MANY_CLASSES_IN_SUPERTYPE_LIST.registerFactory(RemoveSupertypeFix)
+        MANY_CLASSES_IN_SUPERTYPE_LIST.registerFactory(RemoveSupertypeFixFactory)
 
         NO_GET_METHOD.registerFactory(CreateGetFunctionActionFactory)
         TYPE_MISMATCH_ERRORS.forEach { it.registerFactory(CreateGetFunctionActionFactory) }
@@ -592,7 +592,7 @@ class QuickFixRegistrar : QuickFixContributor {
         FINAL_UPPER_BOUND.registerFactory(InlineTypeParameterFix)
         FINAL_UPPER_BOUND.registerFactory(RemoveFinalUpperBoundFix)
 
-        TYPE_PARAMETER_AS_REIFIED.registerFactory(AddReifiedToTypeParameterOfFunctionFix)
+        TYPE_PARAMETER_AS_REIFIED.registerFactory(AddReifiedToTypeParameterOfFunctionFixFactory)
 
         CANNOT_CHECK_FOR_ERASED.registerFactory(MakeTypeParameterReifiedAndFunctionInlineFix)
 
@@ -607,7 +607,7 @@ class QuickFixRegistrar : QuickFixContributor {
         INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(RemoveNullableFix.removeForLateInitProperty)
         INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(RemovePartsFromPropertyFix.LateInitFactory)
         INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(RemoveModifierFixBase.createRemoveLateinitFactory())
-        INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(ConvertLateinitPropertyToNotNullDelegateFix)
+        INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(ConvertLateinitPropertyToNotNullDelegateFixFactory)
 
         VARIABLE_WITH_REDUNDANT_INITIALIZER.registerFactory(RemoveRedundantInitializerFix)
 
@@ -697,10 +697,10 @@ class QuickFixRegistrar : QuickFixContributor {
             RemoveModifierFixBase.removeNonRedundantModifier
         )
 
-        NO_COMPANION_OBJECT.registerFactory(AddIsToWhenConditionFix)
+        NO_COMPANION_OBJECT.registerFactory(AddIsToWhenConditionFixFactory)
 
-        DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE.registerFactory(RemoveDefaultParameterValueFix)
-        ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS.registerFactory(RemoveDefaultParameterValueFix)
+        DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE.registerFactory(RemoveDefaultParameterValueFixFactory)
+        ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS.registerFactory(RemoveDefaultParameterValueFixFactory)
 
         RESOLUTION_TO_CLASSIFIER.registerFactory(ConvertToAnonymousObjectFix, AddFunModifierFix)
 
@@ -725,7 +725,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         UNEXPECTED_TRAILING_LAMBDA_ON_A_NEW_LINE.registerFactory(AddSemicolonBeforeLambdaExpressionFix.Factory)
 
-        CONSTRUCTOR_IN_OBJECT.registerFactory(ChangeObjectToClassFix)
+        CONSTRUCTOR_IN_OBJECT.registerFactory(ChangeObjectToClassFixFactory)
 
         REDUNDANT_LABEL_WARNING.registerFactory(RemoveRedundantLabelFix)
         NOT_A_FUNCTION_LABEL.registerFactory(RemoveReturnLabelFixFactory)
@@ -746,7 +746,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS.registerFactory(RemoveModifierFixBase.createRemoveFunFromInterfaceFactory())
 
-        TOPLEVEL_TYPEALIASES_ONLY.registerFactory(MoveTypeAliasToTopLevelFix)
+        TOPLEVEL_TYPEALIASES_ONLY.registerFactory(MoveTypeAliasToTopLevelFixFactory)
 
         CONFLICTING_JVM_DECLARATIONS.registerFactory(AddJvmNameAnnotationFix)
 

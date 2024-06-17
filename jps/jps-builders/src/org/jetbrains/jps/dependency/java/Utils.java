@@ -21,7 +21,7 @@ import static org.jetbrains.jps.javac.Iterators.*;
  */
 public final class Utils {
   private final @NotNull Graph myGraph;
-  private final @Nullable Graph myDelta;
+  private final @Nullable Delta myDelta;
 
   private final @NotNull Predicate<? super NodeSource> mySourcesFilter;
   private final @NotNull Predicate<? super ReferenceID> myIsNodeDeleted;
@@ -66,7 +66,8 @@ public final class Utils {
     if (myDelta != null) {
       Iterable<NodeSource> _src = myDelta.getSources(nodeId);
       Iterable<NodeSource> deltaSources = _src instanceof Set? _src : collect(_src, new HashSet<>()) /*ensure Set data structure*/;
-      return flat(deltaSources, filter(myGraph.getSources(nodeId), src -> !contains(deltaSources, src) && mySourcesFilter.test(src)));
+      Set<NodeSource> deleted = myDelta.getDeletedSources();
+      return flat(deltaSources, filter(myGraph.getSources(nodeId), src -> !contains(deltaSources, src) && !deleted.contains(src) && mySourcesFilter.test(src)));
     }
     return filter(myGraph.getSources(nodeId), mySourcesFilter::test);
   }
@@ -123,7 +124,7 @@ public final class Utils {
    * @param id a node reference ID
    * @return all nodes with the given ReferenceID. Nodes in the returned collection will have the same ReferenceID, but may be associated with different sources
    */
-  public <T extends JVMClassNode<T, ?>> Iterable<T> getNodes(@NotNull ReferenceID id, Class<T> selector) {
+  public <T extends Node<T, ?>> Iterable<T> getNodes(@NotNull ReferenceID id, Class<T> selector) {
     return getNodesImpl(id, selector, false);
   }
 
@@ -131,11 +132,11 @@ public final class Utils {
    * @param id a node reference ID
    * @return all nodes with the given ReferenceID that have been compiled in the current compilation session (defined by the DifferentiateContext).
    */
-  public <T extends JVMClassNode<T, ?>> Iterable<T> getCompiledNodes(@NotNull ReferenceID id, Class<T> selector) {
+  public <T extends Node<T, ?>> Iterable<T> getCompiledNodes(@NotNull ReferenceID id, Class<T> selector) {
     return getNodesImpl(id, selector, true);
   }
 
-  private <T extends JVMClassNode<T, ?>> @NotNull Iterable<T> getNodesImpl(@NotNull ReferenceID id, Class<T> selector, boolean fromDeltaOnly) {
+  private <T extends Node<T, ?>> @NotNull Iterable<T> getNodesImpl(@NotNull ReferenceID id, Class<T> selector, boolean fromDeltaOnly) {
     if (id instanceof JvmNodeReferenceID && "".equals(((JvmNodeReferenceID)id).getNodeName())) {
       return Collections.emptyList();
     }
@@ -144,9 +145,15 @@ public final class Utils {
       Iterable<NodeSource> deltaSrc = myDelta.getSources(id);
       Iterable<NodeSource> deltaSources = fromDeltaOnly? deltaSrc : deltaSrc instanceof Set? deltaSrc : collect(deltaSrc, new HashSet<>()) /*ensure Set data structure*/;
       Iterable<T> deltaNodes = flat(map(deltaSources, src -> myDelta.getNodes(src, selector)));
-      allNodes = fromDeltaOnly? deltaNodes : flat(
-        deltaNodes, flat(map(filter(myGraph.getSources(id), src -> !contains(deltaSources, src) && mySourcesFilter.test(src)), src -> myGraph.getNodes(src, selector)))
-      );
+      if (fromDeltaOnly) {
+        allNodes = deltaNodes;
+      }
+      else {
+        Set<NodeSource> deleted = myDelta.getDeletedSources();
+        allNodes = flat(
+          deltaNodes, flat(map(filter(myGraph.getSources(id), src -> !contains(deltaSources, src) && !deleted.contains(src) && mySourcesFilter.test(src)), src -> myGraph.getNodes(src, selector)))
+        );
+      }
     }
     else {
       allNodes = fromDeltaOnly? Collections.emptyList() : flat(map(filter(myGraph.getSources(id), mySourcesFilter::test), src -> myGraph.getNodes(src, selector)));
@@ -162,6 +169,10 @@ public final class Utils {
         return visited.add(t);
       }
     });
+  }
+
+  public Iterable<ReferenceID> allDirectSupertypes(ReferenceID classId) {
+    return classId instanceof JvmNodeReferenceID? map(allDirectSupertypes((JvmNodeReferenceID)classId), id -> id) : Collections.emptyList();
   }
 
   public Iterable<JvmNodeReferenceID> allDirectSupertypes(JvmNodeReferenceID classId) {

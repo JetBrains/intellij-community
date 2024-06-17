@@ -4,14 +4,31 @@ package com.jetbrains.python.packaging
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Version
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallPackageQuickFix
+import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object PyPackageInstallUtils {
+  suspend fun confirmAndInstall(project: Project, sdk: Sdk, packageName: String) {
+    val isConfirmed = withContext(Dispatchers.EDT) {
+      confirmInstall(project, packageName)
+    }
+    if (!isConfirmed)
+      return
+    installPackage(project, sdk, packageName)
+  }
+
+
   fun confirmInstall(project: Project, packageName: String): Boolean {
     val isWellKnownPackage = ApplicationManager.getApplication()
       .getService(PyPIPackageRanking::class.java)
@@ -28,6 +45,30 @@ object PyPackageInstallUtils {
       }
     }
     return true
+  }
+
+  suspend fun upgradePackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
+    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
+    val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName, version)
+                               ?: return Result.failure(Exception("Could not find any repositories"))
+
+    return pythonPackageManager.updatePackage(packageSpecification)
+  }
+
+
+  suspend fun installPackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
+    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
+    val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName, version)
+                               ?: return Result.failure(Exception("Could not find any repositories"))
+
+    return pythonPackageManager.installPackage(packageSpecification)
+  }
+
+  fun getPackageVersion(project: Project, sdk: Sdk, packageName: String): Version? {
+    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
+    val pythonPackage = pythonPackageManager.installedPackages.firstOrNull { it.name == packageName }
+    val version = pythonPackage?.version ?: return null
+    return Version.parseVersion(version)
   }
 
   private class ConfirmPackageInstallationDoNotAskOption : DoNotAskOption.Adapter() {

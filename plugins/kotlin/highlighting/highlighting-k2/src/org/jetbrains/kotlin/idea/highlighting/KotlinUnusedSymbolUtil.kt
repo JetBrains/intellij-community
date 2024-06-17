@@ -16,12 +16,12 @@ import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -120,14 +120,14 @@ object KotlinUnusedSymbolUtil {
     return declaration is KtParameter && !(declaration.parent.parent is KtPrimaryConstructor && declaration.hasValOrVar())
   }
 
-  context(KtAnalysisSession)
+  context(KaSession)
   fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
       val symbol = declaration.getSymbol()
       if (declaration.languageVersionSettings.getFlag(
-          AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && (symbol as? KtSymbolWithVisibility)?.visibility?.isPublicAPI == true) {
+          AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && (symbol as? KaSymbolWithVisibility)?.visibility?.isPublicAPI == true) {
           return null
       }
-      if (symbol is KtFunctionSymbol && symbol.isOperator) return null
+      if (symbol is KaFunctionSymbol && symbol.isOperator) return null
 
       val isCheapEnough = lazy(LazyThreadSafetyMode.NONE) {
           isCheapEnoughToSearchUsages(declaration)
@@ -142,7 +142,7 @@ object KotlinUnusedSymbolUtil {
           declarationContainingClass?.mustHaveNonEmptyPrimaryConstructor() == true
       ) return null
       // experimental annotations
-      if (symbol is KtClassOrObjectSymbol && symbol.classKind == KtClassKind.ANNOTATION_CLASS) {
+      if (symbol is KaClassOrObjectSymbol && symbol.classKind == KaClassKind.ANNOTATION_CLASS) {
           val fqName = symbol.nameOrAnonymous.asString()
           val languageVersionSettings = declaration.languageVersionSettings
           if (fqName in languageVersionSettings.getFlag(AnalysisFlags.optIn)) return null
@@ -155,7 +155,7 @@ object KotlinUnusedSymbolUtil {
       return declaration.nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword()
   }
 
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun KtDeclaration.hasKotlinAdditionalAnnotation(): Boolean =
       this is KtNamedDeclaration && checkAnnotatedUsingPatterns(this, KOTLIN_ADDITIONAL_ANNOTATIONS)
 
@@ -265,13 +265,13 @@ object KotlinUnusedSymbolUtil {
   }
 
   // variation of IDEA's AnnotationUtil.checkAnnotatedUsingPatterns()
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun checkAnnotatedUsingPatterns(declaration: KtNamedDeclaration, annotationPatterns: Collection<String>): Boolean {
       if (declaration.annotationEntries.isEmpty()) return false
       val annotationsPresent = declaration.annotationEntries.mapNotNull {
           val reference = it?.calleeExpression?.constructorReferenceExpression?.mainReference ?: return@mapNotNull null
           val symbol = reference.resolveToSymbol() ?: return@mapNotNull null
-          val constructorSymbol = symbol as? KtConstructorSymbol ?: return@mapNotNull null
+          val constructorSymbol = symbol as? KaConstructorSymbol ?: return@mapNotNull null
           constructorSymbol.containingClassId?.asSingleFqName()?.asString()
       }
       if (annotationsPresent.isEmpty()) return false
@@ -288,29 +288,29 @@ object KotlinUnusedSymbolUtil {
       return false
   }
 
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun checkDeclaration(declaration: KtNamedDeclaration, importedDeclaration: KtNamedDeclaration): Boolean =
       declaration !in importedDeclaration.parentsWithSelf && !hasNonTrivialUsages(
           importedDeclaration,
           declarationContainingClass = importedDeclaration.containingClass()
       )
 
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun hasNonTrivialUsages(
       declaration: KtNamedDeclaration,
       declarationContainingClass: KtClass?,
-      symbol: KtDeclarationSymbol? = null
+      symbol: KaDeclarationSymbol? = null
   ): Boolean {
       val isCheapEnough = lazy(LazyThreadSafetyMode.NONE) { isCheapEnoughToSearchUsages(declaration) }
       return hasNonTrivialUsages(declaration, declarationContainingClass, isCheapEnough, symbol)
   }
 
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun hasNonTrivialUsages(
       declaration: KtNamedDeclaration,
       declarationContainingClass: KtClass?,
       isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>,
-      symbol: KtDeclarationSymbol? = null
+      symbol: KaDeclarationSymbol? = null
   ): Boolean {
       val project = declaration.project
       val psiSearchHelper = PsiSearchHelper.getInstance(project)
@@ -379,7 +379,7 @@ object KotlinUnusedSymbolUtil {
 
   private val KtNamedDeclaration.isObjectOrEnum: Boolean get() = this is KtObjectDeclaration || this is KtClass && isEnum()
 
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun checkReference(ref: PsiReference, declaration: KtNamedDeclaration, originalDeclaration: KtNamedDeclaration?): Boolean {
       val refElement = ref.element
       if (declaration.isAncestor(refElement)) return true // usages inside element's declaration are not counted
@@ -416,11 +416,11 @@ object KotlinUnusedSymbolUtil {
       return true
   }
 
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun hasReferences(
       declaration: KtNamedDeclaration,
       declarationContainingClass: KtClass?,
-      symbol: KtDeclarationSymbol?,
+      symbol: KaDeclarationSymbol?,
       useScope: SearchScope
   ): Boolean {
       val searchOptions = KotlinReferencesSearchOptions(acceptCallableOverrides = declaration.hasActualModifier())
@@ -429,15 +429,15 @@ object KotlinUnusedSymbolUtil {
           useScope,
           kotlinOptions = searchOptions
       )
-      val originalDeclaration = (symbol as? KtTypeAliasSymbol)?.expandedType?.expandedClassSymbol?.psi as? KtNamedDeclaration
-      if (symbol !is KtFunctionSymbol || !symbol.annotationsList.hasAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
+      val originalDeclaration = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol?.psi as? KtNamedDeclaration
+      if (symbol !is KaFunctionSymbol || !symbol.annotationsList.hasAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
           if (declaration is KtSecondaryConstructor &&
               declarationContainingClass != null &&
               // when too many occurrences of this class, consider it used
               (isCheapEnoughToSearchUsages(declarationContainingClass) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES ||
               ReferencesSearch.search(KotlinReferencesSearchParameters(declarationContainingClass, useScope)).any {
                   it.element.getStrictParentOfType<KtTypeAlias>() != null || it.element.getStrictParentOfType<KtCallExpression>()
-                      ?.resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
+                      ?.resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
               })
           ) {
               return true
@@ -487,10 +487,10 @@ object KotlinUnusedSymbolUtil {
    * In the above code, CC is not referenced by any expressions other than `import C.CC.value`,
    * but `C.CC.value` is used by `fun value() = value`, so we cannot delete `import C.CC.value`, and we have to keep CC.
    */
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun checkPrivateDeclaration(
       declaration: KtNamedDeclaration,
-      symbol: KtDeclarationSymbol?,
+      symbol: KaDeclarationSymbol?,
       originalDeclaration: KtNamedDeclaration?
   ): Boolean {
       if (symbol == null || !declaration.isPrivateNestedClassOrObject) return false
@@ -505,7 +505,7 @@ object KotlinUnusedSymbolUtil {
           .any { !checkReference(it.mainReference, declaration, originalDeclaration) }
   }
 
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope): Boolean {
       if (enumClass == null) return false
       val isFoundEnumFunctionReferenceViaSearch = ReferencesSearch.search(KotlinReferencesSearchParameters(enumClass, useScope))
@@ -514,14 +514,14 @@ object KotlinUnusedSymbolUtil {
       return isFoundEnumFunctionReferenceViaSearch || hasEnumFunctionReferenceInEnumClass(enumClass)
   }
 
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun KtSimpleNameExpression.isReferenceToBuiltInEnumEntries(): Boolean =
     isEnumValuesSoftDeprecateEnabled() && this.getReferencedNameAsName() == StandardNames.ENUM_ENTRIES && isSynthesizedFunction()
 
   /**
    * Checks calls inside the enum class without receiver expression. Example: `values()`, `::values`
    */
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun hasEnumFunctionReferenceInEnumClass(enumClass: KtClass): Boolean {
       val isFoundCallableReference = enumClass.anyDescendantOfType<KtCallableReferenceExpression> {
           it.receiverExpression == null && it.containingClass() == enumClass && it.isReferenceToBuiltInEnumFunction()
@@ -543,7 +543,7 @@ object KotlinUnusedSymbolUtil {
    * Checks calls in enum class with explicit receiver expression. Example: EnumClass.values(), EnumClass::values.
    * Also includes search by imports and kotlin.enumValues, kotlin.enumValueOf functions
    */
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun hasBuiltInEnumFunctionReference(reference: PsiReference, enumClass: KtClass): Boolean {
       val parent = reference.element.parent
       if ((parent as? KtQualifiedExpression)?.normalizeEnumQualifiedExpression(enumClass)?.canBeReferenceToBuiltInEnumFunction() == true) return true
@@ -585,25 +585,25 @@ object KotlinUnusedSymbolUtil {
       return containingFile.anyDescendantOfType(PsiReferenceExpression::isQualifiedNameInEnumStaticMethods)
   }
 
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun KtImportDirective.resolveReferenceToSymbol(): KtSymbol? = when(importedReference) {
       is KtReferenceExpression -> importedReference as KtReferenceExpression
       else -> importedReference?.getChildOfType<KtReferenceExpression>()
   }?.mainReference?.resolveToSymbol()
 
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun KtImportDirective.isUsedStarImportOfEnumStaticFunctions(): Boolean {
       if (importPath?.isAllUnder != true) return false
       val importedEnumFqName = this.importedFqName ?: return false
-      val importedClass = resolveReferenceToSymbol() as? KtClassOrObjectSymbol ?: return false
-      if (importedClass.classKind != KtClassKind.ENUM_CLASS) return false
+      val importedClass = resolveReferenceToSymbol() as? KaClassOrObjectSymbol ?: return false
+      if (importedClass.classKind != KaClassKind.ENUM_CLASS) return false
 
       val enumStaticMethods = ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES.map { FqName("$importedEnumFqName.$it") }
 
       fun KtExpression.isNameInEnumStaticMethods(): Boolean {
           if (getQualifiedExpressionForSelector() != null) return false
           if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
-          val symbol = mainReference?.resolveToSymbol() as? KtCallableSymbol ?: return false
+          val symbol = mainReference?.resolveToSymbol() as? KaCallableSymbol ?: return false
           return symbol.callableId?.asSingleFqName() in enumStaticMethods
       }
 
@@ -628,24 +628,24 @@ object KotlinUnusedSymbolUtil {
       return reference.containingClass.name == enumClass.name && reference is SyntheticElement && reference.name in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES_IN_JAVA.map { it.asString() }
   }
 
-  context(KtAnalysisSession)
-  private fun KtCallableDeclaration.canBeHandledByLightMethods(symbol: KtDeclarationSymbol?): Boolean {
+  context(KaSession)
+  private fun KtCallableDeclaration.canBeHandledByLightMethods(symbol: KaDeclarationSymbol?): Boolean {
       return when {
-          symbol is KtConstructorSymbol -> {
-              val classSymbol = symbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol ?: return false
+          symbol is KaConstructorSymbol -> {
+              val classSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol ?: return false
               !classSymbol.isInline && !classSymbol.visibility.isPrivateOrPrivateToThis()
           }
           hasModifier(KtTokens.INTERNAL_KEYWORD) -> false
-          symbol !is KtFunctionSymbol -> true
+          symbol !is KaFunctionSymbol -> true
           else -> !symbol.hasInlineClassParameters()
       }
   }
 
-  context(KtAnalysisSession)
-  private fun KtFunctionSymbol.hasInlineClassParameters(): Boolean {
-      val receiverParameterClassSymbol = receiverType?.expandedClassSymbol as? KtNamedClassOrObjectSymbol
+  context(KaSession)
+  private fun KaFunctionSymbol.hasInlineClassParameters(): Boolean {
+      val receiverParameterClassSymbol = receiverType?.expandedSymbol as? KaNamedClassOrObjectSymbol
       return receiverParameterClassSymbol?.isInline == true || valueParameters.any {
-          val namedClassOrObjectSymbol = it.returnType.expandedClassSymbol as? KtNamedClassOrObjectSymbol ?: return@any false
+          val namedClassOrObjectSymbol = it.returnType.expandedSymbol as? KaNamedClassOrObjectSymbol ?: return@any false
           namedClassOrObjectSymbol.isInline
       }
   }
@@ -653,12 +653,12 @@ object KotlinUnusedSymbolUtil {
   private fun hasOverrides(declaration: KtNamedDeclaration, useScope: SearchScope): Boolean =
       DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null
 
-  context(KtAnalysisSession)
-  private fun hasFakeOverrides(declaration: KtNamedDeclaration, useScope: SearchScope, symbol: KtDeclarationSymbol?): Boolean {
+  context(KaSession)
+  private fun hasFakeOverrides(declaration: KtNamedDeclaration, useScope: SearchScope, symbol: KaDeclarationSymbol?): Boolean {
       val ownerClass = declaration.containingClassOrObject as? KtClass ?: return false
       if (!ownerClass.isInheritable()) return false
-      val callableSymbol = symbol as? KtCallableSymbol ?: return false
-      if ((callableSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT) return false
+      val callableSymbol = symbol as? KaCallableSymbol ?: return false
+      if ((callableSymbol as? KaSymbolWithModality)?.modality == Modality.ABSTRACT) return false
       return ownerClass.findAllInheritors(useScope).any { element: PsiElement ->
           when (element) {
               is KtClassOrObject -> {
@@ -726,7 +726,7 @@ object KotlinUnusedSymbolUtil {
         return arrayOf(SafeDeleteFix(declaration))
     }
 
-  context(KtAnalysisSession)
+  context(KaSession)
   private fun isEntryPoint(declaration: KtNamedDeclaration, isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>, isJavaEntryPoint: UnusedDeclarationInspectionBase): Boolean {
       if (declaration.hasKotlinAdditionalAnnotation()) return true
       val lightElement: PsiElement = when (declaration) {

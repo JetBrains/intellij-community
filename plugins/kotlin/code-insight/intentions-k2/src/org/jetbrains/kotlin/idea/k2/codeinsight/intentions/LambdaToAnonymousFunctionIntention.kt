@@ -5,8 +5,8 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
@@ -38,9 +38,9 @@ internal class LambdaToAnonymousFunctionIntention :
       elementContext: LambdaToFunctionContext,
     ): String = KotlinBundle.message("convert.to.anonymous.function")
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtLambdaExpression): LambdaToFunctionContext? {
-        val declarationSymbol = element.functionLiteral.getSymbol() as? KtAnonymousFunctionSymbol ?: return null
+        val declarationSymbol = element.functionLiteral.getSymbol() as? KaAnonymousFunctionSymbol ?: return null
         if (declarationSymbol.valueParameters.any { it.returnType is KtErrorType }) return null
 
         // anonymous suspend functions are forbidden in Kotlin

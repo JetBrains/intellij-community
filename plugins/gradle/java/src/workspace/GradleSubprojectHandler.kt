@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSyste
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.externalSystem.impl.workspace.ExternalSubprojectHandler
 import icons.GradleIcons
@@ -36,19 +36,19 @@ internal class GradleSubprojectHandler : ExternalSubprojectHandler(GradleConstan
     get() = GradleIcons.GradleSubproject
 }
 
-private class GradleImportedProjectSettings(private val project: Project) : ImportedProjectSettings {
+private class GradleImportedProjectSettings(project: Project): ImportedProjectSettings {
   private val gradleProjectsSettings: Collection<GradleProjectSettings> = GradleSettings.getInstance(project).linkedProjectsSettings
-  private val projectDir = requireNotNull(project.guessProjectDir())
+  private val projectDir = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(project.basePath!!))
 
   override suspend fun applyTo(workspace: Project): Boolean {
     if (gradleProjectsSettings.isEmpty()) {
-      if (canOpenGradleProject(projectDir) && isTrusted(projectDir, project)) {
+      if (canOpenGradleProject(projectDir) && isTrusted(projectDir, workspace)) {
         linkAndSyncGradleProject(workspace, projectDir)
         return true
       }
       return false
     }
-    if (!isTrusted(projectDir, project)) {
+    if (!isTrusted(projectDir, workspace)) {
       return true
     }
     val targetGradleSettings = GradleSettings.getInstance(workspace)

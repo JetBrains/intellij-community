@@ -172,7 +172,6 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
       "-Didea.suppress.statistics.report=true",
       "-Drsch.send.usage.stat=false",
       "-Duse.linux.keychain=false",
-      "-Dide.show.tips.on.startup.default.value=false",
       "-Didea.is.internal=true",
       "-DcodeWithMe.memory.only.certificate=true", // system keychain
       "-Dide.slow.operations.assertion=false",

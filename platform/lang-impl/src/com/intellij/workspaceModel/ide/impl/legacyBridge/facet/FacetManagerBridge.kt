@@ -65,8 +65,8 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
         if (facetConfigurationXml != facetEntity.configurationXmlTag) {
           runWriteAction {
             val change: FacetEntity.Builder.() -> Unit = { this.configurationXmlTag = facetConfigurationXml }
-            module.diff?.modifyEntity(facetEntity, change) ?: WorkspaceModel.getInstance(module.project)
-              .updateProjectModel("Update facet configuration (not bridge)") { it.modifyEntity(facetEntity, change) }
+            module.diff?.modifyFacetEntity(facetEntity, change) ?: WorkspaceModel.getInstance(module.project)
+              .updateProjectModel("Update facet configuration (not bridge)") { it.modifyFacetEntity(facetEntity, change) }
           }
         }
       }
@@ -223,8 +223,8 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
     super.facetsChanged()
   }
 
-  fun checkConsistency(facetRelatedEntities: List<ModuleSettingsBase>,
-                       entityTypeToFacetContributor: Map<Class<ModuleSettingsBase>, WorkspaceFacetContributor<ModuleSettingsBase>>) {
+  fun checkConsistency(facetRelatedEntities: List<ModuleSettingsFacetBridgeEntity>,
+                       entityTypeToFacetContributor: Map<Class<ModuleSettingsFacetBridgeEntity>, WorkspaceFacetContributor<ModuleSettingsFacetBridgeEntity>>) {
     val facetEntitiesSet = facetRelatedEntities.toHashSet()
     for (entity in facetRelatedEntities) {
       val facet = facetMapping().getDataByEntity(entity)
@@ -293,5 +293,13 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
     internal fun mutableFacetMapping(mutableEntityStorage: MutableEntityStorage): MutableExternalEntityMapping<Facet<*>> {
       return mutableEntityStorage.getMutableExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
+  }
+}
+
+private fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
+  return when (this) {
+    is ImmutableEntityStorage -> this
+    is MutableEntityStorage -> this.toSnapshot()
+    else -> error("Unexpected storage: $this")
   }
 }

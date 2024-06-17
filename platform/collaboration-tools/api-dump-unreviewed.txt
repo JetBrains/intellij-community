@@ -272,7 +272,6 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - sf:disposingMainScope(com.intellij.openapi.Disposable):kotlinx.coroutines.CoroutineScope
 - sf:disposingScope(com.intellij.openapi.Disposable,kotlin.coroutines.CoroutineContext):kotlinx.coroutines.CoroutineScope
 - bs:disposingScope$default(com.intellij.openapi.Disposable,kotlin.coroutines.CoroutineContext,I,java.lang.Object):kotlinx.coroutines.CoroutineScope
-- sf:futureComputationState(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
 - sf:inverted(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
 - sf:launchNow(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - bs:launchNow$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Job
@@ -710,6 +709,8 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - sf:HorizontalListPanel(I):javax.swing.JPanel
 - bs:HorizontalListPanel$default(I,I,java.lang.Object):javax.swing.JPanel
 - sf:LoadingLabel():javax.swing.JLabel
+- sf:LoadingLabel(java.lang.String):javax.swing.JLabel
+- bs:LoadingLabel$default(java.lang.String,I,java.lang.Object):javax.swing.JLabel
 - sf:LoadingTextLabel():javax.swing.JLabel
 - sf:ScrollablePanel(I,java.awt.LayoutManager):javax.swing.JPanel
 - bs:ScrollablePanel$default(I,java.awt.LayoutManager,I,java.lang.Object):javax.swing.JPanel
@@ -1091,7 +1092,11 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil
 - f:applyDefaults(com.intellij.ui.components.JBTextArea):V
 - f:createCommitListCellRenderer():javax.swing.ListCellRenderer
+- f:createDescriptionEditor(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.editor.Editor
+- bs:createDescriptionEditor$default(com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil,com.intellij.openapi.project.Project,java.lang.String,I,java.lang.Object):com.intellij.openapi.editor.Editor
+- f:createTitleEditor(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.editor.Editor
 - f:createTitleEditor(java.lang.String):com.intellij.ui.components.JBTextArea
+- bs:createTitleEditor$default(com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil,com.intellij.openapi.project.Project,java.lang.String,I,java.lang.Object):com.intellij.openapi.editor.Editor
 - bs:createTitleEditor$default(com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil,java.lang.String,I,java.lang.Object):com.intellij.ui.components.JBTextArea
 *f:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory
@@ -1696,8 +1701,10 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - hashCode():I
 *f:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+- f:create(java.lang.Object,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment):javax.swing.JComponent
 - f:create(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter):javax.swing.JComponent
 - f:create(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment):javax.swing.JComponent
+- bs:create$default(com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory,java.lang.Object,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment,I,java.lang.Object):javax.swing.JComponent
 - bs:create$default(com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment,I,java.lang.Object):javax.swing.JComponent
 *e:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment
 - java.lang.Enum
@@ -1714,6 +1721,8 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - a:getErrorTitle(java.lang.Object):java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Companion
 - sf:ERROR_ACTION_HREF:java.lang.String
+- f:simple(java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text
+- bs:simple$default(com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Companion,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text
 *:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$HTML
 - com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 - a:getHTMLBody(java.lang.Object):java.lang.String
@@ -1729,9 +1738,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - f:showAsyncChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - bs:showAsyncChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - bs:showAsyncChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- f:showAsyncMultipleChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation):java.lang.Object
-- f:showAsyncMultipleChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- bs:showAsyncMultipleChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - f:showChooserPopup(com.intellij.ui.awt.RelativePoint,java.util.List,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation):java.lang.Object
 - f:showChooserPopup(com.intellij.ui.awt.RelativePoint,java.util.List,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation):java.lang.Object
 - f:showChooserPopup(com.intellij.ui.awt.RelativePoint,java.util.List,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer,kotlin.coroutines.Continuation):java.lang.Object
@@ -2055,6 +2061,7 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - getLayoutAlignmentX(java.awt.Container):F
 - getLayoutAlignmentY(java.awt.Container):F
 - f:getMaxSize():com.intellij.collaboration.ui.util.DimensionRestrictions
+- f:getMinSize():com.intellij.collaboration.ui.util.DimensionRestrictions
 - f:getPrefSize():com.intellij.collaboration.ui.util.DimensionRestrictions
 - invalidateLayout(java.awt.Container):V
 - layoutContainer(java.awt.Container):V
@@ -2063,6 +2070,7 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - preferredLayoutSize(java.awt.Container):java.awt.Dimension
 - removeLayoutComponent(java.awt.Component):V
 - f:setMaxSize(com.intellij.collaboration.ui.util.DimensionRestrictions):V
+- f:setMinSize(com.intellij.collaboration.ui.util.DimensionRestrictions):V
 - f:setPrefSize(com.intellij.collaboration.ui.util.DimensionRestrictions):V
 *f:com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout$Companion
 - f:constant(java.lang.Integer,java.lang.Integer):com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
@@ -2232,6 +2240,7 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - sf:bindSelectedItemIn(javax.swing.ComboBoxModel,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.MutableStateFlow):V
 - sf:bindTextHtmlIn(javax.swing.JEditorPane,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextIn(com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.MutableStateFlow):V
+- sf:bindTextIn(com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function1):V
 - sf:bindTextIn(javax.swing.Action,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextIn(javax.swing.JButton,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextIn(javax.swing.JEditorPane,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
@@ -2368,9 +2377,12 @@ f:com.intellij.collaboration.util.ComputedResult$Companion
 f:com.intellij.collaboration.util.ComputedResultKt
 - sf:computeEmitting(kotlinx.coroutines.flow.FlowCollector,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:exceptionOrNull-dyXsKJo(kotlin.Result):java.lang.Throwable
+- sf:fold--EiVA6M(kotlin.Result,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):java.lang.Object
 - sf:getOrNull-dyXsKJo(kotlin.Result):java.lang.Object
 - sf:map-dMZ2rFk(kotlin.Result,kotlin.jvm.functions.Function1):kotlin.Result
 - sf:onFailure-dMZ2rFk(kotlin.Result,kotlin.jvm.functions.Function1):kotlin.Result
+- sf:onInProgress-dMZ2rFk(kotlin.Result,kotlin.jvm.functions.Function0):kotlin.Result
+- sf:onSuccess-dMZ2rFk(kotlin.Result,kotlin.jvm.functions.Function1):kotlin.Result
 f:com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 - sf:INSTANCE:com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 - f:shift(java.lang.Iterable,java.lang.Iterable):java.util.List

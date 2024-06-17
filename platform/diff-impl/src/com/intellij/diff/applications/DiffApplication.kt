@@ -1,17 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.applications
 
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffRequestFactory
-import com.intellij.diff.actions.BlankDiffWindowUtil.createBlankDiffRequestChain
-import com.intellij.diff.actions.BlankDiffWindowUtil.setupBlankContext
 import com.intellij.diff.applications.DiffApplicationBase.findFilesOrThrow
 import com.intellij.diff.applications.DiffApplicationBase.guessProject
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.requests.DiffRequest
+import com.intellij.diff.util.BlankDiffWindowUtil.createBlankDiffRequestChain
+import com.intellij.diff.util.BlankDiffWindowUtil.setupBlankContext
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.ide.CliResult

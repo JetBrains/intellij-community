@@ -46,7 +46,7 @@ class NotebookEditorModeListenerAdapter(private val editor: Editor) : NotebookEd
 
   private fun getCaretAttributes(mode: NotebookEditorMode): CaretVisualAttributes {
     return when (mode) {
-      NotebookEditorMode.EDIT -> CaretVisualAttributes.DEFAULT
+      NotebookEditorMode.EDIT -> CaretVisualAttributes.getDefault()
       NotebookEditorMode.COMMAND -> INVISIBLE_CARET
     }
   }

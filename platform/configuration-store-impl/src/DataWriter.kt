@@ -13,6 +13,7 @@ import java.io.OutputStream
 import java.io.Writer
 import java.nio.file.Path
 
+@Internal
 interface DataWriter {
   fun writeTo(output: OutputStream, lineSeparator: LineSeparator, filter: DataWriterFilter? = null)
 

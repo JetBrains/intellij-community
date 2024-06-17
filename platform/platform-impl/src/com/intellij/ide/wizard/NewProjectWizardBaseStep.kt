@@ -43,6 +43,8 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
   override var name: String by nameProperty
   override var path: String by pathProperty
 
+  var defaultName: String = "untitled"
+
   internal var bottomGap: Boolean = true
 
   private fun suggestLocation(): Path {
@@ -70,8 +72,8 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
 
   private fun suggestUniqueName(): String {
     val moduleNames = findAllModules().map { it.name }.toSet()
-    val path = path.toNioPathOrNull() ?: return "untitled"
-    return FileUtil.createSequentFileName(path.toFile(), "untitled", "") {
+    val path = path.toNioPathOrNull() ?: return defaultName
+    return FileUtil.createSequentFileName(path.toFile(), defaultName, "") {
       !it.exists() && it.name !in moduleNames
     }
   }

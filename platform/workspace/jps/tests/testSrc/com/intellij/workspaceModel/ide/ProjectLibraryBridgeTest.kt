@@ -191,7 +191,7 @@ class ProjectLibraryBridgeTest {
     assertEquals(1, events.size)
     val event = events[0]
     assertTrue(event is EntityChange.Added)
-    val libraryEntity = (event as EntityChange.Added).entity
+    val libraryEntity = (event as EntityChange.Added).newEntity
     assertEquals(libraryName, libraryEntity.name)
     assertTrue(libraryEntity.tableId is LibraryTableId.ProjectLibraryTableId)
     assertEquals(2, libraryEntity.roots.size)
@@ -284,7 +284,7 @@ class ProjectLibraryBridgeTest {
 
   private fun checkLibraryAddedEvent(event: EntityChange<LibraryEntity>, libraryName: String) {
     assertTrue(event is EntityChange.Added)
-    val libraryEntity = (event as EntityChange.Added).entity
+    val libraryEntity = (event as EntityChange.Added).newEntity
     assertEquals(libraryName, libraryEntity.name)
     assertTrue(libraryEntity.tableId is LibraryTableId.ProjectLibraryTableId)
     assertEquals(0, libraryEntity.roots.size)

@@ -45,7 +45,7 @@ __jetbrains_intellij_run_generator() {
 }
 
 __jetbrains_intellij_get_directory_files() {
-  builtin printf '%s' "$(command ls -1ap "$1")"
+  command ls -1ap "$1"
 }
 
 __jetbrains_intellij_get_environment() {
@@ -190,9 +190,9 @@ function __jetbrains_intellij_report_shell_editor_buffer () {
 # See https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html#Zle-Widgets
 zle -N __jetbrains_intellij_report_shell_editor_buffer
 # Remove binding if exists.
-builtin bindkey -r '\e[24~'
-# Bind F12 key to report prompt buffer.
-builtin bindkey '\e[24~' __jetbrains_intellij_report_shell_editor_buffer
+builtin bindkey -r '\eo'
+# Bind [Esc, o] key sequence to report prompt buffer.
+builtin bindkey '\eo' __jetbrains_intellij_report_shell_editor_buffer
 
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd

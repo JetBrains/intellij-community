@@ -1,1 +1,0 @@
-<caret>expect object Test

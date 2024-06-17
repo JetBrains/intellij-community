@@ -396,7 +396,7 @@ public final class HighlightClassUtil {
       info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(textRange)
         .descriptionAndTooltip(message);
-      IntentionAction action = QuickFixFactory.getInstance().createRenameFix(aClass);
+      IntentionAction action = QuickFixFactory.getInstance().createRenameFix(identifier);
       if (action != null) {
         info.registerFix(action, null, null, null, null);
       }
@@ -734,29 +734,27 @@ public final class HighlightClassUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkExtendsDuplicate(@NotNull PsiJavaCodeReferenceElement element, @Nullable PsiElement resolved, @NotNull PsiFile containingFile) {
+  static HighlightInfo.Builder checkExtendsDuplicate(@NotNull PsiJavaCodeReferenceElement element, 
+                                                     @Nullable PsiElement resolved, 
+                                                     @NotNull PsiFile containingFile) {
     if (!(element.getParent() instanceof PsiReferenceList list)) return null;
     if (!(list.getParent() instanceof PsiClass)) return null;
     if (!(resolved instanceof PsiClass aClass)) return null;
-    PsiClassType[] referencedTypes = list.getReferencedTypes();
-    int dupCount = 0;
     PsiManager manager = containingFile.getManager();
-    for (PsiClassType referencedType : referencedTypes) {
-      PsiClass resolvedElement = referencedType.resolve();
-      if (resolvedElement != null && manager.areElementsEquivalent(resolvedElement, aClass)) {
-        dupCount++;
-      }
+    PsiJavaCodeReferenceElement sibling = PsiTreeUtil.getPrevSiblingOfType(element, PsiJavaCodeReferenceElement.class);
+    while (true) {
+      if (sibling == null) return null;
+      PsiElement target = sibling.resolve();
+      if (manager.areElementsEquivalent(target, aClass)) break;
+      sibling = PsiTreeUtil.getPrevSiblingOfType(sibling, PsiJavaCodeReferenceElement.class);
     }
-    if (dupCount > 1) {
-      String name = HighlightUtil.formatClass(aClass);
-      String description = JavaErrorBundle.message("duplicate.class", name);
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
-      IntentionAction action = QuickFixFactory.getInstance().createRemoveDuplicateExtendsAction(name);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-    return null;
+    String name = HighlightUtil.formatClass(aClass);
+    String description = JavaErrorBundle.message("duplicate.reference.in.list", name, list.getFirstChild().getText());
+    HighlightInfo.Builder info =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
+    IntentionAction action = QuickFixFactory.getInstance().createRemoveDuplicateExtendsAction(name);
+    info.registerFix(action, null, null, null, null);
+    return info;
   }
 
   static HighlightInfo.Builder checkClassAlreadyImported(@NotNull PsiClass aClass, @NotNull PsiElement elementToHighlight) {

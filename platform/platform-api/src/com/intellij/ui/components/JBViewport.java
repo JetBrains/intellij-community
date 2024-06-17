@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.notification.Notification;
@@ -246,6 +246,10 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     myPaintingNow = false;
   }
 
+  protected ZoomingDelegate createZooming() {
+    return new ZoomingDelegate((JComponent)getView(), this);
+  }
+
   @Override
   public @Nullable Magnificator getMagnificator() {
     return ClientProperty.get(getView(), Magnificator.CLIENT_PROPERTY_KEY);
@@ -253,7 +257,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   @Override
   public void magnificationStarted(Point at) {
-    myZoomer = new ZoomingDelegate((JComponent)getView(), this);
+    myZoomer = createZooming();
     myZoomer.magnificationStarted(at);
   }
 

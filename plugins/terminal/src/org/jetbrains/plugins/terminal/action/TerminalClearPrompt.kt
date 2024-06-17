@@ -5,12 +5,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalFocusModel
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.promptController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalFocusModel
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
 
 internal class TerminalClearPrompt : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {

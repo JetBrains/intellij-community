@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.searchEverywhereMl.ranking.core.searchEverywhereMlRankingService
 import com.intellij.textMatching.PrefixMatchingType
 import com.intellij.textMatching.PrefixMatchingUtil
+import com.intellij.textMatching.WholeTextMatchUtil
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.round
 
@@ -17,8 +18,7 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
   constructor(vararg supportedTabs: Class<out SearchEverywhereContributor<*>>) : this(supportedTabs.map { it.simpleName })
 
   companion object {
-    val EP_NAME: ExtensionPointName<SearchEverywhereElementFeaturesProvider>
-      = ExtensionPointName.create("com.intellij.searcheverywhere.ml.searchEverywhereElementFeaturesProvider")
+    val EP_NAME: ExtensionPointName<SearchEverywhereElementFeaturesProvider> = ExtensionPointName.create("com.intellij.searcheverywhere.ml.searchEverywhereElementFeaturesProvider")
 
     fun getFeatureProviders(): List<SearchEverywhereElementFeaturesProvider> {
       return EP_NAME.extensionList.filter { getPluginInfo(it.javaClass).isDevelopedByJetBrains() }
@@ -35,7 +35,7 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     internal val SIMILARITY_SCORE = EventFields.Double("similarityScore")
     internal val IS_SEMANTIC_ONLY = EventFields.Boolean("isSemanticOnly")
 
-    internal val nameFeatureToField = hashMapOf<String, EventField<*>>(
+    internal val prefixMatchingNameFeatureToField = hashMapOf<String, EventField<*>>(
       "prefix_same_start_count" to EventFields.Int("${PrefixMatchingUtil.baseName}SameStartCount"),
       "prefix_greedy_score" to EventFields.Double("${PrefixMatchingUtil.baseName}GreedyScore"),
       "prefix_greedy_with_case_score" to EventFields.Double("${PrefixMatchingUtil.baseName}GreedyWithCaseScore"),
@@ -45,10 +45,20 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       "prefix_matched_words_with_case_relative" to EventFields.Double("${PrefixMatchingUtil.baseName}MatchedWordsWithCaseRelative"),
       "prefix_skipped_words" to EventFields.Int("${PrefixMatchingUtil.baseName}SkippedWords"),
       "prefix_matching_type" to EventFields.String(
-        "${PrefixMatchingUtil.baseName}MatchingType", PrefixMatchingType.values().map { it.name }
+        "${PrefixMatchingUtil.baseName}MatchingType", PrefixMatchingType.entries.map { it.name }
       ),
       "prefix_exact" to EventFields.Boolean("${PrefixMatchingUtil.baseName}Exact"),
       "prefix_matched_last_word" to EventFields.Boolean("${PrefixMatchingUtil.baseName}MatchedLastWord"),
+    )
+    internal val wholeMatchingNameFeatureToField = hashMapOf<String, EventField<*>>(
+      "levenshtein_distance" to EventFields.Double("${WholeTextMatchUtil.baseName}LevenshteinDistance",
+                                                   "Levenshtein distance normalized by query lengths"),
+      "levenshtein_distance_case_insensitive" to
+        EventFields.Double("${WholeTextMatchUtil.baseName}LevenshteinDistanceCaseInsensitive",
+                           "Levenshtein distance with case insensitive matching, normalized by query length"),
+      "words_in_query" to EventFields.Int("${WholeTextMatchUtil.baseName}WordsInQuery", "Number of words in the query"),
+      "words_in_element" to EventFields.Int("${WholeTextMatchUtil.baseName}WordsInElement", "Number of words in the element text"),
+      "exactly_matched_words" to EventFields.Int("${WholeTextMatchUtil.baseName}ExactlyMatchedWords")
     )
 
 
@@ -87,11 +97,14 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       NAME_LENGTH.with(nameOfFoundElement.length)
     )
     features.forEach { (key, value) ->
-      val field = nameFeatureToField[key]
+      val field = prefixMatchingNameFeatureToField[key]
       setMatchValueToField(value, field)?.let {
         result.add(it)
       }
     }
+    result.addAll(WholeTextMatchUtil.calculateFeatures(nameOfFoundElement, searchQuery).map { (key, value) ->
+      setMatchValueToField(value, wholeMatchingNameFeatureToField[key])
+    }.filterNotNull())
     return result
   }
 
@@ -116,6 +129,7 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     return null
   }
 }
+
 @ApiStatus.Internal
 fun <T> MutableList<EventPair<*>>.putIfValueNotNull(key: EventField<T>, value: T?) {
   value?.let {

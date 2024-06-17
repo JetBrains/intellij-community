@@ -6,6 +6,7 @@ import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -21,42 +22,51 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.io.File
 
+@ApiStatus.Experimental
 fun containsFileDropTargets(transferFlavors: Array<DataFlavor>): Boolean {
   return FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors)
 }
 
-private val EP_NAME: ExtensionPointName<FileDropHandler> = ExtensionPointName.create("com.intellij.fileDropHandler")
+private val LOG = Logger.getInstance(FileDropManager::class.java)
+
+private val EP_NAME: ExtensionPointName<FileDropHandler> = ExtensionPointName("com.intellij.fileDropHandler")
 
 @Service(Service.Level.PROJECT)
-class FileDropManager(private val project: Project,
-                      private val coroutineScope: CoroutineScope) {
-  fun scheduleDrop(t: Transferable, editor: Editor?, editorWindowCandidate: EditorWindow?) {
-    val fileList = FileCopyPasteUtil.getFileList(t) ?: return
-
+class FileDropManager(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) {
+  fun scheduleDrop(transferable: Transferable, editor: Editor?, editorWindowCandidate: EditorWindow?) {
+    val fileList = FileCopyPasteUtil.getFileList(transferable) ?: return
     coroutineScope.launch {
-      handleDrop(t, editor, editorWindowCandidate, fileList)
+      handleDrop(transferable, editor, editorWindowCandidate, fileList)
     }
   }
 
-  suspend fun handleDrop(t: Transferable,
-                         editor: Editor?,
-                         editorWindowCandidate: EditorWindow?) {
-    val fileList = FileCopyPasteUtil.getFileList(t) ?: return
-
-    handleDrop(t, editor, editorWindowCandidate, fileList)
+  suspend fun handleDrop(transferable: Transferable, editor: Editor?, editorWindowCandidate: EditorWindow?) {
+    val fileList = FileCopyPasteUtil.getFileList(transferable) ?: return
+    handleDrop(transferable = transferable, editor = editor, editorWindowCandidate = editorWindowCandidate, fileList = fileList)
   }
 
-  private suspend fun handleDrop(t: Transferable,
+  private suspend fun handleDrop(transferable: Transferable,
                                  editor: Editor?,
                                  editorWindowCandidate: EditorWindow?,
                                  fileList: Collection<File>) {
-    val event = FileDropEvent(project, t, fileList, editor)
-    val dropHandled = (listOf(CustomFileDropHandlerBridge()) + EP_NAME.extensionList)
-      .any { it.handleDrop(event) }
+    val event = FileDropEvent(project, transferable, fileList, editor)
+    val dropHandled = (listOf(CustomFileDropHandlerBridge()) + EP_NAME.extensionList).any {
+      try {
+        it.handleDrop(event)
+      }
+      catch (e: Exception) {
+        LOG.error("Unable to handle drop event in $it", e)
+        false
+      }
+    }
 
     if (!dropHandled) {
       val editorWindow = editorWindowCandidate ?: readAction {

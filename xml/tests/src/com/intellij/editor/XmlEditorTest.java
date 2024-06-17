@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -34,7 +35,7 @@ public class XmlEditorTest extends LightJavaCodeInsightTestCase {
     for (int i = 0; i < 3; i++) {
       EditorTestUtil.performTypingAction(getEditor(), '\n');
     }
-    PlatformTestUtil.newPerformanceTest("Xml editor enter", () -> {
+    PerformanceTestUtil.newPerformanceTest("Xml editor enter", () -> {
       for (int i = 0; i < 3; i ++) {
         EditorTestUtil.performTypingAction(getEditor(), '\n');
       }

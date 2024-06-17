@@ -5,9 +5,9 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractRenameTest
@@ -38,11 +38,11 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
     override fun checkForUnexpectedErrors(ktFile: KtFile) {}
 
     override fun findPsiDeclarationToRename(contextFile: KtFile, target: KotlinTarget): PsiElement = analyze(contextFile) {
-        fun getContainingMemberSymbol(classId: ClassId): KtSymbolWithMembers {
+        fun getContainingMemberSymbol(classId: ClassId): KaSymbolWithMembers {
             getClassOrObjectSymbolByClassId(classId)?.let { return it }
             val parentSymbol = getClassOrObjectSymbolByClassId(classId.parentClassId!!)!!
 
-            // The function supports getting a `KtEnumEntrySymbol`'s initializer via the enum entry's "class ID". Despite not being 100%
+            // The function supports getting a `KaEnumEntrySymbol`'s initializer via the enum entry's "class ID". Despite not being 100%
             // semantically correct in FIR (enum entries aren't classes), it simplifies referring to the initializing object.
             val declarationSymbol = parentSymbol.getStaticDeclaredMemberScope().getCallableSymbols(classId.shortClassName).first()
             return declarationSymbol.getSymbolContainingMemberDeclarations() ?:
@@ -61,7 +61,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
                 val callablesOfProperType = scope.getCallableSymbols(callableId.callableName)
                     .mapNotNull {
                         when (target.type) {
-                            KotlinTarget.CallableType.FUNCTION -> it as? KtFunctionSymbol
+                            KotlinTarget.CallableType.FUNCTION -> it as? KaFunctionSymbol
                             KotlinTarget.CallableType.PROPERTY -> it as? KtPropertySymbol
                         }
                     }

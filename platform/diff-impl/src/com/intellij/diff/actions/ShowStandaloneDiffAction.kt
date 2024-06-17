@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
@@ -13,7 +13,7 @@ import com.intellij.openapi.project.DumbAware
 /**
  * In contrast to [ShowDiffAction] which may show diff preview, this action will show diff without selection tracking.
  */
-class ShowStandaloneDiffAction : ExtendableAction(EP_NAME), DumbAware {
+internal class ShowStandaloneDiffAction : ExtendableAction(EP_NAME), DumbAware {
   companion object {
     @JvmStatic
     val EP_NAME = ExtensionPointName.create<AnActionExtensionProvider>(

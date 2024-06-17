@@ -96,7 +96,7 @@ public class SuspendManagerImpl implements SuspendManager {
         myDebugProcess.logThreads();
         switch (getSuspendPolicy()) {
           case EventRequest.SUSPEND_ALL -> myDebugProcess.getVirtualMachineProxy().resumedSuspendAllContext();
-          case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(getEventThread()).resumedSuspendThreadContext();
+          case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(getEventThread()).threadWasResumed();
         }
         DebuggerUtilsAsync.resume(set);
         LOG.debug("Set resumed ");
@@ -124,7 +124,7 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   private void logError(String message) {
-    DebuggerDiagnosticsUtil.logError(myDebugProcess, message);
+    myDebugProcess.logError(message);
   }
 
   @Override
@@ -161,8 +161,6 @@ public class SuspendManagerImpl implements SuspendManager {
     if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
       if (!ContainerUtil.exists(myPausedContexts, c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL)) {
         myExplicitlyResumedThreads.clear();
-      } else if (eventThread != null && !ContainerUtil.exists(myEventContexts, c -> c.suspends(eventThread))) {
-        myExplicitlyResumedThreads.add(eventThread);
       }
     }
     Set<ThreadReferenceProxyImpl> resumedThreads = context.myResumedThreads;

@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
@@ -425,8 +426,10 @@ fun jbColorFromHex(light: @NonNls String, dark: @NonNls String): JBColor =
  * Loading label with animated icon
  */
 @Suppress("FunctionName")
-fun LoadingLabel(): JLabel = JLabel(CollaborationToolsUIUtil.animatedLoadingIcon).apply {
+@JvmOverloads
+fun LoadingLabel(labelText: @NlsContexts.Label String? = null): JLabel = JLabel(CollaborationToolsUIUtil.animatedLoadingIcon).apply {
   name = "Animated loading label"
+  text = labelText
 }
 
 /**

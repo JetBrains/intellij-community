@@ -123,21 +123,26 @@ class DirtyFilesQueueTest {
   }
 
   @Test
-  fun `test file is indexed after it was edited when project was closed`() {
-    doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount = 5, expectFullScanning = false)
+  fun `test file is indexed after it was edited when project was closed (restart app)`() {
+    doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount = 5, expectFullScanning = false, restartApp = true)
+  }
+
+  @Test
+  fun `test file is indexed after it was edited when project was closed (don't restart app)`() {
+    doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount = 5, expectFullScanning = false, restartApp = false)
   }
 
   @Test
   fun `test file is indexed after it was edited when project was closed (with full scanning using mod count)`() {
     setOrphanDirtyFilesQueueMaxSize(5)
-    doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount = 30, expectFullScanning = true)
+    doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount = 30, expectFullScanning = true, restartApp = true)
   }
 
   private fun setOrphanDirtyFilesQueueMaxSize(value: Int) {
     Registry.get("maximum.size.of.orphan.dirty.files.queue").setValue(value, testRootDisposable)
   }
 
-  private fun doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount: Int, expectFullScanning: Boolean) {
+  private fun doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount: Int, expectFullScanning: Boolean, restartApp: Boolean) {
     runBlocking {
       val name = "test_file_is_indexed_after_it_was_edited_when_project_was_closed_fileCount_${fileCount}_expecteFullScanning_${expectFullScanning}"
       val projectFile = TemporaryDirectory.generateTemporaryPath("project_${name}")
@@ -171,7 +176,9 @@ class DirtyFilesQueueTest {
           it.writeText("$commonPrefix2 $it")
         }
       } // add files to orphan queue
-      restart(skipFullScanning = true) // persist orphan queue
+      if (restartApp) {
+        restart(skipFullScanning = true) // persist orphan queue
+      }
       openProject(name, projectFile, withIndexingHistory = true) { project, _ ->
         smartReadAction(project) {
           val foundFiles = findFilesWithText(commonPrefix2, project)

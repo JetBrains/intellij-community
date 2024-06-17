@@ -4,6 +4,7 @@ import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
+import com.intellij.ide.actions.searcheverywhere.SearchListener
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
@@ -53,6 +54,8 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
 
   override val priorityThresholds
     get() = PRIORITY_THRESHOLDS
+
+  override var searchListener: SearchListener? = null
 
   override fun isElementSemantic(element: Any): Boolean {
     return (element is MatchedValue && element.type == GotoActionModel.MatchedValueType.SEMANTIC)
@@ -127,6 +130,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
           if (semanticMatches.isEmpty()) return@launch
           standardSearchJob.join()
           if (knownItems.isEmpty() && checkScopeIsDefaultAndAutoSet()) return@launch // allow the scope to change automatically
+          if (knownItems.isEmpty()) onStandardSearchFoundNoResults()
 
           for (priority in ORDERED_PRIORITIES) {
             val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
@@ -191,6 +195,10 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
     }
   }
 
+  override fun onStandardSearchFoundNoResults() {
+    searchListener?.standardSearchFoundNoResults(this)
+  }
+
   override fun defaultFetchElements(pattern: String,
                                     progressIndicator: ProgressIndicator,
                                     consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
@@ -215,7 +223,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
 
     private fun extractAction(item: Any): AnAction? {
       if (item is AnAction) return item
-      return ((if (item is MatchedValue) item.value else item) as? GotoActionModel.ActionWrapper)?.action
+      return ((if (item is MatchedValue) item.value else item) as? ActionWrapper)?.action
     }
 
     private fun checkActionsEqual(lhs: Any, rhs: Any): Boolean {

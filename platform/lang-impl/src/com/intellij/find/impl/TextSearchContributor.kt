@@ -11,6 +11,7 @@ import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
+import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener
 import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.Companion.SE_TAB_TOPIC
 import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.SETabSwitchedEvent
 import com.intellij.ide.actions.searcheverywhere.footer.createTextExtendedInfo
@@ -28,6 +29,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -145,7 +147,8 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
       if (model.isWholeWordsOnly != word.get()) word.set(model.isWholeWordsOnly)
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe<SETabSwitcherListener>(
+    val connection = ApplicationManager.getApplication().getMessageBus().connect()
+    connection.subscribe<SETabSwitcherListener>(
       SE_TAB_TOPIC, object : SETabSwitcherListener {
       override fun tabSwitched(event: SETabSwitchedEvent) {
         case.set(false)
@@ -159,6 +162,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
       onDisposeLocal.invoke()
       model.removeObserver(findModelObserver)
     }
+    Disposer.register(this, connection)
 
     model.addObserver(findModelObserver)
 

@@ -23,6 +23,16 @@ import javax.swing.KeyStroke
 import javax.swing.event.HyperlinkEvent
 
 object ErrorStatusPanelFactory {
+  fun <T> create(
+    error: T,
+    errorPresenter: ErrorStatusPresenter<T>,
+    alignment: Alignment = Alignment.CENTER
+  ): JComponent {
+    var action: Action? = null
+    return create { action }.apply {
+      update(alignment, error, errorPresenter) { action = it }
+    }
+  }
 
   @JvmOverloads
   fun <T> create(
@@ -31,6 +41,17 @@ object ErrorStatusPanelFactory {
     errorPresenter: ErrorStatusPresenter<T>,
     alignment: Alignment = Alignment.CENTER
   ): JComponent {
+    var action: Action? = null
+    return create { action }.apply {
+      scope.launch {
+        errorState.collect { error ->
+          update(alignment, error, errorPresenter) { action = it }
+        }
+      }
+    }
+  }
+
+  private fun create(getAction: () -> Action? = { null }): JEditorPane {
     val htmlEditorPane = JEditorPane().apply {
       editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
       foreground = NamedColorUtil.getErrorForeground()
@@ -39,12 +60,11 @@ object ErrorStatusPanelFactory {
       isOpaque = false
     }
 
-    var action: Action? = null
     htmlEditorPane.addHyperlinkListener(object : HyperlinkAdapter() {
       override fun hyperlinkActivated(event: HyperlinkEvent) {
         if (event.description == ErrorStatusPresenter.ERROR_ACTION_HREF) {
           val actionEvent = ActionEvent(htmlEditorPane, ActionEvent.ACTION_PERFORMED, "perform")
-          action?.actionPerformed(actionEvent)
+          getAction()?.actionPerformed(actionEvent)
         }
         else {
           BrowserUtil.browse(event.description)
@@ -52,16 +72,10 @@ object ErrorStatusPanelFactory {
       }
     })
     htmlEditorPane.registerKeyboardAction(
-      ActionListener { action?.actionPerformed(it) },
+      ActionListener { getAction()?.actionPerformed(it) },
       KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
       JComponent.WHEN_FOCUSED
     )
-
-    scope.launch {
-      errorState.collect { error ->
-        htmlEditorPane.update(alignment, error, errorPresenter) { action = it }
-      }
-    }
 
     return htmlEditorPane
   }

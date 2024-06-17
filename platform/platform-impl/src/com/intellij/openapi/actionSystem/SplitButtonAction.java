@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -51,16 +52,22 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
     SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), SplitButton.class);
 
     Presentation groupPresentation = session.presentation(getDelegate()); // do not remove (RemDev)
-    AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
+    AnAction action = splitButton != null ? splitButton.selectedAction : getMainAction(e);
     if (action != null) {
       Presentation actionPresentation = session.presentation(action);
       presentation.copyFrom(actionPresentation, splitButton);
-      presentation.setEnabledAndVisible(true);
+      if (!isGroupPresentationDependsOnSelectedAction()) {
+        presentation.setEnabledAndVisible(true);
+      }
     }
     else {
       e.getPresentation().copyFrom(groupPresentation, splitButton);
     }
     presentation.putClientProperty(FIRST_ACTION, splitButton != null ? null : action);
+  }
+
+  protected @Nullable AnAction getMainAction(@NotNull AnActionEvent e) {
+    return getFirstEnabledAction(e);
   }
 
   @Override
@@ -78,9 +85,17 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
     return firstEnabled != null ? firstEnabled : ContainerUtil.getFirstItem(children);
   }
 
+  protected boolean useDynamicSplitButton() {
+    return true;
+  }
+
+  protected boolean isGroupPresentationDependsOnSelectedAction() {
+    return false;
+  }
+
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return new SplitButton(this, presentation, place, getDelegate());
+    return new SplitButton(this, presentation, place, getDelegate(), useDynamicSplitButton());
   }
 
   private static final class SplitButton extends ActionButton {
@@ -95,10 +110,16 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
     private boolean actionEnabled = true;
     private MousePressType mousePressType = MousePressType.None;
     private SimpleMessageBusConnection myConnection;
+    private final boolean myUpdateSelectedActionAfterExecution;
 
-    private SplitButton(@NotNull AnAction action, @NotNull Presentation presentation, String place, ActionGroup actionGroup) {
+    private SplitButton(@NotNull AnAction action,
+                        @NotNull Presentation presentation,
+                        String place,
+                        ActionGroup actionGroup,
+                        boolean updateSelectedActionAfterExecution) {
       super(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
       myActionGroup = actionGroup;
+      myUpdateSelectedActionAfterExecution = updateSelectedActionAfterExecution;
       selectedAction = presentation.getClientProperty(FIRST_ACTION);
     }
 
@@ -106,6 +127,14 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
       myPresentation.copyFrom(presentation, this);
       actionEnabled = presentation.isEnabled();
       myPresentation.setEnabled(true);
+    }
+
+    @Override
+    protected @Nullable String getShortcutText() {
+      if (selectedAction != null && !myUpdateSelectedActionAfterExecution) {
+        return KeymapUtil.getFirstKeyboardShortcutText(selectedAction);
+      }
+      return super.getShortcutText();
     }
 
     @Override
@@ -237,19 +266,22 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
     @Override
     public void addNotify() {
       super.addNotify();
-      DataContext context = DataManager.getInstance().getDataContext(getParent());
-      Disposable parentDisposable = Objects.requireNonNullElse(CommonDataKeys.PROJECT.getData(context), ApplicationManager.getApplication());
-      myConnection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
-      myConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
-        @Override
-        public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-          if (event.getDataContext().getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) == SplitButton.this) {
-            selectedAction = action;
-            copyPresentation(event.getPresentation());
-            repaint();
+      if (myUpdateSelectedActionAfterExecution) {
+        DataContext context = DataManager.getInstance().getDataContext(getParent());
+        Disposable parentDisposable =
+          Objects.requireNonNullElse(CommonDataKeys.PROJECT.getData(context), ApplicationManager.getApplication());
+        myConnection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
+        myConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
+          @Override
+          public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+            if (event.getDataContext().getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) == SplitButton.this) {
+              selectedAction = action;
+              copyPresentation(event.getPresentation());
+              repaint();
+            }
           }
-        }
-      });
+        });
+      }
     }
 
     @Override

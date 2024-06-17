@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -54,7 +54,7 @@ internal abstract class AbstractAddAccessorIntention(
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtProperty): Unit? {
         if (element.annotationEntries.isEmpty()) return Unit
         val symbol = element.getVariableSymbol() as? KtPropertySymbol ?: return null

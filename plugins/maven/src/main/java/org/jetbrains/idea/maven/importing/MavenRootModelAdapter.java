@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.Path;
+import org.jetbrains.idea.maven.utils.MavenPathWrapper;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -116,7 +116,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
   }
 
   @Override
-  public Path toPath(String path) {
+  public MavenPathWrapper toPath(String path) {
     return myDelegate.toPath(path);
   }
 

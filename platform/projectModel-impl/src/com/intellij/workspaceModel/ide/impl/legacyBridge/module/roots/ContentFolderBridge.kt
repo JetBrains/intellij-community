@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifySourceRootEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
 import org.jetbrains.jps.model.JpsElement
@@ -88,14 +88,14 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
       if (javaResourceRoot != null) return
 
       updater { diff ->
-        diff.modifyEntity(sourceRootEntity) {
+        diff.modifySourceRootEntity(sourceRootEntity) {
           this.javaSourceRoots += JavaSourceRootPropertiesEntity(false, packagePrefix, sourceRootEntity.entitySource)
         }
       }
     }
     else {
       updater { diff ->
-        diff.modifyEntity(javaSourceRoot) {
+        diff.modifyJavaSourceRootPropertiesEntity(javaSourceRoot) {
           this.packagePrefix = packagePrefix
         }
       }

@@ -12,7 +12,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.impl.UnloadedModulesNameHolderImpl
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.util.JDOMUtil
@@ -393,8 +393,8 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
   val changedSources = changesList.flatMapTo(HashSet()) { changes ->
     changes.flatMap { change ->
       when (change) {
-        is EntityChange.Added -> listOf(change.entity)
-        is EntityChange.Removed -> listOf(change.entity)
+        is EntityChange.Added -> listOf(change.newEntity)
+        is EntityChange.Removed -> listOf(change.oldEntity)
         is EntityChange.Replaced -> listOf(change.oldEntity, change.newEntity)
       }
     }.map { it.entitySource }

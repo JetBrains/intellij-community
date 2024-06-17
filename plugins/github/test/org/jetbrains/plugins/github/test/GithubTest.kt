@@ -69,7 +69,7 @@ abstract class GithubTest : GitPlatformTest() {
   private fun createAccountData(host: GithubServerPath, token: String): AccountData {
     val account = GHAccountManager.createAccount("token", host)
     runBlocking { accountManager.updateAccount(account, token) }
-    val executor = service<GithubApiRequestExecutor.Factory>().create(token)
+    val executor = service<GithubApiRequestExecutor.Factory>().create(host, token)
     val username = executor.execute(GithubApiRequests.CurrentUser.get(account.server)).login
 
     return AccountData(token, account, username, executor)

@@ -96,11 +96,13 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
   }
 
   fun assertGradleProperties(java: Sdk?) {
-    assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradlePropertiesFile))
+    val javaHome = GradlePropertiesFile.getJavaHome(project, externalProjectPath)
+    assertEquals(java?.homePath, javaHome)
   }
 
   fun assertGradleLocalProperties(java: Sdk?) {
-    assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradleLocalPropertiesFile))
+    val javaHome = GradleLocalPropertiesFile.getJavaHome(externalProjectPath)
+    assertEquals(java?.homePath, javaHome)
   }
 
   fun withServiceGradleUserHome(action: () -> Unit) {

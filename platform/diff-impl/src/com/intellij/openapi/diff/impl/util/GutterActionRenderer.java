@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.util;
 
 import com.intellij.codeInsight.daemon.NonHideableIconGutterMark;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -12,6 +13,7 @@ import javax.swing.*;
 /**
  * Used in TC plugin.
  */
+@ApiStatus.Internal
 @SuppressWarnings("unused")
 public class GutterActionRenderer extends GutterIconRenderer implements DumbAware, NonHideableIconGutterMark {
   private final AnAction myAction;

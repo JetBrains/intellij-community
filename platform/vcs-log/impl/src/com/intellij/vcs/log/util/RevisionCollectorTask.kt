@@ -23,7 +23,10 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * @see waitForRevisions
  */
-abstract class RevisionCollectorTask<T>(protected val project: Project, private val mainIndicator: ProgressIndicator, private val fastTaskIndicator: ProgressIndicator?) {
+class RevisionCollectorTask<T>(val project: Project,
+                               val collector: RevisionCollector<T>,
+                               private val mainIndicator: ProgressIndicator,
+                               private val fastTaskIndicator: ProgressIndicator?) {
   private val future: Future<*>
   private val fastFuture: Future<*>?
   private val _revisions = ConcurrentLinkedQueue<T>()
@@ -35,13 +38,11 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
 
   val isCancelled get() = mainIndicator.isCanceled
 
-  protected val revisionsCount get() = _revisions.size
-
   init {
     future = AppExecutorUtil.getAppExecutorService().submit {
       ProgressManager.getInstance().runProcess(Runnable {
         try {
-          collectRevisions {
+          collector.collectRevisions {
             synchronized(firstRevisionCollected) {
               if (!firstRevisionCollected.getAndSet(true)) {
                 _revisions.clear()
@@ -59,7 +60,7 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
       AppExecutorUtil.getAppExecutorService().submit {
         ProgressManager.getInstance().executeProcessUnderProgress(Runnable {
           try {
-            collectRevisionsFast {
+            collector.collectRevisionsFast {
               synchronized(firstRevisionCollected) {
                 if (firstRevisionCollected.get()) {
                   fastTaskIndicator.cancel()
@@ -76,12 +77,6 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
       }
     }
   }
-
-  @Throws(VcsException::class)
-  abstract fun collectRevisions(consumer: (T) -> Unit)
-
-  @Throws(VcsException::class)
-  open fun collectRevisionsFast(consumer: (T) -> Unit) = Unit
 
   /**
    * Waits for task to complete in a loop.
@@ -134,4 +129,12 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
       }
     }
   }
+}
+
+interface RevisionCollector<T> {
+  @Throws(VcsException::class)
+  fun collectRevisions(consumer: (T) -> Unit)
+
+  @Throws(VcsException::class)
+  fun collectRevisionsFast(consumer: (T) -> Unit) = Unit
 }

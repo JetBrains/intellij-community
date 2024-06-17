@@ -77,7 +77,7 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   // TODO [Targets API] [major] `PythonSdkFlavor` should be taken into account to pass (at least) "IRONPYTHONPATH" or "JYTHONPATH"
   //  environment variables for corresponding interpreters
   if (isUsePty) {
-    commandLineBuilder.ptyOptions = LocalTargetPtyOptions(LocalPtyOptions.DEFAULT)
+    commandLineBuilder.ptyOptions = LocalTargetPtyOptions(LocalPtyOptions.defaults())
   }
 
   // This fix shouldn't be here, since flavor patches envs (see configureBuilderToRunPythonOnTarget), but envs

@@ -8,12 +8,11 @@ import com.intellij.ide.IdeView;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.InjectedDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.EditorDataProvider;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -35,10 +34,36 @@ import java.util.LinkedHashSet;
 import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
+/** @deprecated replace with {@link TextEditorPsiDataProvider.DataRule} when EditorDataProvider is dropped */
+@Deprecated(forRemoval = true)
 public class TextEditorPsiDataProvider implements EditorDataProvider {
+
+  static class DataRule implements EdtDataRule {
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
+      Editor editor = snapshot.get(EDITOR);
+      if (!(editor instanceof EditorEx) || editor.isDisposed()) return;
+
+      EditorKind editorKind = editor.getEditorKind();
+      if (editorKind == EditorKind.PREVIEW || editorKind == EditorKind.CONSOLE) return;
+
+      Caret caret = snapshot.get(CARET);
+      if (caret == null) {
+        sink.set(CARET, caret = editor.getCaretModel().getPrimaryCaret());
+      }
+
+      VirtualFile file = editor.getVirtualFile();
+      if (file == null) return;
+
+      Caret finalCaret = caret;
+      sink.set(HOST_EDITOR, editor instanceof EditorWindow o ? o.getDelegate() : editor);
+      sink.set(IDE_VIEW, getIdeView(editor, file));
+      sink.set(BGT_DATA_PROVIDER, slowId -> getSlowData(slowId, editor, finalCaret));
+    }
+  }
+
   @Override
-  @Nullable
-  public Object getData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
+  public @Nullable Object getData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
     if (e.isDisposed() || !(e instanceof EditorEx)) {
       return null;
     }
@@ -54,7 +79,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (IDE_VIEW.is(dataId)) {
       return getIdeView(e, file);
     }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+    if (BGT_DATA_PROVIDER.is(dataId)) {
       return (DataProvider)slowId -> getSlowData(slowId, e, caret);
     }
     return null;
@@ -88,7 +113,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
   }
 
   @Nullable
-  private Object getSlowData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
+  private static Object getSlowData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
     if (e.isDisposed() || !(e instanceof EditorEx)) {
       return null;
     }
@@ -160,17 +185,17 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
   }
 
   // here there's a convention that query* methods below can call getSlowData() whereas get* methods can't
-  private EditorWindow querySlowInjectedEditor(@NotNull Editor e, @NotNull Caret caret) {
+  private static EditorWindow querySlowInjectedEditor(@NotNull Editor e, @NotNull Caret caret) {
     Object editor = getSlowData(InjectedDataKeys.EDITOR.getName(), e, caret);
     return editor instanceof EditorWindow ? (EditorWindow)editor : null;
   }
 
-  private InjectedCaret querySlowInjectedCaret(@NotNull Editor e, @NotNull Caret caret) {
+  private static InjectedCaret querySlowInjectedCaret(@NotNull Editor e, @NotNull Caret caret) {
     EditorWindow editor = querySlowInjectedEditor(e, caret);
     return editor == null ? null : getInjectedCaret(editor, caret);
   }
 
-  private PsiFile querySlowInjectedPsiFile(@NotNull Editor e, @NotNull Caret caret) {
+  private static PsiFile querySlowInjectedPsiFile(@NotNull Editor e, @NotNull Caret caret) {
     return (PsiFile)getSlowData(InjectedDataKeys.PSI_FILE.getName(), e, caret);
   }
 

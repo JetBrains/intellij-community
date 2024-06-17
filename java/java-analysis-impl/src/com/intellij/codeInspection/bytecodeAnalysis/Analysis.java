@@ -15,7 +15,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 final class AbstractValues {
   static final class ParamValue extends BasicValue {
@@ -126,9 +125,9 @@ final class AbstractValues {
   static boolean equiv(BasicValue curr, BasicValue prev) {
     if (curr == prev) return true;
     if (curr.getClass() == prev.getClass()) {
-      if (curr instanceof CallResultValue && prev instanceof CallResultValue) {
-        List<EKey> keys1 = ((CallResultValue)prev).inters;
-        List<EKey> keys2 = ((CallResultValue)curr).inters;
+      if (curr instanceof CallResultValue currRes && prev instanceof CallResultValue prevRes) {
+        List<EKey> keys1 = prevRes.inters;
+        List<EKey> keys2 = currRes.inters;
         return keys1.size() == keys2.size() && keys1.containsAll(keys2);
       }
       else return true;

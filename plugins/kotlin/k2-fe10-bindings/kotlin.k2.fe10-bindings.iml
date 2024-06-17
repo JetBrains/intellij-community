@@ -31,8 +31,8 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-ir" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fir" level="project" />
-    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
-    <orderEntry type="library" name="kotlinc.high-level-api-fir" level="project" />
+    <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="library" name="kotlinc.analysis-api-k2" level="project" />
     <orderEntry type="library" name="kotlinc.low-level-api-fir" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
@@ -49,7 +49,7 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
-    <orderEntry type="library" name="kotlinc.analysis-api-providers" level="project" />
+    <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.highlighting.k2" scope="TEST" />

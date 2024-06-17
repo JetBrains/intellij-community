@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.*
@@ -27,7 +27,7 @@ object ConvertToBlockBodyUtils {
     fun isConvertibleByPsi(element: KtDeclarationWithBody): Boolean =
         (element is KtNamedFunction || element is KtPropertyAccessor) && !element.hasBlockBody() && element.hasBody()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createContext(
         declaration: KtDeclarationWithBody,
         shortenReferences: ShortenReferencesFacility,

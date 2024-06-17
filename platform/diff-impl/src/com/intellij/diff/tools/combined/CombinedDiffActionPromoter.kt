@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 
-class CombinedDiffActionPromoter : ActionPromoter {
+internal class CombinedDiffActionPromoter : ActionPromoter {
   override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
     if (context.getData(COMBINED_DIFF_VIEWER) == null) return actions
 

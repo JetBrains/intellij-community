@@ -762,12 +762,15 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         if (jpsPluginSettings != null) {
             setSelectedItem(kotlinJpsPluginVersionComboBox, defaultJpsVersionItem);
         }
+        // This call adds the correct values to the language/apiVersion dropdown based on the compiler version.
+        // It also selects some values of the dropdown, but we want to choose the values reflecting the current settings afterward.
+        onLanguageLevelChanged(getSelectedKotlinJpsPluginVersionView()); // getSelectedLanguageVersionView() replaces null
+
         if (!commonCompilerArguments.getAutoAdvanceLanguageVersion()) {
             setSelectedItem(languageVersionComboBox, KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments));
         } else {
             setSelectedItem(languageVersionComboBox, getLatestStableVersion());
         }
-        onLanguageLevelChanged((VersionView) languageVersionComboBox.getSelectedItem()); // getSelectedLanguageVersionView() replaces null
         if (!commonCompilerArguments.getAutoAdvanceApiVersion()) {
             setSelectedItem(apiVersionComboBox, KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments));
         } else {

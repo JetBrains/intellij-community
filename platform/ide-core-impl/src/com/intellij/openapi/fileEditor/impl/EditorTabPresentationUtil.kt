@@ -13,7 +13,7 @@ object EditorTabPresentationUtil {
   @JvmStatic
   fun getEditorTabTitle(project: Project, file: VirtualFile): @NlsContexts.TabTitle String {
     return getCustomEditorTabTitle(project, file)
-           ?: UniqueNameEditorTabTitleProvider().getEditorTabTitle(project, file)
+           ?: doGetUniqueNameEditorTabTitle(project = project, file = file)
            ?: file.presentableName
   }
 

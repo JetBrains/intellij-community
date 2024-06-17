@@ -91,7 +91,7 @@ class SaveFacetsTest {
     runWriteActionAndWait {
       workspaceModel.updateProjectModel {
         val moduleEntity = it.entities(ModuleEntity::class.java).single()
-        it.modifyEntity(moduleEntity) {
+        it.modifyModuleEntity(moduleEntity) {
           dependencies = mutableListOf(ModuleSourceDependency, InheritedSdkDependency)
         }
       }

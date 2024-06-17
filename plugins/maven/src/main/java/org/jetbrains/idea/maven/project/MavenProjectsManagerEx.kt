@@ -45,13 +45,17 @@ import org.jetbrains.idea.maven.importing.importActivityStarted
 import org.jetbrains.idea.maven.importing.runMavenConfigurationTask
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
+import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.server.showUntrustedProjectNotification
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.io.File
+import java.nio.file.Files
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
@@ -94,6 +98,10 @@ interface MavenAsyncProjectsManager {
                                           modelsProvider: IdeModifiableModelsProvider?,
                                           previewModule: Module?,
                                           syncProject: Boolean): List<Module>
+
+  fun projectFileExists(file: File): Boolean {
+    return Files.exists(file.toPath());
+  }
 }
 
 open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineScope) : MavenProjectsManager(project) {
@@ -185,24 +193,6 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   }
 
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
-
-  override fun listenForSettingsChanges() {
-    importingSettings.addListener(object : MavenImportingSettings.Listener {
-      override fun createModuleForAggregatorsChanged() {
-        cs.launch {
-          reapplyModelStructureOnly {
-            doImportMavenProjects(emptyMap(), null, it)
-          }
-        }
-      }
-
-      override fun updateAllProjectStructure() {
-        cs.launch {
-          importAllProjects()
-        }
-      }
-    })
-  }
 
   private suspend fun importAllProjects() {
     val projectsToImport = projectsTree.projects.associateBy({ it }, { MavenProjectChanges.ALL })
@@ -322,7 +312,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return doUpdateMavenProjects(spec, modelsProvider) { readAllMavenProjects(spec) }
   }
 
-  private suspend fun doUpdateMavenProjects(spec: MavenSyncSpec,
+  protected open suspend fun doUpdateMavenProjects(spec: MavenSyncSpec,
                                             modelsProvider: IdeModifiableModelsProvider?,
                                             read: suspend () -> MavenProjectsTreeUpdateResult): List<Module> {
     // display all import activities using the same build progress
@@ -343,7 +333,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
             importingSettings,
             generalSettings,
             !project.isTrusted(),
-            syncActivity)
+            SimpleStructureProjectVisitor(),
+            syncActivity,
+            true)
         if (MavenUtil.enablePreimportOnly()) return result.modules
 
         if (!project.isTrusted()) {
@@ -352,7 +344,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
           return result.modules
         }
         incompleteState = writeAction {
-          project.service<IncompleteDependenciesService>().enterIncompleteState()
+          project.service<IncompleteDependenciesService>().enterIncompleteState(this@MavenProjectsManagerEx)
         }
       }
       val result = doDynamicSync(syncActivity, read, spec, modelsProvider)
@@ -400,9 +392,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return result
   }
 
-  private suspend fun importModules(syncActivity: StructuredIdeActivity,
-                                    resolutionResult: MavenProjectResolutionResult,
-                                    modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+  protected suspend fun importModules(syncActivity: StructuredIdeActivity,
+                                      resolutionResult: MavenProjectResolutionResult,
+                                      modelsProvider: IdeModifiableModelsProvider?): List<Module> {
 
     val projectsToImport = resolutionResult.mavenProjectMap.entries
       .flatMap { it.value }
@@ -445,9 +437,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   }
 
-  private suspend fun resolveMavenProjects(syncActivity: StructuredIdeActivity,
-                                           projectsToResolve: Collection<MavenProject>,
-                                           spec: MavenSyncSpec): MavenProjectResolutionResult {
+  protected suspend fun resolveMavenProjects(syncActivity: StructuredIdeActivity,
+                                                                  projectsToResolve: Collection<MavenProject>,
+                                                                  spec: MavenSyncSpec): MavenProjectResolutionResult {
     logDebug("importModules started: ${projectsToResolve.size}")
     val resolver = MavenProjectResolver(project)
     val resolutionResult = withBackgroundProgressTraced(myProject, MavenProjectBundle.message("maven.resolving"), true) {
@@ -457,6 +449,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
           val res = resolver.resolve(spec.resolveIncrementally(),
                                      projectsToResolve,
                                      projectsTree,
+                                     getWorkspaceMap(),
                                      generalSettings,
                                      embeddersManager,
                                      reporter,
@@ -470,8 +463,10 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return resolutionResult
   }
 
-  private suspend fun readMavenProjectsActivity(parentActivity: StructuredIdeActivity,
-                                                read: suspend () -> MavenProjectsTreeUpdateResult): MavenProjectsTreeUpdateResult {
+  protected open fun getWorkspaceMap(): MavenWorkspaceMap = projectsTree.workspaceMap
+
+  protected suspend fun readMavenProjectsActivity(parentActivity: StructuredIdeActivity,
+                                                  read: suspend () -> MavenProjectsTreeUpdateResult): MavenProjectsTreeUpdateResult {
     return withBackgroundProgressTraced(myProject, MavenProjectBundle.message("maven.reading"), false) {
       runMavenImportActivity(project, parentActivity, MavenImportStats.ReadingTask) {
         project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pomReadingStarted()
@@ -482,7 +477,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
   }
 
-  private suspend fun readAllMavenProjects(spec: MavenSyncSpec): MavenProjectsTreeUpdateResult {
+  protected suspend fun readAllMavenProjects(spec: MavenSyncSpec): MavenProjectsTreeUpdateResult {
     return withContext(tracer.span("readAllMavenProjects")) {
       reportRawProgress { reporter ->
         projectsTree.updateAll(spec.forceReading(), generalSettings, reporter)
@@ -490,7 +485,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
   }
 
-  private fun collectProjectsToResolve(readingResult: MavenProjectsTreeUpdateResult): Collection<MavenProject> {
+  protected fun collectProjectsToResolve(readingResult: MavenProjectsTreeUpdateResult): Collection<MavenProject> {
     val updated = readingResult.updated
     val deleted = readingResult.deleted
 
@@ -520,7 +515,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return toResolve
   }
 
-  private fun logImportErrorIfNotControlFlow(e: Throwable) {
+  protected fun logImportErrorIfNotControlFlow(e: Throwable) {
     if (e is ControlFlowException) {
       ExceptionUtil.rethrowAllAsUnchecked(e)
     }
@@ -536,7 +531,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
   }
 
-  private suspend fun checkOrInstallMavenWrapper(project: Project) {
+  protected suspend fun checkOrInstallMavenWrapper(project: Project) {
     if (!MavenUtil.isWrapper(generalSettings)) return
     if (!myProject.isTrusted()) {
       showUntrustedProjectNotification(myProject)
@@ -614,10 +609,10 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
   }
 
-  private suspend fun <T> runMavenImportActivity(project: Project,
-                                                 parentActivity: StructuredIdeActivity,
-                                                 task: MavenImportStats.MavenSyncSubstask,
-                                                 action: suspend () -> T): T {
+  protected suspend fun <T> runMavenImportActivity(project: Project,
+                                                   parentActivity: StructuredIdeActivity,
+                                                   task: MavenImportStats.MavenSyncSubstask,
+                                                   action: suspend () -> T): T {
     val taskClass = task::class.java
     return withContext(tracer.span(taskClass.simpleName)) {
       logDebug("Import activity started: ${taskClass.simpleName}")
@@ -651,7 +646,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
   }
 
-  private suspend fun <T> withBackgroundProgressTraced(
+  protected suspend fun <T> withBackgroundProgressTraced(
     project: Project,
     title: @NlsContexts.ProgressTitle String,
     cancellable: Boolean,
@@ -660,7 +655,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return withContext(tracer.span(title)) { withBackgroundProgress(project, title, cancellable, action) }
   }
 
-  private fun logDebug(debugMessage: String) {
+  protected fun logDebug(debugMessage: String) {
     MavenLog.LOG.debug(debugMessage)
   }
 

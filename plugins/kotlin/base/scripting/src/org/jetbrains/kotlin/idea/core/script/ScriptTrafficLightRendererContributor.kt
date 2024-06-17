@@ -33,18 +33,16 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
         override fun getDaemonCodeAnalyzerStatus(severityRegistrar: SeverityRegistrar): DaemonCodeAnalyzerStatus {
             val status = super.getDaemonCodeAnalyzerStatus(severityRegistrar)
 
-            if (scriptingEnabled) {
-                if (KotlinPluginModeProvider.isK2Mode()) {
-                    if (K2ScriptDependenciesProvider.getInstanceIfCreated(project)?.getConfiguration(file.virtualFile) == null) {
-                        status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
-                        status.errorAnalyzingFinished = false
-                    }
-                } else {
-                    val configurations = ScriptConfigurationManager.getServiceIfCreated(project)
-                    if (configurations == null || configurations.isConfigurationLoadingInProgress(file)) {
-                        status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
-                        status.errorAnalyzingFinished = false
-                    }
+            if (KotlinPluginModeProvider.isK2Mode()) {
+                if (K2ScriptDependenciesProvider.getInstanceIfCreated(project)?.getScriptConfiguration(file) == null) {
+                    status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
+                    status.errorAnalyzingFinished = false
+                }
+            } else {
+                val configurations = ScriptConfigurationManager.getServiceIfCreated(project)
+                if (configurations == null || configurations.isConfigurationLoadingInProgress(file)) {
+                    status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
+                    status.errorAnalyzingFinished = false
                 }
             }
 

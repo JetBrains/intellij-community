@@ -70,7 +70,7 @@ interface SampleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySampleEntity(
   entity: SampleEntity,
   modification: SampleEntity.Builder.() -> Unit,
 ): SampleEntity {
@@ -111,7 +111,7 @@ interface ChildSampleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChildSampleEntity(
   entity: ChildSampleEntity,
   modification: ChildSampleEntity.Builder.() -> Unit,
 ): ChildSampleEntity {
@@ -166,7 +166,7 @@ interface SecondSampleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySecondSampleEntity(
   entity: SecondSampleEntity,
   modification: SecondSampleEntity.Builder.() -> Unit,
 ): SecondSampleEntity {
@@ -207,7 +207,7 @@ interface SourceEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySourceEntity(
   entity: SourceEntity,
   modification: SourceEntity.Builder.() -> Unit,
 ): SourceEntity {
@@ -248,7 +248,7 @@ interface ChildSourceEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChildSourceEntity(
   entity: ChildSourceEntity,
   modification: ChildSourceEntity.Builder.() -> Unit,
 ): ChildSourceEntity {
@@ -291,7 +291,7 @@ interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySymbolicIdEntity(
   entity: SymbolicIdEntity,
   modification: SymbolicIdEntity.Builder.() -> Unit,
 ): SymbolicIdEntity {

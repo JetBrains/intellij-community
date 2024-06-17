@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
@@ -34,7 +34,7 @@ internal class ShadowedCallablesFilter {
      *  invoked. For example, `kotlin.text.String()` is not shortened by reference shortener, because shortened version `String()`
      *  is resolved to `kotlin.String()`. That's why we can't rely on reference shortener and need to use [ImportStrategy.DoNothing].
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun excludeFromCompletion(
         callable: KtCallableSignature<*>,
         options: CallableInsertionOptions,
@@ -61,7 +61,7 @@ internal class ShadowedCallablesFilter {
         return FilterResult(processSignatureConsideringOptions(callable, options, symbolOrigin, typeArgumentsAreRequired), options)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processSignatureConsideringOptions(
         callable: KtCallableSignature<*>,
         insertionOptions: CallableInsertionOptions,
@@ -116,7 +116,7 @@ internal class ShadowedCallablesFilter {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processSignature(
         callable: KtCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
@@ -149,7 +149,7 @@ internal class ShadowedCallablesFilter {
          *
          * Also, extensions are sorted by their kind: a function variable can be shadowed by an extension function.
          */
-        context(KtAnalysisSession)
+        context(KaSession)
         fun sortExtensions(
             extensions: Collection<ApplicableExtension>,
             receiversFromContext: List<KtType>
@@ -195,9 +195,9 @@ internal class ShadowedCallablesFilter {
             private data class NameForLocal(val name: Name) : ReceiverId()
 
             companion object {
-                context(KtAnalysisSession)
+                context(KaSession)
                 fun create(type: KtType): ReceiverId? {
-                    val expandedClassSymbol = type.expandedClassSymbol ?: return null
+                    val expandedClassSymbol = type.expandedSymbol ?: return null
                     val name = expandedClassSymbol.name ?: return null
 
                     return when (val classId = expandedClassSymbol.classId) {
@@ -227,7 +227,7 @@ private sealed class SimplifiedSignature {
     abstract val containerFqName: FqName?
 
     companion object {
-        context(KtAnalysisSession)
+        context(KaSession)
         fun create(
             callableSignature: KtCallableSignature<*>,
             considerContainer: Boolean,
@@ -235,7 +235,7 @@ private sealed class SimplifiedSignature {
             typeArgumentsAreRequired: Boolean
         ): SimplifiedSignature? {
             val symbol = callableSignature.symbol
-            if (symbol !is KtNamedSymbol) return null
+            if (symbol !is KaNamedSymbol) return null
 
             val containerFqName = if (considerContainer) symbol.getContainerFqName() else null
 
@@ -247,12 +247,12 @@ private sealed class SimplifiedSignature {
                     requiredTypeArgumentsCount = if (typeArgumentsAreRequired) callableSignature.symbol.typeParameters.size else 0,
                     lazy(LazyThreadSafetyMode.NONE) { callableSignature.valueParameters.map { it.returnType } },
                     callableSignature.valueParameters.mapIndexedNotNull { index, parameter -> index.takeIf { parameter.symbol.isVararg } },
-                    this@KtAnalysisSession,
+                    this@KaSession,
                 )
             }
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun createSimplifiedSignature(
             signature: KtVariableLikeSignature<*>,
             isFunctionalVariableCall: Boolean,
@@ -268,15 +268,15 @@ private sealed class SimplifiedSignature {
                         functionalType.parameterTypes
                     },
                     varargValueParameterIndices = emptyList(),
-                    this@KtAnalysisSession,
+                    this@KaSession,
                 )
             }
 
             else -> VariableLikeSimplifiedSignature(signature.name, containerFqName)
         }
 
-        context(KtAnalysisSession)
-        private fun KtCallableSymbol.getContainerFqName(): FqName? {
+        context(KaSession)
+        private fun KaCallableSymbol.getContainerFqName(): FqName? {
             val callableId = callableId ?: return null
             return when (symbolKind) {
                 // if a callable is in the root package, then its fully-qualified name coincides with short name
@@ -305,7 +305,7 @@ private class FunctionLikeSimplifiedSignature(
     private val requiredTypeArgumentsCount: Int,
     private val valueParameterTypes: Lazy<List<KtType>>,
     private val varargValueParameterIndices: List<Int>,
-    private val analysisSession: KtAnalysisSession,
+    private val analysisSession: KaSession,
 ) : SimplifiedSignature() {
     override fun hashCode(): Int {
         var result = name.hashCode()

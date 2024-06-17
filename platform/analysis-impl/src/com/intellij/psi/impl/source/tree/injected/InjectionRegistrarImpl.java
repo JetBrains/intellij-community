@@ -780,7 +780,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
                                          @NotNull List<? extends PlaceInfo> placeInfos) {
     VirtualFile file = (VirtualFile)virtualFile;
     FileType fileType = file.getFileType();
-    EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType);
+    EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.getInstance().forFileType(fileType);
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     EditorHighlighter highlighter = provider.getEditorHighlighter(project, fileType, file, scheme);
     highlighter.setText(outChars);

@@ -59,7 +59,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyJavaModuleSettingsEntity(
   entity: JavaModuleSettingsEntity,
   modification: JavaModuleSettingsEntity.Builder.() -> Unit,
 ): JavaModuleSettingsEntity {

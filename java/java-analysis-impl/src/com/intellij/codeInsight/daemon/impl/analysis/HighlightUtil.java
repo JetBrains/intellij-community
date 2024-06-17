@@ -353,7 +353,10 @@ public final class HighlightUtil {
     else {
       lValue = null;
     }
-    if (lValue != null && !TypeConversionUtil.isLValue(lValue) && !PsiTreeUtil.hasErrorElements(expression)) {
+    if (lValue != null && !TypeConversionUtil.isLValue(lValue) && !PsiTreeUtil.hasErrorElements(expression) &&
+        !(IncompleteModelUtil.isIncompleteModel(expression) && 
+          PsiUtil.skipParenthesizedExprDown(lValue) instanceof PsiReferenceExpression ref &&
+          IncompleteModelUtil.canBePendingReference(ref))) {
       String description = JavaErrorBundle.message("variable.expected");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(lValue).descriptionAndTooltip(description);
     }
@@ -2019,7 +2022,9 @@ public final class HighlightUtil {
     for (int i = 1; i < operands.length; i++) {
       PsiExpression operand = operands[i];
       PsiType rType = operand.getType();
-      if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign, lType, rType, false)) {
+      if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign, lType, rType, false) &&
+          !(IncompleteModelUtil.isIncompleteModel(expression) &&
+            IncompleteModelUtil.isPotentiallyConvertible(lType, rType, expression))) {
         PsiJavaToken token = expression.getTokenBeforeOperand(operand);
         assert token != null : expression;
         String message = JavaErrorBundle.message("binary.operator.not.applicable", token.getText(),
@@ -2411,6 +2416,9 @@ public final class HighlightUtil {
                                                                             @Nullable PsiType initializerType,
                                                                             @NotNull PsiType componentType) {
     if (initializerType == null) {
+      if (IncompleteModelUtil.isIncompleteModel(initializer) && IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(initializer)) {
+        return null;
+      }
       String description = JavaErrorBundle.message("illegal.initializer", JavaHighlightUtil.formatType(componentType));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(initializer).descriptionAndTooltip(description);
     }
@@ -3496,6 +3504,11 @@ public final class HighlightUtil {
       JavaResolveResult[] results = ref.multiResolve(true);
       String description;
       if (results.length > 1) {
+        if (ref instanceof PsiMethodReferenceExpression methodRef &&
+            IncompleteModelUtil.isIncompleteModel(ref) &&
+            IncompleteModelUtil.isUnresolvedClassType(methodRef.getFunctionalInterfaceType())) {
+          return null;
+        }
         String t1 = format(Objects.requireNonNull(results[0].getElement()));
         String t2 = format(Objects.requireNonNull(results[1].getElement()));
         description = JavaErrorBundle.message("ambiguous.reference", refName.getText(), t1, t2);

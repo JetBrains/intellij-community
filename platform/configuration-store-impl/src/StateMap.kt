@@ -9,10 +9,12 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SystemProperties
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayInputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicReferenceArray
 
+@ApiStatus.Internal
 class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any>) {
   override fun toString(): String = if (this === EMPTY) "EMPTY" else states.toString()
 

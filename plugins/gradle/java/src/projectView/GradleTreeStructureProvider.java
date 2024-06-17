@@ -196,7 +196,7 @@ public final class GradleTreeStructureProvider implements TreeStructureProvider,
     final Module module = fileIndex.getModuleForFile(virtualFile);
     final String moduleShortName = getGradleModuleShortName(module);
     if (moduleShortName == null) return null;
-    return new GradleModuleDirectoryNode(directoryNode, module, moduleShortName);
+    return new GradleModuleDirectoryNode(project, psiDirectory, settings, module, moduleShortName, directoryNode.getFilter());
   }
 
   @Nullable
@@ -227,16 +227,17 @@ public final class GradleTreeStructureProvider implements TreeStructureProvider,
     private final Module myModule;
     private final boolean appendModuleName;
     private final boolean isSourceSetModule;
-    private final PsiDirectoryNode myOriginal;
 
-    GradleModuleDirectoryNode(PsiDirectoryNode original,
+    GradleModuleDirectoryNode(Project project,
+                              @NotNull PsiDirectory psiDirectory,
+                              ViewSettings settings,
                               Module module,
-                              String moduleShortName) {
-      super(original);
-      myOriginal = original;
+                              String moduleShortName,
+                              PsiFileSystemItemFilter filter) {
+      super(project, psiDirectory, settings, filter);
       myModuleShortName = moduleShortName;
       myModule = module;
-      VirtualFile directoryFile = getValue().getVirtualFile();
+      VirtualFile directoryFile = psiDirectory.getVirtualFile();
       appendModuleName = StringUtil.isNotEmpty(myModuleShortName) &&
                          !StringUtil.equalsIgnoreCase(myModuleShortName.replace("-", ""), directoryFile.getName().replace("-", ""));
       isSourceSetModule = isSourceSetModule(myModule);
@@ -248,11 +249,8 @@ public final class GradleTreeStructureProvider implements TreeStructureProvider,
     }
 
     @Override
-    public void update(@NotNull PresentationData data) {
+    protected void updateImpl(@NotNull PresentationData data) {
       super.updateImpl(data);
-      PresentationData originalPresentation = new PresentationData();
-      myOriginal.update(originalPresentation);
-      data.setIcon(originalPresentation.getIcon(false));
       if (appendModuleName) {
         if (!canRealModuleNameBeHidden()) {
           data.addText("[" + myModuleShortName + "]", REGULAR_BOLD_ATTRIBUTES);

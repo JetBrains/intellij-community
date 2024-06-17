@@ -32,10 +32,10 @@ public abstract class UpdateAddedFileProcessor {
     return null;
   }
 
-  public static void updateAddedFiles(@NotNull Iterable<? extends PsiFile> copyPsis, @Nullable Iterable<? extends PsiFile> originals) throws IncorrectOperationException {
-    Iterator<? extends PsiFile> iterator = originals != null ? originals.iterator() : null;
+  public static void updateAddedFiles(@NotNull Iterable<? extends PsiFile> copyPsis, @NotNull Iterable<? extends PsiFile> originals) throws IncorrectOperationException {
+    Iterator<? extends PsiFile> iterator = originals.iterator();
     for (PsiFile copyPsi : copyPsis) {
-      PsiFile original = iterator != null ? (iterator.hasNext() ? iterator.next() : null) : null;
+      PsiFile original = iterator.hasNext() ? iterator.next() : null;
       UpdateAddedFileProcessor processor = forElement(copyPsi);
       if (processor != null) {
         TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi);

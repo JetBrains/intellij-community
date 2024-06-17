@@ -57,7 +57,7 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
 
   public ExternalSystemProcessingManager() {
     Application app = ApplicationManager.getApplication();
-    myFacadeManager = app.getService(ExternalSystemFacadeManager.class);
+    myFacadeManager = ExternalSystemFacadeManager.getInstance();
     if (app.isUnitTestMode()) {
       return;
     }

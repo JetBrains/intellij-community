@@ -4,6 +4,7 @@ package com.intellij.lang.cacheBuilder;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * are not based on a language. For language file types, the words scanner should be returned
  * from {@link com.intellij.lang.findUsages.FindUsagesProvider#getWordsScanner()}.
  */
+@Internal
 public abstract class CacheBuilderRegistry {
   public static CacheBuilderRegistry getInstance() {
     return ApplicationManager.getApplication().getService(CacheBuilderRegistry.class);

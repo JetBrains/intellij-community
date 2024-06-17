@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.j2k.ExternalCodeProcessing
@@ -46,16 +46,16 @@ class NewExternalCodeProcessing(
     fun isExternalProcessingNeeded(): Boolean =
         members.values.any { it.searchingNeeded }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun addMember(data: JKMemberData) {
         val key = data.buildKey() ?: return
         members[key] = data
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getMember(element: JKDeclaration): JKMemberData? = members[element.psi<PsiMember>()?.buildKey()]
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getMember(element: KtNamedDeclaration): JKMemberData? {
         val key = element.buildKey()
         // For Java record classes, we collect usages of light (non-physical) methods that correspond to the record components.
@@ -64,7 +64,7 @@ class NewExternalCodeProcessing(
         return members[key] ?: members[key.toLightMethodKey()].takeIf { element.isConstructorDeclaredProperty() }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun JKMemberData.buildKey(): MemberKey? {
         val fqName = this.fqName ?: return null
         return when (this) {
@@ -76,7 +76,7 @@ class NewExternalCodeProcessing(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun PsiMember.buildKey(): MemberKey? {
         val fqName = this.kotlinFqName ?: return null
         return when (this) {
@@ -85,13 +85,13 @@ class NewExternalCodeProcessing(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtNamedDeclaration.buildKey() = when (this) {
         is KtNamedFunction -> PhysicalMethodKey(this.fqNameWithoutCompanions, this.valueParameters.mapNotNull { it.typeFqName() })
         else -> FieldKey(this.fqNameWithoutCompanions)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun bindJavaDeclarationsToConvertedKotlinOnes(files: List<KtFile>) {
         files.forEach { file ->
             file.forEachDescendantOfType<KtNamedDeclaration> { declaration ->

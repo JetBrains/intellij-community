@@ -18,6 +18,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl

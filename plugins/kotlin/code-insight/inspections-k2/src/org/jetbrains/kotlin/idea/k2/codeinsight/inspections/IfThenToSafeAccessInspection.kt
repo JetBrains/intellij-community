@@ -10,7 +10,7 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
@@ -60,7 +60,7 @@ internal class IfThenToSafeAccessInspection :
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtIfExpression): IfThenTransformationStrategy? {
         val data = IfThenTransformationUtils.buildTransformationData(element) as IfThenTransformationData
 
@@ -103,7 +103,7 @@ internal class IfThenToSafeAccessInspection :
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression.doesNotHaveStableSmartCast(): Boolean {
         val expressionToCheck = when (this) {
             is KtThisExpression -> instanceReference
@@ -113,7 +113,7 @@ internal class IfThenToSafeAccessInspection :
     }
 
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun conditionIsSenseless(data: IfThenTransformationData): Boolean = data.condition
         .getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         .map { it.diagnosticClass }

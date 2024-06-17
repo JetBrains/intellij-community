@@ -30,7 +30,6 @@ f:com.intellij.codeInspection.InspectionApplication
 - com.intellij.codeInspection.InspectionApplicationBase
 - <init>():V
 c:com.intellij.codeInspection.InspectionApplicationBase
-- com.intellij.codeInspection.InspectionApplicationStart$Synchronous
 - com.intellij.ide.CommandLineInspectionProgressReporter
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
 - sf:PROJECT_STRUCTURE_DIR:java.lang.String
@@ -69,13 +68,6 @@ c:com.intellij.codeInspection.InspectionApplicationBase
 c:com.intellij.codeInspection.InspectionApplicationException
 - java.lang.RuntimeException
 - <init>(java.lang.String):V
-com.intellij.codeInspection.InspectionApplicationStart
-com.intellij.codeInspection.InspectionApplicationStart$Asynchronous
-- com.intellij.codeInspection.InspectionApplicationStart
-- a:startup(kotlin.coroutines.Continuation):java.lang.Object
-com.intellij.codeInspection.InspectionApplicationStart$Synchronous
-- com.intellij.codeInspection.InspectionApplicationStart
-- a:startup():V
 f:com.intellij.codeInspection.InspectionDiff
 - <init>():V
 - s:main(java.lang.String[]):V

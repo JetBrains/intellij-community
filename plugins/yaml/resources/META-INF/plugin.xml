@@ -152,6 +152,12 @@
       <bundleName>messages.YAMLBundle</bundleName>
       <categoryKey>yaml.intention.category.name</categoryKey>
     </intentionAction>
+
+    <fileTypeUsageSchemaDescriptor schema="kubernetes" implementationClass="org.jetbrains.yaml.K8sFileTypeUsageDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="openapi" implementationClass="org.jetbrains.yaml.OpenapiFileTypeUsageDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="swagger" implementationClass="org.jetbrains.yaml.SwaggerFileTypeUsageDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="docker-compose" implementationClass="org.jetbrains.yaml.DockerComposeFileTypeUsageDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="cloudformation" implementationClass="org.jetbrains.yaml.CloudFormationFileTypeUsageDescriptor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">

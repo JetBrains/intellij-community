@@ -38,8 +38,7 @@ public final class ProductModulesSerialization {
   public static ProductModules loadProductModules(@NotNull InputStream inputStream, @NotNull String filePath,
                                                   @NotNull ProductMode currentMode,
                                                   @NotNull RuntimeModuleRepository repository) {
-    ResourceFileResolver resolver = (moduleId, relativePath) -> repository.getModule(moduleId).readFile(relativePath);
-    return loadProductModules(inputStream, filePath, currentMode, repository, resolver);
+    return loadProductModules(inputStream, filePath, currentMode, repository, ResourceFileResolver.createDefault(repository));
   }
 
   public static @NotNull ProductModules loadProductModules(@NotNull InputStream inputStream,

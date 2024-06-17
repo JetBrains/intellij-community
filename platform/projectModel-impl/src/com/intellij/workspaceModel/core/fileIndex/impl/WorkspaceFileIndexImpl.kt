@@ -229,7 +229,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
 
   override fun initializeBlocking() {
     if (indexData is EmptyWorkspaceFileIndexData) {
-      indexData = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project)
+      indexData = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project, this)
     }
   }
 
@@ -305,7 +305,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
         }
       }
       EmptyWorkspaceFileIndexData.RESET -> {
-        indexData = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project)
+        indexData = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project, this)
       }
     }
     return indexData

@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.url;
 
 import com.intellij.platform.workspace.storage.EntityStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -42,6 +43,7 @@ public interface VirtualFileUrl {
   /**
    * @return the list of descendants for the current node
    */
+  @ApiStatus.Internal
   List<VirtualFileUrl> getSubTreeFileUrls();
 
   /**

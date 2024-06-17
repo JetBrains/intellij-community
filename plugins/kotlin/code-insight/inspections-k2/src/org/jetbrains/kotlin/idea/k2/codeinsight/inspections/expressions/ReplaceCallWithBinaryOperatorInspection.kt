@@ -8,14 +8,14 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -64,7 +64,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
                 || identifier in OperatorNameConventions.BINARY_OPERATION_NAMES)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         val callExpression = element.selectorExpression as? KtCallExpression ?: return null
         val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return null
@@ -72,7 +72,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         val argument = callExpression.singleArgumentExpression() ?: return null
 
         analyze(element) {
-            val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
+            val resolvedCall = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return null
             if (resolvedCall.symbol.valueParameters.size != 1) return null
             if (resolvedCall.typeArgumentsMapping.isNotEmpty()) return null
             if (!element.isReceiverExpressionWithValue()) return null
@@ -143,20 +143,20 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtQualifiedExpression.isReceiverExpressionWithValue(): Boolean {
         val receiver = receiverExpression
         if (receiver is KtSuperExpression) return false
         return receiver.getKtType() != null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getOperationToken(calleeExpression: KtSimpleNameExpression): KtSingleValueToken? {
         val identifier = calleeExpression.getReferencedNameAsName()
         val dotQualified = calleeExpression.parent.parent as? KtDotQualifiedExpression ?: return null
         fun isOperatorOrCompatible(): Boolean {
-            val functionCall = calleeExpression.resolveCall()?.successfulFunctionCallOrNull()
-            return (functionCall?.symbol as? KtFunctionSymbol)?.isOperator == true
+            val functionCall = calleeExpression.resolveCallOld()?.successfulFunctionCallOrNull()
+            return (functionCall?.symbol as? KaFunctionSymbol)?.isOperator == true
         }
         return when (identifier) {
             OperatorNameConventions.EQUALS -> {
@@ -197,8 +197,8 @@ internal class ReplaceCallWithBinaryOperatorInspection :
 
 private val KOTLIN_ANY_EQUALS_CALLABLE_ID = CallableId(StandardClassIds.Any, Name.identifier("equals"))
 
-context(KtAnalysisSession)
-private fun KtCallableSymbol.isAnyEquals(): Boolean {
+context(KaSession)
+private fun KaCallableSymbol.isAnyEquals(): Boolean {
     val overriddenSymbols = sequence {
         yield(this@isAnyEquals)
         yieldAll(this@isAnyEquals.getAllOverriddenSymbols())
@@ -206,9 +206,9 @@ private fun KtCallableSymbol.isAnyEquals(): Boolean {
     return overriddenSymbols.any { it.callableId == KOTLIN_ANY_EQUALS_CALLABLE_ID }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtExpression.isAnyEquals(): Boolean {
-    val resolvedCall = resolveCall()?.successfulCallOrNull<KtSimpleFunctionCall>() ?: return false
+    val resolvedCall = resolveCallOld()?.successfulCallOrNull<KaSimpleFunctionCall>() ?: return false
     return resolvedCall.symbol.isAnyEquals()
 }
 
@@ -217,20 +217,20 @@ private fun KtExpression.isAnyEquals(): Boolean {
  * According to Kotlin language specification, “no two objects unrelated by subtyping can ever be considered equal by ==”.
  * [8.9.2 Value equality expressions](https://kotlinlang.org/spec/expressions.html#value-equality-expressions)
  */
-context(KtAnalysisSession)
+context(KaSession)
 private fun areRelatedBySubtyping(first: KtExpression, second: KtExpression): Boolean {
     val firstType = first.getKtType() ?: return false
     val secondType = second.getKtType() ?: return false
     return firstType.isSubTypeOf(secondType) || secondType.isSubTypeOf(firstType)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtExpression.hasDoubleOrFloatType(): Boolean {
     val type = getKtType() ?: return false
     return type.isSubTypeOf(builtinTypes.DOUBLE) || type.isSubTypeOf(builtinTypes.FLOAT)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtExpression.hasUnknownNullabilityType(): Boolean {
     return this.getKtType()?.nullability == KtTypeNullability.UNKNOWN
 }

@@ -115,8 +115,8 @@ class CodeMetaInfoTestCase(
         if ("!CHECK_HIGHLIGHTING" in file.text)
             return emptyList()
 
-        val highlightingInfos = CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, intArrayOf(), false)
-            .filterNot { it.severity < configuration.severityLevel }
+        val infos = CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, intArrayOf(), false)
+        val highlightingInfos = infos.filterNot { it.severity < configuration.severityLevel }
 
         if (configuration.checkNoError) {
             val errorHighlights = highlightingInfos.filter { it.severity >= HighlightSeverity.ERROR }

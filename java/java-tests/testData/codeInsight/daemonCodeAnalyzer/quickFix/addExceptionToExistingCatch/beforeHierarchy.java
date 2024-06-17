@@ -1,6 +1,4 @@
 // "Replace 'C' with more generic 'A'" "true-preview"
-import java.io.Exception;
-
 class A extends Exception {}
 class B extends A {}
 class C extends A {}

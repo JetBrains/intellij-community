@@ -2,10 +2,12 @@
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 import java.lang.reflect.Field;
 
+@ApiStatus.Internal
 public final class FontSubpixelResolution {
   private static final Logger LOG = Logger.getInstance(FontSubpixelResolution.class);
 

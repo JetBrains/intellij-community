@@ -24,8 +24,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <iconMapper mappingFile="VcsLogIconMappings.json"/>
-
     <changesViewContent tabName="Log"
                         className="com.intellij.vcs.log.impl.VcsLogContentProvider"
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"
@@ -66,9 +64,7 @@
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
                     serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
 
-    <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule" type="fast"/>
-    <getDataRule key="Vcs.Log.Main.Ui" implementationClass="com.intellij.vcs.log.ui.MainVcsLogUiDataRule" type="fast"/>
-    <getDataRule key="Vcs.Log.UiEx" implementationClass="com.intellij.vcs.log.ui.VcsLogUiExDataRule" type="fast"/>
+    <edtDataRule implementation="com.intellij.vcs.log.ui.VcsLogEdtDataRule"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider
       implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowDiff"/>
@@ -137,7 +133,7 @@
       <action class="com.intellij.vcs.log.ui.actions.MoveDiffPreviewToBottomAction" id="Vcs.Log.MoveDiffPreviewToBottom"/>
       <action class="com.intellij.vcs.log.ui.actions.MoveDiffPreviewToRightAction" id="Vcs.Log.MoveDiffPreviewToRight"/>
       <action class="com.intellij.vcs.log.ui.actions.ShowChangesFromParentsAction" id="Vcs.Log.ShowChangesFromParents"/>
-      <action class="com.intellij.vcs.log.ui.actions.ShowOnlyAffectedChangesAction" id="Vcs.Log.ShowOnlyAffectedChanges"/>
+      <action class="com.intellij.vcs.log.ui.actions.ShowOnlyAffectedChangesAction" id="Vcs.Log.ShowOnlyAffectedChanges" icon="AllIcons.Nodes.Folder"/>
       <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
       <action class="com.intellij.vcs.log.ui.actions.PreferCommitDateAction" id="Vcs.Log.PreferCommitDate"/>
       <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
@@ -150,7 +146,7 @@
               icon="AllIcons.General.Add"/>
       <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction$InEditor" id="Vcs.Log.OpenAnotherTabInEditor"
               icon="AllIcons.Actions.OpenNewTab"/>
-      <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
+      <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh" icon="AllIcons.Actions.Refresh"/>
       <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
               use-shortcut-of="QuickJavaDoc"/>
       <action class="com.intellij.vcs.log.ui.actions.EnableFilterByRegexAction"
