@@ -16,11 +16,7 @@ internal object MissingJsonSchemaObject : JsonSchemaObjectBackedByJacksonBase(Mi
   override fun isValidByExclusion(): Boolean {
     throw UnsupportedOperationException(ERROR_MESSAGE)
   }
-
-  override fun resolveId(id: String): String? {
-    throw UnsupportedOperationException(ERROR_MESSAGE)
-  }
-
+  
   override fun getPointer(): String {
     throw UnsupportedOperationException(ERROR_MESSAGE)
   }
@@ -42,6 +38,10 @@ internal object MissingJsonSchemaObject : JsonSchemaObjectBackedByJacksonBase(Mi
   }
 
   override fun getType(): JsonSchemaType? {
+    throw UnsupportedOperationException(ERROR_MESSAGE)
+  }
+
+  override fun getConstantSchema(): Boolean? {
     throw UnsupportedOperationException(ERROR_MESSAGE)
   }
 
@@ -262,6 +262,10 @@ internal object MissingJsonSchemaObject : JsonSchemaObjectBackedByJacksonBase(Mi
   }
 
   override fun getProperties(): Map<String, JsonSchemaObjectBackedByJacksonBase> {
+    throw UnsupportedOperationException(ERROR_MESSAGE)
+  }
+
+  override fun hasChildFieldsExcept(namesToSkip: Array<String>): Boolean {
     throw UnsupportedOperationException(ERROR_MESSAGE)
   }
 

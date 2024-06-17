@@ -35,6 +35,11 @@ public final class JsonSchemaObjectReadingUtils {
     return schemaObject.getPropertyNames().hasNext();
   }
 
+
+  /**
+   * @deprecated Use {@link  com.jetbrains.jsonSchema.impl.light.JsonSchemaRefResolverKt#resolveRefSchema}
+   */
+  @Deprecated()
   public static @Nullable JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaObject schemaNode, @NotNull JsonSchemaService service) {
     final String ref = schemaNode.getRef();
     assert !StringUtil.isEmptyOrSpaces(ref);
@@ -79,7 +84,8 @@ public final class JsonSchemaObjectReadingUtils {
     final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter;
     if (Registry.is("json.schema.object.v2")) {
       splitter = complexReferenceCache.get(ref);
-    } else {
+    }
+    else {
       splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(ref);
     }
     String schemaId = splitter.getSchemaId();
@@ -119,6 +125,14 @@ public final class JsonSchemaObjectReadingUtils {
       LOG.debug(String.format("Schema file not found by reference: '%s' from %s", schemaId, schemaFile.getPath()));
       return null;
     }
+    var refSchema = downloadAndParseRemoteSchema(service, refFile);
+    if (refSchema == null) {
+      LOG.debug(String.format("Schema object not found by reference: '%s' from %s", schemaId, schemaFile.getPath()));
+    }
+    return refSchema;
+  }
+
+  public static @Nullable JsonSchemaObject downloadAndParseRemoteSchema(@NotNull JsonSchemaService service, @NotNull VirtualFile refFile) {
     if (refFile instanceof HttpVirtualFile) {
       RemoteFileInfo info = ((HttpVirtualFile)refFile).getFileInfo();
       if (info != null) {
@@ -132,12 +146,7 @@ public final class JsonSchemaObjectReadingUtils {
         }
       }
     }
-    final JsonSchemaObject refSchema = service.getSchemaObjectForSchemaFile(refFile);
-    if (refSchema == null) {
-      LOG.debug(String.format("Schema object not found by reference: '%s' from %s", schemaId, schemaFile.getPath()));
-      return null;
-    }
-    return refSchema;
+    return service.getSchemaObjectForSchemaFile(refFile);
   }
 
   public static JsonSchemaObject findRelativeDefinition(final @NotNull JsonSchemaObject schema,
@@ -150,9 +159,12 @@ public final class JsonSchemaObjectReadingUtils {
         return schema;
       }
       if (id != null && id.startsWith("#")) {
-        final String resolvedId = schema.resolveId(id);
-        if (resolvedId == null || id.equals("#" + resolvedId)) return null;
-        return findRelativeDefinition(schema, new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter("#" + resolvedId), service);
+        JsonSchemaObject rootSchemaObject = schema.getRootSchemaObject();
+        if (rootSchemaObject instanceof RootJsonSchemaObject<?, ?> explicitRootSchemaObject) {
+          final String resolvedId = explicitRootSchemaObject.resolveId(id);
+          if (resolvedId == null || id.equals("#" + resolvedId)) return null;
+          return findRelativeDefinition(schema, new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter("#" + resolvedId), service);
+        }
       }
       return schema;
     }

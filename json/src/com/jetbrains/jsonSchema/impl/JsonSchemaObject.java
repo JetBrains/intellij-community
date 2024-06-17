@@ -2,8 +2,11 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,8 +15,10 @@ import java.util.*;
 public abstract class JsonSchemaObject {
   @Override
   public boolean equals(@Nullable Object o) {
+    if (o == null) return false;
     if (this == o) return true;
-    if (!(o instanceof JsonSchemaObject object)) return false;
+    if (this.getClass() != o.getClass()) return false;
+    JsonSchemaObject object = (JsonSchemaObject)o;
     return Objects.equals(getFileUrl(), object.getFileUrl()) && Objects.equals(getPointer(), object.getPointer());
   }
 
@@ -22,9 +27,16 @@ public abstract class JsonSchemaObject {
     return Objects.hash(getFileUrl(), getPointer());
   }
 
-  public abstract boolean isValidByExclusion();
+  public abstract @Nullable Boolean getConstantSchema();
 
-  public abstract @Nullable String resolveId(@NotNull String id);
+  @ApiStatus.Experimental
+  public abstract boolean hasChildFieldsExcept(@NotNull String @NotNull ... namesToSkip);
+
+  public abstract @NotNull Iterable<JsonSchemaValidation> getValidations(@Nullable JsonSchemaType type, @NotNull JsonValueAdapter value);
+
+  public abstract @NotNull JsonSchemaObject getRootSchemaObject();
+
+  public abstract boolean isValidByExclusion();
 
   public abstract @NotNull String getPointer();
 
@@ -64,7 +76,11 @@ public abstract class JsonSchemaObject {
 
   public abstract @Nullable JsonSchemaObject getPropertyNamesSchema();
 
+  @ApiStatus.Experimental
   public abstract @Nullable JsonSchemaObject getAdditionalPropertiesSchema();
+
+  @ApiStatus.Experimental
+  public abstract @Nullable JsonSchemaObject getUnevaluatedPropertiesSchema();
 
   public abstract @Nullable Boolean getAdditionalItemsAllowed();
 
@@ -73,6 +89,8 @@ public abstract class JsonSchemaObject {
   public abstract @Nullable JsonSchemaObject getAdditionalItemsSchema();
 
   public abstract @Nullable JsonSchemaObject getItemsSchema();
+
+  public abstract @Nullable JsonSchemaObject getUnevaluatedItemsSchema();
 
   public abstract @Nullable JsonSchemaObject getContainsSchema();
 

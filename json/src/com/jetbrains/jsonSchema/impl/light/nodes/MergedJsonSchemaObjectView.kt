@@ -2,17 +2,25 @@
 package com.jetbrains.jsonSchema.impl.light.nodes
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.asSafely
+import com.jetbrains.jsonSchema.extension.JsonSchemaValidation
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.IfThenElse
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import com.jetbrains.jsonSchema.impl.light.legacy.LegacyJsonSchemaObjectMerger
+import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
 
 internal class MergedJsonSchemaObjectView(
   val base: JsonSchemaObject,
   val other: JsonSchemaObject,
   private val pointTo: JsonSchemaObject
 ) : JsonSchemaObject() {
+
+  private fun getMergedSchemaInterpretationStrategy(): JsonSchemaInterpretationStrategy? {
+    return pointTo.rootSchemaObject.asSafely<RootJsonSchemaObjectBackedByJackson>()?.schemaInterpretationStrategy
+  }
 
   override fun getPointer(): String {
     return pointTo.pointer
@@ -39,14 +47,29 @@ internal class MergedJsonSchemaObjectView(
     return booleanOrWithArgument(JsonSchemaObject::hasChildNode, childNodeName)
   }
 
+  override fun hasChildFieldsExcept(namesToSkip: Array<String>): Boolean {
+    return booleanOrWithArgument(JsonSchemaObject::hasChildFieldsExcept, namesToSkip)
+  }
+
+  override fun getValidations(type: JsonSchemaType?, value: JsonValueAdapter): Iterable<JsonSchemaValidation> {
+    return getMergedSchemaInterpretationStrategy()
+      ?.getValidations(this, type, value)
+      .orEmpty()
+      .asIterable()
+  }
+
+  override fun getRootSchemaObject(): JsonSchemaObject {
+    return base.rootSchemaObject
+  }
+
+  override fun getConstantSchema(): Boolean? {
+    return booleanAndNullable(JsonSchemaObject::getConstantSchema)
+  }
+
   override fun isValidByExclusion(): Boolean {
     return LegacyJsonSchemaObjectMerger.computeMergedExclusionAndType(base.type, other.type, other.typeVariants)?.isValidByExclusion
            ?: LegacyJsonSchemaObjectMerger.mergeTypeVariantSets(base.typeVariants, other.typeVariants)?.isValidByExclusion
            ?: base.isValidByExclusion
-  }
-
-  override fun resolveId(id: String): String? {
-    return baseIfConditionOrOtherWithArgument(JsonSchemaObject::resolveId, id, Any?::isNotNull)
   }
 
   override fun getDefinitionNames(): Iterator<String> {
@@ -166,6 +189,10 @@ internal class MergedJsonSchemaObjectView(
     return baseIfConditionOrOther(JsonSchemaObject::getAdditionalPropertiesSchema, Any?::isNotNull)
   }
 
+  override fun getUnevaluatedPropertiesSchema(): JsonSchemaObject? {
+    return baseIfConditionOrOther(JsonSchemaObject::getUnevaluatedPropertiesSchema, Any?::isNotNull)
+  }
+
   override fun getAdditionalItemsAllowed(): Boolean? {
     return baseIfConditionOrOther(JsonSchemaObject::getAdditionalItemsAllowed, Any?::isNotNull)
   }
@@ -180,6 +207,10 @@ internal class MergedJsonSchemaObjectView(
 
   override fun getItemsSchema(): JsonSchemaObject? {
     return baseIfConditionOrOther(JsonSchemaObject::getItemsSchema, Any?::isNotNull)
+  }
+
+  override fun getUnevaluatedItemsSchema(): JsonSchemaObject? {
+    return baseIfConditionOrOther(JsonSchemaObject::getUnevaluatedItemsSchema, Any?::isNotNull)
   }
 
   override fun getContainsSchema(): JsonSchemaObject? {

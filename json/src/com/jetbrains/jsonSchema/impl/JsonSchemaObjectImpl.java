@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonDependencyModificationTracker;
 import com.jetbrains.jsonSchema.JsonPointerUtil;
+import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.jetbrains.jsonSchema.impl.validations.JsonSchemaValidationsCollectorKt.getSchema7AndEarlierValidations;
 
 @Deprecated
 public class JsonSchemaObjectImpl extends JsonSchemaObject {
@@ -126,6 +129,32 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
   }
 
   @Override
+  public @Nullable Boolean getConstantSchema() {
+    return null;
+  }
+
+  @Override
+  public boolean hasChildFieldsExcept(@NotNull String @NotNull ... namesToSkip) {
+    return false;
+  }
+
+  @Override
+  public @NotNull Iterable<JsonSchemaValidation> getValidations(@Nullable JsonSchemaType type, @NotNull JsonValueAdapter value) {
+    return new Iterable<>() {
+      @NotNull
+      @Override
+      public Iterator<JsonSchemaValidation> iterator() {
+        return getSchema7AndEarlierValidations(JsonSchemaObjectImpl.this, type, value).iterator();
+      }
+    };
+  }
+
+  @Override
+  public @NotNull JsonSchemaObject getRootSchemaObject() {
+    throw new UnsupportedOperationException("Do not use the method against old json schema implementation!");
+  }
+
+  @Override
   public boolean isValidByExclusion() {
     return myIsValidByExclusion;
   }
@@ -170,11 +199,6 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     }
 
     myIdsMap = JsonCachedValues.getOrComputeIdsMap(jsonObject.getDelegate().getContainingFile());
-  }
-
-  @Override
-  public String resolveId(@NotNull String id) {
-    return myIdsMap == null ? null : myIdsMap.get(id);
   }
 
   @Override
@@ -595,8 +619,18 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
   }
 
   @Override
+  public @Nullable JsonSchemaObject getUnevaluatedItemsSchema() {
+    return null;
+  }
+
+  @Override
   public @Nullable JsonSchemaObjectImpl getAdditionalPropertiesSchema() {
     return myAdditionalPropertiesSchema;
+  }
+
+  @Override
+  public @Nullable JsonSchemaObject getUnevaluatedPropertiesSchema() {
+    return null;
   }
 
   public void setAdditionalPropertiesSchema(@Nullable JsonSchemaObjectImpl additionalPropertiesSchema) {
