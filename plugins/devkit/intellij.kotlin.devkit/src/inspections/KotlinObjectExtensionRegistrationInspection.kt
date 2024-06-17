@@ -3,12 +3,14 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericDomValue
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
@@ -58,6 +60,8 @@ internal class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInsp
 }
 
 @VisibleForTesting
+@IntellijInternalApi
+@ApiStatus.Internal
 class KotlinObjectRegisteredAsExtensionInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

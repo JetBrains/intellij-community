@@ -78,6 +78,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
 @VisibleForTesting
+@ApiStatus.Internal
 public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase {
   @NonNls
   private static final String PLUGIN_ICON_SVG_FILENAME = "pluginIcon.svg";

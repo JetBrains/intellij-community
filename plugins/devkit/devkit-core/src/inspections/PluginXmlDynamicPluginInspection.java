@@ -9,6 +9,7 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.highlighting.AddDomElementQuickFix;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -18,6 +19,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
 @VisibleForTesting
+@ApiStatus.Internal
 public final class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionBase {
   public boolean highlightNonDynamicEPUsages = false;
 

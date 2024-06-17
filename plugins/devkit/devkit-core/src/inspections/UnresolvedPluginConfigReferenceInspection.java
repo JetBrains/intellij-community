@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.uast.UastHintedVisitorAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.references.PluginConfigReference;
@@ -20,6 +21,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
  * Highlights all unresolved {@link PluginConfigReference}s in code.
  */
 @VisibleForTesting
+@ApiStatus.Internal
 public final class UnresolvedPluginConfigReferenceInspection extends LocalInspectionTool {
 
   @SuppressWarnings("unchecked")
