@@ -17,7 +17,7 @@ public interface JsonValidationHost {
 
   void typeError(final @NotNull PsiElement value, @Nullable JsonSchemaType currentType, final JsonSchemaType @NotNull ... allowedTypes);
 
-  MatchResult resolve(JsonSchemaObject schemaObject);
+  MatchResult resolve(JsonSchemaObject schemaObject, @Nullable JsonValueAdapter inspectedElementAdapter);
 
   @Nullable
   JsonValidationHost checkByMatchResult(JsonValueAdapter adapter, MatchResult result, JsonComplianceCheckerOptions options);
@@ -27,4 +27,6 @@ public interface JsonValidationHost {
   void checkObjectBySchemaRecordErrors(@NotNull JsonSchemaObject schema, @NotNull JsonValueAdapter object);
 
   void addErrorsFrom(JsonValidationHost otherHost);
+
+  boolean hasRecordedErrorsFor(@NotNull JsonValueAdapter inspectedValueAdapter);
 }
