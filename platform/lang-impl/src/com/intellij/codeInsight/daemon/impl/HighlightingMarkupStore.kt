@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeInsight.daemon.impl.HighlightingMarkupGrave.FileMarkupInfo
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCache
 import com.intellij.openapi.fileEditor.impl.text.VersionedExternalizer
 import com.intellij.openapi.project.Project
@@ -38,6 +37,6 @@ internal class HighlightingMarkupStore(project: Project, private val scope: Coro
   object FileMarkupInfoExternalizer : VersionedExternalizer<FileMarkupInfo> {
     override fun serdeVersion(): Int = 3
     override fun save(output: DataOutput, value: FileMarkupInfo): Unit = value.bury(output)
-    override fun read(input: DataInput): FileMarkupInfo = FileMarkupInfo.exhume(input)
+    override fun read(input: DataInput): FileMarkupInfo = FileMarkupInfo.readFileMarkupInfo(input)
   }
 }

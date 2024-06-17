@@ -79,7 +79,7 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
       return null
     }
     val state = cache.get(file.id)
-    if (state == null || state.contentHash != document.contentHash()) {
+    if (state == null || state.contentHash != contentHash(document)) {
       return null
     }
     for (inlayData in state.inlayDataList) {
@@ -98,7 +98,7 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
       editor.getDocument().textLength,
       DeclarativeInlayRenderer::class.java
     )
-    val state = DeclarativeHintsState(editor.document.contentHash(), inlayDataList(declarativeHints))
+    val state = DeclarativeHintsState(contentHash(editor.document), inlayDataList(declarativeHints))
     scope.launch(Dispatchers.IO) {
       cache[file.id] = state
     }

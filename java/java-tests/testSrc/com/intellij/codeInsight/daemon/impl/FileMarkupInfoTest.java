@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.impl.HighlightingMarkupGrave.FileMarkupInfo;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -16,8 +15,6 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-
-import static com.intellij.codeInsight.daemon.impl.HighlightingMarkupGrave.HighlighterState;
 
 final class FileMarkupInfoTest {
   @Test
@@ -64,18 +61,18 @@ final class FileMarkupInfoTest {
 
   private static FileMarkupInfo deserializedMarkupInfo(byte[] markupInfoBytes) throws IOException {
     try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(markupInfoBytes))) {
-      return FileMarkupInfo.exhume(input);
+      return FileMarkupInfo.Companion.readFileMarkupInfo(input);
     }
   }
 
    //special handling for GutterIcon
   private static void assertEquals(FileMarkupInfo expected, FileMarkupInfo actual) {
     Assertions.assertEquals(expected, expected);
-    List<HighlighterState> expectedHighlighters = expected.highlighters();
-    List<HighlighterState> actualHighlighters = actual.highlighters();
+    List<HighlighterState> expectedHighlighters = expected.highlighters;
+    List<HighlighterState> actualHighlighters = actual.highlighters;
     for (int i = 0; i < expectedHighlighters.size(); i++) {
-      Icon expectedIcon = expectedHighlighters.get(i).gutterIcon();
-      Icon actualIcon = actualHighlighters.get(i).gutterIcon();
+      Icon expectedIcon = expectedHighlighters.get(i).gutterIcon;
+      Icon actualIcon = actualHighlighters.get(i).gutterIcon;
       if (expectedIcon == null && actualIcon == null) {
         continue;
       }

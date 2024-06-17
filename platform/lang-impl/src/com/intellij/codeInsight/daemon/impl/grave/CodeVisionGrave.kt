@@ -36,7 +36,7 @@ internal class CodeVisionGrave(project: Project, private val scope: CoroutineSco
         LOG.debug { "code vision grave: empty state ${file.name}" }
         return null
       }
-      if (state.contentHash != document.contentHash()) {
+      if (state.contentHash != contentHash(document)) {
         LOG.debug { "code vision grave: state outdated ${file.name}" }
         cache.remove(file.id)
         return null
@@ -55,7 +55,7 @@ internal class CodeVisionGrave(project: Project, private val scope: CoroutineSco
           .filter { (_, cvEntry) -> !ignoreEntry(cvEntry) }
           .map { CodeVisionEntryState.create(it) }
           .toList()
-        val state = CodeVisionState(editor.document.contentHash(), stateList)
+        val state = CodeVisionState(contentHash(editor.document), stateList)
         scope.launch(Dispatchers.IO) {
           LOG.debug { "code vision grave: bury zombie ${file.name} with ${state.entries.size}" }
           cache[file.id] = state

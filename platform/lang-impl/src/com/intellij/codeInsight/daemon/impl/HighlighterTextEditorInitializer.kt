@@ -16,7 +16,7 @@ private class HighlighterTextEditorInitializer : TextEditorInitializer {
                                         document: Document,
                                         editorSupplier: suspend () -> EditorEx,
                                         highlighterReady: suspend () -> Unit) {
-    if (!HighlightingMarkupGrave.isEnabled() || file !is VirtualFileWithId) {
+    if (!HighlightingMarkupGrave.isEnabled || file !is VirtualFileWithId) {
       return
     }
 

@@ -1,491 +1,443 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
-import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.MarkupGraveEvent;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModelImpl;
-import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorCache;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.io.IOUtil;
-import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
+import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.MarkupGraveEvent
+import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.logEditorMarkupGrave
+import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModelImpl
+import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.impl.text.TextEditorCache
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.markupRestored
+import com.intellij.util.containers.ConcurrentIntObjectMap
+import com.intellij.util.io.DataInputOutputUtil
+import com.intellij.util.io.IOUtil
+import com.intellij.util.messages.SimpleMessageBusConnection
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.io.DataInput
+import java.io.DataOutput
+import java.util.*
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.*;
+private val LOG = logger<HighlightingMarkupGrave>()
+private val IS_ZOMBIE = Key.create<Boolean>("IS_ZOMBIE")
 
-import static com.intellij.util.io.DataInputOutputUtil.readINT;
-import static com.intellij.util.io.DataInputOutputUtil.writeINT;
+private fun markZombieMarkup(highlighter: RangeMarker) {
+  highlighter.putUserData(IS_ZOMBIE, true)
+}
 
 /**
  * Stores the highlighting markup on disk on file close and restores it back to the editor on file open,
  * to reduce the "opened editor-to-some highlighting shown" perceived interval.
  */
 @ApiStatus.Internal
-public class HighlightingMarkupGrave {
-  private static final Logger LOG = Logger.getInstance(HighlightingMarkupGrave.class);
-  private static final Key<Boolean> IS_ZOMBIE = Key.create("IS_ZOMBIE");
+open class HighlightingMarkupGrave(project: Project, coroutineScope: CoroutineScope) {
+  protected val project: Project
+  private val resurrectedZombies: ConcurrentIntObjectMap<Boolean> // fileId -> isMarkupModelPreferable
+  private val markupStore: HighlightingMarkupStore
 
-  protected final @NotNull Project myProject;
-  private final @NotNull ConcurrentIntObjectMap<Boolean> myResurrectedZombies; // fileId -> isMarkupModelPreferable
-  private final @NotNull HighlightingMarkupStore myMarkupStore;
+  companion object {
+    val isEnabled: Boolean
+      get() = Registry.`is`("cache.highlighting.markup.on.disk", true)
 
-  public HighlightingMarkupGrave(@NotNull Project project, @NotNull CoroutineScope scope) {
-    // check that important TextAttributesKeys are initialized
-    assert DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey() != null : DefaultLanguageHighlighterColors.INSTANCE_FIELD;
+    @TestOnly
+    fun runInEnabled(runnable: Runnable) {
+      val wasEnabled = isEnabled
+      Registry.get("cache.highlighting.markup.on.disk").setValue(true)
+      try {
+        runnable.run()
+      }
+      finally {
+        Registry.get("cache.highlighting.markup.on.disk").setValue(wasEnabled)
+      }
+    }
 
-    myProject = project;
-    myResurrectedZombies = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-    myMarkupStore = new HighlightingMarkupStore(project, scope);
+    fun isZombieMarkup(highlighter: RangeMarker): Boolean = highlighter.getUserData(IS_ZOMBIE) != null
 
-    subscribeDaemonFinished();
-    subscribeFileClosed();
+    fun unmarkZombieMarkup(highlighter: RangeMarker) {
+      highlighter.putUserData(IS_ZOMBIE, null)
+    }
   }
 
-  protected void subscribeDaemonFinished() {
+  init {
+    // check that important TextAttributesKeys are initialized
+    checkNotNull(DefaultLanguageHighlighterColors.INSTANCE_FIELD.fallbackAttributeKey) { DefaultLanguageHighlighterColors.INSTANCE_FIELD }
+
+    this.project = project
+    resurrectedZombies = ConcurrentCollectionFactory.createConcurrentIntObjectMap()
+    markupStore = HighlightingMarkupStore(project, coroutineScope)
+
+    val connection = project.messageBus.connect(coroutineScope)
+    @Suppress("LeakingThis")
+    subscribeDaemonFinished(connection)
+    subscribeFileClosed(connection)
+  }
+
+  protected open fun subscribeDaemonFinished(connection: SimpleMessageBusConnection) {
     // as soon as highlighting kicks in and displays its own range highlighters, remove ones we applied from the on-disk cache,
     // but only after the highlighting finished, to avoid flicker
-    myProject.getMessageBus().simpleConnect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
-      @Override
-      public void daemonFinished(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
-        if (!DumbService.getInstance(myProject).isDumb()) {
-          for (FileEditor fileEditor : fileEditors) {
-            if (fileEditor instanceof TextEditor textEditor &&
-                shouldPutDownActiveZombiesInFile(textEditor)) {
-              putDownActiveZombiesInFile(textEditor);
+    connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonListener {
+      override fun daemonFinished(fileEditors: Collection<FileEditor>) {
+        if (!DumbService.getInstance(project).isDumb) {
+          for (fileEditor in fileEditors) {
+            if (fileEditor is TextEditor && shouldPutDownActiveZombiesInFile(fileEditor)) {
+              val file = fileEditor.file
+              if (file is VirtualFileWithId) {
+                putDownActiveZombiesInFile(file, fileEditor.editor)
+              }
             }
           }
         }
       }
-    });
+    })
   }
 
-  protected Boolean shouldPutDownActiveZombiesInFile(TextEditor textEditor){
-    return textEditor.getEditor().getEditorKind() == EditorKind.MAIN_EDITOR &&
-           DaemonCodeAnalyzerEx.isHighlightingCompleted(textEditor, myProject);
+  protected open fun shouldPutDownActiveZombiesInFile(textEditor: TextEditor): Boolean {
+    return textEditor.editor.editorKind == EditorKind.MAIN_EDITOR && DaemonCodeAnalyzerEx.isHighlightingCompleted(textEditor, project)
   }
 
-  private void subscribeFileClosed() {
-    myProject.getMessageBus().connect().subscribe(
-      FileEditorManagerListener.Before.FILE_EDITOR_MANAGER,
-      new FileEditorManagerListener.Before() {
-        @Override
-        public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-          putInGrave(source, file);
-        }
+  private fun subscribeFileClosed(connection: SimpleMessageBusConnection) {
+    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before {
+      override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
+        putInGrave(source, file)
       }
-    );
+    })
   }
 
-  private void putDownActiveZombiesInFile(@NotNull TextEditor textEditor) {
-    if (!(textEditor.getFile() instanceof VirtualFileWithId fileWithId)) {
-      return;
-    }
-    putDownActiveZombiesInFile(fileWithId, textEditor.getEditor());
-  }
-
-  protected void putDownActiveZombiesInFile(@NotNull VirtualFileWithId fileWithId, @NotNull Editor editor){
-    boolean replaced = myResurrectedZombies.replace(fileWithId.getId(), false, true);
+  protected fun putDownActiveZombiesInFile(fileWithId: VirtualFileWithId, editor: Editor) {
+    val replaced = resurrectedZombies.replace(fileWithId.id, false, true)
     if (!replaced) {
       // no zombie or zombie already disposed
-      return;
+      return
     }
-    List<RangeHighlighter> toRemove = null;
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(editor.getDocument(), myProject, false);
+
+    var toRemove: MutableList<RangeHighlighter>? = null
+    val markupModel = DocumentMarkupModel.forDocument(editor.document, project, false)
     if (markupModel != null) {
-      for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
+      for (highlighter in markupModel.allHighlighters) {
         if (isZombieMarkup(highlighter)) {
           if (toRemove == null) {
-            toRemove = new ArrayList<>();
+            toRemove = ArrayList()
           }
-          toRemove.add(highlighter);
+          toRemove.add(highlighter)
         }
       }
     }
     if (toRemove == null) {
-      return;
-    }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("removing " + toRemove.size() + " markups for " + editor + "; dumb=" + DumbService.getInstance(myProject).isDumb());
+      return
     }
 
-    for (RangeHighlighter highlighter : toRemove) {
-      highlighter.dispose();
+    LOG.debug { "removing ${toRemove.size} markups for $editor; dumb=${DumbService.getInstance(project).isDumb}" }
+
+    for (highlighter in toRemove) {
+      highlighter.dispose()
     }
   }
 
-  void resurrectZombies(@NotNull Document document, @NotNull VirtualFileWithId file) {
-    if (myResurrectedZombies.containsKey(file.getId())) {
-      return;
+  internal fun resurrectZombies(document: Document, file: VirtualFileWithId) {
+    if (resurrectedZombies.containsKey(file.id)) {
+      return
     }
-    FileMarkupInfo markupInfo = myMarkupStore.getMarkup(file);
+
+    val markupInfo = markupStore.getMarkup(file)
     if (markupInfo == null) {
-      myResurrectedZombies.put(file.getId(), true);
-      logFusStatistic(file, MarkupGraveEvent.NOT_RESTORED_CACHE_MISS);
-      return;
+      resurrectedZombies.put(file.id, true)
+      logFusStatistic(file, MarkupGraveEvent.NOT_RESTORED_CACHE_MISS)
+      return
     }
 
-    if (contentHash(document) != markupInfo.contentHash()) {
+    if (TextEditorCache.contentHash(document) != markupInfo.contentHash) {
       // text changed since the cached markup was saved on-disk
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("restore canceled hash mismatch " + markupInfo.size() + " for " + file);
-      }
-      myMarkupStore.removeMarkup(file);
-      myResurrectedZombies.put(file.getId(), true);
-      logFusStatistic(file, MarkupGraveEvent.NOT_RESTORED_CONTENT_CHANGED);
-      return;
+      LOG.debug { "restore canceled hash mismatch ${markupInfo.size()} for $file" }
+      markupStore.removeMarkup(file)
+      resurrectedZombies.put(file.id, true)
+      logFusStatistic(file, MarkupGraveEvent.NOT_RESTORED_CONTENT_CHANGED)
+      return
     }
 
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
-    for (HighlighterState state : markupInfo.highlighters()) {
-      int textLength = document.getTextLength();
-      if (state.end() > textLength) {
+    val markupModel = DocumentMarkupModel.forDocument(document, project, true)
+    for (state in markupInfo.highlighters) {
+      val textLength = document.textLength
+      if (state.end > textLength) {
         // something's wrong, the document has changed in the other thread?
-        LOG.warn("skipped " + state + " as it is out of document with length " + textLength);
-        continue;
+        LOG.warn("skipped $state as it is out of document with length $textLength")
+        continue
       }
-      RangeHighlighter highlighter;
+
+      var highlighter: RangeHighlighter
       // re-read TextAttributesKey because it might be read too soon, with its myFallbackKey uninitialized.
       // (still store TextAttributesKey by instance, instead of String, to intern its external name)
-      TextAttributesKey key = state.textAttributesKey() == null ? null : TextAttributesKey.find(state.textAttributesKey().getExternalName());
+      val key = if (state.textAttributesKey == null) null else TextAttributesKey.find(state.textAttributesKey.externalName)
       if (key == null) {
-        highlighter = markupModel.addRangeHighlighter(state.start(), state.end(), state.layer(), state.textAttributes(), state.targetArea());
+        highlighter = markupModel.addRangeHighlighter(state.start, state.end, state.layer, state.textAttributes, state.targetArea)
       }
       else {
-        highlighter = markupModel.addRangeHighlighter(key, state.start(), state.end(), state.layer(), state.targetArea());
+        highlighter = markupModel.addRangeHighlighter(key, state.start, state.end, state.layer, state.targetArea)
         if (StickyLinesModelImpl.isStickyLine(highlighter)) {
-          StickyLinesModelImpl.skipInAllEditors(highlighter);
+          StickyLinesModelImpl.skipInAllEditors(highlighter)
         }
       }
-      if (state.gutterIcon() != null) {
-        GutterIconRenderer fakeIcon = new GutterIconRenderer() {
-          @Override
-          public boolean equals(Object obj) {
-            return false;
-          }
 
-          @Override
-          public int hashCode() {
-            return 0;
-          }
+      if (state.gutterIcon != null) {
+        val fakeIcon: GutterIconRenderer = object : GutterIconRenderer() {
+          override fun equals(other: Any?): Boolean = false
 
-          @Override
-          public @NotNull Icon getIcon() {
-            return state.gutterIcon();
-          }
-        };
-        highlighter.setGutterIconRenderer(fakeIcon);
+          override fun hashCode(): Int = 0
+
+          override fun getIcon(): Icon = state.gutterIcon
+        }
+        highlighter.gutterIconRenderer = fakeIcon
       }
-      markZombieMarkup(highlighter);
+      markZombieMarkup(highlighter)
     }
-    logFusStatistic(file, MarkupGraveEvent.RESTORED, markupInfo.size());
-    FUSProjectHotStartUpMeasurer.INSTANCE.markupRestored(file);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("restored " + markupInfo.size() + " for " + file);
-    }
-    myResurrectedZombies.put(file.getId(), false);
+
+    logFusStatistic(file, MarkupGraveEvent.RESTORED, markupInfo.size())
+    markupRestored(file)
+    LOG.debug { "restored ${markupInfo.size()} for $file" }
+    resurrectedZombies.put(file.id, false)
   }
 
-  private void putInGrave(@NotNull FileEditorManager editorManager, @NotNull VirtualFile file) {
-    if (!(file instanceof VirtualFileWithId fileWithId)) {
-      return;
+  private fun putInGrave(editorManager: FileEditorManager, file: VirtualFile) {
+    if (file !is VirtualFileWithId) {
+      return
     }
-    FileEditor fileEditor = editorManager.getSelectedEditor(file);
-    if (!(fileEditor instanceof TextEditor textEditor)) {
-      return;
+
+    val fileEditor = editorManager.getSelectedEditor(file)
+    if (fileEditor !is TextEditor) {
+      return
     }
-    if (textEditor.getEditor().getEditorKind() != EditorKind.MAIN_EDITOR) {
-      return;
+
+    if (fileEditor.editor.editorKind != EditorKind.MAIN_EDITOR) {
+      return
     }
-    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (document == null) {
-      return;
-    }
-    EditorColorsScheme colorsScheme = textEditor.getEditor().getColorsScheme();
-    myMarkupStore.executeAsync(() -> {
-      ReadAction.run(() -> {
-        FileMarkupInfo markupFromModel = getMarkupFromModel(document, colorsScheme);
-        FileMarkupInfo storedMarkup = myMarkupStore.getMarkup(fileWithId);
-        Boolean zombieDisposed = myResurrectedZombies.get(fileWithId.getId());
-        GraveDecision graveDecision = GraveDecision.getDecision(markupFromModel, storedMarkup, zombieDisposed);
-        switch (graveDecision) {
-          case STORE_NEW -> {
-            myMarkupStore.putMarkup(fileWithId, markupFromModel);
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("stored markup " + markupFromModel.size() + " for " + file);
+
+    val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return
+    val colorsScheme = fileEditor.editor.colorsScheme
+    markupStore.executeAsync {
+      ReadAction.run<RuntimeException> {
+        val markupFromModel = getMarkupFromModel(document, colorsScheme)
+        val storedMarkup = markupStore.getMarkup(file)
+        val zombieDisposed = resurrectedZombies[file.id]
+        val graveDecision = getCacheDecision(newMarkup = markupFromModel, oldMarkup = storedMarkup, isNewMoreRelevant = zombieDisposed)
+        when (graveDecision) {
+          CacheDecision.STORE_NEW -> {
+            markupStore.putMarkup(file, markupFromModel)
+            LOG.debug { "stored markup ${markupFromModel.size()} for $file" }
+          }
+          CacheDecision.REMOVE_OLD -> {
+            markupStore.removeMarkup(file)
+            if (storedMarkup != null && LOG.isDebugEnabled) {
+              LOG.debug("removed outdated markup ${storedMarkup.size()} for $file")
             }
           }
-          case REMOVE_OLD -> {
-            myMarkupStore.removeMarkup(fileWithId);
-            if (LOG.isDebugEnabled() && storedMarkup != null) {
-              LOG.debug("removed outdated markup " + storedMarkup.size() + " for " + file);
-            }
-          }
-          case KEEP_OLD -> {
-            if (LOG.isDebugEnabled() && storedMarkup != null) {
-              LOG.debug("preserved markup " + storedMarkup.size() + " for " + file);
+          CacheDecision.KEEP_OLD -> {
+            if (storedMarkup != null && LOG.isDebugEnabled) {
+              LOG.debug("preserved markup ${storedMarkup.size()} for $file")
             }
           }
         }
-      });
-    });
-  }
-
-  @NotNull
-  private List<HighlighterState> allHighlightersFromMarkup(@NotNull Project project,
-                                                                  @NotNull Document document,
-                                                                  @NotNull EditorColorsScheme colorsScheme) {
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, false);
-    if (markupModel == null) {
-      return Collections.emptyList();
+      }
     }
-    return Arrays.stream(markupModel.getAllHighlighters())
-      .filter(h -> shouldSaveHighlighter(h))
-      .map(h -> new HighlighterState(h, getHighlighterLayer(h), colorsScheme))
-      .toList();
   }
 
-  protected boolean shouldSaveHighlighter(@NotNull RangeHighlighter highlighter) {
+  private fun allHighlightersFromMarkup(
+    project: Project,
+    document: Document,
+    colorsScheme: EditorColorsScheme
+  ): List<HighlighterState> {
+    val markupModel = DocumentMarkupModel.forDocument(document, project, false) ?: return emptyList()
+    return markupModel.allHighlighters
+      .asSequence()
+      .filter { shouldSaveHighlighter(it) }
+      .map { HighlighterState(it, getHighlighterLayer(it), colorsScheme) }
+      .toList()
+  }
+
+  protected open fun shouldSaveHighlighter(highlighter: RangeHighlighter): Boolean {
     if (StickyLinesModelImpl.isStickyLine(highlighter)) {
-      return true;
+      return true
     }
-    HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+
+    val info = HighlightInfo.fromRangeHighlighter(highlighter)
     if (info != null &&
-        (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g., field text attribute)
-         || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY)) {
-      return true;
-    }
-    LineMarkerInfo<?> lm = LineMarkersUtil.getLineMarkerInfo(highlighter);
-    return lm != null && lm.getIcon() != null; // or a line marker with a gutter icon
-  }
-
-  protected int getHighlighterLayer(@NotNull RangeHighlighter highlighter) {
-    return highlighter.getLayer();
-  }
-
-  private @NotNull FileMarkupInfo getMarkupFromModel(@NotNull Document document, @NotNull EditorColorsScheme colorsScheme) {
-    return new FileMarkupInfo(
-      contentHash(document),
-      allHighlightersFromMarkup(myProject, document, colorsScheme)
-    );
-  }
-
-  record FileMarkupInfo(int contentHash, @NotNull List<@NotNull HighlighterState> highlighters) {
-    static @NotNull FileMarkupInfo exhume(@NotNull DataInput in) throws IOException {
-      int contentHash = readINT(in);
-      int hCount = readINT(in);
-      ArrayList<HighlighterState> highlighters = new ArrayList<>(hCount);
-      for (int i = 0; i < hCount; i++) {
-        HighlighterState highlighterState = HighlighterState.exhume(in);
-        highlighters.add(highlighterState);
-      }
-      return new FileMarkupInfo(contentHash, Collections.unmodifiableList(highlighters));
-    }
-
-    void bury(@NotNull DataOutput out) throws IOException {
-      writeINT(out, contentHash);
-      writeINT(out, highlighters.size());
-      for (HighlighterState highlighterState : highlighters) {
-        highlighterState.bury(out);
-      }
-    }
-
-    boolean isEmpty() {
-      return highlighters.isEmpty();
-    }
-
-    int size() {
-      return highlighters.size();
-    }
-  }
-
-  record HighlighterState(
-    int start,
-    int end,
-    int layer,
-    @NotNull HighlighterTargetArea targetArea,
-    @Nullable TextAttributesKey textAttributesKey,
-    @Nullable TextAttributes textAttributes,
-    @Nullable Icon gutterIcon
-  ) {
-    private HighlighterState(@NotNull RangeHighlighter highlighter, int highlighterLayer, @NotNull EditorColorsScheme colorsScheme) {
-      this(
-        highlighter.getStartOffset(),
-        highlighter.getEndOffset(),
-        highlighterLayer, //because Rider needs to modify its zombie's layers
-        highlighter.getTargetArea(),
-        highlighter.getTextAttributesKey(),
-        highlighter.getTextAttributes(colorsScheme),
-        highlighter.getGutterIconRenderer() == null ? null : highlighter.getGutterIconRenderer().getIcon()
-      );
-    }
-
-    static @NotNull HighlighterState exhume(@NotNull DataInput in) throws IOException {
-      int start = readINT(in);
-      int end = readINT(in);
-      int layer = readINT(in);
-      int target = readINT(in);
-      TextAttributesKey key = in.readBoolean() ? TextAttributesKey.find(IOUtil.readUTF(in)) : null;
-      TextAttributes attributes = in.readBoolean() ? new TextAttributes(in) : null;
-      Icon icon = EditorCacheKt.readGutterIcon(in);
-      return new HighlighterState(start, end, layer, HighlighterTargetArea.values()[target], key, attributes, icon);
-    }
-
-    void bury(@NotNull DataOutput out) throws IOException {
-      writeINT(out, start);
-      writeINT(out, end);
-      writeINT(out, layer);
-      writeINT(out, targetArea.ordinal());
-      writeTextAttributesKey(out);
-      writeTextAttributes(out);
-      EditorCacheKt.writeGutterIcon(gutterIcon, out);
-    }
-
-    private void writeTextAttributesKey(@NotNull DataOutput out) throws IOException {
-      boolean attributeKeyExists = textAttributesKey != null;
-      out.writeBoolean(attributeKeyExists);
-      if (attributeKeyExists) {
-        IOUtil.writeUTF(out, textAttributesKey.getExternalName());
-      }
-    }
-
-    private void writeTextAttributes(@NotNull DataOutput out) throws IOException {
-      boolean attributesExists = textAttributes != null && textAttributesKey == null;
-      out.writeBoolean(attributesExists);
-      if (attributesExists) {
-        textAttributes.writeExternal(out);
-      }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      // exclude gutterIcon
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      HighlighterState state = (HighlighterState)o;
-      return start == state.start &&
-             end == state.end &&
-             layer == state.layer &&
-             targetArea == state.targetArea &&
-             Objects.equals(textAttributesKey, state.textAttributesKey) &&
-             Objects.equals(textAttributes, state.textAttributes);
-    }
-
-    @Override
-    public int hashCode() {
-      // exclude gutterIcon
-      return Objects.hash(start, end, layer, targetArea, textAttributesKey, textAttributes);
-    }
-  }
-
-  private enum GraveDecision {
-    STORE_NEW,
-    KEEP_OLD,
-    REMOVE_OLD;
-
-    static GraveDecision getDecision(
-      @NotNull FileMarkupInfo newMarkup,
-      @Nullable FileMarkupInfo oldMarkup,
-      @Nullable Boolean isNewMoreRelevant
+        (info.severity > HighlightSeverity.INFORMATION // either warning/error or symbol type (e.g., field text attribute)
+         || info.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY)
     ) {
-      if (oldMarkup == null && !newMarkup.isEmpty()) {
-        // put zombie's limbs
-        return STORE_NEW;
-      }
-      if (oldMarkup == null) {
-        // no, a limb to put in grave
-        return KEEP_OLD;
-      }
-      if (oldMarkup.contentHash() != newMarkup.contentHash() && !newMarkup.isEmpty()) {
-        // fresh limbs
-        return STORE_NEW;
-      }
-      if (oldMarkup.contentHash() != newMarkup.contentHash()) {
-        // graved zombie is rotten and there is no a limb to bury
-        return REMOVE_OLD;
-      }
-      if (newMarkup.isEmpty()) {
-        // graved zombie is still fresh
-        return KEEP_OLD;
-      }
-      if (isNewMoreRelevant == null) {
-        // should never happen. the file is closed without being opened before
-        return STORE_NEW;
-      }
-      if (isNewMoreRelevant) {
-        // limbs form complete zombie
-        return STORE_NEW;
-      }
-      return KEEP_OLD;
+      return true
     }
+
+    val lm = LineMarkersUtil.getLineMarkerInfo(highlighter)
+    return lm != null && lm.icon != null // or a line marker with a gutter icon
   }
 
-  static boolean isEnabled() {
-    return Registry.is("cache.highlighting.markup.on.disk", true);
+  protected open fun getHighlighterLayer(highlighter: RangeHighlighter): Int = highlighter.layer
+
+  private fun getMarkupFromModel(document: Document, colorsScheme: EditorColorsScheme): FileMarkupInfo {
+    return FileMarkupInfo(
+      contentHash = TextEditorCache.contentHash(document),
+      highlighters = allHighlightersFromMarkup(project = project, document = document, colorsScheme = colorsScheme)
+    )
   }
 
   @TestOnly
-  static void runInEnabled(@NotNull Runnable runnable) {
-    boolean wasEnabled = isEnabled();
-    Registry.get("cache.highlighting.markup.on.disk").setValue(true);
-    try {
-      runnable.run();
+  fun clearResurrectedZombies() {
+    resurrectedZombies.clear()
+  }
+
+  private fun logFusStatistic(file: VirtualFileWithId, event: MarkupGraveEvent, restoredCount: Int = 0) {
+    logEditorMarkupGrave(project = project, file = file as VirtualFile, graveEvent = event, restoredCount = restoredCount)
+  }
+}
+
+internal data class FileMarkupInfo(@JvmField val contentHash: Int, @JvmField val highlighters: List<HighlighterState>) {
+  fun bury(out: DataOutput) {
+    DataInputOutputUtil.writeINT(out, contentHash)
+    DataInputOutputUtil.writeINT(out, highlighters.size)
+    for (highlighterState in highlighters) {
+      highlighterState.bury(out)
     }
-    finally {
-      Registry.get("cache.highlighting.markup.on.disk").setValue(wasEnabled);
+  }
+
+  val isEmpty: Boolean
+    get() = highlighters.isEmpty()
+
+  fun size(): Int = highlighters.size
+
+  companion object {
+    fun readFileMarkupInfo(`in`: DataInput): FileMarkupInfo {
+      val contentHash = DataInputOutputUtil.readINT(`in`)
+      val hCount = DataInputOutputUtil.readINT(`in`)
+      val highlighters = ArrayList<HighlighterState>(hCount)
+      for (i in 0 until hCount) {
+        val highlighterState = HighlighterState.readHighlighterState(`in`)
+        highlighters.add(highlighterState)
+      }
+      return FileMarkupInfo(contentHash, Collections.unmodifiableList(highlighters))
+    }
+  }
+}
+
+internal data class HighlighterState(
+  @JvmField val start: Int,
+  @JvmField val end: Int,
+  @JvmField val layer: Int,
+  @JvmField val targetArea: HighlighterTargetArea,
+  @JvmField val textAttributesKey: TextAttributesKey?,
+  @JvmField val textAttributes: TextAttributes?,
+  @JvmField val gutterIcon: Icon?
+) {
+  constructor(highlighter: RangeHighlighter, highlighterLayer: Int, colorsScheme: EditorColorsScheme) : this(
+    start = highlighter.startOffset,
+    end = highlighter.endOffset,
+    layer = highlighterLayer,  //because Rider needs to modify its zombie's layers
+    targetArea = highlighter.targetArea,
+    textAttributesKey = highlighter.textAttributesKey,
+    textAttributes = highlighter.getTextAttributes(colorsScheme),
+    gutterIcon = if (highlighter.gutterIconRenderer == null) null else highlighter.gutterIconRenderer!!.icon
+  )
+
+  fun bury(out: DataOutput) {
+    DataInputOutputUtil.writeINT(out, start)
+    DataInputOutputUtil.writeINT(out, end)
+    DataInputOutputUtil.writeINT(out, layer)
+    DataInputOutputUtil.writeINT(out, targetArea.ordinal)
+    writeTextAttributesKey(out)
+    writeTextAttributes(out)
+    writeGutterIcon(gutterIcon, out)
+  }
+
+  private fun writeTextAttributesKey(out: DataOutput) {
+    val attributeKeyExists = textAttributesKey != null
+    out.writeBoolean(attributeKeyExists)
+    if (attributeKeyExists) {
+      IOUtil.writeUTF(out, textAttributesKey!!.externalName)
     }
   }
 
-  public static boolean isZombieMarkup(@NotNull RangeMarker highlighter) {
-    return highlighter.getUserData(IS_ZOMBIE) != null;
+  private fun writeTextAttributes(out: DataOutput) {
+    val attributesExists = textAttributes != null && textAttributesKey == null
+    out.writeBoolean(attributesExists)
+    if (attributesExists) {
+      textAttributes!!.writeExternal(out)
+    }
   }
 
-  private static void markZombieMarkup(@NotNull RangeMarker highlighter) {
-    highlighter.putUserData(IS_ZOMBIE, Boolean.TRUE);
+  override fun equals(other: Any?): Boolean {
+    // exclude gutterIcon
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+    val state = other as HighlighterState
+    return start == state.start && end == state.end && layer == state.layer && targetArea == state.targetArea &&
+           textAttributesKey == state.textAttributesKey &&
+           textAttributes == state.textAttributes
   }
 
-  static void unmarkZombieMarkup(@NotNull RangeMarker highlighter) {
-    highlighter.putUserData(IS_ZOMBIE, null);
+  override fun hashCode(): Int {
+    // exclude gutterIcon
+    return Objects.hash(start, end, layer, targetArea, textAttributesKey, textAttributes)
   }
 
-  @TestOnly
-  void clearResurrectedZombies() {
-    myResurrectedZombies.clear();
+  companion object {
+    fun readHighlighterState(`in`: DataInput): HighlighterState {
+      val start = DataInputOutputUtil.readINT(`in`)
+      val end = DataInputOutputUtil.readINT(`in`)
+      val layer = DataInputOutputUtil.readINT(`in`)
+      val target = DataInputOutputUtil.readINT(`in`)
+      val key = if (`in`.readBoolean()) TextAttributesKey.find(IOUtil.readUTF(`in`)) else null
+      val attributes = if (`in`.readBoolean()) TextAttributes(`in`) else null
+      val icon = readGutterIcon(`in`)
+      return HighlighterState(start, end, layer, HighlighterTargetArea.entries[target], key, attributes, icon)
+    }
   }
+}
 
-  private static int contentHash(@NotNull Document document) {
-    return TextEditorCache.Companion.contentHash(document);
-  }
+private enum class CacheDecision {
+  STORE_NEW,
+  KEEP_OLD,
+  REMOVE_OLD;
+}
 
-  private void logFusStatistic(@NotNull VirtualFileWithId file, @NotNull MarkupGraveEvent event) {
-    logFusStatistic(file, event, 0);
-  }
-
-  private void logFusStatistic(@NotNull VirtualFileWithId file, @NotNull MarkupGraveEvent event, int restoredCount) {
-    FileEditorCollector.INSTANCE.logEditorMarkupGrave(myProject, (VirtualFile) file, event, restoredCount);
+private fun getCacheDecision(
+  newMarkup: FileMarkupInfo,
+  oldMarkup: FileMarkupInfo?,
+  isNewMoreRelevant: Boolean?
+): CacheDecision {
+  return when {
+    // put zombie's limbs
+    oldMarkup == null && !newMarkup.isEmpty -> CacheDecision.STORE_NEW
+    // no, a limb to put in grave
+    oldMarkup == null -> CacheDecision.KEEP_OLD
+    // fresh limbs
+    oldMarkup.contentHash != newMarkup.contentHash && !newMarkup.isEmpty -> CacheDecision.STORE_NEW
+    // graved zombie is rotten and there is no a limb to bury
+    oldMarkup.contentHash != newMarkup.contentHash -> CacheDecision.REMOVE_OLD
+    // graved zombie is still fresh
+    newMarkup.isEmpty -> CacheDecision.KEEP_OLD
+    // should never happen. the file is closed without being opened before
+    isNewMoreRelevant == null -> CacheDecision.STORE_NEW
+    // limbs form complete zombie
+    isNewMoreRelevant -> CacheDecision.STORE_NEW
+    else -> CacheDecision.KEEP_OLD
   }
 }

@@ -85,7 +85,7 @@ internal class ParamHintsGrave(
     }
     val inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(editor, 0, editor.document.textLength)
     val hints = inlays.mapNotNull { inlay -> inlay.toHintData() }.toList()
-    val contentHash = editor.document.contentHash()
+    val contentHash = contentHash(editor.document)
     scope.launch(Dispatchers.IO) {
       cache[file.id] = ParameterHintsState(contentHash, hints)
     }
@@ -109,7 +109,7 @@ internal class ParamHintsGrave(
       return null
     }
     val state: ParameterHintsState? = cache[file.id]
-    if (state == null || state.contentHash != document.contentHash() || state.hints.isEmpty()) {
+    if (state == null || state.contentHash != contentHash(document) || state.hints.isEmpty()) {
       return null
     }
     val hintMap = Int2ObjectOpenHashMap<MutableList<HintData>>()
