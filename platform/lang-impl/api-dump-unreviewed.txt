@@ -761,6 +761,7 @@ f:com.intellij.application.options.codeStyle.CodeStyleSchemesModel
 - restoreDefaults(com.intellij.psi.codeStyle.CodeStyleScheme):V
 - selectScheme(com.intellij.psi.codeStyle.CodeStyleScheme,java.lang.Object):V
 - setUiEventsEnabled(Z):V
+- updateClonedSettings():V
 - updateOverridingStatus():V
 f:com.intellij.application.options.codeStyle.CodeStyleSchemesModel$ModelSettings
 - com.intellij.psi.codeStyle.CodeStyleSettings
