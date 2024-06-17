@@ -690,7 +690,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/agent-rt/intellij.platform.remoteServers.agent.rt.iml" filepath="$PROJECT_DIR$/platform/remote-servers/agent-rt/intellij.platform.remoteServers.agent.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/impl/intellij.platform.remoteServers.impl.iml" filepath="$PROJECT_DIR$/platform/remote-servers/impl/intellij.platform.remoteServers.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/target-integration-tests/intellij.platform.remoteServers.targetsIntegrationTests.iml" filepath="$PROJECT_DIR$/platform/remote-servers/target-integration-tests/intellij.platform.remoteServers.targetsIntegrationTests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/reproducible-builds/intellij.platform.reproducibleBuilds.diffTool.iml" filepath="$PROJECT_DIR$/platform/reproducible-builds/intellij.platform.reproducibleBuilds.diffTool.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-resources/intellij.platform.resources.iml" filepath="$PROJECT_DIR$/platform/platform-resources/intellij.platform.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-resources-en/intellij.platform.resources.en.iml" filepath="$PROJECT_DIR$/platform/platform-resources-en/intellij.platform.resources.en.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/runtime/loader/intellij.platform.runtime.loader.iml" filepath="$PROJECT_DIR$/platform/runtime/loader/intellij.platform.runtime.loader.iml" />
@@ -896,6 +895,7 @@
       <module fileurl="file://$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" filepath="$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/launcher-generator/intellij.tools.launcherGenerator.iml" filepath="$PROJECT_DIR$/tools/launcher-generator/intellij.tools.launcherGenerator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/reproducibleBuilds.diff/intellij.tools.reproducibleBuilds.diff.iml" filepath="$PROJECT_DIR$/tools/reproducibleBuilds.diff/intellij.tools.reproducibleBuilds.diff.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/bootstrap/intellij.tools.testsBootstrap.iml" filepath="$PROJECT_DIR$/platform/testFramework/bootstrap/intellij.tools.testsBootstrap.iml" />
       <module fileurl="file://$PROJECT_DIR$/updater/intellij.tools.updater.iml" filepath="$PROJECT_DIR$/updater/intellij.tools.updater.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.iml" filepath="$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.iml" />
