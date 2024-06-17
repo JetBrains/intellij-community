@@ -54,11 +54,26 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       loader?.delayedActions?.add(captureThreadContext(runnable)) ?: runnable.run()
     }
 
-    internal suspend fun waitForLoaded(editor: Editor) {
-      if (editor.getUserData(ASYNC_LOADER) != null) {
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          suspendCancellableCoroutine {
-            performWhenLoaded(editor) { it.resume(Unit) }
+    internal suspend fun waitForCompleted(editor: Editor) {
+      if (isEditorLoaded(editor)) {
+        return
+      }
+
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val loader = editor.getUserData(ASYNC_LOADER) ?: return@withContext
+        suspendCancellableCoroutine { continuation ->
+          // resume on editor close
+          val handle = loader.coroutineScope.coroutineContext.job.invokeOnCompletion {
+            continuation.resume(Unit)
+          }
+
+          performWhenLoaded(editor) {
+            try {
+              continuation.resume(Unit)
+            }
+            finally {
+              handle.dispose()
+            }
           }
         }
       }
@@ -107,6 +122,10 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       }
       EditorNotifications.getInstance(project).updateNotifications(textEditor.file)
     }
+      .invokeOnCompletion {
+        // make sure that async loaded marked as completed
+        editor.putUserData(ASYNC_LOADER, null)
+      }
   }
 
   private fun startInTests(tasks: List<Deferred<*>>, editor: EditorEx) {

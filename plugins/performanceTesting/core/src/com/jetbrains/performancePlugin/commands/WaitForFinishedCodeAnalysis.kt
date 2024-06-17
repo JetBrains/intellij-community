@@ -12,7 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
-import com.intellij.openapi.fileEditor.impl.waitForFullyLoaded
+import com.intellij.openapi.fileEditor.impl.waitForFullyCompleted
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -35,7 +35,7 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandC
     val project = context.project
     val fileEditorManager = FileEditorManager.getInstance(project)
     for (openFile in fileEditorManager.openFiles) {
-      fileEditorManager.getComposite(openFile)?.waitForFullyLoaded()
+      fileEditorManager.getComposite(openFile)?.let { waitForFullyCompleted(it) }
     }
     project
       .service<WaitForFinishedCodeAnalysisListener.ListenerState>()
