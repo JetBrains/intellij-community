@@ -85,6 +85,11 @@ public class K2CopyTestGenerated extends AbstractK2CopyTest {
         runTest("../../idea/tests/testData/refactoring/copy/copyFIleToDefaultPackage/copyFIleToDefaultPackage.test");
     }
 
+    @TestMetadata("copyFIleToSubpackage/copyFIleToSubpackage.test")
+    public void testCopyFIleToSubpackage_CopyFIleToSubpackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/copy/copyFIleToSubpackage/copyFIleToSubpackage.test");
+    }
+
     @TestMetadata("copyFIleWithPackageAndDirUnmatched/copyFIleWithPackageAndDirUnmatched.test")
     public void testCopyFIleWithPackageAndDirUnmatched_CopyFIleWithPackageAndDirUnmatched() throws Exception {
         runTest("../../idea/tests/testData/refactoring/copy/copyFIleWithPackageAndDirUnmatched/copyFIleWithPackageAndDirUnmatched.test");

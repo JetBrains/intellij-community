@@ -85,6 +85,11 @@ public class CopyTestGenerated extends AbstractCopyTest {
         runTest("testData/refactoring/copy/copyFIleToDefaultPackage/copyFIleToDefaultPackage.test");
     }
 
+    @TestMetadata("copyFIleToSubpackage/copyFIleToSubpackage.test")
+    public void testCopyFIleToSubpackage_CopyFIleToSubpackage() throws Exception {
+        runTest("testData/refactoring/copy/copyFIleToSubpackage/copyFIleToSubpackage.test");
+    }
+
     @TestMetadata("copyFIleWithPackageAndDirUnmatched/copyFIleWithPackageAndDirUnmatched.test")
     public void testCopyFIleWithPackageAndDirUnmatched_CopyFIleWithPackageAndDirUnmatched() throws Exception {
         runTest("testData/refactoring/copy/copyFIleWithPackageAndDirUnmatched/copyFIleWithPackageAndDirUnmatched.test");

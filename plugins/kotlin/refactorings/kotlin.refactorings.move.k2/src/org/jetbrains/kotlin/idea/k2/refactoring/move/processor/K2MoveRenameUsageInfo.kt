@@ -321,10 +321,10 @@ sealed class K2MoveRenameUsageInfo(
             originalFile: KtFile,
             fileCopy: KtFile,
         ) {
-            val inCopy = fileCopy.collectDescendantsOfType<KtSimpleNameExpression>()
-            val original = originalFile.collectDescendantsOfType<KtSimpleNameExpression>()
+            val skipPackageStmt: (KtSimpleNameExpression) -> Boolean = { PsiTreeUtil.getParentOfType(it, KtPackageDirective::class.java) == null }
+            val inCopy = fileCopy.collectDescendantsOfType<KtSimpleNameExpression>().filter(skipPackageStmt)
+            val original = originalFile.collectDescendantsOfType<KtSimpleNameExpression>().filter(skipPackageStmt)
             val internalUsages = original.zip(inCopy).mapNotNull { (o, c) ->
-                if (PsiTreeUtil.getParentOfType(o, KtPackageDirective::class.java) != null) return@mapNotNull null
                 val usageInfo = o.internalUsageInfo
                 val referencedElement = (usageInfo as? Source)?.referencedElement ?: return@mapNotNull null
                 if (!referencedElement.isValid ||
