@@ -1,5 +1,5 @@
 // PROBLEM: "Use of getter method instead of property access syntax"
-// LANGUAGE_VERSION: 2.1
+// COMPILER_ARGUMENTS: -XXLanguage:+ReferencesToSyntheticJavaProperties
 
 fun main() {
     funFunction1(Foo::<caret>getFoo)
