@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
@@ -79,6 +80,8 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     versionCheckerConfig = CE_CLASS_VERSIONS
     baseDownloadUrl = "https://download.jetbrains.com/idea/"
     buildDocAuthoringAssets = true
+
+    qodanaProductProperties = QodanaProductProperties("QDJVMC", "Qodana Community for JVM")
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {

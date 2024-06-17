@@ -330,9 +330,7 @@ class LinuxDistributionBuilder(
     val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.LINUX) {
       "bin/${it.productProperties.baseFileName}64.vmoptions"
     }
-    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.LINUX) {
-      "bin/${it.productProperties.baseFileName}64.vmoptions"
-    }
+    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.LINUX)
 
     val json = generateProductInfoJson(
       relativePathToBin = "bin",

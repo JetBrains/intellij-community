@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -45,6 +46,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 
     mavenArtifacts.forIdeModules = true
+    qodanaProductProperties = QodanaProductProperties("QDPYC", "Qodana Community for Python")
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {

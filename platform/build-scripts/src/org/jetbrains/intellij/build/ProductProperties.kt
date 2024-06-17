@@ -13,6 +13,7 @@ import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
+import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -417,6 +418,12 @@ abstract class ProductProperties {
    * Returns IDs of flavors which the current product has. They will be added to the product-info.json file.  
    */
   open fun getProductFlavors(buildContext: BuildContext): List<String> = emptyList()
+
+  /**
+   * Properties required for running Qodana application with this product.
+   * Should be not null if running Qodana is possible, null otherwise.
+   */
+  var qodanaProductProperties: QodanaProductProperties? = null
 
   /**
    * Additional validation can be performed here for [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.

@@ -427,9 +427,8 @@ internal class WindowsDistributionBuilder(
     val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.WINDOWS) {
       "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
     }
-    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.WINDOWS) {
-      "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
-    }
+    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.WINDOWS)
+
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
       builtinModules = context.builtinModule,

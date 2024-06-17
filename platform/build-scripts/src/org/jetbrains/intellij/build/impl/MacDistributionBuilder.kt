@@ -331,9 +331,7 @@ class MacDistributionBuilder(
     val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.MACOS) {
       "../bin/${it.productProperties.baseFileName}.vmoptions"
     }
-    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.MACOS) {
-      "bin/${it.productProperties.baseFileName}.vmoptions"
-    }
+    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.MACOS)
     return ProductInfoLaunchData(
       os = OsFamily.MACOS.osName,
       arch.dirName,
