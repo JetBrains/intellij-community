@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 object TransformToJavaUtil {
-    fun transformToJavaMemberIfApplicable(declaration: KtNamedDeclaration, packageFqName: FqName, isExtension:Boolean, needStatic: Boolean, targetClass: PsiClass?): Boolean {
+    fun transformToJavaMemberIfApplicable(declaration: KtNamedDeclaration, packageFqName: FqName, isExtension:Boolean, needStatic: Boolean, targetClass: PsiClass): Boolean {
         fun convertToJava(targetClass: PsiClass): PsiMember? {
             val psiFactory = KtPsiFactory(declaration.project)
 
@@ -50,7 +50,7 @@ object TransformToJavaUtil {
 
         if (isExtension) return false
 
-        if (targetClass == null || !targetClass.canRefactorElement()) return false
+        if (!targetClass.canRefactorElement()) return false
 
         val project = declaration.project
 

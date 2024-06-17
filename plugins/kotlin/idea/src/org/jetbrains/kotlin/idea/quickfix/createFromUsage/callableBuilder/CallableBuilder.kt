@@ -983,7 +983,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             }
                             val isExtension = config.isExtension || receiverClassDescriptor !is JavaClassDescriptor
                             val targetClass = if (receiverClassDescriptor is DeclarationDescriptor) DescriptorToSourceUtils.getSourceFromDescriptor(receiverClassDescriptor) as? PsiClass else null
-                            if (!transformToJavaMemberIfApplicable(
+                            if (targetClass == null || !transformToJavaMemberIfApplicable(
                                     newDeclaration,
                                     config.currentFile.packageFqName,
                                     isExtension,
