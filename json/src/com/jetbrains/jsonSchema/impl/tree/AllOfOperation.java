@@ -6,6 +6,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.SchemaResolveState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +17,8 @@ import static com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder.andGro
 public final class AllOfOperation extends Operation {
   private final JsonSchemaService myService;
 
-  public AllOfOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service) {
-    super(sourceNode);
+  public AllOfOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service, @Nullable JsonSchemaNodeExpansionRequest expansionRequest) {
+    super(sourceNode, expansionRequest);
     myService = service;
   }
 
@@ -25,7 +26,7 @@ public final class AllOfOperation extends Operation {
   public void map(final @NotNull Set<JsonSchemaObject> visited) {
     var allOf = mySourceNode.getAllOf();
     assert allOf != null;
-    myChildOperations.addAll(ContainerUtil.map(allOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
+    myChildOperations.addAll(ContainerUtil.map(allOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService, myExpansionRequest)));
   }
 
   private static <T> int maxSize(List<List<T>> items) {
@@ -45,7 +46,10 @@ public final class AllOfOperation extends Operation {
     for (Operation op : myChildOperations) {
       if (!op.myState.equals(SchemaResolveState.normal)) continue;
 
-      final List<? extends JsonSchemaObject> mergedAny = andGroups(op.myAnyOfGroup, myAnyOfGroup);
+      final List<JsonSchemaObject> mergedAny = andGroups(op.myAnyOfGroup, myAnyOfGroup);
+      if (mergedAny.isEmpty() && !op.myAnyOfGroup.isEmpty()) {
+        mergedAny.addAll(op.myAnyOfGroup);
+      }
 
       final List<List<JsonSchemaObject>> mergedExclusive =
         new ArrayList<>(op.myAnyOfGroup.size() * maxSize(myOneOfGroup) +
