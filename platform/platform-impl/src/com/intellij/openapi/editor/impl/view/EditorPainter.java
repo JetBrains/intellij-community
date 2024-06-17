@@ -122,7 +122,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final int mySeparatorHighlightersStartOffset;
     private final int mySeparatorHighlightersEndOffset;
     private final ClipDetector myClipDetector;
-    private final IterationState.CaretData myCaretData;
+    private final CaretData myCaretData;
     private final Int2ObjectMap<IntPair> myVirtualSelectionMap;
     private final Int2ObjectMap<List<LineExtensionData>> myExtensionData = new Int2ObjectOpenHashMap<>(); // key is visual line
     private final Int2ObjectMap<TextAttributes> myBetweenLinesAttributes = new Int2ObjectOpenHashMap<>(); // key is bottom visual line
@@ -158,7 +158,7 @@ public final class EditorPainter implements TextDrawingCallback {
       mySeparatorHighlightersStartOffset = DocumentUtil.getLineStartOffset(myView.visualLineToOffset(myStartVisualLine - 1), myDocument);
       mySeparatorHighlightersEndOffset = DocumentUtil.getLineEndOffset(myView.visualLineToOffset(myEndVisualLine + 2), myDocument);
       myClipDetector = new ClipDetector(myEditor, myClip);
-      myCaretData = myEditor.isPaintSelection() ? IterationState.createCaretData(myEditor) : null;
+      myCaretData = myEditor.isPaintSelection() ? CaretData.createCaretData(myEditor) : null;
       myVirtualSelectionMap = createVirtualSelectionMap(myEditor, myStartVisualLine, myEndVisualLine);
       myLineHeight = myView.getLineHeight();
       myAscent = myView.getAscent();
@@ -1542,7 +1542,7 @@ public final class EditorPainter implements TextDrawingCallback {
                                 visualLineEndOffset == offset ? visualLineEndOffset
                                                               : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
                                 visualLineEndOffset,
-                                IterationState.CaretData.copyOf(myCaretData, visLineIterator.isCustomFoldRegionLine() &&
+                                CaretData.copyOf(myCaretData, visLineIterator.isCustomFoldRegionLine() &&
                                                                              !Registry.is("highlight.caret.line.at.custom.fold")),
                                 false, false, false, false);
       }

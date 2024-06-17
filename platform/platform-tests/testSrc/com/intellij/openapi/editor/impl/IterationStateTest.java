@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.view.CaretData;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.testFramework.EditorTestUtil;
@@ -177,7 +178,7 @@ public class IterationStateTest extends AbstractEditorTest {
 
   private void verifySplitting(boolean checkForegroundColor, StateSegment @NotNull ... expectedSegments) {
     EditorEx editor = (EditorEx)getEditor();
-    IterationState.CaretData caretData = IterationState.createCaretData(editor);
+    CaretData caretData = CaretData.createCaretData(editor);
     IterationState iterationState = new IterationState(editor, 0, editor.getDocument().getTextLength(),
                                                        caretData, false, false, true, false);
     List<StateSegment> actualSegments = new ArrayList<>();
