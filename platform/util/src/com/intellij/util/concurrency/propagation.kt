@@ -12,6 +12,7 @@ import com.intellij.concurrency.client.captureClientIdInCallable
 import com.intellij.concurrency.client.captureClientIdInFunction
 import com.intellij.concurrency.client.captureClientIdInRunnable
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Condition
@@ -29,6 +30,8 @@ import kotlin.Pair
 import kotlin.coroutines.*
 import kotlin.coroutines.cancellation.CancellationException
 import com.intellij.openapi.util.Pair as JBPair
+
+private val LOG = Logger.getInstance("#com.intellij.concurrency")
 
 private object Holder {
   // we need context propagation to be configurable
@@ -150,6 +153,9 @@ private fun doCreateChildContext(unconditionalCancellationPropagation: Boolean):
 
 @OptIn(DelicateCoroutinesApi::class)
 private fun childContinuation(parent: Job): Continuation<Unit> {
+  if (parent.isCompleted) {
+    LOG.warn("Attempt to create a child continuation for an already completed job", Throwable())
+  }
   lateinit var continuation: Continuation<Unit>
   GlobalScope.launch(
     parent + Dispatchers.Unconfined,
