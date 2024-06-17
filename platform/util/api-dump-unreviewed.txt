@@ -32,9 +32,6 @@ f:com.intellij.BundleBase
 - sf:replaceMnemonicAmpersand(java.lang.String):java.lang.String
 - sf:setTranslationConsumer(java.util.function.BiConsumer):V
 - sf:useDefaultValue(java.util.ResourceBundle,java.lang.String,java.lang.String):java.lang.String
-f:com.intellij.BundleUtil
-- <init>():V
-- s:loadLanguageBundle(java.lang.ClassLoader,java.lang.String):java.util.ResourceBundle
 f:com.intellij.Patches
 - sf:IBM_JDK_DISABLE_COLLECTION_BUG:Z
 - sf:JDK_BUG_ID_21275177:Z
@@ -45,7 +42,6 @@ f:com.intellij.Patches
 - sf:TEXT_LAYOUT_IS_SLOW:Z
 - <init>():V
 f:com.intellij.UtilBundle
-- s:loadBundleFromPlugin(java.lang.ClassLoader):V
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 *f:com.intellij.concurrency.ThreadContext
 - sf:captureThreadContext(java.lang.Runnable):java.lang.Runnable

@@ -3,7 +3,6 @@ package com.intellij;
 
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -23,12 +22,5 @@ public final class UtilBundle {
       return ourBundle;
     }
     return ourBundle = ResourceBundle.getBundle(BUNDLE);
-  }
-
-  public static void loadBundleFromPlugin(@Nullable ClassLoader pluginClassLoader) {
-    ResourceBundle bundle = BundleUtil.loadLanguageBundle(pluginClassLoader, BUNDLE);
-    if (bundle != null) {
-      ourBundle = bundle;
-    }
   }
 }

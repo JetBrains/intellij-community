@@ -2885,7 +2885,6 @@ com.intellij.ui.UserActivityProviderComponent
 - a:addChangeListener(javax.swing.event.ChangeListener):V
 - a:removeChangeListener(javax.swing.event.ChangeListener):V
 f:com.intellij.ui.UtilUiBundle
-- s:loadBundleFromPlugin(java.lang.ClassLoader):V
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 com.intellij.ui.WidthBasedLayout
 - a:getPreferredHeight(I):I
