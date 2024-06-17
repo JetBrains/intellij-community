@@ -226,14 +226,14 @@ public final class VfsEventsMerger {
 
   public static void tryLog(@NotNull String eventName, int fileId) {
     tryLog(() -> {
-      return "event=" + eventName +
+      return "e=" + eventName +
              ",id=" + fileId;
     });
   }
 
   public static void tryLog(@NotNull String eventName, @NotNull VirtualFile file, @Nullable Supplier<String> additionalMessage) {
     tryLog(() -> {
-      return "event=" + eventName +
+      return "e=" + eventName +
              (file instanceof VirtualFileWithId fileWithId ? (",id=" + fileWithId.getId()) : (",f=" + file.getPath())) +
              ",flen=" + file.getLength() +
              (additionalMessage == null ? "" : ("," + additionalMessage.get()));
@@ -244,17 +244,17 @@ public final class VfsEventsMerger {
     VirtualFile file = indexedFile.getFile();
 
     tryLog(eventName, file, () -> {
-      String extra = "indexedFile@" + System.identityHashCode(indexedFile);
+      String extra = "f@" + System.identityHashCode(indexedFile);
 
       if (indexedFile instanceof FileContentImpl fileContentImpl) {
-        extra += ",transient=" + fileContentImpl.isTransientContent();
+        extra += ",tr=" + (fileContentImpl.isTransientContent() ? "t" : "f");
       }
 
       if (indexedFile instanceof FileContent fileContent) {
-        extra += ",contentLen(bytes)=" + fileContent.getContent().length;
+        extra += ",contLen(b)=" + fileContent.getContent().length;
         FileType fileType = fileContent.getFileType();
         extra += ",psiLen=" + (fileType instanceof LanguageFileType ? fileContent.getPsiFile().getTextLength() : -1);
-        extra += ",binary=" + fileType.isBinary();
+        extra += ",bin=" + (fileType.isBinary() ? "t" : "f");
       }
 
       if (additionalMessage != null) {
