@@ -39,10 +39,9 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
     private val DBUS_ERROR = library.g_dbus_error_quark()
     private val SECRET_ERROR = library.secret_error_get_quark()
 
-    fun create(schemeName: String): SecretCredentialStore? {
-      if (!pingService()) return null
-      return SecretCredentialStore(schemeName)
-    }
+    fun create(schemeName: String): SecretCredentialStore? =
+      if (pingService()) SecretCredentialStore(schemeName)
+      else null
 
     private fun pingService(): Boolean {
       var attr: Memory? = null
@@ -110,7 +109,7 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
       }
       return credentials
     }
-    catch (e: TimeoutException) {
+    catch (_: TimeoutException) {
       LOG.warn("storage unlock timeout")
       return CANNOT_UNLOCK_KEYCHAIN
     }

@@ -76,7 +76,7 @@ internal class KWalletCredentialStore private constructor(private val connection
     try {
       run()
     }
-    catch (e: NoReply) {
+    catch (_: NoReply) {
       handle()
     }
   }
@@ -125,9 +125,7 @@ private interface KWallet : DBusInterface {
   fun open(wallet: String, wId: Long, appId: String): Int
   fun close(walletId: Int, force: Boolean, appId: String): Int
 
-  fun readPassword(walletId: Int, folder: String, key: String, appId: String): String?
   fun readPasswordList(walletId: Int, folder: String, key: String, appId: String): Map<String, Variant<String>>
-  fun removeEntry(walletId: Int, folder: String, key: String, appId: String): Int
   fun removeFolder(walletId: Int, folder: String, appId: String): Boolean
   fun writePassword(walletId: Int, folder: String, key: String, value: String, appId: String): Int
 }

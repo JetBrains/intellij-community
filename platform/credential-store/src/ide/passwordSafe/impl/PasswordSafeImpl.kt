@@ -175,9 +175,6 @@ class PasswordSafeImpl(coroutineScope: CoroutineScope) : BasePasswordSafe(corout
     get() = service<PasswordSafeSettings>()
 }
 
-@Internal
-fun getDefaultKeePassDbFile(): Path = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
-
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
     return InMemoryCredentialStore()
@@ -197,7 +194,7 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (CredentialStoreManager.getInstance().isSupported(settings.providerType)) {
     if (settings.providerType == ProviderType.KEEPASS) {
       try {
-        val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
+        val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultMainPasswordFile()
         return KeePassCredentialStore(dbFile, getDefaultMainPasswordFile())
       }
       catch (e: IncorrectMainPasswordException) {

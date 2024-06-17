@@ -42,8 +42,9 @@ internal fun splitData(data: String?): Credentials? {
 private const val ESCAPING_CHAR = '\\'
 
 private fun parseString(data: String, @Suppress("SameParameterValue") delimiter: Char): List<String> {
-  val part = StringBuilder()
   val result = ArrayList<String>(2)
+
+  val part = StringBuilder()
   var i = 0
   var c: Char?
   do {
@@ -72,12 +73,11 @@ private fun parseString(data: String, @Suppress("SameParameterValue") delimiter:
   return result
 }
 
-fun createSecureRandom(): SecureRandom {
+fun createSecureRandom(): SecureRandom =
   // do not use SecureRandom.getInstanceStrong()
   // https://tersesystems.com/blog/2015/12/17/the-right-way-to-use-securerandom/
   // it leads to blocking without any advantages
-  return SecureRandom()
-}
+  SecureRandom()
 
 @Synchronized
 internal fun SecureRandom.generateBytes(size: Int): ByteArray {

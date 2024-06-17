@@ -20,17 +20,17 @@ import kotlin.io.path.exists
 
 const val DB_FILE_NAME: String = "c.kdbx"
 
-fun getDefaultKeePassBaseDirectory(): Path = PathManager.getConfigDir()
-
-fun getDefaultMainPasswordFile(): Path = getDefaultKeePassBaseDirectory().resolve(MAIN_KEY_FILE_NAME)
+fun getDefaultMainPasswordFile(): Path = PathManager.getConfigDir().resolve(MAIN_KEY_FILE_NAME)
 
 /**
  * preloadedMainKey [MainKey.value] will be cleared
  */
-internal class KeePassCredentialStore(internal val dbFile: Path, private val mainKeyStorage: MainKeyFileStorage, preloadedDb: KeePassDatabase? = null) : BaseKeePassCredentialStore() {
-  constructor(dbFile: Path, mainKeyFile: Path) : this(dbFile = dbFile,
-                                                      mainKeyStorage = MainKeyFileStorage(mainKeyFile),
-                                                      preloadedDb = null)
+internal class KeePassCredentialStore(
+  internal val dbFile: Path,
+  private val mainKeyStorage: MainKeyFileStorage,
+  preloadedDb: KeePassDatabase? = null
+) : BaseKeePassCredentialStore() {
+  constructor(dbFile: Path, mainKeyFile: Path) : this(dbFile, MainKeyFileStorage(mainKeyFile), preloadedDb = null)
 
   private val isNeedToSave: AtomicBoolean
 
@@ -94,9 +94,6 @@ internal class KeePassCredentialStore(internal val dbFile: Path, private val mai
   }
 
   @Synchronized
-  fun isNeedToSave() = isNeedToSave.get() || db.isDirty
-
-  @Synchronized
   fun deleteFileStorage() {
     try {
       dbFile.delete()
@@ -125,8 +122,7 @@ internal class KeePassCredentialStore(internal val dbFile: Path, private val mai
 class InMemoryCredentialStore : BaseKeePassCredentialStore(), PasswordStorage {
   override val db = KeePassDatabase()
 
-  override fun markDirty() {
-  }
+  override fun markDirty() {}
 }
 
 internal fun generateRandomMainKey(mainKeyEncryptionSpec: EncryptionSpec, secureRandom: SecureRandom): MainKey {

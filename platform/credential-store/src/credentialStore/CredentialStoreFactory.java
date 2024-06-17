@@ -7,6 +7,5 @@ import org.jetbrains.annotations.Nullable;
 public interface CredentialStoreFactory {
   ExtensionPointName<CredentialStoreFactory> CREDENTIAL_STORE_FACTORY = ExtensionPointName.create("com.intellij.credentialStore");
 
-  @Nullable
-  CredentialStore create();
+  @Nullable CredentialStore create();
 }

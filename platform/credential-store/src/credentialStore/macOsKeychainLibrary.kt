@@ -46,7 +46,7 @@ internal class KeyChainCredentialStore : CredentialStore {
         }
 
         val pointer = passwordRef.value ?: return null
-        val password = OneTimeString(pointer.getByteArray(0, passwordSize.get(0)))
+        val password = OneTimeString(pointer.getByteArray(0, passwordSize[0]))
         library.SecKeychainItemFreeContent(null, pointer)
 
         var effectiveAccountName = accountName
