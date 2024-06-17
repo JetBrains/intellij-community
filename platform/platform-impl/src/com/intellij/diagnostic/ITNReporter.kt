@@ -149,9 +149,7 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
     val content = DiagnosticBundle.message("error.report.gratitude")
     val title = DiagnosticBundle.message("error.report.submitted")
     val notification = Notification("Error Report", title, content, NotificationType.INFORMATION).setImportant(false)
-    if (reportUrl != null) {
-      notification.addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.report.view.action")) { BrowserUtil.browse(reportUrl) })
-    }
+    notification.addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.report.view.action")) { BrowserUtil.browse(reportUrl) })
     notification.notify(project)
   }
 
