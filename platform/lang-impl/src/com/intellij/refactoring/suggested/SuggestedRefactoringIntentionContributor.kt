@@ -120,7 +120,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     @IntentionName private val text: String,
     private val showReviewBalloon: Boolean
   ) : IntentionAction, PriorityAction {
-    override fun getPriority() = PriorityAction.Priority.TOP
+    override fun getPriority() = PriorityAction.Priority.HIGH
 
     @NonNls
     override fun getFamilyName() = "Suggested Refactoring"
