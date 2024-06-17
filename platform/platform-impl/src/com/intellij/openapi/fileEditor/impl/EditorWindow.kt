@@ -13,7 +13,10 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -24,7 +27,10 @@ import com.intellij.openapi.project.ReadmeShownUsageCollector.README_OPENED_ON_S
 import com.intellij.openapi.project.ReadmeShownUsageCollector.logReadmeClosedIn
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.ui.Splitter
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.KeyWithDefaultValue
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -55,6 +61,8 @@ import java.awt.geom.RoundRectangle2D
 import java.time.Instant
 import java.util.function.Function
 import javax.swing.*
+import kotlin.collections.component1
+import kotlin.collections.component2
 import kotlin.math.roundToInt
 
 private val LOG = logger<EditorWindow>()
@@ -100,7 +108,7 @@ class EditorWindow internal constructor(
   val isDisposed: Boolean
     get() = !coroutineScope.isActive
 
-  private val removedTabs = ArrayDeque<Pair<String, FileEditorOpenOptions>>()
+  private val removedTabs = ArrayDeque<kotlin.Pair<String, FileEditorOpenOptions>>()
 
   val isShowing: Boolean
     get() = component.isShowing
@@ -606,12 +614,12 @@ class EditorWindow internal constructor(
   fun restoreClosedTab() {
     assert(hasClosedTabs()) { "Nothing to restore" }
     val info = removedTabs.last()
-    val file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst()) ?: return
+    val file = VirtualFileManager.getInstance().findFileByUrl(info.first) ?: return
     manager.openFileImpl(
       window = this,
       _file = file,
       entry = null,
-      options = info.getSecond().copy(selectAsCurrent = true, requestFocus = true),
+      options = info.second.copy(selectAsCurrent = true, requestFocus = true),
     )
   }
 
@@ -625,6 +633,7 @@ class EditorWindow internal constructor(
     closeFile(file = file, composite = composite, disposeIfNeeded = disposeIfNeeded)
   }
 
+  @RequiresEdt
   internal fun closeFile(file: VirtualFile, composite: EditorComposite, disposeIfNeeded: Boolean = true) {
     runBulkTabChange(owner) {
       val fileEditorManager = manager
@@ -636,7 +645,7 @@ class EditorWindow internal constructor(
         if (componentIndex >= 0) {
           val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
 
-          removedTabs.addLast(Pair(file.url, FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned)))
+          removedTabs.addLast(file.url to FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned))
           if (removedTabs.size >= tabLimit) {
             removedTabs.removeFirst()
           }
@@ -644,6 +653,7 @@ class EditorWindow internal constructor(
           tabbedPane.removeTabAt(componentIndex, indexToSelect)
           fileEditorManager.disposeComposite(composite)
         }
+
         if (disposeIfNeeded && tabCount == 0) {
           removeFromSplitter()
           logEmptyStateIfMainSplitter(cause = EmptyStateCause.ALL_TABS_CLOSED)
@@ -660,18 +670,15 @@ class EditorWindow internal constructor(
       finally {
         val openedTs = file.getUserData(README_OPENED_ON_START_TS)
         if (openedTs != null) {
+          file.putUserData(README_OPENED_ON_START_TS, null)
           val wasOpenedMillis = Instant.now().toEpochMilli() - openedTs.toEpochMilli()
           logReadmeClosedIn(wasOpenedMillis)
-          file.removeUserData(README_OPENED_ON_START_TS)
         }
 
         fileEditorManager.removeSelectionRecord(file = file, window = this)
-        (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
-        fileEditorManager.notifyPublisher {
-          val project = fileEditorManager.project
-          if (!project.isDisposed) {
-            project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileClosed(fileEditorManager, file)
-          }
+        val project = fileEditorManager.project
+        if (!project.isDisposed) {
+          project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileClosed(fileEditorManager, file)
         }
         owner.afterFileClosed(file)
       }
@@ -720,13 +727,13 @@ class EditorWindow internal constructor(
     dispose()
   }
 
-  @Suppress("MemberVisibilityCanBePrivate")
   internal fun computeIndexToSelect(fileBeingClosed: VirtualFile, fileIndex: Int): Int {
     val currentlySelectedIndex = tabbedPane.selectedIndex
     if (currentlySelectedIndex != fileIndex) {
       // if the file being closed is not currently selected, keep the currently selected file open
       return currentlySelectedIndex
     }
+
     val uiSettings = UISettings.getInstance()
     if (uiSettings.state.activeMruEditorOnClose) {
       // try to open last visited file

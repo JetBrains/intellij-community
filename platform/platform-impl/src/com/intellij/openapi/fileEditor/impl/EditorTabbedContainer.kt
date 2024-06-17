@@ -176,7 +176,7 @@ class EditorTabbedContainer internal constructor(
     if (info.isHidden || !window.manager.project.isOpen || window.isDisposed) {
       toSelect = null
     }
-    editorTabs.removeTab(info, toSelect)
+    editorTabs.removeTab(info = info, forcedSelectionTransfer = toSelect)
   }
 
   val selectedIndex: Int
@@ -283,29 +283,14 @@ class EditorTabbedContainer internal constructor(
   }
 }
 
-internal class DockableEditor(
+internal class DockableEditor @JvmOverloads constructor(
   @JvmField val img: Image?,
   @JvmField val file: VirtualFile,
   private val presentation: Presentation,
   private val preferredSize: Dimension,
   @JvmField val isPinned: Boolean,
-  @JvmField val isNorthPanelAvailable: Boolean,
+  @JvmField val isNorthPanelAvailable: Boolean = isNorthPanelVisible(UISettings.getInstance()),
 ) : DockableContent<VirtualFile?> {
-  constructor(
-    img: Image,
-    file: VirtualFile,
-    presentation: Presentation,
-    preferredSize: Dimension,
-    isFilePinned: Boolean,
-  ) : this(
-    img = img,
-    file = file,
-    presentation = presentation,
-    preferredSize = preferredSize,
-    isPinned = isFilePinned,
-    isNorthPanelAvailable = isNorthPanelVisible(UISettings.getInstance()),
-  )
-
   override fun getKey(): VirtualFile = file
 
   override fun getPreviewImage(): Image? = img
@@ -448,7 +433,7 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
     val isPinnedAtStart = info.isPinned
     info.isHidden = true
     if (previousSelection != null) {
-      editorTabs.select(previousSelection, true)
+      editorTabs.select(info = previousSelection, requestFocus = true)
     }
 
     val file = info.`object` as VirtualFile
@@ -485,8 +470,9 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
       source.isHidden = false
     }
     else {
-      file!!.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, true)
-      window.manager.closeFile(file!!, window)
+      val file = file!!
+      file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, true)
+      window.manager.closeFile(window = window, composite = source.composite, runChecks = false)
     }
     session!!.process(event)
     if (!copy) {
@@ -740,14 +726,14 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
 
 internal fun createDockableEditor(
   image: Image?,
-  file: VirtualFile?,
+  file: VirtualFile,
   presentation: Presentation,
   window: EditorWindow,
   isNorthPanelAvailable: Boolean,
 ): DockableEditor {
   return DockableEditor(
     img = image,
-    file = file!!,
+    file = file,
     presentation = presentation,
     preferredSize = window.size,
     isPinned = window.isFilePinned(file),

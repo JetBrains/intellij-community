@@ -40,6 +40,7 @@ import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import java.awt.Component
 import java.awt.Graphics
@@ -49,6 +50,7 @@ import java.awt.event.MouseEvent
 import java.util.function.Predicate
 import javax.swing.*
 
+@ApiStatus.Internal
 @State(name = "DockManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], getStateRequiresEdt = true)
 class DockManagerImpl(@JvmField internal val project: Project, private val coroutineScope: CoroutineScope)
   : DockManager(), PersistentStateComponent<Element> {
@@ -84,9 +86,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     private fun getWindowDimensionKey(file: VirtualFile): String? = WINDOW_DIMENSION_KEY.get(file)
 
     @JvmStatic
-    fun isNorthPanelVisible(uiSettings: UISettings): Boolean {
-      return uiSettings.showNavigationBar && !uiSettings.presentationMode
-    }
+    fun isNorthPanelVisible(uiSettings: UISettings): Boolean = uiSettings.showNavigationBar && !uiSettings.presentationMode
 
     @JvmStatic
     fun isNorthPanelAvailable(editors: List<FileEditor>): Boolean {

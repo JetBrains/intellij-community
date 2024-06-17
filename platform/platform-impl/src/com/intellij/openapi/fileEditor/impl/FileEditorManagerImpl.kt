@@ -753,7 +753,6 @@ open class FileEditorManagerImpl(
 
     openFileSetModificationCount.increment()
     window.closeFile(file = file, composite = composite)
-    selectionHistory.removeRecord(file, window)
     return true
   }
 

@@ -9153,7 +9153,6 @@ com.intellij.ui.docking.DockContainerFactory$Persistent
 - a:loadContainerFrom(org.jdom.Element):com.intellij.ui.docking.DockContainer
 a:com.intellij.ui.docking.DockManager
 - <init>():V
-- a:createDragSession(java.awt.event.MouseEvent,com.intellij.ui.docking.DockableContent):com.intellij.ui.docking.DragSession
 - a:getContainerFor(java.awt.Component,java.util.function.Predicate):com.intellij.ui.docking.DockContainer
 - a:getContainers():java.util.Set
 - a:getDimensionKeyForFocus(java.lang.String):java.lang.String
@@ -9170,10 +9169,6 @@ com.intellij.ui.docking.DockableContent
 - a:getPreviewImage():java.awt.Image
 com.intellij.ui.docking.DockableContentContainer
 - a:add(com.intellij.ui.awt.RelativePoint):V
-com.intellij.ui.docking.DragSession
-- a:cancel():V
-- a:getResponse(java.awt.event.MouseEvent):com.intellij.ui.docking.DockContainer$ContentResponse
-- a:process(java.awt.event.MouseEvent):V
 com.intellij.ui.dsl.builder.ButtonsGroup
 - com.intellij.ui.dsl.builder.RowsRange
 - a:bind(com.intellij.ui.dsl.builder.MutableProperty,java.lang.Class):com.intellij.ui.dsl.builder.ButtonsGroup

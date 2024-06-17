@@ -2363,15 +2363,19 @@ open class JBTabsImpl internal constructor(
   override fun getPresentation(): JBTabsPresentation = this
 
   override fun removeTab(info: TabInfo?): ActionCallback {
-    return doRemoveTab(info, null, false)
+    return removeTab(info = info, forcedSelectionTransfer = null)
   }
 
   override fun removeTab(info: TabInfo, forcedSelectionTransfer: TabInfo?) {
-    doRemoveTab(info = info, forcedSelectionTransfer = forcedSelectionTransfer, isDropTarget = false)
+    removeTab(info = info, forcedSelectionTransfer = forcedSelectionTransfer)
   }
 
   @RequiresEdt
-  private fun doRemoveTab(info: TabInfo?, forcedSelectionTransfer: TabInfo?, isDropTarget: Boolean): ActionCallback {
+  internal fun removeTab(
+    info: TabInfo?,
+    forcedSelectionTransfer: TabInfo?,
+    isDropTarget: Boolean = false,
+  ): ActionCallback {
     if (removeNotifyInProgress) {
       LOG.warn(IllegalStateException("removeNotify in progress"))
     }
@@ -3157,15 +3161,13 @@ open class JBTabsImpl internal constructor(
   }
 
   override fun resetDropOver(tabInfo: TabInfo) {
-    if (dropInfo != null) {
-      val dropInfo = dropInfo!!
-      this.dropInfo = null
-      showDropLocation = true
-      forcedRelayout = true
-      dropInfoIndex = -1
-      dropSide = -1
-      doRemoveTab(info = dropInfo, forcedSelectionTransfer = null, isDropTarget = true)
-    }
+    val dropInfo = dropInfo ?: return
+    this.dropInfo = null
+    showDropLocation = true
+    forcedRelayout = true
+    dropInfoIndex = -1
+    dropSide = -1
+    removeTab(info = dropInfo, forcedSelectionTransfer = null, isDropTarget = true)
   }
 
   override fun startDropOver(tabInfo: TabInfo, point: RelativePoint): Image {

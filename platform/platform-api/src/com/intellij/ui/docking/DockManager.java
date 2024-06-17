@@ -4,6 +4,7 @@ package com.intellij.ui.docking;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ public abstract class DockManager {
     return project.getService(DockManager.class);
   }
 
+  @ApiStatus.Internal
   public abstract DragSession createDragSession(MouseEvent mouseEvent, @NotNull DockableContent<?> content);
 
   public abstract @NotNull Set<@NotNull DockContainer> getContainers();
