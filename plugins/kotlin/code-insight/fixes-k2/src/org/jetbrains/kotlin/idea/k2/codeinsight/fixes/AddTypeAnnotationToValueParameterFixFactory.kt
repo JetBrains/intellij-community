@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.types.Variance
 internal object AddTypeAnnotationToValueParameterFixFactory {
 
     val addTypeAnnotationToValueParameterFixFactory =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ValueParameterWithNoTypeAnnotation ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ValueParameterWithoutExplicitType ->
             val element = diagnostic.psi
             val defaultValue = element.defaultValue ?: return@ModCommandBased emptyList()
             val elementContext = getTypeName(element, defaultValue) ?: return@ModCommandBased emptyList()
