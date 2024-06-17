@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ex.JobDescriptor
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
@@ -39,13 +40,15 @@ class RunBlockingInspection() : GlobalInspectionTool() {
             globalContext.incrementJobDoneAmount(jobDescriptor, KotlinBundle.message("inspection.runblocking.analysis.graphbuilding.progress", it))
         })
         runBlockingProblems.forEach {
-            val el = it.element
-            val refEntity = globalContext.refManager.getReference(el.containingFile)
-            val expr: PsiElement = (el as? KtCallExpression)?.calleeExpression ?: el
-            problemDescriptionsProcessor.addProblemElement(
-                refEntity,
-                RunBlockingProblemDescriptor(expr, it.stacTrace)
-            )
+            runReadAction {
+                val el = it.element
+                val refEntity = globalContext.refManager.getReference(el.containingFile)
+                val expr: PsiElement = (el as? KtCallExpression)?.calleeExpression ?: el
+                problemDescriptionsProcessor.addProblemElement(
+                    refEntity,
+                    RunBlockingProblemDescriptor(expr, it.stacTrace)
+                )
+            }
         }
     }
 
@@ -67,6 +70,7 @@ class RunBlockingInspection() : GlobalInspectionTool() {
     }
 
     override fun isGraphNeeded(): Boolean = false
+    override fun isReadActionNeeded() = false
     
     private fun analyzeProject(project: Project, scope: AnalysisScope?, totalFilesTodo: (Int) -> Unit, incrementFilesDone: (String) -> Unit): List<RunBlockingProblem> {
         val relevantFiles = getRelevantFiles(project, scope)
@@ -87,12 +91,14 @@ class RunBlockingInspection() : GlobalInspectionTool() {
 
     private fun checkRunBlockingsForFile(file: VirtualFile, project: Project, rbGraph: RBGraph): List<RunBlockingProblem> {
         val rbs: MutableList<RunBlockingProblem> = mutableListOf()
-        MyPsiUtils.findRunBlockings(file, project).forEach { rb ->
-            val stackTrace = analyzeRunBlocking(rb, rbGraph)
-            if (stackTrace != null) {
-                rbs.add(
-                    RunBlockingProblem(rb, stackTrace)
-                )
+        runReadAction {
+            MyPsiUtils.findRunBlockings(file, project).forEach { rb ->
+                val stackTrace = analyzeRunBlocking(rb, rbGraph)
+                if (stackTrace != null) {
+                    rbs.add(
+                        RunBlockingProblem(rb, stackTrace)
+                    )
+                }
             }
         }
         return rbs
@@ -171,10 +177,12 @@ class RunBlockingInspection() : GlobalInspectionTool() {
     private fun getRelevantFiles(project: Project, scope: AnalysisScope?): List<VirtualFile> {
         val relevantFiles = mutableListOf<VirtualFile>()
         ProjectFileIndex.getInstance(project).iterateContent {
-            if (it.fileType is KotlinFileType && scope?.contains(it) != false) {
-                relevantFiles.add(it)
+            runReadAction {
+                if (it.fileType is KotlinFileType && scope?.contains(it) != false) {
+                    relevantFiles.add(it)
+                }
+                true
             }
-            true
         }
         return relevantFiles
     }

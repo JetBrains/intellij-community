@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.rbgraph
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -64,20 +65,22 @@ internal class GraphBuilder(private val project: Project) {
     fun buildGraph(): RBGraph {
         totalFilesTodo(relevantFiles.size)
         relevantFiles.forEachIndexed() { index, file ->
-            incrementFilesDone(file.name)
-            // Search kotlin file for runBlocking calls, and generate tree
-            MyPsiUtils.findRunBlockings(file, project).forEach { rb ->
-                createSubtree(rb)
-                rbFileFound(file)
-            }
-            // Search for async, and launch builders in case globalscope or android scopes are used
-            MyPsiUtils.findNonBlockingBuilders(file, project).forEach { builder ->
-                createSubtree(builder)
-            }
-            // suspend fun for completeness
-            MyPsiUtils.findSuspendFuns(file, project).forEach { susFun ->
-                if (susFun is KtNamedFunction && susFun.fqName != null)
-                    exploreFunDeclaration(susFun, rbGraph.getOrCreateFunction(susFun))
+            runReadAction {
+                incrementFilesDone(file.name)
+                // Search kotlin file for runBlocking calls, and generate tree
+                MyPsiUtils.findRunBlockings(file, project).forEach { rb ->
+                    createSubtree(rb)
+                    rbFileFound(file)
+                }
+                // Search for async, and launch builders in case globalscope or android scopes are used
+                MyPsiUtils.findNonBlockingBuilders(file, project).forEach { builder ->
+                    createSubtree(builder)
+                }
+                // suspend fun for completeness
+                MyPsiUtils.findSuspendFuns(file, project).forEach { susFun ->
+                    if (susFun is KtNamedFunction && susFun.fqName != null)
+                        exploreFunDeclaration(susFun, rbGraph.getOrCreateFunction(susFun))
+                }
             }
         }
         return rbGraph
