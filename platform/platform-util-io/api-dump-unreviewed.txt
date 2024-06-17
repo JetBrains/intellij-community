@@ -464,7 +464,6 @@ f:com.intellij.util.Urls
 - sf:equalsIgnoreParameters(com.intellij.util.Url,java.util.Collection,Z):Z
 - bs:equalsIgnoreParameters$default(com.intellij.util.Url,java.util.Collection,Z,I,java.lang.Object):Z
 - sf:newFromEncoded(java.lang.String):com.intellij.util.Url
-- sf:newFromIdea(java.lang.CharSequence):com.intellij.util.Url
 - sf:newFromVirtualFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.Url
 - sf:newHttpUrl(java.lang.String,java.lang.String):com.intellij.util.Url
 - sf:newHttpUrl(java.lang.String,java.lang.String,java.lang.String):com.intellij.util.Url
@@ -476,9 +475,7 @@ f:com.intellij.util.Urls
 - sf:newUrl(java.lang.String,java.lang.String,java.lang.String,java.lang.String):com.intellij.util.Url
 - sf:newUrl(java.lang.String,java.lang.String,java.lang.String,java.util.Map):com.intellij.util.Url
 - sf:parse(java.lang.String,Z):com.intellij.util.Url
-- sf:parseAsJavaUriWithoutParameters(java.lang.String):java.net.URI
 - sf:parseEncoded(java.lang.String):com.intellij.util.Url
-- sf:parseFromIdea(java.lang.CharSequence):com.intellij.util.Url
 - sf:toUriWithoutParameters(com.intellij.util.Url):java.net.URI
 f:com.intellij.util.io.EnumeratorLongDescriptor
 - com.intellij.util.io.KeyDescriptor

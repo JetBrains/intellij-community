@@ -455,3 +455,25 @@ com.intellij.util.Url
 - a:toDecodedForm():java.lang.String
 - a:toExternalForm():java.lang.String
 - a:trimParameters():com.intellij.util.Url
+f:com.intellij.util.Urls
+- sf:INSTANCE:com.intellij.util.Urls
+- sf:encodeParameters(java.util.Map,java.lang.StringBuilder):V
+- f:equals(com.intellij.util.Url,com.intellij.util.Url,Z,Z):Z
+- f:equalsIgnoreParameters(com.intellij.util.Url,com.intellij.openapi.vfs.VirtualFile):Z
+- sf:equalsIgnoreParameters(com.intellij.util.Url,java.util.Collection):Z
+- sf:equalsIgnoreParameters(com.intellij.util.Url,java.util.Collection,Z):Z
+- bs:equalsIgnoreParameters$default(com.intellij.util.Url,java.util.Collection,Z,I,java.lang.Object):Z
+- sf:newFromEncoded(java.lang.String):com.intellij.util.Url
+- sf:newFromVirtualFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.Url
+- sf:newHttpUrl(java.lang.String,java.lang.String):com.intellij.util.Url
+- sf:newHttpUrl(java.lang.String,java.lang.String,java.lang.String):com.intellij.util.Url
+- sf:newLocalFileUrl(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.Url
+- sf:newLocalFileUrl(java.lang.String):com.intellij.util.Url
+- sf:newUnparsable(java.lang.String):com.intellij.util.Url
+- sf:newUri(java.lang.String,java.lang.String):com.intellij.util.Url
+- sf:newUrl(java.lang.String,java.lang.String,java.lang.String):com.intellij.util.Url
+- sf:newUrl(java.lang.String,java.lang.String,java.lang.String,java.lang.String):com.intellij.util.Url
+- sf:newUrl(java.lang.String,java.lang.String,java.lang.String,java.util.Map):com.intellij.util.Url
+- sf:parse(java.lang.String,Z):com.intellij.util.Url
+- sf:parseEncoded(java.lang.String):com.intellij.util.Url
+- sf:toUriWithoutParameters(com.intellij.util.Url):java.net.URI
