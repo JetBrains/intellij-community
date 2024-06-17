@@ -47,7 +47,7 @@ class ChangeSignatureCodeVisionProvider : CodeVisionProvider<Unit> {
                                     editor,
                                     null,
                                     mouseEvent?.point,
-                                    false,
+                                    true,
                                     ActionPlaces.EDITOR_INLAY)
       }, RefactoringBundle.message("change.signature.code.vision.name"), null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION, true)
     }
