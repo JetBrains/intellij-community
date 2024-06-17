@@ -685,7 +685,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                     !getSelectedKotlinJpsPluginVersion().equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)) ||
                     !additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments());
 
-            if (shouldInvalidateCaches) {
+            if (!project.isDefault() && shouldInvalidateCaches) {
                 ApplicationUtilsKt.runWriteAction(
                         new Function0<>() {
                             @Override
@@ -745,7 +745,9 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             KotlinCompilerSettings.getInstance(project).setSettings(compilerSettings);
         }
 
-        BuildManager.getInstance().clearState(project);
+        if (!project.isDefault()) {
+            BuildManager.getInstance().clearState(project);
+        }
     }
 
     @Override
