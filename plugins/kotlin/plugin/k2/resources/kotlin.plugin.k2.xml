@@ -86,8 +86,8 @@
                  restartRequired="false"/>
 
     <registryKey key="kotlin.k2.show.fir.statusbar.icon"
-                 description="Show K2 FIR tree icon in the status bar"
-                 defaultValue="false"
+                 description="Show K2 mode tree icon in the status bar"
+                 defaultValue="true"
                  restartRequired="false"/>
 
     <registryKey

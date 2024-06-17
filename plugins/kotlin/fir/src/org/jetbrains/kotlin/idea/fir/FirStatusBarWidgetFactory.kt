@@ -10,11 +10,20 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.platform.feedback.impl.OnDemandFeedbackResolver
+import com.intellij.ui.ClickListener
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.K2FeedbackSurvey
+import org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.K2UserTracker
+import java.awt.event.MouseEvent
 import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.SwingUtilities
 
 private class FirStatusBarWidgetFactory : StatusBarWidgetFactory {
     override fun getId(): String = ID
@@ -22,18 +31,18 @@ private class FirStatusBarWidgetFactory : StatusBarWidgetFactory {
     override fun getDisplayName(): String = DISPLAY_NAME
 
     override fun isAvailable(project: Project): Boolean {
-        return Registry.`is`(REGISTRY_KEY, /* defaultValue = */ false)
+        return Registry.`is`(REGISTRY_KEY, /* defaultValue = */ true)
     }
 
-    override fun createWidget(project: Project): StatusBarWidget = Widget()
+    override fun createWidget(project: Project): StatusBarWidget = Widget(project)
 
     companion object {
-        const val ID = "kotlin.fir.ide"
-
-        @NlsSafe
-        private const val DISPLAY_NAME = "K2 mode"
+        const val ID = "kotlin.k2.mode"
     }
 }
+
+@NlsSafe
+private const val DISPLAY_NAME = "Kotlin plugin K2 mode"
 
 private class FirStatusBarWidgetListener : RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {
@@ -50,9 +59,43 @@ private class FirStatusBarWidgetListener : RegistryValueListener {
 
 private const val REGISTRY_KEY: String = "kotlin.k2.show.fir.statusbar.icon"
 
-private class Widget : StatusBarWidget, StatusBarWidget.IconPresentation {
-    override fun getPresentation(): StatusBarWidget.WidgetPresentation = this
+private class Widget(private val project: Project) : CustomStatusBarWidget, StatusBarWidget.IconPresentation {
+    private var icon: JLabel? = null
+
     override fun ID(): String = FirStatusBarWidgetFactory.ID
-    override fun getTooltipText(): String = "K2 mode"
+    override fun getPresentation(): StatusBarWidget.WidgetPresentation = this
+    override fun getTooltipText(): String = DISPLAY_NAME
     override fun getIcon(): Icon = KotlinIcons.FIR
+    override fun getComponent(): JComponent {
+        val icon = JLabel()
+            .apply {
+                object : ClickListener() {
+                    override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+                        if (SwingUtilities.isLeftMouseButton(event)) {
+                            showFeedbackForm()
+                        }
+                        return true
+                    }
+
+                }.installOn(this)
+            }.apply {
+                toolTipText = DISPLAY_NAME
+                icon = KotlinIcons.FIR
+            }
+        this.icon = icon
+        return icon
+    }
+
+    fun showFeedbackForm() {
+        val userTracker = K2UserTracker.getInstance()
+        userTracker.forced = true
+        OnDemandFeedbackResolver.getInstance()
+            .showFeedbackNotification(K2FeedbackSurvey::class, project) {
+                userTracker.forced = false
+            }
+    }
+
+    override fun dispose() {
+        icon = null
+    }
 }

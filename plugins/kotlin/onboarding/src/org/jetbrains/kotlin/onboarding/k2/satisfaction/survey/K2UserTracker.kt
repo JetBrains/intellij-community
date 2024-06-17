@@ -42,6 +42,8 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
         }
     }
 
+    var forced: Boolean = false
+
     internal var switchedToK1 = false
     internal var forUnitTests = false
     internal var k2PluginModeForTests = false // Want the test to not depend on a real K1/K2 mode
@@ -69,6 +71,7 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
     }
 
     internal fun shouldShowK2FeedbackDialog(project: Project): Boolean {
+        if (forced) return true
 
         LOG.debug("State: ${state}")
         if (!Registry.`is`("test.k2.feedback.survey", false)) {
