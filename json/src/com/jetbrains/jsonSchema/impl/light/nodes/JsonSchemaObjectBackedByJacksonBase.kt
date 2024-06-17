@@ -6,13 +6,16 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.keyFMap.KeyFMap
 import com.jetbrains.jsonSchema.JsonPointerUtil
+import com.jetbrains.jsonSchema.extension.JsonSchemaValidation
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.*
 import com.jetbrains.jsonSchema.impl.light.*
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectLegacyAdapter
-import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
 import com.jetbrains.jsonSchema.impl.light.legacy.isOldParserAwareOfFieldName
 import com.jetbrains.jsonSchema.impl.light.legacy.tryReadEnumMetadata
+import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -25,16 +28,21 @@ private val PATTERN_PROPERTIES_KEY = Key<PatternProperties>("patternProperties")
 
 private const val INVALID_PATTERN_FALLBACK = "__invalid_ij_pattern"
 
-internal abstract class JsonSchemaObjectBackedByJacksonBase(
+@ApiStatus.Internal
+abstract class JsonSchemaObjectBackedByJacksonBase(
   override val rawSchemaNode: JsonNode,
   private val jsonPointer: String
 ) : JsonSchemaObjectLegacyAdapter(), JsonSchemaNodePointer<JsonNode> {
 
-  abstract fun getRootSchemaObject(): RootJsonSchemaObjectBackedByJackson
+  abstract override fun getRootSchemaObject(): RootJsonSchemaObjectBackedByJackson
+
+  private fun getSchemaInterpretationStrategy(): JsonSchemaInterpretationStrategy {
+    return getRootSchemaObject().schemaInterpretationStrategy
+  }
 
   private var myCompositeObjectsCache = AtomicReference(KeyFMap.EMPTY_MAP)
 
-  protected fun <V : Any> getOrComputeValue(key: Key<V>, computation: () -> V): V {
+  protected fun <V : Any> getOrComputeValue(key: Key<V>, idempotentComputation: () -> V): V {
     var existingMap: KeyFMap
     var newValue: V?
 
@@ -42,7 +50,7 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
       existingMap = myCompositeObjectsCache.get()
       newValue = existingMap[key]
       if (newValue == null) {
-        val mapWithNewValue = existingMap.plus(key, computation())
+        val mapWithNewValue = existingMap.plus(key, idempotentComputation())
         if (myCompositeObjectsCache.compareAndSet(existingMap, mapWithNewValue)) {
           newValue = mapWithNewValue.get(key)
         }
@@ -55,7 +63,15 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
 
   private fun createResolvableChild(vararg childNodeRelativePointer: String): JsonSchemaObjectBackedByJacksonBase? {
     // delegate to the root schema's factory - it is the only entry point for objects instantiation and caching
-    return getRootSchemaObject().schemaObjectFactory.getChildSchemaObjectByName(this, *childNodeRelativePointer)
+    return getRootSchemaObject().getChildSchemaObjectByName(this, *childNodeRelativePointer)
+  }
+
+  override fun getValidations(type: JsonSchemaType?, value: JsonValueAdapter): Iterable<JsonSchemaValidation> {
+    return getSchemaInterpretationStrategy().getValidations(this, type, value).asIterable()
+  }
+
+  override fun getSchema(): String? {
+    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, SCHEMA_KEYWORD_INVARIANT)
   }
 
   override fun getPointer(): String {
@@ -70,6 +86,12 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
     return getRootSchemaObject().rawFile
   }
 
+  override fun hasChildFieldsExcept(namesToSkip: Array<String>): Boolean {
+    return JacksonSchemaNodeAccessor.readNodeKeys(rawSchemaNode)
+      .orEmpty()
+      .any { it !in namesToSkip }
+  }
+
   override fun hasChildNode(vararg childNodeName: String): Boolean {
     return JacksonSchemaNodeAccessor.hasChildNode(rawSchemaNode, *childNodeName)
   }
@@ -78,21 +100,23 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
     return JacksonSchemaNodeAccessor.readUntypedNodeValueAsText(rawSchemaNode, *childNodeName)
   }
 
+  override fun getConstantSchema(): Boolean? {
+    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode)
+  }
+
   override fun isValidByExclusion(): Boolean {
     return true
   }
 
-  override fun resolveId(id: String): String? {
-    return getRootSchemaObject().resolveId(id)
-  }
-
   override fun getDeprecationMessage(): String? {
-    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, DEPRECATION)
+    val schemaFeature = getSchemaInterpretationStrategy().deprecationKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, schemaFeature)
   }
 
   override fun getTypeVariants(): Set<JsonSchemaType?>? {
+    val schemaFeature = getSchemaInterpretationStrategy().typeKeyword ?: return null
     return getOrComputeValue(TYPE_VARIANTS_KEY) {
-      JacksonSchemaNodeAccessor.readUntypedNodesCollection(rawSchemaNode, TYPE)
+      JacksonSchemaNodeAccessor.readUntypedNodesCollection(rawSchemaNode, schemaFeature)
         .orEmpty()
         .filterIsInstance<String>()
         .map(String::asUnquotedString)
@@ -102,48 +126,59 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
   }
 
   override fun getType(): JsonSchemaType? {
-    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, TYPE)
+    val schemaFeature = getSchemaInterpretationStrategy().typeKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, schemaFeature)
       ?.let(JsonSchemaReader::parseType)
   }
 
   override fun getMultipleOf(): Number? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, MULTIPLE_OF)
+    val schemaFeature = getSchemaInterpretationStrategy().multipleOfKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature)
   }
 
   override fun getMaximum(): Number? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, MAXIMUM)
+    val schemaFeature = getSchemaInterpretationStrategy().maximumKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature)
   }
 
   override fun isExclusiveMaximum(): Boolean {
-    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, EXCLUSIVE_MAXIMUM) ?: false
+    val schemaFeature = getSchemaInterpretationStrategy().exclusiveMaximumKeyword ?: return false
+    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, schemaFeature) ?: false
   }
 
   override fun getExclusiveMaximumNumber(): Number? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, EXCLUSIVE_MAXIMUM)
+    val schemaFeature = getSchemaInterpretationStrategy().exclusiveMaximumKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature)
   }
 
   override fun getExclusiveMinimumNumber(): Number? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, EXCLUSIVE_MINIMUM)
+    val schemaFeature = getSchemaInterpretationStrategy().exclusiveMinimumKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature)
   }
 
   override fun getMinimum(): Number? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, MINIMUM)
+    val schemaFeature = getSchemaInterpretationStrategy().minimumKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature)
   }
 
   override fun isExclusiveMinimum(): Boolean {
-    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, EXCLUSIVE_MINIMUM) ?: false
+    val schemaFeature = getSchemaInterpretationStrategy().exclusiveMaximumKeyword ?: return false
+    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, schemaFeature) ?: false
   }
 
   override fun getMaxLength(): Int? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, MAX_LENGTH) as? Int
+    val schemaFeature = getSchemaInterpretationStrategy().maxLengthKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature) as? Int
   }
 
   override fun getMinLength(): Int? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, MIN_LENGTH) as? Int
+    val schemaFeature = getSchemaInterpretationStrategy().minLengthKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature) as? Int
   }
 
   override fun getPattern(): String? {
-    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, PATTERN)
+    val schemaFeature = getSchemaInterpretationStrategy().patternKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, schemaFeature)
   }
 
   private fun getOrComputeCompiledPattern(): PropertyNamePattern {
@@ -158,24 +193,12 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
   }
 
   override fun findRelativeDefinition(ref: String): JsonSchemaObject? {
-    return resolveLocalReferenceOrId(ref)
-  }
-
-  private fun resolveLocalReferenceOrId(maybeEmptyReference: String?): JsonSchemaObject? {
-    if (maybeEmptyReference == null) return null
-
-    if (maybeEmptyReference.startsWith("#")) {
-      val maybeCorrectJsonPointer = maybeEmptyReference.trimStart('#')
-      val resolvedReference = getRootSchemaObject().schemaObjectFactory.getSchemaObjectByAbsoluteJsonPointer(maybeCorrectJsonPointer)
-      if (resolvedReference != null) return resolvedReference
-    }
-
-    val resolvedIdNodePointer = resolveId(maybeEmptyReference).takeIf { !it.isNullOrBlank() } ?: return null
-    return getRootSchemaObject().schemaObjectFactory.getSchemaObjectByAbsoluteJsonPointer(resolvedIdNodePointer)
+    return resolveLocalSchemaNode(ref, this)
   }
 
   override fun getAdditionalPropertiesAllowed(): Boolean {
-    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, ADDITIONAL_PROPERTIES) ?: true
+    val schemaFeature = getSchemaInterpretationStrategy().additionalPropertiesKeyword ?: return true
+    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, schemaFeature) ?: true
   }
 
   override fun hasOwnExtraPropertyProhibition(): Boolean {
@@ -183,111 +206,151 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
   }
 
   override fun getAdditionalPropertiesSchema(): JsonSchemaObject? {
-    return createResolvableChild(ADDITIONAL_PROPERTIES)
+    val schemaFeature = getSchemaInterpretationStrategy().additionalPropertiesKeyword ?: return null
+    return createResolvableChild(schemaFeature)
       .takeIf { it?.rawSchemaNode?.isObject ?: false }
   }
 
+  override fun getUnevaluatedPropertiesSchema(): JsonSchemaObject? {
+    val additionalPropertiesKeyword = getSchemaInterpretationStrategy().additionalPropertiesKeyword ?: return null
+    if (JacksonSchemaNodeAccessor.hasChildNode(rawSchemaNode, additionalPropertiesKeyword)) return null
+
+    val schemaFeature = getSchemaInterpretationStrategy().unevaluatedPropertiesKeyword ?: return null
+    return createResolvableChild(schemaFeature)
+  }
+
   override fun getPropertyNamesSchema(): JsonSchemaObject? {
-    return createResolvableChild(PROPERTY_NAMES)
+    val schemaFeature = getSchemaInterpretationStrategy().propertyNamesKeyword ?: return null
+    return createResolvableChild(schemaFeature)
   }
 
   override fun getAdditionalItemsAllowed(): Boolean {
-    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, ADDITIONAL_ITEMS) ?: true
+    val schemaFeature = getSchemaInterpretationStrategy().nonPositionalItemsKeyword ?: return true
+    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, schemaFeature) ?: true
   }
 
   override fun getAdditionalItemsSchema(): JsonSchemaObject? {
-    return createResolvableChild(ADDITIONAL_ITEMS)
+    val schemaFeature = getSchemaInterpretationStrategy().nonPositionalItemsKeyword ?: return null
+    return createResolvableChild(schemaFeature)
   }
 
   override fun getItemsSchema(): JsonSchemaObject? {
-    return createResolvableChild(ITEMS)
+    val schemaFeature = getSchemaInterpretationStrategy().itemsSchemaKeyword ?: return null
+    return createResolvableChild(schemaFeature)
   }
 
   override fun getItemsSchemaList(): List<JsonSchemaObject?>? {
-    return createIndexedItemsSequence(ITEMS).takeIf { it.isNotEmpty() }
+    val schemaFeature = getSchemaInterpretationStrategy().positionalItemsKeyword ?: return null
+    return createIndexedItemsSequence(schemaFeature).takeIf { it.isNotEmpty() }
+  }
+
+  override fun getUnevaluatedItemsSchema(): JsonSchemaObject? {
+    val nonPositionalItemsKeyword = getSchemaInterpretationStrategy().nonPositionalItemsKeyword ?: return null
+    if (JacksonSchemaNodeAccessor.hasChildNode(rawSchemaNode, nonPositionalItemsKeyword)) return null
+
+    val schemaFeature = getSchemaInterpretationStrategy().unevaluatedItemsKeyword ?: return null
+    return createResolvableChild(schemaFeature)
   }
 
   override fun getContainsSchema(): JsonSchemaObject? {
-    return createResolvableChild(CONTAINS)
+    val schemaFeature = getSchemaInterpretationStrategy().containsKeyword ?: return null
+    return createResolvableChild(schemaFeature)
   }
 
   override fun getMaxItems(): Int? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, MAX_ITEMS) as? Int
+    val schemaFeature = getSchemaInterpretationStrategy().maxItemsKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature) as? Int
   }
 
   override fun getMinItems(): Int? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, MIN_ITEMS) as? Int
+    val schemaFeature = getSchemaInterpretationStrategy().minItemsKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature) as? Int
   }
 
   override fun isUniqueItems(): Boolean {
-    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, UNIQUE_ITEMS) ?: false
+    val schemaFeature = getSchemaInterpretationStrategy().uniqueItemsKeyword ?: return false
+    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, schemaFeature) ?: false
   }
 
   override fun getMaxProperties(): Int? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, MAX_PROPERTIES) as? Int
+    val schemaFeature = getSchemaInterpretationStrategy().maxPropertiesKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature) as? Int
   }
 
   override fun getMinProperties(): Int? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, MIN_PROPERTIES) as? Int
+    val schemaFeature = getSchemaInterpretationStrategy().minPropertiesKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature) as? Int
   }
 
   override fun getRequired(): Set<String>? {
-    return JacksonSchemaNodeAccessor.readUntypedNodesCollection(rawSchemaNode, REQUIRED)
+    val schemaFeature = getSchemaInterpretationStrategy().requiredKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readUntypedNodesCollection(rawSchemaNode, schemaFeature)
       ?.filterIsInstance<String>()
       ?.map(String::asUnquotedString)
       ?.toSet()
   }
 
   override fun getRef(): String? {
-    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, REF)
-           ?: JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, RECURSIVE_REF)
+    val ordinaryReferenceFeature = getSchemaInterpretationStrategy().referenceKeyword
+    val dynamicReferenceFeature = getSchemaInterpretationStrategy().dynamicReferenceKeyword
+
+    return sequenceOf(ordinaryReferenceFeature, dynamicReferenceFeature).filterNotNull().firstNotNullOfOrNull { referenceFeautre ->
+      JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, referenceFeautre)
+    }
   }
 
   override fun isRefRecursive(): Boolean {
-    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, RECURSIVE_REF) ?: false
+    val schemaFeature = getSchemaInterpretationStrategy().dynamicReferenceKeyword ?: return false
+    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, schemaFeature) ?: false
   }
 
   override fun isRecursiveAnchor(): Boolean {
-    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, RECURSIVE_ANCHOR) ?: false
+    val schemaFeature = getSchemaInterpretationStrategy().dynamicAnchorKeyword ?: return false
+    return JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, schemaFeature) ?: false
   }
 
   override fun getDefault(): Any? {
-    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, DEFAULT)
-           ?: JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, DEFAULT)
-           ?: JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, DEFAULT)
-           ?: createResolvableChild(DEFAULT)
+    val schemaFeature = getSchemaInterpretationStrategy().defaultKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, schemaFeature)
+           ?: JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, schemaFeature)
+           ?: JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, schemaFeature)
+           ?: createResolvableChild(schemaFeature)
   }
 
   override fun getExampleByName(name: String): JsonSchemaObject? {
-    return createResolvableChild(EXAMPLE, name)
+    val schemaFeature = getSchemaInterpretationStrategy().exampleKeyword ?: return null
+    return createResolvableChild(schemaFeature, name)
   }
 
   override fun getFormat(): String? {
-    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, FORMAT)
+    val schemaFeature = getSchemaInterpretationStrategy().formatKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, schemaFeature)
   }
 
   override fun getId(): String? {
-    val rawId = JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, JSON_ID)
-                ?: JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, JSON_DOLLAR_ID)
-                ?: JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, ANCHOR) ?: return null
+    val idFeature = getSchemaInterpretationStrategy().idKeyword
+    val anchorFeature = getSchemaInterpretationStrategy().anchorKeyword
+
+    val rawId = sequenceOf(idFeature, anchorFeature).filterNotNull().firstNotNullOfOrNull { schemaFeature ->
+      JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, schemaFeature)
+    } ?: return null
     return JsonPointerUtil.normalizeId(rawId)
   }
 
-  override fun getSchema(): String? {
-    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, SCHEMA)
-  }
-
   override fun getDescription(): String? {
-    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, DESCRIPTION)
+    val schemaFeature = getSchemaInterpretationStrategy().descriptionKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, schemaFeature)
   }
 
   override fun getTitle(): String? {
-    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, TITLE)
+    val schemaFeature = getSchemaInterpretationStrategy().titleKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, schemaFeature)
   }
 
   override fun getMatchingPatternPropertySchema(name: String): JsonSchemaObject? {
+    val schemaFeature = getSchemaInterpretationStrategy().patternPropertiesKeyword ?: return null
     return getOrComputeValue(PATTERN_PROPERTIES_KEY) {
-      PatternProperties(createChildMap(PATTERN_PROPERTIES).orEmpty())
+      PatternProperties(createChildMap(schemaFeature).orEmpty())
     }.getPatternPropertySchema(name)
   }
 
@@ -296,73 +359,91 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
   }
 
   override fun getPropertyDependencies(): Map<String, List<String?>?>? {
-    return JacksonSchemaNodeAccessor.readNodeAsMultiMapEntries(rawSchemaNode, DEPENDENCIES)?.toMap()
+    val schemaFeature = getSchemaInterpretationStrategy().propertyDependenciesKeyword ?: return null
+    return JacksonSchemaNodeAccessor.readNodeAsMultiMapEntries(rawSchemaNode, schemaFeature)?.toMap()
   }
 
   override fun getEnum(): List<Any?>? {
-    val enum = JacksonSchemaNodeAccessor.readUntypedNodesCollection(rawSchemaNode, ENUM)?.toList()
+    val enumFeature = getSchemaInterpretationStrategy().enumKeyword
+    val enum = if (enumFeature == null) null else JacksonSchemaNodeAccessor.readUntypedNodesCollection(rawSchemaNode, ENUM)?.toList()
     if (enum != null) return enum
-    val number = JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, CONST)
+
+    val constKeyword = getSchemaInterpretationStrategy().constKeyword ?: return null
+    val number = JacksonSchemaNodeAccessor.readNumberNodeValue(rawSchemaNode, constKeyword)
     if (number != null) return listOf(number)
-    val bool = JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, CONST)
+    val bool = JacksonSchemaNodeAccessor.readBooleanNodeValue(rawSchemaNode, constKeyword)
     if (bool != null) return listOf(bool)
-    val text = JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, CONST)?.asDoubleQuotedString()
+    val text = JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, constKeyword)?.asDoubleQuotedString()
     if (text != null) return listOf(text)
     return null
   }
 
   override fun getAllOf(): List<JsonSchemaObject?>? {
+    val schemaFeature = getSchemaInterpretationStrategy().allOfKeyword ?: return null
     return getOrComputeValue(ALL_OF_KEY) {
-      createIndexedItemsSequence(ALL_OF)
+      createIndexedItemsSequence(schemaFeature)
     }.takeIf { it.isNotEmpty() }
   }
 
   override fun getAnyOf(): List<JsonSchemaObject?>? {
+    val schemaFeature = getSchemaInterpretationStrategy().anyOfKeyword ?: return null
     return getOrComputeValue(ANY_OF_KEY) {
-      createIndexedItemsSequence(ANY_OF)
+      createIndexedItemsSequence(schemaFeature)
     }.takeIf { it.isNotEmpty() }
   }
 
   override fun getOneOf(): List<JsonSchemaObject?>? {
+    val schemaFeature = getSchemaInterpretationStrategy().oneOfKeyword ?: return null
     return getOrComputeValue(ONE_OF_KEY) {
-      createIndexedItemsSequence(ONE_OF)
+      createIndexedItemsSequence(schemaFeature)
     }.takeIf { it.isNotEmpty() }
   }
 
   override fun getNot(): JsonSchemaObject? {
-    return createResolvableChild(NOT)
+    val schemaFeature = getSchemaInterpretationStrategy().notKeyword ?: return null
+    return createResolvableChild(schemaFeature)
   }
 
   override fun getIfThenElse(): List<IfThenElse?>? {
-    if (!JacksonSchemaNodeAccessor.hasChildNode(rawSchemaNode, IF)) return null
-    return listOf(IfThenElse(createResolvableChild(IF), createResolvableChild(THEN), createResolvableChild(ELSE)))
+    val ifFeature = getSchemaInterpretationStrategy().ifKeyword ?: return null
+    val thenFeature = getSchemaInterpretationStrategy().thenKeyword ?: return null
+    val elseFeature = getSchemaInterpretationStrategy().elseKeyword ?: return null
+
+    if (!JacksonSchemaNodeAccessor.hasChildNode(rawSchemaNode, ifFeature)) return null
+    return listOf(IfThenElse(createResolvableChild(ifFeature), createResolvableChild(thenFeature), createResolvableChild(elseFeature)))
   }
 
   override fun getDefinitionByName(name: String): JsonSchemaObject? {
-    return createResolvableChild(DEFS, name)
-           ?: createResolvableChild(JSON_DEFINITIONS, name)
-           ?: createResolvableChild(name)
+    return getSchemaInterpretationStrategy().definitionsKeyword?.let { schemaFeature ->
+      createResolvableChild(schemaFeature, name)
+    }
   }
 
   override fun getDefinitionNames(): Iterator<String> {
-    return JacksonSchemaNodeAccessor.readNodeKeys(rawSchemaNode, DEFS)?.iterator()
-           ?: JacksonSchemaNodeAccessor.readNodeKeys(rawSchemaNode, JSON_DEFINITIONS)?.iterator()
-           ?: JacksonSchemaNodeAccessor.readNodeKeys(rawSchemaNode) //todo really need it? ugly old hack
-             ?.filter { !isOldParserAwareOfFieldName(it) }
-             ?.iterator()
-           ?: Collections.emptyIterator()
+    //todo really need it? ugly old hack
+    fun defaultValue(): Iterator<String> = JacksonSchemaNodeAccessor.readNodeKeys(rawSchemaNode)
+                                             ?.filter { !isOldParserAwareOfFieldName(it) }
+                                             ?.iterator()
+                                           ?: Collections.emptyIterator()
+
+    val schemaFeature = getSchemaInterpretationStrategy().definitionsKeyword ?: return defaultValue()
+    return JacksonSchemaNodeAccessor.readNodeKeys(rawSchemaNode, schemaFeature)?.iterator()
+           ?: defaultValue()
   }
 
   override fun getPropertyByName(name: String): JsonSchemaObject? {
-    return createResolvableChild(JSON_PROPERTIES, name)
+    val schemaFeature = getSchemaInterpretationStrategy().propertiesKeyword ?: return null
+    return createResolvableChild(schemaFeature, name)
   }
 
   override fun getPropertyNames(): Iterator<String> {
-    return JacksonSchemaNodeAccessor.readNodeKeys(rawSchemaNode, JSON_PROPERTIES)?.iterator() ?: Collections.emptyIterator()
+    val schemaFeature = getSchemaInterpretationStrategy().propertiesKeyword ?: return Collections.emptyIterator()
+    return JacksonSchemaNodeAccessor.readNodeKeys(rawSchemaNode, schemaFeature)?.iterator() ?: Collections.emptyIterator()
   }
 
   override fun hasPatternProperties(): Boolean {
-    return JacksonSchemaNodeAccessor.hasChildNode(rawSchemaNode, PATTERN_PROPERTIES)
+    val schemaFeature = getSchemaInterpretationStrategy().patternPropertiesKeyword ?: return false
+    return JacksonSchemaNodeAccessor.hasChildNode(rawSchemaNode, schemaFeature)
   }
 
   override fun getEnumMetadata(): Map<String, Map<String, String?>?>? {
@@ -375,11 +456,13 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
   }
 
   override fun getSchemaDependencyNames(): Iterator<String> {
-    return JacksonSchemaNodeAccessor.readNodeKeys(rawSchemaNode, DEPENDENCIES)?.iterator() ?: Collections.emptyIterator()
+    val schemaFeature = getSchemaInterpretationStrategy().dependencySchemasKeyword ?: return Collections.emptyIterator()
+    return JacksonSchemaNodeAccessor.readNodeKeys(rawSchemaNode, schemaFeature)?.iterator() ?: Collections.emptyIterator()
   }
 
   override fun getSchemaDependencyByName(name: String): JsonSchemaObject? {
-    return createResolvableChild(DEPENDENCIES, name)
+    val schemaFeature = getSchemaInterpretationStrategy().dependencySchemasKeyword ?: return null
+    return createResolvableChild(schemaFeature, name)
   }
 
   private fun createIndexedItemsSequence(containingNodeName: String): List<JsonSchemaObject> {
@@ -431,8 +514,9 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
   }
 
   override fun resolveRefSchema(service: JsonSchemaService): JsonSchemaObject? {
-    // fallback to old implementation in case of remote references/builtin schema ids
-    val referenceTarget = resolveLocalReferenceOrId(ref) ?: JsonSchemaObjectReadingUtils.resolveRefSchema(this, service)
-    return referenceTarget.takeIf { it !is MissingJsonSchemaObject }
+    val effectiveReference = ref ?: return null
+    return getSchemaInterpretationStrategy().referenceResolvers
+      .firstNotNullOfOrNull { resolver -> resolver.resolve(effectiveReference, this, service) }
+      ?.takeIf { it !is MissingJsonSchemaObject }
   }
 }
