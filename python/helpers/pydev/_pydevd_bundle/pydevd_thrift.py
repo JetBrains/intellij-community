@@ -413,8 +413,11 @@ def tensor_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
 
 
 def sparse_tensor_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
-    import tensorflow as tf
-    return tensor_to_thrift_struct(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+    try:
+        import tensorflow as tf
+        return tensor_to_thrift_struct(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+    except ImportError:
+        pass
 
 
 def array_to_meta_thrift_struct(array, name, format):

@@ -587,8 +587,11 @@ def tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
 
 
 def sparse_tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
-    import tensorflow as tf
-    return tensor_to_xml(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+    try:
+        import tensorflow as tf
+        return tensor_to_xml(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+    except ImportError:
+        pass
 
 
 class ExceedingArrayDimensionsException(Exception):

@@ -224,6 +224,8 @@ def _create_table(command, start_index=None, end_index=None):
             import tensorflow as tf
             if isinstance(command, tf.SparseTensor):
                 command = tf.sparse.to_dense(tf.sparse.reorder(command))
+        except ImportError:
+            pass
         finally:
             np_array = command
 
