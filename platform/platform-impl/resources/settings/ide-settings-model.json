@@ -407,6 +407,30 @@
       ]
     },
     {
+      "name": "CodeInsightSettings",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.codeInsight.CodeInsightSettings",
+      "storage": "editor.xml",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
       "name": "CodeVisionSettings",
       "scope": "app",
       "pluginId": "com.intellij",
@@ -2561,6 +2585,431 @@
       "storage": "colors.scheme.xml"
     },
     {
+      "name": "EditorSettings",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.openapi.editor.ex.EditorSettingsExternalizable",
+      "storage": "editor.xml",
+      "properties": [
+        {
+          "name": "languageBreadcrumbsMap",
+          "type": "Unsupported",
+          "javaType": "java.util.Map"
+        },
+        {
+          "name": "languageStickyLines",
+          "type": "Unsupported",
+          "javaType": "java.util.Map"
+        },
+        {
+          "name": "line_separator",
+          "mapTo": "LINE_SEPARATOR",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "use_soft_wraps",
+          "mapTo": "USE_SOFT_WRAPS",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "soft_wrap_file_masks",
+          "mapTo": "SOFT_WRAP_FILE_MASKS",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "use_custom_soft_wrap_indent",
+          "mapTo": "USE_CUSTOM_SOFT_WRAP_INDENT",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "custom_soft_wrap_indent",
+          "mapTo": "CUSTOM_SOFT_WRAP_INDENT",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "is_virtual_space",
+          "mapTo": "IS_VIRTUAL_SPACE",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "vertical_scroll_offset",
+          "mapTo": "VERTICAL_SCROLL_OFFSET",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "vertical_scroll_jump",
+          "mapTo": "VERTICAL_SCROLL_JUMP",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "horizontal_scroll_offset",
+          "mapTo": "HORIZONTAL_SCROLL_OFFSET",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "horizontal_scroll_jump",
+          "mapTo": "HORIZONTAL_SCROLL_JUMP",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "is_caret_inside_tabs",
+          "mapTo": "IS_CARET_INSIDE_TABS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "strip_trailing_spaces",
+          "mapTo": "STRIP_TRAILING_SPACES",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "is_ensure_newline_at_eof",
+          "mapTo": "IS_ENSURE_NEWLINE_AT_EOF",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "remove_trailing_blank_lines",
+          "mapTo": "REMOVE_TRAILING_BLANK_LINES",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "show_quick_doc_on_mouse_over_element",
+          "mapTo": "SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "show_inspection_widget",
+          "mapTo": "SHOW_INSPECTION_WIDGET",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "tooltips_delay_ms",
+          "mapTo": "TOOLTIPS_DELAY_MS",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "show_intention_bulb",
+          "mapTo": "SHOW_INTENTION_BULB",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_caret_blinking",
+          "mapTo": "IS_CARET_BLINKING",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "caret_blinking_period",
+          "mapTo": "CARET_BLINKING_PERIOD",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "is_right_margin_shown",
+          "mapTo": "IS_RIGHT_MARGIN_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "are_line_numbers_shown",
+          "mapTo": "ARE_LINE_NUMBERS_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "are_line_numbers_after_icons",
+          "mapTo": "ARE_LINE_NUMBERS_AFTER_ICONS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "line_numeration",
+          "mapTo": "LINE_NUMERATION",
+          "type": "Enum",
+          "javaType": "com.intellij.openapi.editor.EditorSettings$LineNumerationType",
+          "variants": [
+            {
+              "value": "absolute",
+              "mapTo": "ABSOLUTE"
+            },
+            {
+              "value": "relative",
+              "mapTo": "RELATIVE"
+            },
+            {
+              "value": "hybrid",
+              "mapTo": "HYBRID"
+            }
+          ]
+        },
+        {
+          "name": "are_gutter_icons_shown",
+          "mapTo": "ARE_GUTTER_ICONS_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_folding_outline_shown",
+          "mapTo": "IS_FOLDING_OUTLINE_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_folding_outline_shown_only_on_hover",
+          "mapTo": "IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_folding_endings_shown",
+          "mapTo": "IS_FOLDING_ENDINGS_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "show_breadcrumbs_above",
+          "mapTo": "SHOW_BREADCRUMBS_ABOVE",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "show_breadcrumbs",
+          "mapTo": "SHOW_BREADCRUMBS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "show_sticky_lines",
+          "mapTo": "SHOW_STICKY_LINES",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "sticky_lines_limit",
+          "mapTo": "STICKY_LINES_LIMIT",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "enable_rendered_doc",
+          "mapTo": "ENABLE_RENDERED_DOC",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "show_intention_preview",
+          "mapTo": "SHOW_INTENTION_PREVIEW",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "use_editor_font_in_inlays",
+          "mapTo": "USE_EDITOR_FONT_IN_INLAYS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "smart_home",
+          "mapTo": "SMART_HOME",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_block_cursor",
+          "mapTo": "IS_BLOCK_CURSOR",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_full_line_height_cursor",
+          "mapTo": "IS_FULL_LINE_HEIGHT_CURSOR",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_highlight_selection_occurrences",
+          "mapTo": "IS_HIGHLIGHT_SELECTION_OCCURRENCES",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_whitespaces_shown",
+          "mapTo": "IS_WHITESPACES_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_leading_whitespaces_shown",
+          "mapTo": "IS_LEADING_WHITESPACES_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_inner_whitespaces_shown",
+          "mapTo": "IS_INNER_WHITESPACES_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_trailing_whitespaces_shown",
+          "mapTo": "IS_TRAILING_WHITESPACES_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_selection_whitespaces_shown",
+          "mapTo": "IS_SELECTION_WHITESPACES_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_all_softwraps_shown",
+          "mapTo": "IS_ALL_SOFTWRAPS_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_indent_guides_shown",
+          "mapTo": "IS_INDENT_GUIDES_SHOWN",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_focus_mode",
+          "mapTo": "IS_FOCUS_MODE",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_animated_scrolling",
+          "mapTo": "IS_ANIMATED_SCROLLING",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_camel_words",
+          "mapTo": "IS_CAMEL_WORDS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "additional_page_at_bottom",
+          "mapTo": "ADDITIONAL_PAGE_AT_BOTTOM",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_dnd_enabled",
+          "mapTo": "IS_DND_ENABLED",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_wheel_fontchange_enabled",
+          "mapTo": "IS_WHEEL_FONTCHANGE_ENABLED",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_wheel_fontchange_persistent",
+          "mapTo": "IS_WHEEL_FONTCHANGE_PERSISTENT",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "is_mouse_click_selection_honors_camel_words",
+          "mapTo": "IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_variables_inplace",
+          "mapTo": "RENAME_VARIABLES_INPLACE",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "preselect_rename",
+          "mapTo": "PRESELECT_RENAME",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "show_inline_dialog",
+          "mapTo": "SHOW_INLINE_DIALOG",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "refrain_from_scrolling",
+          "mapTo": "REFRAIN_FROM_SCROLLING",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "add_carets_on_double_ctrl",
+          "mapTo": "ADD_CARETS_ON_DOUBLE_CTRL",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "bidi_text_direction",
+          "mapTo": "BIDI_TEXT_DIRECTION",
+          "type": "Enum",
+          "javaType": "com.intellij.openapi.editor.ex.BidiTextDirection",
+          "variants": [
+            {
+              "value": "content_based",
+              "mapTo": "CONTENT_BASED"
+            },
+            {
+              "value": "ltr",
+              "mapTo": "LTR"
+            },
+            {
+              "value": "rtl",
+              "mapTo": "RTL"
+            }
+          ]
+        },
+        {
+          "name": "show_parameter_name_hints",
+          "mapTo": "SHOW_PARAMETER_NAME_HINTS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "keep_trailing_space_on_caret_line",
+          "mapTo": "KEEP_TRAILING_SPACE_ON_CARET_LINE",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "insert_parentheses_automatically",
+          "mapTo": "INSERT_PARENTHESES_AUTOMATICALLY",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
       "name": "OsSpecificEditorSettings",
       "scope": "app",
       "pluginId": "com.intellij",
@@ -3293,6 +3742,13 @@
       ]
     },
     {
+      "name": "ToolWindowLayout",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.toolWindow.ToolWindowDefaultLayoutManager",
+      "storage": "window.layouts.xml"
+    },
+    {
       "name": "PlaybackDebugger",
       "scope": "app",
       "pluginId": "com.intellij",
@@ -3752,56 +4208,6 @@
       ]
     },
     {
-      "name": "screen.forwarding.common.settings",
-      "scope": "app",
-      "pluginId": "com.jetbrains.codeWithMe",
-      "classFqn": "com.jetbrains.rd.platform.codeWithMe.screenForwarding.ScreenForwardingCommonSettings",
-      "storage": "screenForwardingSettings.xml",
-      "properties": [
-        {
-          "name": "xpraExecutablePath",
-          "type": "String",
-          "javaType": "java.lang.String"
-        }
-      ]
-    },
-    {
-      "name": null,
-      "scope": "app",
-      "pluginId": "com.jetbrains.codeWithMe",
-      "classFqn": "com.jetbrains.rdserver.codeInsight.BackendCodeInsightSettings"
-    },
-    {
-      "name": null,
-      "scope": "app",
-      "pluginId": "com.jetbrains.codeWithMe",
-      "classFqn": "com.jetbrains.rdserver.codeInsight.BackendEditorSettingsExternalizable"
-    },
-    {
-      "name": "screen.forwarding.settings",
-      "scope": "app",
-      "pluginId": "com.jetbrains.codeWithMe",
-      "classFqn": "com.jetbrains.rdserver.screenForwarding.ScreenForwardingHostSettings",
-      "storage": "screenForwarding.xml",
-      "properties": [
-        {
-          "name": "noVncCustomLocation",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "useXvfb",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "xpraHtmlServerCustomLocation",
-          "type": "String",
-          "javaType": "java.lang.String"
-        }
-      ]
-    },
-    {
       "name": "ScriptedLoadersAssociations",
       "scope": "app",
       "pluginId": "intellij.grid.impl",
@@ -3923,6 +4329,11 @@
       "classFqn": "com.intellij.database.dataSource.DataSourceStorageLocal",
       "storage": "dataSources.local.xml",
       "properties": [
+        {
+          "name": "attributes",
+          "type": "Unsupported",
+          "javaType": "java.util.List"
+        },
         {
           "name": "name",
           "type": "String",
@@ -4051,6 +4462,11 @@
         },
         {
           "name": "enable-paging-in-in-editor-result-by-default",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "disable-grid-floating-toolbar",
           "type": "Boolean",
           "javaType": "boolean"
         },
