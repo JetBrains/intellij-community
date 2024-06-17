@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.module.ModuleManager
 import org.jetbrains.idea.devkit.util.PsiUtil
 
-class WorkspaceModelGenerationAction: AnAction() {
+internal class WorkspaceModelGenerationAction: AnAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -30,7 +30,7 @@ class WorkspaceModelGenerationAction: AnAction() {
   }
 }
 
-class WorkspaceModelGenerateAllModulesAction: AnAction() {
+internal class WorkspaceModelGenerateAllModulesAction: AnAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
