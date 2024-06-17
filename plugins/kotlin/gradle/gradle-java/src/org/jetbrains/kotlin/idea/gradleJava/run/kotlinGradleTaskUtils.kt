@@ -64,5 +64,6 @@ private fun isMethodOfTaskContainer(methodName: String, fqClassName: FqName) =
 
 
 private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
-    (fqClassName == FqName(GRADLE_API_PROJECT) || fqClassName == FqName(GRADLE_KOTLIN_PROJECT_DELEGATE))
-            && (methodName == "task")
+    (methodName == "task") && (fqClassName == FqName(GRADLE_API_PROJECT)
+            || fqClassName == FqName(GRADLE_KOTLIN_PROJECT_DELEGATE)
+            || fqClassName == FqName("Build_gradle")) // Could be resolved instead of ProjectDelegate on Gradle 6.0
