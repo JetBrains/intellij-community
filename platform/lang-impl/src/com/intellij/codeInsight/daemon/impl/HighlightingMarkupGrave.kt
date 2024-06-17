@@ -7,7 +7,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.MarkupGraveEvent
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.logEditorMarkupGrave
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
@@ -33,6 +33,7 @@ import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.IOUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.DataInput
@@ -52,7 +53,7 @@ private fun markZombieMarkup(highlighter: RangeMarker) {
  * to reduce the "opened editor-to-some highlighting shown" perceived interval.
  */
 @ApiStatus.Internal
-open class HighlightingMarkupGrave(project: Project, coroutineScope: CoroutineScope) {
+open class HighlightingMarkupGrave(project: Project, private val coroutineScope: CoroutineScope) {
   protected val project: Project
   private val resurrectedZombies: ConcurrentIntObjectMap<Boolean> // fileId -> isMarkupModelPreferable
   private val markupStore: HighlightingMarkupStore
@@ -234,8 +235,8 @@ open class HighlightingMarkupGrave(project: Project, coroutineScope: CoroutineSc
 
     val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return
     val colorsScheme = fileEditor.editor.colorsScheme
-    markupStore.executeAsync {
-      ReadAction.run<RuntimeException> {
+    coroutineScope.launch {
+      readActionBlocking {
         val markupFromModel = getMarkupFromModel(document, colorsScheme)
         val storedMarkup = markupStore.getMarkup(file)
         val zombieDisposed = resurrectedZombies[file.id]

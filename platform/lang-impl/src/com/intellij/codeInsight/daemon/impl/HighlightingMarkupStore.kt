@@ -6,19 +6,15 @@ import com.intellij.openapi.fileEditor.impl.text.VersionedExternalizer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileWithId
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.DataInput
 import java.io.DataOutput
 
-internal class HighlightingMarkupStore(project: Project, private val scope: CoroutineScope) : TextEditorCache<FileMarkupInfo>(project, scope) {
+internal class HighlightingMarkupStore(project: Project, coroutineScope: CoroutineScope) : TextEditorCache<FileMarkupInfo>(project, coroutineScope) {
   override fun namePrefix(): String = "persistent-markup"
   override fun valueExternalizer(): FileMarkupInfoExternalizer = FileMarkupInfoExternalizer
   override fun useHeapCache(): Boolean = false
 
-  fun getMarkup(file: VirtualFileWithId): FileMarkupInfo? {
-    return cache[file.id]
-  }
+  fun getMarkup(file: VirtualFileWithId): FileMarkupInfo? = cache[file.id]
 
   fun putMarkup(file: VirtualFileWithId, markupInfo: FileMarkupInfo) {
     cache[file.id] = markupInfo
@@ -26,12 +22,6 @@ internal class HighlightingMarkupStore(project: Project, private val scope: Coro
 
   fun removeMarkup(file: VirtualFileWithId) {
     cache.remove(file.id)
-  }
-
-  fun executeAsync(runnable: Runnable) {
-    scope.launch(Dispatchers.IO) {
-      runnable.run()
-    }
   }
 
   object FileMarkupInfoExternalizer : VersionedExternalizer<FileMarkupInfo> {
