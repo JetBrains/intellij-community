@@ -10,10 +10,10 @@ import java.util.EventListener;
  */
 public interface PolicyListener extends EventListener {
 
-	/**
-	 * Called when a {@link PolicyEvent} is fired.
-	 * 
-	 * @param event
-	 */
-	public void policyChanged(PolicyEvent event);
+  /**
+   * Called when a {@link PolicyEvent} is fired.
+   * 
+   * @param event
+   */
+  public void policyChanged(PolicyEvent event);
 }

@@ -14,22 +14,22 @@ package com.michaelbaranov.microba.marker;
  */
 public interface MarkerMutationModel {
 
-	/**
-	 * Called when the user requests a mark to be removed from
-	 * <code>JMarkerBar</code>.
-	 * 
-	 * @param index
-	 *            index of the mark to be removed.
-	 */
-	void removeMarkerAtIndex(int index);
+  /**
+   * Called when the user requests a mark to be removed from
+   * <code>JMarkerBar</code>.
+   * 
+   * @param index
+   *            index of the mark to be removed.
+   */
+  void removeMarkerAtIndex(int index);
 
-	/**
-	 * Called when the user requests a mark to be inserted into
-	 * <code>JMarkerBar</code>.
-	 * 
-	 * @param position
-	 *            position at which to insert the mark.
-	 * @return index of newly added mark.
-	 */
-	int addMarkAtPosition(int position);
+  /**
+   * Called when the user requests a mark to be inserted into
+   * <code>JMarkerBar</code>.
+   * 
+   * @param position
+   *            position at which to insert the mark.
+   * @return index of newly added mark.
+   */
+  int addMarkAtPosition(int position);
 }

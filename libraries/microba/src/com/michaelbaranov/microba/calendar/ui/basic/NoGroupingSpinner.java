@@ -12,30 +12,30 @@ import javax.swing.text.NumberFormatter;
 
 class NoGroupingSpinner extends JSpinner {
 
-	public static class NoGroupingNumberEditor extends NumberEditor {
+  public static class NoGroupingNumberEditor extends NumberEditor {
 
-		public NoGroupingNumberEditor(JSpinner spinner, SpinnerModel model) {
-			super(spinner);
-			JFormattedTextField ftf = (JFormattedTextField) this
-					.getComponent(0);
-			NumberFormat fmt = NumberFormat.getIntegerInstance();
-			fmt.setGroupingUsed(false);
-			ftf.setFormatterFactory(new DefaultFormatterFactory(
-					new NumberFormatter(fmt)));
-			revalidate();
-		}
+    public NoGroupingNumberEditor(JSpinner spinner, SpinnerModel model) {
+      super(spinner);
+      JFormattedTextField ftf = (JFormattedTextField) this
+          .getComponent(0);
+      NumberFormat fmt = NumberFormat.getIntegerInstance();
+      fmt.setGroupingUsed(false);
+      ftf.setFormatterFactory(new DefaultFormatterFactory(
+          new NumberFormatter(fmt)));
+      revalidate();
+    }
 
-	}
+  }
 
-	public NoGroupingSpinner(SpinnerModel spinnerModel) {
-		super(spinnerModel);
-	}
+  public NoGroupingSpinner(SpinnerModel spinnerModel) {
+    super(spinnerModel);
+  }
 
-	protected JComponent createEditor(SpinnerModel model) {
-		if (model instanceof SpinnerNumberModel)
-			return new NoGroupingNumberEditor(this, model);
+  protected JComponent createEditor(SpinnerModel model) {
+    if (model instanceof SpinnerNumberModel)
+      return new NoGroupingNumberEditor(this, model);
 
-		return super.createEditor(model);
-	}
+    return super.createEditor(model);
+  }
 
 }

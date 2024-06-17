@@ -9,11 +9,11 @@ import java.util.EventListener;
  * 
  */
 public interface CommitListener extends EventListener {
-	/**
-	 * Called when a {@link CommitEvent} is fired.
-	 * 
-	 * @param event
-	 */
-	public void commit(CommitEvent event);
+  /**
+   * Called when a {@link CommitEvent} is fired.
+   * 
+   * @param event
+   */
+  public void commit(CommitEvent event);
 
 }

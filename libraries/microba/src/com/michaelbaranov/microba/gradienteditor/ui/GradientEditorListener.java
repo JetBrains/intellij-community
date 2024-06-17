@@ -7,21 +7,21 @@ import com.michaelbaranov.microba.gradienteditor.GradientEditor;
 
 public class GradientEditorListener implements PropertyChangeListener {
 
-	private GradientEditorUI ui;
+  private GradientEditorUI ui;
 
-	private GradientEditor editor;
+  private GradientEditor editor;
 
-	public GradientEditorListener(GradientEditor editor, GradientEditorUI ui) {
-		super();
-		this.editor = editor;
-		this.ui = ui;
-	}
+  public GradientEditorListener(GradientEditor editor, GradientEditorUI ui) {
+    super();
+    this.editor = editor;
+    this.ui = ui;
+  }
 
-	public void propertyChange(PropertyChangeEvent evt) {
-		if (GradientEditor.PROPERTY_DATA_MODEL.equals(evt.getPropertyName())) {
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (GradientEditor.PROPERTY_DATA_MODEL.equals(evt.getPropertyName())) {
 
-		}
+    }
 
-	}
+  }
 
 }

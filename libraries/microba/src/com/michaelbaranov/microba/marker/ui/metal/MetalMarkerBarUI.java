@@ -10,14 +10,14 @@ import com.michaelbaranov.microba.marker.ui.basic.BasicMarkerBarUI;
 
 public class MetalMarkerBarUI extends BasicMarkerBarUI {
 
-	public static ComponentUI createUI(JComponent c) {
-		return new MetalMarkerBarUI();
-	}
+  public static ComponentUI createUI(JComponent c) {
+    return new MetalMarkerBarUI();
+  }
 
-	protected void drawFocusRect(Graphics g, Rectangle viewRect) {
-		g.setColor(getFocusColor());
+  protected void drawFocusRect(Graphics g, Rectangle viewRect) {
+    g.setColor(getFocusColor());
 
-		g.drawRect(viewRect.x, viewRect.y, viewRect.width - 1, viewRect.height - 1);
-	}
+    g.drawRect(viewRect.x, viewRect.y, viewRect.width - 1, viewRect.height - 1);
+  }
 
 }

@@ -11,46 +11,46 @@ import com.michaelbaranov.microba.gradient.GradientBar;
 import com.michaelbaranov.microba.gradient.ui.basic.BasicGradientUI;
 
 public class GradientListener implements TableModelListener,
-		PropertyChangeListener {
+    PropertyChangeListener {
 
-	private final BasicGradientUI gradientUI;
+  private final BasicGradientUI gradientUI;
 
-	private GradientBar gradient;
+  private GradientBar gradient;
 
-	public GradientListener(BasicGradientUI gradientUI, GradientBar gradient) {
-		this.gradientUI = gradientUI;
-		this.gradient = gradient;
-	}
+  public GradientListener(BasicGradientUI gradientUI, GradientBar gradient) {
+    this.gradientUI = gradientUI;
+    this.gradient = gradient;
+  }
 
-	public void propertyChange(PropertyChangeEvent evt) {
-		if (GradientBar.PROPERTY_DATA_MODEL.equals(evt.getPropertyName())) {
-			BoundedTableModel oldModel = (BoundedTableModel) evt.getOldValue();
-			BoundedTableModel newModel = (BoundedTableModel) evt.getNewValue();
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (GradientBar.PROPERTY_DATA_MODEL.equals(evt.getPropertyName())) {
+      BoundedTableModel oldModel = (BoundedTableModel) evt.getOldValue();
+      BoundedTableModel newModel = (BoundedTableModel) evt.getNewValue();
 
-			if (oldModel != null)
-				oldModel.removeTableModelListener(this);
-			if (newModel != null)
-				newModel.addTableModelListener(this);
+      if (oldModel != null)
+        oldModel.removeTableModelListener(this);
+      if (newModel != null)
+        newModel.addTableModelListener(this);
 
-			gradient.revalidate();
-		}
+      gradient.revalidate();
+    }
 
-		if (GradientBar.PROPERTY_ORIENTATION.equals(evt.getPropertyName())) {
-			gradient.revalidate();
-		}
-		if (GradientBar.PROPERTY_COLOR_POSITION_COLUMN.equals(evt.getPropertyName())) {
-			gradient.repaint();
-		}
-		if (GradientBar.PROPERTY_COLOR_COLUMN.equals(evt.getPropertyName())) {
-			gradient.repaint();
-		}
-		if ("enabled".equals(evt.getPropertyName())) {
-			gradient.repaint();
-		}
-	}
+    if (GradientBar.PROPERTY_ORIENTATION.equals(evt.getPropertyName())) {
+      gradient.revalidate();
+    }
+    if (GradientBar.PROPERTY_COLOR_POSITION_COLUMN.equals(evt.getPropertyName())) {
+      gradient.repaint();
+    }
+    if (GradientBar.PROPERTY_COLOR_COLUMN.equals(evt.getPropertyName())) {
+      gradient.repaint();
+    }
+    if ("enabled".equals(evt.getPropertyName())) {
+      gradient.repaint();
+    }
+  }
 
-	public void tableChanged(TableModelEvent e) {
-		gradient.repaint();
+  public void tableChanged(TableModelEvent e) {
+    gradient.repaint();
 
-	}
+  }
 }

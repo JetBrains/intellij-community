@@ -10,12 +10,12 @@ import com.michaelbaranov.microba.marker.ui.basic.BasicMarkerBarUI;
 
 public class MotifMarkerBarUI extends BasicMarkerBarUI {
 
-	public static ComponentUI createUI(JComponent c) {
-		return new MotifMarkerBarUI();
-	}
+  public static ComponentUI createUI(JComponent c) {
+    return new MotifMarkerBarUI();
+  }
 
-	protected void drawFocusRect(Graphics g, Rectangle viewRect) {
-		// focus painting is handled by the border
-	}
+  protected void drawFocusRect(Graphics g, Rectangle viewRect) {
+    // focus painting is handled by the border
+  }
 
 }

@@ -10,14 +10,14 @@ import java.util.EventObject;
  */
 public class PolicyEvent extends EventObject {
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param source
-	 *            an object whose policy has changed
-	 */
-	public PolicyEvent(Object source) {
-		super(source);
-	}
+  /**
+   * Constructor.
+   * 
+   * @param source
+   *            an object whose policy has changed
+   */
+  public PolicyEvent(Object source) {
+    super(source);
+  }
 
 }

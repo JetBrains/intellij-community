@@ -13,39 +13,39 @@ import com.michaelbaranov.microba.marker.ui.basic.BasicMarkerBarUI;
 
 public class WindowsMarkerBarUI extends BasicMarkerBarUI {
 
-	private int dashedRectGapX;
+  private int dashedRectGapX;
 
-	private int dashedRectGapY;
+  private int dashedRectGapY;
 
-	private int dashedRectGapWidth;
+  private int dashedRectGapWidth;
 
-	private int dashedRectGapHeight;
+  private int dashedRectGapHeight;
 
-	private boolean defaults_initialized;
+  private boolean defaults_initialized;
 
-	public static ComponentUI createUI(JComponent c) {
-		return new WindowsMarkerBarUI();
-	}
+  public static ComponentUI createUI(JComponent c) {
+    return new WindowsMarkerBarUI();
+  }
 
-	protected void drawFocusRect(Graphics g, Rectangle viewRect) {
-		g.setColor(getFocusColor());
+  protected void drawFocusRect(Graphics g, Rectangle viewRect) {
+    g.setColor(getFocusColor());
 
-		g.setColor(getFocusColor());
-		// BasicGraphicsUtils.drawDashedRect(g, dashedRectGapX, dashedRectGapY,
-		// viewRect.width - dashedRectGapWidth, viewRect.height
-		// - dashedRectGapHeight);
-		BasicGraphicsUtils.drawDashedRect(g, viewRect.x, viewRect.y, viewRect.width - 1,
-				viewRect.height - 1);
-	}
+    g.setColor(getFocusColor());
+    // BasicGraphicsUtils.drawDashedRect(g, dashedRectGapX, dashedRectGapY,
+    // viewRect.width - dashedRectGapWidth, viewRect.height
+    // - dashedRectGapHeight);
+    BasicGraphicsUtils.drawDashedRect(g, viewRect.x, viewRect.y, viewRect.width - 1,
+        viewRect.height - 1);
+  }
 
-	protected void installDefaults(MarkerBar b) {
-		super.installDefaults(b);
-		// if(!defaults_initialized) {
-		dashedRectGapX = UIManager.getInt("Button.dashedRectGapX");
-		dashedRectGapY = UIManager.getInt("Button.dashedRectGapY");
-		dashedRectGapWidth = UIManager.getInt("Button.dashedRectGapWidth");
-		dashedRectGapHeight = UIManager.getInt("Button.dashedRectGapHeight");
-		// focusColor = UIManager.getColor(pp + "focus");
-		defaults_initialized = true;
-	}
+  protected void installDefaults(MarkerBar b) {
+    super.installDefaults(b);
+    // if(!defaults_initialized) {
+    dashedRectGapX = UIManager.getInt("Button.dashedRectGapX");
+    dashedRectGapY = UIManager.getInt("Button.dashedRectGapY");
+    dashedRectGapWidth = UIManager.getInt("Button.dashedRectGapWidth");
+    dashedRectGapHeight = UIManager.getInt("Button.dashedRectGapHeight");
+    // focusColor = UIManager.getColor(pp + "focus");
+    defaults_initialized = true;
+  }
 }

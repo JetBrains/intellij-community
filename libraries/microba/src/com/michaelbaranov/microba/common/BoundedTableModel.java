@@ -20,38 +20,38 @@ import javax.swing.table.TableModel;
  */
 public interface BoundedTableModel extends TableModel {
 
-	/**
-	 * The name of the bound property, that holds lower bound value.
-	 */
-	public static final String PROPERTY_LOWER_BOUND = "lowerBound";
+  /**
+   * The name of the bound property, that holds lower bound value.
+   */
+  public static final String PROPERTY_LOWER_BOUND = "lowerBound";
 
-	/**
-	 * The name of the bound property, that holds upper bound value.
-	 */
-	public static final String PROPERTY_UPPER_BOUND = "upperBound";
+  /**
+   * The name of the bound property, that holds upper bound value.
+   */
+  public static final String PROPERTY_UPPER_BOUND = "upperBound";
 
-	/**
-	 * Returns some lower bound, further describing the data.
-	 * 
-	 * @return lower bound.
-	 */
-	int getLowerBound();
+  /**
+   * Returns some lower bound, further describing the data.
+   * 
+   * @return lower bound.
+   */
+  int getLowerBound();
 
-	/**
-	 * Returns some upper bound, further describing the data.
-	 * 
-	 * @return upper bound.
-	 */
-	int getUpperBound();
+  /**
+   * Returns some upper bound, further describing the data.
+   * 
+   * @return upper bound.
+   */
+  int getUpperBound();
 
-	public void addPropertyChangeListener(PropertyChangeListener listener);
+  public void addPropertyChangeListener(PropertyChangeListener listener);
 
-	public void addPropertyChangeListener(String propertyName,
-			PropertyChangeListener listener);
+  public void addPropertyChangeListener(String propertyName,
+      PropertyChangeListener listener);
 
-	public void removePropertyChangeListener(PropertyChangeListener listener);
+  public void removePropertyChangeListener(PropertyChangeListener listener);
 
-	public void removePropertyChangeListener(String propertyName,
-			PropertyChangeListener listener);
+  public void removePropertyChangeListener(String propertyName,
+      PropertyChangeListener listener);
 
 }
