@@ -2570,17 +2570,16 @@ open class JBTabsImpl internal constructor(
         }
       }
     }
-    updateEntryPointToolbar()
+    updateEntryPointToolbar(tabActionGroup = selectedInfo?.tabPaneActions)
     relayout(forced, layoutNow)
   }
 
   @Internal
-  fun updateEntryPointToolbar() {
+  fun updateEntryPointToolbar(tabActionGroup: ActionGroup?) {
     entryPointToolbar?.let {
       remove(it.component)
     }
 
-    val tabActionGroup = selectedInfo?.tabPaneActions
     val entryPointActionGroup = entryPointActionGroup
     if (tabActionGroup == null && entryPointActionGroup == null) {
       entryPointToolbar = null

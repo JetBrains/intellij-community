@@ -361,7 +361,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
   protected open fun createRightToolbar(): ActionToolbar {
     val viewActions = createViewActionGroup().getChildren(null)
-    val viewActionsGroup: ActionGroup = ConditionalActionGroup(viewActions) { !isShowActionsInTabs }
+    val viewActionsGroup = ConditionalActionGroup(viewActions) { !isShowActionsInTabs }
     val group = createRightToolbarActionGroup()
     val rightToolbarActions = if (group == null) {
       viewActionsGroup
@@ -382,7 +382,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
   protected open fun createRightToolbarActionGroup(): ActionGroup? = null
 
-  override fun getTabActions(): ActionGroup = ConditionalActionGroup(createTabActions()) { isShowActionsInTabs }
+  override fun getTabActions(): ActionGroup = ConditionalActionGroup(actions = createTabActions()) { isShowActionsInTabs }
 
   protected open fun createTabActions(): Array<AnAction> = createViewActionGroup().getChildren(null)
 
@@ -487,8 +487,8 @@ private class MyEditorLayeredComponentWrapper(private val editorComponent: JComp
   override fun getPreferredSize(): Dimension = editorComponent.preferredSize
 }
 
-private class ConditionalActionGroup(private val myActions: Array<AnAction>, private val condition: () -> Boolean) : ActionGroup() {
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> = if (condition()) myActions else EMPTY_ARRAY
+private class ConditionalActionGroup(private val actions: Array<AnAction>, private val condition: () -> Boolean) : ActionGroup() {
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = if (condition()) actions else EMPTY_ARRAY
 }
 
 private class MyListenersMultimap(
