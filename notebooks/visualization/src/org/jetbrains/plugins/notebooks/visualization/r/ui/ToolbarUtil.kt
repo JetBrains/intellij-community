@@ -61,10 +61,6 @@ object ToolbarUtil {
     return createAnActionButton(A::class.qualifiedName ?: EMPTY_STRING, onClick)
   }
 
-  inline fun <reified A : AnAction>createAnActionButton(noinline canClick: () -> Boolean, noinline onClick: () -> Unit): AnAction {
-    return createAnActionButton(A::class.qualifiedName ?: EMPTY_STRING, canClick, onClick)
-  }
-
   fun createAnActionButton(id: String, onClick: () -> Unit): AnAction {
     return createAnActionButton(id, { true }, onClick)
   }
