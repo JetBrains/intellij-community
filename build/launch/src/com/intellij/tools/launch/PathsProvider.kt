@@ -27,7 +27,7 @@ interface PathsProvider {
     get() = launcherFolder.resolve("system")
 
   val javaHomeFolder: File
-    get() = JdkDownloader.getJdkHome(BuildDependenciesCommunityRoot(communityRootFolder.toPath()), jdkBuildNumber = "17.0.11b1301.1").normalize().toFile()
+    get() = JdkDownloader.getJdkHome(BuildDependenciesCommunityRoot(communityRootFolder.toPath())).normalize().toFile()
 
   val mavenRepositoryFolder: File
     get() = File(System.getProperty("user.home")).resolve(".m2/repository")
