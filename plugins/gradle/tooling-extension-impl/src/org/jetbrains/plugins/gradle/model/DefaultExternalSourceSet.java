@@ -38,7 +38,7 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
     return name;
   }
 
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     this.name = name;
   }
 

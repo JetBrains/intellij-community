@@ -110,7 +110,7 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
 
   @NotNull
   @Override
-  public List<? extends ExternalFilter> getFilters() {
+  public List<DefaultExternalFilter> getFilters() {
     return filters;
   }
 
