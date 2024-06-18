@@ -54,6 +54,7 @@ import org.jetbrains.jps.model.serialization.JpsPathMapper
 import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
@@ -361,6 +362,16 @@ class CompilationContextImpl private constructor(
 
   override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? {
     return org.jetbrains.intellij.build.impl.findFileInModuleSources(module, relativePath)
+  }
+
+  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String): ByteArray? {
+    val file = getModuleOutputDir(module).resolve(relativePath)
+    try {
+      return Files.readAllBytes(file)
+    }
+    catch (_: NoSuchFileException) {
+      return null
+    }
   }
 
   override fun notifyArtifactBuilt(artifactPath: Path) {

@@ -56,9 +56,9 @@ internal class OriginalModuleRepositoryImpl(private val context: CompilationCont
 
   override suspend fun loadProductModules(rootModuleName: String, productMode: ProductMode): ProductModules {
     val repository = context.getOriginalModuleRepository().repository
-    val productModulesFile = findProductModulesFile(context, rootModuleName)
-                             ?: error("Cannot find product-modules.xml file in $rootModuleName")
-    return ProductModulesSerialization.loadProductModules(productModulesFile, productMode, repository)
+    val productModulesStream = readProductModulesFile(context, rootModuleName)
+                               ?: error("Cannot read product-modules.xml file from $rootModuleName")
+    return ProductModulesSerialization.loadProductModules(productModulesStream, "(product-modules.xml file in $rootModuleName)", productMode, repository)
   }
 
   override val repository: RuntimeModuleRepository by lazy { 
@@ -68,4 +68,8 @@ internal class OriginalModuleRepositoryImpl(private val context: CompilationCont
 
 internal fun findProductModulesFile(context: CompilationContext, clientMainModuleName: String): Path? {
   return findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
+}
+
+internal suspend fun readProductModulesFile(context: CompilationContext, clientMainModuleName: String): InputStream? {
+  return context.readFileContentFromModuleOutput(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")?.inputStream()
 }

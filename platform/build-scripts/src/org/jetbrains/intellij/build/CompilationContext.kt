@@ -56,6 +56,9 @@ interface CompilationContext {
 
   fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean = false): Path?
 
+  @ApiStatus.Internal
+  suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String): ByteArray?
+
   fun notifyArtifactBuilt(artifactPath: Path)
 
   @ApiStatus.Internal
