@@ -183,7 +183,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
       }
       if (anchor == ToolWindowAnchor.BOTTOM) {
         val rootBounds = Rectangle(rootPane.locationOnScreen, rootPane.size)
-        val toolWindowHeight = max(getFirstVisibleToolWindowSize(false), toolBar.height)
+        val toolWindowHeight = max(getFirstVisibleToolWindowSize(false), height + JBUI.scale(40))
         val bounds = Rectangle(rootBounds.x, rootBounds.y + rootBounds.height - toolWindowHeight - getStatusBarHeight(),
                                rootBounds.width / 2, toolWindowHeight)
         if (split) {
