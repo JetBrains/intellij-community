@@ -27,6 +27,24 @@ public class StringTemplateReverseMigrationInspectionTest extends LightJavaCodeI
                }
              }""");
   }
+  
+  public void testTrailingWhitespace() {
+    doTest("""
+             class TrailingWhitespace {
+               void foo(String name) {
+                   String s = STR.""\"<caret>
+                                        Hello \\{name}
+                                        ""\";
+               }
+             }
+             """, """
+             class TrailingWhitespace {
+               void foo(String name) {
+                   String s = "Hello " + name + "\\n";
+               }
+             }
+             """);
+  }
 
   public void testOverrideStringProcessor() {
     doTest("""

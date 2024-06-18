@@ -144,6 +144,10 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
       }
       result.append(c);
     }
+    if (strip == indent) {
+      int end = result.length();
+      result.delete(end - indent, end);
+    }
     return result.toString();
   }
 
