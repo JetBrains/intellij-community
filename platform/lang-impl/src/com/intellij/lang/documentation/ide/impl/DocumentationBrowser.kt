@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.codeInsight.documentation.DocumentationInteractionCollector.logDownloadFinished
+import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.UISnapshot
@@ -162,7 +162,7 @@ internal class DocumentationBrowser private constructor(
     val filePath = href.replaceFirst(DocumentationDownloader.HREF_PREFIX, "")
     val file = VirtualFileManager.getInstance().findFileByUrl(filePath)
     if (file != null) {
-      cs.launch {
+      withContext(NonCancellable) {
         val handler = DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }
         if (handler != null) {
           val callback = handler.download(project, file)
