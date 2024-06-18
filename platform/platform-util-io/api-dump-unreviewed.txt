@@ -490,23 +490,11 @@ e:com.intellij.util.io.PowerStatus
 f:com.intellij.util.io.PowerStatus$Companion
 - f:getPowerStatus():com.intellij.util.io.PowerStatus
 f:com.intellij.util.net.NetUtils
-- s:canConnectToRemoteSocket(java.lang.String,I):Z
-- s:canConnectToSocket(java.lang.String,I):Z
 - s:copyStreamContent(com.intellij.openapi.progress.ProgressIndicator,java.io.InputStream,java.io.OutputStream,I):I
 - s:copyStreamContent(com.intellij.openapi.progress.ProgressIndicator,java.io.InputStream,java.io.OutputStream,J):J
 - s:copyStreamContent(com.intellij.openapi.progress.ProgressIndicator,java.io.InputStream,java.io.OutputStream,J,Z):J
 - s:findAvailableSocketPort():I
 - s:findAvailableSocketPorts(I):I[]
 - s:getLocalHostString():java.lang.String
-- s:isLocalhost(java.lang.String):Z
-- s:isSniEnabled():Z
-- s:isValidHost(java.lang.String):com.intellij.util.net.NetUtils$ValidHostInfo
 - s:tryToFindAvailableSocketPort():I
 - s:tryToFindAvailableSocketPort(I):I
-e:com.intellij.util.net.NetUtils$ValidHostInfo
-- java.lang.Enum
-- sf:INVALID:com.intellij.util.net.NetUtils$ValidHostInfo
-- sf:VALID:com.intellij.util.net.NetUtils$ValidHostInfo
-- sf:VALID_PROXY:com.intellij.util.net.NetUtils$ValidHostInfo
-- s:valueOf(java.lang.String):com.intellij.util.net.NetUtils$ValidHostInfo
-- s:values():com.intellij.util.net.NetUtils$ValidHostInfo[]

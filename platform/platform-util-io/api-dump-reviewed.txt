@@ -489,3 +489,12 @@ e:com.intellij.util.io.PowerStatus
 - s:values():com.intellij.util.io.PowerStatus[]
 f:com.intellij.util.io.PowerStatus$Companion
 - f:getPowerStatus():com.intellij.util.io.PowerStatus
+f:com.intellij.util.net.NetUtils
+- s:copyStreamContent(com.intellij.openapi.progress.ProgressIndicator,java.io.InputStream,java.io.OutputStream,I):I
+- s:copyStreamContent(com.intellij.openapi.progress.ProgressIndicator,java.io.InputStream,java.io.OutputStream,J):J
+- s:copyStreamContent(com.intellij.openapi.progress.ProgressIndicator,java.io.InputStream,java.io.OutputStream,J,Z):J
+- s:findAvailableSocketPort():I
+- s:findAvailableSocketPorts(I):I[]
+- s:getLocalHostString():java.lang.String
+- s:tryToFindAvailableSocketPort():I
+- s:tryToFindAvailableSocketPort(I):I
