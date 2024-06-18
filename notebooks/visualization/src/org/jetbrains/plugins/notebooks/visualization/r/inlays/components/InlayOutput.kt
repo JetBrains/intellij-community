@@ -152,6 +152,9 @@ abstract class InlayOutput(
     fun getToolbarPaneOrNull(e: AnActionEvent): ToolbarPane? =
       e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarPane
 
+    inline fun <reified T> getInlayOutput(e: AnActionEvent): T? =
+      getToolbarPaneOrNull(e)?.inlayOutput as? T
+
     fun loadActions(vararg ids: String): List<AnAction> {
       val actionManager = ActionManager.getInstance()
       return ids.map { actionManager.getAction(it) }

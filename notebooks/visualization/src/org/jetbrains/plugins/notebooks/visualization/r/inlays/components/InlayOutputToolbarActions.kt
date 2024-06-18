@@ -7,6 +7,7 @@ package org.jetbrains.plugins.notebooks.visualization.r.inlays.components
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutput.Companion.getInlayOutput
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutput.Companion.getToolbarPaneOrNull
 
 class ClearOutputAction private constructor() : DumbAwareAction() {
@@ -29,11 +30,11 @@ class ClearOutputAction private constructor() : DumbAwareAction() {
 
 internal class SaveOutputAction private constructor() : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.getInlayOutput<InlayOutput.WithSaveAs>() != null
+    e.presentation.isEnabledAndVisible = getInlayOutput<InlayOutput.WithSaveAs>(e) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getInlayOutput<InlayOutput.WithSaveAs>()?.saveAs()
+    getInlayOutput<InlayOutput.WithSaveAs>(e)?.saveAs()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread =
@@ -47,11 +48,11 @@ internal class SaveOutputAction private constructor() : DumbAwareAction() {
 
 class CopyImageToClipboardAction private constructor() : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.getInlayOutput<InlayOutput.WithCopyImageToClipboard>() != null
+    e.presentation.isEnabledAndVisible = getInlayOutput<InlayOutput.WithCopyImageToClipboard>(e) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getInlayOutput<InlayOutput.WithCopyImageToClipboard>()?.copyImageToClipboard()
+    getInlayOutput<InlayOutput.WithCopyImageToClipboard>(e)?.copyImageToClipboard()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread =
@@ -61,7 +62,3 @@ class CopyImageToClipboardAction private constructor() : DumbAwareAction() {
     const val ID = "org.jetbrains.plugins.notebooks.visualization.r.inlays.components.CopyImageToClipboardAction"
   }
 }
-
-
-private inline fun <reified T> AnActionEvent.getInlayOutput(): T? =
-  getToolbarPaneOrNull(this)?.inlayOutput as? T
