@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.findUsages
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.FindUsagesOptions
@@ -14,6 +15,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -64,6 +66,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.io.File
+import java.io.StringWriter
 
 
 abstract class AbstractFindUsagesWithDisableComponentSearchTest : AbstractFindUsagesTest() {
@@ -533,9 +536,31 @@ internal fun findUsages(
                 ProgressManager.getInstance().run(
                     object : Task.Modal(project, "", false) {
                         override fun run(indicator: ProgressIndicator) {
+                            val currentThread = Thread.currentThread()
+                            val thread = object : Thread("waiter") {
+                                override fun run() {
+                                    try {
+                                        sleep(10000)
+                                        if (!indicator.isCanceled) {
+
+                                            val logger = Logger.getInstance(AbstractFindUsagesTest::class.java)
+                                            logger.debug("Find usages are cancelled by timeout with the thread dump:")
+                                            val stackTrace = StringWriter()
+                                            ThreadDumper.dumpCallStack(currentThread, stackTrace, currentThread.stackTrace)
+                                            logger.debug(stackTrace.toString())
+
+                                            indicator.cancel()
+                                        }
+                                    } catch (_: InterruptedException) {
+                                        //ignore, all good
+                                    }
+                                }
+                            }
+                            thread.start()
                             runReadAction {
                                 handler.processElementUsages(psiElement, processor, options)
                             }
+                            thread.interrupt()
                         }
                     },
                 )
