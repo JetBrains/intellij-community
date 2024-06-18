@@ -489,10 +489,6 @@ e:com.intellij.util.io.PowerStatus
 - s:values():com.intellij.util.io.PowerStatus[]
 f:com.intellij.util.io.PowerStatus$Companion
 - f:getPowerStatus():com.intellij.util.io.PowerStatus
-f:com.intellij.util.net.NetKt
-- sf:loopbackSocketAddress():java.net.InetSocketAddress
-- sf:loopbackSocketAddress(I):java.net.InetSocketAddress
-- bs:loopbackSocketAddress$default(I,I,java.lang.Object):java.net.InetSocketAddress
 f:com.intellij.util.net.NetUtils
 - s:canConnectToRemoteSocket(java.lang.String,I):Z
 - s:canConnectToSocket(java.lang.String,I):Z
