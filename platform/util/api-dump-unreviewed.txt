@@ -339,10 +339,8 @@ f:com.intellij.openapi.application.PathManager
 - sf:PROPERTY_SYSTEM_PATH:java.lang.String
 - sf:SYSTEM_PATHS_CUSTOMIZER:java.lang.String
 - <init>():V
-- s:customizePaths():V
 - s:findBinFile(java.lang.String):java.nio.file.Path
 - s:findBinFileWithException(java.lang.String):java.nio.file.Path
-- s:findFileInLibDirectory(java.lang.String):java.io.File
 - s:getAbsolutePath(java.lang.String):java.lang.String
 - s:getBinPath():java.lang.String
 - s:getBundledRuntimePath():java.lang.String
@@ -352,15 +350,9 @@ f:com.intellij.openapi.application.PathManager
 - s:getConfigPath():java.lang.String
 - s:getCustomOptionsDirectory():java.lang.String
 - s:getDefaultConfigPathFor(java.lang.String):java.lang.String
-- s:getDefaultLogPathFor(java.lang.String):java.lang.String
-- s:getDefaultPluginPathFor(java.lang.String):java.lang.String
 - s:getDefaultSystemPathFor(java.lang.String):java.lang.String
-- s:getDefaultUnixSystemPath(java.lang.String,java.lang.String):java.lang.String
-- s:getHomeDirFor(java.lang.Class):java.nio.file.Path
 - s:getHomePath():java.lang.String
 - s:getHomePath(Z):java.lang.String
-- s:getHomePathFor(java.lang.Class):java.lang.String
-- s:getIndexRoot():java.nio.file.Path
 - s:getJarForClass(java.lang.Class):java.nio.file.Path
 - s:getJarPathForClass(java.lang.Class):java.lang.String
 - s:getLibPath():java.lang.String
@@ -368,7 +360,6 @@ f:com.intellij.openapi.application.PathManager
 - s:getLogPath():java.lang.String
 - s:getOptionsFile(java.lang.String):java.io.File
 - s:getOptionsPath():java.lang.String
-- s:getPathsSelector():java.lang.String
 - s:getPluginTempPath():java.lang.String
 - s:getPluginsDir():java.nio.file.Path
 - s:getPluginsPath():java.lang.String
@@ -382,8 +373,6 @@ f:com.intellij.openapi.application.PathManager
 - s:isUnderHomeDirectory(java.lang.String):Z
 - s:isUnderHomeDirectory(java.nio.file.Path):Z
 - s:setExplicitConfigPath(java.lang.String):V
-- s:substituteVars(java.lang.String):java.lang.String
-- s:substituteVars(java.lang.String,java.lang.String):java.lang.String
 f:com.intellij.openapi.diagnostic.Attachment
 - sf:EMPTY_ARRAY:com.intellij.openapi.diagnostic.Attachment[]
 - <init>(java.lang.String,java.io.File,java.lang.String):V

@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Contract;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,16 +41,16 @@ public class PathManagerTest {
 
   @Test
   public void testVarSubstitution() {
-    assertEquals("", PathManager.substituteVars(""));
-    assertEquals("abc", PathManager.substituteVars("abc"));
-    assertEquals("a$b$c", PathManager.substituteVars("a$b$c"));
+    assertEquals("", substituteVars(""));
+    assertEquals("abc", substituteVars("abc"));
+    assertEquals("a$b$c", substituteVars("a$b$c"));
 
-    assertEquals("/" + TEST_VALUE + "/" + TEST_VALUE + "/", PathManager.substituteVars("/${" + TEST_RPOP + "}/${" + TEST_RPOP + "}/"));
+    assertEquals("/" + TEST_VALUE + "/" + TEST_VALUE + "/", substituteVars("/${" + TEST_RPOP + "}/${" + TEST_RPOP + "}/"));
 
     String home = System.clearProperty(PathManager.PROPERTY_HOME_PATH);
     try {
-      assertEquals(PathManager.getHomePath() + "/build.txt", PathManager.substituteVars("${idea.home}/build.txt"));
-      assertEquals(PathManager.getHomePath() + "\\build.txt", PathManager.substituteVars("${idea.home.path}\\build.txt"));
+      assertEquals(PathManager.getHomePath() + "/build.txt", substituteVars("${idea.home}/build.txt"));
+      assertEquals(PathManager.getHomePath() + "\\build.txt", substituteVars("${idea.home.path}\\build.txt"));
       assertEquals("/opt/idea/build.txt", PathManager.substituteVars("${idea.home}/build.txt", "/opt/idea"));
       assertEquals("C:\\opt\\idea\\build.txt", PathManager.substituteVars("${idea.home.path}\\build.txt", "C:\\opt\\idea"));
     }
@@ -61,7 +62,7 @@ public class PathManagerTest {
 
     String config = System.clearProperty(PathManager.PROPERTY_CONFIG_PATH);
     try {
-      assertEquals(PathManager.getConfigPath() + "/opts", PathManager.substituteVars("${idea.config.path}/opts"));
+      assertEquals(PathManager.getConfigPath() + "/opts", substituteVars("${idea.config.path}/opts"));
     }
     finally {
       if (config != null) {
@@ -71,7 +72,7 @@ public class PathManagerTest {
 
     String system = System.clearProperty(PathManager.PROPERTY_SYSTEM_PATH);
     try {
-      assertEquals(PathManager.getSystemPath() + "/logs2", PathManager.substituteVars("${idea.system.path}/logs2"));
+      assertEquals(PathManager.getSystemPath() + "/logs2", substituteVars("${idea.system.path}/logs2"));
     }
     finally {
       if (system != null) {
@@ -79,8 +80,13 @@ public class PathManagerTest {
       }
     }
 
-    assertTrue(FileUtil.pathsEqual(PathManager.getBinPath() + "/../license", PathManager.substituteVars("../license")));
+    assertTrue(FileUtil.pathsEqual(PathManager.getBinPath() + "/../license", substituteVars("../license")));
 
-    assertEquals("//", PathManager.substituteVars("/${unknown_property_ignore_the_error}/"));
+    assertEquals("//", substituteVars("/${unknown_property_ignore_the_error}/"));
+  }
+
+  @Contract("null -> null")
+  public static String substituteVars(String s) {
+    return PathManager.substituteVars(s, PathManager.getHomePath());
   }
 }
