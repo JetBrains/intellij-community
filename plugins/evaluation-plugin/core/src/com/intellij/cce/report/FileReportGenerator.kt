@@ -25,6 +25,7 @@ abstract class FileReportGenerator(
 
   val reportReferences: MutableMap<String, ReferenceInfo> = mutableMapOf()
 
+  // For the diff algorithm implementation, see [script.js](../../resources/diff.js)
   abstract fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String
 
   override fun generateFileReport(sessions: List<FileEvaluationInfo>) {
