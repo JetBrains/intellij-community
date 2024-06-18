@@ -117,7 +117,6 @@ public final class DynamicMemberUtils {
     private final Map<String, PsiField[]> myStaticFieldMap;
 
     private final Map<String, PsiMethod[]> myNonStaticMethodMap;
-    private final Map<String, PsiField[]> myNonStaticFieldMap;
 
     private ClassMemberHolder(Project project, String classSource) {
       myClassSource = classSource;
@@ -131,7 +130,6 @@ public final class DynamicMemberUtils {
       // Collect fields.
       myFieldMap = new HashMap<>();
       myStaticFieldMap = new HashMap<>();
-      myNonStaticFieldMap = new HashMap<>();
 
       GrField[] fields = myClass.getCodeFields();
 
@@ -153,9 +151,6 @@ public final class DynamicMemberUtils {
         if (field.hasModifierProperty(PsiModifier.STATIC)) {
           myStaticFieldMap.put(field.getName(), dynamicFieldArray);
         }
-        else {
-          myNonStaticFieldMap.put(field.getName(), dynamicFieldArray);
-        }
 
         Object oldValue = myFieldMap.put(field.getName(), dynamicFieldArray);
         assert oldValue == null : "Duplicated field in dynamic class: " + myClass.getName() + ":" + field.getName();
@@ -165,7 +160,7 @@ public final class DynamicMemberUtils {
 
       myFieldMap.put(null, allFields);
 
-      // Collect methods..
+      // Collect methods
       checkDuplicatedMethods(myClass);
 
       MultiMap<String, PsiMethod> multiMap = new MultiMap<>();
