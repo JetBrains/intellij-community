@@ -12,7 +12,6 @@ import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.SettingsService
-import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl.Companion
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
@@ -501,6 +500,7 @@ class JbSettingsImporter(private val configDirPath: Path,
       ConfigImportHelper.updateVMOptions(PathManager.getConfigDir(), LOG)
     }
     CustomConfigMigrationOption.MigrateFromCustomPlace(configDirPath).writeConfigMarkerFile(PathManager.getConfigDir())
+    ConfigImportHelper.migrateLocalization(configDirPath, pluginsPath)
     (System.currentTimeMillis() - startTime).let {
       LOG.info("Raw import finished in $it ms.")
       ImportSettingsEventsCollector.jbTotalImportTimeSpent(it)

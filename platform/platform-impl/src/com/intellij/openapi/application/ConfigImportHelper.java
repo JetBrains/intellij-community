@@ -954,7 +954,7 @@ public final class ConfigImportHelper {
       migratePlugins(oldPluginsDir, oldConfigDir, newPluginsDir, newConfigDir, options, hasPendingUpdate);
     }
 
-    enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir, options.bundledPluginPath, options.brokenPluginVersions, options.compatibleBuildNumber);
+    migrateLocalization(oldConfigDir, oldPluginsDir);
 
     if (SystemInfoRt.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
       setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
@@ -964,6 +964,10 @@ public final class ConfigImportHelper {
     StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir, newPluginsDir);
 
     updateVMOptions(newConfigDir, log);
+  }
+
+  public static void migrateLocalization(Path oldConfigDir, Path oldPluginsDir) {
+    enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir);
   }
 
   private static List<ActionCommand> loadStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) throws IOException {
