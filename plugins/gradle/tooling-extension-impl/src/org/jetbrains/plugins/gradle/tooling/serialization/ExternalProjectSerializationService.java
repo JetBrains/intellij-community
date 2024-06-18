@@ -371,7 +371,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     directorySet.setSrcDirs(readFileSet(reader, SOURCE_DIRECTORY_SRC_DIRS_FIELD));
     directorySet.setGradleOutputDirs(readFileList(reader, SOURCE_DIRECTORY_GRADLE_OUTPUTS_FIELD));
     directorySet.setOutputDir(assertNotNull(readFile(reader, SOURCE_DIRECTORY_OUTPUT_DIR_FIELD)));
-    directorySet.setInheritedCompilerOutput(readBoolean(reader, SOURCE_DIRECTORY_INHERIT_COMPILER_OUTPUT_FIELD));
+    directorySet.setCompilerOutputPathInherited(readBoolean(reader, SOURCE_DIRECTORY_INHERIT_COMPILER_OUTPUT_FIELD));
     directorySet.setPatterns(readPatterns(reader));
     directorySet.setFilters(readFilters(reader));
     reader.stepOut();

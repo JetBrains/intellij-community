@@ -439,7 +439,7 @@ private fun createExternalSourceSet(
                 dirSet.outputDir = effectiveClassesDir
                 dirSet.srcDirs = compilation.declaredSourceSets.flatMapTo(LinkedHashSet()) { it.sourceDirs }
                 dirSet.gradleOutputDirs = compilation.output.classesDirs
-                dirSet.setInheritedCompilerOutput(false)
+                dirSet.isCompilerOutputPathInherited = false
             }
         }
         if (resourcesDir != null) {
@@ -447,7 +447,7 @@ private fun createExternalSourceSet(
                 dirSet.outputDir = resourcesDir
                 dirSet.srcDirs = compilation.declaredSourceSets.flatMapTo(LinkedHashSet()) { it.resourceDirs }
                 dirSet.gradleOutputDirs = listOf(resourcesDir)
-                dirSet.setInheritedCompilerOutput(false)
+                dirSet.isCompilerOutputPathInherited = false
             }
         }
 

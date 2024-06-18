@@ -19,7 +19,7 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
   private final FilePatternSetImpl patterns;
   private @NotNull List<DefaultExternalFilter> filters;
 
-  private boolean inheritedCompilerOutput;
+  private boolean isCompilerOutputInherited;
 
   public DefaultExternalSourceDirectorySet() {
     srcDirs = new HashSet<>(0);
@@ -70,7 +70,11 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
 
   @Override
   public boolean isCompilerOutputPathInherited() {
-    return inheritedCompilerOutput;
+    return isCompilerOutputInherited;
+  }
+
+  public void setCompilerOutputPathInherited(boolean isCompilerOutputInherited) {
+    this.isCompilerOutputInherited = isCompilerOutputInherited;
   }
 
   @NotNull
@@ -102,10 +106,6 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
   public void setPatterns(@NotNull FilePatternSet patterns) {
     this.patterns.setIncludes(patterns.getIncludes());
     this.patterns.setExcludes(patterns.getExcludes());
-  }
-
-  public void setInheritedCompilerOutput(boolean inheritedCompilerOutput) {
-    this.inheritedCompilerOutput = inheritedCompilerOutput;
   }
 
   @NotNull
