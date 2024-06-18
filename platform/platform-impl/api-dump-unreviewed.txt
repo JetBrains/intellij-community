@@ -28282,7 +28282,17 @@ f:com.intellij.ui.mac.MergeAllWindowsAction
 - s:isTabbedWindow(javax.swing.JFrame):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ui.mac.WindowTabsComponent
-- com.intellij.ui.tabs.impl.JBTabsImpl
+- com.intellij.ide.ui.UISettingsListener
+- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
+- com.intellij.openapi.ui.Queryable
+- com.intellij.ui.switcher.QuickActionProvider
+- com.intellij.ui.tabs.JBTabsEx
+- com.intellij.ui.tabs.JBTabsPresentation
+- com.intellij.ui.tabs.impl.MorePopupAware
+- java.beans.PropertyChangeListener
+- javax.accessibility.Accessible
+- javax.swing.JComponent
+- javax.swing.event.PopupMenuListener
 - <init>(com.intellij.openapi.wm.impl.IdeFrameImpl,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
 - createTabsForFrame(com.intellij.openapi.wm.impl.IdeFrameImpl[]):V
 - getPreferredSize():java.awt.Dimension

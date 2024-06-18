@@ -428,17 +428,13 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
   private var session: DragSession? = null
 
   override fun dragOutStarted(mouseEvent: MouseEvent, info: TabInfo) {
-    val previousSelection = info.previousSelection ?: editorTabs.getToSelectOnRemoveOf(info)
     val img = JBTabsImpl.getComponentImage(info)
+    val file = info.`object` as VirtualFile
 
     val dragStartIndex = editorTabs.getIndexOf(info)
     val isPinnedAtStart = info.isPinned
     info.isHidden = true
-    if (previousSelection != null) {
-      editorTabs.select(info = previousSelection, requestFocus = true)
-    }
 
-    val file = info.`object` as VirtualFile
     this.file = file
     file.putUserData(DRAG_START_INDEX_KEY, dragStartIndex)
     file.putUserData(DRAG_START_LOCATION_HASH_KEY, System.identityHashCode(editorTabs))

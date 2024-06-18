@@ -908,10 +908,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 *f:com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModelKt
 - sf:setupCodeReviewProgressModel(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel):V
 - sf:setupCodeReviewProgressModel(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.openapi.Disposable,com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel):V
-*f:com.intellij.collaboration.ui.codereview.CodeReviewTabs
-- sf:INSTANCE:com.intellij.collaboration.ui.codereview.CodeReviewTabs
-- f:bindTabText(kotlinx.coroutines.CoroutineScope,com.intellij.ui.tabs.TabInfo,java.util.function.Supplier,kotlinx.coroutines.flow.Flow):kotlinx.coroutines.Job
-- f:bindTabUi(kotlinx.coroutines.CoroutineScope,com.intellij.ui.tabs.impl.JBTabsImpl,com.intellij.ui.tabs.TabInfo,java.util.function.Supplier,kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow):kotlinx.coroutines.Job
 *f:com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 - sf:HEADER_VERT_PADDING:I
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
