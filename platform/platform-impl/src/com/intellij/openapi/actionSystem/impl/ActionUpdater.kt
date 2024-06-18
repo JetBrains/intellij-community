@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.SUPPRESS_SUBM
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -33,15 +32,18 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.ObjectUtils
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FList
+import com.intellij.util.takeWhileInclusive
 import com.intellij.util.ui.EDT
 import com.intellij.util.use
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
@@ -50,6 +52,7 @@ import java.awt.event.MouseEvent
 import java.lang.IllegalStateException
 import java.lang.Integer.max
 import java.lang.RuntimeException
+import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
@@ -72,6 +75,7 @@ private const val OP_expandActionGroup = "expandedChildren"
 private const val OP_groupChildren = "children"
 private const val OP_actionPresentation = "presentation"
 private const val OP_groupPostProcess = "postProcessChildren"
+private const val OP_sessionData = "sessionData"
 
 private val ourToolbarJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
 private val ourOtherJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
@@ -90,7 +94,8 @@ internal class ActionUpdater @JvmOverloads constructor(
   @Volatile private var bgtScope: CoroutineScope? = null
 
   private val application: Application = com.intellij.util.application
-  private val sessionData = ConcurrentHashMap<Pair<String, Any?>, Deferred<*>>()
+  private val actionManager = ActionManager.getInstance()
+  private val sessionData = ConcurrentHashMap<SessionKey, Deferred<*>>()
   private val updatedPresentations = ConcurrentHashMap<AnAction, Presentation>()
   private val groupChildren = ConcurrentHashMap<ActionGroup, List<AnAction>>()
 
@@ -106,9 +111,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   private var edtWaitNanos: Long = 0 // used only in EDT
 
   init {
-    if (EDT.isCurrentThreadEdt() && SlowOperations.isInSection(SlowOperations.ACTION_UPDATE)) {
-      reportRecursiveUpdateSession()
-    }
+    checkRecursiveUpdateSession()
   }
 
   @RequiresEdt
@@ -128,11 +131,11 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  private suspend fun <T> callAction(action: Any,
-                                     operationName: String,
+  private suspend fun <T> callAction(opElement: OpElement,
                                      updateThreadOrig: ActionUpdateThread,
                                      call: () -> T): T {
-    val forcedUpdateThread = currentCoroutineContext()[ForcedActionUpdateThreadElement]?.updateThread
+    val operationName = opElement.operationName
+    val forcedUpdateThread = opElement.all().mapNotNull { it.forcedUpdateThread }.firstOrNull()
     val updateThread: ActionUpdateThread = forcedUpdateThread ?: updateThreadOrig
     val canAsync = Utils.isAsyncDataContext(dataContext)
     val shallAsync = updateThread == ActionUpdateThread.BGT
@@ -162,14 +165,15 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
     @Suppress("removal", "DEPRECATION")
     if (updateThread == ActionUpdateThread.OLD_EDT) {
-      ensureSlowDataKeysPreCached(action, operationName)
+      ensureSlowDataKeysPreCached(opElement)
     }
-    return computeOnEdt(action, operationName, updateThread == ActionUpdateThread.EDT) {
+    return computeOnEdt(opElement, updateThread == ActionUpdateThread.EDT) {
       call()
     }
   }
 
-  private suspend fun <T> computeOnEdt(action: Any, operationName: String, noRulesInEDT: Boolean, call: () -> T): T {
+  private suspend fun <T> computeOnEdt(opElement: OpElement, noRulesInEDT: Boolean, call: () -> T): T {
+    val operationName = opElement.operationName
     var currentEDTPerformMillis = 0L
     var currentEDTWaitMillis = 0L
     var edtTraces: List<Throwable>? = null
@@ -210,14 +214,15 @@ internal class ActionUpdater @JvmOverloads constructor(
         LOG.info("$currentEDTWaitMillis ms to grab EDT for $operationName")
       }
       if (currentEDTPerformMillis > 300) {
-        reportSlowEdtOperation(action, operationName, currentEDTPerformMillis, edtTraces)
+        reportSlowEdtOperation(opElement.sessionKey ?: opElement.action ?: opElement,
+                               operationName, currentEDTPerformMillis, edtTraces)
       }
     }
   }
 
   suspend fun <R : Any?> runUpdateSession(coroutineContext: CoroutineContext, block: suspend CoroutineScope.() -> R): R =
     withContext(coroutineContext) {
-      val childScope = childScope()
+      val childScope = childScope("ActionUpdater.runUpdateSession")
       bgtScope = childScope
       try {
         block()
@@ -256,22 +261,22 @@ internal class ActionUpdater @JvmOverloads constructor(
       val edtWaitMillis = TimeUnit.NANOSECONDS.toMillis(edtWaitNanos)
       if (edtCallsCount > 500 || edtWaitMillis > 3000) {
         LOG.warn(edtWaitMillis.toString() + " ms total to grab EDT " + edtCallsCount + " times to expand " +
-                 Utils.operationName(group, null, place) + ". Use `ActionUpdateThread.BGT`.")
+                 Utils.operationName(group, OP_expandActionGroup, place) + ". Use `ActionUpdateThread.BGT`.")
       }
     }
   }
 
-  private suspend fun ensureSlowDataKeysPreCached(action: Any, targetOperationName: String) {
+  private suspend fun ensureSlowDataKeysPreCached(opElement: OpElement) {
     if (!preCacheSlowDataKeys) return
-    getSessionDataDeferred(Pair("precache-slow-data@$targetOperationName", null)) {
+    val sessionKey = SessionKey("precache-slow-data@${opElement.operationName}", Unit)
+    getSessionDataDeferred(opElement, sessionKey) {
       readActionUndispatchedForActionExpand {
-        precacheSlowDataKeys(action, targetOperationName)
+        precacheSlowDataKeys(opElement)
       }
     }.await()
   }
 
-  private fun precacheSlowDataKeys(action: Any, targetOperationName: String) {
-    val operationName = "precache-slow-data@$targetOperationName"
+  private fun precacheSlowDataKeys(opElement: OpElement) {
     val start = System.nanoTime()
     try {
       for (key in DataKey.allKeys()) {
@@ -287,38 +292,42 @@ internal class ActionUpdater @JvmOverloads constructor(
       }
     }
     finally {
-      logTimeProblemForPreCached(action, operationName, TimeoutUtil.getDurationMillis(start))
+      logTimeProblemForPreCached(opElement, TimeoutUtil.getDurationMillis(start))
     }
   }
 
-  private fun logTimeProblemForPreCached(action: Any, operationName: String, elapsed: Long) {
+  private fun logTimeProblemForPreCached(opElement: OpElement, elapsed: Long) {
     if (elapsed > 300 && ActionPlaces.isShortcutPlace(place)) {
-      LOG.error(PluginException.createByClass(elapsedReport(elapsed, false, operationName) + OLD_EDT_MSG_SUFFIX, null, action.javaClass))
+      val operationName = "precache-slow-data@${opElement.operationName}"
+      LOG.error(PluginException.createByClass(
+        elapsedReport(elapsed, false, operationName) + OLD_EDT_MSG_SUFFIX, null,
+        (opElement.sessionKey?.source ?: opElement.action ?: opElement).javaClass))
     }
     else if (elapsed > 3000) {
+      val operationName = "precache-slow-data@${opElement.operationName}"
       LOG.warn(elapsedReport(elapsed, false, operationName))
     }
     else if (elapsed > 500 && LOG.isDebugEnabled()) {
+      val operationName = "precache-slow-data@${opElement.operationName}"
       LOG.debug(elapsedReport(elapsed, false, operationName))
     }
   }
 
-  private suspend fun doExpandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> = coroutineScope {
+  private suspend fun doExpandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> {
     if (group is ActionGroupStub) {
       throw IllegalStateException("ActionGroupStub cannot be expanded")
     }
-    val presentation = updateAction(group)
-    if (presentation == null || !presentation.isVisible) {
-      // don't process invisible groups
-      return@coroutineScope emptyList()
-    }
-
-    val children = getGroupChildren(group)
-    // parallel update execution can break some existing caching
-    // the preferred way to do caching now is `updateSession.sharedData`
-    val updateContext = ForcedActionUpdateThreadElement.forGroup(group)
-    val expandResult = withContext(updateContext) {
-      children
+    val opElement = OpElement.next(group, OP_expandActionGroup, place, null)
+    return withContext(opElement) {
+      val presentation = updateAction(group)
+      if (presentation == null || !presentation.isVisible) {
+        // don't process invisible groups
+        return@withContext emptyList()
+      }
+      val children = getGroupChildren(group)
+      // parallel update execution can break some existing caching
+      // the preferred way to do caching now is `updateSession.sharedData`
+      val expandResult = children
         .map {
           async {
             expandGroupChild(it, hideDisabled)
@@ -326,34 +335,34 @@ internal class ActionUpdater @JvmOverloads constructor(
         }
         .awaitAll()
         .flatten()
-    }
-    val result = postProcessGroupChildren(group, expandResult)
-    result
-      .mapNotNull {
-        updatedPresentations[it]?.getClientProperty(ActionUtil.INLINE_ACTIONS)
-        ?: (it as? InlineActionsHolder)?.inlineActions
-      }
-      .flatten()
-      .map {
-        async(updateContext) {
-          updateAction(it)
+      val result = postProcessGroupChildren(group, expandResult)
+      result
+        .mapNotNull {
+          updatedPresentations[it]?.getClientProperty(ActionUtil.INLINE_ACTIONS)
+          ?: (it as? InlineActionsHolder)?.inlineActions
         }
-      }
-      .toList()
-      .awaitAll()
-    result
+        .flatten()
+        .map {
+          async {
+            updateAction(it)
+          }
+        }
+        .toList()
+        .awaitAll()
+      result
+    }
   }
 
   private suspend fun postProcessGroupChildren(group: ActionGroup, result: List<AnAction>): List<AnAction> {
     if (isDefaultImplementationRecursively(OP_groupPostProcess, group)) {
       return result
     }
-    val operationName = Utils.operationName(group, OP_groupPostProcess, place)
-    try {
+    val opElement = OpElement.next(group, OP_groupPostProcess, place, null)
+    return try {
       val updateSession = asUpdateSession()
-      return retryOnAwaitSharedData(operationName, maxAwaitSharedDataRetries) {
+      retryOnAwaitSharedData(opElement, maxAwaitSharedDataRetries) {
         blockingContext { // no data-context hence no RA, just blockingContext
-          val spanBuilder = Utils.getTracer(true).spanBuilder(operationName)
+          val spanBuilder = Utils.getTracer(true).spanBuilder(opElement.operationName)
           spanBuilder.use {
             group.postProcessVisibleChildren(result, updateSession)
           }
@@ -361,8 +370,8 @@ internal class ActionUpdater @JvmOverloads constructor(
       }
     }
     catch (ex: Throwable) {
-      handleException(group, operationName, null, ex)
-      return result
+      handleException(opElement, updatedPresentations[group] ?: group.templatePresentation, actionManager, ex)
+      result
     }
   }
 
@@ -372,22 +381,22 @@ internal class ActionUpdater @JvmOverloads constructor(
     if (cached != null) {
       return cached
     }
-    val operationName = Utils.operationName(group, OP_groupChildren, place)
     // use initial presentation if there's no updated presentation (?)
-    val event = createActionEvent(updatedPresentations[group] ?: initialBgtPresentation(group))
+    val opElement = OpElement.next(group, OP_groupChildren, place, null)
+    val event = createActionEvent(opElement, updatedPresentations[group] ?: initialBgtPresentation(group))
     val children = try {
-      retryOnAwaitSharedData(operationName, maxAwaitSharedDataRetries) {
+      retryOnAwaitSharedData(opElement, maxAwaitSharedDataRetries) {
         ActionUpdaterInterceptor.getGroupChildren(group, event) {
-          callAction(group, operationName, group.actionUpdateThread) {
+          callAction(opElement, group.actionUpdateThread) {
             group.getChildren(event)
           }.let {
-            ensureNotNullChildren(it, group, place)
+            ensureNotNullChildren(opElement, it)
           }
         }
       }.asList()
     }
     catch (ex: Throwable) {
-      handleException(group, operationName, event, ex)
+      handleException(opElement, event.presentation, actionManager, ex)
       return emptyList()
     }
     return groupChildren.getOrPut(group) { children }
@@ -454,10 +463,11 @@ internal class ActionUpdater @JvmOverloads constructor(
     return presentationFactory.getPresentation(action).clone()
   }
 
-  private fun createActionEvent(presentation: Presentation): AnActionEvent {
+  @Suppress("unused")
+  private fun createActionEvent(element: OpElement, presentation: Presentation): AnActionEvent {
     val event = AnActionEvent(
       null, dataContext, place, presentation,
-      ActionManager.getInstance(), 0, contextMenuAction, toolbarAction).let {
+      actionManager, 0, contextMenuAction, toolbarAction).let {
       eventTransform?.invoke(it) ?: it
     }
     event.updateSession = asUpdateSession()
@@ -535,10 +545,10 @@ internal class ActionUpdater @JvmOverloads constructor(
       }
       return presentation
     }
-    val operationName = Utils.operationName(action, OP_actionPresentation, place)
-    val event = createActionEvent(presentation)
+    val opElement = OpElement.next(action, OP_actionPresentation, place, null)
+    val event = createActionEvent(opElement, presentation)
     val success = try {
-      retryOnAwaitSharedData(operationName, maxAwaitSharedDataRetries) {
+      retryOnAwaitSharedData(opElement, maxAwaitSharedDataRetries) {
         ActionUpdaterInterceptor.updateAction(action, event) {
           // reset enabled/visible flags (actions are encouraged to always set them in `update`)
           presentation.setEnabledAndVisible(true)
@@ -546,14 +556,14 @@ internal class ActionUpdater @JvmOverloads constructor(
             action.applyTextOverride(event)
             return@updateAction true
           }
-          callAction(action, operationName, action.actionUpdateThread) {
+          callAction(opElement, action.actionUpdateThread) {
             !ActionUtil.performDumbAwareUpdate(action, event, false)
           }
         }
       }
     }
     catch (ex: Throwable) {
-      handleException(action, operationName, event, ex)
+      handleException(opElement, event.presentation, actionManager, ex)
       return null
     }
     if (success) {
@@ -563,22 +573,20 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun <T : Any?> getSessionDataDeferred(key: Pair<String, Any?>, supplier: suspend () -> T): Deferred<T> {
-    val chain = currentThreadContext()[SharedDataChain]?.chain ?: FList.emptyList<Any>()
+  private fun <T : Any?> getSessionDataDeferred(opElement: OpElement?,
+                                                key: SessionKey,
+                                                supplier: suspend () -> T): Deferred<T> {
+    val opNext = OpElement.next(opElement, opElement?.action, OP_sessionData, place, key)
     val existing = sessionData[key]
     if (existing != null) {
-      if (chain.contains(key)) {
-        throw AssertionError("Circular dependency: ${chain.prepend(key).joinToString(" <- ")}")
-      }
       return existing as Deferred<T>
     }
     val bgtScope = bgtScope
+    val context = currentThreadContext().minusKey(Job) + opNext
     return if (bgtScope != null) {
       sessionData.computeIfAbsent(key) {
-        bgtScope.async(currentThreadContext().minusKey(Job) +
-                       CoroutineName("getSessionDataDeferred#${key.first} ($place)" ) +
-                       SharedDataChain(chain.prepend(key))) {
-          val spanBuilder = Utils.getTracer(true).spanBuilder("${key.first}@$place")
+        bgtScope.async(context) {
+          val spanBuilder = Utils.getTracer(true).spanBuilder("${key.opName}@$place")
           spanBuilder.useWithScope(EmptyCoroutineContext) {
             supplier()
           }
@@ -591,7 +599,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       sessionData.computeIfAbsent(key) { deferred }.also {
         if (it == deferred) {
           deferred.completeWith(runCatching {
-            runBlockingForActionExpand {
+            runBlockingForActionExpand(context) {
               supplier()
             }
           })
@@ -601,8 +609,9 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun <T: Any?> computeSessionDataOrThrow(key: Pair<String, Any?>, supplier: suspend () -> T): T {
-    val deferred = getSessionDataDeferred(key, supplier)
+  private fun <T: Any?> computeSessionDataOrThrow(key: SessionKey, supplier: suspend () -> T): T {
+    val opElement = currentThreadContext()[OpElement]
+    val deferred = getSessionDataDeferred(opElement, key, supplier)
     if (deferred.isCompleted) {
       try {
         return deferred.getCompleted()
@@ -614,7 +623,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         throw CeProcessCanceledException(ex)
       }
     }
-    val operationName = "session.${key.first} at ${currentThreadContext()[OperationName]?.name ?: "unknown"}"
+    val operationName = "session.${key.opName} at ${opElement?.operationName ?: "unknown"}"
     throw AwaitSharedData(deferred, operationName)
   }
 
@@ -638,40 +647,48 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   private class UpdateSessionImpl(val updater: ActionUpdater) : SuspendingUpdateSession {
-    override fun expandedChildren(actionGroup: ActionGroup): Iterable<AnAction> =
-      updater.computeSessionDataOrThrow(Pair(OP_expandActionGroup, actionGroup)) {
+    override fun expandedChildren(actionGroup: ActionGroup): Iterable<AnAction> {
+      val sessionKey = SessionKey(OP_expandActionGroup, actionGroup)
+      return updater.computeSessionDataOrThrow(sessionKey) {
         updater.iterateGroupChildren(actionGroup).toCollection(ArrayList())
       }
+    }
 
-    override fun children(actionGroup: ActionGroup): List<AnAction> =
-      updater.groupChildren[actionGroup] ?: updater.computeSessionDataOrThrow(Pair(OP_groupChildren, actionGroup)) {
+    override fun children(actionGroup: ActionGroup): List<AnAction> {
+      val sessionKey = SessionKey(OP_groupChildren, actionGroup)
+      return updater.groupChildren[actionGroup] ?: updater.computeSessionDataOrThrow(sessionKey) {
         updater.getGroupChildren(actionGroup)
       }
+    }
 
-    override fun presentation(action: AnAction): Presentation =
-      updater.updatedPresentations[action] ?: updater.computeSessionDataOrThrow(Pair(OP_actionPresentation, action)) {
+    override fun presentation(action: AnAction): Presentation {
+      val sessionKey = SessionKey(OP_actionPresentation, action)
+      return updater.updatedPresentations[action] ?: updater.computeSessionDataOrThrow(sessionKey) {
         updater.updateAction(action) ?: updater.initialBgtPresentation(action)
       }
+    }
 
-    override fun <T : Any> sharedData(key: Key<T>, supplier: Supplier<out T>): T =
-      updater.computeSessionDataOrThrow(Pair(key.toString(), key)) {
+    override fun <T : Any> sharedData(key: Key<T>, supplier: Supplier<out T>): T {
+      val sessionKey = SessionKey(key.toString(), key)
+      return updater.computeSessionDataOrThrow(sessionKey) {
         readActionUndispatchedForActionExpand {
           supplier.get()
         }
       }
+    }
 
     override fun <T> compute(action: Any,
-                             op: String,
+                             opName: String,
                              updateThread: ActionUpdateThread,
                              supplier: Supplier<out T>): T {
       if (updateThread == ActionUpdateThread.EDT && EDT.isCurrentThreadEdt()) {
         return supplier.get()
       }
-      return runBlockingForActionExpand {
-        val operationName = Utils.operationName(action, op, updater.place)
-        withContext(OperationName(operationName) + RecursionElement.next()) {
-          updater.callAction(action, operationName, updateThread) { supplier.get() }
-        }
+      val opCur = currentThreadContext()[OpElement]
+      val sessionKey = SessionKey(opName, action)
+      val opElement = OpElement.next(opCur, opCur?.action, OP_sessionData, updater.place, sessionKey)
+      return runBlockingForActionExpand(opElement) {
+        updater.callAction(opElement, updateThread) { supplier.get() }
       }
     }
 
@@ -687,17 +704,19 @@ internal class ActionUpdater @JvmOverloads constructor(
       return updater.expandActionGroup(group, group is CompactActionGroup)
     }
 
-    override fun <T: Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T =
-      updater.computeSessionDataOrThrow(Pair(key.toString(), key)) {
+    override fun <T: Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T {
+      val sessionKey = SessionKey(key.toString(), key)
+      return updater.computeSessionDataOrThrow(sessionKey) {
         supplier()
       }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun visitCaches(visitor: (AnAction, String, Any) -> Unit) {
       updater.updatedPresentations.forEach { action, presentation -> visitor(action, OP_actionPresentation, presentation) }
       updater.groupChildren.forEach { action, children -> visitor(action, OP_groupChildren, children) }
       updater.sessionData.forEach { pair, deferred ->
-        if (pair.first == OP_expandActionGroup) visitor(pair.second as ActionGroup, pair.first, deferred.getCompleted()!!) }
+        if (pair.opName == OP_expandActionGroup) visitor(pair.source as ActionGroup, pair.opName, deferred.getCompleted()!!) }
     }
 
     override fun dropCaches(predicate: (Any) -> Boolean) {
@@ -740,14 +759,6 @@ private fun reportSlowEdtOperation(action: Any,
   }
 }
 
-private fun reportRecursiveUpdateSession() {
-  LOG.error("Recursive update sessions are forbidden. Reuse existing AnActionEvent#getUpdateSession instead.")
-}
-
-private class ComputeOnEDTSkipped : RuntimeException() {
-  override fun fillInStackTrace(): Throwable = this
-}
-
 @ApiStatus.Internal
 fun cancelAllUpdates(reason: String) {
   val adjusted = "$reason (cancelling all updates)"
@@ -783,30 +794,29 @@ private fun elapsedReport(elapsed: Long, isEDT: Boolean, operationName: String):
   return elapsed.toString() + (if (isEDT) " ms to call on EDT " else " ms to call on BGT ") + operationName
 }
 
-private suspend fun handleException(action: AnAction, operationName: String, event: AnActionEvent?, ex: Throwable) {
+private fun handleException(opElement: OpElement, presentation: Presentation, actionManager: ActionManager, ex: Throwable) {
   if (ex is CancellationException) throw ex
   if (ex is AwaitSharedData) throw ex
   if (ex is SkipOperation) {
-    if (RecursionElement.isNested()) throw ex
+    if (opElement.isNested()) throw ex
     else return
   }
-  if (ex is ComputeOnEDTSkipped) return
-  val id = serviceAsync<ActionManager>().getId(action)
-  val text = event?.presentation?.text
-  val message = operationName +
+  val id = opElement.action?.let { actionManager.getId(it) }
+  val text = presentation.text
+  val message = opElement.operationName +
                 (if (id != null) ", actionId=$id" else "") +
                 if (StringUtil.isNotEmpty(text)) ", text='$text'" else ""
   LOG.error(message, ex)
 }
 
-private fun ensureNotNullChildren(children: Array<AnAction?>, group: ActionGroup, place: String): Array<AnAction> {
+private fun ensureNotNullChildren(opElement: OpElement, children: Array<AnAction?>): Array<AnAction> {
   val nullIndex = (children as Array<*>).indexOf(null)
   return if (nullIndex < 0) {
     @Suppress("UNCHECKED_CAST")
     children as Array<AnAction>
   }
   else {
-    LOG.error("$nullIndex item is null in ${Utils.operationName(group, OP_groupChildren, place)}")
+    LOG.error("$nullIndex item is null in ${opElement.operationName}")
     children.filterNotNull().toTypedArray()
   }
 }
@@ -835,10 +845,38 @@ private fun isDefaultImplementationRecursively(op: String, action: AnAction): Bo
   return true
 }
 
-private suspend inline fun <R> retryOnAwaitSharedData(operationName: String,
+private fun checkCyclicDependency(opElement: OpElement) {
+  val same = opElement.all().drop(1).find { op ->
+    when (val k = opElement.sessionKey) {
+      null -> op.sessionKey == null &&
+              opElement.opName == op.opName && opElement.action === op.action
+      else -> k == op.sessionKey ||
+              k.opName == op.opName && k.source === op.action
+    }
+  }
+  if (same != null) {
+    val map = IdentityHashMap<Any, String>()
+    fun Any.hc() = map.computeIfAbsent(this) { "item${map.size}" }
+    val seq = opElement.all()
+      .takeWhileInclusive { it != same }
+      .mapIndexed { i, it ->
+        "$i. ${it.opName}" +
+        ", ${it.sessionKey?.run { "$opName ${source.hc()}" } ?: it.action?.hc()}" +
+        ", ${it.operationName}"
+      }
+    throw IllegalStateException("Cyclic dependency:\n${seq.joinToString("\n")}")
+  }
+}
+
+private fun checkRecursiveUpdateSession() {
+  if (EDT.isCurrentThreadEdt() && SlowOperations.isInSection(SlowOperations.ACTION_UPDATE)) {
+    LOG.error("Recursive update sessions are forbidden. Reuse existing AnActionEvent#getUpdateSession instead.")
+  }
+}
+
+private suspend inline fun <R> retryOnAwaitSharedData(opElement: OpElement,
                                                       maxRetries: Int,
-                                                      crossinline block: suspend () -> R): R = withContext(
-  OperationName(operationName) + RecursionElement.next()) {
+                                                      crossinline block: suspend () -> R): R = withContext(opElement) {
   repeat(maxRetries) {
     try {
       return@withContext block()
@@ -854,38 +892,45 @@ private class AwaitSharedData(val job: Job, message: String) : RuntimeException(
   override fun fillInStackTrace(): Throwable = this
 }
 
-private class ForcedActionUpdateThreadElement(val updateThread: ActionUpdateThread)
-  : AbstractCoroutineContextElement(ForcedActionUpdateThreadElement) {
-  companion object : CoroutineContext.Key<ForcedActionUpdateThreadElement> {
-    fun forGroup(group: ActionGroup) =
-      if (group is ActionUpdateThreadAware.Recursive) ForcedActionUpdateThreadElement(group.getActionUpdateThread())
-      else EmptyCoroutineContext
-  }
-}
-
 class SkipOperation(operation: String) : RuntimeException(operation) {
   override fun fillInStackTrace(): Throwable = this
 }
 
-private class RecursionElement(val level: Int)
-  : AbstractCoroutineContextElement(RecursionElement) {
-  override fun toString(): String = "Recursion(${level})"
+private data class SessionKey(val opName: String, val source: Any)
 
-  companion object : CoroutineContext.Key<RecursionElement> {
-    suspend fun next() = RecursionElement(level() + 1)
-    suspend fun level() = currentCoroutineContext()[this]?.level ?: 0
-    suspend fun isNested() = level() > 0
+private class OpElement(
+  val action: AnAction?,
+  val opName: String,
+  place: String,
+  val sessionKey: SessionKey?,
+  val forcedUpdateThread: ActionUpdateThread?,
+  val parent: OpElement?
+) : AbstractCoroutineContextElement(OpElement) {
+  val operationName: String = Utils.operationName(action ?: sessionKey ?: ObjectUtils.NULL, opName, place)
+  init {
+    checkCyclicDependency(this)
   }
-}
 
-private class SharedDataChain(val chain: FList<Any>)
-  : AbstractCoroutineContextElement(SharedDataChain) {
-  override fun toString(): String = "SharedDataChain(${chain.size})"
-  companion object : CoroutineContext.Key<SharedDataChain>
-}
+  fun all(): Sequence<OpElement> = generateSequence(this) { it.parent }
 
-private class OperationName(val name: String)
-  : AbstractCoroutineContextElement(OperationName) {
-  override fun toString(): String = "OperationName($name)"
-  companion object : CoroutineContext.Key<OperationName>
+  fun isNested(): Boolean {
+    val count = all()
+      .takeWhile { it.opName != OP_expandActionGroup }
+      .filter { it.opName != OP_sessionData }
+      .count()
+    return count > 1
+  }
+
+  override fun toString(): String = "Op($operationName)"
+
+  companion object : CoroutineContext.Key<OpElement> {
+    suspend fun next(action: AnAction?, opName: String, place: String, sessionKey: SessionKey?): OpElement {
+      return next(currentCoroutineContext()[this], action, opName, place, sessionKey)
+    }
+
+    fun next(parent: OpElement?, action: AnAction?, opName: String, place: String, sessionKey: SessionKey?): OpElement {
+      val forcedUpdateThread = (action as? ActionUpdateThreadAware.Recursive)?.actionUpdateThread
+      return OpElement(action, opName, place, sessionKey, forcedUpdateThread, parent)
+    }
+  }
 }
