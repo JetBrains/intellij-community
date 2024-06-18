@@ -106,7 +106,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
  * We don't want to publish any global out-of-block modification on roots changes, because relevant roots changes already cause module
  * state modification events. Such a module state modification event includes the exact module that was affected by the roots change,
  * instead of a less specific global out-of-block modification event. This allows a consumer such as session invalidation to invalidate
- * sessions more granularly. Additionally, many roots changes don't require any event to be published because a corresponding [KaModule][org.jetbrains.kotlin.analysis.project.structure.KaModule]
+ * sessions more granularly. Additionally, many roots changes don't require any event to be published because a corresponding [KaModule][org.jetbrains.kotlin.analysis.api.projectStructure.KaModule]
  * does not exist for the changed module (e.g. when no content roots have been added yet), so roots changes [PsiTreeChangeEvent]s are
  * overzealous, while the module state modification service can handle such cases gracefully.
  */

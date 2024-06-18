@@ -13,11 +13,11 @@ import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
@@ -158,6 +158,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         abstract fun registerModifiedVar(e: KtProperty)
     }
 
+    @OptIn(KaNonPublicApi::class)
     override fun createOutputDescriptor(): OutputDescriptor<KtType> {
         analyze(extractionData.commonParent) {
             val exitSnapshot: KtDataFlowExitPointSnapshot = getExitPointSnapshot(extractionData.expressions)
@@ -232,7 +233,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         )
 
         val generatedDeclaration = Generator.generateDeclaration(config, null).declaration
-        val illegalSuspendInside = analyzeCopy(generatedDeclaration, DanglingFileResolutionMode.PREFER_SELF) {
+        val illegalSuspendInside = analyzeCopy(generatedDeclaration, KaDanglingFileResolutionMode.PREFER_SELF) {
             generatedDeclaration.descendantsOfType<KtExpression>()
                 .flatMap {
                     it.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
@@ -348,7 +349,7 @@ fun ExtractableCodeDescriptor.validate(target: ExtractionTarget = ExtractionTarg
     )
     val result = Generator.generateDeclaration(config, null)
 
-    return analyzeCopy(result.declaration, DanglingFileResolutionMode.PREFER_SELF) {
+    return analyzeCopy(result.declaration, KaDanglingFileResolutionMode.PREFER_SELF) {
         validateTempResult(result)
     }
 }
