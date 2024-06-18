@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
-import com.google.common.base.Function;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -45,14 +45,12 @@ public interface PythonSshInterpreterManager {
    * @throws ExecutionException   credentials can't be obtained due to remote server error
    * @throws InterruptedException credentials can't be obtained due to remote server error
    */
-  @Nullable
-  Pair<Supplier<String>, JPanel> createServerBrowserForm(final @NotNull Sdk remoteSdk)
-    throws ExecutionException, InterruptedException;
+  @Nullable Pair<Supplier<String>, JPanel> createServerBrowserForm(final @NotNull Sdk remoteSdk) throws ExecutionException, InterruptedException;
 
-
-  @NotNull
-  RemoteSdkCredentialsProducer<PyRemoteSdkCredentials> getRemoteSdkCredentialsProducer(@NotNull Function<RemoteCredentials, PyRemoteSdkCredentials> credentialsTransformer,
-                                                                                       @NotNull RemoteConnectionCredentialsWrapper connectionWrapper);
+  @NotNull RemoteSdkCredentialsProducer<PyRemoteSdkCredentials> getRemoteSdkCredentialsProducer(
+    @NotNull Function<RemoteCredentials, PyRemoteSdkCredentials> credentialsTransformer,
+    @NotNull RemoteConnectionCredentialsWrapper connectionWrapper
+  );
 
   final class Factory {
     public static @Nullable PythonSshInterpreterManager getInstance() {
