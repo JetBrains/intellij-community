@@ -270,9 +270,7 @@ class ReaderThread(PyDBDaemonThread):
         self.name = "pydevd.Reader"
         from _pydevd_bundle.pydevd_process_net_command import process_net_command
         self.process_net_command = process_net_command
-        self.global_debugger_holder = GlobalDebuggerHolder
-
-
+        self.debugger = GlobalDebuggerHolder.global_dbg
 
     def do_kill_pydev_thread(self):
         #We must close the socket so that it doesn't stay halted there.
@@ -330,12 +328,11 @@ class ReaderThread(PyDBDaemonThread):
             traceback.print_exc()
             self.handle_except()
 
-
     def handle_except(self):
-        self.global_debugger_holder.global_dbg.finish_debugging_session()
+        self.debugger.finish_debugging_session()
 
     def process_command(self, cmd_id, seq, text):
-        self.process_net_command(self.global_debugger_holder.global_dbg, cmd_id, seq, text)
+        self.process_net_command(self.debugger, cmd_id, seq, text)
 
 
 #----------------------------------------------------------------------------------- SOCKET UTILITIES - WRITER
