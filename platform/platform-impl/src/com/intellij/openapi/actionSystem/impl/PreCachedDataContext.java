@@ -147,7 +147,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
            new InjectedDataContext(myComponentRef, myCachedData, myUserData, myDataManager, myDataKeysCount);
   }
 
-  @NotNull PreCachedDataContext prependProvider(@NotNull DataProvider dataProvider) {
+  @NotNull PreCachedDataContext prependProvider(@Nullable Object dataProvider) {
+    if (dataProvider == null) return this;
     boolean isEDT = EDT.isCurrentThreadEdt();
     int keyCount;
     FList<ProviderData> cachedData;
@@ -313,7 +314,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     ourInstances.clear();
   }
 
-  static @NotNull AsyncDataContext customize(@NotNull AsyncDataContext context, @NotNull DataProvider provider) {
+  static @NotNull AsyncDataContext customize(@NotNull AsyncDataContext context, @Nullable Object provider) {
+    if (provider == null) return context;
     MySink sink = new MySink();
     cacheProviderData(sink, provider, (DataManagerImpl)DataManager.getInstance());
     Map<String, Object> snapshot = sink.map == null ? null : sink.map.uiSnapshot;
@@ -356,14 +358,12 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private static void cacheProviderData(@NotNull MySink sink,
                                         @Nullable Object dataProvider,
                                         @NotNull DataManagerImpl dataManager) {
-    if (dataProvider != null) {
-      DataSink.uiDataSnapshot(sink, dataProvider);
-      if (sink.map != null) { // no data - no rules
-        for (DataKey<?> key : dataManager.keysForRuleType(GetDataRuleType.FAST)) {
-          Object data = dataManager.getDataFromRules(key.getName(), GetDataRuleType.FAST, sink.map.uiSnapshot::get);
-          if (data == null) continue;
-          sink.map.uiSnapshot.putIfAbsent(key.getName(), data);
-        }
+    DataSink.uiDataSnapshot(sink, dataProvider);
+    if (sink.map != null) { // no data - no rules
+      for (DataKey<?> key : dataManager.keysForRuleType(GetDataRuleType.FAST)) {
+        Object data = dataManager.getDataFromRules(key.getName(), GetDataRuleType.FAST, sink.map.uiSnapshot::get);
+        if (data == null) continue;
+        sink.map.uiSnapshot.putIfAbsent(key.getName(), data);
       }
     }
     if (sink.hideEditor) {

@@ -160,14 +160,16 @@ object Utils {
   }
 
   @JvmStatic
-  fun createAsyncDataContext(dataContext: DataContext, provider: DataProvider): DataContext {
+  fun createAsyncDataContext(dataContext: DataContext, provider: Any?): DataContext {
     return when (val asyncContext = createAsyncDataContextImpl(dataContext)) {
       DataContext.EMPTY_CONTEXT -> PreCachedDataContext(null)
         .prependProvider(provider)
       is PreCachedDataContext -> asyncContext
         .prependProvider(provider)
-      is CustomizedDataContext -> (asyncContext.customizedDelegate as PreCachedDataContext)
-        .prependProvider(provider)
+      is CustomizedDataContext -> when (val o = asyncContext.customizedDelegate) {
+        is PreCachedDataContext -> o.prependProvider(provider)
+        else -> PreCachedDataContext.customize(o as AsyncDataContext, provider)
+      }
       is AsyncDataContext -> PreCachedDataContext.customize(asyncContext, provider)
       else -> dataContext.also {
         reportUnexpectedDataContextKind(dataContext)
