@@ -155,7 +155,7 @@ class GitRepositoryImpl private constructor(
   }
 
   override fun isOnBranch(): Boolean {
-    return currentBranch != null && state != Repository.State.DETACHED && state != Repository.State.REBASING
+    return repoInfo.isOnBranch
   }
 
 

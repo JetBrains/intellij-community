@@ -126,13 +126,14 @@ public final class GitBranchUtil {
    * For fresh repository returns an empty string.
    */
   public static @NlsSafe @NotNull String getBranchNameOrRev(@NotNull GitRepository repository) {
-    if (repository.isOnBranch()) {
-      GitBranch currentBranch = repository.getCurrentBranch();
+    var repoInfo = repository.getInfo();
+    if (repoInfo.isOnBranch()) {
+      GitBranch currentBranch = repoInfo.getCurrentBranch();
       assert currentBranch != null;
       return currentBranch.getName();
     }
     else {
-      String currentRevision = repository.getCurrentRevision();
+      String currentRevision = repoInfo.getCurrentRevision();
       return currentRevision != null ? currentRevision.substring(0, 7) : "";
     }
   }

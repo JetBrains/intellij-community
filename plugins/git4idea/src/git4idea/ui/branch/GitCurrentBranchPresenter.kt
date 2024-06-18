@@ -73,13 +73,12 @@ private fun GitRepository.calcIcon(): Icon? {
 }
 
 private fun GitRepository.calcTooltip(): @NlsContexts.Tooltip String? {
-  val branchName = currentBranch?.name
-  val repoState = state
+  val repoInfo = info
   return when {
-    repoState == Repository.State.DETACHED -> GitBundle.message("git.status.bar.widget.tooltip.detached")
-    repoState == Repository.State.REBASING -> GitBundle.message("git.status.bar.widget.tooltip.rebasing")
-    branchName != null -> {
-      var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(), branchName)
+    repoInfo.state == Repository.State.DETACHED -> GitBundle.message("git.status.bar.widget.tooltip.detached")
+    repoInfo.state == Repository.State.REBASING -> GitBundle.message("git.status.bar.widget.tooltip.rebasing")
+    repoInfo.currentBranch != null -> {
+      var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(), repoInfo.currentBranch.name)
       if (!GitUtil.justOneGitRepository(project)) {
         message += "\n"
         message += DvcsBundle.message("tooltip.branch.widget.root.name.text", root.name)
