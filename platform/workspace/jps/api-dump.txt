@@ -520,18 +520,18 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.PackagingElementEntity$Builder
 - f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.PackagingElementEntity$Builder
 - bs:create$default(com.intellij.java.workspace.entities.PackagingElementEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.PackagingElementEntity$Builder
-*:com.intellij.platform.workspace.jps.CustomModuleEntitySource
+com.intellij.platform.workspace.jps.CustomModuleEntitySource
 - com.intellij.platform.workspace.storage.EntitySource
 - a:getInternalSource():com.intellij.platform.workspace.jps.JpsFileEntitySource
-*f:com.intellij.platform.workspace.jps.JpsEntitySourceFactory
+f:com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 - sf:INSTANCE:com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 - f:createJpsEntitySourceForArtifact(com.intellij.platform.workspace.jps.JpsProjectConfigLocation):com.intellij.platform.workspace.jps.JpsFileEntitySource
 - f:createJpsEntitySourceForProjectLibrary(com.intellij.platform.workspace.jps.JpsProjectConfigLocation):com.intellij.platform.workspace.jps.JpsFileEntitySource
-*:com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
 - a:getOriginalSource():com.intellij.platform.workspace.jps.JpsFileEntitySource
-*a:com.intellij.platform.workspace.jps.JpsFileEntitySource
+a:com.intellij.platform.workspace.jps.JpsFileEntitySource
 - com.intellij.platform.workspace.storage.EntitySource
-*f:com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+f:com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 - com.intellij.platform.workspace.jps.JpsFileEntitySource
 - <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -540,7 +540,7 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - equals(java.lang.Object):Z
 - f:getFile():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
-*f:com.intellij.platform.workspace.jps.JpsImportedEntitySource
+f:com.intellij.platform.workspace.jps.JpsImportedEntitySource
 - com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
 - com.intellij.platform.workspace.storage.EntitySource
 - <init>(com.intellij.platform.workspace.jps.JpsFileEntitySource,java.lang.String,Z):V
@@ -556,11 +556,11 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - f:getStoredExternally():Z
 - getVirtualFileUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
-*a:com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+a:com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 - a:getBaseDirectoryUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - f:getBaseDirectoryUrlString():java.lang.String
 - a:getProjectFilePath():java.lang.String
-*f:com.intellij.platform.workspace.jps.JpsProjectConfigLocation$DirectoryBased
+f:com.intellij.platform.workspace.jps.JpsProjectConfigLocation$DirectoryBased
 - com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 - <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -573,7 +573,7 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - f:getProjectDir():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - getProjectFilePath():java.lang.String
 - hashCode():I
-*f:com.intellij.platform.workspace.jps.JpsProjectConfigLocation$FileBased
+f:com.intellij.platform.workspace.jps.JpsProjectConfigLocation$FileBased
 - com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 - <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -586,10 +586,10 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - f:getIprFileParent():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - getProjectFilePath():java.lang.String
 - hashCode():I
-*a:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+a:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 - com.intellij.platform.workspace.jps.JpsFileEntitySource
 - a:getProjectLocation():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
-*f:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$ExactFile
+f:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$ExactFile
 - com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 - <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.JpsProjectConfigLocation):V
 - f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -601,9 +601,9 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - getProjectLocation():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 - getVirtualFileUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
-*f:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory
+f:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory
 - com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-- *sf:Companion:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory$Companion
+- sf:Companion:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory$Companion
 - <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.JpsProjectConfigLocation):V
 - f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - f:component2():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
@@ -615,8 +615,8 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - getProjectLocation():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 - getVirtualFileUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
-*f:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory$Companion
-*f:com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
+f:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory$Companion
+f:com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 - com.intellij.platform.workspace.storage.EntitySource
 - sf:INSTANCE:com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 com.intellij.platform.workspace.jps.entities.ContentRootEntity

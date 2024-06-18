@@ -21,7 +21,4 @@
  * <p>
  * All classes in this package <strong>are experimental</strong> and their API may change in future versions.
  */
-@ApiStatus.Experimental
 package com.intellij.platform.workspace.storage;
-
-import org.jetbrains.annotations.ApiStatus;
