@@ -17,8 +17,8 @@ package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -220,8 +220,7 @@ public final class IncrementDecrementUsedAsExpressionInspection extends BaseInsp
     if (statement instanceof PsiLoopStatement loopStatement) {
       // in/decrement inside loop statement condition
       final PsiStatement body = loopStatement.getBody();
-      if (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+      if (body instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         if (element instanceof PsiPostfixExpression) {
           final PsiElement firstElement = codeBlock.getFirstBodyElement();

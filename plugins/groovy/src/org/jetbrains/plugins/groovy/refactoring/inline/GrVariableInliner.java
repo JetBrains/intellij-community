@@ -57,8 +57,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
   public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     GrExpression expr = (GrExpression)reference.getElement();
-    if (expr.getParent() instanceof GrAssignmentExpression) {
-      GrAssignmentExpression parent = (GrAssignmentExpression)expr.getParent();
+    if (expr.getParent() instanceof GrAssignmentExpression parent) {
       if (expr.equals(parent.getLValue())) {
         conflicts.putValue(expr, GroovyRefactoringBundle.message("local.variable.is.lvalue"));
       }

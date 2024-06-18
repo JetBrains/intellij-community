@@ -67,8 +67,7 @@ public class JDParser {
   }
 
   private static CommentInfo getElementsCommentInfo(@Nullable PsiElement psiElement) {
-    if (psiElement instanceof PsiDocComment) {
-      PsiDocComment docComment = (PsiDocComment)psiElement;
+    if (psiElement instanceof PsiDocComment docComment) {
 
       PsiJavaDocumentedElement owner = docComment.getOwner();
       if (owner != null) {
@@ -80,8 +79,7 @@ public class JDParser {
         return getCommentInfo(docComment, parent);
       }
     }
-    else if (psiElement instanceof PsiJavaDocumentedElement) {
-      PsiJavaDocumentedElement owner = (PsiJavaDocumentedElement)psiElement;
+    else if (psiElement instanceof PsiJavaDocumentedElement owner) {
       PsiDocComment docComment = owner.getDocComment();
       if (docComment != null) {
         return getCommentInfo(docComment, owner);
@@ -99,8 +97,7 @@ public class JDParser {
     boolean first = true;
     PsiElement e = docComment;
     while (true) {
-      if (e instanceof PsiDocComment) {
-        PsiComment cm = (PsiComment)e;
+      if (e instanceof PsiDocComment cm) {
         String text = cm.getText();
         if (text.startsWith("//")) {
           if (!first) sb.append('\n');

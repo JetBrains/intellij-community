@@ -46,13 +46,11 @@ public class YAMLAliasResolveNodeProvider implements FileStructureNodeProvider<S
   public @NotNull Collection<StructureViewTreeElement> provideNodes(@NotNull TreeElement node) {
     PsiElement psiElem;
     String details;
-    if (node instanceof DuplicatedPsiTreeElementBase) {
-      DuplicatedPsiTreeElementBase yamlNode = (DuplicatedPsiTreeElementBase)node;
+    if (node instanceof DuplicatedPsiTreeElementBase yamlNode) {
       psiElem = yamlNode.getElement();
       details = yamlNode.getDetails();
     }
-    else if (node instanceof PsiTreeElementBase) {
-      PsiTreeElementBase yamlNode = (PsiTreeElementBase)node;
+    else if (node instanceof PsiTreeElementBase yamlNode) {
       psiElem = yamlNode.getElement();
       if (psiElem == null) {
         // not sure it is possible

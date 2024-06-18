@@ -115,15 +115,13 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       }
     }
 
-    if (!SUGGEST_FOR_CONSTANTS && refEntity instanceof RefField) {
-      RefField refField = (RefField)refEntity;
+    if (!SUGGEST_FOR_CONSTANTS && refEntity instanceof RefField refField) {
       if (refField.isFinal() && refField.isStatic() && refField.isOnlyAssignedInInitializer()) {
         return null;
       }
     }
 
-    if (refElement instanceof RefField) {
-      final RefField refField = (RefField)refElement;
+    if (refElement instanceof RefField refField) {
       if (refField.isImplicitlyWritten() || refField.isImplicitlyRead()) {
         return null;
       }
@@ -141,15 +139,13 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
 
     //ignore anonymous classes. They do not have access modifiers.
-    if (refElement instanceof RefClass) {
-      RefClass refClass = (RefClass) refElement;
+    if (refElement instanceof RefClass refClass) {
       if (refClass.isAnonymous() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) {
         return null;
       }
     }
     //ignore interface members. They always have public access modifier.
-    if (refElement.getOwner() instanceof RefClass) {
-      RefClass refClass = (RefClass) refElement.getOwner();
+    if (refElement.getOwner() instanceof RefClass refClass) {
       if (refClass.isInterface()) return null;
     }
 

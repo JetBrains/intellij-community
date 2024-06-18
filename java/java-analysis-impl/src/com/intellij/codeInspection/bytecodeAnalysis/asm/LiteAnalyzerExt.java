@@ -113,8 +113,7 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
           interpreter.init(data[insn]);
           current.init(f).execute(insnNode, interpreter);
 
-          if (insnNode instanceof JumpInsnNode) {
-            JumpInsnNode j = (JumpInsnNode)insnNode;
+          if (insnNode instanceof JumpInsnNode j) {
             if (insnOpcode != GOTO && insnOpcode != JSR) {
               merge(insn + 1, current);
             }

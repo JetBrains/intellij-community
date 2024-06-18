@@ -224,7 +224,7 @@ public final class GroovyCompletionData {
   }
 
   /**
-   * checks whether promitive type used in expression
+   * checks whether a primitive type used in expression
    */
   private static boolean isInExpression(PsiElement position) {
     final PsiElement actual = position.getParent();
@@ -567,43 +567,31 @@ public final class GroovyCompletionData {
     return condition == null || !PsiTreeUtil.isAncestor(condition, context, false);
   }
 
-  private static boolean inSwitchExpression(PsiElement context) {
-    return context.getParent() instanceof GrCodeBlock && context.getParent().getParent() instanceof GrSwitchElement;
-  }
-
   private static boolean afterTry(PsiElement context) {
     if (context != null &&
-        GroovyCompletionUtil.nearestLeftSibling(context) instanceof GrTryCatchStatement) {
-      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context);
-      if (tryStatement == null) return false;
+        GroovyCompletionUtil.nearestLeftSibling(context) instanceof GrTryCatchStatement tryStatement) {
       if (tryStatement.getFinallyClause() == null) {
         return true;
       }
     }
     if (context != null &&
-        GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement &&
-        GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling() instanceof GrTryCatchStatement) {
-      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling();
-      if (tryStatement == null) return false;
-      if (tryStatement.getFinallyClause() == null) {
-        return true;
-      }
-    }
-    if (context != null &&
-        (context.getParent() instanceof GrReferenceExpression || context.getParent() instanceof PsiErrorElement) &&
-        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof GrTryCatchStatement) {
-      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context.getParent());
-      if (tryStatement == null) return false;
+        GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement errorElement &&
+        errorElement.getPrevSibling() instanceof GrTryCatchStatement tryStatement) {
       if (tryStatement.getFinallyClause() == null) {
         return true;
       }
     }
     if (context != null &&
         (context.getParent() instanceof GrReferenceExpression || context.getParent() instanceof PsiErrorElement) &&
-        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof PsiErrorElement &&
-        GroovyCompletionUtil.nearestLeftSibling(context.getParent()).getPrevSibling() instanceof GrTryCatchStatement) {
-      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context.getParent()).getPrevSibling();
-      if (tryStatement == null) return false;
+        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof GrTryCatchStatement tryStatement) {
+      if (tryStatement.getFinallyClause() == null) {
+        return true;
+      }
+    }
+    if (context != null &&
+        (context.getParent() instanceof GrReferenceExpression || context.getParent() instanceof PsiErrorElement) &&
+        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof PsiErrorElement errorElement &&
+        errorElement.getPrevSibling() instanceof GrTryCatchStatement tryStatement) {
       if (tryStatement.getFinallyClause() == null) {
         return true;
       }
@@ -612,9 +600,7 @@ public final class GroovyCompletionData {
     if (context != null &&
         (context.getParent() instanceof GrReferenceExpression) &&
         (context.getParent().getParent() instanceof GrMethodCall) &&
-        GroovyCompletionUtil.nearestLeftSibling(context.getParent().getParent()) instanceof GrTryCatchStatement) {
-      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context.getParent().getParent());
-      if (tryStatement == null) return false;
+        GroovyCompletionUtil.nearestLeftSibling(context.getParent().getParent()) instanceof GrTryCatchStatement tryStatement) {
       if (tryStatement.getFinallyClause() == null) {
         return true;
       }
@@ -637,16 +623,14 @@ public final class GroovyCompletionData {
 
     if (context.getParent() != null &&
         GroovyCompletionUtil.nearestLeftSibling(context) != null &&
-        GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling() instanceof GrIfStatement) {
-      GrIfStatement statement = (GrIfStatement) GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling();
+        GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling() instanceof GrIfStatement statement) {
       if (statement.getElseBranch() == null) {
         return true;
       }
     }
     if (context.getParent() != null &&
         context.getParent().getParent() instanceof GrCommandArgumentList &&
-        context.getParent().getParent().getParent().getParent() instanceof GrIfStatement) {
-      GrIfStatement statement = (GrIfStatement) context.getParent().getParent().getParent().getParent();
+        context.getParent().getParent().getParent().getParent() instanceof GrIfStatement statement) {
       if (statement.getElseBranch() == null) {
         return true;
       }
@@ -765,13 +749,13 @@ public final class GroovyCompletionData {
         context.getParent().getParent() instanceof GrCommandArgumentList) {
       return true;
     }
-    if (GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement &&
-        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling())) {
+    if (GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement errorElement &&
+        GroovyCompletionUtil.endsWithExpression(errorElement.getPrevSibling())) {
       return true;
     }
     if (context.getParent() instanceof GrReferenceExpression &&
-        GroovyCompletionUtil.nearestLeftLeaf(context) instanceof PsiErrorElement &&
-        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftLeaf(context).getPrevSibling())) {
+        GroovyCompletionUtil.nearestLeftLeaf(context) instanceof PsiErrorElement errorElement &&
+        GroovyCompletionUtil.endsWithExpression(errorElement.getPrevSibling())) {
       return true;
     }
     if (context.getParent() instanceof PsiErrorElement &&
@@ -805,8 +789,7 @@ public final class GroovyCompletionData {
         return true;
       }
     }
-    if (contextParent instanceof GrField) {
-      final GrVariable variable = (GrVariable)contextParent;
+    if (contextParent instanceof GrField variable) {
       if (variable.getTypeElementGroovy() == null) {
         return true;
       }

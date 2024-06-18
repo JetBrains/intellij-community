@@ -168,15 +168,13 @@ public final class GroovyConstructorUsagesSearcher extends QueryExecutorBase<Psi
           });
         }
       }
-      else if (grandpa instanceof GrTypeCastExpression) {
-        final GrTypeCastExpression cast = (GrTypeCastExpression)grandpa;
+      else if (grandpa instanceof GrTypeCastExpression cast) {
         if (cast.getCastTypeElement() == typeElement &&
             !checkLiteralInstantiation(cast.getOperand(), literalProcessor)) {
           return false;
         }
       }
-      else if (grandpa instanceof GrSafeCastExpression) {
-        final GrSafeCastExpression cast = (GrSafeCastExpression)grandpa;
+      else if (grandpa instanceof GrSafeCastExpression cast) {
         if (cast.getCastTypeElement() == typeElement &&
             !checkLiteralInstantiation(cast.getOperand(), literalProcessor)) {
           return false;

@@ -364,8 +364,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     }
 
     TypeDescriptor type = getType(context);
-    if (type instanceof ComplexTypeDescriptor) {
-      ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
+    if (type instanceof ComplexTypeDescriptor descriptor) {
       final ComplexTypeDescriptor.CanContainAttributeType containAttributeType = descriptor.canContainAttribute(namespace, qName);
 
       if (containAttributeType != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
@@ -429,8 +428,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     }
 
     TypeDescriptor type = getType(context);
-    if (type instanceof ComplexTypeDescriptor) {
-      ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
+    if (type instanceof ComplexTypeDescriptor descriptor) {
       if (descriptor.canContainTag(localName, namespace, context)) {
         return new AnyXmlElementDescriptor(this, getNSDescriptor());
       }

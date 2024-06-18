@@ -157,7 +157,7 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
       if (condition == null) return null;
       int idx = condition.getNullCheckedArgument(true).orElse(-1);
       if (idx == -1) return null;
-      PsiExpression[] args = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions();
+      PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length <= idx || method.isVarArgs() && idx == args.length - 1) return null;
       PsiReferenceExpression reference = tryCast(args[idx], PsiReferenceExpression.class);
       if (reference == null) return null;

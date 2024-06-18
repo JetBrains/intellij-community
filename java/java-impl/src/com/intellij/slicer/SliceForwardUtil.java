@@ -117,8 +117,7 @@ final class SliceForwardUtil {
       return searchReferencesAndProcessAssignmentTarget(from, null, parent, processor);
     }
 
-    if (from instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)from;
+    if (from instanceof PsiMethod method) {
 
       Collection<PsiMethod> superMethods = ContainerUtil.newHashSet(method.findDeepestSuperMethods());
       superMethods.add(method);

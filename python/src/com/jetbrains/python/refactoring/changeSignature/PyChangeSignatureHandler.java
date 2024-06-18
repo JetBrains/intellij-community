@@ -97,7 +97,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
       return;
     }
 
-    final PyFunction superMethod = getSuperMethod((PyFunction)element);
+    final PyFunction superMethod = getSuperMethod(function);
     if (superMethod == null) {
       return;
     }

@@ -100,8 +100,7 @@ public final class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
     try{
       final PsiReferenceExpression expr = (PsiReferenceExpression)element;
       final PsiElement parent = expr.getParent();
-      if (parent instanceof PsiAssignmentExpression && expr.equals(((PsiAssignmentExpression)parent).getLExpression())){
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+      if (parent instanceof PsiAssignmentExpression assignment && expr.equals(((PsiAssignmentExpression)parent).getLExpression())){
         if (assignment.getRExpression() == null) return true;
         PsiJavaToken opSign = assignment.getOperationSign();
         IElementType opType = opSign.getTokenType();

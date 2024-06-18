@@ -212,8 +212,7 @@ public class Matcher {
     final boolean ourOptimizedScope = searchScope != null;
     if (!ourOptimizedScope) searchScope = options.getScope();
 
-    if (searchScope instanceof GlobalSearchScope) {
-      final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
+    if (searchScope instanceof GlobalSearchScope scope) {
 
       final ContentIterator ci = fileOrDir -> {
         if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && !FileTypeRegistry.getInstance().isFileOfType(fileOrDir, FileTypes.UNKNOWN)) {

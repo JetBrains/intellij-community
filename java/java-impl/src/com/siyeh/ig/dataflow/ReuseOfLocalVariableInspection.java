@@ -128,10 +128,9 @@ public final class ReuseOfLocalVariableInspection extends BaseInspection {
         return;
       }
       final PsiElement referent = reference.resolve();
-      if (!(referent instanceof PsiLocalVariable)) {
+      if (!(referent instanceof PsiLocalVariable variable)) {
         return;
       }
-      final PsiVariable variable = (PsiVariable)referent;
       if (variable.getInitializer() == null) {
         return;
       }

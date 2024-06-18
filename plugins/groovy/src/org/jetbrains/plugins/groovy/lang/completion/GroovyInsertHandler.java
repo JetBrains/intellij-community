@@ -131,8 +131,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       return;
     }
 
-    if (obj instanceof PsiClass) {
-      final PsiClass clazz = (PsiClass)obj;
+    if (obj instanceof PsiClass clazz) {
       Editor editor = context.getEditor();
       Document document = editor.getDocument();
       PsiFile file = PsiDocumentManager.getInstance(clazz.getProject()).getPsiFile(document);

@@ -22,7 +22,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -58,10 +57,9 @@ public final class GroovyDslDefaultMembers implements GdslMembersProvider {
     if (elem instanceof PsiClass clazz) {
       final NonCodeMembersHolder holder = new NonCodeMembersHolder();
 
-      if (clazz instanceof GrTypeDefinition) {
+      if (clazz instanceof GrTypeDefinition context) {
         final PsiClassType type = JavaPsiFacade.getElementFactory(consumer.getProject()).createType(clazz);
         final ResolverProcessor processor = CompletionProcessor.createPropertyCompletionProcessor(clazz);
-        final GroovyPsiElement context = (GroovyPsiElement)clazz;
         ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), context);
         for (GroovyResolveResult result : processor.getCandidates()) {
           final PsiElement element = result.getElement();

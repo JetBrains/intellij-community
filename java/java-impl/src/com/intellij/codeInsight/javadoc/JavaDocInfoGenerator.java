@@ -1936,11 +1936,10 @@ public class JavaDocInfoGenerator {
 
   @Contract(mutates = "param1")
   private void generateSnippetValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag) {
-    if (!(tag instanceof PsiSnippetDocTagImpl)) {
+    if (!(tag instanceof PsiSnippetDocTagImpl snippetTag)) {
       LOG.error("Snippet tag must have type PsiSnippetDocTag, but was" + tag.getClass(), tag.getText());
       return;
     }
-    PsiSnippetDocTag snippetTag = (PsiSnippetDocTag)tag;
 
     PsiSnippetDocTagValue value = snippetTag.getValueElement();
     if (value == null) {

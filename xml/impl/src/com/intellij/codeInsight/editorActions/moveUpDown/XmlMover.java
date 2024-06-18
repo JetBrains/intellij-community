@@ -51,8 +51,7 @@ public class XmlMover extends LineMover {
 
     final TextRange textRange = movedParent.getTextRange();
 
-    if (movedParent instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)movedParent;
+    if (movedParent instanceof XmlTag tag) {
       PsiElement parent = tag.getParent();
       if (!(parent instanceof XmlTag) && PsiTreeUtil.getChildrenOfType(parent, XmlTag.class).length < 2) {
         // the only top-level tag

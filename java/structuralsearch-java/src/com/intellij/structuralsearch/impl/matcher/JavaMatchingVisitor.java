@@ -545,8 +545,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           break;
         }
       }
-      if (unmatchedSubstitutionHandler instanceof SubstitutionHandler) {
-        final SubstitutionHandler handler = (SubstitutionHandler)unmatchedSubstitutionHandler;
+      if (unmatchedSubstitutionHandler instanceof SubstitutionHandler handler) {
         for (PsiElement element : unmatchedElements) {
           handler.handle(element, context);
         }
@@ -796,8 +795,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
                                 : getInnermostComponent(matchedType);
 
     PsiElement[] typeParameters = null;
-    if (matchedElement instanceof PsiJavaCodeReferenceElement) {
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)matchedElement;
+    if (matchedElement instanceof PsiJavaCodeReferenceElement referenceElement) {
       typeParameters = getTypeParameters(referenceElement, shouldReplaceDiamondWithExplicitTypes(patternElement));
     }
     else if (matchedElement instanceof PsiTypeParameter) {
@@ -830,8 +828,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
     }
-    if (patternElement instanceof PsiJavaCodeReferenceElement) {
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)patternElement;
+    if (patternElement instanceof PsiJavaCodeReferenceElement referenceElement) {
       final PsiReferenceParameterList list = referenceElement.getParameterList();
       boolean typeParametersMatched = false;
       if (list != null) {

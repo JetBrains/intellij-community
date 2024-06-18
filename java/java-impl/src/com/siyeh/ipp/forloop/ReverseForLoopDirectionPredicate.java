@@ -35,10 +35,9 @@ class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiElement declaredElement = declaredElements[0];
-    if (!(declaredElement instanceof PsiLocalVariable)) {
+    if (!(declaredElement instanceof PsiLocalVariable variable)) {
       return false;
     }
-    final PsiVariable variable = (PsiVariable)declaredElement;
     if (variable.getInitializer() == null) {
       return false;
     }

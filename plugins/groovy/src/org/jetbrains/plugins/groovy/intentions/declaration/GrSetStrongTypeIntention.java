@@ -106,8 +106,7 @@ public final class GrSetStrongTypeIntention extends Intention {
             types.add(SupertypeConstraint.create(type));
           }
         }
-        if (variable instanceof GrParameter) {
-          final PsiParameter parameter = (PsiParameter)variable;
+        if (variable instanceof GrParameter parameter) {
           final PsiType type = getClosureParameterType(parameter);
           if (type != null) {
             types.add(SupertypeConstraint.create(type));

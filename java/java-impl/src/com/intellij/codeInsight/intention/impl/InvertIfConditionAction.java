@@ -411,15 +411,13 @@ public final class InvertIfConditionAction extends PsiUpdateModCommandAction<Psi
       Instruction instruction = instructions.get(i);
       if (controlFlow.getElement(i) != ifStatement) continue;
 
-      if (instruction instanceof GoToInstruction) {
-        GoToInstruction goToInstruction = (GoToInstruction)instruction;
+      if (instruction instanceof GoToInstruction goToInstruction) {
         if (goToInstruction.role != BranchingInstruction.Role.END) continue;
 
         endOffset = goToInstruction.offset;
         break;
       }
-      else if (instruction instanceof ConditionalGoToInstruction) {
-        ConditionalGoToInstruction goToInstruction = (ConditionalGoToInstruction)instruction;
+      else if (instruction instanceof ConditionalGoToInstruction goToInstruction) {
         if (goToInstruction.role != BranchingInstruction.Role.END) continue;
 
         endOffset = goToInstruction.offset;

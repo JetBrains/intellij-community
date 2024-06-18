@@ -63,8 +63,7 @@ public final class ReplaceDoWhileLoopWithWhileLoopIntention extends MCIntention 
       }
       replacementText.append('{');
     }
-    if (body instanceof PsiBlockStatement) {
-      final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+    if (body instanceof PsiBlockStatement blockStatement) {
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       final PsiElement[] children = codeBlock.getChildren();
       if (children.length > 2) {
@@ -103,9 +102,8 @@ public final class ReplaceDoWhileLoopWithWhileLoopIntention extends MCIntention 
       replacementText.append(commentTracker.text(condition));
     }
     replacementText.append(')');
-    if (body instanceof PsiBlockStatement) {
+    if (body instanceof PsiBlockStatement blockStatement) {
       replacementText.append('{');
-      final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       final PsiElement[] children = codeBlock.getChildren();
       if (children.length > 2) {

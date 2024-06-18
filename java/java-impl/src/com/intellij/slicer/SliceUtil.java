@@ -64,13 +64,12 @@ final class SliceUtil {
     }
 
     boolean needToReportDeclaration = false;
-    if (expression instanceof PsiReferenceExpression) {
+    if (expression instanceof PsiReferenceExpression ref) {
       PsiElement element = SliceForwardUtil.complexify(expression);
       if (element instanceof PsiExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
         PsiExpression rightSide = ((PsiAssignmentExpression)element.getParent()).getRExpression();
         return rightSide == null || builder.process(rightSide, processor);
       }
-      PsiReferenceExpression ref = (PsiReferenceExpression)expression;
       JavaResolveResult result = ref.advancedResolve(false);
       builder = builder.withSubstitutor(result.getSubstitutor().putAll(builder.getSubstitutor()));
       PsiElement resolved = result.getElement();
@@ -461,9 +460,8 @@ final class SliceUtil {
                                            PsiElement refElement) {
     PsiExpressionList argumentList;
     JavaResolveResult result;
-    if (refElement instanceof PsiCall) {
+    if (refElement instanceof PsiCall call) {
       // the case of enum constant decl
-      PsiCall call = (PsiCall)refElement;
       argumentList = call.getArgumentList();
       result = call.resolveMethodGenerics();
     }

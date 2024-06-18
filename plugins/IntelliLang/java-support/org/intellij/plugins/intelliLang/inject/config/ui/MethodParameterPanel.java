@@ -278,8 +278,7 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
   @Nullable
   private Boolean isNodeSelected(final DefaultMutableTreeNode o) {
     final Object userObject = o.getUserObject();
-    if (userObject instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)userObject;
+    if (userObject instanceof PsiMethod method) {
       return MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ? myData.get(method).isReturnFlag() : null;
     }
     else if (userObject instanceof PsiParameter parameter) {

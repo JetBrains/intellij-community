@@ -36,8 +36,7 @@ public final class ReplaceShiftWithMultiplyIntention extends MCIntention {
 
   @Override
   protected @NotNull String getTextForElement(@NotNull PsiElement element) {
-    if (element instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression exp = (PsiBinaryExpression)element;
+    if (element instanceof PsiBinaryExpression exp) {
       final PsiJavaToken sign = exp.getOperationSign();
       final IElementType tokenType = sign.getTokenType();
       final String operatorString;

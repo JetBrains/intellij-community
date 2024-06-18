@@ -104,7 +104,7 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
     if (isValid() && group.isValid()) {
       return getElement().getManager().areElementsEquivalent(getElement(), group.getElement());
     }
-    return Objects.equals(myName, ((PsiElementUsageGroupBase<?>)obj).myName);
+    return Objects.equals(myName, group.myName);
   }
 
   @Override

@@ -884,7 +884,7 @@ public class EquivalenceChecker {
       return Match.exact(qualifier1 == qualifier2);
     }
     Match match = expressionsMatch(qualifier1, qualifier2);
-    if (!match.isExactMatch() && PsiUtil.isArrayClass(((PsiMember)element1).getContainingClass()) &&
+    if (!match.isExactMatch() && PsiUtil.isArrayClass(member1.getContainingClass()) &&
         !(GenericsUtil.getLeastUpperBound(qualifier1.getType(), qualifier2.getType(),
                                           referenceExpression1.getManager()) instanceof PsiArrayType)) {
       // access to the member (length or clone()) of incompatible arrays

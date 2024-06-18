@@ -165,8 +165,7 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
     }
 
     int offset;
-    if (firstMember instanceof GrMethod) {
-      GrMethod method = (GrMethod)firstMember;
+    if (firstMember instanceof GrMethod method) {
       GrCodeBlock body = method.getBlock();
       if (body == null) {
         offset = method.getTextRange().getStartOffset();

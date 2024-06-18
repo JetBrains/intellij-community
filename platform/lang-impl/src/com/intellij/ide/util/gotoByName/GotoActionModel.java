@@ -281,9 +281,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       diff = getTypeWeight(o.value) - getTypeWeight(value);
       if (diff != 0) return diff;
 
-      if (value instanceof ActionWrapper && o.value instanceof ActionWrapper) {
-        ActionWrapper value1 = (ActionWrapper)value;
-        ActionWrapper value2 = (ActionWrapper)o.value;
+      if (value instanceof ActionWrapper value1 && o.value instanceof ActionWrapper value2) {
         int compared = value1.compareWeights(value2);
         if (compared != 0) return compared;
       }
@@ -291,9 +289,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       diff = StringUtil.notNullize(getValueText()).length() - StringUtil.notNullize(o.getValueText()).length();
       if (diff != 0) return diff;
 
-      if (value instanceof OptionDescription && o.value instanceof OptionDescription) {
-        OptionDescription value1 = (OptionDescription)value;
-        OptionDescription value2 = (OptionDescription)o.value;
+      if (value instanceof OptionDescription value1 && o.value instanceof OptionDescription value2) {
         diff = value1.compareTo(value2);
         if (diff != 0) return diff;
       }

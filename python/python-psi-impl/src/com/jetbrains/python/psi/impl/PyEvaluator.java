@@ -175,9 +175,7 @@ public class PyEvaluator {
         return first.compareTo(second) != 0;
       }
     }
-    else if (lhs instanceof Boolean && rhs instanceof Boolean) {
-      final Boolean first = (Boolean)lhs;
-      final Boolean second = (Boolean)rhs;
+    else if (lhs instanceof Boolean first && rhs instanceof Boolean second) {
       if (op == PyTokenTypes.AND_KEYWORD) {
         return first && second;
       }

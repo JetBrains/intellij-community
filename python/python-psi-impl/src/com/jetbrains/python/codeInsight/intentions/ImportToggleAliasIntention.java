@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -165,8 +164,7 @@ public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
           @Override
           public boolean execute(@NotNull PsiElement element) {
             getReferences(element);
-            if (element instanceof PyStringLiteralExpression) {
-              final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
+            if (element instanceof PyStringLiteralExpression host) {
               final List<Pair<PsiElement, TextRange>> files =
                 InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
               if (files != null) {

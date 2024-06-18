@@ -1164,8 +1164,7 @@ public final class PyTypeChecker {
                                           ContainerUtil.flatMap(collection.getElementTypes(),
                                                                 t -> substituteExpand(t, substitutions, context, substituting)));
         }
-        else if (type instanceof PyTupleType) {
-          final PyTupleType tupleType = (PyTupleType)type;
+        else if (type instanceof PyTupleType tupleType) {
           final PyClass tupleClass = tupleType.getPyClass();
 
           final List<PyType> oldElementTypes = tupleType.isHomogeneous()

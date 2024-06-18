@@ -102,8 +102,7 @@ final class TerminalBlock {
   @Nullable
   private TerminalBlock extractFilter() {
     PsiStatement single = getSingleStatement();
-    if (single instanceof PsiIfStatement) {
-      PsiIfStatement ifStatement = (PsiIfStatement)single;
+    if (single instanceof PsiIfStatement ifStatement) {
       PsiExpression condition = ifStatement.getCondition();
       if(ifStatement.getElseBranch() == null && condition != null) {
         PsiStatement thenBranch = ifStatement.getThenBranch();

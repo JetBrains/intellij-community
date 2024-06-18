@@ -44,15 +44,13 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
       void handleIteratorLoop(PsiLoopStatement statement, PsiJavaToken endToken, IteratorDeclaration declaration) {
         if (endToken == null || declaration == null || !declaration.isCollection()) return;
         PsiStatement[] statements = ControlFlowUtils.unwrapBlock(statement.getBody());
-        if (statements.length == 2 && statements[1] instanceof PsiIfStatement) {
+        if (statements.length == 2 && statements[1] instanceof PsiIfStatement ifStatement) {
           PsiVariable element = declaration.getNextElementVariable(statements[0]);
           if (element == null) return;
-          PsiIfStatement ifStatement = (PsiIfStatement)statements[1];
           if(checkAndExtractCondition(declaration, ifStatement) == null) return;
           registerProblem(statement);
         }
-        else if (statements.length == 1 && statements[0] instanceof PsiIfStatement){
-          PsiIfStatement ifStatement = (PsiIfStatement)statements[0];
+        else if (statements.length == 1 && statements[0] instanceof PsiIfStatement ifStatement){
           PsiExpression condition = checkAndExtractCondition(declaration, ifStatement);
           if (condition == null) return;
           PsiElement ref = declaration.findOnlyIteratorRef(condition);

@@ -80,8 +80,7 @@ public final class GrRefactoringConflictsUtil {
     if (abstractMethods != null) {
       moving.addAll(abstractMethods);
     }
-    if (scope instanceof GrReferenceExpression) {
-      GrReferenceExpression refExpr = (GrReferenceExpression)scope;
+    if (scope instanceof GrReferenceExpression refExpr) {
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {

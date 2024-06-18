@@ -46,8 +46,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     }
 
     boolean showAsReadOnly = false;
-    if (value instanceof Node && value != tree.getModel().getRoot()) {
-      Node node = (Node)value;
+    if (value instanceof Node node && value != tree.getModel().getRoot()) {
       if (!node.isValid()) {
         append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
         return;
@@ -79,8 +78,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         append(locationString == null ? "" : " " + locationString, SimpleTextAttributes.GRAY_ATTRIBUTES);
         setIcon(presentation.getIcon(expanded));
       }
-      else if (treeNode instanceof GroupNode) {
-        GroupNode node = (GroupNode)treeNode;
+      else if (treeNode instanceof GroupNode node) {
 
         if (node.isRoot()) {
           append("<root>", patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)); //NON-NLS root is invisible
@@ -94,8 +92,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         append(FontUtil.spaceAndThinSpace() + UsageViewBundle.message("usage.view.counter", count),
                SimpleTextAttributes.GRAYED_ATTRIBUTES.derive(attributes.getStyle(), null, null, null));
       }
-      else if (treeNode instanceof UsageNode) {
-        UsageNode node = (UsageNode)treeNode;
+      else if (treeNode instanceof UsageNode node) {
         if (!node.isValid()) {
           append(UsageViewBundle.message("node.invalid"), UsageTreeColors.INVALID_ATTRIBUTES);
           return;
@@ -150,8 +147,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   String getPlainTextForNode(Object value) {
     boolean showAsReadOnly = false;
     StringBuilder result = new StringBuilder();
-    if (value instanceof Node) {
-      Node node = (Node)value;
+    if (value instanceof Node node) {
       if (!node.isValid()) {
         result.append(UsageViewBundle.message("node.invalid")).append(" ");
       }
@@ -177,8 +173,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
           result.append(UsageViewBundle.message("node.invalid"));
         }
       }
-      else if (treeNode instanceof GroupNode) {
-        GroupNode node = (GroupNode)treeNode;
+      else if (treeNode instanceof GroupNode node) {
 
         if (node.isRoot()) {
           result.append("<root>");
@@ -189,8 +184,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
 
         result.append(" (").append(node.getRecursiveUsageCount()).append(")");
       }
-      else if (treeNode instanceof UsageNode) {
-        UsageNode node = (UsageNode)treeNode;
+      else if (treeNode instanceof UsageNode node) {
 
         if (showAsReadOnly) {
           result.append(UsageViewBundle.message("node.readonly")).append(" ");

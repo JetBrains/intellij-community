@@ -51,8 +51,7 @@ public final class GroovySynchronizationOnVariableInitializedWithLiteralInspecti
         return;
       }
       final PsiElement referent = ((PsiReference) lock).resolve();
-      if (referent instanceof GrVariable) {
-        final GrVariable variable = (GrVariable) referent;
+      if (referent instanceof GrVariable variable) {
         final GrExpression initializer = variable.getInitializerGroovy();
         if (initializer == null) {
           return;
@@ -61,8 +60,7 @@ public final class GroovySynchronizationOnVariableInitializedWithLiteralInspecti
           return;
         }
         registerError(lock);
-      } else if (referent instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable) referent;
+      } else if (referent instanceof PsiVariable variable) {
         final PsiExpression initializer = variable.getInitializer();
         if (initializer == null) {
           return;

@@ -605,7 +605,7 @@ public final class MethodParameterInfoHandler
       CandidateInfo[] candidates = getCandidates((PsiCallExpression)call);
       ArrayList<CandidateInfo> result = new ArrayList<>();
 
-      if (!(argList.getParent() instanceof PsiAnonymousClass)) {
+      if (!(argList.getParent() instanceof PsiAnonymousClass aClass)) {
         cand:
         for (CandidateInfo candidate : candidates) {
           PsiMethod methodCandidate = (PsiMethod)candidate.getElement();
@@ -627,7 +627,6 @@ public final class MethodParameterInfoHandler
         }
       }
       else {
-        PsiClass aClass = (PsiClass)argList.getParent();
         for (CandidateInfo candidate : candidates) {
           if (candidate.isStaticsScopeCorrect() && helper.isAccessible((PsiMethod)candidate.getElement(), argList, aClass)) {
             result.add(candidate);

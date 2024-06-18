@@ -424,14 +424,12 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         new PsiElementProcessor() {
           @Override
           public boolean execute(final @NotNull PsiElement element) {
-            if (element instanceof XmlEntityDecl) {
-              final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
+            if (element instanceof XmlEntityDecl entityDecl) {
               if (entityDecl.isInternalReference() && name.equals(entityDecl.getName())) {
                 result[0] = entityDecl;
                 return false;
               }
-            } else if (element instanceof XmlElementDecl) {
-              final XmlElementDecl entityDecl = (XmlElementDecl)element;
+            } else if (element instanceof XmlElementDecl entityDecl) {
               if (name.equals(entityDecl.getName())) {
                 result[0] = entityDecl;
                 return false;

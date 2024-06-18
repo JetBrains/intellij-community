@@ -146,8 +146,7 @@ public final class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
       }
 
       final PsiElement parent = expr.getParent();
-      if (parent instanceof GrAssignmentExpression && expr.equals(((GrAssignmentExpression)parent).getLValue())) {
-        GrAssignmentExpression assignment = (GrAssignmentExpression)parent;
+      if (parent instanceof GrAssignmentExpression assignment && expr.equals(((GrAssignmentExpression)parent).getLValue())) {
         if (assignment.getRValue() != null) {
           PsiElement opSign = assignment.getOperationToken();
           if (!assignment.isOperatorAssignment()) {

@@ -209,8 +209,7 @@ public final class TestNGUtil {
     if (checkJavadoc && getTextJavaDoc((PsiDocCommentOwner)element) != null)
       return true;
     //now we check all methods for the test annotation
-    if (element instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass) element;
+    if (element instanceof PsiClass psiClass) {
       for (PsiMethod method : psiClass.getAllMethods()) {
         PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, TEST_ANNOTATION_FQN);
         if (annotation != null) {

@@ -70,25 +70,17 @@ public final class OrderEntryUtil {
   }
 
   public static boolean equals(OrderEntry orderEntry1, OrderEntry orderEntry2) {
-    if (orderEntry1 instanceof JdkOrderEntry && orderEntry2 instanceof JdkOrderEntry) {
-      final JdkOrderEntry jdkOrderEntry1 = (JdkOrderEntry)orderEntry1;
-      final JdkOrderEntry jdkOrderEntry2 = (JdkOrderEntry)orderEntry2;
+    if (orderEntry1 instanceof JdkOrderEntry jdkOrderEntry1 && orderEntry2 instanceof JdkOrderEntry jdkOrderEntry2) {
       return Comparing.equal(jdkOrderEntry1.getJdk(), jdkOrderEntry2.getJdk()) &&
              Comparing.strEqual(jdkOrderEntry1.getJdkName(), jdkOrderEntry2.getJdkName());
     }
-    if (orderEntry1 instanceof LibraryOrderEntry && orderEntry2 instanceof LibraryOrderEntry) {
-      final LibraryOrderEntry jdkOrderEntry1 = (LibraryOrderEntry)orderEntry1;
-      final LibraryOrderEntry jdkOrderEntry2 = (LibraryOrderEntry)orderEntry2;
+    if (orderEntry1 instanceof LibraryOrderEntry jdkOrderEntry1 && orderEntry2 instanceof LibraryOrderEntry jdkOrderEntry2) {
       return Comparing.equal(jdkOrderEntry1.getLibrary(), jdkOrderEntry2.getLibrary());
     }
-    if (orderEntry1 instanceof ModuleSourceOrderEntry && orderEntry2 instanceof ModuleSourceOrderEntry) {
-      final ModuleSourceOrderEntry jdkOrderEntry1 = (ModuleSourceOrderEntry)orderEntry1;
-      final ModuleSourceOrderEntry jdkOrderEntry2 = (ModuleSourceOrderEntry)orderEntry2;
+    if (orderEntry1 instanceof ModuleSourceOrderEntry jdkOrderEntry1 && orderEntry2 instanceof ModuleSourceOrderEntry jdkOrderEntry2) {
       return Comparing.equal(jdkOrderEntry1.getOwnerModule(), jdkOrderEntry2.getOwnerModule());
     }
-    if (orderEntry1 instanceof ModuleOrderEntry && orderEntry2 instanceof ModuleOrderEntry) {
-      final ModuleOrderEntry jdkOrderEntry1 = (ModuleOrderEntry)orderEntry1;
-      final ModuleOrderEntry jdkOrderEntry2 = (ModuleOrderEntry)orderEntry2;
+    if (orderEntry1 instanceof ModuleOrderEntry jdkOrderEntry1 && orderEntry2 instanceof ModuleOrderEntry jdkOrderEntry2) {
       return Comparing.equal(jdkOrderEntry1.getModule(), jdkOrderEntry2.getModule());
     }
     return false;

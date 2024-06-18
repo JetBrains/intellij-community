@@ -190,12 +190,10 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
   @Nullable
   public Object getContent(Object object) {
-    if (object instanceof GroupNode) {
-      GroupNode node = (GroupNode)object;
+    if (object instanceof GroupNode node) {
       object = node.getSingleRoot();
     }
-    if (object instanceof FileNode) {
-      FileNode node = (FileNode)object;
+    if (object instanceof FileNode node) {
       PsiElement element = node.findFileSystemItem(node.getVirtualFile());
       if (element == null || node.compacted == null) return element;
       if (isPackage(node.getIcon()) && node.getSettings().isFlattenPackages()) return element;

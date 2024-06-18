@@ -212,8 +212,7 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
 
   private @Nullable RadContainer getSelectedGridContainer() {
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);
-    if (selection.size() == 1 && selection.get(0) instanceof RadContainer) {
-      RadContainer container = (RadContainer) selection.get(0);
+    if (selection.size() == 1 && selection.get(0) instanceof RadContainer container) {
       if (container.getLayoutManager().isGrid() && (container.getParent() instanceof RadRootContainer || container.getComponentCount() > 0)) {
         return container;
       }

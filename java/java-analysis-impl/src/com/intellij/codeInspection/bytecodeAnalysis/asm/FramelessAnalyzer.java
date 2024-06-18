@@ -95,8 +95,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
         else {
           subroutine = subroutine == null ? null : subroutine.copy();
 
-          if (insnNode instanceof JumpInsnNode) {
-            JumpInsnNode j = (JumpInsnNode)insnNode;
+          if (insnNode instanceof JumpInsnNode j) {
             if (insnOpcode != GOTO && insnOpcode != JSR) {
               merge(insn + 1, subroutine);
               myEdgeCreator.newControlFlowEdge(insn, insn + 1);

@@ -145,8 +145,7 @@ public final class RefactoringUtil {
     while (outermost.getParent() instanceof PsiExpression) {
       outermost = (PsiExpression)outermost.getParent();
     }
-    if (outermost.getParent() instanceof PsiForStatement) {
-      final PsiForStatement forStatement = (PsiForStatement)outermost.getParent();
+    if (outermost.getParent() instanceof PsiForStatement forStatement) {
       if (forStatement.getCondition() == outermost) {
         return forStatement;
       }
@@ -154,8 +153,8 @@ public final class RefactoringUtil {
         return null;
       }
     }
-    if (outermost.getParent() instanceof PsiExpressionStatement && outermost.getParent().getParent() instanceof PsiForStatement) {
-      final PsiForStatement forStatement = (PsiForStatement)outermost.getParent().getParent();
+    if (outermost.getParent() instanceof PsiExpressionStatement &&
+        outermost.getParent().getParent() instanceof PsiForStatement forStatement) {
       if (forStatement.getUpdate() == outermost.getParent()) {
         return forStatement;
       }

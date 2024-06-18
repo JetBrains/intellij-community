@@ -134,8 +134,7 @@ public final class PyDefUseUtil {
     // TODO: Use ControlFlowUtil.process() for forwards CFG traversal
     if (visited[instr]) return;
     visited[instr] = true;
-    if (instructions[instr] instanceof ReadWriteInstruction) {
-      final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
+    if (instructions[instr] instanceof ReadWriteInstruction instruction) {
       final PsiElement element = instruction.getElement();
       String name = elementName(element);
       if (Comparing.strEqual(name, var.getName())) {

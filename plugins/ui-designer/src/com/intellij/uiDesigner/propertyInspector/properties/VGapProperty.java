@@ -20,16 +20,13 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
 
   @Override
   public Integer getValue(final RadContainer component) {
-    if (component.getLayout() instanceof BorderLayout) {
-      BorderLayout layout = (BorderLayout) component.getLayout();
+    if (component.getLayout() instanceof BorderLayout layout) {
       return layout.getVgap();
     }
-    if (component.getLayout() instanceof FlowLayout) {
-      FlowLayout layout = (FlowLayout) component.getLayout();
+    if (component.getLayout() instanceof FlowLayout layout) {
       return layout.getVgap();
     }
-    if (component.getLayout() instanceof CardLayout) {
-      CardLayout layout = (CardLayout) component.getLayout();
+    if (component.getLayout() instanceof CardLayout layout) {
       return layout.getVgap();
     }
     if (component.getLayout() instanceof AbstractLayout layoutManager) {
@@ -40,16 +37,13 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
 
   @Override
   protected void setValueImpl(final RadContainer component, final Integer value) throws Exception {
-    if (component.getLayout() instanceof BorderLayout) {
-      BorderLayout layout = (BorderLayout) component.getLayout();
+    if (component.getLayout() instanceof BorderLayout layout) {
       layout.setVgap(value.intValue());
     }
-    else if (component.getLayout() instanceof FlowLayout) {
-      FlowLayout layout = (FlowLayout) component.getLayout();
+    else if (component.getLayout() instanceof FlowLayout layout) {
       layout.setVgap(value.intValue());
     }
-    else if (component.getLayout() instanceof CardLayout) {
-      CardLayout layout = (CardLayout) component.getLayout();
+    else if (component.getLayout() instanceof CardLayout layout) {
       layout.setVgap(value.intValue());
     }
     else {

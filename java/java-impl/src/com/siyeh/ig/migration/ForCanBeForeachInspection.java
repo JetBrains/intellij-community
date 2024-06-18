@@ -453,8 +453,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
 
   private static @Nullable Holder getCollectionFromListMethodCall(PsiExpression expression, String methodName, PsiElement secondDeclaredElement) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    if (expression instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
       if (secondDeclaredElement != null && !secondDeclaredElement.equals(target)) {
         return null;
@@ -496,16 +495,13 @@ public final class ForCanBeForeachInspection extends BaseInspection {
         qualifierExpression instanceof PsiSuperExpression) {
       return new Holder(methodExpression);
     }
-    if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+    if (!(qualifierExpression instanceof PsiReferenceExpression referenceExpression)) {
       return null;
     }
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)qualifierExpression;
     final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiVariable)) {
+    if (!(target instanceof PsiVariable variable)) {
       return null;
     }
-    final PsiVariable variable = (PsiVariable)target;
     return new Holder(variable, methodExpression);
   }
 

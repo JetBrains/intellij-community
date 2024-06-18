@@ -167,8 +167,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
     if (abstractMethods != null) {
       moving.addAll(abstractMethods);
     }
-    if (scope instanceof PsiReferenceExpression) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression)scope;
+    if (scope instanceof PsiReferenceExpression refExpr) {
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         PsiExpression qualifier = refExpr.getQualifierExpression();

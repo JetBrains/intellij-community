@@ -110,8 +110,7 @@ public final class MakeCallChainIntoCallSequenceIntention extends MCIntention {
         }
       }
     }
-    else if (parent instanceof PsiLocalVariable) {
-      final PsiLocalVariable variable = (PsiLocalVariable)parent;
+    else if (parent instanceof PsiLocalVariable variable) {
       final PsiType variableType = variable.getType();
       if (variableType.equals(rootType)) {
         targetText = variable.getName();

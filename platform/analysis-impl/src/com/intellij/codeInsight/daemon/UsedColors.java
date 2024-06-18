@@ -25,8 +25,7 @@ public final class UsedColors {
         colorIndex = hashColor(name, colorsCount);
         newColors = new UsedColor(name, colorIndex); // put an object instead of array to save space
       }
-      else if (data instanceof UsedColor) {
-        UsedColor usedColor = (UsedColor)data;
+      else if (data instanceof UsedColor usedColor) {
         if (usedColor.name.equals(name)) {
           colorIndex = usedColor.index;
           newColors = null; // found, no need to create new

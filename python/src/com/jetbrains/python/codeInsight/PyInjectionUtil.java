@@ -121,10 +121,9 @@ public final class PyInjectionUtil {
   private static @NotNull InjectionResult processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar,
                                                                @NotNull String prefix, @NotNull String suffix, @NotNull Formatting formatting) {
     final String missingValue = "missing_value";
-    if (element instanceof PyStringLiteralExpression) {
+    if (element instanceof PyStringLiteralExpression expr) {
       boolean injected = false;
       boolean strict = true;
-      final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
       for (PyStringElement stringElem : expr.getStringElements()) {
         final int nodeOffsetInParent = stringElem.getTextOffset() - expr.getTextRange().getStartOffset();
         final TextRange contentRange = stringElem.getContentRange();
