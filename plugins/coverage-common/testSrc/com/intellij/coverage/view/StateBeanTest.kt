@@ -1,6 +1,5 @@
 package com.intellij.coverage.view
 
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -17,7 +16,13 @@ internal class StateBeanTest {
       myColumnSize = listOf(1, 2, 3)
     }
     val element = XmlSerializer.serialize(stateBean)
-    val names = element.children.map { it.getAttribute("name").value }.sorted().joinToString("\n")
+    val names = element.children.map { element ->
+      if (element.name == "option") {
+        element.getAttribute("name").value
+      } else {
+        element.name
+      }
+    }.sorted().joinToString("\n")
     assertEquals("""
       flattenPackages
       hideFullyCovered
@@ -26,7 +31,7 @@ internal class StateBeanTest {
       myAutoScrollToSource
       myColumnSize
       mySortingColumn
-      showOnlyModified
+      showOnlyModified_v2
     """.trimIndent(), names)
   }
 }

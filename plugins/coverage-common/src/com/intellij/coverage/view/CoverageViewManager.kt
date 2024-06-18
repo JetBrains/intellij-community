@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.DisposableWrapperList
+import com.intellij.util.xmlb.annotations.Tag
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
@@ -176,6 +177,7 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
       }
 
     var isShowOnlyModified: Boolean
+      @Tag("showOnlyModified_v2")
       @ApiStatus.Experimental
       get() = myShowOnlyModified
       @ApiStatus.Experimental
