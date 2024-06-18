@@ -95,6 +95,7 @@ private const val ADJUST_BORDERS = true
 private const val LAYOUT_DONE: @NonNls String = "Layout.done"
 
 @DirtyUI
+@Internal
 open class JBTabsImpl internal constructor(
   private var project: Project?,
   private val parentDisposable: Disposable,
@@ -1366,7 +1367,7 @@ open class JBTabsImpl internal constructor(
   private fun updateAll(forcedRelayout: Boolean) {
     val toSelect = getSelectedInfo()
     setSelectedInfo(toSelect)
-    updateContainer(forcedRelayout, false)
+    updateContainer(forced = forcedRelayout, layoutNow = false)
     removeDeferred()
     updateListeners()
     updateTabActions(false)
@@ -1601,21 +1602,21 @@ open class JBTabsImpl internal constructor(
     when (event.propertyName) {
       TabInfo.ACTION_GROUP -> {
         updateSideComponent(tabInfo)
-        relayout(false, false)
+        relayout(forced = false, layoutNow = false)
       }
       TabInfo.COMPONENT -> {
-        relayout(true, false)
+        relayout(forced = true, layoutNow = false)
       }
       TabInfo.TEXT -> {
         updateText(tabInfo)
-        revalidateAndRepaint()
+        revalidateAndRepaint(layoutNow = true)
       }
       TabInfo.ICON -> {
         updateIcon(tabInfo)
-        revalidateAndRepaint()
+        revalidateAndRepaint(layoutNow = true)
       }
       TabInfo.TAB_COLOR -> {
-        revalidateAndRepaint()
+        revalidateAndRepaint(layoutNow = true)
       }
       TabInfo.ALERT_STATUS -> {
         val start = event.newValue as Boolean
@@ -1623,11 +1624,11 @@ open class JBTabsImpl internal constructor(
       }
       TabInfo.TAB_ACTION_GROUP -> {
         updateTabActions(tabInfo)
-        relayout(false, false)
+        relayout(forced = false, layoutNow = false)
       }
       TabInfo.HIDDEN -> {
         updateHiding()
-        relayout(false, false)
+        relayout(forced = false, layoutNow = false)
       }
       TabInfo.ENABLED -> {
         updateEnabling()
@@ -1674,7 +1675,7 @@ open class JBTabsImpl internal constructor(
         val toSelect = getToSelectOnRemoveOf(selectedInfo!!)
         setSelectedInfo(toSelect)
       }
-      updateAll(true)
+      updateAll(forcedRelayout = true)
     }
   }
 
@@ -2645,7 +2646,7 @@ open class JBTabsImpl internal constructor(
     super.addImpl(component, constraints, index)
   }
 
-  fun relayout(forced: Boolean, layoutNow: Boolean) {
+  internal fun relayout(forced: Boolean, layoutNow: Boolean) {
     if (!forcedRelayout) {
       forcedRelayout = forced
     }

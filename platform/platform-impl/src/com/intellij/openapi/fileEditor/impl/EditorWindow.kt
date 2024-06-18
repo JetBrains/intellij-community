@@ -442,6 +442,13 @@ class EditorWindow internal constructor(
     _currentCompositeFlow.value = composite
   }
 
+  // we must select tab in the same EDT event (same command) - IdeDocumentHistoryImpl rely on that
+  @RequiresEdt
+  internal fun setCurrentCompositeAndSelectTab(tab: TabInfo) {
+    tabbedPane.editorTabs.select(info = tab, requestFocus = false)
+    _currentCompositeFlow.value = tab.composite
+  }
+
   @RequiresEdt
   internal fun selectTabOnStartup(tab: TabInfo, requestFocus: Boolean, windowAdded: suspend () -> Unit) {
     val composite = tab.composite
@@ -651,6 +658,7 @@ class EditorWindow internal constructor(
         fileEditorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
           .beforeFileClosed(fileEditorManager, file)
         val componentIndex = findComponentIndex(composite)
+        val editorTabs = tabbedPane.editorTabs
         // composite could close itself on decomposition
         if (componentIndex >= 0) {
           removedTabs.addLast(file.url to FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned))
@@ -658,16 +666,17 @@ class EditorWindow internal constructor(
             removedTabs.removeFirst()
           }
 
-          val info = tabbedPane.editorTabs.getTabAt(componentIndex)
-          // removing the hidden tab happens at the end of the drag-out,
-          // we've already selected the correct tab for this case in dragOutStarted
-          if (info.isHidden || !manager.project.isOpen || isDisposed) {
-            tabbedPane.editorTabs.removeTabWithoutChangingSelection(info)
+          val info = editorTabs.getTabAt(componentIndex)
+          if (isDisposed || !manager.project.isOpen) {
+            editorTabs.removeTabWithoutChangingSelection(info)
           }
           else {
-            val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
-            val toSelect = if (indexToSelect >= 0 && indexToSelect < tabbedPane.editorTabs.tabCount) tabbedPane.editorTabs.getTabAt(indexToSelect) else null
-            tabbedPane.editorTabs.removeTab(info = info, forcedSelectionTransfer = toSelect)
+            var toSelect = info.previousSelection
+            if (toSelect == null) {
+              val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
+              toSelect = if (indexToSelect >= 0 && indexToSelect < editorTabs.tabCount) editorTabs.getTabAt(indexToSelect) else null
+            }
+            editorTabs.removeTab(info = info, forcedSelectionTransfer = toSelect)
           }
           fileEditorManager.disposeComposite(composite)
         }
@@ -680,7 +689,7 @@ class EditorWindow internal constructor(
           component.revalidate()
         }
 
-        if (tabbedPane.tabs.selectedInfo == null) {
+        if (editorTabs.selectedInfo == null) {
           // selection event is not fired
           _currentCompositeFlow.value = null
         }

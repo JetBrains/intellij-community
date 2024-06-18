@@ -328,7 +328,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
     if (!willDragOutStart) {
      tabs.fireTabsMoved();
     }
-    tabs.relayout(true, false);
+    tabs.relayout$intellij_platform_ide(true, false);
 
     tabs.revalidate();
 

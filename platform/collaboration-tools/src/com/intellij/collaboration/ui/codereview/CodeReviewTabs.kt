@@ -16,18 +16,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
+@Internal
 object CodeReviewTabs {
-  fun CoroutineScope.bindTabText(tab: TabInfo, text: Supplier<@Nls String>, countFlow: Flow<Int?>): Job =
-    countFlow
+  fun CoroutineScope.bindTabText(tab: TabInfo, text: Supplier<@Nls String>, countFlow: Flow<Int?>): Job {
+    return countFlow
       .onEach { count ->
         tab.setText(text)
         tab.appendCount(count)
       }
       .launchIn(this)
+  }
 
+  @Internal
   fun CoroutineScope.bindTabUi(
     tabs: JBTabsImpl,
     tab: TabInfo,
