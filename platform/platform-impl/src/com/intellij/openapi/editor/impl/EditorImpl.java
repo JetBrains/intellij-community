@@ -2549,7 +2549,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void resetMousePointer() {
-    UIUtil.setCursor(myEditorComponent, NamedColorUtil.getTextCursor(getBackgroundColor()));
+    UIUtil.setCursor(myEditorComponent, Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
   }
 
   private void validateMousePointer(@NotNull MouseEvent e, @Nullable EditorMouseEvent editorMouseEvent) {
@@ -2569,8 +2569,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Cursor cursor = myEditorComponent.getCursor();
       if (cursor != Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) &&
           cursor != Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) &&
-          cursor != EMPTY_CURSOR &&
-          (!SystemInfo.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
+          cursor != EMPTY_CURSOR) {
         // someone else has set cursor, don't touch it
         return;
       }
@@ -2595,7 +2594,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         result = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
       }
     }
-    return result == null ? NamedColorUtil.getTextCursor(getBackgroundColor()) : result;
+    return result == null ? Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) : result;
   }
 
   private void runMouseDraggedCommand(@NotNull MouseEvent e) {

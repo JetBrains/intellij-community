@@ -27,6 +27,12 @@ public final class MacUIUtil {
     }
   }
 
+  /**
+   * @deprecated The inverted text cursor is not needed for macOS 10.14 Mojave and later, because the default I-beam cursor
+   * now has a thick white border and is visible on a dark background.
+   * The inverted cursor also doesn't adjust to color customization in the System Settings, so its usage should be avoided.
+   */
+  @Deprecated
   public static @NotNull Cursor getInvertedTextCursor() {
     if (INVERTED_TEXT_CURSOR == null) {
       Toolkit toolkit = Toolkit.getDefaultToolkit();
