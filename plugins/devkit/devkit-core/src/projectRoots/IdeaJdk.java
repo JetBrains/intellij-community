@@ -158,6 +158,8 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static VirtualFile[] getIdeaLibrary(String home) {
     List<VirtualFile> result = new ArrayList<>();
+    appendIdeaLibrary(home, result, "junit.jar", "junit4.jar");
+
     String plugins = home + File.separator + PLUGINS_DIR + File.separator;
     appendIdeaLibrary(plugins + "java", result);
     appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-javax-console.jar", "jpa-jakarta-console.jar",
