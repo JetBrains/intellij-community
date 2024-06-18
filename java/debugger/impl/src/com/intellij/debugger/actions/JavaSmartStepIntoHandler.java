@@ -405,6 +405,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       ArrayList<SmartStepTarget> all = new ArrayList<>(targets);
 
+      final List<SmartStepTarget> targetsWithCollisions = new ArrayList<>();
       // collect bytecode offsets of the calls
       final Set<Integer> finalLines = lines;
       class BytecodeVisitor extends MethodVisitor implements MethodBytecodeUtil.InstructionOffsetReader {
@@ -416,7 +417,6 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         final Set<SmartStepTarget> foundTargets = new HashSet<>();
         final Set<SmartStepTarget> alreadyExecutedTargets = new HashSet<>();
         final Set<SmartStepTarget> anotherBasicBlockTargets = new HashSet<>();
-        boolean hasCollisions = false;
 
         BytecodeVisitor() {
           super(Opcodes.API_VERSION);
@@ -480,8 +480,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               PsiMethod method = mt.getMethod();
               if (DebuggerUtilsEx.methodMatches(method, owner.replace("/", "."), name, desc, debugProcess)) {
                 if (foundTargets.contains(mt)) {
-                  hasCollisions = true;
-                  LOG.debug("Target occurred multiple times in bytecode: " + mt);
+                  targetsWithCollisions.add(mt);
                 }
                 else {
                   foundTargets.add(mt);
@@ -501,15 +500,26 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       MethodBytecodeUtil.visit(location.method(), bytecodeVisitor, true);
 
       // sanity check
-      boolean hasNoOffset = false;
+      List<SmartStepTarget> notFoundTargets = new ArrayList<>();
       for (SmartStepTarget t : targets) {
         if (isImmediateMethodCall(t) && !bytecodeVisitor.foundTargets.contains(t)) {
-          LOG.debug("Target was not found in bytecode: " + t);
-          hasNoOffset = true;
+          notFoundTargets.add(t);
         }
       }
-      if (bytecodeVisitor.hasCollisions || hasNoOffset) {
-        // logging was done above
+
+      StringBuilder errorMessage = new StringBuilder();
+      if (!targetsWithCollisions.isEmpty()) {
+        errorMessage.append("Target occurred multiple times in bytecode: ")
+          .append(JvmSmartStepIntoErrorReporter.joinTargetInfo(targetsWithCollisions));
+      }
+      if (!notFoundTargets.isEmpty()) {
+        if (!errorMessage.isEmpty()) errorMessage.append('\n');
+        errorMessage.append("Target not found in bytecode: ")
+          .append(JvmSmartStepIntoErrorReporter.joinTargetInfo(notFoundTargets));
+      }
+
+      if (!errorMessage.isEmpty()) {
+        JvmSmartStepIntoErrorReporter.report(element, debuggerContext.getDebuggerSession(), position, errorMessage.toString());
         return Collections.emptyList();
       }
 
@@ -543,7 +553,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       }
     }
     catch (Exception e) {
-      LOG.info(e);
+      LOG.error(e);
       return Collections.emptyList();
     }
 
