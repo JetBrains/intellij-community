@@ -22,7 +22,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -54,11 +53,6 @@ public class VcsDirtyScopeTest extends FileBasedTest {
     private VirtualFile baseDir;
     private VirtualFile dir1;
     private VirtualFile dir2;
-    private VirtualFile dir3;
-    private VirtualFile dir4;
-    private VirtualFile innerDir1;
-    private VirtualFile innerDir2;
-    private List<VirtualFile> files;
   }
 
   @Test
@@ -117,19 +111,19 @@ public class VcsDirtyScopeTest extends FileBasedTest {
               try {
                 data.dir1 = data.baseDir.createChildDirectory(this, "dir1");
                 data.dir2 = data.baseDir.createChildDirectory(this, "dir2");
-                data.dir3 = data.baseDir.createChildDirectory(this, "dir3");
-                data.dir4 = data.baseDir.createChildDirectory(this, "dir4");
-
-                data.innerDir1 = data.dir1.createChildDirectory(this, "innerDir1");
-                data.innerDir2 = data.dir2.createChildDirectory(this, "innerDir2");
-
-                final VirtualFile[] virtualFiles = {data.dir1, data.dir2, data.dir3, data.dir4, data.innerDir1, data.innerDir2};
-                int i = 1;
-                data.files = new LinkedList<>();
-                for (VirtualFile vf : virtualFiles) {
-                  data.files.add(vf.createChildData(this, "f" + i + ".txt"));
-                  ++i;
-                }
+                //data.dir3 = data.baseDir.createChildDirectory(this, "dir3");
+                //data.dir4 = data.baseDir.createChildDirectory(this, "dir4");
+                //
+                //data.innerDir1 = data.dir1.createChildDirectory(this, "innerDir1");
+                //data.innerDir2 = data.dir2.createChildDirectory(this, "innerDir2");
+                //
+                //final VirtualFile[] virtualFiles = {data.dir1, data.dir2, data.dir3, data.dir4, data.innerDir1, data.innerDir2};
+                //int i = 1;
+                //data.files = new LinkedList<>();
+                //for (VirtualFile vf : virtualFiles) {
+                //  data.files.add(vf.createChildData(this, "f" + i + ".txt"));
+                //  ++i;
+                //}
               }
               catch (IOException e) {
                 exc[0] = e;
