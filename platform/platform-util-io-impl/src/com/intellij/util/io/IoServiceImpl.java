@@ -6,10 +6,12 @@ import com.github.markusbernhardt.proxy.selector.misc.BufferedProxySelector;
 import com.github.markusbernhardt.proxy.selector.pac.PacProxySelector;
 import com.github.markusbernhardt.proxy.selector.pac.UrlPacScriptSource;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.ProxySelector;
 
+@ApiStatus.Internal
 public class IoServiceImpl implements IoService {
   @Override
   public ProxySelector getProxySelector(String pacUrlForUse) {

@@ -2,9 +2,11 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.net.ProxySelector;
 
+@ApiStatus.Internal
 public interface IoService {
   ProxySelector getProxySelector(String pacUrlForUse);
 

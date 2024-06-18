@@ -477,9 +477,6 @@ f:com.intellij.util.Urls
 - sf:parse(java.lang.String,Z):com.intellij.util.Url
 - sf:parseEncoded(java.lang.String):com.intellij.util.Url
 - sf:toUriWithoutParameters(com.intellij.util.Url):java.net.URI
-com.intellij.util.io.IoService
-- s:getInstance():com.intellij.util.io.IoService
-- a:getProxySelector(java.lang.String):java.net.ProxySelector
 e:com.intellij.util.io.PowerStatus
 - java.lang.Enum
 - sf:AC:com.intellij.util.io.PowerStatus

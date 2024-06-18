@@ -10,10 +10,6 @@ f:com.intellij.execution.process.ProcessServiceImpl
 - sendWinProcessCtrlC(java.lang.Process):Z
 - startPtyProcess(java.lang.String[],java.lang.String,java.util.Map,com.intellij.execution.process.LocalPtyOptions,com.intellij.openapi.application.Application,Z,Z,Z):java.lang.Process
 - winPtyChildProcessId(java.lang.Process):java.lang.Integer
-c:com.intellij.util.io.IoServiceImpl
-- com.intellij.util.io.IoService
-- <init>():V
-- getProxySelector(java.lang.String):java.net.ProxySelector
 c:com.intellij.util.io.jackson.IntelliJPrettyPrinter
 - com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 - sf:Companion:com.intellij.util.io.jackson.IntelliJPrettyPrinter$Companion
