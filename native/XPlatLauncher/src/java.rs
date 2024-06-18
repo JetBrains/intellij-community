@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::{env, thread};
+use std::thread;
 use std::ffi::{c_void, CString};
 use std::path::Path;
 use std::sync::Mutex;
@@ -20,6 +20,12 @@ use {
     core_foundation::date::CFTimeInterval,
     core_foundation::runloop::{CFRunLoopAddTimer, CFRunLoopGetCurrent, CFRunLoopRunInMode, CFRunLoopTimerCreate,
                                CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished}
+};
+
+#[cfg(target_os = "windows")]
+use {
+    std::os::windows::ffi::OsStrExt,
+    windows::Win32::System::LibraryLoader
 };
 
 #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
@@ -169,11 +175,6 @@ fn reset_signal_handler(signal: c_int) -> Result<()> {
 }
 
 fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv<'static>> {
-    // Read the current directory and pass it to JVM through environment variable.
-    // The real current directory will be changed in load_libjvm().
-    let work_dir = env::current_dir().context("Failed to get current directory")?;
-    env::set_var("IDEA_INITIAL_DIRECTORY", work_dir);
-
     let libjvm_path = jre_home.join(JVM_LIB_REL_PATH);
     debug!("[JVM] Loading {libjvm_path:?}");
     let libjvm = load_libjvm(jre_home, &libjvm_path)?;
@@ -212,22 +213,30 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
 
 #[cfg(target_os = "windows")]
 fn load_libjvm(jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Library> {
-    let jre_bin_dir = jre_home.join("bin");
-    debug!("[JVM] Changing working dir to {jre_bin_dir:?}, so that 'libjvm.dll' can find its dependencies");
-    env::set_current_dir(&jre_bin_dir)?;
+    let flags = LibraryLoader::LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LibraryLoader::LOAD_LIBRARY_SEARCH_USER_DIRS;
+    unsafe { LibraryLoader::SetDefaultDllDirectories(flags) }
+        .context("Failed to prepare 'jvm.dll' dependencies search path")?;
 
-    unsafe {
-        libloading::Library::new(libjvm_path)
-    }.context("Failed to load 'libjvm.dll'")
+    let jre_bin_dir = jre_home.join("bin");
+    debug!("[JVM] Adding {:?} to the DLL search path, so that 'jvm.dll' can find its dependencies", jre_bin_dir);
+    let jre_bin_dir_chars = jre_bin_dir.as_os_str().encode_wide().chain([0u16]).collect::<Vec<u16>>();
+    let jre_bin_dir_str = windows::core::PCWSTR::from_raw(jre_bin_dir_chars.as_ptr());
+    let jre_bin_dir_cookie = unsafe { LibraryLoader::AddDllDirectory(jre_bin_dir_str) };
+    if jre_bin_dir_cookie.is_null() {
+        return Err(Error::from(std::io::Error::last_os_error()))
+            .context(format!("Failed to add '{}' to 'jvm.dll' dependencies search path", jre_bin_dir.display()));
+    }
+
+    unsafe { libloading::Library::new(libjvm_path) }
+        .context("Failed to load 'jvm.dll'")
 }
 
 #[cfg(target_family = "unix")]
 fn load_libjvm(_jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Library> {
     let path_ref = Some(libjvm_path.as_os_str());
     let flags = libloading::os::unix::RTLD_LAZY;
-    unsafe {
-        libloading::os::unix::Library::open(path_ref, flags).map(From::from)
-    }.context("Failed to load 'libjvm'")
+    unsafe { libloading::os::unix::Library::open(path_ref, flags).map(From::from) }
+        .with_context(|| format!("Failed to load '{}'", Path::new(libjvm_path.file_name().unwrap()).display()))
 }
 
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArgs, Vec<jni::sys::JavaVMOption>)> {
