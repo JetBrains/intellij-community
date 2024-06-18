@@ -44,7 +44,7 @@ fun injectIntoYamlMultiRanges(registrar: MultiHostRegistrar,
   registrar.startInjecting(language)
 
   if (context is YAMLBlockScalarImpl)
-    context.putUserData(InjectionMeta.INJECTION_INDENT, context.indentString)
+    context.putUserData(InjectionMeta.getInjectionIndent(), context.indentString)
 
   if (ranges.size == 1) {
     registrar.addPlace(prefix, suffix, context, ranges.single())

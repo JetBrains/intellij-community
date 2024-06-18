@@ -181,7 +181,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     if (changesHandlerFactory != null) {
       return changesHandlerFactory.createFileChangesHandler(shreds, editor, document, injectedFile);
     }
-    if (ContainerUtil.or(shreds, it -> InjectionMeta.INJECTION_INDENT.get(it.getHost()) != null)) {
+    if (ContainerUtil.or(shreds, it -> InjectionMeta.getInjectionIndent().get(it.getHost()) != null)) {
       return new IndentAwareInjectedFileChangesHandler(shreds, editor, document, injectedFile);
     }
     return new CommonInjectedFileChangesHandler(shreds, editor, document, injectedFile);

@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,10 +11,6 @@ public abstract class EditorFontCache {
 
   public static EditorFontCache getInstance() {
     return ApplicationManager.getApplication().getService(EditorFontCache.class);
-  }
-
-  @ApiStatus.Internal
-  protected EditorFontCache() {
   }
 
   public abstract @NotNull Font getFont(@Nullable EditorFontType key);

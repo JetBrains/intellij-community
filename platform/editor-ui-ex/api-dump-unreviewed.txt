@@ -362,7 +362,6 @@ c:com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter
 - p:createSegments():com.intellij.openapi.editor.ex.util.SegmentArrayWithData
 - p:createTokenProcessor(I,com.intellij.openapi.editor.ex.util.SegmentArrayWithData,java.lang.CharSequence):com.intellij.openapi.editor.ex.util.LexerEditorHighlighter$TokenProcessor
 - documentChanged(com.intellij.openapi.editor.event.DocumentEvent):V
-- getSegments():com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter$MappingSegments
 - p:hasAdditionalData(I):Z
 - registerLayer(com.intellij.psi.tree.IElementType,com.intellij.openapi.editor.ex.util.LayerDescriptor):V
 - setColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V

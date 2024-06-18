@@ -1044,7 +1044,7 @@ com.intellij.injected.editor.InjectedFileChangesHandler
 com.intellij.injected.editor.InjectedFileChangesHandlerProvider
 - a:createFileChangesHandler(java.util.List,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):com.intellij.injected.editor.InjectedFileChangesHandler
 *f:com.intellij.injected.editor.InjectionMeta
-- sf:INJECTION_INDENT:com.intellij.openapi.util.Key
+- s:getInjectionIndent():com.intellij.openapi.util.Key
 f:com.intellij.lang.LanguageStructureViewBuilder
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.lang.LanguageStructureViewBuilder
@@ -2306,6 +2306,7 @@ f:com.intellij.openapi.editor.colors.EditorColorsUtil
 - s:getGlobalOrDefaultColorScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - s:updateNotInHierarchyComponentUIAndColors(java.awt.Component):V
 a:com.intellij.openapi.editor.colors.EditorFontCache
+- <init>():V
 - a:getFont(com.intellij.openapi.editor.colors.EditorFontType):java.awt.Font
 - s:getInstance():com.intellij.openapi.editor.colors.EditorFontCache
 - a:reset():V
@@ -2705,13 +2706,6 @@ f:com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders
 - com.intellij.openapi.fileTypes.FileTypeExtension
 - sf:INSTANCE:com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders
 - s:getInstance():com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders
-f:com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider
-- com.intellij.openapi.fileTypes.SyntaxHighlighterProvider
-- <init>():V
-- create(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
-f:com.intellij.openapi.fileTypes.LanguageSyntaxHighlighters
-- com.intellij.lang.LanguageExtension
-- s:getInstance():com.intellij.openapi.fileTypes.LanguageSyntaxHighlighters
 c:com.intellij.openapi.fileTypes.PlainSyntaxHighlighter
 - com.intellij.openapi.fileTypes.SyntaxHighlighter
 - <init>():V

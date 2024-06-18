@@ -22,7 +22,7 @@ fun preserveIndentStateBeforeProcessing(file: PsiFile, dataContext: DataContext)
   if (!hostFile.viewProvider.hasLanguage(YAMLLanguage.INSTANCE)) return
 
   val injectionHost = InjectedLanguageManager.getInstance(file.project).getInjectionHost(file) ?: return
-  val lineIndent = InjectionMeta.INJECTION_INDENT[injectionHost]
+  val lineIndent = InjectionMeta.getInjectionIndent()[injectionHost]
   INDENT_BEFORE_PROCESSING[file] = lineIndent
   INJECTION_RANGE_BEFORE_ENTER[file] = hostEditor.document.createRangeMarker(injectionHost.textRange)
 }
