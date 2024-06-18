@@ -21,7 +21,7 @@
       key="intellij.platform.ml.embeddings.index.files.use.limit"/>
 
     <registryKey
-      defaultValue="20000"
+      defaultValue="100000"
       description="Embedding indexing per-project files limit"
       key="intellij.platform.ml.embeddings.index.files.limit"/>
 
@@ -31,7 +31,7 @@
       key="intellij.platform.ml.embeddings.index.use.memory.limit"/>
 
     <registryKey
-      defaultValue="50"
+      defaultValue="200"
       description="Embedding indexing per-application memory limit (MB)"
       key="intellij.platform.ml.embeddings.index.memory.limit"/>
 
