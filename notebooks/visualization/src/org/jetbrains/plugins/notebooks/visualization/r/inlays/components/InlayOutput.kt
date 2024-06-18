@@ -118,10 +118,13 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
   }
 
   private fun createToolbar(): JComponent {
-    return ToolbarUtil.createEllipsisToolbar("NotebooksInlayOutput", actions + createClearAction()).apply {
-      isOpaque = true
-      background = UiCustomizer.instance.getTextOutputBackground(editor)
-    }
+    val toolbar = ToolbarUtil.createEllipsisToolbar("NotebooksInlayOutput", actions + createClearAction())
+
+    toolbar.targetComponent = toolbarPane // ToolbarPane will be in context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
+    toolbar.component.isOpaque = true
+    toolbar.component.background = UiCustomizer.instance.getTextOutputBackground(editor)
+
+    return toolbar.component
   }
 
   protected fun saveWithFileChooser(@Nls title: String,
