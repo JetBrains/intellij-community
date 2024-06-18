@@ -81,7 +81,7 @@ internal fun toPsiClass(
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun toPsiMethod(
-    functionSymbol: KaFunctionLikeSymbol,
+    functionSymbol: KaFunctionSymbol,
     context: KtElement,
 ): PsiMethod? {
     // `inline` w/ `reified` type param from binary dependency,
@@ -149,7 +149,7 @@ internal fun toPsiMethod(
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun toPsiMethodForDeserialized(
-    functionSymbol: KaFunctionLikeSymbol,
+    functionSymbol: KaFunctionSymbol,
     context: KtElement,
     psi: KtFunction?,
 ): PsiMethod? {

@@ -112,7 +112,7 @@ class SmartStepTargetVisitor(
             val property = symbol.psi as? KtProperty ?: return false
             val delegate = property.delegate ?: return false
             val delegatedMethod = findDelegatedMethod(delegate, targetType) ?: return false
-            val delegatedSymbol = delegatedMethod.symbol as? KaFunctionLikeSymbol ?: return false
+            val delegatedSymbol = delegatedMethod.symbol as? KaFunctionSymbol ?: return false
             val methodInfo = CallableMemberInfo(delegatedSymbol, countExistingMethodCalls(delegatedMethod))
             val label = propertyAccessLabel(symbol, delegatedSymbol)
             appendPropertyFilter(methodInfo, delegatedMethod, label, expression, lines)
@@ -221,7 +221,7 @@ class SmartStepTargetVisitor(
     context(KaSession)
     private fun createJavaLambdaInfo(
         declaration: PsiMethod,
-        methodSymbol: KaFunctionLikeSymbol,
+        methodSymbol: KaFunctionSymbol,
         argumentSymbol: KaValueParameterSymbol,
     ): KotlinLambdaInfo {
         val callerMethodOrdinal = countExistingMethodCalls(declaration)
@@ -231,7 +231,7 @@ class SmartStepTargetVisitor(
     context(KaSession)
     private fun createKotlinLambdaInfo(
         declaration: KtDeclaration,
-        methodSymbol: KaFunctionLikeSymbol,
+        methodSymbol: KaFunctionSymbol,
         argumentSymbol: KaValueParameterSymbol,
     ): KotlinLambdaInfo? {
         val callerMethodOrdinal = countExistingMethodCalls(declaration)
@@ -384,7 +384,7 @@ class SmartStepTargetVisitor(
     }
 
     context(KaSession)
-    private fun getFunctionDeclaration(symbol: KaFunctionLikeSymbol): PsiElement? {
+    private fun getFunctionDeclaration(symbol: KaFunctionSymbol): PsiElement? {
         if (symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke) return null
         symbol.psi?.let { return it }
         // null is returned for implemented by delegation methods in K1

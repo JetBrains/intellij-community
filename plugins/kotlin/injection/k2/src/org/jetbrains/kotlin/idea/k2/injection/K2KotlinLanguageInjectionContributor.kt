@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.idea.base.injection.InjectionInfo
 import org.jetbrains.kotlin.idea.base.injection.KotlinLanguageInjectionContributorBase
@@ -55,7 +55,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
     ): InjectionInfo? {
         val element = functionReference.element as? KtElement ?: return null
         return analyze(element) {
-            val functionSymbol = element.mainReference?.resolveToSymbol() as? KaFunctionLikeSymbol ?: return null
+            val functionSymbol = element.mainReference?.resolveToSymbol() as? KaFunctionSymbol ?: return null
             val parameterSymbol = if (argumentName != null) {
                 functionSymbol.valueParameters.firstOrNull { it.name == argumentName }
             } else {

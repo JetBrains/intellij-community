@@ -88,7 +88,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
 
                 // If current declaration is a function, we only offer names of unresolved function calls. For property declarations, we
                 // always offer an unresolved usage because a property may be called if the object has an `invoke` method.
-                refExprParent !is KtCallableReferenceExpression && refExprParent !is KtCallExpression && symbol is KaFunctionLikeSymbol -> false
+                refExprParent !is KtCallableReferenceExpression && refExprParent !is KtCallExpression && symbol is KaFunctionSymbol -> false
 
                 receiver != null -> {
                     val actualReceiverType = receiver.getKtType() ?: return false

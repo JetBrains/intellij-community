@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
@@ -166,7 +166,7 @@ class KotlinCallHierarchyNodeDescriptor(
                             }
                         }
                         is KtNamedFunction, is KtConstructor<*> -> {
-                            if (declarationSymbol !is KaFunctionLikeSymbol) return null
+                            if (declarationSymbol !is KaFunctionSymbol) return null
                             elementText = renderNamedFunction(declarationSymbol)
                         }
                         is KtProperty -> {
@@ -196,7 +196,7 @@ class KotlinCallHierarchyNodeDescriptor(
 
         context(KaSession)
         @OptIn(KaExperimentalApi::class)
-        fun renderNamedFunction(symbol: KaFunctionLikeSymbol): String? {
+        fun renderNamedFunction(symbol: KaFunctionSymbol): String? {
             val name = ((symbol as? KaNamedFunctionSymbol)?.name ?: ((symbol as? KaConstructorSymbol)?.containingSymbol as? KaClassOrObjectSymbol)?.name)?.asString() ?: return null
             val paramTypes =
                 StringUtil.join(

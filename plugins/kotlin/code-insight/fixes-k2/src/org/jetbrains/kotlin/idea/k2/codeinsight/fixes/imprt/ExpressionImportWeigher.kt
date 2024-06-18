@@ -155,7 +155,7 @@ internal class CallExpressionImportWeigher(
             weight = presentReceiverTypes.mapNotNull { weighType(it, receiverTypeFromImport, weight) }.maxOrNull() ?: weight
         }
 
-        if (symbolToBeImported is KaFunctionLikeSymbol) {
+        if (symbolToBeImported is KaFunctionSymbol) {
             val symbolValueParameters = symbolToBeImported.valueParameters
             val symbolHasVarargParameter = symbolValueParameters.any { it.isVararg }
             weight += if (symbolValueParameters.size >= presentValueArgumentTypes.size || symbolHasVarargParameter) {

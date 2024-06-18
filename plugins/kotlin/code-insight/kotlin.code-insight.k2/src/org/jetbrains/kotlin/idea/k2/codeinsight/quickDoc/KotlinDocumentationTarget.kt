@@ -78,7 +78,7 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
                   renderKotlinDeclaration(
                       itReference.mainReference.resolve() as KtFunctionLiteral,
                       quickNavigation,
-                      symbolFinder = { (it as? KaFunctionLikeSymbol)?.valueParameters?.firstOrNull() })
+                      symbolFinder = { (it as? KaFunctionSymbol)?.valueParameters?.firstOrNull() })
               }
           }
       }

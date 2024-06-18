@@ -58,7 +58,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
@@ -663,7 +663,7 @@ internal class KotlinIdeDeclarationRenderer(
                 printer: PrettyPrinter
             ) {
                 val valueParameters = when (symbol) {
-                    is KaFunctionLikeSymbol -> symbol.valueParameters
+                    is KaFunctionSymbol -> symbol.valueParameters
                     else -> return
                 }
                 if (valueParameters.isEmpty()) {

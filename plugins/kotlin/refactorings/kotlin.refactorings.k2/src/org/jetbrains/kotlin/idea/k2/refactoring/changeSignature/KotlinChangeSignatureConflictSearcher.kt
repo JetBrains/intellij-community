@@ -14,7 +14,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -154,13 +154,13 @@ class KotlinChangeSignatureConflictSearcher(
                 factory.createContextType(it, function)
             }
         }
-        return candidateSymbol is KaFunctionLikeSymbol &&
+        return candidateSymbol is KaFunctionSymbol &&
                 areSameSignatures(
                     newReceiverType,
                     candidateSymbol.receiverType,
                     newParameterTypes,
                     candidateSymbol.valueParameters.map { it.returnType }, //todo currently context receiver can't be changed
-                    (function.symbol as? KaFunctionLikeSymbol)?.contextReceivers ?: emptyList(),
+                    (function.symbol as? KaFunctionSymbol)?.contextReceivers ?: emptyList(),
                     candidateSymbol.contextReceivers
                 )
     }

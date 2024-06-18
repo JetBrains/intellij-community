@@ -56,9 +56,9 @@ class VariableCallTarget(
 class FunctionCallTarget(
     override val caller: KtElement,
     override val call: KaCall,
-    override val partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionLikeSymbol>
-) : TypedCallTarget<KaFunctionLikeSymbol, KtFunctionLikeSignature<KaFunctionLikeSymbol>> {
-    override val symbol: KaFunctionLikeSymbol
+    override val partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>
+) : TypedCallTarget<KaFunctionSymbol, KtFunctionLikeSignature<KaFunctionSymbol>> {
+    override val symbol: KaFunctionSymbol
         get() = partiallyAppliedSymbol.symbol
 }
 
@@ -166,7 +166,7 @@ object KotlinCallProcessor {
 
                     val shouldContinue = with(processor) {
                         when (symbol) {
-                            is KaFunctionLikeSymbol -> {
+                            is KaFunctionSymbol -> {
                                 val signature = symbol.asSignature()
                                 val partiallyAppliedSymbol = KaPartiallyAppliedFunctionSymbol(signature, null, null)
                                 val call = KaSimpleFunctionCall(partiallyAppliedSymbol, linkedMapOf(), mapOf(), isImplicitInvoke = false)
@@ -191,7 +191,7 @@ object KotlinCallProcessor {
             }
 
             if (element is KtForExpression) {
-                return handleSpecial(element) { it is KaFunctionLikeSymbol }
+                return handleSpecial(element) { it is KaFunctionSymbol }
             }
 
             if (element is KtDestructuringDeclarationEntry) {

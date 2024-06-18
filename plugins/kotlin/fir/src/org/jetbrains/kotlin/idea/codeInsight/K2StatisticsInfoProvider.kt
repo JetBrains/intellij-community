@@ -30,7 +30,7 @@ object K2StatisticsInfoProvider {
 
         returnTypeFilter = object : KaCallableReturnTypeFilter {
             override fun shouldRenderReturnType(analysisSession: KaSession, type: KtType, symbol: KaCallableSymbol): Boolean {
-                return symbol !is KaFunctionLikeSymbol
+                return symbol !is KaFunctionSymbol
             }
         }
 

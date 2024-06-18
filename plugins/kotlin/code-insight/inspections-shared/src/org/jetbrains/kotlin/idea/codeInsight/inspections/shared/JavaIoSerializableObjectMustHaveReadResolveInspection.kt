@@ -10,7 +10,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities.Private
 import org.jetbrains.kotlin.descriptors.Visibilities.Protected
@@ -69,7 +69,7 @@ private fun KtObjectDeclaration.doesImplementReadResolve(): Boolean = analyze(th
     val classSymbol = this@doesImplementReadResolve.symbol as? KaClassOrObjectSymbol ?: return false
     fun KtScope.isAnyReadResolve(vararg visibilities: Visibility): Boolean =
         getCallableSymbols { it.asString() == JAVA_IO_SERIALIZATION_READ_RESOLVE }.any {
-            val functionLikeSymbol = it as? KaFunctionLikeSymbol ?: return@any false
+            val functionLikeSymbol = it as? KaFunctionSymbol ?: return@any false
             val visibility = (it as? KaSymbolWithVisibility)?.visibility
             visibility in visibilities && functionLikeSymbol.valueParameters.isEmpty() && it.returnType.isAny
         }

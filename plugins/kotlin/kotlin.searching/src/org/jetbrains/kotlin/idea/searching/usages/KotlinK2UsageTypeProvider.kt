@@ -19,7 +19,7 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
         val reference = refExpr.mainReference
         check(reference is KtSimpleReference<*>) { "Reference should be KtSimpleReference but not ${reference::class}" }
 
-        fun getFunctionUsageType(functionSymbol: KaFunctionLikeSymbol): UsageTypeEnum? {
+        fun getFunctionUsageType(functionSymbol: KaFunctionSymbol): UsageTypeEnum? {
             when (reference) {
                 is KtArrayAccessReference ->
                     return when ((functionSymbol as KaNamedFunctionSymbol).name) {
@@ -61,7 +61,7 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
                     if (targetElement.psi is PsiPackage) getPackageUsageType(refExpr) else getClassUsageType(refExpr)
 
                 is KtVariableLikeSymbol -> getVariableUsageType(refExpr)
-                is KaFunctionLikeSymbol -> getFunctionUsageType(targetElement)
+                is KaFunctionSymbol -> getFunctionUsageType(targetElement)
                 else -> null
             }
         }

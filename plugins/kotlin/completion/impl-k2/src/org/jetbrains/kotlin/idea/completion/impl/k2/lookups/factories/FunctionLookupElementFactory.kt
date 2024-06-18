@@ -12,7 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -95,7 +95,7 @@ internal class FunctionLookupElementFactory {
 object FunctionInsertionHelper {
     context(KaSession)
     fun functionCanBeCalledWithoutExplicitTypeArguments(
-        symbol: KaFunctionLikeSymbol,
+        symbol: KaFunctionSymbol,
         expectedType: KtType?
     ): Boolean {
         if (symbol.typeParameters.isEmpty()) return true

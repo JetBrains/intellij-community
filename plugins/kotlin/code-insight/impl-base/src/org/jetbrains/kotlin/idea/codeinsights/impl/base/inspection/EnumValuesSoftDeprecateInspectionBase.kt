@@ -91,7 +91,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
     protected abstract fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
 
     context(KaSession)
-    private fun createQuickFix(callExpression: KtCallExpression, symbol: KaFunctionLikeSymbol): LocalQuickFix? {
+    private fun createQuickFix(callExpression: KtCallExpression, symbol: KaFunctionSymbol): LocalQuickFix? {
         val enumClassSymbol = symbol.containingSymbol as? KaClassOrObjectSymbol
         val enumClassQualifiedName = enumClassSymbol?.classId?.asFqNameString() ?: return null
         return createQuickFix(getReplaceFixType(callExpression), enumClassQualifiedName)
