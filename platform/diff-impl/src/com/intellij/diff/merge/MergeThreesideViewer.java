@@ -1020,6 +1020,14 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
       return state;
     }
+
+    @Override
+    protected void onRangeManuallyEdit(int index) {
+      TextMergeChange change = myAllMergeChanges.get(index);
+      if (change.isResolvedWithAI()) {
+        myAggregator.wasEditedAfterAi(index);
+      }
+    }
   }
 
   //

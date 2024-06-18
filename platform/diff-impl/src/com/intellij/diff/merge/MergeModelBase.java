@@ -37,8 +37,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
   @NotNull private final Document myDocument;
   @Nullable private final UndoManager myUndoManager;
 
-  @NotNull private final IntList myStartLines=new IntArrayList();
-  @NotNull private final IntList myEndLines=new IntArrayList();
+  @NotNull private final IntList myStartLines = new IntArrayList();
+  @NotNull private final IntList myEndLines = new IntArrayList();
 
   @NotNull private final IntSet myChangesToUpdate = new IntOpenHashSet();
   private int myBulkChangeUpdateDepth;
@@ -166,12 +166,22 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     // RangeMarker can be updated in a different way
     boolean rangeAffected = newRange.damaged || (oldLine2 >= line1 && oldLine1 <= line2);
 
+    boolean rangeManuallyEdit = newRange.damaged || (oldLine2 > line1 && oldLine1 < line2);
+    if (rangeManuallyEdit && !isInsideCommand() && (myUndoManager != null && !myUndoManager.isUndoOrRedoInProgress())) {
+      onRangeManuallyEdit(index);
+    }
+
     S oldState = rangeAffected ? storeChangeState(index) : null;
 
     setLineStart(index, newRange.startLine);
     setLineEnd(index, newRange.endLine);
 
     return oldState;
+  }
+
+  @ApiStatus.Internal
+  protected void onRangeManuallyEdit(int index) {
+
   }
 
   private class MyDocumentListener implements DocumentListener {

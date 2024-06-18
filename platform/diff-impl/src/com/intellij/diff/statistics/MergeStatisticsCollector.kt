@@ -24,6 +24,7 @@ internal object MergeStatisticsCollector : CounterUsagesCollector() {
   private val AI_RESOLVED = EventFields.Int("aiResolved")
   private val AI_ROLLED_BACK = EventFields.Int("rolledBackAfterAi")
   private val AI_UNDONE = EventFields.Int("undoneAfterAi")
+  private val AI_EDITED = EventFields.Int("editedAfterAi")
 
   private val FILE_MERGED_EVENT: VarargEventId = GROUP.registerVarargEvent("file.merged", CHANGES, EventFields.DurationMs, AUTO_RESOLVABLE, CONFLICTS, UNRESOLVED, AI_RESOLVED, AI_ROLLED_BACK, AI_UNDONE)
 
@@ -40,6 +41,7 @@ internal object MergeStatisticsCollector : CounterUsagesCollector() {
       add(AI_RESOLVED.with(aggregator.resolvedByAi()))
       add(AI_ROLLED_BACK.with(aggregator.rolledBackAfterAI()))
       add(AI_UNDONE.with(aggregator.undoneAfterAI()))
+      add(AI_EDITED.with(aggregator.editedAfterAI()))
     }
   }
 }
