@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -38,7 +39,7 @@ public final class LombokLibraryUtil {
 
     ThreadingAssertions.assertReadAccess();
     return JavaLibraryUtil.hasLibraryJar(project, "org.projectlombok:lombok")
-           || detectLombokJarsSlow(project);
+           || (!DumbService.isDumb(project) && detectLombokJarsSlow(project));
   }
 
   public static boolean hasLombokClasses(@Nullable Module module) {

@@ -2,6 +2,7 @@
 package com.intellij.java.refactoring.suggested
 
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
@@ -15,6 +16,9 @@ import com.siyeh.ig.psiutils.TypeUtils
 
 class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
   override fun isAnchor(psiElement: PsiElement): Boolean {
+    //todo make SuggestedRefactoringSupport dumbAware
+    if (DumbService.isDumb(psiElement.project)) return false
+
     if (psiElement is PsiCallExpression && Registry.`is`("ide.java.refactoring.suggested.call.site")) {
       return psiElement.argumentList != null
     }

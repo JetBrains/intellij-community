@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring.suggested
 
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.refactoring.suggested.SuggestedRefactoringState
@@ -12,6 +13,8 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactoringSupport) :
   SuggestedRefactoringStateChanges(refactoringSupport) {
   override fun createInitialState(anchor: PsiElement): SuggestedRefactoringState? {
+    //todo make SuggestedRefactoringSupport dumbAware
+    if (DumbService.isDumb(anchor.project)) return null
     val state = super.createInitialState(anchor) ?: return null
     if (anchor is PsiMember && isDuplicate(anchor, state.oldSignature)) return null
     return state

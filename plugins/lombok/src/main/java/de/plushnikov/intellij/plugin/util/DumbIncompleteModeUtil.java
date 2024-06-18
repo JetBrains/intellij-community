@@ -29,8 +29,12 @@ public final class DumbIncompleteModeUtil {
 
   public static boolean isDumbOrIncompleteMode(@NotNull PsiElement context) {
     Project project = context.getProject();
+    return isDumbOrIncompleteMode(project);
+  }
+
+  public static boolean isDumbOrIncompleteMode(@NotNull Project project) {
     return (DumbService.isDumb(project) && Registry.is("lombok.dumb.mode.enabled", false)) ||
-           isIncompleteMode(context.getProject());
+           isIncompleteMode(project);
   }
 
   /**
