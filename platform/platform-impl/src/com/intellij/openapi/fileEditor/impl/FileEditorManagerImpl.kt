@@ -2148,11 +2148,7 @@ open class FileEditorManagerImpl(
         }
       }
 
-      composite.coroutineScope.launch {
-        composite.selectedEditorWithProvider.drop(1).collect {
-          tab.setTabPaneActions(it?.fileEditor?.tabActions)
-        }
-      }
+      window.watchForTabActions(composite = composite, tab = tab)
     }
   }
 

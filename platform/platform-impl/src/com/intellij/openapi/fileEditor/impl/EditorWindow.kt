@@ -51,7 +51,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.drop
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -358,12 +357,7 @@ class EditorWindow internal constructor(
         parentDisposable = composite,
       )
 
-      coroutineScope.launch {
-        attachAsChildTo(composite.coroutineScope)
-        composite.selectedEditorWithProvider.drop(1).collect {
-          tab.setTabPaneActions(it?.fileEditor?.tabActions)
-        }
-      }
+      watchForTabActions(composite = composite, tab = tab)
 
       var dragStartIndex: Int? = null
       val hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY)
@@ -421,6 +415,22 @@ class EditorWindow internal constructor(
 
     updateTabsVisibility()
     owner.validate()
+  }
+
+  internal fun watchForTabActions(composite: EditorComposite, tab: TabInfo) {
+    // on unsplit, we transfer composite to another window, so, we launch in the window's scope
+    coroutineScope.launch {
+      attachAsChildTo(composite.coroutineScope)
+      composite.selectedEditorWithProvider.collect {
+        val tabActions = it?.fileEditor?.tabActions
+        withContext(Dispatchers.EDT) {
+          if (tab.tabPaneActions != tabActions) {
+            tab.setTabPaneActions(tabActions)
+            tabbedPane.editorTabs.updateEntryPointToolbar(tabActionGroup = tabActions)
+          }
+        }
+      }
+    }
   }
 
   // we must select tab in the same EDT event (same command) - IdeDocumentHistoryImpl rely on that
