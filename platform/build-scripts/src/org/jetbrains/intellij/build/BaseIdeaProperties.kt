@@ -155,6 +155,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       // this library is placed into subdirectory of the 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
       layout.withoutProjectLibrary("layoutlib")
 
+      layout.withoutProjectLibrary("jetbrains.qodana.cloud.kotlin.client")
       layout.withoutProjectLibrary("jetbrains.qodana.publisher")
       layout.withoutProjectLibrary("jetbrains.qodana.sarif.converter")
       layout.withoutProjectLibrary("jetbrains.qodana.web.ui")
