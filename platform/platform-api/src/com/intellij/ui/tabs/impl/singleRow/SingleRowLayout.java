@@ -7,6 +7,7 @@ import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.ObjectUtils;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public abstract class SingleRowLayout extends TabLayout {
   final JBTabsImpl tabs;
   public SingleRowPassInfo lastSingRowLayout;

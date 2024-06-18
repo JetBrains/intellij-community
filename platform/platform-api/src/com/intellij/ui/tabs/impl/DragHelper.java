@@ -17,6 +17,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.util.Axis;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class DragHelper extends MouseDragHelper<JBTabsImpl> {
   private final JBTabsImpl tabs;
   private TabInfo dragSource;

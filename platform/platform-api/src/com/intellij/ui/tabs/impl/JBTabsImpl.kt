@@ -280,7 +280,9 @@ open class JBTabsImpl internal constructor(
 
   @JvmField
   internal val tabPainterAdapter: TabPainterAdapter = createTabPainterAdapter()
-  val tabPainter: JBTabPainter = tabPainterAdapter.tabPainter
+
+  val tabPainter: JBTabPainter
+    get() = tabPainterAdapter.tabPainter
 
   private var alphabeticalMode = false
 

@@ -2,11 +2,13 @@
 package com.intellij.ui.tabs.impl
 
 import com.intellij.ui.tabs.JBTabPainter
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 
 class DefaultTabPainterAdapter(override val tabPainter: JBTabPainter) : TabPainterAdapter {
+  @Internal
   override fun paintBackground(label: TabLabel, g: Graphics, tabs: JBTabsImpl) {
     val info = label.info
     val rect = Rectangle(0, 0, label.width, label.height)

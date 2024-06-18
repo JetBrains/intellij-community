@@ -3,6 +3,7 @@ package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -10,7 +11,8 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public class WindowTabsLayout extends SingleRowLayout {
+@ApiStatus.Internal
+public final class WindowTabsLayout extends SingleRowLayout {
   public WindowTabsLayout(JBTabsImpl tabs) {
     super(tabs);
   }

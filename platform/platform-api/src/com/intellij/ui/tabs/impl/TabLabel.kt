@@ -24,6 +24,7 @@ import com.intellij.util.MathUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.StartupUiUtil.labelFont
 import com.intellij.util.ui.accessibility.ScreenReader
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.BorderLayout.NORTH
 import java.awt.BorderLayout.SOUTH
@@ -41,7 +42,10 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Suppress("LeakingThis")
-open class TabLabel(@JvmField protected val tabs: JBTabsImpl, val info: TabInfo) : JPanel(/* isDoubleBuffered = */ false), Accessible, DataProvider {
+open class TabLabel @Internal constructor(
+  @JvmField @Internal protected val tabs: JBTabsImpl,
+  val info: TabInfo,
+) : JPanel(/* isDoubleBuffered = */ false), Accessible, DataProvider {
   // if this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
   @JvmField
   protected val label: SimpleColoredComponent
@@ -50,6 +54,7 @@ open class TabLabel(@JvmField protected val tabs: JBTabsImpl, val info: TabInfo)
   private var overlaidIcon: Icon? = null
 
   @JvmField
+  @Internal
   protected var actionPanel: ActionPanel? = null
   private var isCentered = false
   private var isCompressionEnabled = false

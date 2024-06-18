@@ -7,17 +7,18 @@ import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public abstract class SingleRowLayoutStrategy {
-
   private static final int MIN_TAB_WIDTH = 50;
   final SingleRowLayout myLayout;
   final JBTabsImpl myTabs;
 
-  protected SingleRowLayoutStrategy(final SingleRowLayout layout) {
+  protected SingleRowLayoutStrategy(SingleRowLayout layout) {
     myLayout = layout;
     myTabs = myLayout.tabs;
   }
@@ -278,7 +279,7 @@ public abstract class SingleRowLayoutStrategy {
     }
   }
 
-  static class Bottom extends Horizontal {
+  static final class Bottom extends Horizontal {
     Bottom(final SingleRowLayout layout) {
       super(layout);
     }

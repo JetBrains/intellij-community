@@ -31,7 +31,6 @@ object CodeReviewTabs {
       .launchIn(this)
   }
 
-  @Internal
   fun CoroutineScope.bindTabUi(
     tabs: JBTabsImpl,
     tab: TabInfo,

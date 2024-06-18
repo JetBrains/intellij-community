@@ -22357,10 +22357,6 @@ f:com.intellij.openapi.wm.impl.welcomeScreen.ActionGroupPanelWrapper
 - s:createActionGroupPanel(com.intellij.openapi.actionSystem.ActionGroup,java.lang.Runnable,com.intellij.openapi.Disposable):com.intellij.openapi.util.Pair
 - s:installQuickSearch(com.intellij.ui.components.JBList):V
 - s:wrapGroups(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.Disposable):com.intellij.openapi.actionSystem.AnAction
-c:com.intellij.openapi.wm.impl.welcomeScreen.ActionPanel
-- javax.swing.JPanel
-- <init>(java.awt.LayoutManager):V
-- getActions():java.util.List
 com.intellij.openapi.wm.impl.welcomeScreen.ActionsWithPanelProvider
 f:com.intellij.openapi.wm.impl.welcomeScreen.BottomLineBorder
 - javax.swing.border.EmptyBorder
