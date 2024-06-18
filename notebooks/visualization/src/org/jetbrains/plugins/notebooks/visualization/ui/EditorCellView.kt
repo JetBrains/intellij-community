@@ -36,8 +36,9 @@ import kotlin.reflect.KClass
 class EditorCellView(
   private val editor: EditorImpl,
   private val intervals: NotebookCellLines,
-  internal var cell: EditorCell
-) : Disposable {
+  internal var cell: EditorCell,
+  private val cellInlayManager: NotebookCellInlayManager,
+) : EditorCellViewComponent(), Disposable {
 
   private var _controllers: List<NotebookCellInlayController> = emptyList()
   private val controllers: List<NotebookCellInlayController>
@@ -54,7 +55,7 @@ class EditorCellView(
 
   val input: EditorCellInput = EditorCellInput(
     editor,
-    { currentComponent: EditorCellViewComponent? ->
+    { parent: EditorCellInput, currentComponent: EditorCellViewComponent? ->
       val currentController = (currentComponent as? ControllerEditorCellViewComponent)?.controller
       val controller = getInputFactories().firstNotNullOfOrNull { factory ->
         failSafeCompute(factory, editor, currentController?.let { listOf(it) }
@@ -65,27 +66,16 @@ class EditorCellView(
           currentComponent
         }
         else {
-          ControllerEditorCellViewComponent(controller)
+          ControllerEditorCellViewComponent(controller, parent)
         }
       }
       else {
         TextEditorCellViewComponent(editor, cell)
       }
-    }, cell).also {
-    it.addViewComponentListener(object : EditorCellViewComponentListener {
-      override fun componentBoundaryChanged(location: Point, size: Dimension) {
-        updateBoundaries()
-      }
-    })
-  }
-
-  private var _location: Point = Point(0, 0)
-
-  val location: Point get() = _location
-
-  private var _size: Dimension = Dimension(0, 0)
-
-  val size: Dimension get() = _size
+    }, cell)
+    .also {
+      add(it)
+    }
 
   private var _outputs: EditorCellOutputs? = null
 
@@ -101,23 +91,12 @@ class EditorCellView(
     updateSelection(false)
   }
 
-  private fun updateBoundaries() {
-    val inputBounds = input.bounds
-    val y = inputBounds.y
-    _location = Point(0, y)
-    val currentOutputs = outputs
-    _size = Dimension(
-      editor.contentSize.width,
-      currentOutputs?.bounds?.let { it.height + it.y - y } ?: inputBounds.height
-    )
-  }
-
-  override fun dispose() {
+  override fun doDispose() {
     _controllers.forEach { controller ->
       disposeController(controller)
     }
     input.dispose()
-
+    outputs?.dispose()
     removeCellHighlight()
   }
 
@@ -128,13 +107,8 @@ class EditorCellView(
   }
 
   fun update(force: Boolean = false) {
-    extracted(force)
-  }
-
-  private fun extracted(force: Boolean) {
     val otherFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
       .filter { it !is NotebookCellInlayController.InputFactory }
-
     val controllersToDispose = _controllers.toMutableSet()
     _controllers = if (!editor.isDisposed) {
       otherFactories.mapNotNull { factory -> failSafeCompute(factory, editor, _controllers, intervals.intervals.listIterator(interval.ordinal)) }
@@ -157,14 +131,18 @@ class EditorCellView(
     }
     input.update(force)
     updateOutputs()
-    updateBoundaries()
     updateCellHighlight()
+    invalidate()
   }
 
   private fun updateOutputs() {
     if (hasOutputs()) {
       if (_outputs == null) {
-        _outputs = EditorCellOutputs(editor, { interval }).also { Disposer.register(this, it) }
+        _outputs = EditorCellOutputs(editor, { interval })
+          .also {
+            Disposer.register(this, it)
+            add(it)
+          }
         updateCellHighlight()
         updateFolding()
       }
@@ -173,7 +151,10 @@ class EditorCellView(
       }
     }
     else {
-      outputs?.let { Disposer.dispose(it) }
+      outputs?.let {
+        Disposer.dispose(it)
+        remove(it)
+      }
       _outputs = null
     }
   }
@@ -186,10 +167,12 @@ class EditorCellView(
       .filter { it is NotebookCellInlayController.InputFactory }
   }
 
-  private fun failSafeCompute(factory: NotebookCellInlayController.Factory,
-                              editor: Editor,
-                              controllers: Collection<NotebookCellInlayController>,
-                              intervalIterator: ListIterator<NotebookCellLines.Interval>): NotebookCellInlayController? {
+  private fun failSafeCompute(
+    factory: NotebookCellInlayController.Factory,
+    editor: Editor,
+    controllers: Collection<NotebookCellInlayController>,
+    intervalIterator: ListIterator<NotebookCellLines.Interval>,
+  ): NotebookCellInlayController? {
     try {
       return factory.compute(editor as EditorImpl, controllers, intervalIterator)
     }
@@ -197,11 +180,6 @@ class EditorCellView(
       thisLogger().error("${factory.javaClass.name} shouldn't throw exceptions at NotebookCellInlayController.Factory.compute(...)", t)
       return null
     }
-  }
-
-  fun updatePositions() {
-    input.updatePositions()
-    outputs?.updatePositions()
   }
 
   fun onViewportChanges() {
@@ -362,6 +340,24 @@ class EditorCellView(
     }
   }
 
+  override fun doInvalidate() {
+    cellInlayManager.invalidateCells()
+  }
+
+  override fun calculateBounds(): Rectangle {
+    val inputBounds = input.calculateBounds()
+    val currentOutputs = outputs
+    return Rectangle(
+      0,
+      inputBounds.y,
+      editor.contentSize.width,
+      currentOutputs?.calculateBounds()
+        ?.takeIf { !it.isEmpty }
+        ?.let { it.height + it.y - inputBounds.y }
+      ?: inputBounds.height
+    )
+  }
+
   inner class NotebookGutterLineMarkerRenderer(private val interval: NotebookCellLines.Interval) : NotebookLineMarkerRenderer() {
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
       editor as EditorImpl
@@ -381,10 +377,12 @@ class EditorCellView(
       }
     }
 
-    private fun paintBackground(editor: EditorImpl,
-                                g: Graphics,
-                                r: Rectangle,
-                                interval: NotebookCellLines.Interval) {
+    private fun paintBackground(
+      editor: EditorImpl,
+      g: Graphics,
+      r: Rectangle,
+      interval: NotebookCellLines.Interval,
+    ) {
       for (controller: NotebookCellInlayController in controllers) {
         controller.paintGutter(editor, g, r, interval)
       }

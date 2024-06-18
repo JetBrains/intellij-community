@@ -19,12 +19,12 @@ import javax.swing.SwingUtilities
 
 val NOTEBOOK_CELL_OUTPUT_DATA_KEY = DataKey.create<EditorCellOutput>("NOTEBOOK_CELL_OUTPUT")
 
-class EditorCellOutput internal constructor(private val editor: EditorEx, private val component: CollapsingComponent, private val disposable: Disposable?) {
+class EditorCellOutput internal constructor(
+  private val editor: EditorEx,
+  private val component: CollapsingComponent,
+  private val disposable: Disposable?,
+) : EditorCellViewComponent() {
 
-  val location: Point
-    get() = SwingUtilities.convertPoint(component.parent, component.location, editor.contentComponent)
-  val size: Dimension
-    get() = component.size
   var collapsed: Boolean
     get() = !component.isSeen
     set(value) {
@@ -38,11 +38,11 @@ class EditorCellOutput internal constructor(private val editor: EditorEx, privat
     .also {
       component.addComponentListener(object : ComponentAdapter() {
         override fun componentMoved(e: ComponentEvent) {
-          updatePositions()
+          invalidate()
         }
 
         override fun componentResized(e: ComponentEvent) {
-          updatePositions()
+          invalidate()
         }
       })
     }
@@ -58,21 +58,17 @@ class EditorCellOutput internal constructor(private val editor: EditorEx, privat
     }
   }
 
-  fun updatePositions() {
-    folding.updatePosition(location.y, size.height)
-  }
-
-  fun dispose() {
+  override fun doDispose() {
     folding.dispose()
     disposable?.let { Disposer.dispose(it) }
   }
 
-  fun onViewportChange() {
-      val component = component.mainComponent as? NotebookOutputInlayShowable ?: return
-      if (component !is JComponent) return
-      validateComponent(component)
-      val componentRect = SwingUtilities.convertRectangle(component, component.bounds, editor.scrollPane.viewport.view)
-      component.shown = editor.scrollPane.viewport.viewRect.intersects(componentRect)
+  override fun doViewportChange() {
+    val component = component.mainComponent as? NotebookOutputInlayShowable ?: return
+    if (component !is JComponent) return
+    validateComponent(component)
+    val componentRect = SwingUtilities.convertRectangle(component, component.bounds, editor.scrollPane.viewport.view)
+    component.shown = editor.scrollPane.viewport.viewRect.intersects(componentRect)
   }
 
   fun hideFolding() {
@@ -99,5 +95,15 @@ class EditorCellOutput internal constructor(private val editor: EditorEx, privat
         painter.paintGutter(editor, g, bounds)
       }
     }
+  }
+
+  override fun calculateBounds(): Rectangle {
+    val location = SwingUtilities.convertPoint(component.parent, component.location, editor.contentComponent)
+    val size = component.size
+    return Rectangle(location, size)
+  }
+
+  override fun doLayout() {
+    folding.updatePosition(bounds.y, bounds.height)
   }
 }

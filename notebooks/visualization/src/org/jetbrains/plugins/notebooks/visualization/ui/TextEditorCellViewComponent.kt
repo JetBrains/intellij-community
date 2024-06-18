@@ -6,38 +6,19 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 import java.awt.Dimension
-import java.awt.Point
+import java.awt.Rectangle
 
 class TextEditorCellViewComponent(
   private val editor: EditorEx,
-  private val cell: EditorCell
-) : EditorCellViewComponent {
+  private val cell: EditorCell,
+) : EditorCellViewComponent(), HasGutterIcon {
 
   private var highlighters: List<RangeHighlighter>? = null
 
   private val interval: NotebookCellLines.Interval
     get() = cell.intervalPointer.get() ?: error("Invalid interval")
-
-  private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
-  override val location: Point
-    get() {
-      val startOffset = editor.document.getLineStartOffset(interval.lines.first)
-      return editor.offsetToXY(startOffset)
-    }
-
-  override val size: Dimension
-    get() {
-      val interval = interval
-      val startOffset = editor.document.getLineStartOffset(interval.lines.first)
-      val endOffset = editor.document.getLineEndOffset(interval.lines.last)
-      val location = editor.offsetToXY(startOffset)
-      val height = editor.offsetToXY(endOffset).y + editor.lineHeight - location.y
-      val width = editor.offsetToXY(endOffset).x - location.x
-      return Dimension(width, height)
-    }
 
   override fun updateGutterIcons(gutterAction: AnAction?) {
     disposeExistingHighlighter()
@@ -59,11 +40,8 @@ class TextEditorCellViewComponent(
     }
   }
 
-  override fun dispose() {
+  override fun doDispose() {
     disposeExistingHighlighter()
-  }
-
-  override fun onViewportChange() {
   }
 
   private fun disposeExistingHighlighter() {
@@ -75,11 +53,15 @@ class TextEditorCellViewComponent(
     }
   }
 
-  override fun addViewComponentListener(listener: EditorCellViewComponentListener) {
-    cellEventListeners.addListener(listener)
+  override fun calculateBounds(): Rectangle {
+    val startOffset = editor.document.getLineStartOffset(interval.lines.first)
+    val location = editor.offsetToXY(startOffset)
+    val interval = interval
+    val endOffset = editor.document.getLineEndOffset(interval.lines.last)
+    val height = editor.offsetToXY(endOffset).y + editor.lineHeight - location.y
+    val width = editor.offsetToXY(endOffset).x - location.x
+    val dimension = Dimension(width, height)
+    return Rectangle(location, dimension)
   }
 
-  override fun updatePositions() {
-    cellEventListeners.multicaster.componentBoundaryChanged(location, size)
-  }
 }

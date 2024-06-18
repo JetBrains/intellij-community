@@ -2,36 +2,21 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.EventDispatcher
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
-import java.awt.Dimension
-import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 
 class ControllerEditorCellViewComponent(
-  internal val controller: NotebookCellInlayController
-) : EditorCellViewComponent {
-
-  private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
-
-  override val location: Point
-    get() {
-      val component = controller.inlay.renderer as JComponent
-      return component.location
-    }
-
-  override val size: Dimension
-    get() {
-      val component = controller.inlay.renderer as JComponent
-      return component.size
-    }
+  internal val controller: NotebookCellInlayController,
+  private val parent: EditorCellInput,
+) : EditorCellViewComponent(), HasGutterIcon {
 
   private val listener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent) {
-      cellEventListeners.multicaster.componentBoundaryChanged(e.component.location, e.component.size)
+      parent.invalidate()
     }
   }
 
@@ -45,21 +30,17 @@ class ControllerEditorCellViewComponent(
     inlay.update()
   }
 
-  override fun dispose() {
+  override fun doDispose() {
     controller.inlay.renderer.asSafely<JComponent>()?.removeComponentListener(listener)
     controller.let { controller -> Disposer.dispose(controller.inlay) }
   }
 
-  override fun onViewportChange() {
+  override fun doViewportChange() {
     controller.onViewportChange()
   }
 
-
-  override fun addViewComponentListener(listener: EditorCellViewComponentListener) {
-    cellEventListeners.addListener(listener)
-  }
-
-  override fun updatePositions() {
-    cellEventListeners.multicaster.componentBoundaryChanged(location, size)
+  override fun calculateBounds(): Rectangle {
+    val component = controller.inlay.renderer as JComponent
+    return component.bounds
   }
 }

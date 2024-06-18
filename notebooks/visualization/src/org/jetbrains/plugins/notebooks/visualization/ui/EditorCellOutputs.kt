@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.EventDispatcher
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
@@ -30,12 +29,8 @@ import javax.swing.JComponent
 class EditorCellOutputs(
   private val editor: EditorImpl,
   private val interval: () -> NotebookCellLines.Interval,
-  private val onInlayDisposed: (EditorCellOutputs) -> Unit = {}
-) : Disposable {
-
-
-
-  private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
+  private val onInlayDisposed: (EditorCellOutputs) -> Unit = {},
+) : EditorCellViewComponent(), Disposable {
 
   private val _outputs = mutableListOf<EditorCellOutput>()
   val outputs
@@ -55,30 +50,17 @@ class EditorCellOutputs(
   }
   private var inlay: Inlay<*>? = null
 
-  val bounds: Rectangle?
-    get() {
-      return inlay?.bounds
-    }
-
   init {
     update()
   }
 
-  override fun dispose() {
+  override fun doDispose() {
     outputs.forEach { it.dispose() }
     inlay?.let { Disposer.dispose(it) }
   }
 
-  fun updatePositions() {
-    val b = bounds
-    if (b != null) {
-      cellEventListeners.multicaster.componentBoundaryChanged(b.location, b.size)
-      outputs.forEach { it.updatePositions() }
-    }
-  }
-
-  fun onViewportChange() {
-    outputs.forEach { it.onViewportChange() }
+  override fun calculateBounds(): Rectangle {
+    return inlay?.bounds ?: Rectangle(0, 0, 0, 0)
   }
 
   fun updateSelection(selected: Boolean) {
@@ -172,7 +154,9 @@ class EditorCellOutputs(
 
   private fun removeOutput(idx: Int) {
     innerComponent.remove(idx)
-    _outputs.removeAt(idx).dispose()
+    val outputComponent = _outputs.removeAt(idx)
+    outputComponent.dispose()
+    remove(outputComponent)
   }
 
   private fun <K : NotebookOutputDataKey> createOutputGuessingFactory(outputDataKey: K): NotebookOutputComponentFactory.CreatedComponent<*>? =
@@ -185,8 +169,10 @@ class EditorCellOutputs(
       }
       .firstOrNull()
 
-  private fun <K : NotebookOutputDataKey> createOutput(factory: NotebookOutputComponentFactory<*, K>,
-                                                       outputDataKey: K): NotebookOutputComponentFactory.CreatedComponent<*>? {
+  private fun <K : NotebookOutputDataKey> createOutput(
+    factory: NotebookOutputComponentFactory<*, K>,
+    outputDataKey: K,
+  ): NotebookOutputComponentFactory.CreatedComponent<*>? {
     val lines = interval().lines
     ApplicationManager.getApplication().messageBus.syncPublisher(OUTPUT_LISTENER).beforeOutputCreated(editor, lines.last)
     val result = try {
@@ -238,7 +224,7 @@ class EditorCellOutputs(
   ).also {
     it.renderer.asSafely<JComponent>()?.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
-        cellEventListeners.multicaster.componentBoundaryChanged(e.component.location, e.component.size)
+        invalidate()
       }
     })
     Disposer.register(it) {
@@ -263,7 +249,9 @@ class EditorCellOutputs(
       pos,
     )
 
-    _outputs.add(if (pos == -1) _outputs.size else pos, EditorCellOutput(editor, collapsingComponent, newComponent.disposable))
+    val outputComponent = EditorCellOutput(editor, collapsingComponent, newComponent.disposable)
+    _outputs.add(if (pos == -1) _outputs.size else pos, outputComponent)
+    add(outputComponent)
 
     // DS-1972 Without revalidation, the component would be just invalidated, and would be rendered only after anything else requests
     // for repainting the editor.
@@ -275,9 +263,11 @@ class EditorCellOutputs(
     override fun next(): Pair<A, B> = this@zip.next() to other.next()
   }
 
-  fun paintGutter(editor: EditorImpl,
-                  g: Graphics,
-                  r: Rectangle) {
+  fun paintGutter(
+    editor: EditorImpl,
+    g: Graphics,
+    r: Rectangle,
+  ) {
     val yOffset = innerComponent.yOffsetFromEditor(editor) ?: return
 
     val oldClip = g.clipBounds

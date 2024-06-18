@@ -4,20 +4,15 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.TextRange
-import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
-import java.awt.Dimension
-import java.awt.Point
 import java.awt.Rectangle
 
 class EditorCellInput(
   private val editor: EditorEx,
-  private val componentFactory: (EditorCellViewComponent?) -> EditorCellViewComponent,
-  private val cell: EditorCell
-) {
-
-  private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
+  private val componentFactory: (EditorCellInput, EditorCellViewComponent?) -> EditorCellViewComponent,
+  private val cell: EditorCell,
+): EditorCellViewComponent() {
 
   val interval: NotebookCellLines.Interval
     get() = cell.intervalPointer.get() ?: error("Invalid interval")
@@ -33,60 +28,31 @@ class EditorCellInput(
     else -> editor.notebookAppearance.cellBorderHeight / 2
   }
 
-  val bounds: Rectangle
-    get() {
-      val linesRange = interval.lines
-      val startOffset = editor.document.getLineStartOffset(linesRange.first)
-      val endOffset = editor.document.getLineEndOffset(linesRange.last)
-      val bounds = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
-        .asSequence()
-        .filter { it.properties.priority > editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY }
-        .mapNotNull { it.bounds }
-        .fold(Rectangle(_component.location, _component.size)) { b, i ->
-          b.union(i)
-        }
-      return bounds
-    }
-
-  private var _component: EditorCellViewComponent = componentFactory(null).also { bind(it) }
+  private var _component: EditorCellViewComponent = componentFactory(this, null)
     set(value) {
       if (value != field) {
         field.dispose()
+        remove(field)
         field = value
-        bind(value)
+        add(value)
       }
     }
-
-  private fun bind(value: EditorCellViewComponent) {
-    value.addViewComponentListener(object : EditorCellViewComponentListener {
-      override fun componentBoundaryChanged(location: Point, size: Dimension) {
-        cellEventListeners.multicaster.componentBoundaryChanged(bounds.location, bounds.size)
-      }
-    })
-  }
 
   val component: EditorCellViewComponent
     get() = _component
 
   private val folding: EditorCellFolding = EditorCellFolding(editor) {
     toggleFolding(componentFactory)
-  }.also {
-    cellEventListeners.addListener(object : EditorCellViewComponentListener {
-      override fun componentBoundaryChanged(location: Point, size: Dimension) {
-        it.updatePosition(location.y + delimiterPanelSize, size.height - delimiterPanelSize)
-      }
-    })
   }
 
-  private fun toggleFolding(inputComponentFactory: (EditorCellViewComponent) -> EditorCellViewComponent) {
+  private fun toggleFolding(inputComponentFactory: (EditorCellInput, EditorCellViewComponent) -> EditorCellViewComponent) {
     _component = if (_component is ControllerEditorCellViewComponent) {
-      _component.dispose()
       toggleTextFolding()
       TextEditorCellViewComponent(editor, cell)
     }
     else {
       toggleTextFolding()
-      inputComponentFactory(_component)
+      inputComponentFactory(this, _component)
     }
   }
 
@@ -116,7 +82,7 @@ class EditorCellInput(
 
   private var gutterAction: AnAction? = null
 
-  fun dispose() {
+  override fun doDispose() {
     folding.dispose()
     runCellButton?.dispose()
     _component.dispose()
@@ -124,20 +90,16 @@ class EditorCellInput(
 
   fun update(force: Boolean = false) {
     val oldComponent = if (force) null else _component
-    _component = componentFactory(oldComponent)
+    _component = componentFactory(this, oldComponent)
     updateGutterIcons()
   }
 
   private fun updateGutterIcons() {
-    _component.updateGutterIcons(gutterAction)
+    (_component as? HasGutterIcon)?.updateGutterIcons(gutterAction)
   }
 
-  fun updatePositions() {
-    _component.updatePositions()
-  }
-
-  fun onViewportChange() {
-    _component.onViewportChange()
+  override fun doLayout() {
+    folding.updatePosition(bounds.y + delimiterPanelSize, bounds.height - delimiterPanelSize)
   }
 
   fun setGutterAction(action: AnAction) {
@@ -156,24 +118,36 @@ class EditorCellInput(
   fun showRunButton() {
     try {
       runCellButton?.showRunButton(interval)
-    } catch (e: IllegalStateException) { return }
+    }
+    catch (e: IllegalStateException) {
+      return
+    }
   }
 
   fun hideRunButton() {
     runCellButton?.hideRunButton()
   }
 
-  fun addViewComponentListener(listener: EditorCellViewComponentListener) {
-    cellEventListeners.addListener(listener)
-  }
-
   fun updatePresentation(view: EditorCellViewComponent) {
-    _component.dispose()
     _component = view
   }
 
   fun updateSelection(value: Boolean) {
     folding.updateSelection(value)
+  }
+
+  override fun calculateBounds(): Rectangle {
+    val linesRange = interval.lines
+    val startOffset = editor.document.getLineStartOffset(linesRange.first)
+    val endOffset = editor.document.getLineEndOffset(linesRange.last)
+    val bounds = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
+      .asSequence()
+      .filter { it.properties.priority > editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY }
+      .mapNotNull { it.bounds }
+      .fold(_component.calculateBounds()) { b, i ->
+        b.union(i)
+      }
+    return bounds
   }
 }
 
@@ -181,7 +155,7 @@ private fun String.ellipsis(length: Int): String {
   return if (this.length > length) {
     substring(0, length - 1)
   }
-  else {
+         else {
     this
   } + "\u2026"
 }

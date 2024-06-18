@@ -22,7 +22,7 @@ import javax.swing.JLayer
 import javax.swing.SwingUtilities
 import javax.swing.plaf.LayerUI
 
-private class DecoratedEditor(private val original: TextEditor) : TextEditor by original {
+private class DecoratedEditor(private val original: TextEditor, private val manager: NotebookCellInlayManager) : TextEditor by original {
 
   private var mouseOverCell: EditorCellView? = null
 
@@ -64,6 +64,7 @@ private class DecoratedEditor(private val original: TextEditor) : TextEditor by 
 
       override fun validateTree() {
         keepScrollingPositionWhile(editor) {
+          manager.validateCells()
           super.validateTree()
         }
       }
@@ -118,12 +119,12 @@ private class DecoratedEditor(private val original: TextEditor) : TextEditor by 
   })
 
   private fun updateMouseOverCell(component: JComponent, point: Point) {
-    val cells = NotebookCellInlayManager.get(editor)!!.cells
+    val cells = manager.cells
     val currentOverCell = cells.filter { it.visible }.mapNotNull { it.view }.firstOrNull {
       val viewLeft = 0
-      val viewTop = it.location.y
+      val viewTop = it.bounds.y
       val viewRight = component.size.width
-      val viewBottom = viewTop + it.size.height
+      val viewBottom = viewTop + it.bounds.height
       viewLeft <= point.x && viewTop <= point.y && viewRight >= point.x && viewBottom >= point.y
     }
     if (mouseOverCell != currentOverCell) {
@@ -135,8 +136,8 @@ private class DecoratedEditor(private val original: TextEditor) : TextEditor by 
 
 }
 
-fun decorateTextEditor(textEditor: TextEditor): TextEditor {
-  return DecoratedEditor(textEditor)
+fun decorateTextEditor(textEditor: TextEditor, manager: NotebookCellInlayManager): TextEditor {
+  return DecoratedEditor(textEditor, manager)
 }
 
 internal fun keepScrollingPositionWhile(editor: Editor, task: Runnable) {

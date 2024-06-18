@@ -1,16 +1,64 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
-import com.intellij.openapi.actionSystem.AnAction
-import java.awt.Dimension
-import java.awt.Point
+import java.awt.Rectangle
 
-interface EditorCellViewComponent {
-  val size: Dimension
-  val location: Point
+abstract class EditorCellViewComponent {
 
-  fun updateGutterIcons(gutterAction: AnAction?)
-  fun dispose()
-  fun onViewportChange()
-  fun addViewComponentListener(listener: EditorCellViewComponentListener)
-  fun updatePositions()
+  var bounds: Rectangle = Rectangle(0, 0, 0, 0)
+
+  private var parent: EditorCellViewComponent? = null
+
+  private val children = mutableListOf<EditorCellViewComponent>()
+
+  private var valid = false
+
+  fun add(child: EditorCellViewComponent) {
+    children.add(child)
+    child.parent = this
+  }
+
+  fun remove(child: EditorCellViewComponent) {
+    children.remove(child)
+    child.parent = null
+  }
+
+  fun dispose() {
+    children.forEach { it.dispose() }
+    doDispose()
+  }
+
+  open fun doDispose() {}
+
+  fun onViewportChange() {
+    children.forEach { it.onViewportChange() }
+    doViewportChange()
+  }
+
+  open fun doViewportChange() {}
+
+  abstract fun calculateBounds(): Rectangle
+
+  fun validate() {
+    if (!valid) {
+      doLayout()
+      children.forEach { it.validate() }
+      valid = true
+    }
+  }
+
+  open fun doLayout() {
+    children.forEach {
+      it.bounds = it.calculateBounds()
+    }
+  }
+
+  fun invalidate() {
+    if (valid) {
+      doInvalidate()
+      valid = false
+      parent?.invalidate()
+    }
+  }
+
+  open fun doInvalidate() {}
 }

@@ -68,10 +68,6 @@ class EditorCell(
     }
   }
 
-  fun updatePositions() {
-    view?.updatePositions()
-  }
-
   override fun dispose() {
     view?.let { Disposer.dispose(it) }
   }

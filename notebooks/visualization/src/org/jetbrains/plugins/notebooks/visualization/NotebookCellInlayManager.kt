@@ -1,11 +1,8 @@
 package org.jetbrains.plugins.notebooks.visualization
 
-import com.intellij.codeInsight.codeVision.ui.popup.layouter.bottom
-import com.intellij.codeInsight.codeVision.ui.popup.layouter.right
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
@@ -36,16 +33,14 @@ import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener.
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView
 import org.jetbrains.plugins.notebooks.visualization.ui.keepScrollingPositionWhile
 import java.awt.Graphics
-import java.awt.Point
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
 class NotebookCellInlayManager private constructor(
-  val editor: EditorImpl
+  val editor: EditorImpl,
 ) : Disposable, NotebookIntervalPointerFactory.ChangeListener {
   private val notebookCellLines = NotebookCellLines.get(editor)
-  private val viewportQueue = MergingUpdateQueue("NotebookCellInlayManager Viewport Update", 100, true, null, editor.disposable, null, true)
 
   /** 20 is 1000 / 50, two times faster than the eye refresh rate. Actually, the value has been chosen randomly, without experiments. */
   private val updateQueue = MergingUpdateQueue("NotebookCellInlayManager Interval Update", 20, true, null, editor.disposable, null, true)
@@ -61,6 +56,8 @@ class NotebookCellInlayManager private constructor(
   var changedListener: InlaysChangedListener? = null
 
   private val cellEventListeners = EventDispatcher.create(EditorCellEventListener::class.java)
+
+  private var valid = false
 
   override fun dispose() {}
 
@@ -100,18 +97,9 @@ class NotebookCellInlayManager private constructor(
 
   private fun addViewportChangeListener() {
     editor.scrollPane.viewport.addChangeListener {
-      val rect = editor.scrollPane.viewport.viewRect
-      val top = editor.xyToLogicalPosition(rect.location)
-      val bottom = editor.xyToLogicalPosition(Point(rect.right, rect.bottom))
-      scheduleUpdatePositions(top.line, bottom.line)
-      viewportQueue.queue(object : Update("Viewport change") {
-        override fun run() {
-          if (editor.isDisposed) return
-          _cells.forEach {
-            it.onViewportChange()
-          }
-        }
-      })
+      _cells.forEach {
+        it.onViewportChange()
+      }
     }
   }
 
@@ -136,7 +124,7 @@ class NotebookCellInlayManager private constructor(
 
     editor.foldingModel.addListener(object : FoldingListener {
       override fun onFoldProcessingEnd() {
-        scheduleUpdatePositions()
+        invalidateCells()
       }
     }, editor.disposable)
 
@@ -215,24 +203,6 @@ class NotebookCellInlayManager private constructor(
     startOffset >= region.startOffset && endOffset <= region.endOffset
   }
 
-  private fun scheduleUpdatePositions(from: Int = 0, to: Int = 1000_000_000) {
-    runInEdt {
-      val fromIndex = _cells.indexOfFirst { cell ->
-        val lines = cell.intervalPointer.get()?.lines
-        lines != null && lines.hasIntersectionWith(from..to + 1)
-      }
-      if (fromIndex == -1) return@runInEdt
-      val toIndex = _cells.subList(fromIndex, _cells.size).indexOfFirst { cell ->
-        val lines = cell.intervalPointer.get()?.lines
-        lines != null && !lines.hasIntersectionWith(from..to + 1)
-      }
-      val finalIndex = if (toIndex == -1) _cells.size - 1 else fromIndex + toIndex
-      for (i in max(fromIndex - 1, 0)..min(finalIndex + 1, _cells.size - 1)) {
-        _cells[i].updatePositions()
-      }
-    }
-  }
-
   private fun refreshHighlightersLookAndFeel() {
     for (highlighter in editor.markupModel.allHighlighters) {
       if (highlighter.customRenderer === NotebookCellHighlighterRenderer) {
@@ -257,7 +227,7 @@ class NotebookCellInlayManager private constructor(
   }
 
   private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, interval) { cell ->
-    EditorCellView(editor, notebookCellLines, cell).also { Disposer.register(cell, it) }
+    EditorCellView(editor, notebookCellLines, cell, this).also { Disposer.register(cell, it) }
   }.also { Disposer.register(this, it) }
 
   private fun ensureInlaysAndHighlightersExist(matchingCellsBeforeChange: List<NotebookCellLines.Interval>, logicalLines: IntRange) {
@@ -413,7 +383,7 @@ class NotebookCellInlayManager private constructor(
       }
     }
     if (needUpdatePositions) {
-      scheduleUpdatePositions()
+      invalidateCells()
     }
     cellEventListeners.multicaster.onEditorCellEvents(events)
     updateConsequentInlays(start..end)
@@ -425,6 +395,22 @@ class NotebookCellInlayManager private constructor(
 
   fun getCell(index: Int): EditorCell {
     return cells[index]
+  }
+
+  fun invalidateCells() {
+    valid = false
+  }
+
+  fun validateCells() {
+    if (!valid) {
+      _cells.forEach {
+        it.view?.also { view ->
+          view.bounds = view.calculateBounds()
+          view.validate()
+        }
+      }
+      valid = true
+    }
   }
 }
 
@@ -455,10 +441,12 @@ private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
   }
 }
 
-private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
-                               pointers: Collection<NotebookIntervalPointer>? = null,
-                               private var updateAll: Boolean = false,
-                               private var forceUpdate: Boolean = false) : Update(Any()) {
+private class UpdateInlaysTask(
+  private val manager: NotebookCellInlayManager,
+  pointers: Collection<NotebookIntervalPointer>? = null,
+  private var updateAll: Boolean = false,
+  private var forceUpdate: Boolean = false,
+) : Update(Any()) {
   private val pointerSet = pointers?.let { SmartHashSet(pointers) } ?: SmartHashSet()
 
   override fun run() {
