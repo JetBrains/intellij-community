@@ -259,6 +259,9 @@ public class SingleClassesTest {
 
   @Test public void testTryToPreserveCast() { doTest("pkg/TryToPreserveCast"); }
 
+  @Test public void testPreserveAssignmentToRecord() { doTest("pkg/PreserveAssignmentToRecord"); }
+  @Test public void testPreserveAssignmentToRecord2() { doTest("pkg/PreserveAssignmentToRecord2"); }
+
   private void doTest(String testFile, String... companionFiles) {
     var decompiler = fixture.getDecompiler();
 
