@@ -1,6 +1,7 @@
 package com.intellij.tools.launch.docker.cli
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.tools.launch.os.ProcessOutputStrategy
 import com.intellij.tools.launch.os.affixIO
 import com.intellij.tools.launch.os.pathNotResolvingSymlinks
 import java.io.File
@@ -43,11 +44,15 @@ internal class DockerCli(
     @Suppress("SSBasedInspection")
     stdoutFile.deleteOnExit()
 
-    if (!captureOutput)
-      processBuilder.affixIO(redirectOutputIntoParentProcess, logFolder)
-    else {
+    if (captureOutput) {
       processBuilder.redirectOutput(stdoutFile)
       processBuilder.redirectError(stdoutFile)
+    }
+    else if (redirectOutputIntoParentProcess) {
+      processBuilder.affixIO(ProcessOutputStrategy.InheritIO)
+    }
+    else {
+      processBuilder.affixIO(ProcessOutputStrategy.RedirectToFiles(logFolder))
     }
 
     val readableCmd = cmd.joinToString(" ", prefix = "'", postfix = "'")

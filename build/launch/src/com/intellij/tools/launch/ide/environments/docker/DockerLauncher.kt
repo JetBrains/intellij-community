@@ -11,6 +11,7 @@ import com.intellij.tools.launch.docker.cli.waitForContainerId
 import com.intellij.tools.launch.docker.cli.waitForContainerToStart
 import com.intellij.tools.launch.environments.LaunchCommand
 import com.intellij.tools.launch.environments.PathInLaunchEnvironment
+import com.intellij.tools.launch.os.ProcessOutputStrategy
 import com.intellij.tools.launch.os.affixIO
 import com.intellij.tools.launch.os.pathNotResolvingSymlinks
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -150,7 +151,12 @@ internal class DockerLauncher(private val paths: PathsProvider, private val opti
 
     val dockerRunPb = result.createProcessBuilder()
     if (dockerContainerOptions.legacy) {
-      dockerRunPb.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
+      if (options.redirectOutputIntoParentProcess) {
+        dockerRunPb.affixIO(ProcessOutputStrategy.InheritIO)
+      }
+      else {
+        dockerRunPb.affixIO(ProcessOutputStrategy.RedirectToFiles(paths.logFolder))
+      }
     }
 
     val dockerRun = dockerRunPb.start()

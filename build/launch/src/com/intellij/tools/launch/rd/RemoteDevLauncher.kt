@@ -2,18 +2,32 @@ package com.intellij.tools.launch.rd
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.launch.docker.BindMount
+import com.intellij.tools.launch.os.ProcessOutputInfo
+import com.intellij.tools.launch.os.asyncAwaitExit
+import com.intellij.tools.launch.os.terminal.AnsiColor
+import com.intellij.tools.launch.os.terminal.colorize
 import com.intellij.tools.launch.rd.RemoteDevLauncher.logger
+import com.intellij.tools.launch.rd.components.BackendLaunchResult
 import com.intellij.tools.launch.rd.components.runCodeWithMeHostNoLobby
 import com.intellij.tools.launch.rd.components.runJetBrainsClientLocally
 import com.intellij.tools.launch.rd.dsl.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
-suspend fun launchRemoteDev(init: LaunchRemoteDevBuilder.() -> Unit) {
+suspend fun CoroutineScope.launchRemoteDev(init: LaunchRemoteDevBuilder.() -> Unit): LaunchRemoteDevResult =
   LaunchRemoteDevBuilderImpl().let {
     it.init()
-    it.launch()
+    it.launch(coroutineScope = this)
   }
-}
+
+data class LaunchRemoteDevResult(val clientTerminationDeferred: Deferred<Int>, val backendTerminationDeferred: Deferred<Int>)
 
 private class LaunchRemoteDevBuilderImpl : LaunchRemoteDevBuilder {
   private lateinit var clientResult: JetBrainsClientBuilderImpl.Result
@@ -42,26 +56,97 @@ private class LaunchRemoteDevBuilderImpl : LaunchRemoteDevBuilder {
     )
   }
 
-  suspend fun launch() {
+  suspend fun launch(coroutineScope: CoroutineScope): LaunchRemoteDevResult {
     logger.info("Starting backend: $backendInEnvDescription")
-    val backendStatus = runCodeWithMeHostNoLobby(backendInEnvDescription)
+    val backendLaunchResult = runCodeWithMeHostNoLobby(backendInEnvDescription)
+    handleBackendProcessOutput(backendLaunchResult, coroutineScope)
     val backendDebugPort = 5006
     logger.info("Attaching debugger to backend at port $backendDebugPort")
     backendInEnvDescription.backendDescription.attachDebuggerCallback?.invoke(backendDebugPort)
-    if (backendStatus.waitForHealthy()) {
+    if (backendLaunchResult.backendStatus.waitForHealthy()) {
       logger.info("Backend is healthy now")
     }
     else {
       error("Backend failed to start normally")
     }
     logger.info("Starting JetBrains client")
-    val clientDebugPort = runJetBrainsClientLocally()
+    val (clientLocalProcessResult, clientDebugPort) = coroutineScope {
+      withContext(CoroutineName("JetBrains Client Launcher")) {
+        runJetBrainsClientLocally()
+      }
+    }
+    handleLocalProcessOutput(
+      clientLocalProcessResult.process,
+      clientLocalProcessResult.processOutputInfo,
+      processShortName = "JetBrains Client",
+      processColor = AnsiColor.GREEN,
+      coroutineScope
+    )
     clientResult.attachDebuggerCallback?.let {
       logger.info("Attaching debugger to client at port $clientDebugPort")
       it.invoke(clientDebugPort)
     }
+    return LaunchRemoteDevResult(
+      clientTerminationDeferred = clientLocalProcessResult.process.asyncAwaitExit(coroutineScope, processTitle = "JetBrains Client"),
+      backendTerminationDeferred = backendLaunchResult.asyncAwaitExit(coroutineScope)
+    )
   }
 }
+
+private suspend fun handleBackendProcessOutput(backendLaunchResult: BackendLaunchResult, coroutineScope: CoroutineScope) {
+  when (backendLaunchResult) {
+    is BackendLaunchResult.Local -> handleLocalProcessOutput(
+      backendLaunchResult.localProcessResult.process,
+      backendLaunchResult.localProcessResult.processOutputInfo,
+      processShortName = "IDE Backend",
+      processColor = AnsiColor.PURPLE,
+      coroutineScope
+    )
+    is BackendLaunchResult.Docker -> handleLocalProcessOutput(
+      backendLaunchResult.localDockerRunResult.process,
+      ProcessOutputInfo.Piped,
+      processShortName = "\uD83D\uDC33 IDE Backend",
+      processColor = AnsiColor.CYAN,
+      coroutineScope
+    )
+  }
+}
+
+private suspend fun handleLocalProcessOutput(
+  process: Process,
+  outputStrategy: ProcessOutputInfo,
+  processShortName: String,
+  processColor: AnsiColor,
+  coroutineScope: CoroutineScope,
+) {
+  val prefix = colorize("$processShortName\t| ", processColor)
+  when (outputStrategy) {
+    ProcessOutputInfo.Piped -> {
+      coroutineScope.launch(Dispatchers.IO + SupervisorJob() + CoroutineName("$processShortName | stdout")) {
+        process.inputReader().lines().forEach { line ->
+          println("$prefix$line")
+        }
+      }
+      coroutineScope.launch(Dispatchers.IO + SupervisorJob() + CoroutineName("$processShortName | stderr")) {
+        process.errorReader().lines().forEach { line ->
+          println("$prefix${colorize(line, AnsiColor.RED)}")
+        }
+      }
+    }
+    ProcessOutputInfo.InheritedByParent -> Unit
+    is ProcessOutputInfo.RedirectedToFiles -> {
+      logger.info("JetBrains Client's standard streams redirected to:\n" +
+                  "${outputStrategy.stdoutLogPath.toUri()}\n" +
+                  "${outputStrategy.stderrLogPath.toUri()}")
+    }
+  }
+}
+
+private suspend fun BackendLaunchResult.asyncAwaitExit(coroutineScope: CoroutineScope): Deferred<Int> =
+  when (this) {
+    is BackendLaunchResult.Local -> localProcessResult.process.asyncAwaitExit(coroutineScope, processTitle = "IDE Backend")
+    is BackendLaunchResult.Docker -> localDockerRunResult.process.asyncAwaitExit(coroutineScope, processTitle = "IDE Backend (Docker)")
+  }
 
 internal sealed interface BackendInEnvDescription {
   val backendDescription: BackendDescription
@@ -78,7 +163,7 @@ internal data class BackendInDockerContainer(
 ) : BackendInEnvDescription
 
 private abstract class IdeBuilderImpl : IdeBuilder {
-  protected var attachDebuggerCallback: (suspend (Int) -> Unit)? = null
+  var attachDebuggerCallback: (suspend (Int) -> Unit)? = null
     private set
 
   override fun attachDebugger(callback: suspend (Int) -> Unit) {

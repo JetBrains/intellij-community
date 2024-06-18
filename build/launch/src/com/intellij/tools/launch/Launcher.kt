@@ -5,6 +5,7 @@ import com.intellij.tools.launch.ide.*
 import com.intellij.tools.launch.ide.environments.docker.legacyDockerRunCliCommandLauncherFactory
 import com.intellij.tools.launch.ide.environments.local.LocalIdeCommandLauncherFactory
 import com.intellij.tools.launch.ide.environments.local.localLaunchOptions
+import com.intellij.tools.launch.os.ProcessOutputStrategy
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -48,11 +49,10 @@ object Launcher {
       val localLauncherFactory = LocalIdeCommandLauncherFactory(
         localLaunchOptions(
           beforeProcessStart = options.beforeProcessStart,
-          redirectOutputIntoParentProcess = options.redirectOutputIntoParentProcess,
-          logFolder = paths.logFolder
+          processOutputStrategy = if (options.redirectOutputIntoParentProcess) ProcessOutputStrategy.InheritIO else ProcessOutputStrategy.RedirectToFiles(paths.logFolder),
         )
       )
-      return IdeLauncher.launchCommand(localLauncherFactory, ideLaunchContext) to null
+      return IdeLauncher.launchCommand(localLauncherFactory, ideLaunchContext).process to null
     }
   }
 

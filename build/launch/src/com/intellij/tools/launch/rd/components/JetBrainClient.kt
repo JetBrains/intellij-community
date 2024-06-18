@@ -8,10 +8,18 @@ import com.intellij.tools.launch.ide.IdeLaunchContext
 import com.intellij.tools.launch.ide.IdeLauncher
 import com.intellij.tools.launch.ide.classpathCollector
 import com.intellij.tools.launch.ide.environments.local.LocalIdeCommandLauncherFactory
+import com.intellij.tools.launch.ide.environments.local.LocalProcessLaunchResult
 import com.intellij.tools.launch.ide.environments.local.localLaunchOptions
+import com.intellij.tools.launch.os.ProcessOutputStrategy
+import kotlinx.coroutines.CoroutineScope
 import java.io.File
 
-fun runJetBrainsClientLocally(): Int {
+data class JetBrainsClientLaunchResult(
+  val localProcessLaunchResult: LocalProcessLaunchResult,
+  val debugPort: Int,
+)
+
+suspend fun CoroutineScope.runJetBrainsClientLocally(): JetBrainsClientLaunchResult {
   JetBrainClient.logger.info("Starting JetBrains client")
   val paths = JetBrainsClientIdeaPathsProvider()
   val classpath = classpathCollector(
@@ -20,8 +28,8 @@ fun runJetBrainsClientLocally(): Int {
     additionalRuntimeModules = listOf(RemoteDevConstants.GATEWAY_PLUGIN_MODULE)
   )
   val debugPort = 5007
-  IdeLauncher.launchCommand(
-    LocalIdeCommandLauncherFactory(localLaunchOptions(redirectOutputIntoParentProcess = false, logFolder = paths.logFolder)),
+  val localProcessLaunchResult = IdeLauncher.launchCommand(
+    LocalIdeCommandLauncherFactory(localLaunchOptions(processOutputStrategy = ProcessOutputStrategy.Pipe)),
     context = IdeLaunchContext(
       classpathCollector = classpath,
       // changed in Java 9, now we have to use *: to listen on all interfaces
@@ -36,7 +44,7 @@ fun runJetBrainsClientLocally(): Int {
       specifyUserHomeExplicitly = false,
     )
   )
-  return debugPort
+  return JetBrainsClientLaunchResult(localProcessLaunchResult, debugPort)
 }
 
 private class JetBrainsClientIdeaPathsProvider : PathsProvider {

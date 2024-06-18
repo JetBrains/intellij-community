@@ -7,10 +7,11 @@ import com.intellij.tools.launch.ide.ClassPathBuilder
 import com.intellij.tools.launch.ide.ClasspathCollector
 import com.intellij.tools.launch.ide.IdeCommandLauncherFactory
 import com.intellij.tools.launch.ide.IdePathsInLaunchEnvironment
+import com.intellij.tools.launch.os.ProcessOutputInfo
+import com.intellij.tools.launch.os.ProcessOutputStrategy
 import com.intellij.tools.launch.os.affixIO
 import com.intellij.util.SystemProperties
 import com.sun.security.auth.module.UnixSystem
-import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -31,29 +32,26 @@ object LocalLaunchEnvironment : LaunchEnvironment {
 
 interface LocalLaunchOptions {
   val beforeProcessStart: () -> Unit
-  val redirectOutputIntoParentProcess: Boolean
-  val logFolder: File
+  val processOutputStrategy: ProcessOutputStrategy
 }
 
 private data class LocalLaunchOptionsImpl(
   override val beforeProcessStart: () -> Unit,
-  override val redirectOutputIntoParentProcess: Boolean,
-  override val logFolder: File,
+  override val processOutputStrategy: ProcessOutputStrategy,
 ) : LocalLaunchOptions
 
 fun localLaunchOptions(
   beforeProcessStart: () -> Unit = {},
-  redirectOutputIntoParentProcess: Boolean,
-  logFolder: File,
+  processOutputStrategy: ProcessOutputStrategy,
 ): LocalLaunchOptions =
-  LocalLaunchOptionsImpl(beforeProcessStart, redirectOutputIntoParentProcess, logFolder)
+  LocalLaunchOptionsImpl(beforeProcessStart, processOutputStrategy)
 
-class LocalCommandLauncher(private val localLaunchOptions: LocalLaunchOptions) : AbstractCommandLauncher<Process> {
-  override fun launch(buildCommand: LaunchEnvironment.() -> LaunchCommand): Process {
+class LocalCommandLauncher(private val localLaunchOptions: LocalLaunchOptions) : AbstractCommandLauncher<LocalProcessLaunchResult> {
+  override fun launch(buildCommand: LaunchEnvironment.() -> LaunchCommand): LocalProcessLaunchResult {
     val (commandLine, environment) = LocalLaunchEnvironment.buildCommand()
     val processBuilder = ProcessBuilder(commandLine)
 
-    processBuilder.affixIO(localLaunchOptions.redirectOutputIntoParentProcess, localLaunchOptions.logFolder)
+    val processOutputStrategy = processBuilder.affixIO(localLaunchOptions.processOutputStrategy)
     processBuilder.environment().putAll(environment)
     localLaunchOptions.beforeProcessStart()
 
@@ -61,7 +59,7 @@ class LocalCommandLauncher(private val localLaunchOptions: LocalLaunchOptions) :
     logger.info(processBuilder.command().joinToString("\n"))
     logger.info("-- END")
 
-    return processBuilder.start()
+    return LocalProcessLaunchResult(process = processBuilder.start(), processOutputStrategy)
   }
 
   companion object {
@@ -69,8 +67,13 @@ class LocalCommandLauncher(private val localLaunchOptions: LocalLaunchOptions) :
   }
 }
 
-class LocalIdeCommandLauncherFactory(private val localLaunchOptions: LocalLaunchOptions) : IdeCommandLauncherFactory<Process> {
-  override fun create(localPaths: PathsProvider, classpathCollector: ClasspathCollector): Pair<AbstractCommandLauncher<Process>, IdePathsInLaunchEnvironment> {
+data class LocalProcessLaunchResult(
+  val process: Process,
+  val processOutputInfo: ProcessOutputInfo,
+)
+
+class LocalIdeCommandLauncherFactory(private val localLaunchOptions: LocalLaunchOptions) : IdeCommandLauncherFactory<LocalProcessLaunchResult> {
+  override fun create(localPaths: PathsProvider, classpathCollector: ClasspathCollector): Pair<AbstractCommandLauncher<LocalProcessLaunchResult>, IdePathsInLaunchEnvironment> {
     val classpathInDocker = classpathCollector.collect(LocalLaunchEnvironment)
     val classPathArgFile = ClassPathBuilder.createClassPathArgFile(localPaths, classpathInDocker)
     val pathsInLocalLaunchEnvironment = object : IdePathsInLaunchEnvironment {

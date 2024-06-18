@@ -8,9 +8,12 @@ import com.intellij.tools.launch.ide.IdeLaunchContext
 import com.intellij.tools.launch.ide.IdeLauncher
 import com.intellij.tools.launch.ide.classpathCollector
 import com.intellij.tools.launch.ide.environments.docker.DockerContainerOptions
+import com.intellij.tools.launch.ide.environments.docker.LocalDockerRunResult
 import com.intellij.tools.launch.ide.environments.docker.dockerRunCliCommandLauncherFactory
 import com.intellij.tools.launch.ide.environments.local.LocalIdeCommandLauncherFactory
+import com.intellij.tools.launch.ide.environments.local.LocalProcessLaunchResult
 import com.intellij.tools.launch.ide.environments.local.localLaunchOptions
+import com.intellij.tools.launch.os.ProcessOutputStrategy
 import com.intellij.tools.launch.rd.BackendInDockerContainer
 import com.intellij.tools.launch.rd.BackendInEnvDescription
 import com.intellij.tools.launch.rd.BackendOnLocalMachine
@@ -21,7 +24,15 @@ import java.io.File
 private const val DEFAULT_CONTAINER_NAME = "idea-ultimate"
 private const val DEFAULT_JAVA_EXECUTABLE_PATH: PathInLaunchEnvironment = "/usr/bin/java"
 
-internal fun runCodeWithMeHostNoLobby(backendDescription: BackendInEnvDescription): BackendStatus {
+internal sealed interface BackendLaunchResult {
+  val backendStatus: BackendStatus
+
+  data class Local(val localProcessResult: LocalProcessLaunchResult, override val backendStatus: BackendStatus) : BackendLaunchResult
+
+  data class Docker(val localDockerRunResult: LocalDockerRunResult, override val backendStatus: BackendStatus) : BackendLaunchResult
+}
+
+internal fun runCodeWithMeHostNoLobby(backendDescription: BackendInEnvDescription): BackendLaunchResult {
   val projectPath = backendDescription.backendDescription.projectPath
   val mainModule = backendDescription.backendDescription.product.mainModule
   val paths = IdeaPathsProvider()
@@ -37,10 +48,10 @@ internal fun runCodeWithMeHostNoLobby(backendDescription: BackendInEnvDescriptio
     "ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE" to "false",
     "DISPLAY" to ":0",
   )
-  val process = when (backendDescription) {
+  return when (backendDescription) {
     is BackendOnLocalMachine -> {
-      IdeLauncher.launchCommand(
-        LocalIdeCommandLauncherFactory(localLaunchOptions(redirectOutputIntoParentProcess = false, logFolder = paths.logFolder)),
+      val localProcessLaunchResult = IdeLauncher.launchCommand(
+        LocalIdeCommandLauncherFactory(localLaunchOptions(processOutputStrategy = ProcessOutputStrategy.RedirectToFiles(paths.logFolder))),
         context = IdeLaunchContext(
           classpathCollector = classpathCollector,
           localPaths = paths,
@@ -51,9 +62,10 @@ internal fun runCodeWithMeHostNoLobby(backendDescription: BackendInEnvDescriptio
           specifyUserHomeExplicitly = false,
         )
       )
+      BackendLaunchResult.Local(localProcessLaunchResult, BackendStatusFromStdout(localProcessLaunchResult.process))
     }
     is BackendInDockerContainer -> {
-      IdeLauncher.launchCommand(
+      val localDockerRunResult = IdeLauncher.launchCommand(
         dockerRunCliCommandLauncherFactory(
           DockerContainerOptions(
             image = backendDescription.image,
@@ -72,11 +84,10 @@ internal fun runCodeWithMeHostNoLobby(backendDescription: BackendInEnvDescriptio
           environment = environment,
           specifyUserHomeExplicitly = false,
         )
-      ).process
+      )
+      BackendLaunchResult.Docker(localDockerRunResult, BackendStatusFromStdout(localDockerRunResult.process))
     }
   }
-
-  return BackendStatusFromStdout(process)
 }
 
 internal interface BackendStatus {
