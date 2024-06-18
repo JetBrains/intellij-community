@@ -489,9 +489,6 @@ e:com.intellij.util.io.PowerStatus
 - s:values():com.intellij.util.io.PowerStatus[]
 f:com.intellij.util.io.PowerStatus$Companion
 - f:getPowerStatus():com.intellij.util.io.PowerStatus
-f:com.intellij.util.io.SuperUserStatus
-- sf:INSTANCE:com.intellij.util.io.SuperUserStatus
-- sf:isSuperUser():Z
 f:com.intellij.util.net.NetKt
 - sf:loopbackSocketAddress():java.net.InetSocketAddress
 - sf:loopbackSocketAddress(I):java.net.InetSocketAddress
