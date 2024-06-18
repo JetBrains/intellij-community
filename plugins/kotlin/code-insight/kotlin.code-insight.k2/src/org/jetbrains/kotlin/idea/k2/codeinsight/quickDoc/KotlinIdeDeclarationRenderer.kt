@@ -207,10 +207,11 @@ internal class KotlinIdeDeclarationRenderer(
                     }
                 ) { annotation ->
                     append(highlight("@") { asAnnotationName })
-                    if (backingFieldAnnotations != null && annotation in backingFieldAnnotations) {
-                        printer.append(highlight("field") { asKeyword })
-                        printer.append(':')
-                    }
+                    (annotation.useSiteTarget?.renderName
+                        ?: "field".takeIf { backingFieldAnnotations != null && annotation in backingFieldAnnotations })?.let { useSiteName ->
+                            printer.append(highlight(useSiteName) { asKeyword })
+                            printer.append(highlight(":") { asColon })
+                        }
                     annotationsQualifiedNameRenderer.renderQualifier(analysisSession, annotation, owner, annotationRenderer, printer)
                     annotationArgumentsRenderer.renderAnnotationArguments(analysisSession, annotation, owner, annotationRenderer, printer)
                 }

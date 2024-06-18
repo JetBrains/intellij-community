@@ -45,6 +45,16 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("../../idea/tests/testData/editor/quickDoc/Annotation.kt");
     }
 
+    @TestMetadata("AnnotationWithUseSite1.kt")
+    public void testAnnotationWithUseSite1() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/AnnotationWithUseSite1.kt");
+    }
+
+    @TestMetadata("AnnotationWithUseSite2.kt")
+    public void testAnnotationWithUseSite2() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/AnnotationWithUseSite2.kt");
+    }
+
     @TestMetadata("AnonymousObjectLocalVariable.kt")
     public void testAnonymousObjectLocalVariable() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/AnonymousObjectLocalVariable.kt");
