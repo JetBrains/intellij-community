@@ -3,23 +3,21 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.psi.*;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
+
 @SkipSlowTestLocally
 public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
   public void testHugeConcatenationVisitingPerformance() throws IncorrectOperationException {
-    StringBuilder text = new StringBuilder("String s = null");
     final int N = 20000;
-    for (int i = 0; i < N; i++) {
-      text.append("+\"xxx\"");
-    }
-    text.append(";");
+    String text = "String s = null" + "+\"xxx\"".repeat(N) + ";";
     final PsiElement expression =
-      JavaPsiFacade.getElementFactory(getProject()).createStatementFromText(text.toString(), null);
+      JavaPsiFacade.getElementFactory(getProject()).createStatementFromText(text, null);
     final int[] n = {0};
     PerformanceTestUtil.newPerformanceTest(getTestName(false), new ThrowableRunnable() {
       @Override
@@ -30,7 +28,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
           public void visitExpression(@NotNull PsiExpression expression) {
             PsiExpression s = expression;
             super.visitExpression(expression);
-            s.hashCode(); //hold on stack
+            Reference.reachabilityFence(s); //hold on stack
             n[0]++;
           }
         });
@@ -39,14 +37,10 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
     }).start();
   }
   public void testHugeMethodChainingVisitingPerformance() throws IncorrectOperationException {
-    StringBuilder text = new StringBuilder("Object s = new StringBuilder()");
     final int N = 20000;
-    for (int i = 0; i < N; i++) {
-      text.append(".append(\"xxx\")");
-    }
-    text.append(";");
+    String text = "Object s = new StringBuilder()" + ".append(\"xxx\")".repeat(N) + ";";
     final PsiElement expression =
-      JavaPsiFacade.getElementFactory(getProject()).createStatementFromText(text.toString(), null);
+      JavaPsiFacade.getElementFactory(getProject()).createStatementFromText(text, null);
     final int[] n = {0};
     PerformanceTestUtil.newPerformanceTest(getTestName(false), new ThrowableRunnable() {
       @Override

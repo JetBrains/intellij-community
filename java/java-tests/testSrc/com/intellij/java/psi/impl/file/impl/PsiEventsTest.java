@@ -509,7 +509,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
     setFileText(file, "aaa");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiFile psiFile = fileManager.findFile(file);
-    psiFile.getText();
+    assertNotNull(psiFile.getText()); // Trigger PSI loading
 
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());

@@ -335,7 +335,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       psiDocumentManager.commitAllDocuments();
 
       if (aClass.isValid()) {
-        aClass.getChildren();
+        assertNotNull(aClass.getChildren()); // trigger PSI loading
       }
 
       element = pointer.getElement();

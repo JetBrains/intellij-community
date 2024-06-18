@@ -99,6 +99,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
+        //noinspection ResultOfMethodCallIgnored
         expression.getNode();
       }
     });

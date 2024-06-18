@@ -36,7 +36,7 @@ public class SourceRootAddedAsLibraryRootTest extends JavaPsiTestCase {
   public void testBug() {
     touchFileSync();
     PsiFile psiFile = myPsiManager.findFile(myVFile);
-    psiFile.getText();
+    assertNotNull(psiFile.getText());
     changeRoots();
   }
 
