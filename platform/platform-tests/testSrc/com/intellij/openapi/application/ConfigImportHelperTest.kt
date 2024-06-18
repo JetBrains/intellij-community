@@ -208,7 +208,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.downloadService = object : MarketplacePluginDownloadService() {
 
-      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?): File {
         val path = localTempDir.newDirectory("pluginTemp")
           .toPath()
           .resolve("my-plugin-new.jar")
@@ -237,7 +237,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.downloadService = object : MarketplacePluginDownloadService() {
 
-      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator) =
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?) =
         throw IOException("404")
     }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
@@ -334,7 +334,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.downloadService = object : MarketplacePluginDownloadService() {
 
-      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator) =
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?) =
         throw AssertionError("No file download should be requested")
     }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)

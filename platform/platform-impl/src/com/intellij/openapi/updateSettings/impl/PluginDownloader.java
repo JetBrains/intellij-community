@@ -174,7 +174,7 @@ public final class PluginDownloader {
     return myShownErrors;
   }
 
-  public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
+  public boolean prepareToInstall(@Nullable ProgressIndicator indicator) throws IOException {
     ThreadingAssertions.assertBackgroundThread();
     myShownErrors = false;
 
@@ -353,10 +353,12 @@ public final class PluginDownloader {
     myOldFile = oldFile;
   }
 
-  @NotNull File tryDownloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
+  @NotNull File tryDownloadPlugin(@Nullable ProgressIndicator indicator) throws IOException {
     ThreadingAssertions.assertBackgroundThread();
-    indicator.checkCanceled();
-    indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
+    if (indicator != null) {
+      indicator.checkCanceled();
+      indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
+    }
 
     LOG.info("downloading plugin " + myPluginName + "(" + myPluginId + ") version " + myPluginVersion + " from " + myPluginUrl);
     MarketplacePluginDownloadService downloader = myDownloadService != null ? myDownloadService : new MarketplacePluginDownloadService();

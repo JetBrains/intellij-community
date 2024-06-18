@@ -62,7 +62,7 @@ open class MarketplacePluginDownloadService {
   private val objectMapper by lazy { ObjectMapper() }
 
   @Throws(IOException::class)
-  open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
+  open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?): File {
     val file = getPluginTempFile()
     return HttpRequests
       .request(pluginUrl)
@@ -85,7 +85,7 @@ open class MarketplacePluginDownloadService {
   }
 
   @Throws(IOException::class)
-  fun downloadPluginViaBlockMap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator): File {
+  fun downloadPluginViaBlockMap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator?): File {
     val prevPluginArchive = getPrevPluginArchive(prevPlugin)
     if (!prevPluginArchive.exists()) {
       LOG.info(IdeBundle.message("error.file.not.found.message", prevPluginArchive.toString()))
@@ -156,8 +156,8 @@ open class MarketplacePluginDownloadService {
   private fun processBlockmapDownloadProblem(
     exception: Exception,
     pluginUrl: String,
-    indicator: ProgressIndicator,
-    printStackTrace: Boolean = false
+    indicator: ProgressIndicator?,
+    printStackTrace: Boolean = false,
   ): File {
     val message = IdeBundle.message("error.download.plugin.via.blockmap", pluginUrl)
     if (printStackTrace) {
