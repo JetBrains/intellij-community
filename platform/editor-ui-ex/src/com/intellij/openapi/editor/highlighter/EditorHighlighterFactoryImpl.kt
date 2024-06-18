@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.SlowOperations
 
-class EditorHighlighterFactoryImpl : EditorHighlighterFactory() {
+private class EditorHighlighterFactoryImpl : EditorHighlighterFactory() {
   override fun createEditorHighlighter(highlighter: SyntaxHighlighter?, colors: EditorColorsScheme): EditorHighlighter {
     return LexerEditorHighlighter(highlighter ?: PlainSyntaxHighlighter(), colors)
   }

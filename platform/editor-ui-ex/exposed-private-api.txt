@@ -1,1 +1,0 @@
-com/intellij/openapi/editor/colors/impl/AppConsoleFontOptions$ConsoleFontState

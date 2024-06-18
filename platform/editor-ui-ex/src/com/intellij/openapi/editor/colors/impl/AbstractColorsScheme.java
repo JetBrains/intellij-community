@@ -107,7 +107,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     metaInfo.setProperty(META_INFO_IDE, PlatformUtils.getPlatformPrefix());
     metaInfo.setProperty(META_INFO_IDE_VERSION, ApplicationInfo.getInstance().getStrictVersion());
     if (parentScheme != null &&
-        parentScheme != EmptyColorScheme.INSTANCE &&
+        parentScheme != EmptyColorScheme.getEmptyScheme() &&
         !parentScheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
       metaInfo.setProperty(META_INFO_ORIGINAL, parentScheme.getName());
       String pluginId = parentScheme.getMetaProperties().getProperty(META_INFO_PLUGIN_ID);
@@ -343,7 +343,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
     boolean isDefault = isDefaultScheme != null && Boolean.parseBoolean(isDefaultScheme);
     if (!isDefault) {
-      parentScheme = getDefaultScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, EmptyColorScheme.NAME));
+      parentScheme = getDefaultScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, EmptyColorScheme.getSchemeName()));
     }
 
     metaInfo.clear();
@@ -522,7 +522,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(UISettings.getDefFontScale()));
     }
 
-    if (parentScheme != null && parentScheme != EmptyColorScheme.INSTANCE) {
+    if (parentScheme != null && parentScheme != EmptyColorScheme.getEmptyScheme()) {
       parentNode.setAttribute(PARENT_SCHEME_ATTR, parentScheme.getName());
     }
 
@@ -1080,7 +1080,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     private final String myParentName;
 
     TemporaryParent(@NotNull String parentName) {
-      super(EmptyColorScheme.INSTANCE);
+      super(EmptyColorScheme.getEmptyScheme());
       myParentName = parentName;
     }
 

@@ -4,9 +4,11 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   private final ImaginaryCaretModel myCaretModel;
   private int myStart, myPos, myEnd;

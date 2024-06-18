@@ -21,10 +21,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * This is mock implementation to be used in null-object pattern where necessary.
  */
-public final class EmptyMarkupModel implements MarkupModelEx {
+final class EmptyMarkupModel implements MarkupModelEx {
   private final Document myDocument;
 
-  public EmptyMarkupModel(final Document document) {
+  EmptyMarkupModel(final Document document) {
     myDocument = document;
   }
 

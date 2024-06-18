@@ -28,7 +28,7 @@ class DefaultColorSchemesManager {
     }
     catch (e: Exception) {
       thisLogger().error(e)
-      listOf(EmptyColorScheme.INSTANCE)
+      listOf(EmptyColorScheme.getEmptyScheme())
     }
   }
 
@@ -80,7 +80,7 @@ private fun loadState(oldSchemes: List<DefaultColorsScheme>): List<DefaultColors
       schemes.add(newScheme)
     }
   }
-  schemes.add(EmptyColorScheme.INSTANCE)
+  schemes.add(EmptyColorScheme.getEmptyScheme())
   return java.util.List.copyOf(schemes)
 }
 

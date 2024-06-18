@@ -10,7 +10,7 @@ import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
 @Service(Service.Level.PROJECT)
-public final class DocumentMarkupModelManager {
+final class DocumentMarkupModelManager {
   private static final Logger LOG = Logger.getInstance(DocumentMarkupModelManager.class);
 
   private final WeakList<Document> myDocumentSet = new WeakList<>();
@@ -20,7 +20,7 @@ public final class DocumentMarkupModelManager {
     return project.getService(DocumentMarkupModelManager.class);
   }
 
-  public DocumentMarkupModelManager(@NotNull Project project) {
+  DocumentMarkupModelManager(@NotNull Project project) {
     Disposer.register(project, () -> cleanupProjectMarkups(project));
   }
 

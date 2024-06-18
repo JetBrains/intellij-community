@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.impl.FontFamilyService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class EditorFontCacheImpl extends EditorFontCache {
   private static final Map<TextAttribute, Integer> LIGATURES_ATTRIBUTES = Map.of(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON);
 

@@ -15,8 +15,15 @@ import java.awt.*;
 @SuppressWarnings("UseJBColor")
 public final class EmptyColorScheme extends DefaultColorsScheme {
   private static final TextAttributes DEFAULT_ATTRS = new TextAttributes(Color.GRAY, null, null, EffectType.BOXED, Font.PLAIN);
-  public static final String NAME = "Empty";
-  public static final EmptyColorScheme INSTANCE = new EmptyColorScheme();
+  private static final EmptyColorScheme INSTANCE = new EmptyColorScheme();
+
+  public static @NotNull String getSchemeName() {
+    return "Empty";
+  }
+
+  public static @NotNull EmptyColorScheme getEmptyScheme() {
+    return INSTANCE;
+  }
 
   private EmptyColorScheme() {
     attributesMap.put(HighlighterColors.TEXT.getExternalName(), DEFAULT_ATTRS);
@@ -30,7 +37,7 @@ public final class EmptyColorScheme extends DefaultColorsScheme {
 
   @Override
   public @NotNull String getName() {
-    return NAME;
+    return getSchemeName();
   }
 
   @Override

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * moved from PsiSearchHelperImpl
  */
-class TodoItemCreator {
+final class TodoItemCreator {
   private final TodoPattern[] myTodoPatterns;
 
   TodoItemCreator() {

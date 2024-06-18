@@ -71,9 +71,9 @@ private fun importScheme(file: VirtualFile, e: FileDropEvent) {
   val imported = importer.importScheme(DefaultProjectFactory.getInstance().defaultProject, file, colorsManager.globalScheme) { name: String? ->
     val preferredName = name ?: "Unnamed"
     val newName = SchemeNameGenerator.getUniqueName(preferredName) { candidate: String -> names.contains(candidate) }
-    val newScheme = EditorColorsSchemeImpl(EmptyColorScheme.INSTANCE)
+    val newScheme = EditorColorsSchemeImpl(EmptyColorScheme.getEmptyScheme())
     newScheme.name = newName
-    newScheme.setDefaultMetaInfo(EmptyColorScheme.INSTANCE)
+    newScheme.setDefaultMetaInfo(EmptyColorScheme.getEmptyScheme())
     newScheme
   }
 
