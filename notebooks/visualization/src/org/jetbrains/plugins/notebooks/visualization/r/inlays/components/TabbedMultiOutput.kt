@@ -171,7 +171,7 @@ internal class TabbedMultiOutput(private val editor: Editor, parent: Disposable)
   }
 
   private fun createClearAction(): AnAction {
-    return ToolbarUtil.createAnActionButton("org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ClearOutputAction", clearAction::invoke)
+    return ToolbarUtil.createAnActionButton(ClearOutputAction.ID, clearAction::invoke)
   }
 
   private fun updateMaxHeight(height: Int) {
