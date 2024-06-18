@@ -372,8 +372,9 @@ fun <T : CommandChain> T.delayType(delayMs: Int,
   addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime|$disableWriteProtection")
 }
 
-fun <T : CommandChain> T.doLocalInspection(): T = apply {
-  addCommand("${CMD_PREFIX}doLocalInspection")
+fun <T : CommandChain> T.doLocalInspection(spanTag: String? = null): T = apply {
+  val spanTagLine = spanTag?.let {  " spanTag $spanTag" } ?: ""
+  addCommand("${CMD_PREFIX}doLocalInspection" + spanTagLine)
 }
 
 fun <T : CommandChain> T.runSingleInspection(inspectionName: String, scope: String): T = apply {
@@ -817,13 +818,11 @@ fun <T : CommandChain> T.assertCompletionCommandCount(count: Int): T = apply {
   addCommand("${CMD_PREFIX}assertCompletionCommand COUNT ${count}")
 }
 
-@Suppress("unused")
-fun <T : CommandChain> T.goToDeclaration(): T = apply {
-  executeEditorAction("GotoDeclaration")
-}
-
-fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String): T = apply {
-  executeEditorAction("GotoDeclaration expectedOpenedFile $expectedOpenedFile")
+fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String? = null, spanTag: String? = null): T = apply {
+  val action = StringBuilder("GotoDeclaration")
+  if (expectedOpenedFile != null) action.append(" expectedOpenedFile $expectedOpenedFile")
+  if (spanTag != null) action.append(" spanTag $spanTag")
+  executeEditorAction(action.toString())
 }
 
 fun <T : CommandChain> T.collectAllFiles(extension: String, fromSources: Boolean = true): T = apply {

@@ -40,7 +40,8 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     }
 
     val busConnection = project.messageBus.simpleConnect()
-    val span = PerformanceTestSpan.getTracer(isWarmupMode()).spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
+    val spanTag = extractCommandArgument(PREFIX).parameter("spanTag")?.let { "_$it"} ?: ""
+    val span = PerformanceTestSpan.getTracer(isWarmupMode()).spanBuilder(SPAN_NAME + spanTag).setParent(PerformanceTestSpan.getContext())
     var spanRef: Span? = null
     var scopeRef: Scope? = null
     val editor = FileEditorManager.getInstance(project).selectedTextEditor
@@ -105,6 +106,11 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
         DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
       }
     }
+  }
+  private fun String.parameter(name: String): String? {
+    val paramArray = this.split(" ")
+    val keyIndex = paramArray.indexOf(name)
+    return if (keyIndex >= 0 && (keyIndex + 1) <= paramArray.size) paramArray[keyIndex + 1] else null
   }
 
   private fun isWarmupMode(): Boolean {

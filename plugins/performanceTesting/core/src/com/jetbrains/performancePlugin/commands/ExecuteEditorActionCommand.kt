@@ -28,7 +28,8 @@ class ExecuteEditorActionCommand(text: String, line: Int) : PlaybackCommandCorou
     val input = extractCommandArgument(DelayTypeCommand.PREFIX)
     val parameter = input.parameter(1)
     val expectedOpenedFile = input.parameter("expectedOpenedFile")
-    val span = PerformanceTestSpan.TRACER.spanBuilder(PARTITION_SPAN_NAME + cleanSpanName(parameter)).setParent(
+    val spanTag = input.parameter("spanTag")?.let { "_${it}" } ?: ""
+    val span = PerformanceTestSpan.TRACER.spanBuilder(PARTITION_SPAN_NAME + cleanSpanName(parameter) + spanTag).setParent(
       PerformanceTestSpan.getContext())
     val spanRef = Ref<Span>()
     val connection = context.project.messageBus.simpleConnect()
