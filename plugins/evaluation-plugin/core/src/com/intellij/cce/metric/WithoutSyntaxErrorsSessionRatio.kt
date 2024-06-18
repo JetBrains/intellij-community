@@ -4,7 +4,7 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
-class SyntaxErrorsSessionRatio : Metric {
+class WithoutSyntaxErrorsSessionRatio : Metric {
   private val sample = Sample()
   override val name: String = "Sessions Without Syntax Errors Ratio"
   override val description: String = "Ratio of sessions without syntax errors"
