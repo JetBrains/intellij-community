@@ -8,6 +8,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -138,17 +139,13 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
   private fun createActions(): List<AnAction> {
     return extraActions.toMutableList().apply {
       if (useDefaultSaveAction) {
-        add(createSaveAsAction())
+        add(ActionManager.getInstance().getAction(SaveOutputAction.ID))
       }
     }
   }
 
   private fun createClearAction(): AnAction {
     return ToolbarUtil.createAnActionButton<ClearOutputAction>(clearAction::invoke)
-  }
-
-  private fun createSaveAsAction(): AnAction {
-    return ToolbarUtil.createAnActionButton<SaveOutputAction>(this::saveAs)
   }
 }
 
