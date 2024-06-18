@@ -131,30 +131,57 @@ internal class InlineCompletionFocusListener : FocusChangeListener {
 }
 
 /**
- * Cancels inline completion (via [cancel]) as soon as one of the following happens:
- * * A caret added/removed.
- * * A new caret offset doesn't correspond to [expectedOffset].
+ * The listener has two mods:
+ * * **Movement is prohibited**: cancels inline completion (via [cancel]) as soon as a caret moves to unexpected position
+ * (defined by [completionOffset])
+ * * **Adaptive**: [completionOffset] is updated each time a caret offset is changed.
+ *
+ * In any mode, the inline completion will be canceled if any of the following happens:
+ * * Any caret is added/removed
+ * * A caret leans to the right, as only left lean is permitted. Otherwise, inlays will be to the left of the caret.
  */
-internal class InlineSessionWiseCaretListener(
-  @RequiresEdt private val expectedOffset: () -> Int,
-  @RequiresEdt private val cancel: () -> Unit
-) : CaretListener {
+internal abstract class InlineSessionWiseCaretListener : CaretListener {
+
+  protected abstract var completionOffset: Int
+    @RequiresEdt
+    get
+    @RequiresEdt
+    set
+
+  protected abstract val mode: Mode
+    @RequiresEdt
+    get
+
+  @RequiresEdt
+  protected abstract fun cancel()
 
   override fun caretAdded(event: CaretEvent) = cancel()
 
   override fun caretRemoved(event: CaretEvent) = cancel()
 
   override fun caretPositionChanged(event: CaretEvent) {
-    if (event.oldPosition == event.newPosition) {
+    if (event.oldPosition == event.newPosition && event.newPosition.leansForward) {
       // ML-1341
       // It means that we moved caret from the state 'before inline completion' to `after inline completion`
-      // In such a case, the actual caret position does not change
+      // In such a case, the actual caret position does not change, only 'leansForward'
       return cancel()
     }
     val newOffset = event.editor.logicalPositionToOffset(event.newPosition)
-    if (newOffset != expectedOffset()) {
-      return cancel()
+    when (mode) {
+      Mode.ADAPTIVE -> {
+        completionOffset = newOffset
+      }
+      Mode.PROHIBIT_MOVEMENT -> {
+        if (newOffset != completionOffset) {
+          cancel()
+        }
+      }
     }
+  }
+
+  protected enum class Mode {
+    ADAPTIVE,
+    PROHIBIT_MOVEMENT
   }
 }
 

@@ -59,8 +59,7 @@ class InlineCompletionHandler(
   private val sessionManager = createSessionManager()
   private val typingTracker = InlineCompletionTypingTracker(parentDisposable)
 
-  private var customDocumentChangesAllowed = false
-  private var isInvokingEvent = false
+  private val completionState = InlineCompletionState()
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
@@ -98,12 +97,12 @@ class InlineCompletionHandler(
   fun invokeEvent(event: InlineCompletionEvent) {
     ThreadingAssertions.assertEventDispatchThread()
 
-    if (isInvokingEvent) {
+    if (completionState.isInvokingEvent) {
       LOG.trace("Cannot process inline event $event: another event is being processed right now.")
       return
     }
 
-    isInvokingEvent = true
+    completionState.isInvokingEvent = true
     try {
       LOG.trace("Start processing inline event $event")
 
@@ -130,7 +129,7 @@ class InlineCompletionHandler(
       }
     }
     finally {
-      isInvokingEvent = false
+      completionState.isInvokingEvent = false
     }
   }
 
@@ -270,10 +269,8 @@ class InlineCompletionHandler(
     if (event != null) {
       invokeEvent(event)
     }
-    else {
-      if (!customDocumentChangesAllowed) {
-        sessionManager.invalidate()
-      }
+    else if (!completionState.ignoreDocumentChanges) {
+      sessionManager.invalidate()
     }
   }
 
@@ -289,12 +286,16 @@ class InlineCompletionHandler(
   @RequiresEdt
   fun <T> withIgnoringDocumentChanges(block: () -> T): T {
     ThreadingAssertions.assertEventDispatchThread()
-    val currentCustomDocumentChangesAllowed = customDocumentChangesAllowed
-    customDocumentChangesAllowed = true
-    val result = block()
-    check(customDocumentChangesAllowed) { "The state of disabling document changes tracker is switched outside." }
-    customDocumentChangesAllowed = currentCustomDocumentChangesAllowed
-    return result
+    val currentCustomDocumentChangesAllowed = completionState.ignoreDocumentChanges
+    completionState.ignoreDocumentChanges = true
+    return try {
+      block()
+    } finally {
+      check(completionState.ignoreDocumentChanges) {
+        "The state of disabling document changes tracker is switched outside."
+      }
+      completionState.ignoreDocumentChanges = currentCustomDocumentChangesAllowed
+    }
   }
 
   @ApiStatus.Experimental
@@ -302,7 +303,33 @@ class InlineCompletionHandler(
   @RequiresEdt
   fun setIgnoringDocumentChanges(value: Boolean) {
     ThreadingAssertions.assertEventDispatchThread()
-    customDocumentChangesAllowed = value
+    completionState.ignoreDocumentChanges = value
+  }
+
+  /**
+   * By default, any caret movement to the non-expected position clears an inline completion session.
+   * The expected position is defined by [InlineCompletionRequest.endOffset].
+   *
+   * Some completion updates, like 'accept only the next word', cannot guess the next expected position,
+   * because this update is defined by implementation details of a particular provider.
+   * Therefore, with this method, any caret movement will update the expected offset of the inline completion.
+   */
+  @ApiStatus.Experimental
+  @RequiresEdt
+  internal fun <T> withIgnoringCaretMovement(block: () -> T): T {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (completionState.ignoreCaretMovement) {
+      return block()
+    }
+    completionState.ignoreCaretMovement = true
+    return try {
+      block()
+    } finally {
+      check(completionState.ignoreCaretMovement) {
+        "The state of disabling caret movement tracker is switched outside."
+      }
+      completionState.ignoreCaretMovement = false
+    }
   }
 
   private suspend fun request(
@@ -452,16 +479,21 @@ class InlineCompletionHandler(
 
   @RequiresEdt
   private fun InlineCompletionSession.guardCaretModifications() {
-    val expectedOffset = {
-      // This caret listener might be disposed after context: ML-1438
-      if (!context.isDisposed) context.expectedStartOffset else -1
+    val listener = object : InlineSessionWiseCaretListener() {
+      override var completionOffset: Int
+        get() = if (!context.isDisposed) context.expectedStartOffset else -1
+        set(value) {
+          if (!context.isDisposed) context.expectedStartOffset = value
+        }
+
+      override val mode: Mode
+        get() = if (completionState.ignoreCaretMovement) Mode.ADAPTIVE else Mode.PROHIBIT_MOVEMENT
+
+      override fun cancel() {
+        if (!context.isDisposed) hide(context, FinishType.CARET_CHANGED)
+      }
     }
-    val cancel = {
-      if (!context.isDisposed) hide(context, FinishType.CARET_CHANGED)
-    }
-    val listener = InlineSessionWiseCaretListener(expectedOffset, cancel)
-    editor.caretModel.addCaretListener(listener)
-    whenDisposed { editor.caretModel.removeCaretListener(listener) }
+    editor.caretModel.addCaretListener(listener, this)
   }
 
   @RequiresBlockingContext
@@ -481,6 +513,12 @@ class InlineCompletionHandler(
     ThreadingAssertions.assertEventDispatchThread()
     executor.awaitAll()
   }
+
+  private class InlineCompletionState(
+    var ignoreDocumentChanges: Boolean = false,
+    var ignoreCaretMovement: Boolean = false,
+    var isInvokingEvent: Boolean = false
+  )
 
   companion object {
     private val LOG = thisLogger()
