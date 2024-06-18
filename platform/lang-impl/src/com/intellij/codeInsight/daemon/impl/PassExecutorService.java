@@ -41,6 +41,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Functions;
+import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -368,7 +369,7 @@ final class PassExecutorService implements Disposable {
       myThreadsToStartCountdown = threadsToStartCountdown;
       myUpdateProgress = progressIndicator;
       myOpenTelemetryContext = openTelemetryContext;
-      myContext = ThreadContext.currentThreadContext().minusKey(kotlinx.coroutines.Job.Key);
+      myContext = Propagation.createChildContext().getContext();
     }
 
     @Override
