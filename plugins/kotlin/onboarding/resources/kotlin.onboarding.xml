@@ -1,7 +1,9 @@
 <idea-plugin package="org.jetbrains.kotlin.onboarding">
-  <dependencies>
-    <plugin id="org.jetbrains.plugins.gradle"/>
-  </dependencies>
+  <applicationListeners>
+    <listener class="org.jetbrains.kotlin.onboarding.k2.FirStatusBarWidgetListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
+
   <projectListeners>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
               class="org.jetbrains.kotlin.onboarding.KotlinNewUserTrackerFileListener"/>
@@ -9,16 +11,12 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.KotlinNewUserTracker"/>
-    <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurveyStore"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.K2UserTracker"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.OnboardingFeedbackSurvey"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.K2FeedbackSurvey"/>
-    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurvey"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.CheckKotlinPluginModeWasSwitchedOnRestartPostStartupActivity"/>
-    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionExternalSystemListener"/>
 
     <statusBarWidgetFactory id="kotlin.fir.ide" implementation="org.jetbrains.kotlin.onboarding.k2.FirStatusBarWidgetFactory"/>
-
   </extensions>
   <actions resource-bundle="messages.FeedbackBundle">
     <group id="OnboardingKotlin" internal="true">
@@ -29,11 +27,6 @@
     <group id="K2Satisfaction" internal="true">
       <action id="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.ShowK2FeedbackDialogAction"
               class="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.ShowK2FeedbackDialogAction" internal="true"/>
-      <add-to-group group-id="FeedbackDialogGroup" anchor="last"/>
-    </group>
-    <group id="BuildProcessSatisfaction" internal="true">
-      <action id="org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction"
-              class="org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction" internal="true"/>
       <add-to-group group-id="FeedbackDialogGroup" anchor="last"/>
     </group>
   </actions>

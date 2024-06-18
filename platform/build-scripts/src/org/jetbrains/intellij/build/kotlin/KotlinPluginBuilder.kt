@@ -122,6 +122,7 @@ object KotlinPluginBuilder {
     "kotlin.j2k.k1.new",
     "kotlin.j2k.k2",
     "kotlin.onboarding",
+    "kotlin.onboarding.gradle",
     "kotlin.plugin-updater",
     "kotlin.preferences",
     "kotlin.project-configuration",

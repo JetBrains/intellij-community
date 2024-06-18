@@ -155,6 +155,7 @@
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.injection" />
     <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.onboarding.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.highlighting.minimal" />
     <orderEntry type="module" module-name="kotlin.formatter.minimal" />

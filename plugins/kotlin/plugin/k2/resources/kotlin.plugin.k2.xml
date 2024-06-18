@@ -46,11 +46,6 @@
     <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.IdeaFirKotlinUastCodeGenerationPlugin"/>
   </extensions>
 
-  <applicationListeners>
-    <listener class="org.jetbrains.kotlin.idea.fir.FirStatusBarWidgetListener"
-              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
-  </applicationListeners>
-
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"
                     serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider"/>
@@ -225,6 +220,7 @@
     <module name="kotlin.gradle.gradle-java"/>
 
     <module name="kotlin.onboarding"/>
+    <module name="kotlin.onboarding.gradle"/>
 
     <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.project-wizard.gradle"/>

@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package onboarding.gradle
+package org.jetbrains.kotlin.onboarding.gradle
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurveyStore
 import org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurveyStore.Companion.MINIMUM_BUILDS_BEFORE_SURVEY
 import org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurveyStore.Companion.MINIMUM_DURATION_SINCE_FIRST_BUILD
 import java.time.Instant
