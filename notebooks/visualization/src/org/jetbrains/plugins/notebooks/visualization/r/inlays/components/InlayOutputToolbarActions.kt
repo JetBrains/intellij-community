@@ -6,17 +6,30 @@ package org.jetbrains.plugins.notebooks.visualization.r.inlays.components
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutput.Companion.getToolbarPaneOrNull
 
-import org.jetbrains.plugins.notebooks.visualization.r.ui.DumbAwareActionAdapter
-
-class ClearOutputAction : DumbAwareActionAdapter()
-
-internal class SaveOutputAction : DumbAwareAction() {
+class ClearOutputAction private constructor() : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val toolbarPane = getToolbarPaneOrNull(e)
-    e.presentation.isEnabledAndVisible = toolbarPane != null
+    e.presentation.isEnabledAndVisible = getToolbarPaneOrNull(e) != null
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    getToolbarPaneOrNull(e)?.inlayOutput?.doClearAction()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread =
+    ActionUpdateThread.EDT
+
+  companion object {
+    const val ID = "org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ClearOutputAction"
+  }
+}
+
+
+internal class SaveOutputAction private constructor() : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = getToolbarPaneOrNull(e) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -26,18 +39,15 @@ internal class SaveOutputAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread =
     ActionUpdateThread.EDT
 
-  private fun getToolbarPaneOrNull(e: AnActionEvent): ToolbarPane? =
-    e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarPane
-
   companion object {
     const val ID = "org.jetbrains.plugins.notebooks.visualization.r.inlays.components.SaveOutputAction"
   }
 }
 
-class CopyImageToClipboardAction : DumbAwareAction() {
+
+class CopyImageToClipboardAction private constructor() : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val imageOutput = getImageOutputOrNull(e)
-    e.presentation.isEnabledAndVisible = imageOutput != null
+    e.presentation.isEnabledAndVisible = getImageOutputOrNull(e) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -48,12 +58,13 @@ class CopyImageToClipboardAction : DumbAwareAction() {
     ActionUpdateThread.EDT
 
   private fun getImageOutputOrNull(e: AnActionEvent): CanCopyImageToClipboard? =
-    (e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarPane)?.inlayOutput as? CanCopyImageToClipboard
+    getToolbarPaneOrNull(e)?.inlayOutput as? CanCopyImageToClipboard
 
   companion object {
     const val ID = "org.jetbrains.plugins.notebooks.visualization.r.inlays.components.CopyImageToClipboardAction"
   }
 }
+
 
 /** marker interface for [CopyImageToClipboardAction] */
 interface CanCopyImageToClipboard {

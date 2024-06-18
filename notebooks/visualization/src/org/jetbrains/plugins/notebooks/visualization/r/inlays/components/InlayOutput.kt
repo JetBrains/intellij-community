@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
@@ -119,7 +120,8 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
   }
 
   private fun createToolbar(): JComponent {
-    val toolbar = ToolbarUtil.createEllipsisToolbar("NotebooksInlayOutput", actions + createClearAction())
+    val clearAction = ActionManager.getInstance().getAction(ClearOutputAction.ID)
+    val toolbar = ToolbarUtil.createEllipsisToolbar("NotebooksInlayOutput", actions + clearAction)
 
     toolbar.targetComponent = toolbarPane // ToolbarPane will be in context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
     toolbar.component.isOpaque = true
@@ -144,8 +146,14 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
     }
   }
 
-  private fun createClearAction(): AnAction {
-    return ToolbarUtil.createAnActionButton<ClearOutputAction>(clearAction::invoke)
+  /** called by [ClearOutputAction] */
+  fun doClearAction() {
+    clearAction()
+  }
+
+  companion object {
+    fun getToolbarPaneOrNull(e: AnActionEvent): ToolbarPane? =
+      e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarPane
   }
 }
 
