@@ -42,7 +42,6 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -261,7 +260,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return executionResult;
   }
 
-  private @NotNull String getExecutionName(@NotNull ProjectSystemId externalSystemId) {
+  private @NotNull @Nls String getExecutionName(@NotNull ProjectSystemId externalSystemId) {
     if (StringUtil.isNotEmpty(mySettings.getExecutionName())) {
       return mySettings.getExecutionName();
     }

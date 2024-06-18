@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview.jcef
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.HttpRequests
@@ -32,7 +33,7 @@ private val shouldEnforceCsp: Boolean
   get() = Registry.`is`("markdown.export.html.enforce.csp", true)
 
 internal class HtmlExporter(
-  htmlSource: String,
+  htmlSource: @NlsSafe String,
   private val savingSettings: HtmlResourceSavingSettings,
   private val project: Project,
   private val targetFile: File

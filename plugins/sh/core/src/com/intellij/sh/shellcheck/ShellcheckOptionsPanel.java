@@ -8,12 +8,14 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.ActionLink;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,7 +58,8 @@ public class ShellcheckOptionsPanel {
     myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
     myErrorLabel.setForeground(JBColor.RED);
 
-    ShShellcheckUtil.SHELLCHECK_CODES.forEach((key, value) -> myInspectionsCheckboxPanel.addCheckbox(key + " " + value, key));
+    ShShellcheckUtil.SHELLCHECK_CODES.forEach(
+      (@NlsSafe String key, @Nls String value) -> myInspectionsCheckboxPanel.addCheckbox(key + " " + value, key));
     myWarningLabel.setIcon(AllIcons.General.Warning);
   }
 
