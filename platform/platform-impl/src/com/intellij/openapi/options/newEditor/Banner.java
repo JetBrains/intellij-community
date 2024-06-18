@@ -3,7 +3,6 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
@@ -36,7 +35,7 @@ final class Banner extends SimpleBanner {
     myLeftPanel.add(myBreadcrumbs);
     myLeftPanel.add(myProjectIcon);
     myLeftPanel.add(myProgress);
-    add(BorderLayout.EAST, RelativeFont.BOLD.install(new ActionLink(action)));
+    add(new ActionLink(action), BorderLayout.EAST);
   }
 
   void setText(@NotNull Collection<@NlsContexts.ConfigurableName String> names) {
