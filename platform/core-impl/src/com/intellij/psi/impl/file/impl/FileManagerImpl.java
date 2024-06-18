@@ -623,7 +623,11 @@ public final class FileManagerImpl implements FileManager {
 
     if (shouldResurrect(viewProvider, file)) {
       viewProvider.putUserData(IN_COMA, null);
-      LOG.assertTrue(getRawCachedViewProvider(file) == viewProvider);
+      FileViewProvider cachedProvider = getRawCachedViewProvider(file);
+      LOG.assertTrue(
+        cachedProvider == viewProvider,
+        "Cached: " + cachedProvider + ", expected: " + viewProvider
+      );
 
       for (PsiFile psiFile : viewProvider.getCachedPsiFiles()) {
         // update "myPossiblyInvalidated" fields in files by calling "isValid"
