@@ -6,22 +6,23 @@ import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
-import git4idea.*;
-import git4idea.validators.GitRefNameValidator;
+import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
@@ -38,11 +39,14 @@ public class GitRepositoryReader {
 
   private static final Logger LOG = Logger.getInstance(GitRepositoryReader.class);
 
+  private static final String DETACHED_HEAD = "detached HEAD";
+
   private final @NotNull File myHeadFile;       // .git/HEAD
   private final @NotNull File myRefsHeadsDir;   // .git/refs/heads/
   private final @NotNull File myRefsRemotesDir; // .git/refs/remotes/
   private final @NotNull File myPackedRefsFile; // .git/packed-refs
   private final @NotNull GitRepositoryFiles myGitFiles;
+
 
   GitRepositoryReader(@NotNull GitRepositoryFiles gitFiles) {
     myGitFiles = gitFiles;
@@ -154,12 +158,17 @@ public class GitRepositoryReader {
       currentBranch = headInfo.content;
     }
     else if (state == Repository.State.REBASING) {
-      currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseApplyDir());
-      if (currentBranch == null) {
-        currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseMergeDir());
-      }
+      currentBranch = tryFindRebaseBranch();
     }
     return addRefsHeadsPrefixIfNeeded(currentBranch);
+  }
+
+  private @Nullable String tryFindRebaseBranch() {
+    String currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseApplyDir());
+    if (currentBranch == null) {
+      currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseMergeDir());
+    }
+    return (currentBranch == null || currentBranch.equals(DETACHED_HEAD)) ? null : currentBranch;
   }
 
   private static @Nullable String readRebaseDirBranchFile(@NonNls File rebaseDir) {
