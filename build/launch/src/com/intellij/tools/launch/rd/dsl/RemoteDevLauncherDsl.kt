@@ -20,6 +20,8 @@ enum class Product(val mainModule: String) {
 }
 
 interface BackendBuilder : IdeBuilder {
+  fun jbr(path: String)
+
   /**
    * The path to the project on the machine where backend is launched.
    *

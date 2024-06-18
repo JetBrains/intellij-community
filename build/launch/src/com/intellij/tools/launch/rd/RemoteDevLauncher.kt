@@ -201,18 +201,24 @@ private class DockerBuilderImpl : DockerBuilder {
 }
 
 private open class BackendBuilderImpl(val product: Product, val launchInDocker: Boolean) : IdeBuilderImpl(), BackendBuilder {
+  var jbrPath: String? = null
   lateinit var projectPath: String
+
+  override fun jbr(path: String) {
+    jbrPath = path
+  }
 
   override fun project(path: String) {
     projectPath = path
   }
 
-  fun build(): BackendDescription = BackendDescription(product, launchInDocker, projectPath, attachDebuggerCallback)
+  fun build(): BackendDescription = BackendDescription(product, launchInDocker, jbrPath, projectPath, attachDebuggerCallback)
 }
 
 internal data class BackendDescription(
   val product: Product,
   val launchInDocker: Boolean,
+  val jbrPath: String?,
   val projectPath: String,
   val attachDebuggerCallback: (suspend (Int) -> Unit)?,
 )

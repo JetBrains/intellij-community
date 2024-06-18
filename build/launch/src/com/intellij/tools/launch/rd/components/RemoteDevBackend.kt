@@ -70,7 +70,7 @@ internal fun runCodeWithMeHostNoLobby(backendDescription: BackendInEnvDescriptio
           DockerContainerOptions(
             image = backendDescription.image,
             containerName = DEFAULT_CONTAINER_NAME,
-            javaExecutable = DEFAULT_JAVA_EXECUTABLE_PATH,
+            javaExecutable = backendDescription.backendDescription.jbrPath ?: DEFAULT_JAVA_EXECUTABLE_PATH,
             ultimateRepositoryPathInContainer = "/intellij",
             bindMounts = backendDescription.bindMounts
           )
