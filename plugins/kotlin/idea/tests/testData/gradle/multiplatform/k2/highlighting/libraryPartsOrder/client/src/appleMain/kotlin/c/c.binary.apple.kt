@@ -10,6 +10,6 @@ fun binaryApple(mc: MyClass) {
     MyClass.V
     mc.mem()
 
-    nonExpectHasHigherPriority(1).<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'nea'.'")!>nea<!>
+    nonExpectHasHigherPriority(1).nea
     expectHasHigherPriority(1).ea
 }
