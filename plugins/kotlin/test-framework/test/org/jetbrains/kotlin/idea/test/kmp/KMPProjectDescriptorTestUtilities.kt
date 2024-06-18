@@ -34,7 +34,7 @@ object KMPProjectDescriptorTestUtilities {
         for (file in files) {
             val module = KaModuleProvider.getModule(file.project, file, useSiteModule = null)
             check(module is KaSourceModule)
-            val targetPlatform = module.platform
+            val targetPlatform = module.targetPlatform
             when (platform) {
                 KMPTestPlatform.Jvm -> check(targetPlatform.isJvm())
                 KMPTestPlatform.Js -> check(targetPlatform.isJs())

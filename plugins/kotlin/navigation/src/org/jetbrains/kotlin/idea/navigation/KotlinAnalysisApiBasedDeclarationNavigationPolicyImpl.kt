@@ -265,11 +265,11 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     }
 
     private fun KaModule.getContentScopeWithCommonDependencies(): GlobalSearchScope {
-        if (platform.isCommon()) return contentScope
+        if (targetPlatform.isCommon()) return contentScope
 
         val scopes = buildList {
             add(contentScope)
-            allDirectDependencies().filter { it.platform.isCommon() }.mapTo(this) { it.contentScope }
+            allDirectDependencies().filter { it.targetPlatform.isCommon() }.mapTo(this) { it.contentScope }
         }
         return GlobalSearchScope.union(scopes)
     }

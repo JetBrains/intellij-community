@@ -38,7 +38,7 @@ class KtSymbolFromIndexProvider private constructor(
     private fun useSiteFilter(element: PsiElement): Boolean {
         if (element.kotlinFqName?.isExcludedFromAutoImport(project, useSiteFile) == true) return false
 
-        val isCommon = useSiteModule.platform.isCommon()
+        val isCommon = useSiteModule.targetPlatform.isCommon()
         return isCommon || (element as? KtDeclaration)?.isExpectDeclaration() != true
     }
 

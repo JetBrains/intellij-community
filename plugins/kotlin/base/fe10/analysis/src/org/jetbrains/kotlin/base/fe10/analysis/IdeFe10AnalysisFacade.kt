@@ -40,7 +40,7 @@ internal class IdeFe10AnalysisFacade(private val project: Project) : Fe10Analysi
     @OptIn(Frontend10ApiUsage::class)
     override fun getAnalysisContext(ktModule: KaModule, token: KtLifetimeToken): Fe10AnalysisContext {
         val moduleInfo = ktModule.moduleInfo
-        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeByModuleInfo(moduleInfo, ktModule.platform)
+        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeByModuleInfo(moduleInfo, ktModule.targetPlatform)
         return resolutionFacade.getAnalysisContext(token)
     }
 
