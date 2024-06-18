@@ -26,7 +26,7 @@ class GroovyMoveInnerClassTest extends GroovyMoveTestBase {
   }
 
   @Override
-  boolean perform(String newPackageName, String[] classNames) {
+  void perform(String newPackageName, String[] classNames) {
     assertEquals("ClassNames should contain source class name and target class name", 2, classNames.length)
 
     String className = classNames[0]
@@ -43,7 +43,5 @@ class GroovyMoveInnerClassTest extends GroovyMoveTestBase {
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
     FileDocumentManager.getInstance().saveAllDocuments()
-
-    return true
   }
 }

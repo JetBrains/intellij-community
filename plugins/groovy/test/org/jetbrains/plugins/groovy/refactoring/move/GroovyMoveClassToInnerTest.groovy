@@ -137,7 +137,7 @@ class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
   }
 
   @Override
-  boolean perform(String newPackageName, String[] names) {
+  void perform(String newPackageName, String[] names) {
     final PsiClass[] classes = new PsiClass[names.length]
     for (int i = 0; i < classes.length; i++) {
       String className = names[i]
@@ -153,13 +153,11 @@ class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
       def usages = processor.findUsages()
       def conflicts = processor.getConflicts(usages)
       assertSameElements(conflicts.values(), myConflicts)
-      return false
     }
     else {
       processor.run()
       PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
       FileDocumentManager.instance.saveAllDocuments()
-      return true
     }
   }
 }

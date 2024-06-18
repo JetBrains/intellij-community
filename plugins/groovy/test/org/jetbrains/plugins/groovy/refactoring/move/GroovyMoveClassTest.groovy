@@ -69,7 +69,7 @@ class GroovyMoveClassTest extends GroovyMoveTestBase {
   }
 
   @Override
-  boolean perform(String newPackageName, String[] classNames) {
+  void perform(String newPackageName, String[] classNames) {
     final PsiClass[] classes = new PsiClass[classNames.length]
     for (int i = 0; i < classes.length; i++) {
       String className = classNames[i]
@@ -89,7 +89,5 @@ class GroovyMoveClassTest extends GroovyMoveTestBase {
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
     FileDocumentManager.getInstance().saveAllDocuments()
-
-    return true
   }
 }

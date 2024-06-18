@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2024 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.move
+package org.jetbrains.plugins.groovy.refactoring.move;
 
-import com.intellij.refactoring.LightMultiFileTestCase
+import com.intellij.refactoring.LightMultiFileTestCase;
 
-/**
- * @author Max Medvedev
- */
 abstract class GroovyMoveTestBase extends LightMultiFileTestCase {
 
   protected void doTest(String newPackageName, String[] names) {
-    doTest(() -> perform(newPackageName, names))
+    doTest(() -> perform(newPackageName, names));
   }
 
-  abstract boolean perform(String newPackageName, String[] names)
+  abstract void perform(String newPackageName, String[] names);
 }

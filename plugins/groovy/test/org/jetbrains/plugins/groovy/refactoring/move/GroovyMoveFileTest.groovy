@@ -34,12 +34,11 @@ class GroovyMoveFileTest extends GroovyMoveTestBase {
   }
 
   @Override
-  boolean perform(String newPackageName, String[] names) {
+  void perform(String newPackageName, String[] names) {
     def pack1 = myFixture.findFileInTempDir('pack1')
     PsiFile[] files = myFixture.psiManager.findDirectory(pack1).files.findAll {file -> names.find {name -> name == file.name}}
     def dir = myFixture.psiManager.findDirectory(myFixture.findFileInTempDir(newPackageName))
 
     new MoveFilesOrDirectoriesProcessor(myFixture.project, files, dir, false, false, false, null, null).run()
-    return true
   }
 }
