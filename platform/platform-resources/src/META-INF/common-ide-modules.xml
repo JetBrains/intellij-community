@@ -6,6 +6,7 @@
     <module name="intellij.platform.lvcs.impl"/>
     <module name="intellij.platform.smRunner.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.libraries.microba"/>
   </content>
 
   <xi:include href="/META-INF/vcs-modules.xml"/>

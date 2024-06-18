@@ -2,6 +2,10 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.vcs"/>
 
+  <dependencies>
+    <module name="intellij.libraries.microba"/>
+  </dependencies>
+
   <xi:include href="/META-INF/VcsExtensionPoints.xml"/>
 
   <xi:include href="/META-INF/VcsExtensions.xml"/>
