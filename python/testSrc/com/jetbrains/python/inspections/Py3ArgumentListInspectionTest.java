@@ -311,4 +311,35 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    Derived2(0, <warning descr="Unexpected argument">0</warning>, b=0<warning descr="Parameter 'qq' unfilled">)</warning>
                    """);
   }
+
+  // PY-23067
+  public void testFunctoolsWraps() {
+    doTestByText("""
+                   import functools
+                                      
+                   class MyClass:
+                     def foo(self, s: str, i: int):
+                         pass
+                                      
+                   class Route:
+                       @functools.wraps(MyClass.foo)
+                       def __init__(self):
+                           pass
+                                      
+                   class Router:
+                       @functools.wraps(wrapped=Route.__init__)
+                       def route(self, s: str):
+                           pass
+                                      
+                   r = Router()
+                   r.route("", 13)
+                   r.route(""<warning descr="Parameter 'i' unfilled">)</warning>
+                   r.route("", 13, <warning descr="Unexpected argument">1</warning>)
+                   """);
+  }
+
+  // PY-23067
+  public void testFunctoolsWrapsMultiFile() {
+    doMultiFileTest();
+  }
 }

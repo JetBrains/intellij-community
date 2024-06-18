@@ -69,7 +69,7 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     assertNotNull(stringValue);
 
     PsiElement referenceElement = marks.get("<the_ref>").getParent(); // ident -> expr
-    final PyDocStringOwner docOwner = (PyDocStringOwner)((PyReferenceExpression)referenceElement).getReference().resolve();
+    final PyDocStringOwner docOwner = (PyDocStringOwner)referenceElement.getReference().resolve();
     assertNotNull(docOwner);
     assertEquals(docElement, docOwner.getDocStringExpression());
 
@@ -91,7 +91,7 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   private void checkHover() {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
-    final PsiElement docOwner = ((PyReferenceExpression)originalElement.getParent()).getReference().resolve();
+    final PsiElement docOwner = originalElement.getParent().getReference().resolve();
     checkByHTML(myProvider.getQuickNavigateInfo(docOwner, originalElement));
   }
 
@@ -165,18 +165,11 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropNewSetter() {
-    Map<String, PsiElement> marks = loadTest();
-    PsiElement referenceElement = marks.get("<the_ref>");
-    final PyDocStringOwner docStringOwner = (PyDocStringOwner)referenceElement.getParent().getReference().resolve();
-    checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
+    checkHTMLOnly();
   }
 
   public void testPropNewDeleter() {
-    Map<String, PsiElement> marks = loadTest();
-    PsiElement referenceElement = marks.get("<the_ref>");
-    final PyDocStringOwner docStringOwner =
-      (PyDocStringOwner)((PyReferenceExpression)(referenceElement.getParent())).getReference().resolve();
-    checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
+    checkHTMLOnly();
   }
 
   public void testPropOldGetter() {
@@ -185,10 +178,7 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
 
 
   public void testPropOldSetter() {
-    Map<String, PsiElement> marks = loadTest();
-    PsiElement referenceElement = marks.get("<the_ref>");
-    final PyDocStringOwner docStringOwner = (PyDocStringOwner)referenceElement.getParent().getReference().resolve();
-    checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
+    checkHTMLOnly();
   }
 
   public void testPropOldDeleter() {
@@ -868,6 +858,11 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
 
   // PY-64074
   public void testTypeAliasStatement() {
+    checkHTMLOnly();
+  }
+
+  // PY-23067
+  public void testFunctoolsWraps() {
     checkHTMLOnly();
   }
 

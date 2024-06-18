@@ -1258,6 +1258,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a: int, *, name: str = ..., year: int", new String[]{"year: int"});
   }
 
+  // PY-23067
+  public void testFunctoolsWraps() {
+    final Map<String, PsiElement> marks = loadTest(2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: MyClass, s: str, b: bool", new String[]{"s: str, "}, new String[]{"self: MyClass, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: MyClass, s: str, b: bool", new String[]{"b: bool"}, new String[]{"self: MyClass, "});
+  }
+
   // PY-58497
   public void testSimplePopupWithHintsOff() {
     Map<String, PsiElement> marks = loadTest(5);
