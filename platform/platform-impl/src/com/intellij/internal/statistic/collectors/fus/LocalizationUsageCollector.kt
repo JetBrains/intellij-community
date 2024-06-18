@@ -13,7 +13,7 @@ import com.intellij.l10n.LocalizationUtil
 class LocalizationUsageCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("localization.info", 2)
   private val selectedLanguage = GROUP.registerEvent("selected.language", StringEventField.ValidatedByRegexp("value", ".*{2,5}"))
-  private val selectedRegion = GROUP.registerEvent("selected.region", EventFields.Enum("value", Region::class.java))
+  private val selectedRegion = GROUP.registerEvent("selected.region", EventFields.Enum<Region>("value"))
 
   override fun getMetrics(): Set<MetricEvent> {
     val result = mutableSetOf<MetricEvent>()
