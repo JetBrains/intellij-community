@@ -37,6 +37,7 @@ import org.ec4j.core.ResourceProperties
 import org.editorconfig.EditorConfigNotifier
 import org.editorconfig.Utils
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory
+import org.editorconfig.configmanagement.EditorConfigUsagesCollector.logEditorConfigUsed
 import org.editorconfig.language.messages.EditorConfigBundle.message
 import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
@@ -171,12 +172,14 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
 
 private var ourEnabledInTestOnly = false
 
-private fun processOptions(properties: ResourceProperties,
-                           settings: CodeStyleSettings,
-                           fileType: FileType,
-                           mapper: AbstractCodeStylePropertyMapper,
-                           languageSpecific: Boolean,
-                           processed: MutableSet<String>): Boolean {
+private fun processOptions(
+  properties: ResourceProperties,
+  settings: CodeStyleSettings,
+  fileType: FileType,
+  mapper: AbstractCodeStylePropertyMapper,
+  languageSpecific: Boolean,
+  processed: MutableSet<String>,
+): Boolean {
   val langPrefix = if (languageSpecific) mapper.languageDomainId + "_" else null
   var isModified = false
   for (prop in properties.properties.values) {
@@ -216,12 +219,14 @@ private fun getDependentProperties(property: String, langPrefix: String?): List<
   }
 }
 
-private fun preprocessValue(accessor: CodeStylePropertyAccessor<*>,
-                            properties: ResourceProperties,
-                            settings: CodeStyleSettings,
-                            fileType: FileType,
-                            optionKey: String,
-                            rawValue: String): String {
+private fun preprocessValue(
+  accessor: CodeStylePropertyAccessor<*>,
+  properties: ResourceProperties,
+  settings: CodeStyleSettings,
+  fileType: FileType,
+  optionKey: String,
+  rawValue: String,
+): String {
   val optionValue = rawValue.trim()
   if ("indent_size" == optionKey) {
     val explicitTabSize = getExplicitTabSize(properties)
@@ -245,9 +250,11 @@ private fun preprocessValue(accessor: CodeStylePropertyAccessor<*>,
   return optionValue
 }
 
-private fun findAccessor(mapper: AbstractCodeStylePropertyMapper,
-                         propertyName: String,
-                         langPrefix: String?): CodeStylePropertyAccessor<*>? {
+private fun findAccessor(
+  mapper: AbstractCodeStylePropertyMapper,
+  propertyName: String,
+  langPrefix: String?,
+): CodeStylePropertyAccessor<*>? {
   if (langPrefix != null) {
     if (propertyName.startsWith(langPrefix)) {
       val prefixlessName = Strings.trimStart(propertyName, langPrefix)
@@ -276,17 +283,21 @@ private fun isTabIndent(properties: ResourceProperties): Boolean {
   }
 }
 
-private fun getMappers(settings: TransientCodeStyleSettings,
-                       properties: ResourceProperties,
-                       fileBaseLanguage: Language): Collection<AbstractCodeStylePropertyMapper> {
+private fun getMappers(
+  settings: TransientCodeStyleSettings,
+  properties: ResourceProperties,
+  fileBaseLanguage: Language,
+): Collection<AbstractCodeStylePropertyMapper> {
   return buildSet {
     getLanguageCodeStyleProviders(properties, fileBaseLanguage).mapTo(this) { it.getPropertyMapper(settings) }
     add(GeneralCodeStylePropertyMapper(settings))
   }
 }
 
-private fun getLanguageCodeStyleProviders(properties: ResourceProperties,
-                                          fileBaseLanguage: Language): Collection<LanguageCodeStyleSettingsProvider> {
+private fun getLanguageCodeStyleProviders(
+  properties: ResourceProperties,
+  fileBaseLanguage: Language,
+): Collection<LanguageCodeStyleSettingsProvider> {
   val providers = LinkedHashSet<LanguageCodeStyleSettingsProvider>()
   LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(fileBaseLanguage)?.let {
     providers.add(it)
@@ -338,6 +349,9 @@ private fun applyCodeStyleSettings(settings: TransientCodeStyleSettings, propert
                                               mapper = mapper,
                                               languageSpecific = true,
                                               processed = processed)
+  }
+  if (isModified) {
+    logEditorConfigUsed(file, properties)
   }
   return isModified
 }
