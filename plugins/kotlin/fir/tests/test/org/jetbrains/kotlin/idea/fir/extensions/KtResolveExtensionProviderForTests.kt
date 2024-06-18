@@ -10,7 +10,7 @@ import com.intellij.psi.xml.XmlTag
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
@@ -101,7 +101,7 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
                     .filterIsInstance<KtDeclaration>()
                     .firstNotNullOfOrNull { declaration ->
                         val fqNameParts = when (val symbol = declaration.symbol) {
-                            is KaFunctionSymbol -> {
+                            is KaNamedFunctionSymbol -> {
                                 val callableId = symbol.callableId
                                     ?: return@firstNotNullOfOrNull null
                                 callableId.className?.pathSegments().orEmpty() + callableId.callableName

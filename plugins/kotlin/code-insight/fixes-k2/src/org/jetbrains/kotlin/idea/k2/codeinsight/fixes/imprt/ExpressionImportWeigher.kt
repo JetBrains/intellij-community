@@ -217,14 +217,14 @@ internal class OperatorExpressionImportWeigher(
 
     context(KaSession)
     override fun weigh(symbol: KaDeclarationSymbol): Int {
-        val functionSymbol = (symbol as? KaFunctionSymbol)?.takeIf { it.isOperator } ?: return 0
+        val functionSymbol = (symbol as? KaNamedFunctionSymbol)?.takeIf { it.isOperator } ?: return 0
 
         return super.weigh(functionSymbol)
     }
 
     context(KaSession)
     override fun ownWeigh(symbol: KaDeclarationSymbol): Int = withValidityAssertion {
-        symbol as KaFunctionSymbol
+        symbol as KaNamedFunctionSymbol
 
         val name = symbol.name
 

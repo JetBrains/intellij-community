@@ -127,7 +127,7 @@ object KotlinUnusedSymbolUtil {
           AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && (symbol as? KaSymbolWithVisibility)?.visibility?.isPublicAPI == true) {
           return null
       }
-      if (symbol is KaFunctionSymbol && symbol.isOperator) return null
+      if (symbol is KaNamedFunctionSymbol && symbol.isOperator) return null
 
       val isCheapEnough = lazy(LazyThreadSafetyMode.NONE) {
           isCheapEnoughToSearchUsages(declaration)
@@ -430,7 +430,7 @@ object KotlinUnusedSymbolUtil {
           kotlinOptions = searchOptions
       )
       val originalDeclaration = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol?.psi as? KtNamedDeclaration
-      if (symbol !is KaFunctionSymbol || !symbol.annotationsList.hasAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
+      if (symbol !is KaNamedFunctionSymbol || !symbol.annotationsList.hasAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
           if (declaration is KtSecondaryConstructor &&
               declarationContainingClass != null &&
               // when too many occurrences of this class, consider it used
@@ -636,13 +636,13 @@ object KotlinUnusedSymbolUtil {
               !classSymbol.isInline && !classSymbol.visibility.isPrivateOrPrivateToThis()
           }
           hasModifier(KtTokens.INTERNAL_KEYWORD) -> false
-          symbol !is KaFunctionSymbol -> true
+          symbol !is KaNamedFunctionSymbol -> true
           else -> !symbol.hasInlineClassParameters()
       }
   }
 
   context(KaSession)
-  private fun KaFunctionSymbol.hasInlineClassParameters(): Boolean {
+  private fun KaNamedFunctionSymbol.hasInlineClassParameters(): Boolean {
       val receiverParameterClassSymbol = receiverType?.expandedSymbol as? KaNamedClassOrObjectSymbol
       return receiverParameterClassSymbol?.isInline == true || valueParameters.any {
           val namedClassOrObjectSymbol = it.returnType.expandedSymbol as? KaNamedClassOrObjectSymbol ?: return@any false

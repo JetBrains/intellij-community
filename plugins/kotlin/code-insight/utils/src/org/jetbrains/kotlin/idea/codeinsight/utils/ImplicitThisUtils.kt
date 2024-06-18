@@ -37,7 +37,7 @@ private fun getAssociatedClass(symbol: KtSymbol): KaClassOrObjectSymbol? {
     // both variables and functions are callable, and only they can be referenced by "this"
     if (symbol !is KaCallableSymbol) return null
     return when (symbol) {
-        is KaFunctionSymbol, is KtPropertySymbol ->
+        is KaNamedFunctionSymbol, is KtPropertySymbol ->
             if (symbol.isExtension) symbol.receiverType?.expandedSymbol else symbol.containingSymbol as? KaClassOrObjectSymbol
         is KtVariableLikeSymbol -> {
             val variableType = symbol.returnType as? KtFunctionalType
@@ -87,7 +87,7 @@ private fun getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<K
                 potentialCallNameReference?.getReferencedNameAsName()
             }
         }
-        is KaFunctionSymbol -> receiverSymbol.name
+        is KaNamedFunctionSymbol -> receiverSymbol.name
         else -> null
     }
     return Pair(associatedClass, associatedTag)

@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 
 @ApiStatus.Internal
-fun KaFunctionSymbol.getByteCodeMethodName(): String {
+fun KaNamedFunctionSymbol.getByteCodeMethodName(): String {
     val jvmName = annotations
         .filter { it.classId?.asFqNameString() == "kotlin.jvm.JvmName" }
         .firstNotNullOfOrNull {

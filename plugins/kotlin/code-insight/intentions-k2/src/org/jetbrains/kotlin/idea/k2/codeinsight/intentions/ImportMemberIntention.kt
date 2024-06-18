@@ -112,7 +112,7 @@ private fun canBeImported(symbol: KaCallableSymbol): Boolean {
     if (symbol is KaEnumEntrySymbol) return true
     if (symbol.origin.isJavaSourceOrLibrary()) {
         return when (symbol) {
-            is KaFunctionSymbol -> symbol.isStatic
+            is KaNamedFunctionSymbol -> symbol.isStatic
             is KtPropertySymbol -> symbol.isStatic
             is KtJavaFieldSymbol -> symbol.isStatic
             else -> false

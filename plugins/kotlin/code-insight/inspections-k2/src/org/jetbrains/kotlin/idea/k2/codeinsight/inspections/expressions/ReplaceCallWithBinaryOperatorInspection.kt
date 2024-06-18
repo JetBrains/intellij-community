@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -156,7 +156,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         val dotQualified = calleeExpression.parent.parent as? KtDotQualifiedExpression ?: return null
         fun isOperatorOrCompatible(): Boolean {
             val functionCall = calleeExpression.resolveCallOld()?.successfulFunctionCallOrNull()
-            return (functionCall?.symbol as? KaFunctionSymbol)?.isOperator == true
+            return (functionCall?.symbol as? KaNamedFunctionSymbol)?.isOperator == true
         }
         return when (identifier) {
             OperatorNameConventions.EQUALS -> {

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -41,7 +41,7 @@ private fun KtType.renderFullyQualifiedName() = render(KtTypeRendererForSource.W
 internal class KotlinFunctionPattern : KotlinFunctionPatternBase() {
     override fun KtFunction.matchParameters(vararg parameterTypes: String): Boolean {
         analyze(this) {
-            val symbol = symbol as? KaFunctionSymbol ?: return false
+            val symbol = symbol as? KaNamedFunctionSymbol ?: return false
             val valueParameterSymbols = symbol.valueParameters
 
             if (valueParameterSymbols.size != parameterTypes.size) return false
@@ -58,7 +58,7 @@ internal class KotlinFunctionPattern : KotlinFunctionPatternBase() {
     }
 
     override fun KtFunction.matchReceiver(receiverFqName: String): Boolean = analyze(this) {
-        val symbol = symbol as? KaFunctionSymbol ?: return false
+        val symbol = symbol as? KaNamedFunctionSymbol ?: return false
         val receiverType = symbol.receiverType ?: return false
         receiverType.renderFullyQualifiedName() == receiverFqName
     }

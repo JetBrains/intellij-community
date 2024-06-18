@@ -101,7 +101,7 @@ internal class ConvertLambdaToReferenceIntention :
         if (element.parentValueArgument() as? KtLambdaArgument == null) {
             val renderTypeForProperty = if (parent is KtProperty && parent.typeReference == null) {
                 val propertyType = parent.getReturnKtType()
-                val symbol = element.singleStatementOrNull()?.resolveCallOld()?.singleFunctionCallOrNull()?.symbol as? KaFunctionSymbol
+                val symbol = element.singleStatementOrNull()?.resolveCallOld()?.singleFunctionCallOrNull()?.symbol as? KaNamedFunctionSymbol
                 if (symbol != null && symbol.overloadedFunctions(element).size > 1) {
                     propertyType.render(position = Variance.IN_VARIANCE)
                 } else null
@@ -258,7 +258,7 @@ private fun buildReferenceText(receiver: String, selector: String, call: KaCalla
 }
 
 private val KaCallableSymbol.isInvokeOperator: Boolean
-    get() = this is KaFunctionSymbol && this.isOperator && name == org.jetbrains.kotlin.util.OperatorNameConventions.INVOKE
+    get() = this is KaNamedFunctionSymbol && this.isOperator && name == org.jetbrains.kotlin.util.OperatorNameConventions.INVOKE
 
 private fun getCalleeReferenceExpression(callableExpression: KtExpression): KtNameReferenceExpression? {
     return when (callableExpression) {
@@ -320,7 +320,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     }
 
     val lambdaParameterIsSuspend = lambdaParameterType?.isSuspendFunctionType == true
-    val calleeFunctionIsSuspend = (symbol as? KaFunctionSymbol)?.isSuspend
+    val calleeFunctionIsSuspend = (symbol as? KaNamedFunctionSymbol)?.isSuspend
     if (!lambdaParameterIsSuspend && calleeFunctionIsSuspend == true) return false
     if (lambdaParameterIsSuspend && calleeFunctionIsSuspend == false && !languageVersionSettings.supportsFeature(LanguageFeature.SuspendConversion)) return false
 
@@ -342,7 +342,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     val callableArgumentsCount = (callableExpression as? KtCallExpression)?.valueArguments?.size ?: 0
     if (symbol is KaFunctionLikeSymbol && symbol.valueParameters.size != callableArgumentsCount && (lambdaExpression.parentValueArgument() == null || (symbol as? KaFunctionLikeSymbol)?.valueParameters?.none { it.hasDefaultValue } == true)) return false
 
-    if (!lambdaExpression.isArgument() && symbol is KaFunctionSymbol && symbol.overloadedFunctions(lambdaExpression).size > 1) {
+    if (!lambdaExpression.isArgument() && symbol is KaNamedFunctionSymbol && symbol.overloadedFunctions(lambdaExpression).size > 1) {
         val property = lambdaExpression.getStrictParentOfType<KtProperty>()
         if (property != null && property.initializer?.let(KtPsiUtil::safeDeparenthesize) != lambdaExpression) return false
     }
@@ -394,13 +394,13 @@ private fun isExtensionFunctionType(type: KtType): Boolean {
 }
 
 context(KaSession)
-private fun KaFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpression): List<KaFunctionSymbol> {
+private fun KaNamedFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpression): List<KaNamedFunctionSymbol> {
     val scope = when (val containingSymbol = this.containingSymbol) {
         is KaClassOrObjectSymbol -> containingSymbol.memberScope
         else -> lambdaArgument.containingKtFile.getScopeContextForPosition(lambdaArgument).getCompositeScope()
     }
 
-    val symbols = scope.getCallableSymbols(name).filterIsInstance<KaFunctionSymbol>().toList()
+    val symbols = scope.getCallableSymbols(name).filterIsInstance<KaNamedFunctionSymbol>().toList()
 
     val function = psi ?: return symbols
     if (!function.isPhysical) {
@@ -421,7 +421,7 @@ private fun KaFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpress
 context(KaSession)
 private fun KtCallExpression.addTypeArgumentsIfNeeded(lambda: KtLambdaExpression): String? {
     val resolvedCall = lambda.singleStatementOrNull()?.resolveCallOld()?.successfulFunctionCallOrNull() ?: return null
-    val calledFunctionInLambda = resolvedCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return null
+    val calledFunctionInLambda = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return null
     val overloadedFunctions = calledFunctionInLambda.overloadedFunctions(lambda)
 
     if (overloadedFunctions.count { it.valueParameters.size == calledFunctionInLambda.valueParameters.size } < 2

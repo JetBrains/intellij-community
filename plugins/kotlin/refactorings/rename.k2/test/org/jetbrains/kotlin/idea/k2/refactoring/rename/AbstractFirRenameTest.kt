@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
@@ -61,7 +61,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
                 val callablesOfProperType = scope.getCallableSymbols(callableId.callableName)
                     .mapNotNull {
                         when (target.type) {
-                            KotlinTarget.CallableType.FUNCTION -> it as? KaFunctionSymbol
+                            KotlinTarget.CallableType.FUNCTION -> it as? KaNamedFunctionSymbol
                             KotlinTarget.CallableType.PROPERTY -> it as? KtPropertySymbol
                         }
                     }

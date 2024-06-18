@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -225,8 +225,8 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     private fun KtOperationReferenceExpression.replaceWith(fqName: FqName, targetElement: KtNamedFunction): ReplaceResult {
         val psiFactory = KtPsiFactory(project)
         val shortName = fqName.quoteIfNeeded().shortName().asString()
-        val isInfix = analyze(targetElement) { (targetElement.getFunctionLikeSymbol() as? KaFunctionSymbol)?.isInfix == true }
-        val isOperator = analyze(targetElement) { (targetElement.getFunctionLikeSymbol() as? KaFunctionSymbol)?.isOperator == true }
+        val isInfix = analyze(targetElement) { (targetElement.getFunctionLikeSymbol() as? KaNamedFunctionSymbol)?.isInfix == true }
+        val isOperator = analyze(targetElement) { (targetElement.getFunctionLikeSymbol() as? KaNamedFunctionSymbol)?.isOperator == true }
         val replacedExpr = if (isOperator) {
             replaced(psiFactory.createOperationName(OperatorNameConventions.TOKENS_BY_OPERATOR_NAME[Name.identifier(shortName)] ?: shortName))
         } else if (isInfix) {

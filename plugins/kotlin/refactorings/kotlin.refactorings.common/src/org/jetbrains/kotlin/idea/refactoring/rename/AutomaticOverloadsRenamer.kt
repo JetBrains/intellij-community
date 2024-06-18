@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -48,7 +48,7 @@ private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
     @OptIn(KaAllowAnalysisOnEdt::class)
     allowAnalysisOnEdt {
         analyze(this) {
-            val symbol = symbol as? KaFunctionSymbol ?: return emptyList()
+            val symbol = symbol as? KaNamedFunctionSymbol ?: return emptyList()
             if (symbol.isActual && symbol.getExpectsForActual().isNotEmpty()) return emptyList()
             val result = LinkedHashSet<KtNamedFunction>()
             listOfNotNull(

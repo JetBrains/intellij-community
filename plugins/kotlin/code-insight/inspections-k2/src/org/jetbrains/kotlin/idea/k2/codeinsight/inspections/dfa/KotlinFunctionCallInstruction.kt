@@ -83,7 +83,7 @@ class KotlinFunctionCallInstruction(
     ): DfaValue {
         val factory = resultValue.factory
         val functionCall = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return resultValue
-        val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return resultValue
+        val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return resultValue
         val callEffects = functionSymbol.contractEffects
         for (effect in callEffects) {
             if (effect !is KtContractConditionalContractEffectDeclaration) continue
@@ -202,7 +202,7 @@ class KotlinFunctionCallInstruction(
     }
 
     private fun fromKnownDescriptor(call: KaFunctionCall<*>, arguments: DfaCallArguments, state: DfaMemoryState): DfType? {
-        val functionSymbol = call.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return null
+        val functionSymbol = call.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return null
         val name = functionSymbol.name.asString()
         val containingPackage = functionSymbol.callableId?.packageName?.asString() ?: return null
         if (containingPackage == "kotlin.collections") {

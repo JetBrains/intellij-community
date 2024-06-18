@@ -87,7 +87,7 @@ internal fun toPsiMethod(
     // `inline` w/ `reified` type param from binary dependency,
     // which we can't find source PSI, so fake it
     if (functionSymbol.origin == KtSymbolOrigin.LIBRARY &&
-        (functionSymbol as? KaFunctionSymbol)?.isInline == true &&
+        (functionSymbol as? KaNamedFunctionSymbol)?.isInline == true &&
         functionSymbol.typeParameters.any { it.isReified }
     ) {
         functionSymbol.containingJvmClassName?.let { fqName ->
@@ -113,7 +113,7 @@ internal fun toPsiMethod(
             // For synthetic members in enum classes, `psi` points to their containing enum class.
             if (psi is KtClass && psi.isEnum()) {
                 val lc = psi.toLightClass() ?: return null
-                lc.methods.find { it.name == (functionSymbol as? KaFunctionSymbol)?.name?.identifier }?.let { return it }
+                lc.methods.find { it.name == (functionSymbol as? KaNamedFunctionSymbol)?.name?.identifier }?.let { return it }
             }
 
             // Default primary constructor
@@ -214,7 +214,7 @@ private fun toPsiMethodForDeserialized(
             0 -> {
                 if (psi != null) {
                     UastFakeDeserializedSourceLightMethod(psi, this@lookup)
-                } else if (functionSymbol is KaFunctionSymbol) {
+                } else if (functionSymbol is KaNamedFunctionSymbol) {
                     UastFakeDeserializedSymbolLightMethod(
                         functionSymbol.createPointer(),
                         functionSymbol.name.identifier,
@@ -247,7 +247,7 @@ private fun toPsiMethodForDeserialized(
     return if (psi != null) {
         // Lint/UAST IDE: with deserialized PSI
         psi.containingKtFile.findFacadeClass()?.lookup()
-    } else if (functionSymbol is KaFunctionSymbol) {
+    } else if (functionSymbol is KaNamedFunctionSymbol) {
         // Lint/UAST CLI: attempt to find the binary class
         //   with the facade fq name from the resolved symbol
         functionSymbol.containingJvmClassName?.let { fqName ->

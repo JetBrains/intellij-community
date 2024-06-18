@@ -63,7 +63,7 @@ class SmartStepTargetVisitor(
             if (symbol is KtPropertySymbol) {
                 return recordProperty(expression, symbol)
             }
-            if (symbol is KaFunctionSymbol) {
+            if (symbol is KaNamedFunctionSymbol) {
                 val declaration = symbol.psi ?: return false
                 if (declaration is PsiMethod) {
                     append(MethodSmartStepTarget(declaration, null, expression, true, lines))
@@ -239,7 +239,7 @@ class SmartStepTargetVisitor(
             val samClassSymbol = argumentSymbol.returnType.expandedSymbol ?: return null
             val scope = samClassSymbol.memberScope
             val funMethodSymbol = scope.getCallableSymbols()
-                .filterIsInstance<KaFunctionSymbol>()
+                .filterIsInstance<KaNamedFunctionSymbol>()
                 .singleOrNull { it.modality == Modality.ABSTRACT }
                 ?: return null
             KotlinLambdaInfo(
@@ -344,7 +344,7 @@ class SmartStepTargetVisitor(
                 return
             }
 
-            if (declaration == null && !(symbol is KaFunctionSymbol && symbol.isBuiltinFunctionInvoke)) {
+            if (declaration == null && !(symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke)) {
                 return
             }
 
@@ -363,7 +363,7 @@ class SmartStepTargetVisitor(
             }
 
             val callLabel = KotlinMethodSmartStepTarget.calcLabel(symbol)
-            val label = if (symbol is KaFunctionSymbol && symbol.isBuiltinFunctionInvoke && highlightExpression is KtSimpleNameExpression) {
+            val label = if (symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke && highlightExpression is KtSimpleNameExpression) {
                 "${highlightExpression.text}.$callLabel"
             } else {
                 callLabel
@@ -385,10 +385,10 @@ class SmartStepTargetVisitor(
 
     context(KaSession)
     private fun getFunctionDeclaration(symbol: KaFunctionLikeSymbol): PsiElement? {
-        if (symbol is KaFunctionSymbol && symbol.isBuiltinFunctionInvoke) return null
+        if (symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke) return null
         symbol.psi?.let { return it }
         // null is returned for implemented by delegation methods in K1
-        if (symbol !is KaFunctionSymbol) return null
+        if (symbol !is KaNamedFunctionSymbol) return null
         return symbol.allOverriddenSymbols.firstNotNullOfOrNull { it.psi }
     }
 

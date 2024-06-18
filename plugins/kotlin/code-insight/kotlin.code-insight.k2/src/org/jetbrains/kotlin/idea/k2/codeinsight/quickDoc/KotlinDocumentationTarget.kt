@@ -309,10 +309,10 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
     }
 
     if (symbol is KaValueParameterSymbol) {
-        val containingSymbol = symbol.containingSymbol as? KaFunctionSymbol
+        val containingSymbol = symbol.containingSymbol as? KaNamedFunctionSymbol
         if (containingSymbol != null) {
             val idx = containingSymbol.valueParameters.indexOf(symbol)
-            containingSymbol.getExpectsForActual().filterIsInstance<KaFunctionSymbol>().mapNotNull { expectFunction ->
+            containingSymbol.getExpectsForActual().filterIsInstance<KaNamedFunctionSymbol>().mapNotNull { expectFunction ->
                 findKDoc(expectFunction.valueParameters[idx])
             }.firstOrNull()?.let { return it }
         }

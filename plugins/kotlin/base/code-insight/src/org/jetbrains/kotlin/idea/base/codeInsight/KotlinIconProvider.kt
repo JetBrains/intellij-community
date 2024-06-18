@@ -23,7 +23,7 @@ object KotlinIconProvider {
             }
         }
 
-        if (symbol is KaFunctionSymbol) {
+        if (symbol is KaNamedFunctionSymbol) {
             val isAbstract = symbol.modality == Modality.ABSTRACT
 
             return when {
