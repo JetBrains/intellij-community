@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
-import com.intellij.credentialStore.keePass.getDefaultMainPasswordFile
+import com.intellij.credentialStore.keePass.getDefaultDbFile
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfo
@@ -34,13 +34,13 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
     get() {
       val result = state.keepassDb
       return when {
-        result == null && providerType === ProviderType.KEEPASS -> getDefaultMainPasswordFile().toString()
+        result == null && providerType === ProviderType.KEEPASS -> getDefaultDbFile().toString()
         else -> result
       }
     }
     set(value) {
       var v = value.nullize(nullizeSpaces = true)
-      if (v != null && v == getDefaultMainPasswordFile().toString()) {
+      if (v != null && v == getDefaultDbFile().toString()) {
         v = null
       }
       state.keepassDb = v

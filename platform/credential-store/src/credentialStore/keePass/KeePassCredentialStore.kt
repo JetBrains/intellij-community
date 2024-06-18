@@ -20,6 +20,7 @@ import kotlin.io.path.exists
 
 const val DB_FILE_NAME: String = "c.kdbx"
 
+fun getDefaultDbFile(): Path = PathManager.getConfigDir().resolve(DB_FILE_NAME)
 fun getDefaultMainPasswordFile(): Path = PathManager.getConfigDir().resolve(MAIN_KEY_FILE_NAME)
 
 /**

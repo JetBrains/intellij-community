@@ -7,6 +7,7 @@ import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.keePass.DB_FILE_NAME
 import com.intellij.credentialStore.keePass.KeePassFileManager
 import com.intellij.credentialStore.keePass.MainKeyFileStorage
+import com.intellij.credentialStore.keePass.getDefaultDbFile
 import com.intellij.credentialStore.keePass.getDefaultMainPasswordFile
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.passwordSafe.PasswordSafe
@@ -83,7 +84,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
 
     panel.reset()
 
-    keePassDbFile?.text = settings.keepassDb ?: getDefaultMainPasswordFile().toString()
+    keePassDbFile?.text = settings.keepassDb ?: getDefaultDbFile().toString()
   }
 
   override fun isModified(settings: PasswordSafeSettings): Boolean {
@@ -160,7 +161,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     // not in createAndSaveKeePassDatabaseWithNewOptions (as logically should be) because we want to force users to set custom master passwords even if some another setting (not path) was changed
     // (e.g. PGP key)
     if (providerType == ProviderType.KEEPASS) {
-      createKeePassFileManager()?.setCustomMainPasswordIfNeeded(getDefaultMainPasswordFile())
+      createKeePassFileManager()?.setCustomMainPasswordIfNeeded(getDefaultDbFile())
     }
 
     settings.providerType = providerType

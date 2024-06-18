@@ -5,6 +5,7 @@ import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.credentialStore.*
 import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.keePass.*
+import com.intellij.credentialStore.keePass.getDefaultDbFile
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ApplicationManager
@@ -194,7 +195,7 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (CredentialStoreManager.getInstance().isSupported(settings.providerType)) {
     if (settings.providerType == ProviderType.KEEPASS) {
       try {
-        val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultMainPasswordFile()
+        val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultDbFile()
         return KeePassCredentialStore(dbFile, getDefaultMainPasswordFile())
       }
       catch (e: IncorrectMainPasswordException) {
