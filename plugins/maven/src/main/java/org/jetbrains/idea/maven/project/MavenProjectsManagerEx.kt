@@ -39,6 +39,7 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
+import org.jetbrains.idea.maven.buildtool.incrementalMode
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.importing.importActivityStarted
@@ -362,8 +363,11 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       }
       console.finishTransaction(spec.resolveIncrementally())
       syncActivity.finished {
-        listOf(ProjectImportCollector.LINKED_PROJECTS.with(projectsTree.rootProjects.count()),
-               ProjectImportCollector.SUBMODULES_COUNT.with(projectsTree.projects.count()))
+        listOf(
+          ProjectImportCollector.LINKED_PROJECTS.with(projectsTree.rootProjects.count()),
+          ProjectImportCollector.SUBMODULES_COUNT.with(projectsTree.projects.count()),
+          ProjectImportCollector.INCREMENTAL_MODE.with(spec.incrementalMode),
+        )
       }
       withContext(tracer.span("syncFinished")) {
         ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncFinished(myProject)

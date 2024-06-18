@@ -2412,6 +2412,7 @@ f:com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 - sf:ADDED_MODULES:com.intellij.internal.statistic.eventLog.events.RoundedIntEventField
 - sf:IMPORT_ACTIVITY:com.intellij.internal.statistic.IdeActivityDefinition
 - sf:IMPORT_STAGE:com.intellij.internal.statistic.IdeActivityDefinition
+- sf:INCREMENTAL_MODE:com.intellij.internal.statistic.eventLog.events.EnumEventField
 - sf:INSTANCE:com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 - sf:LINKED_PROJECTS:com.intellij.internal.statistic.eventLog.events.IntEventField
 - sf:PLUGIN_RESOLVE_PROCESS:com.intellij.internal.statistic.IdeActivityDefinition
@@ -2428,6 +2429,14 @@ f:com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 - sf:WORKSPACE_APPLY_STAGE:com.intellij.internal.statistic.IdeActivityDefinition
 - f:getGROUP():com.intellij.internal.statistic.eventLog.EventLogGroup
 - getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+e:com.intellij.openapi.externalSystem.statistics.ProjectImportCollector$IncrementalMode
+- java.lang.Enum
+- sf:INCREMENTAL:com.intellij.openapi.externalSystem.statistics.ProjectImportCollector$IncrementalMode
+- sf:NON_INCREMENTAL:com.intellij.openapi.externalSystem.statistics.ProjectImportCollector$IncrementalMode
+- sf:PARTIALLY_INCREMENTAL:com.intellij.openapi.externalSystem.statistics.ProjectImportCollector$IncrementalMode
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.statistics.ProjectImportCollector$IncrementalMode
+- s:values():com.intellij.openapi.externalSystem.statistics.ProjectImportCollector$IncrementalMode[]
 f:com.intellij.openapi.externalSystem.statistics.SystemIdValidationRule
 - com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 - com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule

@@ -11,7 +11,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector.EXTERNAL_SYSTEM_ID
 
 object ProjectImportCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("project.import", 11)
+  val GROUP = EventLogGroup("project.import", 12)
 
   @JvmField
   val TASK_CLASS = EventFields.Class("task_class")
@@ -35,10 +35,17 @@ object ProjectImportCollector : CounterUsagesCollector() {
   @JvmField
   val RESOLVED_DEPS_PERCENT = Float("resolved_dependencies_percent")
 
+  enum class IncrementalMode {
+    INCREMENTAL, PARTIALLY_INCREMENTAL, NON_INCREMENTAL,
+  }
+
+  @JvmField
+  val INCREMENTAL_MODE = EventFields.Enum("incremental_mode", IncrementalMode::class.java)
+
   @JvmField
   val IMPORT_ACTIVITY = GROUP.registerIdeActivity("import_project", startEventAdditionalFields = arrayOf(EXTERNAL_SYSTEM_ID, TASK_CLASS,
                                                                                                          EventFields.PluginInfo),
-                                                  finishEventAdditionalFields = arrayOf(SUBMODULES_COUNT, LINKED_PROJECTS))
+                                                  finishEventAdditionalFields = arrayOf(SUBMODULES_COUNT, LINKED_PROJECTS, INCREMENTAL_MODE))
 
   @JvmField
   val PREIMPORT_ACTIVITY = GROUP.registerIdeActivity("fast_model_read", parentActivity = IMPORT_ACTIVITY,
