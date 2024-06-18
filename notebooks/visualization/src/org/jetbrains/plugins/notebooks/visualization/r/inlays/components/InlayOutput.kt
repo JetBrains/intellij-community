@@ -83,8 +83,6 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
   abstract fun scrollToTop()
   abstract fun getCollapsedDescription(): String
 
-  abstract fun saveAs()
-
   abstract fun acceptType(type: String): Boolean
 
   fun updateProgressStatus(editor: Editor, progressStatus: InlayProgressStatus) {
@@ -151,13 +149,24 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
     clearAction()
   }
 
+  /** marker interface for [SaveOutputAction] */
+  interface WithSaveAs {
+    fun saveAs()
+  }
+
+  /** marker interface for [CopyImageToClipboardAction] */
+  interface WithCopyImageToClipboard {
+    fun copyImageToClipboard()
+  }
+
   companion object {
     fun getToolbarPaneOrNull(e: AnActionEvent): ToolbarPane? =
       e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarPane
   }
 }
 
-class InlayOutputImg(parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction), CanCopyImageToClipboard {
+class InlayOutputImg(parent: Disposable, editor: Editor, clearAction: () -> Unit)
+  : InlayOutput(parent, editor, clearAction), InlayOutput.WithCopyImageToClipboard, InlayOutput.WithSaveAs {
   private val graphicsPanel = GraphicsPanel(project, parent).apply {
     isAdvancedMode = true
   }
@@ -227,7 +236,8 @@ class InlayOutputImg(parent: Disposable, editor: Editor, clearAction: () -> Unit
   }
 }
 
-class InlayOutputText(parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction) {
+class InlayOutputText(parent: Disposable, editor: Editor, clearAction: () -> Unit)
+  : InlayOutput(parent, editor, clearAction), InlayOutput.WithSaveAs {
 
   private val console = ColoredTextConsole(project, viewer = true)
 
@@ -373,7 +383,8 @@ fun updateOutputTextConsoleUI(consoleEditor: EditorEx, editor: Editor) {
   }
 }
 
-class InlayOutputHtml(parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction) {
+class InlayOutputHtml(parent: Disposable, editor: Editor, clearAction: () -> Unit)
+  : InlayOutput(parent, editor, clearAction), InlayOutput.WithSaveAs {
 
   private val jbBrowser: JBCefBrowser = JBCefBrowser().also { Disposer.register(parent, it) }
   private val heightJsCallback = JBCefJSQuery.create(jbBrowser as JBCefBrowserBase)
@@ -472,8 +483,6 @@ class InlayOutputTable(val parent: Disposable, editor: Editor, clearAction: () -
   override fun scrollToTop() {}
 
   override fun getCollapsedDescription(): String = "Table output"
-
-  override fun saveAs() {}
 
   override fun acceptType(type: String): Boolean = type == "TABLE"
 }
