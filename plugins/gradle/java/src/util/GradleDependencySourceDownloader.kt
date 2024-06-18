@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.wsl.WslPath.Companion.parseWindowsUncPath
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -13,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPathOrNull
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.service.execution.loadDownloadSourcesInitScript
@@ -36,7 +38,6 @@ object GradleDependencySourceDownloader {
   fun downloadSources(project: Project, executionName: @Nls String, sourceArtifactNotation: String, externalProjectPath: String)
     : CompletableFuture<File> {
     val sourcesLocationFile: File
-    val projectPath = Path.of(externalProjectPath)
     try {
       sourcesLocationFile = File(FileUtil.createTempDirectory("sources", "loc"), "path.tmp")
       Runtime.getRuntime().addShutdownHook(Thread({ FileUtil.delete(sourcesLocationFile) }, "GradleAttachSourcesProvider cleanup"))
@@ -48,12 +49,12 @@ object GradleDependencySourceDownloader {
     val taskName = "ijDownloadSources" + UUID.randomUUID().toString().substring(0, 12)
     val settings = ExternalSystemTaskExecutionSettings().also {
       it.executionName = executionName
-      it.externalProjectPath = projectPath.toCanonicalPath()
+      it.externalProjectPath = externalProjectPath
       it.taskNames = listOf(taskName)
       it.vmOptions = GradleSettings.getInstance(project).getGradleVmOptions()
       it.externalSystemIdString = GradleConstants.SYSTEM_ID.id
     }
-    val userData = prepareUserData(sourceArtifactNotation, taskName, sourcesLocationFile.toPath(), projectPath)
+    val userData = prepareUserData(sourceArtifactNotation, taskName, sourcesLocationFile.toPath(), externalProjectPath)
     val resultWrapper = CompletableFuture<File>()
     val listener = object : ExternalSystemTaskNotificationListener {
       override fun onSuccess(id: ExternalSystemTaskId) {
@@ -97,20 +98,28 @@ object GradleDependencySourceDownloader {
     return resultWrapper
   }
 
-  private fun prepareUserData(sourceArtifactNotation: String, taskName: String, sourcesLocationFilePath: Path, externalProjectPath: Path)
+  private fun prepareUserData(sourceArtifactNotation: String, taskName: String, sourcesLocationFilePath: Path, externalProjectPath: String)
     : UserDataHolderBase {
+    val projectPath = externalProjectPath.asSystemDependentGradleProjectPath()
     val legacyInitScript = LazyVersionSpecificInitScript(
-      scriptSupplier = { loadLegacyDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, externalProjectPath) },
+      scriptSupplier = { loadLegacyDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, projectPath) },
       filePrefix = INIT_SCRIPT_FILE_PREFIX,
       isApplicable = { GRADLE_5_6 > it }
     )
     val initScript = LazyVersionSpecificInitScript(
-      scriptSupplier = { loadDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, externalProjectPath) },
+      scriptSupplier = { loadDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, projectPath) },
       filePrefix = INIT_SCRIPT_FILE_PREFIX,
       isApplicable = { GRADLE_5_6 <= it }
     )
     return UserDataHolderBase().apply {
       putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, listOf(legacyInitScript, initScript))
     }
+  }
+
+  private fun String.asSystemDependentGradleProjectPath(): String {
+    val wslPath = parseWindowsUncPath(this)
+    val pathToNormalize = wslPath?.linuxPath ?: this
+    return pathToNormalize.toNioPathOrNull()?.toCanonicalPath()
+           ?: throw IllegalStateException("Unable to convert $this to canonical path")
   }
 }
