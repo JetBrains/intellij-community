@@ -5,6 +5,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.util.lang.JavaVersion
 
 internal class DefaultWorkspaceSettingsImporter : WorkspaceSettingsImporter {
   override fun importFromProject(project: Project): ImportedProjectSettings {
@@ -25,11 +26,16 @@ private class DefaultImportedProjectSettings(project: Project) : ImportedProject
   }
 
   override suspend fun applyTo(workspace: Project): Boolean {
-    if (projectSdk != null && ProjectRootManager.getInstance(workspace).projectSdk == null) {
-      writeAction {
-        ProjectRootManager.getInstance(workspace).projectSdk = projectSdk
+    if (projectSdk != null) {
+      val current = ProjectRootManager.getInstance(workspace).projectSdk
+      if (current == null || getVersion(current) < getVersion(projectSdk)) {
+        writeAction {
+          ProjectRootManager.getInstance(workspace).projectSdk = projectSdk
+        }
       }
     }
     return false
   }
+
+  private fun getVersion(sdk: Sdk): JavaVersion = JavaVersion.tryParse(sdk.versionString) ?: JavaVersion.compose(4)
 }
