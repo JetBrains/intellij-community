@@ -651,7 +651,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         fun testJvmFacetConfiguration() = runBlocking {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
-            val kotlinMavenPluginVersion = "1.6.20"
+            val kotlinMavenPluginVersion = "1.7.22"
             importProjectAsync(
                 """
             <groupId>test</groupId>
@@ -2287,7 +2287,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             val kotlinMainPluginVersion = "1.5.10"
-            val kotlinMavenPluginVersion1 = "1.6.21"
+            val kotlinMavenPluginVersion1 = "1.7.21"
             val kotlinMavenPluginVersion2 = "1.5.31"
             val notifications = catchNotificationsAsync(project, "Kotlin JPS plugin") {
                 val mainPom = createProjectPom(
@@ -3582,7 +3582,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             // Some version won't be imported into JPS (because it's some milestone version which wasn't published to MC) => explicit
             // JPS version during import will be dropped => we will fall back to the bundled JPS =>
             // we have to load 1.6 jvmTarget as 1.8 KTIJ-21515
-            val (facet, notifications) = doJvmTarget6Test("1.6.20-RC")
+            val (facet, notifications) = doJvmTarget6Test("1.7.0-RC")
 
             Assert.assertEquals("JVM 1.8", facet.targetPlatform!!.oldFashionedDescription)
             Assert.assertEquals("1.8", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
