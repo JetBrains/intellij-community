@@ -77,6 +77,7 @@ open class CachedImageIcon private constructor(
   val originalPath: String?
     get() = originalLoader?.path
 
+  // TODO: rewrite to unique icon id
   val expUIPath: String?
     get() = originalLoader?.expUIPath
 
