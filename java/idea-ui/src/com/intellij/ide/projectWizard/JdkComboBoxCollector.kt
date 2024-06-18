@@ -13,7 +13,6 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 internal object JdkComboBoxCollector: CounterUsagesCollector() {
   private val GROUP: EventLogGroup = EventLogGroup("npw.jdk.combo", 2)
   private const val UNKNOWN_VENDOR = "unknown"
-  @OptIn(ExperimentalStdlibApi::class)
   private val KNOWN_VENDORS = JdkVersionDetector.Variant.entries
     .mapNotNull { it.displayName }
     .toList() + UNKNOWN_VENDOR
@@ -41,6 +40,11 @@ internal object JdkComboBoxCollector: CounterUsagesCollector() {
     JDK_REGISTERED.log(variant, version)
   }
 
+  fun jdkDownloaded(item: JdkItem) {
+    val vendor = KNOWN_VENDORS.firstOrNull { item.fullPresentationText.contains(it) } ?: UNKNOWN_VENDOR
+    JDK_DOWNLOADED.log(vendor, findSdkVersion(item.presentableMajorVersionString))
+  }
+
   fun noJdkSelected() {
     NO_JDK_SELECTED.log()
   }
@@ -54,14 +58,5 @@ internal object JdkComboBoxCollector: CounterUsagesCollector() {
       }
       matchResult?.groups?.get(1)?.value?.toInt() ?: -1
     }
-  }
-
-  fun jdkDownloaded(item: JdkItem) {
-    val vendor = when (item.product.vendor) {
-      in KNOWN_VENDORS -> item.product.vendor
-      else -> UNKNOWN_VENDOR
-    }
-
-    JDK_DOWNLOADED.log(vendor, findSdkVersion(item.presentableMajorVersionString))
   }
 }
