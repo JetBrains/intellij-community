@@ -477,3 +477,15 @@ f:com.intellij.util.Urls
 - sf:parse(java.lang.String,Z):com.intellij.util.Url
 - sf:parseEncoded(java.lang.String):com.intellij.util.Url
 - sf:toUriWithoutParameters(com.intellij.util.Url):java.net.URI
+e:com.intellij.util.io.PowerStatus
+- java.lang.Enum
+- sf:AC:com.intellij.util.io.PowerStatus
+- sf:BATTERY:com.intellij.util.io.PowerStatus
+- sf:Companion:com.intellij.util.io.PowerStatus$Companion
+- sf:UNKNOWN:com.intellij.util.io.PowerStatus
+- s:getEntries():kotlin.enums.EnumEntries
+- sf:getPowerStatus():com.intellij.util.io.PowerStatus
+- s:valueOf(java.lang.String):com.intellij.util.io.PowerStatus
+- s:values():com.intellij.util.io.PowerStatus[]
+f:com.intellij.util.io.PowerStatus$Companion
+- f:getPowerStatus():com.intellij.util.io.PowerStatus
