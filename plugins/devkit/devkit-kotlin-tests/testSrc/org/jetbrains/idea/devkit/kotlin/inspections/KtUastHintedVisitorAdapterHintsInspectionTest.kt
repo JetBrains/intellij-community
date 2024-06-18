@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.kotlin.inspections;
+package org.jetbrains.idea.devkit.kotlin.inspections
 
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.UastHintedVisitorAdapterHintsInspectionTestBase
@@ -331,6 +331,35 @@ class KtUastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHi
       """.trimIndent())
   }
 
+  fun `test should not report when ULiteralExpression or UPolyadicExpression visited and UInjectionHost element hinted`() {
+    doTest(
+      """
+        class TestInspection : LocalInspectionTool() {
+          @Override
+          override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+            return UastHintedVisitorAdapter.create(
+              Language.ANY,
+              object : AbstractUastNonRecursiveVisitor() {
+                override fun visitPolyadicExpression(node: UPolyadicExpression): Boolean {
+                  if (node !is UInjectionHost) return true
+                  processInjectionHost(node)
+                  return super.visitPolyadicExpression(node)
+                }
+                
+                override fun visitLiteralExpression(node: ULiteralExpression): Boolean {
+                  if (node !is UInjectionHost) return true
+                  processInjectionHost(node)
+                  return super.visitExpression(node)
+                }
+                private fun processInjectionHost(@Suppress("UNUSED_PARAMETER") node: UInjectionHost) {}
+              },
+              arrayOf(UInjectionHost::class.java)
+            )
+          }
+        }
+      """.trimIndent())
+  }
+
   private fun doTest(@Language("kotlin") code: String) {
     myFixture.configureByText(
       "TestInspection.kt",
@@ -342,6 +371,7 @@ class KtUastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHi
         import com.intellij.psi.PsiElementVisitor
         import com.intellij.uast.UastHintedVisitorAdapter
         import org.jetbrains.uast.*
+        import org.jetbrains.uast.expressions.*
         import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
         $code
       """.trimIndent())

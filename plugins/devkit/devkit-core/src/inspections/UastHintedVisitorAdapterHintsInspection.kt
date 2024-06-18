@@ -39,6 +39,16 @@ private val UAST_VISITOR_BASE_CLASS_NAMES = setOf(
   "org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor"
 )
 
+/**
+ * Stores the hint classes and their allowed visited elements.
+ * The reason for exceptions is that `UInjectionHost` is an interface that is not
+ * a part of `UElement` interfaces hierarchy but is implemented by concrete elements.
+ */
+private val HINT_EXCEPTIONS = mapOf(
+  "org.jetbrains.uast.expressions.UInjectionHost" to setOf("org.jetbrains.uast.ULiteralExpression",
+                                                           "org.jetbrains.uast.UPolyadicExpression")
+)
+
 internal class UastHintedVisitorAdapterHintsInspection : DevKitUastInspectionBase() {
 
   override fun isAllowed(holder: ProblemsHolder): Boolean {
@@ -91,9 +101,11 @@ internal class UastHintedVisitorAdapterHintsInspection : DevKitUastInspectionBas
     checkRedundantHints(classLiteralAndExpandedClassesList, overriddenMethods, holder)
   }
 
-  private fun checkMissingHints(classLiteralAndExpandedClassesList: List<ClassLiteralAndExpandedClasses>,
-                                overriddenMethods: List<UMethod>,
-                                holder: ProblemsHolder) {
+  private fun checkMissingHints(
+    classLiteralAndExpandedClassesList: List<ClassLiteralAndExpandedClasses>,
+    overriddenMethods: List<UMethod>,
+    holder: ProblemsHolder,
+  ) {
     val hintClasses = classLiteralAndExpandedClassesList.flatMap { it.coveredClasses }.toSet()
     val methodsNotInHintClasses = overriddenMethods.filter { !it.isReachedByHints(hintClasses) }
     for (redundantMethod in methodsNotInHintClasses) {
@@ -114,13 +126,19 @@ internal class UastHintedVisitorAdapterHintsInspection : DevKitUastInspectionBas
 
   private fun UMethod.isReachedByHints(hintClasses: Set<PsiClass>): Boolean {
     val visitedElementClass = this.resolveTheOnlyParameterClass() ?: return true // shouldn't happen
+    val visitedElementClassQualifiedName = visitedElementClass.qualifiedName
     return visitedElementClass in hintClasses ||
-           hintClasses.any { it.isInheritor(visitedElementClass, true) } // visitElement(UElement) is covered by any hint class
+           hintClasses.any {
+             HINT_EXCEPTIONS[it.qualifiedName]?.contains(visitedElementClassQualifiedName) == true ||
+             it.isInheritor(visitedElementClass, true) // visitElement(UElement) is covered by any hint class
+           }
   }
 
-  private fun checkRedundantHints(classLiteralAndExpandedClassesList: List<ClassLiteralAndExpandedClasses>,
-                                  overriddenMethods: List<UMethod>,
-                                  holder: ProblemsHolder) {
+  private fun checkRedundantHints(
+    classLiteralAndExpandedClassesList: List<ClassLiteralAndExpandedClasses>,
+    overriddenMethods: List<UMethod>,
+    holder: ProblemsHolder,
+  ) {
     val hintClassesNotInMethods = classLiteralAndExpandedClassesList
       .filter { literalAndClasses ->
         !overriddenMethods.any { it.isReachedByHints(literalAndClasses.coveredClasses) }
@@ -199,7 +217,7 @@ internal class UastHintedVisitorAdapterHintsInspection : DevKitUastInspectionBas
    */
   private class ClassLiteralAndExpandedClasses(
     val classLiteral: UClassLiteralExpression,
-    val coveredClasses: Set<PsiClass>
+    val coveredClasses: Set<PsiClass>,
   )
 
 }

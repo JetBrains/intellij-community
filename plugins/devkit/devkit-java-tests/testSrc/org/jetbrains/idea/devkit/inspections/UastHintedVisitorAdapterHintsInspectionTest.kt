@@ -10,7 +10,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
       """
         class TestInspection extends LocalInspectionTool {
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             return UastHintedVisitorAdapter.create(
               Language.ANY,
               new AbstractUastNonRecursiveVisitor() {
@@ -40,7 +40,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
           @SuppressWarnings("unchecked")
           private static final Class<? extends UElement>[] HINTS = new Class[]{UForExpression.class};
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             return UastHintedVisitorAdapter.create(
               Language.ANY,
               new AbstractUastNonRecursiveVisitor() {
@@ -69,7 +69,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
         class TestInspection extends LocalInspectionTool {
           @SuppressWarnings("unchecked")
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             Class<? extends UElement>[] hints = new Class[]{UForExpression.class};
             return UastHintedVisitorAdapter.create(
               Language.ANY,
@@ -99,7 +99,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
         class TestInspection extends LocalInspectionTool {
           @SuppressWarnings("unchecked")
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             return UastHintedVisitorAdapter.create(Language.ANY, new MyVisitor(), new Class[]{UForExpression.class});
           }
           private static class MyVisitor extends AbstractUastNonRecursiveVisitor {
@@ -137,7 +137,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
               private void inspectLoopExpression() {}
             };
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             return UastHintedVisitorAdapter.create(
               Language.ANY,
               VISITOR,
@@ -153,7 +153,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
       """
         class TestInspection extends LocalInspectionTool {
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             return UastHintedVisitorAdapter.create(
               Language.ANY,
               new AbstractUastNonRecursiveVisitor() {
@@ -178,7 +178,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
           @SuppressWarnings("unchecked")
           private static final Class<? extends UElement>[] HINTS = new Class[]{UForExpression.class, <warning descr="'UDoWhileExpression' is provided in hints, but the element is not visited in the visitor">UDoWhileExpression.class</warning>};
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             return UastHintedVisitorAdapter.create(
               Language.ANY,
               new AbstractUastNonRecursiveVisitor() {
@@ -202,7 +202,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
         class TestInspection extends LocalInspectionTool {
           @SuppressWarnings("unchecked")
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             Class<? extends UElement>[] hints = new Class[]{UForExpression.class, <warning descr="'UDoWhileExpression' is provided in hints, but the element is not visited in the visitor">UDoWhileExpression.class</warning>};
             return UastHintedVisitorAdapter.create(
               Language.ANY,
@@ -226,7 +226,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
       """
         class TestInspection extends LocalInspectionTool {
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             return UastHintedVisitorAdapter.create(
               Language.ANY,
               new MyVisitor(),
@@ -250,7 +250,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
       """
         class TestInspection extends LocalInspectionTool {
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             AbstractUastNonRecursiveVisitor visitor = new AbstractUastNonRecursiveVisitor() {
                 @Override
                 public boolean visitForExpression(UForExpression node) {
@@ -274,7 +274,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
       """
         class TestInspection extends LocalInspectionTool {
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             return UastHintedVisitorAdapter.create(
               Language.ANY,
               new AbstractUastNonRecursiveVisitor() {
@@ -302,7 +302,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
       """
         class TestInspection extends LocalInspectionTool {
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             return UastHintedVisitorAdapter.create(
               Language.ANY,
               new AbstractUastNonRecursiveVisitor() {
@@ -328,7 +328,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
       """
         class TestInspection extends LocalInspectionTool {
           @Override
-          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly)  {
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
             return UastHintedVisitorAdapter.create(
               Language.ANY,
               new AbstractUastNonRecursiveVisitor() {
@@ -346,6 +346,37 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
       """.trimIndent())
   }
 
+  fun `test should not report when ULiteralExpression or UPolyadicExpression visited and UInjectionHost element hinted`() {
+    doTest(
+      """
+        class TestInspection extends LocalInspectionTool {
+          @Override
+          public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+            return UastHintedVisitorAdapter.create(
+              Language.ANY,
+              new AbstractUastNonRecursiveVisitor() {
+                @Override
+                public boolean visitPolyadicExpression(UPolyadicExpression node) {
+                  if (!(node instanceof UInjectionHost)) return true;
+                  processInjectionHost((UInjectionHost)node);
+                  return super.visitPolyadicExpression(node);
+                }
+                
+                @Override
+                public boolean visitLiteralExpression(ULiteralExpression node) {
+                  if (!(node instanceof UInjectionHost)) return true;
+                  processInjectionHost((UInjectionHost)node);
+                  return super.visitExpression(node);
+                }
+                private void processInjectionHost(UInjectionHost node) {}
+              },
+              new Class[]{UInjectionHost.class}
+            );
+          }
+        }
+      """.trimIndent())
+  }
+
   private fun doTest(@Language("JAVA") code: String) {
     myFixture.configureByText(
       "TestInspection.java",
@@ -357,6 +388,7 @@ class UastHintedVisitorAdapterHintsInspectionTest : UastHintedVisitorAdapterHint
         import com.intellij.psi.PsiElementVisitor;
         import com.intellij.uast.UastHintedVisitorAdapter;
         import org.jetbrains.uast.*;
+        import org.jetbrains.uast.expressions.*;
         import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
         $code
       """.trimIndent())
