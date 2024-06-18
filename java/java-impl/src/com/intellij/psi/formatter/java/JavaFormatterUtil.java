@@ -19,13 +19,15 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.psi.formatter.java.TypeAnnotationUtil.isTypeAnnotation;
 
@@ -625,5 +627,13 @@ public final class JavaFormatterUtil {
       if (!Character.isWhitespace(text.charAt(i))) return false;
     }
     return true;
+  }
+
+  public static boolean isExplicitlyAbstract(@NotNull PsiMethod method) {
+    PsiModifierList modifierList = method.getModifierList();
+    return modifierList.hasExplicitModifier(PsiModifier.ABSTRACT) ||
+           ((method.getParent() instanceof PsiClass clazz && clazz.isInterface() &&
+             !modifierList.hasExplicitModifier(PsiModifier.DEFAULT) &&
+             !modifierList.hasExplicitModifier(PsiModifier.STATIC)));
   }
 }

@@ -659,7 +659,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private static boolean isAbstractMethod(ASTNode node) {
-    return node.getPsi() instanceof PsiMethod method && method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
+    return node.getPsi() instanceof PsiMethod method && JavaFormatterUtil.isExplicitlyAbstract(method);
   }
 
   @Override

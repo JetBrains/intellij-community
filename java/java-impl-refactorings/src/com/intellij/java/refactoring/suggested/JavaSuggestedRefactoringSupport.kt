@@ -6,6 +6,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
+import com.intellij.psi.formatter.java.JavaFormatterUtil
 import com.intellij.psi.impl.source.tree.ChildRole
 import com.intellij.psi.impl.source.tree.java.MethodElement
 import com.intellij.psi.util.endOffset
@@ -119,11 +120,7 @@ internal fun PsiMethod.explicitVisibility(): String {
 }
 
 internal fun PsiMethod.explicitAbstract(): Boolean {
-  val modifierList = this.modifierList
-  return modifierList.hasExplicitModifier(PsiModifier.ABSTRACT) ||
-         ((this.parent as? PsiClass)?.isInterface == true &&
-          !modifierList.hasExplicitModifier(PsiModifier.DEFAULT) &&
-          !modifierList.hasExplicitModifier(PsiModifier.STATIC))
+  return JavaFormatterUtil.isExplicitlyAbstract(this)
 }
 
 internal fun PsiJvmModifiersOwner.extractAnnotations(): String {
