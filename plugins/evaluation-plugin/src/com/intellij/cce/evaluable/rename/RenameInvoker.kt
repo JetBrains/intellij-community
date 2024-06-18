@@ -6,6 +6,7 @@ import com.intellij.cce.evaluable.common.asSuggestion
 import com.intellij.cce.evaluable.common.getEditor
 import com.intellij.cce.evaluable.common.positionToString
 import com.intellij.cce.evaluable.common.readActionInSmartMode
+import com.intellij.cce.evaluation.ContextAwareSuggestionsProvider
 import com.intellij.cce.evaluation.SuggestionsProvider
 import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.codeInsight.lookup.LookupManager
@@ -95,7 +96,12 @@ class RenameInvoker(private val project: Project,
                ?: throw IllegalStateException("Can't find language \"${language.ideaLanguageId}\"")
     val provider = SuggestionsProvider.find(project, strategy.suggestionsProvider)
                    ?: throw IllegalStateException("Can't find suggestions provider \"${strategy.suggestionsProvider}\"")
-    return provider.getSuggestions(expectedLine, editor, lang,  this::comparator, strategy.collectContextOnly)
+
+    return if (provider is ContextAwareSuggestionsProvider) {
+      provider.getSuggestions(expectedLine, editor, lang, this::comparator, strategy.collectContextOnly)
+    } else {
+      provider.getSuggestions(expectedLine, editor, lang, this::comparator)
+    }
   }
 
   private fun createSession(position: Int, expectedText: String, nodeProperties: TokenProperties, lookup: Lookup): Session {
