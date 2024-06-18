@@ -257,6 +257,8 @@ com.intellij.remote.RemoteSdkAdditionalData
 - com.intellij.remote.RemoteSdkProperties
 - a:connectionCredentials():com.intellij.remote.RemoteConnectionCredentialsWrapper
 - a:getRemoteConnectionType():com.intellij.remote.CredentialsType
+- getRemoteCredentials(com.intellij.openapi.project.Project,Z):com.intellij.remote.RemoteCredentials
+- produceRemoteCredentials(com.intellij.openapi.project.Project,Z,java.util.function.Consumer):V
 - a:setCredentials(com.intellij.openapi.util.Key,java.lang.Object):V
 - a:switchOnConnectionType(com.intellij.remote.ext.CredentialsCase[]):V
 com.intellij.remote.RemoteSdkCredentials
