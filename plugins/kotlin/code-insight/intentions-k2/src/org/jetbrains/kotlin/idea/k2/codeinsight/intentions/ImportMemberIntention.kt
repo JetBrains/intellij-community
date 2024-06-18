@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
@@ -27,13 +28,17 @@ internal class ImportMemberIntention :
         val shortenCommand: ShortenCommand,
     )
 
-    override fun getFamilyName(): String = KotlinBundle.message("add.import.for.member")
+    override fun getFamilyName(): String =
+        KotlinBundle.message("add.import.for.member")
 
-    override fun getActionName(
-      actionContext: ActionContext,
-      element: KtNameReferenceExpression,
-      elementContext: Context,
-    ): String = KotlinBundle.message("add.import.for.0", elementContext.fqName.asString())
+    override fun getPresentation(
+        context: ActionContext,
+        element: KtNameReferenceExpression,
+    ): Presentation? {
+        val (fqName) = getElementContext(context, element)
+            ?: return null
+        return Presentation.of(KotlinBundle.message("add.import.for.0", fqName.asString()))
+    }
 
     override fun isApplicableByPsi(element: KtNameReferenceExpression): Boolean =
         // Ignore simple name expressions or already imported names.

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -24,15 +25,21 @@ internal class AddNameToArgumentIntention :
     KotlinApplicableModCommandAction<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class),
     LowPriorityAction {
 
-    class Context(val argumentName: Name)
+    data class Context(
+        val argumentName: Name,
+    )
 
-    override fun getFamilyName(): String = KotlinBundle.message("add.name.to.argument")
+    override fun getFamilyName(): String =
+        KotlinBundle.message("add.name.to.argument")
 
-    override fun getActionName(
-      actionContext: ActionContext,
-      element: KtValueArgument,
-      elementContext: Context,
-    ): String = KotlinBundle.message("add.0.to.argument", elementContext.argumentName)
+    override fun getPresentation(
+        context: ActionContext,
+        element: KtValueArgument,
+    ): Presentation? {
+        val (argumentName) = getElementContext(context, element)
+            ?: return null
+        return Presentation.of(KotlinBundle.message("add.0.to.argument", argumentName))
+    }
 
     override fun getApplicableRanges(element: KtValueArgument): List<TextRange> =
         ApplicabilityRanges.valueArgumentExcludingLambda(element)

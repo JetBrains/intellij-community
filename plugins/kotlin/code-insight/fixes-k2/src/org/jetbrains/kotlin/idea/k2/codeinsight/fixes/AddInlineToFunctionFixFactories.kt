@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -34,14 +35,14 @@ internal object AddInlineToFunctionFixFactories {
             element.addModifier(KtTokens.INLINE_KEYWORD)
         }
 
-        override fun getActionName(
-            actionContext: ActionContext,
+        override fun getPresentation(
+            context: ActionContext,
             element: KtFunction,
-            elementContext: Unit
-        ): String {
-            return KotlinBundle.message("fix.add.modifier.inline.function.text", element.name.toString())
-        }
+        ): Presentation = Presentation.of(
+            KotlinBundle.message("fix.add.modifier.inline.function.text", element.name.toString()),
+        )
 
-        override fun getFamilyName(): String = KotlinBundle.message("fix.add.modifier.inline.function.family")
+        override fun getFamilyName(): String =
+            KotlinBundle.message("fix.add.modifier.inline.function.family")
     }
 }

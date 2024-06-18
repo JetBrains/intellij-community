@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtExpression
@@ -15,13 +16,15 @@ class AddArrayOfTypeFix(
     private val prefix: String,
 ) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, Unit>(element, Unit) {
 
-    override fun getActionName(
-        actionContext: ActionContext,
+    override fun getPresentation(
+        context: ActionContext,
         element: KtExpression,
-        elementContext: Unit,
-    ): String = KotlinBundle.message("fix.add.array.of.type.text", prefix)
+    ): Presentation = Presentation.of(
+        KotlinBundle.message("fix.add.array.of.type.text", prefix),
+    )
 
-    override fun getFamilyName() = KotlinBundle.message("fix.add.array.of.type.family")
+    override fun getFamilyName(): String =
+        KotlinBundle.message("fix.add.array.of.type.family")
 
     override fun invoke(
         actionContext: ActionContext,

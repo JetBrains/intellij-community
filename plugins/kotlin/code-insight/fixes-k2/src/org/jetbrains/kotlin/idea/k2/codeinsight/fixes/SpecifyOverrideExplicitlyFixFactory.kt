@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -107,7 +108,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
         }
     }
 
-    private class ElementContext(
+    private data class ElementContext(
         val signature: String,
         val delegateParameters: MutableList<SmartPsiElementPointer<KtParameter>>,
         val generatedMembers: List<KtCallableDeclaration>,
@@ -137,12 +138,15 @@ internal object SpecifyOverrideExplicitlyFixFactory {
             }
         }
 
-        override fun getActionName(actionContext: ActionContext, element: KtClassOrObject, elementContext: ElementContext): String {
-            return KotlinBundle.message("specify.override.for.0.explicitly", elementContext.signature)
+        override fun getPresentation(
+            context: ActionContext,
+            element: KtClassOrObject,
+        ): Presentation {
+            val (signature) = getElementContext(context, element)
+            return Presentation.of(KotlinBundle.message("specify.override.for.0.explicitly", signature))
         }
 
-        override fun getFamilyName(): String {
-            return KotlinBundle.message("specify.override.explicitly")
-        }
+        override fun getFamilyName(): String =
+            KotlinBundle.message("specify.override.explicitly")
     }
 }

@@ -25,13 +25,13 @@ object EqualityNotApplicableFactory : KotlinIntentionActionsFactory() {
                 NumberConversionFix(
                     element = left,
                     elementContext = prepareNumberConversionElementContext(leftType, rightType),
-                    conversionType = NumberConversionFix.ConversionType.LEFT_HAND_SIDE
+                    actionNameProvider = NumberConversionFix.ActionNameProvider.LEFT_HAND_SIDE,
                 ).asIntention(),
 
                 NumberConversionFix(
                     element = right,
                     elementContext = prepareNumberConversionElementContext(rightType, leftType),
-                    conversionType = NumberConversionFix.ConversionType.RIGHT_HAND_SIDE
+                    actionNameProvider = NumberConversionFix.ActionNameProvider.RIGHT_HAND_SIDE,
                 ).asIntention(),
             )
         }

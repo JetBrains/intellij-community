@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 
 import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
@@ -30,8 +29,7 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any> private co
                                  ?: throw NoContextException()
             invoke(context, e, elementContext, updater)
         }
-    }
-    catch (e: NoContextException) {
+    } catch (_: NoContextException) {
         ModNothing.NOTHING
     } catch (e: ProcessCanceledException) {
         throw e
@@ -56,19 +54,6 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any> private co
         actionContext: ActionContext,
         element: E,
     ): C?
-
-    protected open fun getActionName(
-        actionContext: ActionContext,
-        element: E,
-        elementContext: C,
-    ): @IntentionName String = familyName
-
-    final override fun getPresentation(
-        context: ActionContext,
-        element: E,
-    ): Presentation? = getElementContext(context, element)
-        ?.let { getActionName(context, element, it) }
-        ?.let { Presentation.of(it) }
 
     abstract class ElementBased<E : PsiElement, C : Any>(
         element: E,

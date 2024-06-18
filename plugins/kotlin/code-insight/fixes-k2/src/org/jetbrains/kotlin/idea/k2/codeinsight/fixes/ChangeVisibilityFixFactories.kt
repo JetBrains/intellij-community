@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -37,15 +38,18 @@ object ChangeVisibilityFixFactories {
             visibilityModifier,
         )
 
-        override fun getActionName(
-            actionContext: ActionContext,
+        override fun getPresentation(
+            context: ActionContext,
             element: KtDeclaration,
-            elementContext: ElementContext,
-        ): String = KotlinBundle.message(
-            if (forceUsingExplicitModifier) "make.0.1.explicitly" else "make.0.1",
-            elementContext.elementName,
-            visibilityModifier,
-        )
+        ): Presentation {
+            val (elementName) = getElementContext(context, element)
+            val actionName = KotlinBundle.message(
+                if (forceUsingExplicitModifier) "make.0.1.explicitly" else "make.0.1",
+                elementName,
+                visibilityModifier,
+            )
+            return Presentation.of(actionName)
+        }
 
         override fun invoke(
             actionContext: ActionContext,

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -81,15 +82,20 @@ internal object RemovePartsFromPropertyFixFactory {
         elementContext: ElementContext,
     ) : KotlinPsiUpdateModCommandAction.ElementBased<KtProperty, ElementContext>(element, elementContext) {
 
-        override fun getFamilyName(): String = KotlinBundle.message("remove.parts.from.property")
+        override fun getFamilyName(): String =
+            KotlinBundle.message("remove.parts.from.property")
 
-        override fun getActionName(
-            actionContext: ActionContext,
+        override fun getPresentation(
+            context: ActionContext,
             element: KtProperty,
-            elementContext: ElementContext,
-        ): String {
-            val (removeInitializer, removeGetter, removeSetter, _) = elementContext
-            return RemovePartsFromPropertyUtils.getRemovePartsFromPropertyActionName(removeInitializer, removeGetter, removeSetter)
+        ): Presentation {
+            val elementContext = getElementContext(context, element)
+            val actionName = RemovePartsFromPropertyUtils.getRemovePartsFromPropertyActionName(
+                removeInitializer = elementContext.removeInitializer,
+                removeGetter = elementContext.removeGetter,
+                removeSetter = elementContext.removeSetter,
+            )
+            return Presentation.of(actionName)
         }
 
         override fun invoke(

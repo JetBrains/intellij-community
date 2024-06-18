@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -17,14 +17,15 @@ class ReplacePrimitiveCastWithNumberConversionFix(
     private val targetShortType: String,
 ) : KotlinPsiUpdateModCommandAction.ElementBased<KtBinaryExpressionWithTypeRHS, Unit>(element, Unit) {
 
-    override fun getActionName(
-        actionContext: ActionContext,
+    override fun getPresentation(
+        context: ActionContext,
         element: KtBinaryExpressionWithTypeRHS,
-        elementContext: Unit
-    ): @IntentionName String = KotlinBundle.message("replace.cast.with.call.to.to.0", targetShortType)
+    ): Presentation = Presentation.of(
+        KotlinBundle.message("replace.cast.with.call.to.to.0", targetShortType),
+    )
 
-    override fun getFamilyName() = KotlinBundle.message("replace.cast.with.primitive.conversion.method")
-
+    override fun getFamilyName(): String =
+        KotlinBundle.message("replace.cast.with.primitive.conversion.method")
 
     override fun invoke(
         actionContext: ActionContext,

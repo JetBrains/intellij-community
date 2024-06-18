@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
@@ -39,13 +40,15 @@ internal class ConvertLambdaToReferenceIntention :
         val renderedTypeArguments: String?,
     )
 
-    override fun getFamilyName(): String = KotlinBundle.message("convert.lambda.to.reference.before.text")
+    override fun getFamilyName(): String =
+        KotlinBundle.message("convert.lambda.to.reference.before.text")
 
-    override fun getActionName(
-      actionContext: ActionContext,
-      element: KtLambdaExpression,
-      elementContext: Context,
-    ): String = KotlinBundle.message("convert.lambda.to.reference")
+    override fun getPresentation(
+        context: ActionContext,
+        element: KtLambdaExpression,
+    ): Presentation = Presentation.of(
+        KotlinBundle.message("convert.lambda.to.reference"),
+    )
 
     override fun isApplicableByPsi(element: KtLambdaExpression): Boolean {
         val singleStatement = element.singleStatementOrNull() ?: return false

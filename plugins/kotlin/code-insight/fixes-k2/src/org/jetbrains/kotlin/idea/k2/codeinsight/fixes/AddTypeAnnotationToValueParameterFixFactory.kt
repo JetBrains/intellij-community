@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
@@ -74,12 +75,19 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
             element.typeReference = KtPsiFactory(actionContext.project).createType(typeName)
         }
 
-        override fun getFamilyName(): String = KotlinBundle.message("fix.add.type.annotation.family")
+        override fun getFamilyName(): String =
+            KotlinBundle.message("fix.add.type.annotation.family")
 
-        override fun getActionName(
-            actionContext: ActionContext,
+        override fun getPresentation(
+            context: ActionContext,
             element: KtParameter,
-            elementContext: Unit,
-        ): String = KotlinBundle.message("fix.add.type.annotation.text", typeName, element.name.toString())
+        ): Presentation {
+            val actionName = KotlinBundle.message(
+                "fix.add.type.annotation.text",
+                typeName,
+                element.name.toString(),
+            )
+            return Presentation.of(actionName)
+        }
     }
 }

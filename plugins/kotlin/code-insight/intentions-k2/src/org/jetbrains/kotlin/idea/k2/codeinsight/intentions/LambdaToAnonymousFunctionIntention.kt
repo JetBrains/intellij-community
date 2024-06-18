@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
@@ -30,13 +31,15 @@ internal class LambdaToAnonymousFunctionIntention :
         val lambdaArgumentName: Name?,
     )
 
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.lambda.expression.to.anonymous.function")
+    override fun getFamilyName(): @IntentionFamilyName String =
+        KotlinBundle.message("convert.lambda.expression.to.anonymous.function")
 
-    override fun getActionName(
-      actionContext: ActionContext,
-      element: KtLambdaExpression,
-      elementContext: LambdaToFunctionContext,
-    ): String = KotlinBundle.message("convert.to.anonymous.function")
+    override fun getPresentation(
+        context: ActionContext,
+        element: KtLambdaExpression,
+    ): Presentation = Presentation.of(
+        KotlinBundle.message("convert.to.anonymous.function"),
+    )
 
     context(KaSession)
     override fun prepareContext(element: KtLambdaExpression): LambdaToFunctionContext? {

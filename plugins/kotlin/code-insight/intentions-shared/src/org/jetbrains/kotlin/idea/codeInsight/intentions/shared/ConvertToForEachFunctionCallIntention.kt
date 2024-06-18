@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -22,18 +23,21 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 internal class ConvertToForEachFunctionCallIntention :
     KotlinApplicableModCommandAction<KtForExpression, Unit>(KtForExpression::class) {
 
-    override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.foreach.function.call", "forEach")
+    override fun getFamilyName(): String =
+        KotlinBundle.message("replace.with.a.foreach.function.call", "forEach")
 
-    override fun getActionName(
-      actionContext: ActionContext,
-      element: KtForExpression,
-      elementContext: Unit,
-    ): String {
-        val callExpression = element.loopRange?.getPossiblyQualifiedCallExpression()
-        return KotlinBundle.message(
+    override fun getPresentation(
+        context: ActionContext,
+        element: KtForExpression,
+    ): Presentation {
+        val calleeExpression = element.loopRange
+            ?.getPossiblyQualifiedCallExpression()
+            ?.calleeExpression
+        val actionName = KotlinBundle.message(
             "replace.with.a.foreach.function.call",
-            if (callExpression?.calleeExpression?.text == WITH_INDEX_NAME) "forEachIndexed" else "forEach"
+            if (calleeExpression?.text == WITH_INDEX_NAME) "forEachIndexed" else "forEach",
         )
+        return Presentation.of(actionName)
     }
 
     override fun isApplicableByPsi(element: KtForExpression): Boolean {

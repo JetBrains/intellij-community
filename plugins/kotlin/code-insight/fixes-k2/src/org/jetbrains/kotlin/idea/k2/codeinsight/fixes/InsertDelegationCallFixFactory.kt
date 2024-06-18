@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -77,17 +77,18 @@ internal object InsertDelegationCallFixFactory {
             updater.moveCaretTo(leftParOffset + 1)
         }
 
-        override fun getActionName(
-            actionContext: ActionContext,
+        override fun getPresentation(
+            context: ActionContext,
             element: KtSecondaryConstructor,
-            elementContext: Unit,
-        ): String {
-            val keyword = if (isThis) "this" else "super"
-            return KotlinBundle.message("fix.insert.delegation.call", keyword)
+        ): Presentation {
+            val actionName = KotlinBundle.message(
+                "fix.insert.delegation.call",
+                if (isThis) "this" else "super",
+            )
+            return Presentation.of(actionName)
         }
 
-        override fun getFamilyName(): String {
-            return KotlinBundle.message("insert.explicit.delegation.call")
-        }
+        override fun getFamilyName(): String =
+            KotlinBundle.message("insert.explicit.delegation.call")
     }
 }

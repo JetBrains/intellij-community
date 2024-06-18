@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.psi.findParameterWithName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -29,14 +30,16 @@ internal object AddInlineModifierFixFactories {
 
     val inlineSuspendFunctionTypeUnsupported =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InlineSuspendFunctionTypeUnsupported ->
-            val parameter = diagnostic.psi as? KtParameter ?: return@ModCommandBased listOf()
+            val parameter = diagnostic.psi
             listOf(
                 AddInlineModifierFix(parameter, ElementContext(KtTokens.NOINLINE_KEYWORD)),
                 AddInlineModifierFix(parameter, ElementContext(KtTokens.CROSSINLINE_KEYWORD))
             )
         }
 
-    private class ElementContext(val modifier: KtModifierKeywordToken)
+    private data class ElementContext(
+        val modifier: KtModifierKeywordToken,
+    )
 
     private class AddInlineModifierFix(
         parameter: KtParameter,
@@ -55,10 +58,20 @@ internal object AddInlineModifierFixFactories {
             }
         }
 
-        override fun getActionName(actionContext: ActionContext, element: KtParameter, elementContext: ElementContext): String {
-            return KotlinBundle.message("fix.add.modifier.inline.parameter.text", elementContext.modifier, element.name.toString())
+        override fun getPresentation(
+            context: ActionContext,
+            element: KtParameter,
+        ): Presentation {
+            val (modifier) = getElementContext(context, element)
+            val actionName = KotlinBundle.message(
+                "fix.add.modifier.inline.parameter.text",
+                modifier,
+                element.name.toString(),
+            )
+            return Presentation.of(actionName)
         }
 
-        override fun getFamilyName() = KotlinBundle.message("fix.add.modifier.inline.parameter.family", context.modifier.value)
+        override fun getFamilyName(): String =
+            KotlinBundle.message("fix.add.modifier.inline.parameter.family", context.modifier.value)
     }
 }

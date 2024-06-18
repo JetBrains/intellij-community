@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -49,13 +50,17 @@ internal object MakeOverriddenMemberOpenFixFactory {
             MakeOverriddenMemberOpenFixUtils.invoke(writableMembers)
         }
 
-        override fun getActionName(
-            actionContext: ActionContext,
+        override fun getPresentation(
+            context: ActionContext,
             element: KtDeclaration,
-            elementContext: ElementContext,
-        ): String = MakeOverriddenMemberOpenFixUtils.getActionName(element, elementContext.containingDeclarationNames)
+        ): Presentation {
+            val (_, containingDeclarationNames) = getElementContext(context, element)
+            val actionName = MakeOverriddenMemberOpenFixUtils.getActionName(element, containingDeclarationNames)
+            return Presentation.of(actionName)
+        }
 
-        override fun getFamilyName(): String = KotlinBundle.message("add.modifier")
+        override fun getFamilyName(): String =
+            KotlinBundle.message("add.modifier")
     }
 }
 

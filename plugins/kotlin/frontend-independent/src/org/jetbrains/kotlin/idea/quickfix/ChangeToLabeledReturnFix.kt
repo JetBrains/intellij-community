@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -29,11 +30,11 @@ class ChangeToLabeledReturnFix(
         element.replace(newExpression)
     }
 
-    override fun getFamilyName(): String = KotlinBundle.message("fix.change.to.labeled.return.family")
+    override fun getFamilyName(): String =
+        KotlinBundle.message("fix.change.to.labeled.return.family")
 
-    override fun getActionName(
-        actionContext: ActionContext,
+    override fun getPresentation(
+        context: ActionContext,
         element: KtReturnExpression,
-        elementContext: Unit,
-    ): String = KotlinBundle.message("fix.change.to.labeled.return.text", labeledReturn)
+    ): Presentation = Presentation.of(KotlinBundle.message("fix.change.to.labeled.return.text", labeledReturn))
 }

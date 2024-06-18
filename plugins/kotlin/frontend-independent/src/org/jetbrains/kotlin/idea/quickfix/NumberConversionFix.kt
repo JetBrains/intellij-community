@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -18,13 +19,28 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 class NumberConversionFix(
     element: KtExpression,
     elementContext: ElementContext,
-    private val conversionType: ConversionType = ConversionType.EXPRESSION,
+    private val actionNameProvider: ActionNameProvider = ActionNameProvider.EXPRESSION,
 ) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, NumberConversionFix.ElementContext>(element, elementContext) {
 
-    enum class ConversionType(val intentionText: (String) -> @IntentionName String) {
-        EXPRESSION({ KotlinBundle.message("convert.expression.to.0", it) }),
-        LEFT_HAND_SIDE({ KotlinBundle.message("convert.left.hand.side.to.0", it) }),
-        RIGHT_HAND_SIDE({ KotlinBundle.message("convert.right.hand.side.to.0", it) }),
+
+    fun interface ActionNameProvider {
+
+        operator fun invoke(elementContext: ElementContext): @IntentionName String
+
+        companion object {
+
+            val EXPRESSION = ActionNameProvider {
+                KotlinBundle.message("convert.expression.to.0", it.typePresentation)
+            }
+
+            val LEFT_HAND_SIDE = ActionNameProvider {
+                KotlinBundle.message("convert.left.hand.side.to.0", it.typePresentation)
+            }
+
+            val RIGHT_HAND_SIDE = ActionNameProvider {
+                KotlinBundle.message("convert.right.hand.side.to.0", it.typePresentation)
+            }
+        }
     }
 
     data class ElementContext(
@@ -38,12 +54,16 @@ class NumberConversionFix(
         val toByteOrShort: Boolean,
     )
 
-    override fun getFamilyName() = KotlinBundle.message("insert.number.conversion")
-    override fun getActionName(
-        actionContext: ActionContext,
+    override fun getFamilyName(): String =
+        KotlinBundle.message("insert.number.conversion")
+
+    override fun getPresentation(
+        context: ActionContext,
         element: KtExpression,
-        elementContext: ElementContext,
-    ): String = conversionType.intentionText(elementContext.typePresentation)
+    ): Presentation {
+        val contextElement = getElementContext(context, element)
+        return Presentation.of(actionNameProvider(contextElement))
+    }
 
     override fun invoke(
         actionContext: ActionContext,

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtExpression
@@ -14,13 +15,15 @@ class WrapWithArrayLiteralFix(
     element: KtExpression,
 ) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, Unit>(element, Unit) {
 
-    override fun getFamilyName() = KotlinBundle.message("wrap.with.array.literal")
+    override fun getFamilyName(): String =
+        KotlinBundle.message("wrap.with.array.literal")
 
-    override fun getActionName(
-        actionContext: ActionContext,
+    override fun getPresentation(
+        context: ActionContext,
         element: KtExpression,
-        elementContext: Unit,
-    ): String = KotlinBundle.message("wrap.with")
+    ): Presentation = Presentation.of(
+        KotlinBundle.message("wrap.with"),
+    )
 
     override fun invoke(
         actionContext: ActionContext,

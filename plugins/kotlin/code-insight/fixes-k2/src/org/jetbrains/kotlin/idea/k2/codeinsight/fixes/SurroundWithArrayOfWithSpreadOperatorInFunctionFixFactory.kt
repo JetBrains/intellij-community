@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -29,13 +30,16 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
         elementContext: ElementContext,
     ) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, ElementContext>(element, elementContext) {
 
-        override fun getFamilyName(): String = KotlinBundle.message("surround.with.array.of")
+        override fun getFamilyName(): String =
+            KotlinBundle.message("surround.with.array.of")
 
-        override fun getActionName(
-            actionContext: ActionContext,
+        override fun getPresentation(
+            context: ActionContext,
             element: KtExpression,
-            elementContext: ElementContext,
-        ): String = KotlinBundle.getMessage("surround.with.0", elementContext.shortArrayOfCall)
+        ): Presentation {
+            val (_, shortArrayOfCall) = getElementContext(context, element)
+            return Presentation.of(KotlinBundle.getMessage("surround.with.0", shortArrayOfCall))
+        }
 
         override fun invoke(
             actionContext: ActionContext,

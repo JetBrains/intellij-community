@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -34,17 +35,21 @@ object CastExpressionFixFactories {
         elementContext: ElementContext,
     ) : KotlinPsiUpdateModCommandAction.ElementBased<PsiElement, ElementContext>(element, elementContext) {
 
-        override fun getFamilyName(): String = KotlinBundle.message("fix.cast.expression.family")
+        override fun getFamilyName(): String =
+            KotlinBundle.message("fix.cast.expression.family")
 
-        override fun getActionName(
-            actionContext: ActionContext,
-            element: PsiElement,
-            elementContext: ElementContext,
-        ): String = KotlinBundle.message(
-            "fix.cast.expression.text",
-            getExpressionShortText(element),
-            elementContext.typePresentation,
-        )
+        override fun getPresentation(
+            context: ActionContext,
+            element: PsiElement
+        ): Presentation {
+            val (typePresentation) = getElementContext(context, element)
+            val actionName = KotlinBundle.message(
+                "fix.cast.expression.text",
+                getExpressionShortText(element),
+                typePresentation,
+            )
+            return Presentation.of(actionName)
+        }
 
         override fun invoke(
             actionContext: ActionContext,
