@@ -53,7 +53,12 @@ import javax.swing.SwingUtilities
 import kotlin.math.max
 import kotlin.math.min
 
-abstract class InlayOutput(parent: Disposable, val editor: Editor, private val clearAction: () -> Unit) {
+abstract class InlayOutput(
+  parent: Disposable,
+  val editor: Editor,
+  private val clearAction: () -> Unit,
+  val actions: List<AnAction>,
+) {
   // Transferring `this` from the constructor to another class violates JMM and leads to undefined behaviour
   // when accessing `toolbarPane` inside constructor and when `toolbarPane` accesses `this`. So, be careful.
   // Since this is an abstract class with many inheritors, the only way to get rid of this issue is to convert
@@ -64,15 +69,8 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
 
   protected val project: Project = editor.project ?: error("Editor should have a project")
 
-  protected open val useDefaultSaveAction: Boolean = true
-  protected open val extraActions: List<AnAction> = emptyList()
-
   /** If the output should occupy as much editor width as possible. */
   open val isFullWidth = true
-
-  val actions: List<AnAction> by lazy {  // Note: eager initialization will cause runtime errors
-    createActions()
-  }
 
   fun getComponent() = toolbarPane
 
@@ -118,8 +116,7 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
   }
 
   private fun createToolbar(): JComponent {
-    val clearAction = ActionManager.getInstance().getAction(ClearOutputAction.ID)
-    val toolbar = ToolbarUtil.createEllipsisToolbar("NotebooksInlayOutput", actions + clearAction)
+    val toolbar = ToolbarUtil.createEllipsisToolbar("NotebooksInlayOutput", actions)
 
     toolbar.targetComponent = toolbarPane // ToolbarPane will be in context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
     toolbar.component.isOpaque = true
@@ -134,14 +131,6 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
                                     defaultName: String,
                                     onChoose: (File) -> Unit) {
     InlayOutputUtil.saveWithFileChooser(project, title, description, extension, defaultName, true, onChoose)
-  }
-
-  private fun createActions(): List<AnAction> {
-    return extraActions.toMutableList().apply {
-      if (useDefaultSaveAction) {
-        add(ActionManager.getInstance().getAction(SaveOutputAction.ID))
-      }
-    }
   }
 
   /** called by [ClearOutputAction] */
@@ -162,16 +151,20 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
   companion object {
     fun getToolbarPaneOrNull(e: AnActionEvent): ToolbarPane? =
       e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarPane
+
+    fun loadActions(vararg ids: String): List<AnAction> {
+      val actionManager = ActionManager.getInstance()
+      return ids.map { actionManager.getAction(it) }
+    }
   }
 }
 
 class InlayOutputImg(parent: Disposable, editor: Editor, clearAction: () -> Unit)
-  : InlayOutput(parent, editor, clearAction), InlayOutput.WithCopyImageToClipboard, InlayOutput.WithSaveAs {
+  : InlayOutput(parent, editor, clearAction, loadActions(CopyImageToClipboardAction.ID, SaveOutputAction.ID, ClearOutputAction.ID)), InlayOutput.WithCopyImageToClipboard, InlayOutput.WithSaveAs {
   private val graphicsPanel = GraphicsPanel(project, parent).apply {
     isAdvancedMode = true
   }
 
-  override val extraActions = createExtraActions()
   override val isFullWidth = false
 
   init {
@@ -225,10 +218,6 @@ class InlayOutputImg(parent: Disposable, editor: Editor, clearAction: () -> Unit
     return type == "IMG" || type == "IMGBase64" || type == "IMGSVG"
   }
 
-  private fun createExtraActions(): List<AnAction> {
-    return listOf(ActionManager.getInstance().getAction(CopyImageToClipboardAction.ID))
-  }
-
   override fun copyImageToClipboard() {
     graphicsPanel.image?.let { image ->
       ClipboardUtils.copyImageToClipboard(image)
@@ -237,7 +226,7 @@ class InlayOutputImg(parent: Disposable, editor: Editor, clearAction: () -> Unit
 }
 
 class InlayOutputText(parent: Disposable, editor: Editor, clearAction: () -> Unit)
-  : InlayOutput(parent, editor, clearAction), InlayOutput.WithSaveAs {
+  : InlayOutput(parent, editor, clearAction, loadActions(SaveOutputAction.ID, ClearOutputAction.ID)), InlayOutput.WithSaveAs {
 
   private val console = ColoredTextConsole(project, viewer = true)
 
@@ -384,7 +373,7 @@ fun updateOutputTextConsoleUI(consoleEditor: EditorEx, editor: Editor) {
 }
 
 class InlayOutputHtml(parent: Disposable, editor: Editor, clearAction: () -> Unit)
-  : InlayOutput(parent, editor, clearAction), InlayOutput.WithSaveAs {
+  : InlayOutput(parent, editor, clearAction, loadActions(SaveOutputAction.ID, ClearOutputAction.ID)), InlayOutput.WithSaveAs {
 
   private val jbBrowser: JBCefBrowser = JBCefBrowser().also { Disposer.register(parent, it) }
   private val heightJsCallback = JBCefJSQuery.create(jbBrowser as JBCefBrowserBase)
@@ -465,7 +454,8 @@ class InlayOutputHtml(parent: Disposable, editor: Editor, clearAction: () -> Uni
   }
 }
 
-class InlayOutputTable(val parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction) {
+class InlayOutputTable(val parent: Disposable, editor: Editor, clearAction: () -> Unit)
+  : InlayOutput(parent, editor, clearAction, loadActions(ClearOutputAction.ID)) {
 
   private val inlayTablePage: InlayTablePage = InlayTablePage()
 
