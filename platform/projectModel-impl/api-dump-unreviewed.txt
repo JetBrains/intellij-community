@@ -339,11 +339,9 @@ f:com.intellij.openapi.module.impl.UnloadedModulesListStorage
 - <init>():V
 - addUnloadedModuleNames(java.util.Collection):V
 - getState():com.intellij.openapi.module.impl.UnloadedModulesListStorage
-- getUnloadedModuleNameHolder():com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
 - loadState(com.intellij.openapi.module.impl.UnloadedModulesListStorage):V
 - setUnloadedModuleNames(java.util.Collection):V
 c:com.intellij.openapi.module.impl.UnloadedModulesNameHolderImpl
-- com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
 - <init>(java.util.Set):V
 - hasUnloaded():Z
 - isUnloaded(java.lang.String):Z

@@ -32,6 +32,7 @@ public final class UnloadedModulesListStorage implements PersistentStateComponen
 
   @Transient
   @NotNull
+  @ApiStatus.Internal
   public UnloadedModulesNameHolder getUnloadedModuleNameHolder() {
     return new UnloadedModulesNameHolderImpl(moduleNames);
   }

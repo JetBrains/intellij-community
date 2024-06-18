@@ -619,10 +619,6 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 *f:com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 - com.intellij.platform.workspace.storage.EntitySource
 - sf:INSTANCE:com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
-*:com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
-- sf:DUMMY:com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
-- a:hasUnloaded():Z
-- a:isUnloaded(java.lang.String):Z
 com.intellij.platform.workspace.jps.entities.ContentRootEntity
 - com.intellij.platform.workspace.storage.WorkspaceEntity
 - sf:Companion:com.intellij.platform.workspace.jps.entities.ContentRootEntity$Companion
