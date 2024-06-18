@@ -477,13 +477,6 @@ f:com.intellij.util.Urls
 - sf:parse(java.lang.String,Z):com.intellij.util.Url
 - sf:parseEncoded(java.lang.String):com.intellij.util.Url
 - sf:toUriWithoutParameters(com.intellij.util.Url):java.net.URI
-f:com.intellij.util.io.EnumeratorLongDescriptor
-- com.intellij.util.io.KeyDescriptor
-- sf:INSTANCE:com.intellij.util.io.EnumeratorLongDescriptor
-- getHashCode(J):I
-- isEqual(J,J):Z
-- read(java.io.DataInput):java.lang.Long
-- save(java.io.DataOutput,J):V
 com.intellij.util.io.IoService
 - s:getInstance():com.intellij.util.io.IoService
 - a:getProxySelector(java.lang.String):java.net.ProxySelector
