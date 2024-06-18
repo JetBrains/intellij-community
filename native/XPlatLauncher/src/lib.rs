@@ -91,9 +91,11 @@ pub fn main_lib() {
 #[cfg(target_os = "windows")]
 fn attach_console() {
     unsafe {
-        match AttachConsole(ATTACH_PARENT_PROCESS) {
-            Ok(_) => {}
-            Err(_) => AllocConsole().expect("Failed to attach to existing console or allocate a new one")
+        if AttachConsole(ATTACH_PARENT_PROCESS).is_err() {
+            eprintln!("AttachConsole(ATTACH_PARENT_PROCESS): {:?}", Foundation::GetLastError());
+            if AllocConsole().is_err() {
+                eprintln!("AllocConsole(): {:?}", Foundation::GetLastError());
+            }
         }
     }
 }
