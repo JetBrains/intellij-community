@@ -15,12 +15,9 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public final class MethodChainLookupRangingHelper {
   @NotNull
@@ -101,15 +98,16 @@ public final class MethodChainLookupRangingHelper {
   @NotNull
   private static LookupElement createQualifierLookupElement(@NotNull PsiClass qualifierClass,
                                                             @NotNull ChainCompletionContext context) {
-    PsiNamedElement element = context.getQualifiers(qualifierClass).findFirst().orElse(null);
+    PsiClassType type = JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createType(qualifierClass);
+    PsiNamedElement element = context.getQualifierIfPresent(type);
     if (element == null) {
       return new ChainCompletionNewVariableLookupElement(qualifierClass, context);
     } else {
-      if (element instanceof PsiVariable) {
-        return new VariableLookupItem((PsiVariable)element);
+      if (element instanceof PsiVariable var) {
+        return new VariableLookupItem(var);
       }
-      else if (element instanceof PsiMethod) {
-        return createMethodLookupElement((PsiMethod)element);
+      else if (element instanceof PsiMethod method) {
+        return createMethodLookupElement(method);
       }
       throw new AssertionError("unexpected element: " + element);
     }
@@ -123,8 +121,7 @@ public final class MethodChainLookupRangingHelper {
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       PsiType type = parameter.getType();
       if (!ChainCompletionContext.isWidelyUsed(type)) {
-        Collection<PsiElement> contextVariables = context.getQualifiers(type).collect(Collectors.toList());
-        PsiElement contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
+        PsiNamedElement contextVariable = context.getQualifierIfPresent(type);
         if (contextVariable != null) {
           matchedParametersInContext++;
           continue;
