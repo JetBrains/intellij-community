@@ -16,6 +16,9 @@
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurvey"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.CheckKotlinPluginModeWasSwitchedOnRestartPostStartupActivity"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionExternalSystemListener"/>
+
+    <statusBarWidgetFactory id="kotlin.fir.ide" implementation="org.jetbrains.kotlin.onboarding.k2.FirStatusBarWidgetFactory"/>
+
   </extensions>
   <actions resource-bundle="messages.FeedbackBundle">
     <group id="OnboardingKotlin" internal="true">

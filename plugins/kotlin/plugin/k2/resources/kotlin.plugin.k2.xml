@@ -63,7 +63,6 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
             serviceImplementation="org.jetbrains.kotlin.idea.fir.FirLibrarySourceScopeService"/>
-    <statusBarWidgetFactory id="kotlin.fir.ide" implementation="org.jetbrains.kotlin.idea.fir.FirStatusBarWidgetFactory"/>
 
     <applicationService serviceInterface="org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService"
                         serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>

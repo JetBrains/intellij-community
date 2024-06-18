@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.fir
+package org.jetbrains.kotlin.onboarding.k2
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -14,10 +14,8 @@ import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
-import com.intellij.platform.feedback.impl.OnDemandFeedbackResolver
 import com.intellij.ui.ClickListener
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.K2FeedbackSurvey
 import org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.K2UserTracker
 import java.awt.event.MouseEvent
 import javax.swing.Icon
@@ -72,11 +70,10 @@ private class Widget(private val project: Project) : CustomStatusBarWidget, Stat
                 object : ClickListener() {
                     override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
                         if (SwingUtilities.isLeftMouseButton(event)) {
-                            showFeedbackForm()
+                            K2UserTracker.getInstance().forceShowFeedbackForm(project)
                         }
                         return true
                     }
-
                 }.installOn(this)
             }.apply {
                 toolTipText = DISPLAY_NAME
@@ -84,15 +81,6 @@ private class Widget(private val project: Project) : CustomStatusBarWidget, Stat
             }
         this.icon = icon
         return icon
-    }
-
-    fun showFeedbackForm() {
-        val userTracker = K2UserTracker.getInstance()
-        userTracker.forced = true
-        OnDemandFeedbackResolver.getInstance()
-            .showFeedbackNotification(K2FeedbackSurvey::class, project) {
-                userTracker.forced = false
-            }
     }
 
     override fun dispose() {

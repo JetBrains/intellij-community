@@ -7,6 +7,8 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.feedback.impl.OnDemandFeedbackResolver
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
@@ -42,7 +44,16 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
         }
     }
 
-    var forced: Boolean = false
+    @ApiStatus.Internal
+    fun forceShowFeedbackForm(project: Project) {
+        forced = true
+        OnDemandFeedbackResolver.getInstance()
+            .showFeedbackNotification(K2FeedbackSurvey::class, project) {
+                forced = false
+            }
+    }
+
+    private var forced: Boolean = false
 
     internal var switchedToK1 = false
     internal var forUnitTests = false
