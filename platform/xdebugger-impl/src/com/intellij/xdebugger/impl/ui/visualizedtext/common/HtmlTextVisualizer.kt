@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.impl.ui.visualizedtext.TextVisualizerContentType
+import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedContentTabWithStats
 import com.intellij.xdebugger.ui.TextValueVisualizer
 import com.intellij.xdebugger.ui.VisualizedContentTab
 import javax.swing.JComponent
@@ -18,11 +20,13 @@ internal class HtmlTextVisualizer : TextValueVisualizer {
       return emptyList()
     }
 
-    return listOf(object : VisualizedContentTab {
+    return listOf(object : VisualizedContentTab, VisualizedContentTabWithStats {
       override val name
         get() = XDebuggerBundle.message("xdebugger.visualized.text.name.html")
       override val id
         get() = HtmlTextVisualizer::class.qualifiedName!!
+      override val contentTypeForStats
+        get() = TextVisualizerContentType.HTML
 
       override fun createComponent(project: Project): JComponent {
         val editor = JEditorPane()

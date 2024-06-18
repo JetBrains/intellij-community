@@ -7,6 +7,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.ui.visualizedtext.TextBasedContentTab
+import com.intellij.xdebugger.impl.ui.visualizedtext.TextVisualizerContentType
+import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedContentTabWithStats
 import com.intellij.xdebugger.ui.TextValueVisualizer
 import com.intellij.xdebugger.ui.VisualizedContentTab
 import kotlin.io.encoding.Base64
@@ -17,11 +19,13 @@ internal class JWTTextVisualizer : TextValueVisualizer {
     val jwt = tryParse(value)
     if (jwt == null) return emptyList()
 
-    return listOf(object : TextBasedContentTab() {
+    return listOf(object : TextBasedContentTab(), VisualizedContentTabWithStats {
       override val name
         get() = XDebuggerBundle.message("xdebugger.visualized.text.name.jwt")
       override val id
         get() = JWTTextVisualizer::class.qualifiedName!!
+      override val contentTypeForStats
+        get() = TextVisualizerContentType.JWT
       override fun formatText() =
         prettify(jwt!!) // !! is a workaround for KT-69132, remove it after migration to Kotlin >= 2.0
       override val fileType

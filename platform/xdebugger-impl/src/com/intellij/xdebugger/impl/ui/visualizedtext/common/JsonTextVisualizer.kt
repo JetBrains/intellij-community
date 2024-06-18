@@ -8,6 +8,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.ui.visualizedtext.TextBasedContentTab
+import com.intellij.xdebugger.impl.ui.visualizedtext.TextVisualizerContentType
+import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedContentTabWithStats
 import com.intellij.xdebugger.ui.TextValueVisualizer
 import com.intellij.xdebugger.ui.VisualizedContentTab
 
@@ -23,11 +25,13 @@ internal class JsonTextVisualizer : TextValueVisualizer {
     val json = JsonEncodingUtil.tryParseJson(value)
     if (json == null) return emptyList()
 
-    return listOf(object : TextBasedContentTab() {
+    return listOf(object : TextBasedContentTab(), VisualizedContentTabWithStats {
       override val name
         get() = XDebuggerBundle.message("xdebugger.visualized.text.name.json")
       override val id
         get() = JsonTextVisualizer::class.qualifiedName!!
+      override val contentTypeForStats
+        get() = TextVisualizerContentType.JSON
       override fun formatText() =
         JsonEncodingUtil.prettifyJson(json!!) // !! is a workaround for KT-69132, remove it after migration to Kotlin >= 2.0
       override val fileType
