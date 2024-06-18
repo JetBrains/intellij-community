@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.navigationToolbar.experimental
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.navigationToolbar.rider
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -44,12 +44,15 @@ import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
-class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
+/**
+ * Search Everywhere action's item on the main Rider toolbar for the classic UI.
+ */
+class SearchEverywhereRiderMainToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
   companion object {
-    const val SHOW_HOT_KEY_TIP: String = "com.intellij.ide.navigationToolbar.experimental.showSearchEverywhereHotKeyTip"
+    const val SHOW_HOT_KEY_TIP: String = "com.intellij.ide.navigationToolbar.rider.showSearchEverywhereHotKeyTip"
   }
 
-  private val logger = logger<SearchEverywhereNewToolbarAction>()
+  private val logger = logger<SearchEverywhereRiderMainToolbarAction>()
 
   private val margin = JBUI.scale(4)
   private var subscribedForDoubleShift = false
@@ -231,7 +234,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         }
       }
     }
-    if (action is SearchEverywhereNewToolbarAction && event.place == ActionPlaces.MAIN_TOOLBAR) {
+    if (action is SearchEverywhereRiderMainToolbarAction && event.place == ActionPlaces.MAIN_TOOLBAR) {
       clearPosition = true
     }
   }

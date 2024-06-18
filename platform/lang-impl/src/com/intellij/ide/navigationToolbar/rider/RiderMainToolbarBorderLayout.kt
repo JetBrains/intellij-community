@@ -1,11 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navigationToolbar.experimental
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.navigationToolbar.rider
 
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 
-internal class NewToolbarBorderLayout : BorderLayout() {
+/**
+ * Layout for the Rider main toolbar used in the classic IDE UI.
+ */
+internal class RiderMainToolbarBorderLayout : BorderLayout() {
   private var lastTarget: Container? = null
 
   override fun layoutContainer(target: Container?) {

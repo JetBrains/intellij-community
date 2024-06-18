@@ -893,8 +893,8 @@
     <listener class="git4idea.actions.GitQuickActionsToolbarPopup$MyGitRepositoryListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="git4idea.ui.branch.GitBranchWidget$MyExperimentalToolbarStateListener"
-              topic="com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener"
+    <listener class="git4idea.ui.branch.GitBranchWidget$MyRiderMainToolbarStateListener"
+              topic="com.intellij.ide.navigationToolbar.rider.RiderMainToolbarStateListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="git4idea.ui.branch.GitBranchWidget$SettingsListener"
               activeInHeadlessMode="false" activeInTestMode="false"

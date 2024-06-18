@@ -15961,26 +15961,26 @@ a:com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension
 - processChildren(java.lang.Object,java.lang.Object,com.intellij.util.Processor):Z
 f:com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension$Companion
 - f:getMODEL():com.intellij.openapi.util.Key
-com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener
-- sf:Companion:com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener$Companion
-- a:refreshVisibility():V
-f:com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener$Companion
-- f:getTOPIC():com.intellij.util.messages.Topic
-c:com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneManager
+c:com.intellij.ide.navigationToolbar.rider.RiderMainToolbarRootPaneManager
 - com.intellij.openapi.util.SimpleModificationTracker
-- sf:Companion:com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneManager$Companion
+- sf:Companion:com.intellij.ide.navigationToolbar.rider.RiderMainToolbarRootPaneManager$Companion
 - <init>(com.intellij.openapi.project.Project):V
 - isLeftSideAction(com.intellij.openapi.actionSystem.AnAction):Z
 - isRightSideAction(com.intellij.openapi.actionSystem.AnAction):Z
 - mainGroupName():java.lang.String
 - f:startUpdateActionGroups(javax.swing.JPanel):V
-f:com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneManager$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneManager
-f:com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction
+f:com.intellij.ide.navigationToolbar.rider.RiderMainToolbarRootPaneManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.navigationToolbar.rider.RiderMainToolbarRootPaneManager
+com.intellij.ide.navigationToolbar.rider.RiderMainToolbarStateListener
+- sf:Companion:com.intellij.ide.navigationToolbar.rider.RiderMainToolbarStateListener$Companion
+- a:refreshVisibility():V
+f:com.intellij.ide.navigationToolbar.rider.RiderMainToolbarStateListener$Companion
+- f:getTOPIC():com.intellij.util.messages.Topic
+f:com.intellij.ide.navigationToolbar.rider.SearchEverywhereRiderMainToolbarAction
 - com.intellij.ide.actions.SearchEverywhereAction
 - com.intellij.openapi.actionSystem.ex.AnActionListener
 - com.intellij.openapi.project.DumbAware
-- sf:Companion:com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction$Companion
+- sf:Companion:com.intellij.ide.navigationToolbar.rider.SearchEverywhereRiderMainToolbarAction$Companion
 - sf:SHOW_HOT_KEY_TIP:java.lang.String
 - <init>():V
 - afterActionPerformed(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnActionResult):V
@@ -15989,7 +15989,7 @@ f:com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarActi
 - f:getSeManager():com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 - f:setSeManager(com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction$Companion
+f:com.intellij.ide.navigationToolbar.rider.SearchEverywhereRiderMainToolbarAction$Companion
 com.intellij.ide.projectView.HelpID
 - sf:PROJECT_VIEWS:java.lang.String
 a:com.intellij.ide.projectView.ProjectView

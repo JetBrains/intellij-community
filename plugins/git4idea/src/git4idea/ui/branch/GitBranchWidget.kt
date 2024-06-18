@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsStatusWidget
-import com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener
+import com.intellij.ide.navigationToolbar.rider.RiderMainToolbarStateListener
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -124,7 +124,7 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
     }
   }
 
-  internal class MyExperimentalToolbarStateListener(private val project: Project) : ExperimentalToolbarStateListener {
+  internal class MyRiderMainToolbarStateListener(private val project: Project) : RiderMainToolbarStateListener {
     override fun refreshVisibility() {
       project.getService(StatusBarWidgetsManager::class.java).updateWidget(Factory::class.java)
     }

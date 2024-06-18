@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navigationToolbar.experimental
+package com.intellij.ide.navigationToolbar.rider
 
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
@@ -42,11 +42,11 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 @FunctionalInterface
-fun interface ExperimentalToolbarStateListener {
+fun interface RiderMainToolbarStateListener {
   companion object {
     @Topic.ProjectLevel
-    val TOPIC: Topic<ExperimentalToolbarStateListener> = Topic(
-      ExperimentalToolbarStateListener::class.java,
+    val TOPIC: Topic<RiderMainToolbarStateListener> = Topic(
+      RiderMainToolbarStateListener::class.java,
       Topic.BroadcastDirection.NONE,
       true,
     )
@@ -58,10 +58,12 @@ fun interface ExperimentalToolbarStateListener {
   fun refreshVisibility()
 }
 
-
-open class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker() {
+/**
+ * This is the Rider main toolbar (available in other IDEs under a registry key), used only in the classic UI.
+ */
+open class RiderMainToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker() {
   companion object {
-    fun getInstance(project: Project): NewToolbarRootPaneManager = project.service()
+    fun getInstance(project: Project): RiderMainToolbarRootPaneManager = project.service()
   }
 
   fun startUpdateActionGroups(panel: JPanel) {
@@ -89,7 +91,7 @@ open class NewToolbarRootPaneManager(private val project: Project) : SimpleModif
         }
       )
       .exceptionally {
-        logger<NewToolbarRootPaneManager>().error(it)
+        logger<RiderMainToolbarRootPaneManager>().error(it)
         null
       }
     getToolbarGroup()?.let {
@@ -193,11 +195,11 @@ private class NewToolbarRootPaneExtension : IdeRootPaneNorthExtension {
     }
 
     val panel = MyPanel(project)
-    NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(panel)
+    RiderMainToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(panel)
     return panel
   }
 
-  private class MyPanel(private val project: Project) : JPanel(NewToolbarBorderLayout()), UISettingsListener {
+  private class MyPanel(private val project: Project) : JPanel(RiderMainToolbarBorderLayout()), UISettingsListener {
     private var disposable: Disposable? = null
 
     init {
@@ -221,7 +223,7 @@ private class NewToolbarRootPaneExtension : IdeRootPaneNorthExtension {
         RunWidgetAvailabilityManager.getInstance(project).availabilityChanged.collectLatest {
           withContext(Dispatchers.EDT) {
             LOG.info("New toolbar: run widget availability changed $it")
-            NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this@MyPanel)
+            RiderMainToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this@MyPanel)
           }
         }
       }.cancelOnDispose(disposable)
@@ -261,12 +263,12 @@ private class NewToolbarRootPaneExtension : IdeRootPaneNorthExtension {
 
       isEnabled = isAvailable
       this.isVisible = isVisible
-      project.messageBus.syncPublisher(ExperimentalToolbarStateListener.TOPIC).refreshVisibility()
+      project.messageBus.syncPublisher(RiderMainToolbarStateListener.TOPIC).refreshVisibility()
 
       revalidate()
       repaint()
 
-      NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)
+      RiderMainToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)
     }
   }
 }

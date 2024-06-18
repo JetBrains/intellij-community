@@ -809,7 +809,7 @@
         <reference id="Back"/>
         <reference id="Forward"/>
         <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
-        <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
+        <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.rider.SearchEverywhereRiderMainToolbarAction"/>
       </group>
       <group id="RightToolbarSideGroup">
         <reference id="RunToolbarWidgetAction"/>

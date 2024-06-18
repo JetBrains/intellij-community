@@ -157,7 +157,7 @@
     <projectService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater"
                     serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl" preload="await"/>
 
-    <projectService serviceImplementation="com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneManager"/>
+    <projectService serviceImplementation="com.intellij.ide.navigationToolbar.rider.RiderMainToolbarRootPaneManager"/>
 
     <idePerformanceListener implementation="com.intellij.diagnostic.IdeaFreezeReporter"/>
 
