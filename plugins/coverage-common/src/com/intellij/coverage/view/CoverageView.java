@@ -66,7 +66,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
@@ -182,8 +181,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         resetView(() -> myStateBean.setShowOnlyModified(false));
       }
       else {
-        final String message = CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName());
-        final GotItTooltip gotIt = new GotItTooltip("coverage.view.elements.filter", message, this);
+        GotItTooltip gotIt = createGotIt();
         if (gotIt.canShow()) {
           final JComponent filterAction = ActionButtonUtil.findToolbarActionButton(actionToolbar, button -> button.getIcon() == FILTER_ICON);
           if (filterAction != null) {
@@ -192,6 +190,18 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         }
       }
     }
+  }
+
+  private @NotNull GotItTooltip createGotIt() {
+    String branchName = getFilteredBranchName();
+    if (branchName != null) {
+      return new GotItTooltip("coverage.view.elements.by.branch.filter",
+                              CoverageBundle.message("coverage.filter.branch.gotit", myViewExtension.getElementsName()),
+                              this);
+    }
+    return new GotItTooltip("coverage.view.elements.filter",
+                            CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName()),
+                            this);
   }
 
   private boolean hasVCSFilteredNodes() {
@@ -603,13 +613,17 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
   private @Nls @NotNull String getModifiedActionName() {
     String elementName = myViewExtension.getElementsCapitalisedName();
-    ModifiedFilesFilter filter = getModifiedFilesFilter();
-    String branchName = Objects.requireNonNull(filter).getBranchName();
+    String branchName = getFilteredBranchName();
     if (branchName != null) {
       return CoverageBundle.message("coverage.show.only.elements.in.feature.branch", elementName, branchName);
     } else {
       return CoverageBundle.message("coverage.show.only.modified.elements", elementName);
     }
+  }
+
+  private @Nullable String getFilteredBranchName() {
+    ModifiedFilesFilter filter = getModifiedFilesFilter();
+    return filter == null ? null : filter.getBranchName();
   }
 
   private void select(Object object) {
