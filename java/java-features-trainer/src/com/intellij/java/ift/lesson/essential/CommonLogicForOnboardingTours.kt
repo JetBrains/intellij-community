@@ -40,6 +40,7 @@ import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.put
+import org.jetbrains.annotations.Nls
 import training.dsl.*
 import training.dsl.LessonUtil.adjustSearchEverywherePosition
 import training.dsl.LessonUtil.checkEditorModification
@@ -62,7 +63,7 @@ import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JWindow
 
-abstract class CommonLogicForOnboardingTours(id: String, lessonName: String) : KLesson(id, lessonName) {
+abstract class CommonLogicForOnboardingTours(id: String, @Nls lessonName: String) : KLesson(id, lessonName) {
   abstract val sample: LessonSample
 
   private var backupPopupLocation: Point? = null

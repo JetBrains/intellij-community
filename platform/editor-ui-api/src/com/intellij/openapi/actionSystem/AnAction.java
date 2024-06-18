@@ -354,7 +354,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   /**
    * A shortcut for {@code getTemplatePresentation().getText()}.
    */
-  public final String getTemplateText() {
+  public final @ActionText String getTemplateText() {
     return getTemplatePresentation().getText();
   }
 
