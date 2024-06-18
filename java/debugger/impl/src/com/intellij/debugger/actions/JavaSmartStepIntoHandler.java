@@ -16,6 +16,8 @@ import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.statistics.DebuggerStatistics;
+import com.intellij.debugger.statistics.Engine;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
@@ -116,19 +118,21 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                                                    boolean smart) {
     final int line = position.getLine();
     if (line < 0) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
       return Collections.emptyList(); // the document has been changed
     }
 
     final PsiFile file = position.getFile();
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
       // the file is not physical
       return Collections.emptyList();
     }
 
     final Document doc = FileDocumentManager.getInstance().getDocument(vFile);
-    if (doc == null) return Collections.emptyList();
-    if (line >= doc.getLineCount()) {
+    if (doc == null || line >= doc.getLineCount()) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
       return Collections.emptyList(); // the document has been changed
     }
     TextRange curLineRange = DocumentUtil.getLineTextRange(doc, line);
@@ -137,6 +141,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     final TextRange lineRange = (body != null) ? curLineRange.intersection(body.getTextRange()) : curLineRange;
 
     if (lineRange == null || lineRange.isEmpty() || element == null || element instanceof PsiCompiledElement) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
       return Collections.emptyList();
     }
 
@@ -374,6 +379,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       sibling.accept(methodCollector);
     }
     if (targets.isEmpty()) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.NO_TARGETS);
       return Collections.emptyList();
     }
 
@@ -390,12 +396,19 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
     StackFrameProxyImpl frameProxy = suspendContext != null ? suspendContext.getFrameProxy() : null;
     if (frameProxy == null) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.SUCCESS);
       return targets;
     }
 
     VirtualMachineProxyImpl virtualMachine = frameProxy.getVirtualMachine();
     if (!virtualMachine.canGetConstantPool() || !virtualMachine.canGetBytecodes()) {
-      return smart ? targets : Collections.emptyList();
+      if (smart) {
+        DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.SUCCESS);
+        return targets;
+      } else {
+        DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE);
+        return Collections.emptyList();
+      }
     }
 
     try {
@@ -520,6 +533,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       if (!errorMessage.isEmpty()) {
         JvmSmartStepIntoErrorReporter.report(element, debuggerContext.getDebuggerSession(), position, errorMessage.toString());
+        DebuggerStatistics.logSmartStepIntoTargetsDetection(element.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.TARGETS_MISMATCH);
         return Collections.emptyList();
       }
 
@@ -551,13 +565,14 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             }
           });
       }
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(element.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.SUCCESS);
+      return targets;
     }
     catch (Exception e) {
       LOG.error(e);
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(element.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INTERNAL_ERROR);
       return Collections.emptyList();
     }
-
-    return targets;
   }
 
   /**
