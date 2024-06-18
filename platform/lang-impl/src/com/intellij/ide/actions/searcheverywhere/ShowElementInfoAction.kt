@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.codeWithMe.ClientId.Companion.current
 import com.intellij.ide.DataManager
+import com.intellij.ide.actions.searcheverywhere.SearchListModel.ResultsNotificationElement
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -112,8 +113,8 @@ private class ElementInfoManager(private val seUI: SearchEverywhereUI) {
       content.text = "'More...' element"
       return
     }
-    if (info.element == SearchListModel.HAS_ONLY_SIMILAR_ELEMENT) {
-      content.text = "'No exact matches...' element"
+    if (info.element is ResultsNotificationElement) {
+      content.text = "Results notification element"
       return
     }
 

@@ -2,9 +2,11 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NotNull
+import java.util.function.Consumer
 
 @ApiStatus.Internal
-@ApiStatus.Experimental
-interface SearchEverywhereContributorWithListener {
-  var searchListener: SearchListener?
+interface SearchEverywhereResultsNotifier {
+  var notifyCallback: Consumer<@NotNull @Nls String>?
 }

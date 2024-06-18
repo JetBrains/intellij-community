@@ -79,7 +79,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
     val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.mixedListInfo, session.cachedContextInfo)
 
-    val effectiveContributor = if (contributor is PSIPresentationBgRendererWrapper) contributor.delegate else contributor
+    val effectiveContributor = if (contributor is SearchEverywhereContributorWrapper) contributor.getEffectiveContributor() else contributor
     val mlWeight = if (shouldCalculateMlWeight(effectiveContributor, state, element)) state.getMLWeight(session.cachedContextInfo, mlElementInfo) else null
 
     return if (isShowDiff()) SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features)

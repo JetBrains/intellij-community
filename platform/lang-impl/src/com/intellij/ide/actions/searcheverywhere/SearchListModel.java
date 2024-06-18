@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.google.common.collect.Lists;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,8 +19,9 @@ import java.util.stream.Collectors;
 public abstract class SearchListModel extends AbstractListModel<Object> {
 
   static final Object MORE_ELEMENT = new Object();
-  @ApiStatus.Experimental
-  static final Object HAS_ONLY_SIMILAR_ELEMENT = new Object();
+
+  public record ResultsNotificationElement(@NotNull @Nls String label) {
+  }
 
   protected final List<SearchEverywhereFoundElementInfo> listElements = new ArrayList<>();
   protected boolean resultsExpired = false;
@@ -58,7 +60,7 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
     return listElements.stream()
       .filter(info -> info.getContributor() == contributor &&
                       info.getElement() != MORE_ELEMENT &&
-                      info.getElement() != HAS_ONLY_SIMILAR_ELEMENT)
+                      !(info.getElement() instanceof ResultsNotificationElement))
       .map(info -> info.getElement())
       .collect(Collectors.toList());
   }
@@ -77,14 +79,7 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
 
   public abstract void setHasMore(SearchEverywhereContributor<?> contributor, boolean contributorHasMore);
 
-  @ApiStatus.Experimental
-  public void standardSearchFoundNoResults(SearchEverywhereContributor<?> contributor) { }
-
-  @ApiStatus.Experimental
-  public boolean hasOnlySimilarElements(SearchEverywhereContributor<?> contributor) { return false; }
-
-  @ApiStatus.Experimental
-  public void setHasOnlySimilarElements(SearchEverywhereContributor<?> contributor) { }
+  public void addNotificationElement(@NotNull @Nls String label) { }
 
   public abstract void addElements(List<? extends SearchEverywhereFoundElementInfo> items);
 
@@ -120,12 +115,13 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
 
   @NotNull
   public List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
-    return ContainerUtil.filter(listElements, info -> info.element != MORE_ELEMENT && info.element != HAS_ONLY_SIMILAR_ELEMENT);
+    return ContainerUtil.filter(listElements, info -> info.element != MORE_ELEMENT
+                                                      && !(info.element instanceof ResultsNotificationElement));
   }
 
   public Map<SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> getFoundElementsMap() {
     return listElements.stream()
-      .filter(info -> info.element != MORE_ELEMENT && info.element != HAS_ONLY_SIMILAR_ELEMENT)
+      .filter(info -> info.element != MORE_ELEMENT && !(info.element instanceof ResultsNotificationElement))
       .collect(Collectors.groupingBy(o -> o.getContributor(), Collectors.toCollection(ArrayList::new)));
   }
 }

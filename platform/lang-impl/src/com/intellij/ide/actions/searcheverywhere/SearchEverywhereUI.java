@@ -211,6 +211,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     init();
+    myHeader.setResultsNotifyCallback(myListModel::addNotificationElement); // should be performed after myListModel creation in init()
+
     myHintHelper = new HintHelper(mySearchField);
 
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
@@ -540,7 +542,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private @NotNull List<SearchEverywhereFoundElementInfo> getSelectedInfos() {
     return Arrays.stream(myResultsList.getSelectedIndices())
       .mapToObj(myListModel::getRawFoundElementAt)
-      .filter(o -> o.getElement() != SearchListModel.MORE_ELEMENT && o.getElement() != SearchListModel.HAS_ONLY_SIMILAR_ELEMENT)
+      .filter(o -> o.getElement() != SearchListModel.MORE_ELEMENT
+                   && !(o.getElement() instanceof SearchListModel.ResultsNotificationElement))
       .collect(Collectors.toList());
   }
 
@@ -981,7 +984,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         int selectedIndex = myResultsList.getSelectedIndex();
         if (prevSelectedIndex != -1 &&
             selectedIndex != -1 &&
-            myListModel.getElementAt(selectedIndex) == SearchListModel.HAS_ONLY_SIMILAR_ELEMENT) {
+            myListModel.getElementAt(selectedIndex) instanceof SearchListModel.ResultsNotificationElement) {
           int newIndex;
           int listSize = myListModel.getSize();
           if (prevSelectedIndex == selectedIndex + 1) {
@@ -1141,7 +1144,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private void showDescriptionForIndex(int index) {
     if (index < 0 || myListModel.isMoreElement(index)
-        || myListModel.getElementAt(index) == SearchListModel.HAS_ONLY_SIMILAR_ELEMENT) {
+        || myListModel.getElementAt(index) instanceof SearchListModel.ResultsNotificationElement) {
       return;
     }
 
@@ -1292,7 +1295,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     boolean multiSelectMode = e.isShiftDown() || UIUtil.isControlKeyDown(e);
     boolean isPreviewDoubleClick = !isPreviewActive() || !hasPreviewProvider(myHeader.getSelectedTab()) || e.getClickCount() == 2;
     int selectedIndex = myResultsList.locationToIndex(e.getPoint());
-    if (myListModel.getElementAt(selectedIndex) == SearchListModel.HAS_ONLY_SIMILAR_ELEMENT) {
+    if (myListModel.getElementAt(selectedIndex) instanceof SearchListModel.ResultsNotificationElement) {
       int listSize = myListModel.getSize();
       if (prevSelectedIndex == (selectedIndex - 1 + listSize) % listSize) {
         myResultsList.setSelectedIndex(selectedIndex + 1);
@@ -1338,15 +1341,16 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       showMoreElements(contributor);
       return;
     }
-    if (indexes.length == 1 && myListModel.getElementAt(indexes[0]) == SearchListModel.HAS_ONLY_SIMILAR_ELEMENT) {
+    if (indexes.length == 1 && myListModel.getElementAt(indexes[0]) instanceof SearchListModel.ResultsNotificationElement) {
       return;
     }
 
-    boolean hasOnlySimilarElement = ContainerUtil.find(myListModel.getItems(), SearchListModel.HAS_ONLY_SIMILAR_ELEMENT) != null;
+    boolean hasNotificationElement = ContainerUtil.find(
+      myListModel.getItems(), element -> element instanceof SearchListModel.ResultsNotificationElement) != null;
 
     indexes = Arrays.stream(indexes)
       .filter(i -> !myListModel.isMoreElement(i))
-      .filter(i -> myListModel.getElementAt(i) != SearchListModel.HAS_ONLY_SIMILAR_ELEMENT)
+      .filter(i -> !(myListModel.getElementAt(i) instanceof SearchListModel.ResultsNotificationElement))
       .toArray();
 
     String searchText = getSearchPattern();
@@ -1369,8 +1373,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (selectedTabContributorID != null) {
         data.add(SearchEverywhereUsageTriggerCollector.CURRENT_TAB_FIELD.with(selectedTabContributorID));
       }
-      data.add(SearchEverywhereUsageTriggerCollector.SELECTED_ITEM_NUMBER.with(hasOnlySimilarElement ? (i - 1) : i));
-      data.add(SearchEverywhereUsageTriggerCollector.HAS_ONLY_SIMILAR_ELEMENT.with(hasOnlySimilarElement));
+      data.add(SearchEverywhereUsageTriggerCollector.SELECTED_ITEM_NUMBER.with(hasNotificationElement ? (i - 1) : i));
+      data.add(SearchEverywhereUsageTriggerCollector.HAS_ONLY_SIMILAR_ELEMENT.with(hasNotificationElement));
       PsiElement psi = toPsi(value);
       if (psi != null) {
         data.add(EventFields.Language.with(psi.getLanguage()));
@@ -1383,7 +1387,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     if (myMlService != null) {
       var tabId = myHeader.getSelectedTab().getID();
-      var correctIndexes = hasOnlySimilarElement ? Arrays.stream(indexes).map(i -> (i - 1)).toArray() : indexes;
+      var correctIndexes = hasNotificationElement ? Arrays.stream(indexes).map(i -> (i - 1)).toArray() : indexes;
       myMlService.onItemSelected(
         myProject, tabId, correctIndexes, selectedItems, () -> myListModel.getFoundElementsInfo(), closePopup, searchText);
     }
@@ -1747,7 +1751,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (selectedItem instanceof SearchEverywhereSpellCheckResult.Correction && myListModel.getSize() > 1) {
         myResultsList.setSelectedIndex(1);
       }
-      if (myResultsList.getSelectedValue() == SearchListModel.HAS_ONLY_SIMILAR_ELEMENT && myListModel.getSize() > 1) {
+      if (myResultsList.getSelectedValue() instanceof SearchListModel.ResultsNotificationElement && myListModel.getSize() > 1) {
         myResultsList.setSelectedIndex(myResultsList.getSelectedIndex() + 1);
       }
 
@@ -1803,12 +1807,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     @Override
     public void contributorFinished(@NotNull SearchEverywhereContributor<?> contributor, boolean hasMore) {
       myExternalSearchListeners.forEach(listener -> listener.contributorFinished(contributor, hasMore));
-    }
-
-    @ApiStatus.Experimental
-    @Override
-    public void standardSearchFoundNoResults(@NotNull SearchEverywhereContributor<?> contributor) {
-      myListModel.standardSearchFoundNoResults(contributor);
     }
 
     private void updateEmptyText(String pattern) {

@@ -14056,6 +14056,7 @@ f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 - com.intellij.ide.actions.searcheverywhere.EssentialContributor
 - com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 - com.intellij.ide.actions.searcheverywhere.ScopeSupporting
+- com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorWrapper
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 - com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
@@ -14069,6 +14070,7 @@ f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 - getAutocompleteItems(java.lang.String,I):java.util.List
 - getDataForItem(java.lang.Object,java.lang.String):java.lang.Object
 - getDelegate():com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
+- getEffectiveContributor():com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 - getElementPriority(java.lang.Object,java.lang.String):I
 - getElementsRenderer():javax.swing.ListCellRenderer
 - getFullGroupName():java.lang.String
@@ -14259,6 +14261,8 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorValidatio
 - com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
 - <init>():V
 - getRuleId():java.lang.String
+com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorWrapper
+- a:getEffectiveContributor():com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereEmptyTextProvider
 - a:updateEmptyStatus(com.intellij.util.ui.StatusText,kotlin.jvm.functions.Function0):V
 c:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersAction
@@ -14324,6 +14328,7 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader
 - getTabs():java.util.List
 - isEverywhere():Z
 - resetScope():V
+- setResultsNotifyCallback(java.util.function.Consumer):V
 - switchToNextTab():V
 - switchToPrevTab():V
 - switchToTab(com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader$SETab):V
@@ -14337,6 +14342,7 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader$SETab
 - getName():java.lang.String
 - getReportableID():java.lang.String
 - isSingleContributor():Z
+- setResultsNotifyCallback(java.util.function.Consumer):V
 - setSelected(Z):V
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 - a:getCurrentlyShownUI():com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI

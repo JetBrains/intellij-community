@@ -6,7 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
-import com.intellij.ide.actions.searcheverywhere.SearchListener
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -15,6 +14,7 @@ import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticFilesProvider
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 
 /**
  * Contributor that adds semantic search functionality when searching for files in Search Everywhere.
@@ -30,9 +30,9 @@ open class SemanticFileSearchEverywhereContributor(initEvent: AnActionEvent)
 
   override val itemsProvider = SemanticFilesProvider(project, createModel(project))
 
-  override val psiElementsRenderer = elementsRenderer as SearchEverywherePsiRenderer
+  override var notifyCallback: Consumer<String>? = null
 
-  override var searchListener: SearchListener? = null
+  override val psiElementsRenderer = elementsRenderer as SearchEverywherePsiRenderer
 
   override fun getSearchProviderId(): String = FileSearchEverywhereContributor::class.java.simpleName
 
@@ -48,10 +48,6 @@ open class SemanticFileSearchEverywhereContributor(initEvent: AnActionEvent)
   override fun defaultFetchElements(pattern: String, progressIndicator: ProgressIndicator,
                                     consumer: Processor<in FoundItemDescriptor<Any>>) {
     super.fetchWeightedElements(pattern, progressIndicator, consumer)
-  }
-
-  override fun onStandardSearchFoundNoResults() {
-    searchListener?.standardSearchFoundNoResults(this)
   }
 
   override fun checkScopeIsDefaultAndAutoSet(): Boolean = isScopeDefaultAndAutoSet

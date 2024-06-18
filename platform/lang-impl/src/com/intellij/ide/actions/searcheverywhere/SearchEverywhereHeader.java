@@ -31,6 +31,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -333,6 +334,12 @@ public final class SearchEverywhereHeader {
                      contributors, actions, filter);
   }
 
+  public void setResultsNotifyCallback(@NotNull Consumer<@NotNull @Nls String> notifyCallback) {
+    for (SETab tab: myTabs) {
+      tab.setResultsNotifyCallback(notifyCallback);
+    }
+  }
+
   public static final class SETab {
     private final @NotNull @NonNls String id;
     private final @NlsContexts.Label @NotNull String name;
@@ -380,6 +387,17 @@ public final class SearchEverywhereHeader {
       if (!isSingleContributor()) return getID();
 
       return getReportableContributorID(contributors.get(0));
+    }
+
+    public void setResultsNotifyCallback(@NotNull Consumer<@NotNull @Nls String> notifyCallback) {
+      for (SearchEverywhereContributor<?> contributor : contributors) {
+        var effectiveContributor = (contributor instanceof SearchEverywhereContributorWrapper wrapper)
+                                   ? wrapper.getEffectiveContributor() : contributor;
+
+        if (effectiveContributor instanceof SearchEverywhereResultsNotifier notifierContributor) {
+          notifierContributor.setNotifyCallback(notifyCallback);
+        }
+      }
     }
 
     public boolean isSingleContributor() {
