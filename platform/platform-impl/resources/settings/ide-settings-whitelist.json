@@ -126,6 +126,7 @@
     "com.intellij:app:XmlFoldingSettings.*",
     "com.intellij.css:app:CssEmmetOptions.*",
     "com.intellij.java-i18n:app:PropertiesFoldingSettings.*",
+    "com.intellij.java:app:ViewsSettings.*",
     "com.intellij.javaee.jpa:app:JpaQlFoldingSettings.*",
     "com.intellij.gradle:app:GradleSystemSettings.serviceDirectoryPath",
     "com.intellij.kubernetes:app:KubernetesFoldingSettings.collapse_env_vars",
