@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.psi.PsiElement
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
@@ -86,6 +87,7 @@ interface KotlinProjectConfigurator {
         return emptySet()
     }
 
+    @RequiresEdt
     @JvmSuppressWildcards
     fun configure(project: Project, excludeModules: Collection<Module>)
 
