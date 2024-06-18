@@ -45,6 +45,11 @@ public final class CodeFormattingData {
     for (TextRange range : ranges) {
       formattingData.getInjectedRanges(range);
     }
+
+    for (CodeFormattingDataPreparer preparer : CodeFormattingDataPreparer.EP_NAME.getExtensionList()) {
+      preparer.prepareFormattingData(file, ranges, formattingData);
+    }
+
     return formattingData;
   }
 
