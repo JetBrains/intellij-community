@@ -671,11 +671,7 @@ class EditorWindow internal constructor(
             editorTabs.removeTabWithoutChangingSelection(info)
           }
           else {
-            var toSelect = info.previousSelection
-            if (toSelect == null) {
-              val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
-              toSelect = if (indexToSelect >= 0 && indexToSelect < editorTabs.tabCount) editorTabs.getTabAt(indexToSelect) else null
-            }
+            val toSelect = getTabToSelect(tabBeingClosed = info, fileBeingClosed = file, componentIndex = componentIndex)
             editorTabs.removeTab(info = info, forcedSelectionTransfer = toSelect)
           }
           fileEditorManager.disposeComposite(composite)
@@ -710,6 +706,20 @@ class EditorWindow internal constructor(
         owner.afterFileClosed(file)
       }
     }
+  }
+
+  internal fun getTabToSelect(
+    tabBeingClosed: TabInfo,
+    fileBeingClosed: VirtualFile,
+    componentIndex: Int,
+  ): TabInfo? {
+    tabBeingClosed.previousSelection?.let {
+      return it
+    }
+
+    val indexToSelect = computeIndexToSelect(fileBeingClosed = fileBeingClosed, fileIndex = componentIndex)
+    val editorTabs = tabbedPane.editorTabs
+    return if (indexToSelect >= 0 && indexToSelect < editorTabs.tabCount) editorTabs.getTabAt(indexToSelect) else null
   }
 
   internal fun logEmptyStateIfMainSplitter(cause: EmptyStateCause) {

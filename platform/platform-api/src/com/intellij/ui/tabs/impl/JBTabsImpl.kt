@@ -1662,6 +1662,7 @@ open class JBTabsImpl internal constructor(
         update = true
       }
     }
+
     val hidden = hiddenInfos.keys.iterator()
     while (hidden.hasNext()) {
       val each = hidden.next()
@@ -1671,11 +1672,12 @@ open class JBTabsImpl internal constructor(
         update = true
       }
     }
+
     if (update) {
       resetTabsCache()
-      if (selectedInfo != null && hiddenInfos.containsKey(selectedInfo)) {
-        val toSelect = getToSelectOnRemoveOf(selectedInfo!!)
-        setSelectedInfo(toSelect)
+      val oldSelectedInfo = selectedInfo
+      if (oldSelectedInfo != null && hiddenInfos.containsKey(oldSelectedInfo)) {
+        setSelectedInfo(getToSelectOnRemoveOf(oldSelectedInfo))
       }
       updateAll(forcedRelayout = true)
     }
@@ -1766,12 +1768,9 @@ open class JBTabsImpl internal constructor(
   override fun getSelectedInfo(): TabInfo? {
     return when {
       oldSelection != null -> oldSelection
-      selectedInfo == null -> if (visibleInfos.isEmpty()) null else visibleInfos[0]
+      selectedInfo == null -> visibleInfos.firstOrNull()
       visibleInfos.contains(selectedInfo) -> selectedInfo
-      else -> {
-        setSelectedInfo(null)
-        null
-      }
+      else -> null
     }
   }
 
@@ -1793,9 +1792,9 @@ open class JBTabsImpl internal constructor(
     val index = getVisibleInfos().indexOf(tab)
     var result: TabInfo? = null
     if (index > 0) {
-      result = findEnabledBackward(index, false)
+      result = findEnabledBackward(from = index, cycle = false)
     }
-    return result ?: findEnabledForward(index, false)
+    return result ?: findEnabledForward(from = index, cycle = false)
   }
 
   fun findEnabledForward(from: Int, cycle: Boolean): TabInfo? {
@@ -2402,13 +2401,13 @@ open class JBTabsImpl internal constructor(
 
     val result = ActionCallback()
     if (toSelect == null) {
-      processRemove(tab = info!!, forcedNow = true, updateSelection = true)
+      processRemove(tab = info!!, forcedNow = true, setSelectedToNull = selectedInfo == info)
       removeDeferred().notifyWhenDone(result)
     }
     else {
       val clearSelection = info == selectedInfo
       val transferFocus = isFocused(info!!)
-      processRemove(tab = info, forcedNow = false, updateSelection = false)
+      processRemove(tab = info, forcedNow = false, setSelectedToNull = false)
       if (clearSelection) {
         setSelectedInfo(info)
       }
@@ -2472,7 +2471,7 @@ open class JBTabsImpl internal constructor(
     return ourWindow != null && !ourWindow.isFocused && ancestorChecker.test(ourWindow.mostRecentFocusOwner)
   }
 
-  private fun processRemove(tab: TabInfo, forcedNow: Boolean, updateSelection: Boolean) {
+  private fun processRemove(tab: TabInfo, forcedNow: Boolean, setSelectedToNull: Boolean) {
     val tabLabel = tab.tabLabel
     tabLabel?.let { remove(it) }
     infoToForeToolbar.get(tab)?.let { remove(it) }
@@ -2496,7 +2495,7 @@ open class JBTabsImpl internal constructor(
     }
     resetTabsCache()
 
-    if (updateSelection) {
+    if (setSelectedToNull) {
       setSelectedInfo(null)
     }
 
@@ -3192,7 +3191,7 @@ open class JBTabsImpl internal constructor(
 
     if (dropInfo.isHidden) {
       lastLayoutPass?.visibleInfos?.remove(dropInfo)
-      processRemove(tab = dropInfo, forcedNow = true, updateSelection = false)
+      processRemove(tab = dropInfo, forcedNow = true, setSelectedToNull = false)
     }
     else {
       removeTab(info = dropInfo, forcedSelectionTransfer = null, isDropTarget = true)
