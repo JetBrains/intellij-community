@@ -610,20 +610,20 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 
     val mainPanel = JPanel(BorderLayout(0, JBUI.scale(8)))
     mainPanel.isOpaque = false
-    mainPanel.border = JBUI.Borders.empty(8, 8, 0, 0)
+    mainPanel.border = JBUI.Borders.emptyTop(8)
     add(mainPanel)
 
     myTitle.mediumFontFunction()
     myTitle.foreground = NotificationComponent.INFO_COLOR
 
     if (mySuggestionType) {
-      myTitle.border = JBUI.Borders.emptyLeft(10)
+      myTitle.border = JBUI.Borders.emptyLeft(18)
       mainPanel.add(myTitle, BorderLayout.NORTH)
     }
     else {
       val panel = JPanel(BorderLayout())
       panel.isOpaque = false
-      panel.border = JBUI.Borders.emptyLeft(10)
+      panel.border = JBUI.Borders.emptyLeft(18)
 
       panel.add(myTitle, BorderLayout.WEST)
 
@@ -639,7 +639,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 
     myList.isOpaque = true
     myList.background = NotificationComponent.BG_COLOR
-    myList.border = JBUI.Borders.emptyRight(10)
+    myList.border = JBUI.Borders.empty(0, 8, 0, 10)
 
     ScrollableContentBorder.setup(myScrollPane, Side.TOP)
     mainPanel.add(myScrollPane)
