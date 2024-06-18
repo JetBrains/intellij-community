@@ -18,7 +18,7 @@ class WrapMultiRowLayout(tabs: JBTabsImpl, showPinnedTabsSeparately: Boolean) : 
     val firstRowWidth = rightmostX - leftmostX
     val getRowMaxLen: (Int) -> Int = { index -> if (index == 0) firstRowWidth else data.toFitRec.width }
 
-    val infos = data.myVisibleInfos
+    val infos = data.visibleInfos
     val rows = mutableListOf<TabsRow>()
     if (showPinnedTabsSeparately) {
       val (pinned, unpinned) = splitToPinnedUnpinned(infos)

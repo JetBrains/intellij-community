@@ -10909,18 +10909,6 @@ a:com.intellij.ui.tabs.impl.JBEditorTabsPainter
 - a:getBackgroundColor():java.awt.Color
 - getEmptySpaceColor():java.awt.Color
 - setDefaultTabColor(java.awt.Color):V
-a:com.intellij.ui.tabs.impl.LayoutPassInfo
-- entryPointRect:java.awt.Rectangle
-- moreRect:java.awt.Rectangle
-- f:myVisibleInfos:java.util.List
-- titleRect:java.awt.Rectangle
-- p:<init>(java.util.List):V
-- a:getHeaderRectangle():java.awt.Rectangle
-- s:getNext(java.util.List,I):com.intellij.ui.tabs.TabInfo
-- s:getPrevious(java.util.List,I):com.intellij.ui.tabs.TabInfo
-- a:getRequiredLength():I
-- a:getRowCount():I
-- a:getScrollExtent():I
 com.intellij.ui.tabs.impl.MorePopupAware
 - sf:KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:KEY_TOOLWINDOW_TITLE:com.intellij.openapi.actionSystem.DataKey
@@ -11117,7 +11105,6 @@ a:com.intellij.ui.tabs.impl.multiRow.TabsRow
 - f:getWithEntryPointToolbar():Z
 - f:getWithTitle():Z
 f:com.intellij.ui.tabs.impl.table.TablePassInfo
-- com.intellij.ui.tabs.impl.LayoutPassInfo
 - f:invisible:java.util.List
 - f:tabRectangle:java.awt.Rectangle
 - f:toFitRec:java.awt.Rectangle
