@@ -68,6 +68,12 @@ fun compilerAllowsAnyScriptsInSourceRoots(project: Project): Boolean {
 }
 
 @ApiStatus.Internal
+fun VirtualFile.isRunnableKotlinScript(project: Project): Boolean {
+    if (nameSequence.endsWith(".gradle.kts")) return false
+    return isStandaloneKotlinScript(project)
+}
+
+@ApiStatus.Internal
 fun VirtualFile.isStandaloneKotlinScript(project: Project): Boolean {
     val ktFile = (toPsiFile(project) as? KtFile)?.takeIf(KtFile::isScript) ?: return false
     val scriptDefinition = ScriptDefinitionProvider.getInstance(project)?.findDefinition(KtFileScriptSource(ktFile))
