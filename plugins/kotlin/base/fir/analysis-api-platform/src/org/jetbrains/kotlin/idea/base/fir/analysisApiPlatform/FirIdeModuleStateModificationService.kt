@@ -43,15 +43,15 @@ import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.caching.SdkEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
-import org.jetbrains.kotlin.idea.util.toKtModulesForModificationEvents
+import org.jetbrains.kotlin.idea.util.toKaModulesForModificationEvents
 import org.jetbrains.kotlin.utils.alwaysTrue
 import java.util.regex.Pattern
 
@@ -61,12 +61,12 @@ private val STDLIB_PATTERN = Pattern.compile("kotlin-stdlib-(\\d*)\\.(\\d*)\\.(\
 class FirIdeModuleStateModificationService(val project: Project) : Disposable {
 
     /**
-     * Publishes a module state modification event for a script or not-under-content-root [KtModule] whose file is being moved or deleted.
+     * Publishes a module state modification event for a script or not-under-content-root [KaModule] whose file is being moved or deleted.
      *
      * This listener processes events *before* the file is moved/deleted due to the following reasons:
      *
      *  1. Move: The file may be moved outside the project's content root. The listener cannot react to such files.
-     *  2. Deletion: Getting a PSI file (and in turn the PSI file's [KtModule]) for a virtual file which has been deleted is not feasible.
+     *  2. Deletion: Getting a PSI file (and in turn the PSI file's [KaModule]) for a virtual file which has been deleted is not feasible.
      *
      * A global out-of-block modification event will be published by `FirIdeOutOfBlockPsiTreeChangePreprocessor` when a Kotlin file is
      * moved, but we still need this listener to publish a module state modification event specifically.
@@ -74,7 +74,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     internal class SingleFileModuleModificationListener(project: Project) : AbstractSingleFileModuleBeforeFileEventListener(project) {
         override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileMoveEvent || event is VFileDeleteEvent
 
-        override fun processEvent(event: VFileEvent, module: KtModule) {
+        override fun processEvent(event: VFileEvent, module: KaModule) {
             val modificationKind = when (event) {
                 is VFileDeleteEvent -> KotlinModuleStateModificationKind.REMOVAL
                 else -> KotlinModuleStateModificationKind.UPDATE
@@ -316,8 +316,8 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
 private fun Module.publishModuleStateModification(
     modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
 ) {
-    toKtModulesForModificationEvents().forEach { ktModule ->
-        ktModule.publishModuleStateModification(modificationKind)
+    toKaModulesForModificationEvents().forEach { kaModule ->
+        kaModule.publishModuleStateModification(modificationKind)
     }
 }
 
@@ -326,11 +326,11 @@ private fun Library.publishModuleStateModification(
     modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
 ) {
     getBinaryAndSourceModuleInfos(project).forEach { moduleInfo ->
-        moduleInfo.toKtModule().publishModuleStateModification(modificationKind)
+        moduleInfo.toKaModule().publishModuleStateModification(modificationKind)
     }
 }
 
-private fun KtModule.publishModuleStateModification(modificationKind: KotlinModuleStateModificationKind) {
+private fun KaModule.publishModuleStateModification(modificationKind: KotlinModuleStateModificationKind) {
     ThreadingAssertions.assertWriteAccess()
 
     project.analysisMessageBus.syncPublisher(KotlinModificationTopics.MODULE_STATE_MODIFICATION).onModification(this, modificationKind)

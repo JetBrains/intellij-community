@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
-import org.jetbrains.kotlin.analysis.project.structure.KtDanglingFileModule
-import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
 import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
@@ -20,9 +20,9 @@ import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.base.util.minus
 
 internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScopeProvider() {
-    override fun getResolutionScope(module: KtModule): GlobalSearchScope {
+    override fun getResolutionScope(module: KaModule): GlobalSearchScope {
         return when (module) {
-            is KtSourceModule -> {
+            is KaSourceModule -> {
                 @OptIn(Frontend10ApiUsage::class)
                 val moduleInfo = module.moduleInfo as ModuleSourceInfo
                 val includeTests = moduleInfo is ModuleTestSourceInfo
@@ -34,7 +34,7 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
                 }
             }
 
-            is KtDanglingFileModule -> {
+            is KaDanglingFileModule -> {
                 val scopes = listOf(
                     module.file.fileScope(),
                     getResolutionScope(module.contextModule)
@@ -45,7 +45,7 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
 
             else -> {
                 val allModules = buildList {
-                    if (module is KtLibrarySourceModule) {
+                    if (module is KaLibrarySourceModule) {
                         add(module.binaryLibrary)
                     } else {
                         add(module)
@@ -60,11 +60,11 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
     /**
      * Some dependencies from order entities might be filtered by [org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SourceModuleDependenciesFilter]
      * Those entries would still be present in the [GlobalSearchScope.moduleWithDependenciesAndLibrariesScope].
-     * Analysis API should know nothing about such dependencies as it works only by KtModule (which itself works by ModuleInfo). So, we exclude such dependencies
+     * Analysis API should know nothing about such dependencies as it works only by KaModule (which itself works by ModuleInfo). So, we exclude such dependencies
      */
     private fun excludeIgnoredModulesByKotlinProjectModel(
         moduleInfo: ModuleSourceInfo,
-        module: KtSourceModule,
+        module: KaSourceModule,
         includeTests: Boolean
     ): GlobalSearchScope {
         val ignored = moduleInfo

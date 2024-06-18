@@ -17,8 +17,15 @@ import com.intellij.util.CommonProcessors.FindProcessor
 import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.project.structure.*
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
@@ -94,20 +101,20 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         )
 
         val sourceFile = getFile("Main.kt")
-        val sourceModule = ktModuleWithAssertion<KtSourceModule>(sourceFile)
+        val sourceModule = kaModuleWithAssertion<KaSourceModule>(sourceFile)
 
         val libraryClassFile = getFile("KotlinCompileDaemon.class")
-        val libraryModuleWithoutContext = ktModuleWithAssertion<KtLibraryModule>(libraryClassFile)
+        val libraryModuleWithoutContext = kaModuleWithAssertion<KaLibraryModule>(libraryClassFile)
         assertEquals(libraryName, libraryModuleWithoutContext.libraryName)
 
-        val libraryModuleWithUnrelatedContext = ktModuleWithAssertion<KtLibraryModule>(libraryClassFile, sourceModule)
+        val libraryModuleWithUnrelatedContext = kaModuleWithAssertion<KaLibraryModule>(libraryClassFile, sourceModule)
         assertEquals(libraryModuleWithoutContext, libraryModuleWithUnrelatedContext)
 
         val librarySourceFile = getFile("_Collections.kt")
-        val librarySourceModuleWithoutContext = ktModuleWithAssertion<KtLibrarySourceModule>(librarySourceFile)
+        val librarySourceModuleWithoutContext = kaModuleWithAssertion<KaLibrarySourceModule>(librarySourceFile)
         assertEquals(libraryModuleWithoutContext.librarySources, librarySourceModuleWithoutContext)
 
-        val librarySourceModuleWithUnrelatedContext = ktModuleWithAssertion<KtLibrarySourceModule>(librarySourceFile, sourceModule)
+        val librarySourceModuleWithUnrelatedContext = kaModuleWithAssertion<KaLibrarySourceModule>(librarySourceFile, sourceModule)
         assertEquals(librarySourceModuleWithoutContext, librarySourceModuleWithUnrelatedContext)
     }
 
@@ -136,14 +143,14 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         moduleLibrary(moduleB, libraryName = "library", classesRoot = sharedLibraryContentRoot)
 
         val sourceAFile = getFile("A.kt")
-        val sourceAModule = ktModuleWithAssertion<KtSourceModule>(sourceAFile)
+        val sourceAModule = kaModuleWithAssertion<KaSourceModule>(sourceAFile)
 
         val sourceBFile = getFile("B.kt")
-        val sourceBModule = ktModuleWithAssertion<KtSourceModule>(sourceBFile)
+        val sourceBModule = kaModuleWithAssertion<KaSourceModule>(sourceBFile)
 
         val libraryFile = getFile("KotlinCompileDaemon.class")
-        val libraryAModule = ktModuleWithAssertion<KtLibraryModule>(libraryFile, sourceAModule)
-        val libraryBModule = ktModuleWithAssertion<KtLibraryModule>(libraryFile, sourceBModule)
+        val libraryAModule = kaModuleWithAssertion<KaLibraryModule>(libraryFile, sourceAModule)
+        val libraryBModule = kaModuleWithAssertion<KaLibraryModule>(libraryFile, sourceBModule)
         assertEquals(libraryAModule, libraryBModule)
         assertTrue(libraryAModule in sourceAModule.directRegularDependencies)
         assertTrue(libraryBModule in sourceBModule.directRegularDependencies)
@@ -182,28 +189,28 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val libraryScope = LibraryScope(project, library)
         val libraryFile = getFile("KotlinCompileDaemon.class", libraryScope)
 
-        val libraryModuleWithoutContext = ktModuleWithAssertion<KtLibraryModule>(libraryFile)
+        val libraryModuleWithoutContext = kaModuleWithAssertion<KaLibraryModule>(libraryFile)
         assertEquals(libraryName, libraryModuleWithoutContext.libraryName)
 
-        val sourceModule = ktModuleWithAssertion<KtSourceModule>(sourceFile)
-        val libraryModuleWithContext = ktModuleWithAssertion<KtLibraryModule>(libraryFile, contextualModule = sourceModule)
+        val sourceModule = kaModuleWithAssertion<KaSourceModule>(sourceFile)
+        val libraryModuleWithContext = kaModuleWithAssertion<KaLibraryModule>(libraryFile, contextualModule = sourceModule)
 
         assertEquals(libraryModuleWithoutContext, libraryModuleWithContext)
         assertTrue("The library module must be in dependencies", libraryModuleWithContext in sourceModule.directRegularDependencies)
 
         val libSourceFile = getFile("Comparator.kt")
-        val libSourceModule = ktModuleWithAssertion<KtLibrarySourceModule>(libSourceFile)
+        val libSourceModule = kaModuleWithAssertion<KaLibrarySourceModule>(libSourceFile)
         assertEquals(libraryModuleWithoutContext.librarySources, libSourceModule)
 
         val reflectionLibSourceFile = getFile("FunctionWithAllInvokes.kt")
-        val reflectionLibSourceModule = ktModuleWithAssertion<KtLibrarySourceModule>(reflectionLibSourceFile)
+        val reflectionLibSourceModule = kaModuleWithAssertion<KaLibrarySourceModule>(reflectionLibSourceFile)
         assertEquals(kotlinReflectLibraryName, reflectionLibSourceModule.libraryName)
 
-        val libSourceModuleForBinaryFile = ktModuleWithAssertion<KtLibrarySourceModule>(libraryFile, contextualModule = libSourceModule)
+        val libSourceModuleForBinaryFile = kaModuleWithAssertion<KaLibrarySourceModule>(libraryFile, contextualModule = libSourceModule)
         assertEquals(libraryModuleWithoutContext.librarySources, libSourceModuleForBinaryFile)
 
-        val ktLibraryModule = ktModuleWithAssertion<KtLibraryModule>(libraryFile, contextualModule = reflectionLibSourceModule)
-        assertEquals(libraryName, ktLibraryModule.libraryName)
+        val libraryModule = kaModuleWithAssertion<KaLibraryModule>(libraryFile, contextualModule = reflectionLibSourceModule)
+        assertEquals(libraryName, libraryModule.libraryName)
     }
 
     fun `test module libraries with the same shared content`() {
@@ -261,24 +268,24 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertEquals("Files from libraries A and B must be the same due to sharing", libraryAFile, libraryBFile)
 
         // -------> A module logic (the first one in the order)
-        val libraryAModuleWithoutContext = ktModuleWithAssertion<KtLibraryModule>(libraryAFile)
+        val libraryAModuleWithoutContext = kaModuleWithAssertion<KaLibraryModule>(libraryAFile)
         assertEquals(libraryAName, libraryAModuleWithoutContext.libraryName)
 
-        val sourceAModule = ktModuleWithAssertion<KtSourceModule>(sourceAFile)
-        val libraryAModuleWithContext = ktModuleWithAssertion<KtLibraryModule>(libraryAFile, contextualModule = sourceAModule)
+        val sourceAModule = kaModuleWithAssertion<KaSourceModule>(sourceAFile)
+        val libraryAModuleWithContext = kaModuleWithAssertion<KaLibraryModule>(libraryAFile, contextualModule = sourceAModule)
         assertEquals(libraryAModuleWithoutContext, libraryAModuleWithContext)
         assertTrue("The library module must be in dependencies", libraryAModuleWithContext in sourceAModule.directRegularDependencies)
 
         // -------> B module logic (the last one in the order)
-        val libraryBModuleWithoutContext = ktModuleWithAssertion<KtLibraryModule>(libraryBFile)
+        val libraryBModuleWithoutContext = kaModuleWithAssertion<KaLibraryModule>(libraryBFile)
         assertEquals(
             "The library name should be from the first module due to a context absence",
             libraryAName,
             libraryBModuleWithoutContext.libraryName,
         )
 
-        val sourceBModule = ktModuleWithAssertion<KtSourceModule>(sourceBFile)
-        val libraryBModuleWithContext = ktModuleWithAssertion<KtLibraryModule>(libraryBFile, contextualModule = sourceBModule)
+        val sourceBModule = kaModuleWithAssertion<KaSourceModule>(sourceBFile)
+        val libraryBModuleWithContext = kaModuleWithAssertion<KaLibraryModule>(libraryBFile, contextualModule = sourceBModule)
         assertEquals(
             "The library name must be from the corresponding module if a context passed",
             libraryBName,
@@ -294,25 +301,25 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertTrue("The library module must be in dependencies", libraryBModuleWithContext in sourceBModule.directRegularDependencies)
 
         val libraryCFile = getFile("KProperties.class")
-        val libraryCModule = ktModuleWithAssertion<KtLibraryModule>(libraryCFile)
+        val libraryCModule = kaModuleWithAssertion<KaLibraryModule>(libraryCFile)
         assertEquals(libraryCName, libraryCModule.libraryName)
 
         val sharedLibrarySourceFile = getFile("_Collections.kt")
-        val sharedLibrarySourceModuleWithoutContext = ktModuleWithAssertion<KtLibrarySourceModule>(sharedLibrarySourceFile)
+        val sharedLibrarySourceModuleWithoutContext = kaModuleWithAssertion<KaLibrarySourceModule>(sharedLibrarySourceFile)
         assertEquals(
             "The library source should be from the first module due to a context absence",
             libraryCModule.librarySources,
             sharedLibrarySourceModuleWithoutContext,
         )
 
-        val sharedLibrarySourceModuleWithCContext = ktModuleWithAssertion<KtLibrarySourceModule>(sharedLibrarySourceFile, sourceAModule)
+        val sharedLibrarySourceModuleWithCContext = kaModuleWithAssertion<KaLibrarySourceModule>(sharedLibrarySourceFile, sourceAModule)
         assertEquals(
             "The library source must be the same due to the same context as the first library",
             sharedLibrarySourceModuleWithoutContext,
             sharedLibrarySourceModuleWithCContext,
         )
 
-        val sharedLibrarySourceModuleWithBContext = ktModuleWithAssertion<KtLibrarySourceModule>(sharedLibrarySourceFile, sourceBModule)
+        val sharedLibrarySourceModuleWithBContext = kaModuleWithAssertion<KaLibrarySourceModule>(sharedLibrarySourceFile, sourceBModule)
         assertNotEquals(
             "The library source module must be from the corresponding module if a context passed",
             sharedLibrarySourceModuleWithoutContext,
@@ -339,11 +346,11 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
             },
         )
 
-        assertKtModuleType<KtSourceModule>("Main.kt")
-        assertKtModuleType<KtSourceModule>("Test.kt")
+        assertKaModuleType<KaSourceModule>("Main.kt")
+        assertKaModuleType<KaSourceModule>("Test.kt")
     }
 
-    fun `test that buildSrc sources belong to KtSourceModule`() {
+    fun `test that buildSrc sources belong to KaSourceModule`() {
         createModule(
             moduleName = "buildSrc",
             srcContentSpec = directoryContent {
@@ -367,10 +374,11 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(scriptFile)
 
-        assertKtModuleType<KtSourceModule>(dependency, ktModule(scriptFile))
+        assertKaModuleType<KaSourceModule>(dependency, kaModule(scriptFile))
     }
 
-    fun `test that script in buildSrc belong to KtScriptModule`() {
+    @OptIn(KaExperimentalApi::class)
+    fun `test that script in buildSrc belong to KaScriptModule`() {
         createModule(
             moduleName = "buildSrc",
             srcContentSpec = directoryContent {
@@ -380,7 +388,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         val scriptFile = getFile("build.gradle.kts")
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(scriptFile)
-        assertKtModuleType<KtScriptModule>(scriptFile, ktModule(scriptFile))
+        assertKaModuleType<KaScriptModule>(scriptFile, kaModule(scriptFile))
     }
 
     fun `test module of source directory`() {
@@ -398,7 +406,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val file = getFile("Main.kt")
         val psiDirectory = file.parent as PsiDirectory
 
-        assertKtModuleType<KtSourceModule>(psiDirectory)
+        assertKaModuleType<KaSourceModule>(psiDirectory)
     }
 
     fun `test out of content module`() {
@@ -408,7 +416,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val dummyVirtualFile = dummyRoot.findChild("dummy.kt")!!
         val dummyFile = PsiManager.getInstance(project).findFile(dummyVirtualFile)!!
 
-        assertKtModuleType<KtNotUnderContentRootModule>(dummyFile)
+        assertKaModuleType<KaNotUnderContentRootModule>(dummyFile)
 
         createModule(
             moduleName = "m",
@@ -419,20 +427,21 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
             },
         )
 
-        // KTIJ-26841: Should be KtNotUnderContentRootModule as well
-        assertKtModuleType<KtSourceModule>("resource.kt")
+        // KTIJ-26841: Should be KaNotUnderContentRootModule as well
+        assertKaModuleType<KaSourceModule>("resource.kt")
     }
 
     fun `test dangling file module`() {
         val file = createDummyFile("dummy.kt", "class A")
-        assertKtModuleType<KtDanglingFileModule>(file)
+        assertKaModuleType<KaDanglingFileModule>(file)
     }
 
     fun `test dangling script file module`() {
         val file = createDummyFile("dummy.kts", "class A")
-        assertKtModuleType<KtDanglingFileModule>(file)
+        assertKaModuleType<KaDanglingFileModule>(file)
     }
 
+    @OptIn(KaExperimentalApi::class)
     fun `test script module`() {
         val dummyRoot = directoryContent { file("dummy.kts", "class A") }
             .generateInVirtualTempDir()
@@ -440,7 +449,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val dummyVirtualFile = dummyRoot.findChild("dummy.kts")!!
         val dummyFile = PsiManager.getInstance(project).findFile(dummyVirtualFile)!!
 
-        assertKtModuleType<KtScriptModule>(dummyFile)
+        assertKaModuleType<KaScriptModule>(dummyFile)
 
         createModule(
             moduleName = "m",
@@ -451,7 +460,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
             },
         )
 
-        assertKtModuleType<KtScriptModule>("myScript.kts")
+        assertKaModuleType<KaScriptModule>("myScript.kts")
     }
 
     fun `test element to library mapping consistency with contextual library module`() {
@@ -478,10 +487,10 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val thirdModule = createModule("third").apply { addDependency(kotlinReflectLibrary) }
 
         fun testClassModule(className: String, module: Module, expectedLibrary: Library, contextLibrary: Library = expectedLibrary) {
-            val expectedLibraryKtModule = expectedLibrary.toKtModule()
+            val expectedLibraryKtModule = expectedLibrary.toKaModule()
             val expectedLibrarySourceKtModule = expectedLibraryKtModule.librarySources!!
 
-            val contextLibraryKtModule = contextLibrary.toKtModule()
+            val contextLibraryKtModule = contextLibrary.toKaModule()
             val contextLibrarySourceKtModule = contextLibraryKtModule.librarySources!!
 
             val javaLightClass = JavaPsiFacade.getInstance(project)
@@ -518,32 +527,32 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         testClassModule("kotlin.reflect.full.IllegalCallableAccessException", thirdModule, kotlinReflectLibrary, firstStdlibLibrary)
     }
 
-    private fun Library.toKtModule(): KtLibraryModule {
+    private fun Library.toKaModule(): KaLibraryModule {
         val expectedLibraryInfo = LibraryInfoCache.getInstance(project)[this].single()
-        return expectedLibraryInfo.toKtModuleOfType<KtLibraryModule>()
+        return expectedLibraryInfo.toKaModuleOfType<KaLibraryModule>()
     }
 
-    private inline fun <reified T> assertKtModuleType(element: PsiElement, contextualModule: KtModule? = null) {
-        assertInstanceOf<T>(ktModule(element, contextualModule))
+    private inline fun <reified T> assertKaModuleType(element: PsiElement, contextualModule: KaModule? = null) {
+        assertInstanceOf<T>(kaModule(element, contextualModule))
     }
 
-    private fun ktModule(
+    private fun kaModule(
         element: PsiElement,
-        contextualModule: KtModule? = null,
-    ): KtModule = KotlinProjectStructureProvider.getModule(project, element, useSiteModule = contextualModule)
+        contextualModule: KaModule? = null,
+    ): KaModule = KotlinProjectStructureProvider.getModule(project, element, useSiteModule = contextualModule)
 
-    private inline fun <reified T : KtModule> ktModuleWithAssertion(
+    private inline fun <reified T : KaModule> kaModuleWithAssertion(
         element: PsiElement,
-        contextualModule: KtModule? = null
+        contextualModule: KaModule? = null
     ): T = KotlinProjectStructureProvider.getModule(
         project,
         element,
         useSiteModule = contextualModule,
     ).requireIs<T>()
 
-    private inline fun <reified T> assertKtModuleType(fileName: String) {
+    private inline fun <reified T> assertKaModuleType(fileName: String) {
         val file = getFile(fileName)
-        assertKtModuleType<T>(file)
+        assertKaModuleType<T>(file)
     }
 
     private fun getFile(

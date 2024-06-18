@@ -55,7 +55,7 @@
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.ktModuleFactory"
-            interface="org.jetbrains.kotlin.idea.base.projectStructure.KtModuleFactory"
+            interface="org.jetbrains.kotlin.idea.base.projectStructure.KaModuleFactory"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.analysis.additionalKDocResolutionProvider"

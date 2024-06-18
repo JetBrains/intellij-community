@@ -9,6 +9,9 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -30,9 +33,9 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val ktFile = declaration.containingKtFile
         if (!ktFile.isCompiled) return declaration
         val project = ktFile.project
-        when (val ktModule = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
-            is KtLibraryModule -> {
-                val librarySource = ktModule.librarySources ?: return declaration
+        when (val module = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
+            is KaLibraryModule -> {
+                val librarySource = module.librarySources ?: return declaration
                 val scope = librarySource.getContentScopeWithCommonDependencies()
                 return getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(declaration, scope, project) ?: declaration
             }
@@ -45,9 +48,9 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val ktFile = declaration.containingKtFile
         if (ktFile.isCompiled) return declaration
         val project = ktFile.project
-        when (val ktModule = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
-            is KtLibrarySourceModule -> {
-                val libraryBinary = ktModule.binaryLibrary
+        when (val module = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
+            is KaLibrarySourceModule -> {
+                val libraryBinary = module.binaryLibrary
                 val scope = libraryBinary.getContentScopeWithCommonDependencies()
                 return getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(declaration, scope, project) ?: declaration
             }
@@ -261,7 +264,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         }
     }
 
-    private fun KtModule.getContentScopeWithCommonDependencies(): GlobalSearchScope {
+    private fun KaModule.getContentScopeWithCommonDependencies(): GlobalSearchScope {
         if (platform.isCommon()) return contentScope
 
         val scopes = buildList {

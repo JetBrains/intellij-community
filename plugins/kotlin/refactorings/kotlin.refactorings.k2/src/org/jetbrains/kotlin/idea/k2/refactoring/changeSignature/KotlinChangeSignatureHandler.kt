@@ -49,9 +49,9 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
     @OptIn(KaAllowAnalysisOnEdt::class)
     fun findDeclaration(element: PsiElement, context: PsiElement, project: Project, editor: Editor?): PsiElement? {
         if (element !is KtElement) return element
-        val ktModule = KaModuleProvider.getModule(project, context, useSiteModule = null)
+        val module = KaModuleProvider.getModule(project, context, useSiteModule = null)
         return allowAnalysisOnEdt {
-            analyze(ktModule) {
+            analyze(module) {
                 val ktSymbol = when (element) {
                     is KtParameter -> {
                         if (element.hasValOrVar()) element.symbol else null

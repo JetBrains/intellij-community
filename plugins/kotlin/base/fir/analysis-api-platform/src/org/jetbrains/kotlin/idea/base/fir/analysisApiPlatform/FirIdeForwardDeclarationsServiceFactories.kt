@@ -9,33 +9,33 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.createDeclaration
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinForwardDeclarationsPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.api.platform.packages.createPackageProvider
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.KtNativeKlibLibraryModuleByModuleInfo
 
 /**
  * FIR IDE declaration provider factory implementation for Kotlin/Native forward declarations.
- * Delegates to the regular factory, but uses a narrow [GlobalSearchScope] that contains only generated declarations of the [KtModule].
+ * Delegates to the regular factory, but uses a narrow [GlobalSearchScope] that contains only generated declarations of the [KaModule].
  *
  * @see [org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileGenerator]
  */
 internal class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclarationProviderFactory() {
-    override fun createDeclarationProvider(ktModule: KtModule): KotlinDeclarationProvider? {
-        if (ktModule !is KtNativeKlibLibraryModuleByModuleInfo) return null
+    override fun createDeclarationProvider(module: KaModule): KotlinDeclarationProvider? {
+        if (module !is KtNativeKlibLibraryModuleByModuleInfo) return null
 
-        return ktModule.project.createDeclarationProvider(ktModule.forwardDeclarationsScope, ktModule)
+        return module.project.createDeclarationProvider(module.forwardDeclarationsScope, module)
     }
 }
 
 /**
  * FIR IDE package provider factory for Kotlin/Native forward declarations.
- * Delegates to the regular factory, but uses a narrow [GlobalSearchScope] that contains only generated declarations of the [KtModule].
+ * Delegates to the regular factory, but uses a narrow [GlobalSearchScope] that contains only generated declarations of the [KaModule].
  *
  * @see [org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileGenerator]
  */
 internal class FirIdeForwardDeclarationPackageProviderFactory : KotlinForwardDeclarationsPackageProviderFactory() {
-    override fun createPackageProvider(ktModule: KtModule): KotlinPackageProvider? {
-        if (ktModule !is KtNativeKlibLibraryModuleByModuleInfo) return null
+    override fun createPackageProvider(module: KaModule): KotlinPackageProvider? {
+        if (module !is KtNativeKlibLibraryModuleByModuleInfo) return null
 
-        return ktModule.project.createPackageProvider(ktModule.forwardDeclarationsScope)
+        return module.project.createPackageProvider(module.forwardDeclarationsScope)
     }
 }

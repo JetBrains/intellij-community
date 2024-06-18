@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents
 
 import com.google.gson.JsonObject
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getAsStringList
@@ -32,7 +32,7 @@ abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<Modul
 
         val targetModule = when (entityReference) {
             is TestProjectLibraryReference ->
-                LibraryInfoCache.getInstance(project)[projectLibrariesByName.getValue(entityReference.name)].first().toKtModule()
+                LibraryInfoCache.getInstance(project)[projectLibrariesByName.getValue(entityReference.name)].first().toKaModule()
 
             is TestProjectModuleReference ->
                 modulesByName.getValue(entityReference.name).getMainKtSourceModule()!!
@@ -42,20 +42,20 @@ abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<Modul
         assertEquals(
             "Direct dependents of ${entityReference.name}:",
             target.directDependents,
-            directDependents.map { (it as KtSourceModule).name }.toSet(),
+            directDependents.map { (it as KaSourceModule).name }.toSet(),
         )
 
         val transitiveDependents = moduleDependentsProvider.getTransitiveDependents(targetModule)
         assertEquals(
             "Transitive dependents of ${entityReference.name}:",
             target.transitiveDependents,
-            transitiveDependents.map { (it as KtSourceModule).name }.toSet(),
+            transitiveDependents.map { (it as KaSourceModule).name }.toSet(),
         )
     }
 }
 
 /**
- * The module dependents test supports multiple module/library targets, which allows checking module dependents of all `KtModule`s defined
+ * The module dependents test supports multiple module/library targets, which allows checking module dependents of all `KaModule`s defined
  * in the project structure, without duplicating the same project structure in multiple tests.
  */
 data class ModuleDependentsTestProjectStructure(

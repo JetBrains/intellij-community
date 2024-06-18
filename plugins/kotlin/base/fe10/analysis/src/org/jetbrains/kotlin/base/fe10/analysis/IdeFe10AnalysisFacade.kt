@@ -7,8 +7,8 @@ import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade.AnalysisMode
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.util.CancellationChecker
 internal class IdeFe10AnalysisFacade(private val project: Project) : Fe10AnalysisFacade {
 
     @OptIn(Frontend10ApiUsage::class)
-    override fun getAnalysisContext(ktModule: KtModule, token: KtLifetimeToken): Fe10AnalysisContext {
+    override fun getAnalysisContext(ktModule: KaModule, token: KtLifetimeToken): Fe10AnalysisContext {
         val moduleInfo = ktModule.moduleInfo
         val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeByModuleInfo(moduleInfo, ktModule.platform)
         return resolutionFacade.getAnalysisContext(token)

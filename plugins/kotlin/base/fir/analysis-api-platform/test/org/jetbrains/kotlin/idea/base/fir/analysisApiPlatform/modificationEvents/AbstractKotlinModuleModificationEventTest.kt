@@ -6,10 +6,10 @@ import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
 import org.jetbrains.kotlin.analysis.api.platform.modification.isModuleLevel
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractKotlinModuleModificationEventTest : AbstractKotlinModificationEventTest() {
@@ -24,7 +24,7 @@ abstract class AbstractKotlinModuleModificationEventTest : AbstractKotlinModific
      * does not need to be disposed manually.
      */
     protected fun createTracker(
-        module: KtModule,
+        module: KaModule,
         label: String,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker =
@@ -36,7 +36,7 @@ abstract class AbstractKotlinModuleModificationEventTest : AbstractKotlinModific
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker =
         createTracker(
-            module.productionSourceInfo!!.toKtModule(),
+            module.productionSourceInfo!!.toKaModule(),
             label,
             additionalAllowedEventKinds,
         )
@@ -47,7 +47,7 @@ abstract class AbstractKotlinModuleModificationEventTest : AbstractKotlinModific
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker =
         createTracker(
-            LibraryInfoCache.getInstance(project)[library].single().toKtModule(),
+            LibraryInfoCache.getInstance(project)[library].single().toKaModule(),
             label,
             additionalAllowedEventKinds,
         )

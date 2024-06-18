@@ -12,9 +12,9 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.*
@@ -187,8 +187,8 @@ internal fun getModulesStringForMarkerTooltip(navigatableDeclarations: Collectio
 }
 
 @OptIn(KaExperimentalApi::class)
-private val KtModule.moduleName: String
-    get() = (this as? KtSourceModule)?.name ?: moduleDescription
+private val KaModule.moduleName: String
+    get() = (this as? KaSourceModule)?.name ?: moduleDescription
 
 fun expectTooltip(navigatableDeclarations: Collection<SmartPsiElementPointer<KtDeclaration>>?): String? {
     val modulesString = getModulesStringForMarkerTooltip(navigatableDeclarations) ?: return null
