@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiElement
 import com.intellij.ui.EditorTextField
 
 internal class BasicEdtDataRule : EdtDataRule {
@@ -29,11 +30,15 @@ internal class BasicEdtDataRule : EdtDataRule {
     val items = snapshot[SELECTED_ITEMS]
     val navigatables = items?.filterIsInstance<Navigatable>()
     if (navigatables?.isNotEmpty() == true) {
-      sink[NAVIGATABLE_ARRAY] = navigatables.toTypedArray()
+      // do not provide PSI in EDT, errors are already logged
+      if (navigatables.first() !is PsiElement) {
+        sink[NAVIGATABLE_ARRAY] = navigatables.toTypedArray()
+      }
     }
     else {
-      snapshot[NAVIGATABLE]?.let {
-        sink[NAVIGATABLE_ARRAY] = arrayOf(it)
+      val navigatable = snapshot[NAVIGATABLE]
+      if (navigatable != null && navigatable !is PsiElement) {
+        sink[NAVIGATABLE_ARRAY] = arrayOf(navigatable)
       }
     }
   }
