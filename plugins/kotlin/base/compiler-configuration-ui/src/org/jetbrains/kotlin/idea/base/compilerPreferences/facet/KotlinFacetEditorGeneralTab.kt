@@ -19,7 +19,10 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab
 import org.jetbrains.kotlin.idea.base.util.onTextChange
-import org.jetbrains.kotlin.idea.compiler.configuration.*
+import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 import org.jetbrains.kotlin.idea.facet.getExposedFacetFields
@@ -350,12 +353,6 @@ class KotlinFacetEditorGeneralTab(
 
     private var enableValidation = false
 
-    private fun onLanguageLevelChanged() {
-        with(editor.compilerConfigurable) {
-            onLanguageLevelChanged(selectedLanguageVersionView)
-        }
-    }
-
     private fun JTextField.validateOnChange() {
         onTextChange { doValidate() }
     }
@@ -400,7 +397,6 @@ class KotlinFacetEditorGeneralTab(
             copyRuntimeFilesCheckBox.validateOnChange()
             moduleKindComboBox.validateOnChange()
             languageVersionComboBox.addActionListener {
-                onLanguageLevelChanged()
                 doValidate()
             }
             apiVersionComboBox.validateOnChange()
