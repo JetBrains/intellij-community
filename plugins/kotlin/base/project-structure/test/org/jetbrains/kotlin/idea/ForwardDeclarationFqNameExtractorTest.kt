@@ -33,4 +33,28 @@ class ForwardDeclarationFqNameExtractorTest : TestCase() {
             KotlinForwardDeclarationsFqNameExtractor.groupByPackage(declarationFqNames)
         )
     }
+
+    fun testTopLevelFqNamesAndRoot() {
+        val declarationFqNames = listOf(
+            FqName("Top1"),
+            FqName("Top2"),
+            FqName(""),
+            FqName("non.top.level.Foo"),
+            FqName("non.top.level.Bar"),
+        )
+
+        assertEquals(
+            mapOf(
+                FqName.ROOT to listOf(
+                    FqName("Top1"),
+                    FqName("Top2"),
+                ),
+                FqName("non.top.level") to listOf(
+                    FqName("non.top.level.Foo"),
+                    FqName("non.top.level.Bar"),
+                )
+            ),
+            KotlinForwardDeclarationsFqNameExtractor.groupByPackage(declarationFqNames)
+        )
+    }
 }

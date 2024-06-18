@@ -27,7 +27,7 @@ internal object KotlinForwardDeclarationsFqNameExtractor {
     }
 
     internal fun groupByPackage(declarations: List<FqName>): Map<FqName, List<FqName>> =
-        declarations.groupBy(FqName::parent)
+        declarations.filterNot { it.isRoot }.groupBy(FqName::parent)
 
     private fun getForwardDeclarationFqNames(libraryInfo: NativeKlibLibraryInfo): List<FqName> {
         return getForwardDeclarationFqNames(libraryInfo.resolvedKotlinLibrary.manifestProperties)
