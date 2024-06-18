@@ -19,13 +19,12 @@ internal class SaveOutputAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = toolbarPane != null
   }
 
+  override fun actionPerformed(e: AnActionEvent) {
+    getToolbarPaneOrNull(e)?.inlayOutput?.saveAs()
+  }
+
   override fun getActionUpdateThread(): ActionUpdateThread =
     ActionUpdateThread.EDT
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val toolbarPane = getToolbarPaneOrNull(e) ?: return
-    toolbarPane.inlayOutput.saveAs()
-  }
 
   private fun getToolbarPaneOrNull(e: AnActionEvent): ToolbarPane? =
     e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarPane
@@ -35,4 +34,28 @@ internal class SaveOutputAction : DumbAwareAction() {
   }
 }
 
-class CopyImageToClipboardAction : DumbAwareActionAdapter()
+class CopyImageToClipboardAction : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    val imageOutput = getImageOutputOrNull(e)
+    e.presentation.isEnabledAndVisible = imageOutput != null
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    getImageOutputOrNull(e)?.copyImageToClipboard()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread =
+    ActionUpdateThread.EDT
+
+  private fun getImageOutputOrNull(e: AnActionEvent): CanCopyImageToClipboard? =
+    (e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarPane)?.inlayOutput as? CanCopyImageToClipboard
+
+  companion object {
+    const val ID = "org.jetbrains.plugins.notebooks.visualization.r.inlays.components.CopyImageToClipboardAction"
+  }
+}
+
+/** marker interface for [CopyImageToClipboardAction] */
+interface CanCopyImageToClipboard {
+  fun copyImageToClipboard()
+}

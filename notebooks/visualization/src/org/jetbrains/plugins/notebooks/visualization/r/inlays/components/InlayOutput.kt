@@ -149,7 +149,7 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
   }
 }
 
-class InlayOutputImg(parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction) {
+class InlayOutputImg(parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction), CanCopyImageToClipboard {
   private val graphicsPanel = GraphicsPanel(project, parent).apply {
     isAdvancedMode = true
   }
@@ -209,10 +209,10 @@ class InlayOutputImg(parent: Disposable, editor: Editor, clearAction: () -> Unit
   }
 
   private fun createExtraActions(): List<AnAction> {
-    return listOf(ToolbarUtil.createAnActionButton<CopyImageToClipboardAction>(this::copyImageToClipboard))
+    return listOf(ActionManager.getInstance().getAction(CopyImageToClipboardAction.ID))
   }
 
-  private fun copyImageToClipboard() {
+  override fun copyImageToClipboard() {
     graphicsPanel.image?.let { image ->
       ClipboardUtils.copyImageToClipboard(image)
     }
