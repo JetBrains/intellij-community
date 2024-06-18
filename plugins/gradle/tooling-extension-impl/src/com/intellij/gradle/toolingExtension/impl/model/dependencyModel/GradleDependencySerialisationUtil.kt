@@ -16,6 +16,39 @@ import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap.ObjectFactory
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector
 import java.io.IOException
 
+private const val DEPENDENCY_TYPE_FIELD = "_type"
+
+private const val DEPENDENCY_ID_FIELD = "id"
+private const val DEPENDENCY_SCOPE_FIELD = "scope"
+private const val DEPENDENCY_SELECTED_REASON_FIELD = "selectionReason"
+private const val DEPENDENCY_CLASSPATH_ORDER_FIELD = "classpathOrder"
+private const val DEPENDENCY_EXPORTED_FIELD = "exported"
+private const val DEPENDENCY_DEPENDENCIES_FIELD = "dependencies"
+
+private const val DEPENDENCY_ID_GROUP_FIELD = "group"
+private const val DEPENDENCY_ID_NAME_FIELD = "name"
+private const val DEPENDENCY_ID_VERSION_FIELD = "version"
+private const val DEPENDENCY_ID_PACKAGING_FIELD = "packaging"
+private const val DEPENDENCY_ID_CLASSIFIER_FIELD = "classifier"
+
+private const val LIBRARY_DEPENDENCY_FILE_FIELD = "file"
+private const val LIBRARY_DEPENDENCY_SOURCE_FIELD = "source"
+private const val LIBRARY_DEPENDENCY_JAVADOC_FIELD = "javadoc"
+
+private const val MULTI_LIBRARY_DEPENDENCY_FILES_FIELD = "files"
+private const val MULTI_LIBRARY_DEPENDENCY_SOURCES_FIELD = "sources"
+private const val MULTI_LIBRARY_DEPENDENCY_JAVADOCS_FIELD = "javadocs"
+
+private const val PROJECT_DEPENDENCY_PATH_FIELD = "projectPath"
+private const val PROJECT_DEPENDENCY_CONFIGURATION_NAME_FIELD = "configurationName"
+private const val PROJECT_DEPENDENCY_ARTIFACTS_FIELD = "projectDependencyArtifacts"
+private const val PROJECT_DEPENDENCY_ARTIFACTS_SOURCES_FIELD = "projectDependencyArtifactsSources"
+
+private const val FILE_COLLECTION_DEPENDENCY_FILES_FIELD = "files"
+private const val FILE_COLLECTION_DEPENDENCY_EXCLUDED_FROM_INDEXING_FIELD = "excludedFromIndexing"
+
+private const val UNRESOLVED_DEPENDENCY_FAILURE_MESSAGE_FIELD = "failureMessage"
+
 @ApiStatus.Internal
 class DependencyWriteContext {
   val dependencies: ObjectCollector<ExternalDependency, IOException> = ObjectCollector()
@@ -36,7 +69,7 @@ fun writeDependency(
     writer.step(IonType.STRUCT) {
       writeInt(writer, OBJECT_ID_FIELD, objectId)
       if (isAdded) {
-        writeString(writer, "_type", when (dependency) {
+        writeString(writer, DEPENDENCY_TYPE_FIELD, when (dependency) {
           is ExternalLibraryDependency -> ExternalLibraryDependency::class.java.simpleName
           is ExternalMultiLibraryDependency -> ExternalMultiLibraryDependency::class.java.simpleName
           is ExternalProjectDependency -> ExternalProjectDependency::class.java.simpleName
@@ -68,7 +101,7 @@ fun readDependency(
     val objectId = readInt(reader, OBJECT_ID_FIELD)
     context.dependencies.computeIfAbsent(objectId, object : ObjectFactory<AbstractExternalDependency> {
       override fun newInstance(): AbstractExternalDependency {
-        return when (val type = readString(reader, "_type")!!) {
+        return when (val type = readString(reader, DEPENDENCY_TYPE_FIELD)!!) {
           ExternalLibraryDependency::class.java.simpleName -> DefaultExternalLibraryDependency()
           ExternalMultiLibraryDependency::class.java.simpleName -> DefaultExternalMultiLibraryDependency()
           ExternalProjectDependency::class.java.simpleName -> DefaultExternalProjectDependency()
@@ -95,12 +128,12 @@ fun readDependency(
 
 private fun writeDependencyCommonFields(writer: IonWriter, context: DependencyWriteContext, dependency: ExternalDependency) {
   writeDependencyId(writer, dependency)
-  writeString(writer, "scope", dependency.scope)
+  writeString(writer, DEPENDENCY_SCOPE_FIELD, dependency.scope)
   @Suppress("DEPRECATION")
-  writeString(writer, "selectionReason", dependency.selectionReason)
-  writeInt(writer, "classpathOrder", dependency.classpathOrder)
-  writeBoolean(writer, "exported", dependency.exported)
-  writeCollection(writer, "dependencies", dependency.dependencies) {
+  writeString(writer, DEPENDENCY_SELECTED_REASON_FIELD, dependency.selectionReason)
+  writeInt(writer, DEPENDENCY_CLASSPATH_ORDER_FIELD, dependency.classpathOrder)
+  writeBoolean(writer, DEPENDENCY_EXPORTED_FIELD, dependency.exported)
+  writeCollection(writer, DEPENDENCY_DEPENDENCIES_FIELD, dependency.dependencies) {
     writeDependency(writer, context, it)
   }
 }
@@ -111,24 +144,24 @@ private fun fillDependencyCommonFields(
   dependency: AbstractExternalDependency,
 ) {
   fillDependencyId(reader, dependency.id as DefaultExternalDependencyId)
-  dependency.scope = readString(reader, "scope")
-  dependency.selectionReason = readString(reader, "selectionReason")
-  dependency.classpathOrder = readInt(reader, "classpathOrder")
-  dependency.exported = readBoolean(reader, "exported")
-  dependency.dependencies = readList(reader, "dependencies") {
+  dependency.scope = readString(reader, DEPENDENCY_SCOPE_FIELD)
+  dependency.selectionReason = readString(reader, DEPENDENCY_SELECTED_REASON_FIELD)
+  dependency.classpathOrder = readInt(reader, DEPENDENCY_CLASSPATH_ORDER_FIELD)
+  dependency.exported = readBoolean(reader, DEPENDENCY_EXPORTED_FIELD)
+  dependency.dependencies = readList(reader, DEPENDENCY_DEPENDENCIES_FIELD) {
     readDependency(reader, context)
   }
 }
 
 private fun writeDependencyId(writer: IonWriter, dependency: ExternalDependency) {
-  writer.setFieldName("id")
+  writer.setFieldName(DEPENDENCY_ID_FIELD)
   writer.step(IonType.STRUCT) {
     val dependencyId = dependency.id
-    writeString(writer, "group", dependencyId.group)
-    writeString(writer, "name", dependencyId.name)
-    writeString(writer, "version", dependencyId.version)
-    writeString(writer, "packaging", dependencyId.packaging)
-    writeString(writer, "classifier", dependencyId.classifier)
+    writeString(writer, DEPENDENCY_ID_GROUP_FIELD, dependencyId.group)
+    writeString(writer, DEPENDENCY_ID_NAME_FIELD, dependencyId.name)
+    writeString(writer, DEPENDENCY_ID_VERSION_FIELD, dependencyId.version)
+    writeString(writer, DEPENDENCY_ID_PACKAGING_FIELD, dependencyId.packaging)
+    writeString(writer, DEPENDENCY_ID_CLASSIFIER_FIELD, dependencyId.classifier)
   }
 }
 
@@ -137,68 +170,68 @@ private fun fillDependencyId(
   dependencyId: DefaultExternalDependencyId,
 ) {
   assertNotNull(reader.next())
-  assertFieldName(reader, "id")
+  assertFieldName(reader, DEPENDENCY_ID_FIELD)
   reader.step {
-    dependencyId.group = readString(reader, "group")
-    dependencyId.name = readString(reader, "name")
-    dependencyId.version = readString(reader, "version")
-    dependencyId.packaging = readString(reader, "packaging")!!
-    dependencyId.classifier = readString(reader, "classifier")
+    dependencyId.group = readString(reader, DEPENDENCY_ID_GROUP_FIELD)
+    dependencyId.name = readString(reader, DEPENDENCY_ID_NAME_FIELD)
+    dependencyId.version = readString(reader, DEPENDENCY_ID_VERSION_FIELD)
+    dependencyId.packaging = readString(reader, DEPENDENCY_ID_PACKAGING_FIELD)!!
+    dependencyId.classifier = readString(reader, DEPENDENCY_ID_CLASSIFIER_FIELD)
   }
 }
 
 private fun writeLibraryDependencyFields(writer: IonWriter, dependency: ExternalLibraryDependency) {
-  writeFile(writer, "file", dependency.file)
-  writeFile(writer, "source", dependency.source)
-  writeFile(writer, "javadoc", dependency.javadoc)
+  writeFile(writer, LIBRARY_DEPENDENCY_FILE_FIELD, dependency.file)
+  writeFile(writer, LIBRARY_DEPENDENCY_SOURCE_FIELD, dependency.source)
+  writeFile(writer, LIBRARY_DEPENDENCY_JAVADOC_FIELD, dependency.javadoc)
 }
 
 private fun fillLibraryDependencyFields(reader: IonReader, dependency: DefaultExternalLibraryDependency) {
-  dependency.file = readFile(reader, "file")
-  dependency.source = readFile(reader, "source")
-  dependency.javadoc = readFile(reader, "javadoc")
+  dependency.file = readFile(reader, LIBRARY_DEPENDENCY_FILE_FIELD)
+  dependency.source = readFile(reader, LIBRARY_DEPENDENCY_SOURCE_FIELD)
+  dependency.javadoc = readFile(reader, LIBRARY_DEPENDENCY_JAVADOC_FIELD)
 }
 
 private fun writeMultiLibraryDependencyFields(writer: IonWriter, dependency: ExternalMultiLibraryDependency) {
-  writeFiles(writer, "files", dependency.files)
-  writeFiles(writer, "sources", dependency.sources)
-  writeFiles(writer, "javadocs", dependency.javadoc)
+  writeFiles(writer, MULTI_LIBRARY_DEPENDENCY_FILES_FIELD, dependency.files)
+  writeFiles(writer, MULTI_LIBRARY_DEPENDENCY_SOURCES_FIELD, dependency.sources)
+  writeFiles(writer, MULTI_LIBRARY_DEPENDENCY_JAVADOCS_FIELD, dependency.javadoc)
 }
 
 private fun fillMultiLibraryDependencyFields(reader: IonReader, dependency: DefaultExternalMultiLibraryDependency) {
-  dependency.files.addAll(readFileList(reader, null))
-  dependency.sources.addAll(readFileList(reader, null))
-  dependency.javadoc.addAll(readFileList(reader, null))
+  dependency.files.addAll(readFileList(reader, MULTI_LIBRARY_DEPENDENCY_FILES_FIELD))
+  dependency.sources.addAll(readFileList(reader, MULTI_LIBRARY_DEPENDENCY_SOURCES_FIELD))
+  dependency.javadoc.addAll(readFileList(reader, MULTI_LIBRARY_DEPENDENCY_JAVADOCS_FIELD))
 }
 
 private fun writeProjectDependencyFields(writer: IonWriter, dependency: ExternalProjectDependency) {
-  writeString(writer, "projectPath", dependency.projectPath)
-  writeString(writer, "configurationName", dependency.configurationName)
-  writeFiles(writer, "projectDependencyArtifacts", dependency.projectDependencyArtifacts)
-  writeFiles(writer, "projectDependencyArtifactsSources", dependency.projectDependencyArtifactsSources)
+  writeString(writer, PROJECT_DEPENDENCY_PATH_FIELD, dependency.projectPath)
+  writeString(writer, PROJECT_DEPENDENCY_CONFIGURATION_NAME_FIELD, dependency.configurationName)
+  writeFiles(writer, PROJECT_DEPENDENCY_ARTIFACTS_FIELD, dependency.projectDependencyArtifacts)
+  writeFiles(writer, PROJECT_DEPENDENCY_ARTIFACTS_SOURCES_FIELD, dependency.projectDependencyArtifactsSources)
 }
 
 private fun fillProjectDependencyFields(reader: IonReader, dependency: DefaultExternalProjectDependency) {
-  dependency.projectPath = readString(reader, "projectPath")
-  dependency.configurationName = readString(reader, "configurationName")
-  dependency.projectDependencyArtifacts = readFileList(reader, null)
-  dependency.projectDependencyArtifactsSources = readFileList(reader, null)
+  dependency.projectPath = readString(reader, PROJECT_DEPENDENCY_PATH_FIELD)
+  dependency.configurationName = readString(reader, PROJECT_DEPENDENCY_CONFIGURATION_NAME_FIELD)
+  dependency.projectDependencyArtifacts = readFileList(reader, PROJECT_DEPENDENCY_ARTIFACTS_FIELD)
+  dependency.projectDependencyArtifactsSources = readFileList(reader, PROJECT_DEPENDENCY_ARTIFACTS_SOURCES_FIELD)
 }
 
 private fun writeFileCollectionDependencyFields(writer: IonWriter, dependency: FileCollectionDependency) {
-  writeFiles(writer, "files", dependency.files)
-  writeBoolean(writer, "excludedFromIndexing", dependency.isExcludedFromIndexing)
+  writeFiles(writer, FILE_COLLECTION_DEPENDENCY_FILES_FIELD, dependency.files)
+  writeBoolean(writer, FILE_COLLECTION_DEPENDENCY_EXCLUDED_FROM_INDEXING_FIELD, dependency.isExcludedFromIndexing)
 }
 
 private fun fillFileCollectionDependencyFields(reader: IonReader, dependency: DefaultFileCollectionDependency) {
-  dependency.files = readFileList(reader, null)
-  dependency.isExcludedFromIndexing = readBoolean(reader, "excludedFromIndexing")
+  dependency.files = readFileList(reader, FILE_COLLECTION_DEPENDENCY_FILES_FIELD)
+  dependency.isExcludedFromIndexing = readBoolean(reader, FILE_COLLECTION_DEPENDENCY_EXCLUDED_FROM_INDEXING_FIELD)
 }
 
 private fun writeUnresolvedDependencyFields(writer: IonWriter, dependency: UnresolvedExternalDependency) {
-  writeString(writer, "failureMessage", dependency.failureMessage)
+  writeString(writer, UNRESOLVED_DEPENDENCY_FAILURE_MESSAGE_FIELD, dependency.failureMessage)
 }
 
 private fun fillUnresolvedDependencyFields(reader: IonReader, dependency: DefaultUnresolvedExternalDependency) {
-  dependency.failureMessage = readString(reader, "failureMessage")
+  dependency.failureMessage = readString(reader, UNRESOLVED_DEPENDENCY_FAILURE_MESSAGE_FIELD)
 }
