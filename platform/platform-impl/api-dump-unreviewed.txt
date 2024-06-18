@@ -23650,7 +23650,6 @@ a:com.intellij.remote.ui.CreateRemoteSdkForm
 - b:$$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,com.intellij.remote.ui.RemoteSdkEditorContainer,com.intellij.remote.ui.SdkScopeController,java.lang.Runnable,com.intellij.remote.ui.BundleAccessor):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.remote.ui.RemoteSdkEditorContainer,java.lang.Runnable,com.intellij.remote.ui.BundleAccessor):V
-- f:computeSdkCredentials():com.intellij.remote.RemoteSdkCredentials
 - createSdkData():com.intellij.remote.RemoteSdkAdditionalData
 - p:createSdkDataInner():com.intellij.remote.RemoteSdkAdditionalData
 - p:disableChangeTypePanel():V
@@ -23680,7 +23679,7 @@ a:com.intellij.remote.ui.CreateRemoteSdkForm
 - p:setTempFilesPathVisible(Z):V
 - showBrowsePathsDialog(com.intellij.openapi.ui.TextFieldWithBrowseButton,java.lang.String):V
 - updateHelpersPath(java.lang.String):V
-- updateModifiedValues(com.intellij.remote.RemoteSdkCredentials):V
+- updateModifiedValues(com.intellij.remote.RemoteSdkProperties):V
 - validateFinal():java.lang.String
 - validateRemoteInterpreter():com.intellij.openapi.ui.ValidationInfo
 com.intellij.remote.ui.CredentialsEditorProvider
