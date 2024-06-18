@@ -13,6 +13,9 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Point
+import java.awt.event.ContainerEvent
+import java.awt.event.ContainerListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -39,15 +42,12 @@ object ScrollPaneWithStickyHeaders {
     val scrollPane = JBScrollPane(scrolledBody)
 
     val stickyElements = mutableMapOf<Component, StickyElement>()
-    var prevElement: StickyElement? = null
 
     components.forEach { (component, isSticky) ->
 
       if (isSticky) {
-        val (wrapper, element) = addStickySection(scrolledBody, topStickedPane, bottomStickedPane, component)
+        val (wrapper, element) = addStickySection(scrollPane, scrolledBody, topStickedPane, bottomStickedPane, component, stickyElements.values)
         stickyElements[wrapper] = element
-        prevElement?.apply { nextElem = element }
-        prevElement = element
       }
       else scrolledBody.add(component)
     }
@@ -68,13 +68,12 @@ object ScrollPaneWithStickyHeaders {
             if (elem.isInTop) topLimit -= elem.wrapperBody.height
 
             var bottomLimit = position.y + scrollPane.height - bottomMargin
-            if (elem.isInBottom) bottomLimit += elem.wrapperBody.height - (elem.nextElem?.wrapperBody?.height ?: 0)
+            if (elem.isInBottom) bottomLimit += elem.wrapperBody.height
 
             elem.underTopLimit = elem.wrapperBody.y > topLimit
             elem.aboveBottomLimit = elem.wrapperBody.y + elem.wrapperBody.height < bottomLimit
 
             elem.move()
-            applyBottomConstraint(bottomStickedPane)
 
             revalidate()
             repaint()
@@ -89,19 +88,19 @@ object ScrollPaneWithStickyHeaders {
     }
   }
 
-  private fun addStickySection(scrolledBody: JPanel, topStickedPane: JPanel, bottomStickedPane: JPanel, comp: JComponent):
-    Pair<JComponent, StickyElement> {
+  private fun addStickySection(
+    scrollPane: JBScrollPane, scrolledBody: JPanel, topStickedPane: JPanel, bottomStickedPane: JPanel,
+    comp: JComponent, stickyElems: Iterable<StickyElement>,
+  ): Pair<JComponent, StickyElement> {
 
-    val wrapperInBody = OpaquePanel(BorderLayout())
-    wrapperInBody.border = IdeBorderFactory.createBorder(OnePixelDivider.BACKGROUND, SideBorder.TOP)
+    val wrapperInBody = createWrapper(false)
     wrapperInBody.add(comp)
     scrolledBody.add(wrapperInBody)
 
-    val wrapperInTop = NonOpaquePanel(BorderLayout())
-    wrapperInTop.border = IdeBorderFactory.createBorder(OnePixelDivider.BACKGROUND, SideBorder.TOP)
+    val wrapperInTop = createWrapper()
     topStickedPane.add(wrapperInTop)
-    val wrapperInBottom = NonOpaquePanel(BorderLayout())
-    wrapperInBottom.border = IdeBorderFactory.createBorder(OnePixelDivider.BACKGROUND, SideBorder.TOP)
+
+    val wrapperInBottom = createWrapper()
     bottomStickedPane.add(wrapperInBottom)
 
     return wrapperInBody to StickyElement(
@@ -109,14 +108,29 @@ object ScrollPaneWithStickyHeaders {
       wrapperInBody,
       wrapperInTop,
       wrapperInBottom,
-      scrolledBody
+      scrollPane,
+      scrolledBody,
+      stickyElems
     )
   }
 
-  private fun applyBottomConstraint(bottomStickedPane: JPanel) {
-    val populated = bottomStickedPane.components.filter { (it as JPanel).componentCount > 0 }
-    populated.firstOrNull()?.isVisible = true
-    populated.drop(1).forEach { it.isVisible = false }
+  private fun createWrapper(hiding: Boolean = true): JPanel {
+    val panel = NonOpaquePanel()
+
+    panel.name = "wrapper"
+    panel.border = IdeBorderFactory.createBorder(OnePixelDivider.BACKGROUND, SideBorder.TOP)
+    if (hiding) {
+      panel.addContainerListener(object : ContainerListener {
+        override fun componentAdded(e: ContainerEvent?) {
+          panel.isVisible = e?.child?.isVisible ?: false
+        }
+
+        override fun componentRemoved(e: ContainerEvent?) {
+          panel.isVisible = false
+        }
+      })
+    }
+    return panel
   }
 
   private class StickyElement(
@@ -124,11 +138,13 @@ object ScrollPaneWithStickyHeaders {
     val wrapperBody: JPanel,
     val wrapperTop: JPanel,
     val wrapperBottom: JPanel,
+    scrollPane: JBScrollPane,
     scrolledBody: JPanel,
+    private val stickyElems: Iterable<StickyElement>,
   ) {
     var underTopLimit = true
     var aboveBottomLimit = true
-    var nextElem: StickyElement? = null
+    var beforeElems: List<StickyElement>? = null
 
     val isInTop get() = wrapperTop.componentCount > 0
     val isInBottom get() = wrapperBottom.componentCount > 0
@@ -145,7 +161,11 @@ object ScrollPaneWithStickyHeaders {
       })
       wrapperBottom.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
-          scrolledBody.scrollRectToVisible(wrapperBody.bounds)
+          if (beforeElems == null) {
+            beforeElems = stickyElems.takeWhile { it != this@StickyElement }
+          }
+
+          scrollPane.viewport.viewPosition = Point(0, wrapperBody.y - beforeElems!!.sumOf { it.component.height })
         }
       })
     }
