@@ -2389,7 +2389,7 @@ open class JBTabsImpl internal constructor(
     }
 
     if (isDropTarget && lastLayoutPass != null) {
-      lastLayoutPass!!.myVisibleInfos.remove(info)
+      lastLayoutPass!!.visibleInfos.remove(info)
     }
 
     val toSelect = if (forcedSelectionTransfer == null) {
@@ -2444,7 +2444,7 @@ open class JBTabsImpl internal constructor(
     if (visibleInfos.isEmpty()) {
       removeDeferredNow()
     }
-    revalidateAndRepaint(true)
+    revalidateAndRepaint(layoutNow = true)
     fireTabRemoved(info)
   }
 
@@ -3190,7 +3190,14 @@ open class JBTabsImpl internal constructor(
     forcedRelayout = true
     dropInfoIndex = -1
     dropSide = -1
-    removeTab(info = dropInfo, forcedSelectionTransfer = null, isDropTarget = true)
+
+    if (dropInfo.isHidden) {
+      lastLayoutPass?.visibleInfos?.remove(dropInfo)
+      processRemove(tab = dropInfo, forcedNow = true, updateSelection = false)
+    }
+    else {
+      removeTab(info = dropInfo, forcedSelectionTransfer = null, isDropTarget = true)
+    }
   }
 
   override fun startDropOver(tabInfo: TabInfo, point: RelativePoint): Image {

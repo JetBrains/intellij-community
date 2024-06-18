@@ -145,9 +145,9 @@ sealed class MultiRowLayout(
 
     var component = tabs.getComponentAt(point)
     if (component is JBTabsImpl) {
-      for (i in 0 until data.myVisibleInfos.size - 1) {
-        val firstInfo = data.myVisibleInfos[i]
-        val secondInfo = data.myVisibleInfos[i + 1]
+      for (i in 0 until data.visibleInfos.size - 1) {
+        val firstInfo = data.visibleInfos[i]
+        val secondInfo = data.visibleInfos[i + 1]
         val first = tabs.getTabLabel(firstInfo)!!
         val second = tabs.getTabLabel(secondInfo)!!
         val firstBounds = first.bounds
@@ -172,12 +172,12 @@ sealed class MultiRowLayout(
 
     if (component is TabLabel) {
       val info = component.info
-      val index = data.myVisibleInfos.indexOf(info)
+      val index = data.visibleInfos.indexOf(info)
       if (!tabs.isDropTarget(info)) {
-        val dropTargetBefore = data.myVisibleInfos.subList(0, index + 1).any { tabs.isDropTarget(it) }
+        val dropTargetBefore = data.visibleInfos.subList(0, index + 1).any { tabs.isDropTarget(it) }
         result = index - if (dropTargetBefore) 1 else 0
       }
-      else if (index < data.myVisibleInfos.size) {
+      else if (index < data.visibleInfos.size) {
         result = index
       }
     }

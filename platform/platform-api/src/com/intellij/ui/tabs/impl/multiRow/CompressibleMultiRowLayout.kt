@@ -7,11 +7,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 class CompressibleMultiRowLayout(tabs: JBTabsImpl, showPinnedTabsSeparately: Boolean) : MultiRowLayout(tabs, showPinnedTabsSeparately) {
   override fun splitToRows(data: MultiRowPassInfo): List<TabsRow> {
-    val (pinned, unpinned) = splitToPinnedUnpinned(data.myVisibleInfos)
+    val (pinned, unpinned) = splitToPinnedUnpinned(data.visibleInfos)
     val withTitle = tabs.titleWrapper.preferredSize.width > 0
     val withEntryPoint = tabs.entryPointPreferredSize.width > 0
     return if (!showPinnedTabsSeparately) {
-      listOf(CompressibleTabsRow(data.myVisibleInfos, withTitle, withEntryPoint))
+      listOf(CompressibleTabsRow(data.visibleInfos, withTitle, withEntryPoint))
     }
     else if (pinned.isNotEmpty() && unpinned.isNotEmpty()) {
       listOf(CompressibleTabsRow(pinned, withTitle, withEntryPoint),

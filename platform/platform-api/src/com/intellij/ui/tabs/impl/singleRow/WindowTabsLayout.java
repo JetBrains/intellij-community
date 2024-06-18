@@ -20,7 +20,7 @@ public final class WindowTabsLayout extends SingleRowLayout {
   @Override
   protected void recomputeToLayout(SingleRowPassInfo data) {
     data.requiredLength = tabs.getWidth();
-    data.toLayout.addAll(data.myVisibleInfos);
+    data.toLayout.addAll(data.visibleInfos);
   }
 
   @Override
@@ -53,7 +53,7 @@ public final class WindowTabsLayout extends SingleRowLayout {
   public int getDropIndexFor(Point point) {
     Component component = tabs.getComponentAt(point);
     if (component instanceof TabLabel label && lastSingRowLayout != null) {
-      return lastSingRowLayout.myVisibleInfos.indexOf(label.getInfo());
+      return lastSingRowLayout.visibleInfos.indexOf(label.getInfo());
     }
     return -1;
   }

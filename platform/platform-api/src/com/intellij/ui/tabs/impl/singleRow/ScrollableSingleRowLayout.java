@@ -69,7 +69,7 @@ public final class ScrollableSingleRowLayout extends SingleRowLayout {
       return;
     }
     int offset = -myScrollOffset;
-    for (TabInfo info : passInfo.myVisibleInfos) {
+    for (TabInfo info : passInfo.visibleInfos) {
       final int length = getRequiredLength(info);
       if (info == tabs.getSelectedInfo()) {
         if (offset < 0) {

@@ -79,7 +79,7 @@ public class TableLayout extends TabLayout {
 
     int hGap = myTabs.getTabHGap();
     int entryPointMargin = scrollable ? 0 : myTabs.getEntryPointPreferredSize().width;
-    for (TabInfo eachInfo : data.myVisibleInfos) {
+    for (TabInfo eachInfo : data.visibleInfos) {
       TabLabel eachLabel = myTabs.getTabLabel(eachInfo);
       boolean pinned = eachLabel.isPinned();
       int width = data.lengths.get(eachInfo);
@@ -131,7 +131,7 @@ public class TableLayout extends TabLayout {
     eachY = -1;
     TableRow eachTableRow = new TableRow(data);
 
-    for (TabInfo info : data.myVisibleInfos) {
+    for (TabInfo info : data.visibleInfos) {
       final TabLabel tabLabel = myTabs.getTabLabel(info);
       if (eachY == -1 || eachY != Objects.requireNonNull(tabLabel).getY()) {
         if (eachY != -1) {
@@ -155,9 +155,9 @@ public class TableLayout extends TabLayout {
     int standardLengthToFit = data.moreRect.x - (data.titleRect.x + data.titleRect.width) - myTabs.getActionsInsets().left;
     if (compressible || showPinnedTabsSeparately) {
       if (showPinnedTabsSeparately) {
-        List<TabInfo> pinned = ContainerUtil.filter(data.myVisibleInfos, info -> info.isPinned());
+        List<TabInfo> pinned = ContainerUtil.filter(data.visibleInfos, info -> info.isPinned());
         calculateCompressibleLengths(pinned, data, standardLengthToFit);
-        List<TabInfo> unpinned = ContainerUtil.filter(data.myVisibleInfos, info -> !info.isPinned());
+        List<TabInfo> unpinned = ContainerUtil.filter(data.visibleInfos, info -> !info.isPinned());
         if (compressible) {
           Insets insets = myTabs.getActionsInsets();
           calculateCompressibleLengths(unpinned, data, pinned.isEmpty()
@@ -176,15 +176,15 @@ public class TableLayout extends TabLayout {
         }
       }
       else {
-        calculateCompressibleLengths(data.myVisibleInfos, data, standardLengthToFit);
+        calculateCompressibleLengths(data.visibleInfos, data, standardLengthToFit);
       }
     }
     else {//both scrollable and multi-row
-      calculateRawLengths(data.myVisibleInfos, data);
-      if (getTotalLength(data.myVisibleInfos, data) > standardLengthToFit) {
+      calculateRawLengths(data.visibleInfos, data);
+      if (getTotalLength(data.visibleInfos, data) > standardLengthToFit) {
         int moreWidth = getMoreRectAxisSize();
         data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth, data.toFitRec.y, moreWidth, myTabs.getHeaderFitSize().height);
-        calculateRawLengths(data.myVisibleInfos, data);
+        calculateRawLengths(data.visibleInfos, data);
       }
     }
   }
@@ -322,8 +322,8 @@ public class TableLayout extends TabLayout {
     }
 
     Rectangle area = new Rectangle(lastTableLayout.toFitRec.width, tabLabel.getBounds().height);
-    for (int i = 0; i < lastTableLayout.myVisibleInfos.size(); i++) {
-      area = area.union(myTabs.getTabLabel(lastTableLayout.myVisibleInfos.get(i)).getBounds());
+    for (int i = 0; i < lastTableLayout.visibleInfos.size(); i++) {
+      area = area.union(myTabs.getTabLabel(lastTableLayout.visibleInfos.get(i)).getBounds());
     }
     return Math.abs(deltaY) > area.height * getDragOutMultiplier();
   }
@@ -343,9 +343,9 @@ public class TableLayout extends TabLayout {
     }
 
     if (c instanceof JBTabsImpl) {
-      for (int i = 0; i < lastTableLayout.myVisibleInfos.size() - 1; i++) {
-        TabInfo firstInfo = lastTableLayout.myVisibleInfos.get(i);
-        TabInfo secondInfo = lastTableLayout.myVisibleInfos.get(i + 1);
+      for (int i = 0; i < lastTableLayout.visibleInfos.size() - 1; i++) {
+        TabInfo firstInfo = lastTableLayout.visibleInfos.get(i);
+        TabInfo secondInfo = lastTableLayout.visibleInfos.get(i + 1);
         TabLabel first = myTabs.getTabLabel(firstInfo);
         TabLabel second = myTabs.getTabLabel(secondInfo);
 
@@ -373,18 +373,18 @@ public class TableLayout extends TabLayout {
 
     if (c instanceof TabLabel) {
       TabInfo info = ((TabLabel)c).getInfo();
-      int index = lastTableLayout.myVisibleInfos.indexOf(info);
+      int index = lastTableLayout.visibleInfos.indexOf(info);
       boolean isDropTarget = myTabs.isDropTarget(info);
       if (!isDropTarget) {
         for (int i = 0; i <= index; i++) {
-          if (myTabs.isDropTarget(lastTableLayout.myVisibleInfos.get(i))) {
+          if (myTabs.isDropTarget(lastTableLayout.visibleInfos.get(i))) {
             index -= 1;
             break;
           }
         }
         result = index;
       }
-      else if (index < lastTableLayout.myVisibleInfos.size()) {
+      else if (index < lastTableLayout.visibleInfos.size()) {
         result = index;
       }
     }
@@ -453,7 +453,7 @@ public class TableLayout extends TabLayout {
     }
 
     int offset = -myScrollOffset;
-    for (TabInfo info : data.myVisibleInfos) {
+    for (TabInfo info : data.visibleInfos) {
       if (info.isPinned()) continue;
       final int length = data.lengths.get(info);
       if (info == myTabs.getSelectedInfo()) {
