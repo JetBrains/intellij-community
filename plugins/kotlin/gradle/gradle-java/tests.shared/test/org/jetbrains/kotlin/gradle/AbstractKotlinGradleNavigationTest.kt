@@ -33,6 +33,34 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
 
     @ParameterizedTest
     @BaseGradleVersionSource
+    @TestMetadata("projectAccessorSimpleModule.test")
+    fun testProjectAccessorSimpleModule(gradleVersion: GradleVersion) {
+        verifyNavigationFromCaretToExpected(gradleVersion)
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("projectAccessorSubSubModule.test")
+    fun testProjectAccessorSubSubModule(gradleVersion: GradleVersion) {
+        verifyNavigationFromCaretToExpected(gradleVersion)
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("projectFullAccessorSubSubModule.test")
+    fun testProjectFullAccessorSubSubModule(gradleVersion: GradleVersion) {
+        verifyNavigationFromCaretToExpected(gradleVersion)
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("projectAccessorSubModuleInTheMiddle.test")
+    fun testProjectAccessorSubModuleInTheMiddle(gradleVersion: GradleVersion) {
+        verifyNavigationFromCaretToExpected(gradleVersion)
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
     @TestMetadata("librarySourceDependency.test")
     fun testLibrarySourceDependency(gradleVersion: GradleVersion) {
         verifyNavigationFromCaretToExpected(gradleVersion)
@@ -94,13 +122,22 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
         val GRADLE_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
             withSettingsFile(useKotlinDsl = true) {
                 setProjectName("GradleKotlinFixture")
-                include("module1")
+                include("module1", ":module1:module11", ":module1:module11:module111")
+                enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
             }
             withBuildFile(gradleVersion, useKotlinDsl = true) {
                 withKotlinJvmPlugin()
                 withMavenCentral()
             }
             withBuildFile(gradleVersion, relativeModulePath = "module1", useKotlinDsl = true) {
+                withKotlinJvmPlugin()
+                withMavenCentral()
+            }
+            withBuildFile(gradleVersion, relativeModulePath = "module1/module11", useKotlinDsl = true) {
+                withKotlinJvmPlugin()
+                withMavenCentral()
+            }
+            withBuildFile(gradleVersion, relativeModulePath = "module1/module11/module111", useKotlinDsl = true) {
                 withKotlinJvmPlugin()
                 withMavenCentral()
             }
