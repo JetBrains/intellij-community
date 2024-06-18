@@ -70,7 +70,7 @@ fun createFileStructure(rootDir: VirtualFile, vararg paths: String) {
 internal fun initRepo(project: Project, repoRoot: Path, makeInitialCommit: Boolean) {
   Files.createDirectories(repoRoot)
   cd(repoRoot.toString())
-  git(project, "init")
+  gitInit(project)
   setupDefaultUsername(project)
   setupLocalIgnore(repoRoot)
   if (makeInitialCommit) {

@@ -145,7 +145,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   private fun createParentRepo(parentName: String): Path {
     cd(testNioRoot)
-    git("init --bare $parentName.git")
+    gitInit("--bare $parentName.git")
     return testNioRoot.resolve("$parentName.git")
   }
 

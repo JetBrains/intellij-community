@@ -151,6 +151,12 @@ fun GitRepository.mv(from: File, to: File) {
   mv(from.path, to.path)
 }
 
+private const val DefaultInitBranch = "master"
+fun GitPlatformTest.gitInit(vararg params: String, initialBranch: String = DefaultInitBranch) =
+  gitInit(project, *params, initialBranch =  initialBranch)
+fun gitInit(project: Project, vararg params: String, initialBranch: String = DefaultInitBranch) =
+  git(project, "init --initial-branch=$initialBranch ${params.joinToString(" ")}")
+
 fun GitRepository.prepareConflict(initialBranch: String = "master",
                                   featureBranch: String = "feature",
                                   conflictingFile: String = "c.txt"): String {

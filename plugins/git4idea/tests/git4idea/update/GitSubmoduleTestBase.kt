@@ -3,10 +3,7 @@ package git4idea.update
 
 import com.intellij.openapi.vcs.Executor.cd
 import git4idea.config.GitSaveChangesPolicy
-import git4idea.test.GitPlatformTest
-import git4idea.test.git
-import git4idea.test.setupDefaultUsername
-import git4idea.test.tac
+import git4idea.test.*
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -16,7 +13,7 @@ abstract class GitSubmoduleTestBase : GitPlatformTest() {
   protected fun createPlainRepo(repoName: String): RepositoryAndParent {
     LOG.info("----- creating plain repository $repoName -----")
     cd(testRoot)
-    git("init $repoName")
+    gitInit(repoName)
     val repoDir = testNioRoot.resolve(repoName)
     cd(repoDir)
     setupDefaultUsername()
@@ -25,7 +22,7 @@ abstract class GitSubmoduleTestBase : GitPlatformTest() {
     git("remote add origin ${testNioRoot}/$parentName")
 
     cd(testRoot)
-    git("init --bare $parentName")
+    gitInit("--bare $parentName")
     cd(repoDir)
     git("push -u origin master")
     return RepositoryAndParent(repoName, repoDir, testNioRoot.resolve(parentName))
