@@ -2305,6 +2305,7 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 *f:com.intellij.collaboration.ui.util.popup.SimpleSelectablePopupItemRenderer$Companion
 - f:create(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
+- f:create(Z,kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 *:com.intellij.collaboration.util.ChangesSelection
 - a:getChanges():java.util.List
 - a:getSelectedIdx():I

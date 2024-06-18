@@ -49,9 +49,10 @@ class SimplePopupItemRenderer<T> private constructor(private val presenter: (T) 
   }
 }
 
-class SimpleSelectablePopupItemRenderer<T> private constructor(private val reviewerPresenter: (T) -> SelectablePopupItemPresentation) : ListCellRenderer<T> {
+class SimpleSelectablePopupItemRenderer<T> private constructor(private val showCheckbox: Boolean, private val reviewerPresenter: (T) -> SelectablePopupItemPresentation) : ListCellRenderer<T> {
   private val checkBox: JBCheckBox = JBCheckBox().apply {
     isOpaque = false
+    isVisible = showCheckbox
   }
   private val label: SimpleColoredComponent = SimpleColoredComponent().apply {
     iconTextGap = JBUIScale.scale(4)
@@ -89,7 +90,11 @@ class SimpleSelectablePopupItemRenderer<T> private constructor(private val revie
 
   companion object {
     fun <T> create(presenter: (T) -> SelectablePopupItemPresentation): ListCellRenderer<T> {
-      val simplePopupItemRenderer = SimpleSelectablePopupItemRenderer(presenter)
+      return create(showCheckboxes = true, presenter)
+    }
+
+    fun <T> create(showCheckboxes: Boolean, presenter: (T) -> SelectablePopupItemPresentation): ListCellRenderer<T> {
+      val simplePopupItemRenderer = SimpleSelectablePopupItemRenderer(showCheckboxes, presenter)
       if (!ExperimentalUI.isNewUI())
         return simplePopupItemRenderer
 
