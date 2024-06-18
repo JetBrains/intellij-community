@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.minutes
 internal class DockerCli(
   private val workDir: File,
   private val redirectOutputIntoParentProcess: Boolean,
-  private val logFolder: File
+  private val logFolder: File,
 ) {
   fun info(timeout: Duration = DEFAULT_TIMEOUT) {
     runCmd(timeout, assertSuccess = false, captureOutput = false, "docker", "info")
@@ -30,10 +30,12 @@ internal class DockerCli(
   fun listContainers(timeout: Duration = DEFAULT_TIMEOUT): List<String> =
     runCmd(timeout, assertSuccess = true, captureOutput = true, "docker", "ps")
 
-  private fun runCmd(timeout: Duration,
-                     assertSuccess: Boolean,
-                     captureOutput: Boolean = false,
-                     vararg cmd: String): List<String> {
+  private fun runCmd(
+    timeout: Duration,
+    assertSuccess: Boolean,
+    captureOutput: Boolean = false,
+    vararg cmd: String,
+  ): List<String> {
     val processBuilder = ProcessBuilder(*cmd)
     processBuilder.directory(workDir)
 

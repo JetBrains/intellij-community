@@ -38,13 +38,13 @@ interface LocalLaunchOptions {
 private data class LocalLaunchOptionsImpl(
   override val beforeProcessStart: () -> Unit,
   override val redirectOutputIntoParentProcess: Boolean,
-  override val logFolder: File
+  override val logFolder: File,
 ) : LocalLaunchOptions
 
 fun localLaunchOptions(
   beforeProcessStart: () -> Unit = {},
   redirectOutputIntoParentProcess: Boolean,
-  logFolder: File
+  logFolder: File,
 ): LocalLaunchOptions =
   LocalLaunchOptionsImpl(beforeProcessStart, redirectOutputIntoParentProcess, logFolder)
 

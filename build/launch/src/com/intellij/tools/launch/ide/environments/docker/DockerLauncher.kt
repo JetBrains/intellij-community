@@ -48,7 +48,7 @@ internal class DockerLauncher(private val paths: PathsProvider, private val opti
   fun runInContainer(
     dockerContainerEnvironment: DockerContainerEnvironment,
     launchCommand: LaunchCommand,
-    dockerContainerOptions: DockerContainerOptions
+    dockerContainerOptions: DockerContainerOptions,
   ): Pair<Process, String> {
     val containerIdFile = File.createTempFile("cwm.docker.cid", "")
     val containerName = "${options.containerName}-${System.nanoTime()}"

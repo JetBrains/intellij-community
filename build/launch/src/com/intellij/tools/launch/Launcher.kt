@@ -10,10 +10,12 @@ import java.net.InetAddress
 import java.net.ServerSocket
 
 object Launcher {
-  fun launch(paths: PathsProvider,
-             modulesToScopes: Map<String, JpsJavaClasspathKind>,
-             options: LauncherOptions,
-             logClasspath: Boolean): Pair<Process, String?> {
+  fun launch(
+    paths: PathsProvider,
+    modulesToScopes: Map<String, JpsJavaClasspathKind>,
+    options: LauncherOptions,
+    logClasspath: Boolean,
+  ): Pair<Process, String?> {
     val classpath = ClassPathBuilder(paths, modulesToScopes).buildClasspath(logClasspath)
     return launch(paths, collectedClasspath(classpath), options)
   }
@@ -21,7 +23,7 @@ object Launcher {
   fun launch(
     paths: PathsProvider,
     classpathCollector: ClasspathCollector,
-    options: LauncherOptions
+    options: LauncherOptions,
   ): Pair<Process, String?> {
     val currentUserIsNotRoot = true
     val ideLaunchContext = IdeLaunchContext(
