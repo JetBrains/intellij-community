@@ -15,8 +15,10 @@ import com.intellij.util.animation.Easing
 import com.intellij.util.animation.JBAnimator
 import com.intellij.util.animation.animation
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 
+@Internal
 class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
   private val animator = JBAnimator()
   private var start: Int = -1

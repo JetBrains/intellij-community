@@ -5,7 +5,9 @@ package com.intellij.ui.tabs.impl.multiRow
 
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.JBTabsImpl
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class WrapMultiRowLayout(tabs: JBTabsImpl, showPinnedTabsSeparately: Boolean) : MultiRowLayout(tabs, showPinnedTabsSeparately) {
   override fun splitToRows(data: MultiRowPassInfo): List<TabsRow> {
     val leftmostX = data.toFitRec.x + tabs.titleWrapper.preferredSize.width

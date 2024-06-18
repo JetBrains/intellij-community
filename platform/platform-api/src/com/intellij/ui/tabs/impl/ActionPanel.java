@@ -11,6 +11,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class ActionPanel extends NonOpaquePanel {
   private final List<ActionButton> buttons = new ArrayList<>();
   private final JBTabsImpl tabs;

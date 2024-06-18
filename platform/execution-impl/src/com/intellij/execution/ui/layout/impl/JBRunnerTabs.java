@@ -13,6 +13,7 @@ import com.intellij.ui.tabs.JBTabsBorder;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
   }
 
   @Override
+  @ApiStatus.Internal
   protected @NotNull JBTabsBorder createTabBorder() {
     return new JBRunnerTabsBorder(this);
   }

@@ -4,11 +4,16 @@
 package com.intellij.ui.tabs.impl
 
 import com.intellij.ui.tabs.JBTabsBorder
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 
+@Internal
 open class JBDefaultTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-    if (tabs.isEmptyVisible) return
+    if (tabs.isEmptyVisible) {
+      return
+    }
+
     g as Graphics2D
 
     val rect = Rectangle(x, y, width, height)

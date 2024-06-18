@@ -9,13 +9,17 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.LayoutPassInfo
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.table.TableLayout
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.math.abs
 
-sealed class MultiRowLayout(protected val tabs: JBTabsImpl,
-                              protected val showPinnedTabsSeparately: Boolean) : TableLayout(tabs) {
-  protected var prevLayoutPassInfo: MultiRowPassInfo? = null
+@ApiStatus.Internal
+sealed class MultiRowLayout(
+  protected val tabs: JBTabsImpl,
+  protected val showPinnedTabsSeparately: Boolean,
+) : TableLayout(tabs) {
+  internal var prevLayoutPassInfo: MultiRowPassInfo? = null
 
   override fun layoutTable(visibleInfos: List<TabInfo>): LayoutPassInfo {
     tabs.resetLayout(true)
@@ -44,7 +48,7 @@ sealed class MultiRowLayout(protected val tabs: JBTabsImpl,
     return data
   }
 
-  protected abstract fun splitToRows(data: MultiRowPassInfo): List<TabsRow>
+  internal abstract fun splitToRows(data: MultiRowPassInfo): List<TabsRow>
 
   private fun layoutRows(data: MultiRowPassInfo) {
     for ((index, row) in data.rows.withIndex()) {

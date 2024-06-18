@@ -12,6 +12,7 @@ import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.*;
  */
 @SuppressWarnings("removal")
 @Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public class TableLayout extends TabLayout {
   private int myScrollOffset = 0;
 

@@ -8,9 +8,10 @@ import java.awt.Rectangle
 import kotlin.math.abs
 import kotlin.math.max
 
-class ScrollableTabsRow(infos: List<TabInfo>,
-                        withTitle: Boolean,
-                        withEntryPointToolbar: Boolean
+internal class ScrollableTabsRow(
+  infos: List<TabInfo>,
+  withTitle: Boolean,
+  withEntryPointToolbar: Boolean,
 ) : TabsRow(infos, withTitle, withEntryPointToolbar) {
   override fun layoutTabs(data: MultiRowPassInfo, x: Int, y: Int, maxLength: Int) {
     val tabs = data.tabs

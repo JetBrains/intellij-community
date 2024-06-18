@@ -5,7 +5,7 @@ package com.intellij.ui.tabs.impl.multiRow
 
 import com.intellij.ui.tabs.TabInfo
 
-class SimpleTabsRow(infos: List<TabInfo>,
+internal class SimpleTabsRow(infos: List<TabInfo>,
                     withTitle: Boolean,
                     withEntryPointToolbar: Boolean
 ) : TabsRow(infos, withTitle, withEntryPointToolbar) {
