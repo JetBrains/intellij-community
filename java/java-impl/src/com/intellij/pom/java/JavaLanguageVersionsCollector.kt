@@ -13,18 +13,26 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.util.lang.JavaVersion
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.util.*
 
+private const val UNKNOWN_VENDOR = "Unknown"
+private val KNOWN_VENDORS = JdkVersionDetector.Variant.entries
+                              .mapNotNull { it.displayName }
+                              .toList() + UNKNOWN_VENDOR
+
 class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
-  private val group = EventLogGroup("java.language", 3)
+  private val group = EventLogGroup("java.language", 4)
 
   private val feature = EventFields.Int("feature")
   private val minor = EventFields.Int("minor")
   private val update = EventFields.Int("update")
   private val ea = EventFields.Boolean("ea")
   private val wsl = EventFields.Boolean("wsl")
+  private val vendor = EventFields.String("vendor", KNOWN_VENDORS)
+
   private val moduleJdkVersion = group.registerVarargEvent("MODULE_JDK_VERSION",
-                                                           feature, minor, update, ea, wsl)
+                                                           feature, minor, update, ea, wsl, vendor)
   private val moduleLanguageLevel = group.registerEvent("MODULE_LANGUAGE_LEVEL",
                                                         EventFields.Int("version"),
                                                         EventFields.Boolean("preview"))
@@ -38,18 +46,25 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
       ModuleRootManager.getInstance(it).sdk
     }.filter { it.sdkType is JavaSdk }
 
+    data class JdkVersionData(val version: JavaVersion?, val wsl: Boolean, val vendor: String)
+
     val jdkVersions = sdks.mapTo(HashSet()) { sdk ->
-      JavaVersion.tryParse(sdk.versionString) to (sdk.homePath?.let { WslPath.isWslUncPath(it) } ?: false)
+      JdkVersionData(
+        JavaVersion.tryParse(sdk.versionString),
+        (sdk.homePath?.let { WslPath.isWslUncPath(it) } ?: false),
+        KNOWN_VENDORS.firstOrNull { sdk.versionString?.contains(it) == true } ?: UNKNOWN_VENDOR
+      )
     }
 
     val metrics = HashSet<MetricEvent>()
-    jdkVersions.mapTo(metrics) { (version, isWsl) ->
+    jdkVersions.mapTo(metrics) { (version, isWsl, detectedVendor) ->
       moduleJdkVersion.metric(
         feature with (version?.feature ?: -1),
         minor with (version?.minor ?: -1),
         update with (version?.update ?: -1),
         ea with (version?.ea ?: false),
-        wsl with isWsl
+        wsl with isWsl,
+        vendor with detectedVendor
       )
     }
 
