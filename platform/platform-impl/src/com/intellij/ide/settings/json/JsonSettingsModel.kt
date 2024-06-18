@@ -19,7 +19,7 @@ private val logger = logger<JsonSettingsModel>()
 class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
 
   private val propertyPluginIdMap: Map<String, String> by lazy {
-    propertyMap.values.filter { it.pluginId != "com.intellij" }.mapNotNull { property ->
+    propertyMap.values.mapNotNull { property ->
       property.pluginId?.let { "${property.componentName}.${property.name}" to it }
     }.toMap()
   }
