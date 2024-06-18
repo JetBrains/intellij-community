@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
+import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension

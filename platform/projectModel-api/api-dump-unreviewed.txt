@@ -1190,21 +1190,9 @@ a:com.intellij.openapi.roots.libraries.PersistentLibraryKind
 f:com.intellij.projectModel.ProjectModelBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-com.intellij.workspaceModel.ide.EntitiesOrphanage
-- sf:Companion:com.intellij.workspaceModel.ide.EntitiesOrphanage$Companion
-- a:getCurrentSnapshot():com.intellij.platform.workspace.storage.ImmutableEntityStorage
-- a:update(kotlin.jvm.functions.Function1):V
-f:com.intellij.workspaceModel.ide.EntitiesOrphanage$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.ide.EntitiesOrphanage
-com.intellij.workspaceModel.ide.JpsProjectLoadingManager
-- sf:Companion:com.intellij.workspaceModel.ide.JpsProjectLoadingManager$Companion
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.ide.JpsProjectLoadingManager
-- a:jpsProjectLoaded(java.lang.Runnable):V
-f:com.intellij.workspaceModel.ide.JpsProjectLoadingManager$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.ide.JpsProjectLoadingManager
-com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
-- sf:Companion:com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry$Companion
+com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
+- sf:Companion:com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry$Companion
 - a:findTypeById(com.intellij.platform.workspace.jps.entities.SourceRootTypeId):org.jetbrains.jps.model.module.JpsModuleSourceRootType
-- s:getInstance():com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
-f:com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry$Companion
-- f:getInstance():com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
+- s:getInstance():com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
+f:com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry$Companion
+- f:getInstance():com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry

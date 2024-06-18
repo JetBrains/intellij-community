@@ -3,12 +3,14 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Discussion about this manager: IDEA-330045
  *
  * If possible, try not to use this manager as it's related to the JPS model, and we may try to get rid of JPS in non-IJ IDEs in the future.
  */
+@ApiStatus.Internal
 interface JpsProjectLoadingManager {
   /**
    * Schedule a task that should be executed after a JPS project model will be loaded.

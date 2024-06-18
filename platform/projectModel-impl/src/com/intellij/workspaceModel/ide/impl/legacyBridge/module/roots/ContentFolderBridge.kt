@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
 import com.intellij.platform.workspace.jps.entities.modifySourceRootEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
+import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot

@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.sourceRoots
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
+import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 
 /**
  * Return a file located under the source or resource roots of this module which will be copied to the production output with [relativePath].  

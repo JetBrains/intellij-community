@@ -12,7 +12,7 @@ import com.intellij.util.asSafely
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
+import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
