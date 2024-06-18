@@ -6,11 +6,16 @@ import com.intellij.tools.launch.ide.environments.docker.legacyDockerRunCliComma
 import com.intellij.tools.launch.ide.environments.local.LocalIdeCommandLauncherFactory
 import com.intellij.tools.launch.ide.environments.local.localLaunchOptions
 import com.intellij.tools.launch.os.ProcessOutputStrategy
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import java.net.InetAddress
 import java.net.ServerSocket
 
 object Launcher {
+  @Suppress("SSBasedInspection")
+  private val launcherLifespanScope = CoroutineScope(CoroutineName("RemoteDev Launcher"))
+
   fun launch(
     paths: PathsProvider,
     modulesToScopes: Map<String, JpsJavaClasspathKind>,
@@ -50,6 +55,8 @@ object Launcher {
         localLaunchOptions(
           beforeProcessStart = options.beforeProcessStart,
           processOutputStrategy = if (options.redirectOutputIntoParentProcess) ProcessOutputStrategy.InheritIO else ProcessOutputStrategy.RedirectToFiles(paths.logFolder),
+          processTitle = "IDE backend (local process)",
+          lifespanScope = launcherLifespanScope
         )
       )
       return IdeLauncher.launchCommand(localLauncherFactory, ideLaunchContext).process to null

@@ -19,7 +19,7 @@ data class JetBrainsClientLaunchResult(
   val debugPort: Int,
 )
 
-suspend fun CoroutineScope.runJetBrainsClientLocally(): JetBrainsClientLaunchResult {
+fun runJetBrainsClientLocally(clientProcessLifespanScope: CoroutineScope): JetBrainsClientLaunchResult {
   JetBrainClient.logger.info("Starting JetBrains client")
   val paths = JetBrainsClientIdeaPathsProvider()
   val classpath = classpathCollector(
@@ -29,7 +29,11 @@ suspend fun CoroutineScope.runJetBrainsClientLocally(): JetBrainsClientLaunchRes
   )
   val debugPort = 5007
   val localProcessLaunchResult = IdeLauncher.launchCommand(
-    LocalIdeCommandLauncherFactory(localLaunchOptions(processOutputStrategy = ProcessOutputStrategy.Pipe)),
+    LocalIdeCommandLauncherFactory(localLaunchOptions(
+      processOutputStrategy = ProcessOutputStrategy.Pipe,
+      processTitle = "JetBrains Client",
+      lifespanScope = clientProcessLifespanScope
+    )),
     context = IdeLaunchContext(
       classpathCollector = classpath,
       // changed in Java 9, now we have to use *: to listen on all interfaces

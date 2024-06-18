@@ -7,11 +7,14 @@ import com.intellij.tools.launch.ide.ClassPathBuilder
 import com.intellij.tools.launch.ide.ClasspathCollector
 import com.intellij.tools.launch.ide.IdeCommandLauncherFactory
 import com.intellij.tools.launch.ide.IdePathsInLaunchEnvironment
-import com.intellij.tools.launch.os.ProcessOutputInfo
 import com.intellij.tools.launch.os.ProcessOutputStrategy
+import com.intellij.tools.launch.os.ProcessWrapper
 import com.intellij.tools.launch.os.affixIO
+import com.intellij.tools.launch.os.asyncAwaitExit
 import com.intellij.util.SystemProperties
 import com.sun.security.auth.module.UnixSystem
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -33,25 +36,35 @@ object LocalLaunchEnvironment : LaunchEnvironment {
 interface LocalLaunchOptions {
   val beforeProcessStart: () -> Unit
   val processOutputStrategy: ProcessOutputStrategy
+
+  /**
+   * Process title used for diagnostic purposes (f.e. log records, names of associated threads and coroutines).
+   */
+  val processTitle: String
+  val lifespanScope: CoroutineScope
 }
 
 private data class LocalLaunchOptionsImpl(
   override val beforeProcessStart: () -> Unit,
   override val processOutputStrategy: ProcessOutputStrategy,
+  override val processTitle: String,
+  override val lifespanScope: CoroutineScope,
 ) : LocalLaunchOptions
 
 fun localLaunchOptions(
   beforeProcessStart: () -> Unit = {},
   processOutputStrategy: ProcessOutputStrategy,
+  processTitle: String,
+  lifespanScope: CoroutineScope,
 ): LocalLaunchOptions =
-  LocalLaunchOptionsImpl(beforeProcessStart, processOutputStrategy)
+  LocalLaunchOptionsImpl(beforeProcessStart, processOutputStrategy, processTitle, lifespanScope)
 
 class LocalCommandLauncher(private val localLaunchOptions: LocalLaunchOptions) : AbstractCommandLauncher<LocalProcessLaunchResult> {
   override fun launch(buildCommand: LaunchEnvironment.() -> LaunchCommand): LocalProcessLaunchResult {
     val (commandLine, environment) = LocalLaunchEnvironment.buildCommand()
     val processBuilder = ProcessBuilder(commandLine)
 
-    val processOutputStrategy = processBuilder.affixIO(localLaunchOptions.processOutputStrategy)
+    val processOutputInfoFactory = processBuilder.affixIO(localLaunchOptions.processOutputStrategy)
     processBuilder.environment().putAll(environment)
     localLaunchOptions.beforeProcessStart()
 
@@ -59,7 +72,14 @@ class LocalCommandLauncher(private val localLaunchOptions: LocalLaunchOptions) :
     logger.info(processBuilder.command().joinToString("\n"))
     logger.info("-- END")
 
-    return LocalProcessLaunchResult(process = processBuilder.start(), processOutputStrategy)
+    val process = processBuilder.start()
+    val processOutputInfo = processOutputInfoFactory(localLaunchOptions.lifespanScope, process)
+    val processWrapper = ProcessWrapper(
+      processOutputInfo = processOutputInfo,
+      terminationDeferred = process.asyncAwaitExit(localLaunchOptions.lifespanScope, processTitle = "")
+    )
+
+    return LocalProcessLaunchResult(process, processWrapper)
   }
 
   companion object {
@@ -68,8 +88,9 @@ class LocalCommandLauncher(private val localLaunchOptions: LocalLaunchOptions) :
 }
 
 data class LocalProcessLaunchResult(
+  @Obsolete
   val process: Process,
-  val processOutputInfo: ProcessOutputInfo,
+  val processWrapper: ProcessWrapper,
 )
 
 class LocalIdeCommandLauncherFactory(private val localLaunchOptions: LocalLaunchOptions) : IdeCommandLauncherFactory<LocalProcessLaunchResult> {

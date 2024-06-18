@@ -3,7 +3,6 @@ package com.intellij.tools.launch.rd
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.launch.docker.BindMount
 import com.intellij.tools.launch.os.ProcessOutputInfo
-import com.intellij.tools.launch.os.asyncAwaitExit
 import com.intellij.tools.launch.os.terminal.AnsiColor
 import com.intellij.tools.launch.os.terminal.colorize
 import com.intellij.tools.launch.rd.RemoteDevLauncher.logger
@@ -11,20 +10,13 @@ import com.intellij.tools.launch.rd.components.BackendLaunchResult
 import com.intellij.tools.launch.rd.components.runCodeWithMeHostNoLobby
 import com.intellij.tools.launch.rd.components.runJetBrainsClientLocally
 import com.intellij.tools.launch.rd.dsl.*
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.nio.file.Path
 
 suspend fun CoroutineScope.launchRemoteDev(init: LaunchRemoteDevBuilder.() -> Unit): LaunchRemoteDevResult =
   LaunchRemoteDevBuilderImpl().let {
     it.init()
-    it.launch(coroutineScope = this)
+    it.launch(remoteDevLifespanScope = this)
   }
 
 data class LaunchRemoteDevResult(val clientTerminationDeferred: Deferred<Int>, val backendTerminationDeferred: Deferred<Int>)
@@ -56,10 +48,10 @@ private class LaunchRemoteDevBuilderImpl : LaunchRemoteDevBuilder {
     )
   }
 
-  suspend fun launch(coroutineScope: CoroutineScope): LaunchRemoteDevResult {
+  suspend fun launch(remoteDevLifespanScope: CoroutineScope): LaunchRemoteDevResult {
     logger.info("Starting backend: $backendInEnvDescription")
-    val backendLaunchResult = runCodeWithMeHostNoLobby(backendInEnvDescription)
-    handleBackendProcessOutput(backendLaunchResult, coroutineScope)
+    val backendLaunchResult = runCodeWithMeHostNoLobby(backendInEnvDescription, remoteDevLifespanScope)
+    handleBackendProcessOutput(backendLaunchResult, remoteDevLifespanScope)
     val backendDebugPort = 5006
     logger.info("Attaching debugger to backend at port $backendDebugPort")
     backendInEnvDescription.backendDescription.attachDebuggerCallback?.invoke(backendDebugPort)
@@ -70,25 +62,23 @@ private class LaunchRemoteDevBuilderImpl : LaunchRemoteDevBuilder {
       error("Backend failed to start normally")
     }
     logger.info("Starting JetBrains client")
-    val (clientLocalProcessResult, clientDebugPort) = coroutineScope {
+    val (clientLocalProcessResult, clientDebugPort) =
       withContext(CoroutineName("JetBrains Client Launcher")) {
-        runJetBrainsClientLocally()
+        runJetBrainsClientLocally(remoteDevLifespanScope)
       }
-    }
     handleLocalProcessOutput(
-      clientLocalProcessResult.process,
-      clientLocalProcessResult.processOutputInfo,
-      processShortName = "JetBrains Client",
+      clientLocalProcessResult.processWrapper.processOutputInfo,
+      processShortName = "\uD83D\uDE80 JetBrains Client",
       processColor = AnsiColor.GREEN,
-      coroutineScope
+      remoteDevLifespanScope
     )
     clientResult.attachDebuggerCallback?.let {
       logger.info("Attaching debugger to client at port $clientDebugPort")
       it.invoke(clientDebugPort)
     }
     return LaunchRemoteDevResult(
-      clientTerminationDeferred = clientLocalProcessResult.process.asyncAwaitExit(coroutineScope, processTitle = "JetBrains Client"),
-      backendTerminationDeferred = backendLaunchResult.asyncAwaitExit(coroutineScope)
+      clientTerminationDeferred = clientLocalProcessResult.processWrapper.terminationDeferred,
+      backendTerminationDeferred = backendLaunchResult.asyncAwaitExit(remoteDevLifespanScope)
     )
   }
 }
@@ -96,15 +86,13 @@ private class LaunchRemoteDevBuilderImpl : LaunchRemoteDevBuilder {
 private suspend fun handleBackendProcessOutput(backendLaunchResult: BackendLaunchResult, coroutineScope: CoroutineScope) {
   when (backendLaunchResult) {
     is BackendLaunchResult.Local -> handleLocalProcessOutput(
-      backendLaunchResult.localProcessResult.process,
-      backendLaunchResult.localProcessResult.processOutputInfo,
+      backendLaunchResult.localProcessResult.processWrapper.processOutputInfo,
       processShortName = "IDE Backend",
       processColor = AnsiColor.PURPLE,
       coroutineScope
     )
     is BackendLaunchResult.Docker -> handleLocalProcessOutput(
-      backendLaunchResult.localDockerRunResult.process,
-      ProcessOutputInfo.Piped,
+      backendLaunchResult.localDockerRunResult.processWrapper.processOutputInfo,
       processShortName = "\uD83D\uDC33 IDE Backend",
       processColor = AnsiColor.CYAN,
       coroutineScope
@@ -112,8 +100,7 @@ private suspend fun handleBackendProcessOutput(backendLaunchResult: BackendLaunc
   }
 }
 
-private suspend fun handleLocalProcessOutput(
-  process: Process,
+private fun handleLocalProcessOutput(
   outputStrategy: ProcessOutputInfo,
   processShortName: String,
   processColor: AnsiColor,
@@ -121,14 +108,14 @@ private suspend fun handleLocalProcessOutput(
 ) {
   val prefix = colorize("$processShortName\t| ", processColor)
   when (outputStrategy) {
-    ProcessOutputInfo.Piped -> {
+    is ProcessOutputInfo.Piped -> {
       coroutineScope.launch(Dispatchers.IO + SupervisorJob() + CoroutineName("$processShortName | stdout")) {
-        process.inputReader().lines().forEach { line ->
+        outputStrategy.outputFlows.stdout.collect { line ->
           println("$prefix$line")
         }
       }
       coroutineScope.launch(Dispatchers.IO + SupervisorJob() + CoroutineName("$processShortName | stderr")) {
-        process.errorReader().lines().forEach { line ->
+        outputStrategy.outputFlows.stderr.collect { line ->
           println("$prefix${colorize(line, AnsiColor.RED)}")
         }
       }
@@ -144,8 +131,8 @@ private suspend fun handleLocalProcessOutput(
 
 private suspend fun BackendLaunchResult.asyncAwaitExit(coroutineScope: CoroutineScope): Deferred<Int> =
   when (this) {
-    is BackendLaunchResult.Local -> localProcessResult.process.asyncAwaitExit(coroutineScope, processTitle = "IDE Backend")
-    is BackendLaunchResult.Docker -> localDockerRunResult.process.asyncAwaitExit(coroutineScope, processTitle = "IDE Backend (Docker)")
+    is BackendLaunchResult.Local -> localProcessResult.processWrapper.terminationDeferred
+    is BackendLaunchResult.Docker -> localDockerRunResult.processWrapper.terminationDeferred
   }
 
 internal sealed interface BackendInEnvDescription {
