@@ -13,7 +13,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public abstract class PackagingValidationTestCase extends PackagingElementsTestCase {
   @Override
@@ -32,7 +34,6 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
 
   protected class MockArtifactProblemsHolder extends ArtifactProblemsHolderBase {
     private final List<String> myProblems = new ArrayList<>();
-    private final Map<String, ArtifactProblemQuickFix[]> myQuickFixes = new HashMap<>();
 
     public MockArtifactProblemsHolder() {
       super(new MockPackagingEditorContext(new MockArtifactsStructureConfigurableContext(), null));
@@ -44,7 +45,6 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
                               @Nullable List<PackagingElement<?>> pathToPlace,
                               ArtifactProblemQuickFix @NotNull ... quickFixes) {
       myProblems.add(message);
-      myQuickFixes.put(message, quickFixes);
     }
 
     @Override
