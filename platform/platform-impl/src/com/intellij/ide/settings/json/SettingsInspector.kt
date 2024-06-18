@@ -9,8 +9,10 @@ import com.intellij.serialization.MutableAccessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.getBeanAccessors
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
+@ApiStatus.Internal
 @VisibleForTesting
 fun buildComponentModel(): JsonSettingsModel.ComponentModel =
   JsonSettingsModel.ComponentModel(listAppComponents().map { descriptor ->
