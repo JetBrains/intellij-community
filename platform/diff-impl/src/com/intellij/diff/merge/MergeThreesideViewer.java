@@ -294,14 +294,14 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
             !MergeUtil.showExitWithoutApplyingChangesDialog(myTextMergeViewer, myMergeRequest, myMergeContext, myContentModified)) {
           return;
         }
-        doFinishMerge(result);
+        doFinishMerge(result, MergeResultSource.DIALOG_BUTTON);
       }
     };
   }
 
-  protected void doFinishMerge(@NotNull final MergeResult result) {
+  protected void doFinishMerge(@NotNull final MergeResult result, @NotNull MergeResultSource source) {
     if (result == MergeResult.RESOLVED) {
-      logMergeFinished(MergeResultSource.DIALOG_BUTTON);
+      logMergeFinished(source);
     }
     destroyChangedBlocks();
     myMergeContext.finishMerge(result);
@@ -747,9 +747,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         @NlsSafe String message = XmlStringUtil.wrapInHtmlTag(DiffBundle.message("merge.all.changes.processed.message.text"), "a");
         DiffBalloons.showSuccessPopup(title, message, point, this, () -> {
           if (isDisposed() || myLoadingPanel.isLoading()) return;
-          logMergeFinished(MergeResultSource.NOTIFICATION);
-          destroyChangedBlocks();
-          myMergeContext.finishMerge(MergeResult.RESOLVED);
+          doFinishMerge(MergeResult.RESOLVED, MergeResultSource.NOTIFICATION);
+
         });
       });
     }
