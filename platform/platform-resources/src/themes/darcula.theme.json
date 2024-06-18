@@ -1105,6 +1105,10 @@
 
     "MainToolbar.Dropdown.transparentHoverBackground": "#FFFFFF1A",
 
+    "LicenseDialog": {
+      "licenseInfoProductNameFontOffset": 7
+    },
+
     "UIDesigner": {
       "ColorPicker": {
         "background": "#404040",
