@@ -71,22 +71,23 @@ public final class StringTemplateReverseMigrationInspection extends AbstractBase
       List<@NotNull PsiExpression> expressions = template.getEmbeddedExpressions();
       CommentTracker ct = new CommentTracker();
       StringBuilder concatenation = new StringBuilder();
-      boolean start = true;
+      boolean stringSeen = false;
       for (int i = 0; i < expressions.size(); i++) {
         PsiFragment fragment = fragments.get(i);
         String value = fragment.getValue();
         if (value == null) return;
-        if (!value.isEmpty()) {
+        if (!value.isEmpty() || i > 0 && !stringSeen) {
           if (!concatenation.isEmpty()) concatenation.append('+');
           concatenation.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
-          start = false;
+          stringSeen = true;
         }
         if (!concatenation.isEmpty()) concatenation.append('+');
         PsiExpression expression = expressions.get(i);
         int precedence = PsiPrecedenceUtil.getPrecedence(expression);
+        boolean string = ExpressionUtils.hasStringType(expression);
         boolean needParentheses = 
           precedence > PsiPrecedenceUtil.ADDITIVE_PRECEDENCE ||
-          !start && precedence == PsiPrecedenceUtil.ADDITIVE_PRECEDENCE && !ExpressionUtils.hasStringType(expression);
+          stringSeen && precedence == PsiPrecedenceUtil.ADDITIVE_PRECEDENCE && !string;
         if (needParentheses) {
           concatenation.append('(').append(ct.text(expression)).append(')');
         }
@@ -94,6 +95,7 @@ public final class StringTemplateReverseMigrationInspection extends AbstractBase
           String text = ct.text(expression);
           concatenation.append(text.isEmpty() ? "null" : text);
         }
+        if (string) stringSeen = true;
       }
       String last = fragments.get(fragments.size() - 1).getValue();
       if (last == null) return;
