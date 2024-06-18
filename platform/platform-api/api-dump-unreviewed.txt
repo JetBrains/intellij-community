@@ -1628,6 +1628,11 @@ e:com.intellij.openapi.actionSystem.ActionToolbarPosition
 - sf:TOP:com.intellij.openapi.actionSystem.ActionToolbarPosition
 - s:valueOf(java.lang.String):com.intellij.openapi.actionSystem.ActionToolbarPosition
 - s:values():com.intellij.openapi.actionSystem.ActionToolbarPosition[]
+f:com.intellij.openapi.actionSystem.ActionWrapperUtil
+- s:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):V
+- s:getActionUpdateThread(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.ActionUpdateThread
+- s:getChildren(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.AnAction[]
+- s:update(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):V
 com.intellij.openapi.actionSystem.AlwaysVisibleActionGroup
 com.intellij.openapi.actionSystem.AnActionHolder
 - a:getAction():com.intellij.openapi.actionSystem.AnAction

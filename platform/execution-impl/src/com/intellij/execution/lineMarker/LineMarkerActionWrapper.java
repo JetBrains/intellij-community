@@ -6,7 +6,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.actions.ExecutorGroupActionGroup;
 import com.intellij.execution.actions.RunContextAction;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -17,12 +16,13 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * @author Dmitry Avdeev
  */
-public class LineMarkerActionWrapper extends ActionGroup implements PriorityAction, ActionWithDelegate<AnAction> {
+public class LineMarkerActionWrapper extends ActionGroup
+  implements DataSnapshotProvider, PriorityAction, ActionWithDelegate<AnAction> {
+
+  @Deprecated(forRemoval = true)
   public static final Key<Pair<PsiElement, DataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
 
   protected final SmartPsiElementPointer<PsiElement> myElement;
@@ -44,7 +44,25 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return myOrigin.getActionUpdateThread();
+    return ActionWrapperUtil.getActionUpdateThread(this, myOrigin);
+  }
+
+  @Override
+  public @NotNull AnAction getDelegate() {
+    return myOrigin;
+  }
+
+  @Override
+  public @NotNull Priority getPriority() {
+    return Priority.TOP;
+  }
+
+  @Override
+  public void dataSnapshot(@NotNull DataSink sink) {
+    sink.lazy(Location.DATA_KEY, () -> {
+      PsiElement e = myElement.getElement();
+      return e != null && e.isValid() ? new PsiLocation<>(e) : null;
+    });
   }
 
   @Override
@@ -58,7 +76,7 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
           action, ((RunContextAction)action).getExecutor(), order)));
     }
     if (myOrigin instanceof ActionGroup o) {
-      return o.getChildren(e == null ? null : wrapEvent(e));
+      return ActionWrapperUtil.getChildren(e, this, o);
     }
     return EMPTY_ARRAY;
   }
@@ -70,46 +88,11 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    AnActionEvent wrapped = wrapEvent(e);
-    myOrigin.update(wrapped);
-    Icon icon = wrapped.getPresentation().getIcon();
-    if (icon != null) {
-      e.getPresentation().setIcon(icon);
-    }
-  }
-
-  private @NotNull AnActionEvent wrapEvent(@NotNull AnActionEvent e) {
-    return e.withDataContext(wrapContext(e.getDataContext()));
-  }
-
-  private @NotNull DataContext wrapContext(@NotNull DataContext dataContext) {
-    Pair<PsiElement, DataContext> pair = DataManager.getInstance().loadFromDataContext(dataContext, LOCATION_WRAPPER);
-    PsiElement element = myElement.getElement();
-    if (pair == null || pair.first != element) {
-      DataContext wrapper = CustomizedDataContext.withSnapshot(dataContext, sink -> {
-        sink.lazy(Location.DATA_KEY, () -> {
-          PsiElement e = myElement.getElement();
-          return e != null && e.isValid() ? new PsiLocation<>(e) : null;
-        });
-      });
-      pair = Pair.pair(element, wrapper);
-      DataManager.getInstance().saveInDataContext(dataContext, LOCATION_WRAPPER, pair);
-    }
-    return pair.second;
+    ActionWrapperUtil.update(e, this, myOrigin);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    myOrigin.actionPerformed(wrapEvent(e));
-  }
-
-  @Override
-  public @NotNull Priority getPriority() {
-    return Priority.TOP;
-  }
-
-  @Override
-  public @NotNull AnAction getDelegate() {
-    return myOrigin;
+    ActionWrapperUtil.actionPerformed(e, this, myOrigin);
   }
 }

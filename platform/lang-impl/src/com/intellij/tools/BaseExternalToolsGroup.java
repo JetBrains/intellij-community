@@ -34,8 +34,6 @@ public abstract class BaseExternalToolsGroup<T extends Tool> extends ActionGroup
     ActionGroup delegate = (ActionGroup)(e != null ? e.getActionManager() : ActionManager.getInstance())
       .getAction(getDelegateGroupId());
     if (delegate == null) return EMPTY_ARRAY;
-    UpdateSession session = e != null ? e.getUpdateSession() : UpdateSession.EMPTY;
-    return session == UpdateSession.EMPTY ? delegate.getChildren(e) :
-           session.children(delegate).toArray(EMPTY_ARRAY);
+    return ActionWrapperUtil.getChildren(e, this, delegate);
   }
 }

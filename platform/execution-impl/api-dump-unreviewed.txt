@@ -1443,9 +1443,11 @@ f:com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$R
 f:com.intellij.execution.lineMarker.ExecutorAction
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.openapi.actionSystem.ActionWithDelegate
+- com.intellij.openapi.actionSystem.DataSnapshotProvider
 - sf:Companion:com.intellij.execution.lineMarker.ExecutorAction$Companion
 - b:<init>(com.intellij.openapi.actionSystem.AnAction,com.intellij.execution.Executor,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- dataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - equals(java.lang.Object):Z
 - sf:getActionList():java.util.List
 - sf:getActionList(I):java.util.List
@@ -1473,10 +1475,12 @@ c:com.intellij.execution.lineMarker.LineMarkerActionWrapper
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.codeInsight.intention.PriorityAction
 - com.intellij.openapi.actionSystem.ActionWithDelegate
+- com.intellij.openapi.actionSystem.DataSnapshotProvider
 - sf:LOCATION_WRAPPER:com.intellij.openapi.util.Key
 - pf:myElement:com.intellij.psi.SmartPsiElementPointer
 - <init>(com.intellij.psi.PsiElement,com.intellij.openapi.actionSystem.AnAction):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- dataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
 - getDelegate():com.intellij.openapi.actionSystem.AnAction

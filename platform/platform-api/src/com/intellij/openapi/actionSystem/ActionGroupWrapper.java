@@ -27,21 +27,17 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return ActionWrapperUtil.getActionUpdateThread(this, myDelegate);
   }
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    UpdateSession session = e != null ? e.getUpdateSession() : UpdateSession.EMPTY;
-    return session == UpdateSession.EMPTY ? myDelegate.getChildren(e) :
-           session.children(myDelegate).toArray(AnAction.EMPTY_ARRAY);
+    return ActionWrapperUtil.getChildren(e, this, myDelegate);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    UpdateSession session = e.getUpdateSession();
-    if (session == UpdateSession.EMPTY) myDelegate.update(e);
-    else e.getPresentation().copyFrom(session.presentation(myDelegate), null, true);
+    ActionWrapperUtil.update(e, this, myDelegate);
   }
 
   @Override
