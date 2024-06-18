@@ -96,9 +96,8 @@ public final class AnnotationContext {
   }
 
   public static @NotNull AnnotationContext fromModifierListOwner(@Nullable PsiModifierListOwner owner) {
-    if (owner instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)owner;
-      return new AnnotationContext(owner, (method).getReturnType(), () -> {
+    if (owner instanceof PsiMethod method) {
+      return new AnnotationContext(owner, method.getReturnType(), () -> {
         HashSet<PsiMethod> visited = new HashSet<>();
         return StreamEx.ofNullable(getKotlinProperty(owner))
           .append(StreamEx.ofTree(method, m -> StreamEx.of(m.findSuperMethods()).filter(visited::add)).skip(1));

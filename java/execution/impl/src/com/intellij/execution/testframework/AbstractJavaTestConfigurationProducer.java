@@ -403,8 +403,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
           }
           return null;
         }
-        else if (element instanceof PsiDirectory) {
-          final PsiDirectory directory = (PsiDirectory)element;
+        else if (element instanceof PsiDirectory directory) {
           if (isSource(directory, fileIndex)) {
             return JavaDirectoryService.getInstance().getPackage(directory);
           }

@@ -14,10 +14,9 @@ class CallSequencePredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiExpressionStatement)) {
+    if (!(element instanceof PsiExpressionStatement statement)) {
       return false;
     }
-    final PsiStatement statement = (PsiStatement)element;
     final PsiStatement nextSibling = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
     if (nextSibling == null) {
       return false;

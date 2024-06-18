@@ -1011,12 +1011,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public static @NlsContexts.DialogMessage String processError(Exception e) {
     String message;
 
-    if (e instanceof VMStartException) {
-      VMStartException e1 = (VMStartException)e;
+    if (e instanceof VMStartException e1) {
       message = e1.getLocalizedMessage();
     }
-    else if (e instanceof IllegalConnectorArgumentsException) {
-      IllegalConnectorArgumentsException e1 = (IllegalConnectorArgumentsException)e;
+    else if (e instanceof IllegalConnectorArgumentsException e1) {
       final List<String> invalidArgumentNames = e1.argumentNames();
       message = formatMessage(
         JavaDebuggerBundle.message("error.invalid.argument", invalidArgumentNames.size()) + ": " + e1.getLocalizedMessage()) + invalidArgumentNames;

@@ -115,13 +115,11 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
       RadComponent parent = entry.getKey();
       List<RadComponent> children = entry.getValue();
       boolean finished = false;
-      if (parent instanceof IComponentDeletionParticipant) {
-        IComponentDeletionParticipant handler = (IComponentDeletionParticipant)parent;
+      if (parent instanceof IComponentDeletionParticipant handler) {
         finished = handler.deleteChildren(parent, children);
       }
       else if (parent != null && /*check root*/
-               parent.getLayout() instanceof IComponentDeletionParticipant) {
-        IComponentDeletionParticipant handler = (IComponentDeletionParticipant)parent.getLayout();
+               parent.getLayout() instanceof IComponentDeletionParticipant handler) {
         finished = handler.deleteChildren(parent, children);
       }
 
@@ -132,8 +130,8 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   }
 
   private static void deleteComponents(List<RadComponent> components) throws Exception {
-    if (components.get(0) instanceof IGroupDeleteComponent) {
-      ((IGroupDeleteComponent)components.get(0)).delete(components);
+    if (components.get(0) instanceof IGroupDeleteComponent component) {
+      component.delete(components);
     }
     else {
       for (RadComponent component : components) {

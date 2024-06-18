@@ -114,8 +114,7 @@ public final class CopyConstructorMissesFieldInspection extends BaseInspection {
           }
         }
       }
-      else if (element instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
+      else if (element instanceof PsiMethodCallExpression methodCallExpression) {
         final PsiExpression qualifier =
           PsiUtil.skipParenthesizedExprDown(methodCallExpression.getMethodExpression().getQualifierExpression());
         if (qualifier == null || qualifier instanceof PsiThisExpression) {

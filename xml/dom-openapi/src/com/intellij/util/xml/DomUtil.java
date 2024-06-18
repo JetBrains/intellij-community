@@ -201,8 +201,7 @@ public class DomUtil {
 
     if (parent instanceof GenericAttributeValue) return Collections.emptyList();
 
-    if (parent instanceof DomFileElement) {
-      DomFileElement<?> element = (DomFileElement<?>)parent;
+    if (parent instanceof DomFileElement<?> element) {
       return tags ? Collections.singletonList(element.getRootElement()) : Collections.emptyList();
     }
 
@@ -397,8 +396,8 @@ public class DomUtil {
   }
 
   public static <T extends DomElement> DomFileElement<T> getFileElement(@NotNull DomElement element) {
-    if (element instanceof DomFileElement) {
-      return (DomFileElement)element;
+    if (element instanceof DomFileElement domFileElement) {
+      return domFileElement;
     }
     DomFileElement fileElement = element.getUserData(FILE_ELEMENT_KEY);
     if (fileElement == null) {

@@ -200,8 +200,7 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
           }
         }
       }
-      else if (pomTarget instanceof DomChildrenDescription) {
-        final DomChildrenDescription description = (DomChildrenDescription)pomTarget;
+      else if (pomTarget instanceof DomChildrenDescription description) {
         Type type = null;
         try {
           type = description.getType();

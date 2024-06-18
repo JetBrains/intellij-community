@@ -13,7 +13,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.DeleteCatchSectionFix;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,8 +31,7 @@ public final class CaughtExceptionImmediatelyRethrownInspection extends BaseInsp
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     final PsiTryStatement tryStatement = (PsiTryStatement)infos[0];
     final boolean removeTryCatch = tryStatement.getCatchSections().length == 1 && tryStatement.getFinallyBlock() == null &&
       tryStatement.getResourceList() == null;
@@ -133,8 +131,7 @@ public final class CaughtExceptionImmediatelyRethrownInspection extends BaseInsp
     }
 
     private static void processExceptionClasses(PsiType type, Processor<? super PsiClass> processor) {
-      if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
+      if (type instanceof PsiClassType classType) {
         final PsiClass aClass = classType.resolve();
         if (aClass != null) {
           processor.process(aClass);

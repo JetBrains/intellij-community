@@ -688,11 +688,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myOutOfCodeBlockExtraction = selectedExpr.getUserData(ElementToWorkOn.OUT_OF_CODE_BLOCK);
       myDeleteSelf = myOutOfCodeBlockExtraction != null;
       myElement = getPhysicalElement(selectedExpr);
-      if (myElement.getParent() instanceof PsiExpressionStatement && getNormalizedAnchor(myAnchorElement).equals(myAnchorElement) && selectedExpr.isPhysical()) {
-        PsiStatement statement = (PsiStatement)myElement.getParent();
-        if (statement.getParent() instanceof PsiCodeBlock) {
-          myDeleteSelf = true;
-        }
+      if (myElement.getParent() instanceof PsiExpressionStatement statement &&
+          getNormalizedAnchor(myAnchorElement).equals(myAnchorElement) &&
+          selectedExpr.isPhysical() &&
+          statement.getParent() instanceof PsiCodeBlock) {
+        myDeleteSelf = true;
       }
 
       myEditor = editor;

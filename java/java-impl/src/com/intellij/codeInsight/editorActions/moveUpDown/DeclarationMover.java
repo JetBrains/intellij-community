@@ -288,9 +288,9 @@ final class DeclarationMover extends LineMover {
   // throws IllegalMoveException when corresponding movement has no sense
   private @Nullable LineRange moveInsideOutsideClassPosition(Editor editor, PsiElement sibling, final boolean isDown, boolean areWeMovingClass) throws IllegalMoveException{
     if (sibling == null || sibling instanceof PsiImportList) throw new IllegalMoveException();
-    if (PsiUtil.isJavaToken(sibling, (isDown ? JavaTokenType.RBRACE : JavaTokenType.LBRACE)) && sibling.getParent() instanceof PsiClass) {
+    if (PsiUtil.isJavaToken(sibling, (isDown ? JavaTokenType.RBRACE : JavaTokenType.LBRACE)) &&
+        sibling.getParent() instanceof PsiClass aClass) {
       // moving outside class
-      final PsiClass aClass = (PsiClass)sibling.getParent();
       final PsiElement parent = aClass.getParent();
       if (!areWeMovingClass && !(parent instanceof PsiClass)) throw new IllegalMoveException();
       if (aClass instanceof PsiAnonymousClass) throw new IllegalMoveException();
@@ -298,21 +298,19 @@ final class DeclarationMover extends LineMover {
       return new LineRange(start, sibling, editor.getDocument());
       //return isDown ? nextLineOffset(editor, aClass.getTextRange().getEndOffset()) : aClass.getTextRange().getStartOffset();
     }
-    // trying to move up inside enum constant list, move outside of enum class instead
+    // trying to move up inside enum constant list, move outside enum class instead
     if (!isDown
-        && sibling.getParent() instanceof PsiClass
+        && sibling.getParent() instanceof PsiClass aClass
         && (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON) || sibling instanceof PsiErrorElement)
         && firstNonWhiteElement(sibling.getPrevSibling(), false) instanceof PsiEnumConstant) {
-      PsiClass aClass = (PsiClass)sibling.getParent();
       if (!areWeMovingClass && !(aClass.getParent() instanceof PsiClass)) throw new IllegalMoveException();
       Document document = editor.getDocument();
       int startLine = document.getLineNumber(aClass.getTextRange().getStartOffset());
       int endLine = document.getLineNumber(sibling.getTextRange().getEndOffset()) + 1;
       return new LineRange(startLine, endLine);
     }
-    if (sibling instanceof PsiClass) {
+    if (sibling instanceof PsiClass aClass) {
       // moving inside class
-      PsiClass aClass = (PsiClass)sibling;
       if (aClass instanceof PsiAnonymousClass) throw new IllegalMoveException();
       if (isDown) {
         PsiElement child = aClass.getFirstChild();

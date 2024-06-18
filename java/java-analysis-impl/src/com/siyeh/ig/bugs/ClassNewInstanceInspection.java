@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -75,8 +76,7 @@ public final class ClassNewInstanceInspection extends BaseInspection {
                           "java.lang.reflect.InvocationTargetException");
         }
       }
-      else if (parentOfType instanceof PsiMethod){
-        final PsiMethod method = (PsiMethod)parentOfType;
+      else if (parentOfType instanceof PsiMethod method){
         addThrowsClause(method, "java.lang.NoSuchMethodException", "java.lang.reflect.InvocationTargetException");
       }
       @NonNls final String newExpression = qualifier.getText() + ".getConstructor().newInstance()";
@@ -114,7 +114,7 @@ public final class ClassNewInstanceInspection extends BaseInspection {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       for (String exceptionName : exceptionNames) {
         final PsiClassType type = (PsiClassType)factory.createTypeFromText(exceptionName, tryStatement);
-        if (presentExceptions.stream().anyMatch(e -> e.isAssignableFrom(type))) {
+        if (ContainerUtil.exists(presentExceptions, e -> e.isAssignableFrom(type))) {
           continue;
         }
         final PsiCatchSection section = factory.createCatchSection(type, name, tryStatement);

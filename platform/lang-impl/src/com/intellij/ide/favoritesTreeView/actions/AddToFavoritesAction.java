@@ -146,8 +146,7 @@ public class AddToFavoritesAction extends AnAction {
     }
 
     //on form in editor
-    if (object instanceof VirtualFile) {
-      final VirtualFile vFile = (VirtualFile)object;
+    if (object instanceof VirtualFile vFile) {
       final PsiFile psiFile = psiManager.findFile(vFile);
       addPsiElementNode(psiFile, project, result, favoritesConfig);
       return result;

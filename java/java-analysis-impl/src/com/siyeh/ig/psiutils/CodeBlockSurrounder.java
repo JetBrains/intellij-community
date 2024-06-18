@@ -695,12 +695,9 @@ public abstract class CodeBlockSurrounder {
       PsiStatement body = whileStatement.getBody();
       PsiBlockStatement blockBody;
       int operandIndex = -1;
-      if (oldCondition instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression polyadic = (PsiPolyadicExpression)oldCondition;
-        if (polyadic.getOperationTokenType().equals(JavaTokenType.ANDAND)) {
-          PsiExpression[] operands = polyadic.getOperands();
-          operandIndex = ContainerUtil.indexOf(Arrays.asList(operands), o -> PsiTreeUtil.isAncestor(o, myExpression, false));
-        }
+      if (oldCondition instanceof PsiPolyadicExpression polyadic && polyadic.getOperationTokenType().equals(JavaTokenType.ANDAND)) {
+        PsiExpression[] operands = polyadic.getOperands();
+        operandIndex = ContainerUtil.indexOf(Arrays.asList(operands), o -> PsiTreeUtil.isAncestor(o, myExpression, false));
       }
       if (body == null) {
         PsiWhileStatement newWhileStatement = (PsiWhileStatement)factory.createStatementFromText("while(true) {}", whileStatement);

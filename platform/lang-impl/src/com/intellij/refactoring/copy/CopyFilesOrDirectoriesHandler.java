@@ -510,8 +510,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
     }
     currentFileCount.set(currentFileCount.get() + 1);
     
-    if (elementToCopy instanceof PsiFile) {
-      PsiFile file = (PsiFile)elementToCopy;
+    if (elementToCopy instanceof PsiFile file) {
       String name = newName == null ? file.getName() : newName;
       final PsiFile existing = targetDirectory.findFile(name);
       if (existing != null && !existing.equals(file)) {
