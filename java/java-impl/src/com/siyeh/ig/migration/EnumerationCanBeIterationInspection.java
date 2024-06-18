@@ -418,10 +418,10 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
           return;
         }
         final PsiElement element = referenceExpression.resolve();
-        if (!(element instanceof PsiVariable variable)) {
+        if (!(element instanceof PsiVariable var)) {
           return;
         }
-        enumerationMethodCalled = this.variable.equals(variable);
+        enumerationMethodCalled = this.variable.equals(var);
       }
 
       private boolean isEnumerationMethodCalled() {
