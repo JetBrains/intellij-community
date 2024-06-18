@@ -29,19 +29,14 @@ public final class RegionSettings {
       resetCode();
     }
     else {
-      Prefs.put(REGION_CODE_KEY, region.name());
+      Prefs.put(REGION_CODE_KEY, region.externalName());
       fireEvent();
     }
   }
 
   public static @NotNull Region getRegion() {
-    try {
-      String name = Prefs.get(REGION_CODE_KEY, Region.NOT_SET.name());
-      return Region.valueOf(name);
-    }
-    catch (IllegalArgumentException e) {
-      return Region.NOT_SET;
-    }
+    String name = Prefs.get(REGION_CODE_KEY, Region.NOT_SET.externalName());
+    return Region.fromExternalName(name);
   }
 
   /**
