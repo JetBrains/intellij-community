@@ -11,7 +11,9 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.toBuilder
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object WorkspaceEntityLifecycleSupporterUtils {
   fun ensureEntitiesInWorkspaceAreAsProviderDefined(project: Project, provider: WorkspaceEntityLifecycleSupporter<*, *>) {
     val workspaceModel = WorkspaceModel.getInstance(project)

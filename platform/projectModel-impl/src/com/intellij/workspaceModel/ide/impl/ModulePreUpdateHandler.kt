@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 
-class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
+internal class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
   @OptIn(EntityStorageInstrumentationApi::class)
   override fun update(before: EntityStorage, builder: MutableEntityStorage): Boolean {
     // TODO: 21.12.2020 We need an api to find removed modules faster

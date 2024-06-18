@@ -19,7 +19,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Compa
 import org.jdom.Element
 
 private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
-class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
+
+internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
                                private val originalSdk: ProjectJdkImpl,
                                private val originalSdkDelegate: SdkBridgeImpl) : SdkModificator {
 

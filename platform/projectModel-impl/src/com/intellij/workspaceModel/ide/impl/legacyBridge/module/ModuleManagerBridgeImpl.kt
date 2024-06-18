@@ -69,7 +69,7 @@ private val getModulesTimeMs = MillisecondsMeasurer()
 private val LOG = logger<ModuleManagerBridgeImpl>()
 private val MODULE_BRIDGE_MAPPING_ID = ExternalMappingKey.create<ModuleBridge>("intellij.modules.bridge")
 
-class ModuleManagerComponentBridgeInitializer : BridgeInitializer {
+internal class ModuleManagerComponentBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
 
   override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {

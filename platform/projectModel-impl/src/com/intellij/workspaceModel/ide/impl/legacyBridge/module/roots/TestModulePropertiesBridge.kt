@@ -9,7 +9,9 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class TestModulePropertiesBridge(private val currentModule: Module): TestModuleProperties() {
   private val workspaceModel = WorkspaceModel.getInstance(currentModule.project)
 

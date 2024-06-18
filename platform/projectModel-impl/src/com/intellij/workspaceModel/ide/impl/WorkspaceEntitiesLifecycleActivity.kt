@@ -10,7 +10,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.workspace.WorkspaceEntityLifecycleSupporter
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 
-class WorkspaceEntitiesLifecycleActivity : ProjectActivity {
+internal class WorkspaceEntitiesLifecycleActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
 
     WorkspaceEntityLifecycleSupporter.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<WorkspaceEntityLifecycleSupporter<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>>> {
@@ -24,6 +24,6 @@ class WorkspaceEntitiesLifecycleActivity : ProjectActivity {
 }
 
 @Service(Service.Level.PROJECT)
-class ConstantEntitiesDisposableService : Disposable {
+internal class ConstantEntitiesDisposableService : Disposable {
   override fun dispose() {}
 }

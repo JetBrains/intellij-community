@@ -29,8 +29,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
-class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
+internal class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
 
   override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
@@ -53,6 +54,7 @@ class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
   }
 }
 
+@ApiStatus.Internal
 class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
 ) : ProjectLibraryTableBridge, Disposable {
@@ -269,6 +271,7 @@ class ProjectLibraryTableBridgeImpl(
     private val LOG = logger<ProjectLibraryTableBridgeImpl>()
   }
 }
+
 private fun List<EntityChange<LibraryEntity>>.filterProjectLibraryChanges(): List<EntityChange<LibraryEntity>> {
   return filter {
     when (it) {

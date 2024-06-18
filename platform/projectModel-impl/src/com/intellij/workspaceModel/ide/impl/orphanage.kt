@@ -94,7 +94,7 @@ internal class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrp
 }
 
 @Service(Service.Level.PROJECT)
-class OrphanService(
+internal class OrphanService(
   private val project: Project,
   private val cs: CoroutineScope,
 ) {

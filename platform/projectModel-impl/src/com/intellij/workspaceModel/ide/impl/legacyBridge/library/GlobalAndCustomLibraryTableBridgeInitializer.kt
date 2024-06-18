@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 
-class GlobalAndCustomLibraryTableBridgeInitializer : BridgeInitializer {
+internal class GlobalAndCustomLibraryTableBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
 
   // Handle the initialization of all global and custom libraries

@@ -47,7 +47,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
 
-class ModifiableRootModelBridgeImpl(
+internal class ModifiableRootModelBridgeImpl(
   diff: MutableEntityStorage,
   override val moduleBridge: ModuleBridge,
   override val accessor: RootConfigurationAccessor,

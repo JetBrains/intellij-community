@@ -4,9 +4,12 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.SharedMetrics
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import org.jetbrains.annotations.ApiStatus
 
+@get:ApiStatus.Internal
 val workspaceModelMetrics: WorkspaceModelMetrics by lazy { WorkspaceModelMetrics.instance.value }
 
+@ApiStatus.Internal
 class WorkspaceModelMetrics : SharedMetrics(WorkspaceModel) {
   companion object {
     val instance: SynchronizedClearableLazy<WorkspaceModelMetrics> = SynchronizedClearableLazy { WorkspaceModelMetrics() }

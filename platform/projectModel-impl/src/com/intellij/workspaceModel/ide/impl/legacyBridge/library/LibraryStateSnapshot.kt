@@ -27,7 +27,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDes
 import com.intellij.workspaceModel.ide.toExternalSource
 import java.io.StringReader
 
-class LibraryStateSnapshot(
+internal class LibraryStateSnapshot(
   val libraryEntity: LibraryEntity,
   val storage: EntityStorage,
   val libraryTable: LibraryTable,

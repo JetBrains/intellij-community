@@ -24,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
+@ApiStatus.Internal
 class ModuleRootComponentBridge(
   private val currentModule: Module
 ) : ModuleRootManagerEx(), Disposable, ModuleRootModelBridge {

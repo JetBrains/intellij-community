@@ -79,7 +79,7 @@ class LibraryBridgeImpl(
     )
   }
 
-  val librarySnapshot: LibraryStateSnapshot
+  internal val librarySnapshot: LibraryStateSnapshot
     get() {
       checkDisposed()
       return entityStorage.cachedValue(librarySnapshotCached)

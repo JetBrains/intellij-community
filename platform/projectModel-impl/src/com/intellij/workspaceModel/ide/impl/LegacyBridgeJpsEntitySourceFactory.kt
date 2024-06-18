@@ -14,7 +14,9 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object LegacyBridgeJpsEntitySourceFactory {
   fun createEntitySourceForModule(project: Project,
                                   baseModuleDir: VirtualFileUrl,

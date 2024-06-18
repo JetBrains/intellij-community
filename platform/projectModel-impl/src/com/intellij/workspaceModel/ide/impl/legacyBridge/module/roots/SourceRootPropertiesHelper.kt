@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
 import com.intellij.platform.workspace.jps.entities.modifyCustomSourceRootPropertiesEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsElementFactory
@@ -25,6 +26,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 import org.jetbrains.jps.model.serialization.module.UnknownSourceRootPropertiesSerializer
 
+@ApiStatus.Internal
 object SourceRootPropertiesHelper {
   @Suppress("UNCHECKED_CAST")
   fun <P : JpsElement?> findSerializer(rootType: JpsModuleSourceRootType<P>): JpsModuleSourceRootPropertiesSerializer<P>? {

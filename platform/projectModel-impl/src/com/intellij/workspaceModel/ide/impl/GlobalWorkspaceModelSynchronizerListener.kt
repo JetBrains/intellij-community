@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 
-class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : WorkspaceModelChangeListener {
+internal class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
     // Avoid handling events if change was made by global workspace model

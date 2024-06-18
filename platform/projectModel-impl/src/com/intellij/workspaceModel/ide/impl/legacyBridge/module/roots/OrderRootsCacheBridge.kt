@@ -12,11 +12,13 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 
+@ApiStatus.Internal
 class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable) : OrderRootsCache(parentDisposable) {
   private val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
   private val myRootUrls = AtomicReference<ConcurrentMap<CacheKey, Array<String>>>()
