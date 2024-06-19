@@ -4108,7 +4108,6 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - willReopenProjectOnStart():Z
 f:com.intellij.ide.RecentProjectsManagerBase$Companion
 - f:getInstanceEx():com.intellij.ide.RecentProjectsManagerBase
-- f:isFileSystemPath(java.lang.String):Z
 f:com.intellij.ide.RemoteDesktopDetector
 - com.intellij.ide.RemoteDesktopService
 - isRemoteDesktopConnected():Z
