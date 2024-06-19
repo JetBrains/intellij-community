@@ -13,13 +13,11 @@ public class Formatter {
         return null;
     }
 
-    @NotNull
-    String getNotNullName() {
+    @NotNull String getNotNullName() {
         return "";
     }
 
-    @Nullable
-    String getNullableName() {
+    @Nullable String getNullableName() {
         return null;
     }
 }

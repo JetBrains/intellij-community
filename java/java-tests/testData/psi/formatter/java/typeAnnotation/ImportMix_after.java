@@ -9,8 +9,7 @@ public class Formatter {
         return List.of();
     }
 
-    @NotNull @org.jetbrains.annotations.Nullable
-    String getNotNullName() {
+    @NotNull @org.jetbrains.annotations.Nullable String getNotNullName() {
         return "";
     }
 }

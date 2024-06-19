@@ -9,13 +9,11 @@ public class Formatter {
         return null;
     }
 
-    @org.jetbrains.annotations.NotNull
-    String getNotNullName() {
+    @org.jetbrains.annotations.NotNull String getNotNullName() {
         return "";
     }
 
-    @org.jetbrains.annotations.Nullable
-    String getNullableName() {
+    @org.jetbrains.annotations.Nullable String getNullableName() {
         return null;
     }
 }
