@@ -3631,6 +3631,12 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl
 - renderSpecialSymbol(java.lang.String):V
 - renderStringValue(java.lang.String,java.lang.String,I):V
 - renderValue(java.lang.String):V
+a:com.intellij.xdebugger.impl.ui.visualizedtext.TextBasedContentTab
+- com.intellij.xdebugger.ui.VisualizedContentTab
+- <init>():V
+- createComponent(com.intellij.openapi.project.Project):javax.swing.JComponent
+- pa:formatText():java.lang.String
+- pa:getFileType():com.intellij.openapi.fileTypes.FileType
 c:com.intellij.xdebugger.memory.action.ShowClassesWithDiffAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - <init>():V

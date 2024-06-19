@@ -22,6 +22,8 @@
     <extensionPoint name="xdebugger.dialog.process.view.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachToProcessViewProvider" dynamic="true"/>
 
     <extensionPoint name="xdebugger.inlineBreakpointsDisabler" interface="com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler" dynamic="true"/>
+
+    <extensionPoint name="xdebugger.textValueVisualizer" interface="com.intellij.xdebugger.ui.TextValueVisualizer" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
