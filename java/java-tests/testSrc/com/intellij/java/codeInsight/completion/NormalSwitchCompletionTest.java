@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -110,6 +111,7 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
     configure();
     myFixture.type('\t');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 }
