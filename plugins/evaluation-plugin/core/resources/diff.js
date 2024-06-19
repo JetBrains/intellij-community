@@ -185,6 +185,135 @@ class Diff {
   postProcess(changeObjects) {
     return changeObjects;
   }
+
+  lineDiff = {
+    tokenize: function(value, options) {
+      if (options.stripTrailingCr) {
+        value = value.replace(/\r\n/g, '\n');
+      }
+
+      let retLines = [],
+        linesAndNewlines = value.split(/(\n|\r\n)/);
+
+      if (!linesAndNewlines[linesAndNewlines.length - 1]) {
+        linesAndNewlines.pop();
+      }
+
+      for (let i = 0; i < linesAndNewlines.length; i++) {
+        let line = linesAndNewlines[i];
+
+        if (i % 2 && !options.newlineIsToken) {
+          retLines[retLines.length - 1] += line;
+        } else {
+          retLines.push(line);
+        }
+      }
+
+      return retLines;
+    },
+
+    equals: function(left, right, options) {
+      if (options.ignoreWhitespace) {
+        if (!options.newlineIsToken || !left.includes('\n')) {
+          left = left.trim();
+        }
+        if (!options.newlineIsToken || !right.includes('\n')) {
+          right = right.trim();
+        }
+      }
+      return Diff.prototype.equals.call(this, left, right, options);
+    }
+  };
+
+  diffLines(oldStr, newStr, callback) {
+    return this.lineDiff.diff(oldStr, newStr, callback);
+  }
+
+  diffTrimmedLines(oldStr, newStr, callback) {
+    let options = this.generateOptions(callback, {ignoreWhitespace: true});
+    return this.lineDiff.diff(oldStr, newStr, options);
+  }
+
+  generateOptions(options, defaults) {
+    if (typeof options === 'function') {
+      defaults.callback = options;
+    } else if (options) {
+      for (let name in options) {
+        if (options.hasOwnProperty(name)) {
+          defaults[name] = options[name];
+        }
+      }
+    }
+    return defaults;
+  }
+
+  computeDiff(oldCode, newCode) {
+    const changes = this.diffLines(oldCode || "", newCode);
+
+    let oldIndex = -1;
+    return changes.map(({ value, count, removed, added }) => {
+      const lines = value.split(/\r\n|\r|\n/);
+      const lastLine = lines.pop();
+      if (lastLine) {
+        lines.push(lastLine);
+      }
+      const result = {
+        oldIndex,
+        lines,
+        count,
+        removed,
+        added
+      };
+      if (!added) {
+        oldIndex += count || 0;
+      }
+      return result;
+    });
+  }
+
+  unifiedSlideDiff(prevCode, currCode, slideIndex) {
+    const changes = this.computeDiff(prevCode, currCode);
+    const unifiedDiff = [];
+    let oldLineNumber = 1;
+    let newLineNumber = 1;
+
+    changes.forEach(change => {
+      const { lines, added, removed } = change;
+      lines.forEach(line => {
+        if (added) {
+          unifiedDiff.push({
+            content: `+ ${line}`,
+            type: "added",
+            oldLineNumber: '',
+            newLineNumber: newLineNumber,
+            slideIndex
+          });
+          newLineNumber++;
+        } else if (removed) {
+          unifiedDiff.push({
+            content: `- ${line}`,
+            type: "removed",
+            oldLineNumber: oldLineNumber,
+            newLineNumber: '',
+            slideIndex
+          });
+          oldLineNumber++;
+        } else {
+          unifiedDiff.push({
+            content: `  ${line}`,
+            type: "unchanged",
+            oldLineNumber: oldLineNumber,
+            newLineNumber: newLineNumber,
+            slideIndex
+          });
+          oldLineNumber++;
+          newLineNumber++;
+        }
+      });
+    });
+
+    return unifiedDiff;
+  }
 }
 
 function buildValues(diff, lastComponent, newString, oldString, useLongestToken) {
