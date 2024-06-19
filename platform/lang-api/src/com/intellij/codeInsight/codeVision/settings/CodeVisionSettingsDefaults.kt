@@ -2,10 +2,12 @@
 package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
  * Extension allowing customization of defaults for [CodeVisionSettings].
  */
+@Experimental
 interface CodeVisionSettingsDefaults {
   companion object {
     private val EP_NAME =
