@@ -211,6 +211,8 @@ class EditorNotificationsImpl(private val project: Project,
   }
 
   private fun updateEditors(file: VirtualFile, fileEditors: List<FileEditor>) {
+    if (fileEditors.isEmpty()) return
+
     val job = coroutineScope.launch(start = CoroutineStart.LAZY) {
       // delay for debouncing
       delay(100)
