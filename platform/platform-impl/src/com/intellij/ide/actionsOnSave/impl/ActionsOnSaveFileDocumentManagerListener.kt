@@ -88,29 +88,29 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
      * Actions on Save for other documents keep running.
      *
      * Typical implementation:
-     *
-     *    override suspend fun updateDocument(project: Project, document: Document) {
-     *      if (!isApplicable(project, document) return
-     *      val changeInfo = prepareChange(project, document)
-     *      writeCommandAction(project, "Format file") {
-     *        applyChange(project, document, changeInfo)
-     *      }
-     *    }
-     *
+     * ```
+     * override suspend fun updateDocument(project: Project, document: Document) {
+     *   if (!isApplicable(project, document)) return
+     *   val changeInfo = prepareChange(project, document)
+     *   writeCommandAction(project, "Format file") {
+     *     applyChange(project, document, changeInfo)
+     *   }
+     * }
+     * ```
      * Another example for the case when a `readAction` is needed to calculate the document change:
-     *
-     *    override suspend fun updateDocument(project: Project, document: Document) {
-     *      if (!isApplicable(project, document) return
-     *      readAndWriteAction {
-     *        val changeInfo = prepareChange(project, document)
-     *        writeAction {
-     *          executeCommand(project, "Format file") {
-     *            applyChange(project, document, changeInfo)
-     *          }
-     *        }
-     *      }
-     *    }
-     *
+     * ```
+     * override suspend fun updateDocument(project: Project, document: Document) {
+     *   if (!isApplicable(project, document)) return
+     *   readAndWriteAction {
+     *     val changeInfo = prepareChange(project, document)
+     *     writeAction {
+     *       executeCommand(project, "Format file") {
+     *         applyChange(project, document, changeInfo)
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
      */
     @RequiresBackgroundThread
     abstract suspend fun updateDocument(project: Project, document: Document)
@@ -255,7 +255,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
     @Suppress("DialogTitleCapitalization") val progressTitle = IdeBundle.message("actions.on.save.background.progress")
     withBackgroundProgress(project, progressTitle) {
       reportProgress(size = documentsToModStamps.size) { progressReporter ->
-        for (documentToModStamp in documentsToModStamps) {
+        for ((document, modStamp) in documentsToModStamps) {
           // Not only does the `progressReporter.itemStep` call help with progress reporting,
           // it also makes sure that the documents are processed one at a time, not in parallel.
           // It's a safer path than parallel processing because there may be a lot of documents,
@@ -265,8 +265,6 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
             // but keep running Actions on Save for other documents.
             // So, a separate child coroutine for each document is needed.
             launch(ActionOnSaveContextElement) {
-              val document = documentToModStamp.key
-              val modStamp = documentToModStamp.value
               runDocumentUpdatingActionsOnSaveAndSaveDocument(actionsOnSave, document, modStamp, documentScope = this)
             }
           }
