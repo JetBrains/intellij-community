@@ -449,6 +449,7 @@ f:com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 - sf:getCODE_LENS_SETTINGS_CHANGED():com.intellij.util.messages.Topic
 - f:getCodeVisionEnabled():Z
 - f:getDefaultPosition():com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+- f:getDisabledCodeVisionProviderIds():java.util.Set
 - f:getPositionForGroup(java.lang.String):com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 - getState():com.intellij.codeInsight.codeVision.settings.CodeVisionSettings$State
 - f:getVisibleMetricsAboveDeclarationCount():I
@@ -478,6 +479,7 @@ f:com.intellij.codeInsight.codeVision.settings.CodeVisionSettings$State
 - f:getCodeVisionGroupToPosition():java.util.Map
 - f:getDefaultPosition():java.lang.String
 - f:getDisabledCodeVisionProviderIds():java.util.TreeSet
+- f:getEnabledCodeVisionProviderIds():java.util.TreeSet
 - f:getVisibleMetricsAboveDeclarationCount():I
 - f:getVisibleMetricsNextToDeclarationCount():I
 - f:isEnabled():Z
@@ -485,8 +487,14 @@ f:com.intellij.codeInsight.codeVision.settings.CodeVisionSettings$State
 - f:setDefaultPosition(java.lang.String):V
 - f:setDisabledCodeVisionProviderIds(java.util.TreeSet):V
 - f:setEnabled(Z):V
+- f:setEnabledCodeVisionProviderIds(java.util.TreeSet):V
 - f:setVisibleMetricsAboveDeclarationCount(I):V
 - f:setVisibleMetricsNextToDeclarationCount(I):V
+*:com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults
+- *sf:Companion:com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults$Companion
+- a:getDefaultEnablementForProviderId():java.util.Map
+*f:com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults$Companion
+- f:getInstance():com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults
 a:com.intellij.codeInsight.completion.NextPrevParameterAction
 - com.intellij.codeInsight.actions.CodeInsightAction
 - com.intellij.openapi.project.DumbAware
