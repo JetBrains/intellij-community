@@ -8,15 +8,21 @@ object IjentFsResultImpl {
   data class Ok<T, E : IjentFsError>(override val value: T) : IjentFsResult.Ok<T, E>
   data class Error<T, E : IjentFsError>(override val error: E) : IjentFsResult.Error<T, E>
 
+  data class Other(override val where: IjentPath.Absolute, override val message: String) :
+    IjentFileSystemApi.FileReaderError.Other,
+    IjentFileSystemApi.FileWriterError.Other,
+    IjentFileSystemApi.ListDirectoryError.Other,
+    IjentFileSystemApi.SameFileError.Other,
+    IjentFileSystemApi.StatError.Other,
+    IjentFileSystemApi.CanonicalizeError.Other,
+    IjentOpenedFile.Reader.ReadError.Other
+
   data class DoesNotExist(override val where: IjentPath.Absolute, override val message: String) :
     IjentFileSystemApi.FileReaderError.DoesNotExist,
     IjentFileSystemApi.FileWriterError.DoesNotExist,
     IjentFileSystemApi.ListDirectoryError.DoesNotExist,
     IjentFileSystemApi.SameFileError.DoesNotExist,
     IjentFileSystemApi.StatError.DoesNotExist,
-    IjentOpenedFile.Reader.ReadError.DoesNotExist,
-    IjentOpenedFile.SeekError.DoesNotExist,
-    IjentOpenedFile.Writer.WriteError.DoesNotExist,
     IjentFileSystemApi.CanonicalizeError.DoesNotExist
 
   class PermissionDenied(override val where: IjentPath.Absolute, override val message: String) :
@@ -25,10 +31,7 @@ object IjentFsResultImpl {
     IjentFileSystemApi.FileWriterError.PermissionDenied,
     IjentFileSystemApi.ListDirectoryError.PermissionDenied,
     IjentFileSystemApi.SameFileError.PermissionDenied,
-    IjentFileSystemApi.StatError.PermissionDenied,
-    IjentOpenedFile.Reader.ReadError.PermissionDenied,
-    IjentOpenedFile.SeekError.PermissionDenied,
-    IjentOpenedFile.Writer.WriteError.PermissionDenied
+    IjentFileSystemApi.StatError.PermissionDenied
 
   data class NotDirectory(override val where: IjentPath.Absolute, override val message: String) :
     IjentFileSystemApi.CanonicalizeError.NotDirectory,
@@ -36,18 +39,16 @@ object IjentFsResultImpl {
     IjentFileSystemApi.FileWriterError.NotDirectory,
     IjentFileSystemApi.ListDirectoryError.NotDirectory,
     IjentFileSystemApi.SameFileError.NotDirectory,
-    IjentFileSystemApi.StatError.NotDirectory,
-    IjentOpenedFile.Reader.ReadError.NotDirectory,
-    IjentOpenedFile.SeekError.NotDirectory,
-    IjentOpenedFile.Writer.WriteError.NotDirectory
+    IjentFileSystemApi.StatError.NotDirectory
 
   data class NotFile(override val where: IjentPath.Absolute, override val message: String) :
     IjentFileSystemApi.CanonicalizeError.NotFile,
     IjentFileSystemApi.FileReaderError.NotFile,
     IjentFileSystemApi.FileWriterError.NotFile,
     IjentFileSystemApi.SameFileError.NotFile,
-    IjentFileSystemApi.StatError.NotFile,
-    IjentOpenedFile.Reader.ReadError.NotFile,
-    IjentOpenedFile.SeekError.NotFile,
-    IjentOpenedFile.Writer.WriteError.NotFile
+    IjentFileSystemApi.StatError.NotFile
+
+  data class InvalidValue(override val where: IjentPath.Absolute, override val message: String) :
+    IjentOpenedFile.Reader.ReadError.InvalidValue,
+    IjentOpenedFile.SeekError.InvalidValue
 }

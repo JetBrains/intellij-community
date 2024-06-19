@@ -44,6 +44,7 @@ internal fun IjentFsError.throwFileSystemException(): Nothing {
     is IjentFsError.NotDirectory -> NotDirectoryException(where.toString())
     is IjentOpenedFile.SeekError.InvalidValue -> TODO()
     is IjentFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
+    is IjentOpenedFile.Reader.ReadError.InvalidValue -> TODO()
   }
 }
 
