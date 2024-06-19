@@ -23,6 +23,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
+import static com.intellij.util.SystemProperties.getIntProperty;
+
 @ApiStatus.Internal
 public final class IndexUpdateWriter {
   private static final Logger LOG = Logger.getInstance(IndexUpdateWriter.class);
@@ -47,12 +49,12 @@ public final class IndexUpdateWriter {
   /**
    * Max number of queued updates per indexing thread, after which one indexing thread is going to sleep, until queue is shrunk.
    */
-  private static final int MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER = 100;
+  private static final int MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER = getIntProperty("IndexUpdateWriter.MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER", 100);
 
   /**
    * This is an experimental data from indexing IDEA project: median write time for a single index entry.
    */
-  private static final long EXPECTED_SINGLE_WRITE_TIME_NS = 2_500;
+  private static final long EXPECTED_SINGLE_WRITE_TIME_NS = getIntProperty("IndexUpdateWriter.EXPECTED_SINGLE_WRITE_TIME_NS", 2_500);
 
   /**
    * Total number of index writing threads
@@ -164,9 +166,9 @@ public final class IndexUpdateWriter {
   static void sleepIfWriterQueueLarge(int numberOfIndexingThreads) {
     var currentlySleeping = SLEEPING_INDEXERS.get();
     var couldBeSleeping = currentlySleeping + 1;
-    int writesInQueueToSleep =
-      MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * numberOfIndexingThreads + couldBeSleeping * MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER;
+    int writesInQueueToSleep = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * (numberOfIndexingThreads + couldBeSleeping);
     var writesInQueue = INDEX_WRITES_QUEUED.get();
+    //TODO RC: why we don't repeat the CAS below if it fails?
     if (writesInQueue > writesInQueueToSleep && SLEEPING_INDEXERS.compareAndSet(currentlySleeping, couldBeSleeping)) {
       var writesToWakeUp = writesInQueueToSleep - MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER;
       LOG.debug("Sleeping indexer: ", couldBeSleeping, " of ", numberOfIndexingThreads, "; writes queued: ", writesInQueue,
