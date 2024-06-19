@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
@@ -164,6 +165,7 @@ object KotlinCallProcessor {
                         continue
                     }
 
+                    @OptIn(KaImplementationDetail::class)
                     val shouldContinue = with(processor) {
                         when (symbol) {
                             is KaFunctionSymbol -> {
