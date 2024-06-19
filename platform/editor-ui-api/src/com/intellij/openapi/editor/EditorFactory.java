@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,9 +18,10 @@ import java.util.stream.Stream;
 
 /**
  * Provides services for creating document and editor instances.
- *
+ * <p>
  * Creating and releasing of editors must be done from EDT.
  */
+@ApiStatus.NonExtendable
 public abstract class EditorFactory {
   /**
    * Returns the editor factory instance.
