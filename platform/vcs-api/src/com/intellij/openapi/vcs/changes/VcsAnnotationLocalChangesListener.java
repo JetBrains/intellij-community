@@ -32,7 +32,7 @@ public interface VcsAnnotationLocalChangesListener {
   /**
    * @deprecated Use {@link #registerAnnotation(FileAnnotation)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void registerAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
     registerAnnotation(annotation);
   }
@@ -40,7 +40,7 @@ public interface VcsAnnotationLocalChangesListener {
   /**
    * @deprecated Use {@link #unregisterAnnotation(FileAnnotation)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void unregisterAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
     unregisterAnnotation(annotation);
   }

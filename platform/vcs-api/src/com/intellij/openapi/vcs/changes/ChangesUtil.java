@@ -93,7 +93,7 @@ public final class ChangesUtil {
    * @deprecated This method will detect {@link FilePath#isDirectory()} using NIO.
    * Avoid using the method, if {@code isDirectory} is known from context or not important.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable AbstractVcs getVcsForFile(@NotNull File file, @NotNull Project project) {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsUtil.getFilePath(file));
   }
