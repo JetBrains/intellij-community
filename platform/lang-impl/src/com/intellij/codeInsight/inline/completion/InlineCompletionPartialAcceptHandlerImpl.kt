@@ -129,7 +129,7 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
       if (element.text.contains('\n')) {
         newLineAppeared = true
         val newLineOffset = element.text.indexOf('\n')
-        val prefixLength = newLineOffset + element.text.count(startFrom = newLineOffset) { it.isWhitespace() }
+        val prefixLength = newLineOffset + element.text.countWhilePredicate(start = newLineOffset) { it.isWhitespace() }
         insertionLength += prefixLength
         if (prefixLength < element.text.length) {
           break
@@ -139,7 +139,7 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
         insertionLength += element.text.length
       }
       else {
-        val prefixLength = element.text.count(startFrom = 0) { it.isWhitespace() }
+        val prefixLength = element.text.countWhilePredicate(start = 0) { it.isWhitespace() }
         insertionLength += prefixLength
         if (prefixLength < element.text.length) {
           break
@@ -251,18 +251,159 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     skipOffsets: List<Int>,
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement> {
-    val suffix = skipOffsets.joinToString("") { completion[it].toString() }
-    originalEditor.document.insertString(finalOffset, suffix)
-    return elements.insertSkipElementsAt(skipOffsets.map { it - prefixLength })
+    val newSkipOffsets = insertSkipSymbolsWithAdditionalLineBreaks(
+      originalEditor,
+      finalOffset,
+      completion.drop(prefixLength),
+      prefixLength,
+      skipOffsets,
+      elements
+    )
+    return elements.insertSkipElementsAt(newSkipOffsets.map { it - prefixLength })
   }
 
-  private fun String.count(startFrom: Int, predicate: (Char) -> Boolean): Int {
-    for (i in startFrom until length) {
-      if (!predicate(this[i])) {
-        return i - startFrom
+  /**
+   * When we insert an open brace/quote, we'd like to insert the paired bracket/quote as well.
+   * [skipOffsets] represent all the offsets in a completion, that need to be inserted in an editor.
+   *
+   * The problem: when the paired bracket/quote is located on another line, that doesn't exist in an editor yet,
+   * we need to insert it as well.
+   * Also, we need to insert all leading whitespaces before that bracket/quote (if they are not inserted yet),
+   * to be sure that cancellation of the inline completion will leave the code with correct indentation.
+   *
+   * This method operates over forbidden magic, doing the following:
+   * * It groups [skipOffsets] by their line.
+   * * For each line we compute whether it's already existent checking [elements] on instance of [InlineCompletionSkipTextElement].
+   * * For each non-existent line used in insertion, we compute leading whitespaces.
+   * * If line or leading whitespaces do not exist, we add them to the editor and add their offsets to new skip elements.
+   *
+   * @return the initial skip offsets with new skip offsets responsible to newly inserted symbols.
+   */
+  private fun insertSkipSymbolsWithAdditionalLineBreaks(
+    originalEditor: Editor,
+    finalOffset: Int,
+    trimmedCompletion: String,
+    prefixLength: Int,
+    skipOffsets: List<Int>,
+    elements: List<InlineCompletionElement>
+  ): List<Int> {
+    val initialSkipOffsets = skipOffsets
+      .map { it - prefixLength }
+      .filter { it < trimmedCompletion.length && it >= 0 }
+      .distinct()
+      .sorted()
+    if (initialSkipOffsets.isEmpty()) {
+      return emptyList()
+    }
+
+    val lineNumberToOffsets = List(trimmedCompletion.count { it == '\n' } + 1) { mutableListOf<Int>() }
+    var elementIndex = 0
+    var lineNumber = 0
+    var currentOffset = 0
+    for (skipOffset in initialSkipOffsets) {
+      while (elementIndex < elements.size && currentOffset + elements[elementIndex].text.length < skipOffset) {
+        currentOffset += elements[elementIndex].text.length
+        lineNumber += elements[elementIndex].text.count { it == '\n' }
+        elementIndex++
+      }
+      check(elementIndex < elements.size)
+      val element = elements[elementIndex]
+      val relativeSkipOffset = skipOffset - currentOffset
+      lineNumber += element.text.take(relativeSkipOffset).count { it == '\n' }
+      lineNumberToOffsets[lineNumber] += skipOffset
+    }
+
+    val lineToExists = MutableList(lineNumberToOffsets.size) { false }
+    lineToExists[0] = true
+    lineNumber = 0
+    for (element in elements) {
+      val newLinesNumber = element.text.count { it == '\n' }
+      if (element is InlineCompletionSkipTextElement) {
+        for (i in lineNumber + 1..lineNumber + newLinesNumber) {
+          lineToExists[i] = true
+        }
+      }
+      lineNumber += newLinesNumber
+    }
+
+    val lineBreaksOffsets = trimmedCompletion.indices.filter { trimmedCompletion[it] == '\n' }
+
+    data class LineFix(val lineNumber: Int, val startSkip: Int, val endSkip: Int)
+
+    val lineFixes = mutableListOf<LineFix>()
+    for (lineNum in lineNumberToOffsets.indices.filter { lineNumberToOffsets[it].isNotEmpty() }) {
+      if (lineToExists[lineNum]) {
+        val lineStart = lineBreaksOffsets.getOrNull(lineNum - 1)?.plus(1) ?: 0
+        lineFixes += LineFix(lineNum, lineStart, lineStart) // To insert skip symbols on the already existent line
+        continue
+      }
+      check(lineNumber > 0)
+      val breakStart = lineBreaksOffsets[lineNum - 1]
+      val rangeEnd = breakStart + trimmedCompletion.countWhilePredicate(start = breakStart) { it.isWhitespace() }
+      lineFixes += LineFix(lineNum, breakStart, rangeEnd)
+    }
+
+    var insertionOffset = finalOffset
+    val labeledSkipOffsets = labelSkipOffsets(elements)
+    currentOffset = 0
+    for ((lineNum, newSkipOffsetStart, newSkipOffsetEnd) in lineFixes) {
+      while (currentOffset < newSkipOffsetStart) {
+        if (labeledSkipOffsets[currentOffset]) {
+          insertionOffset++
+        }
+        currentOffset++
+      }
+      for (i in newSkipOffsetStart until newSkipOffsetEnd) {
+        if (labeledSkipOffsets[i]) {
+          insertionOffset++
+        }
+        else {
+          originalEditor.document.insertString(insertionOffset, trimmedCompletion[i].toString())
+          insertionOffset++
+        }
+      }
+      var focusOffset = newSkipOffsetEnd
+      for (currentSkipOffset in lineNumberToOffsets[lineNum].sorted()) {
+        if (focusOffset > currentSkipOffset) {
+          continue
+        }
+        while (focusOffset < currentSkipOffset) {
+          if (labeledSkipOffsets[focusOffset]) {
+            insertionOffset++
+          }
+          focusOffset++
+        }
+        if (!labeledSkipOffsets[currentSkipOffset]) {
+          originalEditor.document.insertString(insertionOffset, trimmedCompletion[currentSkipOffset].toString())
+          insertionOffset++
+        }
       }
     }
-    return length - startFrom
+
+    return (initialSkipOffsets + lineFixes.flatMap { it.startSkip until it.endSkip })
+      .distinct()
+      .map { it + prefixLength }
+  }
+
+  private fun labelSkipOffsets(elements: List<InlineCompletionElement>): List<Boolean> {
+    val labels = MutableList(elements.sumOf { it.text.length }) { false }
+    var offset = 0
+    for (element in elements) {
+      repeat(element.text.length) {
+        labels[offset] = element is InlineCompletionSkipTextElement
+        offset++
+      }
+    }
+    return labels
+  }
+
+  private fun String.countWhilePredicate(start: Int = 0, end: Int = length, predicate: (Char) -> Boolean): Int {
+    for (i in start until end) {
+      if (!predicate(this[i])) {
+        return i - start
+      }
+    }
+    return end - start
   }
 
   private inline fun <T> withFakeEditor(
