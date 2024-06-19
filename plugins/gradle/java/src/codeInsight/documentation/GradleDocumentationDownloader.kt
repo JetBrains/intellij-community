@@ -6,14 +6,15 @@ import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gradle.action.GradleAttachSourcesProvider
+import org.jetbrains.plugins.gradle.service.coroutine.GradleCoroutineScopeProvider
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 class GradleDocumentationDownloader : DocumentationDownloader {
@@ -31,26 +32,42 @@ class GradleDocumentationDownloader : DocumentationDownloader {
     return readAction { JavaEditorFileSwapper.findSourceFile(project, file) == null }
   }
 
-  override suspend fun download(project: Project, file: VirtualFile): ActionCallback {
-    val libraryEntries = readAction { findLibraryEntriesForFile(file, project) }
-    if (libraryEntries.isEmpty()) {
-      return ActionCallback.REJECTED
-    }
-    val action = readAction {
-      val psiFile = file.findPsiFile(project)
-      if (psiFile == null) {
-        return@readAction null
+  override fun download(project: Project, file: VirtualFile): ActionCallback {
+    val result = ActionCallback()
+    GradleCoroutineScopeProvider.getInstance(project).cs
+      .launch {
+        val libraryEntries = readAction {
+          findLibraryEntriesForFile(file, project)
+        }
+        if (libraryEntries.isEmpty()) {
+          result.setRejected()
+          return@launch
+        }
+        val action = readAction {
+          val psiFile = file.findPsiFile(project)
+          if (psiFile == null) {
+            return@readAction null
+          }
+          val actions = GradleAttachSourcesProvider()
+            .getActions(libraryEntries, psiFile)
+          return@readAction actions.firstOrNull()
+        }
+        if (action == null) {
+          result.setRejected()
+          return@launch
+        }
+        action.perform(libraryEntries).apply {
+          doWhenDone {
+            if (isDone) {
+              result.setDone()
+            }
+            else {
+              result.setRejected()
+            }
+          }
+        }
       }
-      val actions = GradleAttachSourcesProvider()
-        .getActions(libraryEntries, psiFile)
-      return@readAction actions.firstOrNull()
-    }
-    if (action == null) {
-      return ActionCallback.REJECTED
-    }
-    return blockingContext {
-      action.perform(libraryEntries)
-    }
+    return result
   }
 
   private fun findLibraryEntriesForFile(file: VirtualFile, project: Project): List<LibraryOrderEntry> {
@@ -61,6 +78,6 @@ class GradleDocumentationDownloader : DocumentationDownloader {
           entries.add(it)
         }
       }
-    return entries;
+    return entries
   }
 }
