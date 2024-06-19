@@ -7900,6 +7900,801 @@
       ]
     },
     {
+      "name": "PhpEditorOptions",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.PhpEditorOptions",
+      "storage": "editor.xml",
+      "properties": [
+        {
+          "name": "show_class_separators",
+          "mapTo": "SHOW_CLASS_SEPARATORS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "always_enable_php_background_highlighting",
+          "mapTo": "ALWAYS_ENABLE_PHP_BACKGROUND_HIGHLIGHTING",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "PhpAutoImport",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.completion.autoImport.PhpAutoImportConfiguration",
+      "storage": "php.xml",
+      "properties": [
+        {
+          "name": "autoImportFromGlobalSpace",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "autoImportInFileScope",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "autoImportInNamespaceScope",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "globalClassBehavior",
+          "type": "Enum",
+          "javaType": "com.jetbrains.php.completion.autoImport.PhpAutoImportConfiguration$GlobalSymbolBehavior",
+          "variants": [
+            {
+              "value": "prefer_fallback",
+              "mapTo": "PREFER_FALLBACK"
+            },
+            {
+              "value": "prefer_import",
+              "mapTo": "PREFER_IMPORT"
+            },
+            {
+              "value": "prefer_fqn",
+              "mapTo": "PREFER_FQN"
+            }
+          ]
+        },
+        {
+          "name": "globalConstantBehavior",
+          "type": "Enum",
+          "javaType": "com.jetbrains.php.completion.autoImport.PhpAutoImportConfiguration$GlobalSymbolBehavior",
+          "variants": [
+            {
+              "value": "prefer_fallback",
+              "mapTo": "PREFER_FALLBACK"
+            },
+            {
+              "value": "prefer_import",
+              "mapTo": "PREFER_IMPORT"
+            },
+            {
+              "value": "prefer_fqn",
+              "mapTo": "PREFER_FQN"
+            }
+          ]
+        },
+        {
+          "name": "globalFunctionBehavior",
+          "type": "Enum",
+          "javaType": "com.jetbrains.php.completion.autoImport.PhpAutoImportConfiguration$GlobalSymbolBehavior",
+          "variants": [
+            {
+              "value": "prefer_fallback",
+              "mapTo": "PREFER_FALLBACK"
+            },
+            {
+              "value": "prefer_import",
+              "mapTo": "PREFER_IMPORT"
+            },
+            {
+              "value": "prefer_fqn",
+              "mapTo": "PREFER_FQN"
+            }
+          ]
+        },
+        {
+          "name": "importOnPaste",
+          "type": "Enum",
+          "javaType": "com.jetbrains.php.completion.autoImport.PhpAutoImportConfiguration$ImportOnPaste",
+          "variants": [
+            {
+              "value": "all",
+              "mapTo": "ALL"
+            },
+            {
+              "value": "ask",
+              "mapTo": "ASK"
+            },
+            {
+              "value": "none",
+              "mapTo": "NONE"
+            }
+          ]
+        },
+        {
+          "name": "prependGlobalFunctionsAndConstants",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "PhpSmartKeysConfiguration",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.completion.smartEnter.PhpSmartKeysConfiguration",
+      "storage": "php.xml",
+      "properties": [
+        {
+          "name": "autoInsertFullPhpOpenTag",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "autoInsertSemicolonAfterFunctionCall",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "escapeSymbolsInStringLiterals",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "findUsagesOfBaseMethod",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "insertClosingHtmlTagInPhpDoc",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "promptFindUsagesOfBaseMethod",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "removePhpTagsWhilePastingByDefault",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "replaceUnnecessaryDoubleQuotes",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "selectVariableNameWithoutDollar",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "smartFunctionParametersCompletion",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "PhpLanguageFeatureUsagesStatistics",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.config.PhpLanguageFeatureUsagesTrackerImpl",
+      "storage": "$CACHE_FILE$"
+    },
+    {
+      "name": "PhpInterpreters",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.config.interpreters.PhpInterpretersManagerImpl$PhpApplicationInterpretersManager",
+      "storage": "php-tools.xml",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "PhpInterpretersPhpInfoCache",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.config.interpreters.PhpInterpretersPhpInfoCacheImpl$PhpApplicationInterpretersPhpInfoCache",
+      "storage": "php-tools.xml",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "PhpDebugGeneral",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.debug.PhpApplicationDebugConfiguration",
+      "storage": "php.xml",
+      "properties": [
+        {
+          "name": "enableDfaAssist",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "enableDfaAssistGrayMode",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "xdebugMoveToResolveBreakpoints",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "xdebugNotifyAboutResolvedBreakpoints",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "xdebugResolveBreakpoints",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "xdebugReturnFunctionValueDebugging",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "PhpThisOrSelfImportFilteringUsageSetting",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.lang.findUsages.PhpThisOrSelfImportFilteringUsageSetting",
+      "storage": "usageView.xml",
+      "properties": [
+        {
+          "name": "show_this_or_self_references",
+          "mapTo": "SHOW_THIS_OR_SELF_REFERENCES",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "PhpCodeFoldingSettings",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.lang.folding.PhpCodeFoldingConfiguration",
+      "storage": "editor.xml",
+      "properties": [
+        {
+          "name": "collapse_php_tags",
+          "mapTo": "COLLAPSE_PHP_TAGS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "collapse_here_docs",
+          "mapTo": "COLLAPSE_HERE_DOCS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "collapse_imports",
+          "mapTo": "COLLAPSE_IMPORTS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "collapse_function_body",
+          "mapTo": "COLLAPSE_FUNCTION_BODY",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "collapse_method_body",
+          "mapTo": "COLLAPSE_METHOD_BODY",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "collapse_classes",
+          "mapTo": "COLLAPSE_CLASSES",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "collapse_attribute",
+          "mapTo": "COLLAPSE_ATTRIBUTE",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "collapse_attribute_list",
+          "mapTo": "COLLAPSE_ATTRIBUTE_LIST",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "PhpUnit",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.phpunit.PhpUnitSettingsManager$PhpUnitApplicationSettingsManager",
+      "storage": "php-tools.xml",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "PhpBirthdayDiscountPersistentState",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.promotion.PhpBirthdayDiscountPersistentState",
+      "storage": "php.birthday.discount.xml",
+      "properties": [
+        {
+          "name": "nextTimeToShowNotificationEpochMillis",
+          "type": "Unsupported",
+          "javaType": "long"
+        },
+        {
+          "name": "notificationShowedCount",
+          "type": "Integer",
+          "javaType": "int"
+        }
+      ]
+    },
+    {
+      "name": "PhpRefactoringSettings",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.refactoring.PhpRefactoringSettings",
+      "storage": "baseRefactoring.xml",
+      "properties": [
+        {
+          "name": "rename_field_accessors",
+          "mapTo": "RENAME_FIELD_ACCESSORS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_parameters",
+          "mapTo": "RENAME_PARAMETERS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_class_inheritors_and_reated_files",
+          "mapTo": "RENAME_CLASS_INHERITORS_AND_REATED_FILES",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_class_in_file",
+          "mapTo": "RENAME_CLASS_IN_FILE",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_in_comments_for_class",
+          "mapTo": "RENAME_SEARCH_IN_COMMENTS_FOR_CLASS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_non_code_for_class",
+          "mapTo": "RENAME_SEARCH_NON_CODE_FOR_CLASS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_in_comments_for_field",
+          "mapTo": "RENAME_SEARCH_IN_COMMENTS_FOR_FIELD",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_non_code_for_field",
+          "mapTo": "RENAME_SEARCH_NON_CODE_FOR_FIELD",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_in_comments_for_method",
+          "mapTo": "RENAME_SEARCH_IN_COMMENTS_FOR_METHOD",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_non_code_for_method",
+          "mapTo": "RENAME_SEARCH_NON_CODE_FOR_METHOD",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_in_comments_for_variable",
+          "mapTo": "RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_non_code_for_variable",
+          "mapTo": "RENAME_SEARCH_NON_CODE_FOR_VARIABLE",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_in_comments_for_function",
+          "mapTo": "RENAME_SEARCH_IN_COMMENTS_FOR_FUNCTION",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_non_code_for_function",
+          "mapTo": "RENAME_SEARCH_NON_CODE_FOR_FUNCTION",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_in_comments_for_constant",
+          "mapTo": "RENAME_SEARCH_IN_COMMENTS_FOR_CONSTANT",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_non_code_for_constant",
+          "mapTo": "RENAME_SEARCH_NON_CODE_FOR_CONSTANT",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_in_comments_for_parameter",
+          "mapTo": "RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_non_code_for_parameter",
+          "mapTo": "RENAME_SEARCH_NON_CODE_FOR_PARAMETER",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_non_code_for_use_with_alias",
+          "mapTo": "RENAME_SEARCH_NON_CODE_FOR_USE_WITH_ALIAS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_in_comments_for_use_with_alias",
+          "mapTo": "RENAME_SEARCH_IN_COMMENTS_FOR_USE_WITH_ALIAS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_in_global_scope_for_method",
+          "mapTo": "RENAME_SEARCH_IN_GLOBAL_SCOPE_FOR_METHOD",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_in_global_scope_for_field",
+          "mapTo": "RENAME_SEARCH_IN_GLOBAL_SCOPE_FOR_FIELD",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_variable_in_closest_scope",
+          "mapTo": "RENAME_SEARCH_VARIABLE_IN_CLOSEST_SCOPE",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "import_class_always_create_alias",
+          "mapTo": "IMPORT_CLASS_ALWAYS_CREATE_ALIAS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "extract_method_default_visibility",
+          "mapTo": "EXTRACT_METHOD_DEFAULT_VISIBILITY",
+          "type": "Enum",
+          "javaType": "com.jetbrains.php.lang.psi.elements.PhpModifier$Access",
+          "variants": [
+            {
+              "value": "public",
+              "mapTo": "public"
+            },
+            {
+              "value": "protected",
+              "mapTo": "protected"
+            },
+            {
+              "value": "private",
+              "mapTo": "private"
+            }
+          ]
+        },
+        {
+          "name": "extract_field_default_visibility",
+          "mapTo": "EXTRACT_FIELD_DEFAULT_VISIBILITY",
+          "type": "Enum",
+          "javaType": "com.jetbrains.php.lang.psi.elements.PhpModifier$Access",
+          "variants": [
+            {
+              "value": "public",
+              "mapTo": "public"
+            },
+            {
+              "value": "protected",
+              "mapTo": "protected"
+            },
+            {
+              "value": "private",
+              "mapTo": "private"
+            }
+          ]
+        },
+        {
+          "name": "extract_method_generate_phpdoc",
+          "mapTo": "EXTRACT_METHOD_GENERATE_PHPDOC",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "move_class_search_in_comments_and_strings",
+          "mapTo": "MOVE_CLASS_SEARCH_IN_COMMENTS_AND_STRINGS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "move_class_search_in_text_occurrences",
+          "mapTo": "MOVE_CLASS_SEARCH_IN_TEXT_OCCURRENCES",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "move_namespace_search_in_comments_and_strings",
+          "mapTo": "MOVE_NAMESPACE_SEARCH_IN_COMMENTS_AND_STRINGS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "move_namespace_search_in_text_occurrences",
+          "mapTo": "MOVE_NAMESPACE_SEARCH_IN_TEXT_OCCURRENCES",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "inline_local_this",
+          "mapTo": "INLINE_LOCAL_THIS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "PhpTestFrameworkSettings",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.testFramework.PhpTestFrameworkSettingsManager$PhpTestFrameworkApplicationSettingsManager",
+      "storage": "php-test-framework.xml",
+      "properties": [
+        {
+          "name": "settings",
+          "type": "Unsupported",
+          "javaType": "java.util.Map"
+        }
+      ]
+    },
+    {
+      "name": "PhpTestFrameworkVersionCache",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.testFramework.PhpTestFrameworkVersionCache$PhpFrameworkVersionApplicationCache",
+      "storage": "php-test-framework-cache.xml",
+      "properties": [
+        {
+          "name": "versionCache",
+          "type": "Unsupported",
+          "javaType": "java.util.Map"
+        }
+      ]
+    },
+    {
+      "name": "LaravelPint",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.tools.quality.laravelPint.LaravelPintConfigurationManager$LaravelPintAppConfigurationManager",
+      "storage": "php-tools.xml",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "MessDetector",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.tools.quality.messDetector.MessDetectorConfigurationManager$MessDetectorAppConfigurationManager",
+      "storage": "php-tools.xml",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "PhpCSFixer",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.tools.quality.phpCSFixer.PhpCSFixerConfigurationManager$PhpCSFixerAppConfigurationManager",
+      "storage": "php-tools.xml",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "PhpCodeSniffer",
+      "scope": "app",
+      "pluginId": "com.jetbrains.php",
+      "classFqn": "com.jetbrains.php.tools.quality.phpcs.PhpCSConfigurationManager$PhpCSAppConfigurationManager",
+      "storage": "php-tools.xml",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "PhpStan",
+      "scope": "app",
+      "pluginId": "com.intellij.php.tools.quality.phpstan",
+      "classFqn": "com.jetbrains.php.tools.quality.phpstan.PhpStanConfigurationManager$PhpStanAppConfigurationManager",
+      "storage": "php.xml",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "Psalm",
+      "scope": "app",
+      "pluginId": "com.intellij.php.psalm",
+      "classFqn": "com.jetbrains.php.tools.quality.psalm.PsalmConfigurationManager$PsalmAppConfigurationManager",
+      "storage": "php.xml",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
       "name": "VagrantSettings",
       "scope": "app",
       "pluginId": "org.jetbrains.plugins.vagrant",
@@ -8396,6 +9191,25 @@
           "name": "xpraHtmlServerCustomLocation",
           "type": "String",
           "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "TwigSmartKeysConfiguration",
+      "scope": "app",
+      "pluginId": "com.jetbrains.twig",
+      "classFqn": "com.jetbrains.twig.TwigSmartKeysConfiguration",
+      "storage": "twig.xml",
+      "properties": [
+        {
+          "name": "closingDelimiterAutoInsertion",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "syncDelimiterEditing",
+          "type": "Boolean",
+          "javaType": "boolean"
         }
       ]
     },
