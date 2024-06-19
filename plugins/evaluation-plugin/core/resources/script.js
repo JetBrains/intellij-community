@@ -8,6 +8,12 @@ const LC_KEYS = {
 
 const lineDiff = new Diff();
 
+const codeGenPrompts = [
+  "cover this method with logging",
+  "simplify the following method",
+  "add exception handling",
+  "add comments to the code"
+];
 document.addEventListener("click", function (e) {
   if (e.target.closest(".multiline") != null) {
     updateMultilinePopup(e)
@@ -118,6 +124,8 @@ function getLookup(sessionDiv) {
 
 function updatePopup(sessionDiv) {
   const lookup = getLookup(sessionDiv)
+  console.log(lookup)
+  console.log(lookup["additionalInfo"])
   const popup = document.createElement("DIV")
   popup.setAttribute("class", "autocomplete-items")
   const prefixDiv = document.createElement("DIV")
@@ -129,8 +137,8 @@ function updatePopup(sessionDiv) {
     prefixDiv.innerHTML = `prefix: &quot;${lookup["prefix"]}&quot;; latency: ${lookup["latency"]}`
   }
   popup.appendChild(prefixDiv)
-  // order: () -> suggestions -> features -> contexts
-  const needAddFeatures = sessionDiv.classList.contains("diffView")
+  // order: () -> (suggestions or diffView) -> features -> contexts
+  const needAddFeatures = sessionDiv.classList.contains("diffView") || sessionDiv.classList.contains("suggestions")
   const needAddContext = sessionDiv.classList.contains("features")
   closeAllLists()
   if (needAddFeatures) {
@@ -140,7 +148,12 @@ function updatePopup(sessionDiv) {
     addContexts(sessionDiv, popup, lookup)
   }
   else {
-    addDiffView(sessionDiv, popup, lookup, codeElement.innerText);
+    const userPrompt = lookup["additionalInfo"]["aia_user_prompt"];
+    if (codeGenPrompts.includes(userPrompt)) {
+      addDiffView(sessionDiv, popup, lookup, codeElement.innerText);
+    } else {
+      addSuggestions(sessionDiv, popup, lookup);
+    }
   }
   sessionDiv.appendChild(popup)
 }
@@ -148,7 +161,7 @@ function updatePopup(sessionDiv) {
 // Add the `addDiffView` function
 function addDiffView(sessionDiv, popup, lookup, originalText) {
   sessionDiv.classList.add("diffView")
-  sessionDiv.classList.remove("features", "contexts")
+  sessionDiv.classList.remove("features", "contexts","suggestions")
   const diffDiv = document.createElement("DIV");
   diffDiv.setAttribute("class", "diffView");
 
@@ -189,7 +202,7 @@ function addDiffView(sessionDiv, popup, lookup, originalText) {
 
 function addCommonFeatures(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("features")
-  sessionDiv.classList.remove("contexts", "diffView")
+  sessionDiv.classList.remove("contexts", "diffView","suggestions")
   const parts = sessionDiv.id.split(" ")
   const sessionId = parts[0]
   const lookupOrder = parts[1]
@@ -221,7 +234,7 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
 
 function addContexts(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("contexts")
-  sessionDiv.classList.remove("features", "diffView")
+  sessionDiv.classList.remove("features", "diffView","suggestions")
 
   if (!("cc_context" in lookup["additionalInfo"])) return
 
