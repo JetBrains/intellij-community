@@ -190,7 +190,7 @@ final class BackgroundHighlighter {
     int end = caret.getSelectionEnd();
     CharSequence sequence = document.getCharsSequence();
     String toFind = sequence.subSequence(start, end).toString();
-    if (toFind.trim().isEmpty()) {
+    if (toFind.trim().isEmpty() || toFind.contains("\n")) {
       return false;
     }
     String previous = editor.getUserData(HIGHLIGHTED_TEXT);
