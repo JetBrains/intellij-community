@@ -5,6 +5,7 @@ import com.intellij.util.SystemProperties
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 import java.util.function.Predicate
@@ -137,6 +138,7 @@ abstract class MacDistributionCustomizer {
    */
   open fun getCustomIdeaProperties(appInfo: ApplicationInfoProperties): Map<String, String> = emptyMap()
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Please migrate the build script to Kotlin and override `copyAdditionalFiles`")
   open fun copyAdditionalFiles(context: BuildContext, targetDir: Path) { }
 

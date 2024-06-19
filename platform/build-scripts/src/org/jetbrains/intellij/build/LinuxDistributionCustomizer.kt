@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 
@@ -78,6 +79,7 @@ abstract class LinuxDistributionCustomizer {
     copyAdditionalFilesBlocking(context, targetDir, arch)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Please migrate the build script to Kotlin and override `copyAdditionalFiles`")
   open fun copyAdditionalFilesBlocking(context: BuildContext, targetDir: Path, arch: JvmArchitecture) { }
 }

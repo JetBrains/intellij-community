@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.annotations.ApiStatus
 import java.util.Objects
 
 /**
@@ -61,14 +62,22 @@ class PluginBundlingRestrictions(
 
     @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_RELEASE"))
     var includeInEapOnly: Boolean
+      @ApiStatus.ScheduledForRemoval
+      @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_RELEASE"))
       get() = includeInDistribution == PluginDistribution.NOT_FOR_RELEASE
+      @ApiStatus.ScheduledForRemoval
+      @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_RELEASE"))
       set(_) {
         includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
       }
 
     @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS"))
     var includeInNightlyOnly: Boolean
+      @ApiStatus.ScheduledForRemoval
+      @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS"))
       get() = includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS
+      @ApiStatus.ScheduledForRemoval
+      @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS"))
       set(_) {
         includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
       }
