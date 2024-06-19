@@ -88,7 +88,7 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       }
       val providerId = SymbolSearchEverywhereContributor::class.java.simpleName
       return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.symbols.enable") ||
-             (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
+             isInternal || (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
                SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
     }
     set(newValue) {

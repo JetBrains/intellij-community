@@ -54,6 +54,10 @@ class SearchEverywhereMlExperiment {
       3 to ExperimentType.NO_ML
     ),
 
+    SearchEverywhereTabWithMlRanking.SYMBOLS to Experiment(
+      1 to ExperimentType.ENABLE_SEMANTIC_SEARCH,
+    ),
+
     SearchEverywhereTabWithMlRanking.ALL to Experiment(
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
       3 to ExperimentType.NO_RECENT_FILES_PRIORITIZATION
