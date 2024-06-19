@@ -1,0 +1,44 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xdebugger.impl.ui.visualizedtext.common
+
+import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.impl.ui.visualizedtext.TextBasedContentTab
+import com.intellij.xdebugger.ui.TextValueVisualizer
+import com.intellij.xdebugger.ui.VisualizedContentTab
+import java.net.URLDecoder
+
+internal class UrlEncodedTextVisualizer : TextValueVisualizer {
+  override fun visualize(value: @NlsSafe String): List<VisualizedContentTab> {
+    val decoded = tryParse(value)
+    if (decoded == null) return emptyList()
+
+    return listOf(object : TextBasedContentTab() {
+      override val name
+        get() = XDebuggerBundle.message("xdebugger.visualized.text.name.url")
+      override val id
+        get() = UrlEncodedTextVisualizer::class.qualifiedName!!
+      override fun formatText() =
+        decoded!! // !! is a workaround for KT-69132, remove it after migration to Kotlin >= 2.0
+      override val fileType
+        get() = FileTypes.PLAIN_TEXT
+    })
+  }
+
+  private fun tryParse(value: String): String? {
+    val decoded = try {
+      URLDecoder.decode(value, Charsets.UTF_8)
+    } catch (_: IllegalArgumentException) {
+      return null
+    }
+
+    if (decoded == value) {
+      // Not-URL or URL without escaped characters.
+      return null
+    }
+
+    return decoded
+  }
+
+}
