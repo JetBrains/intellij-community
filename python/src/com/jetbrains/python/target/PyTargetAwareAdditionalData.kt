@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.target
 
 import com.intellij.execution.target.*
@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.remote.RemoteSdkPropertiesHolder
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
@@ -52,7 +53,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
   }
 
   constructor(flavorAndData: PyFlavorAndData<*, *>, targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : this(
-    RemoteSdkPropertiesHolder(DEFAULT_PYCHARM_HELPERS_DIR_NAME), flavorAndData, targetEnvironmentConfiguration)
+    RemoteSdkPropertiesHolder(PyRemoteSdkAdditionalData.PYCHARM_HELPERS), flavorAndData, targetEnvironmentConfiguration)
 
   override fun save(rootElement: Element) {
     // store "interpeter paths" (i.e. `PYTHONPATH` elements)
@@ -119,8 +120,6 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
   private val Collection<VirtualFile>.asMappings get() = associate { it.toNioPath() to b.pathMappings.convertToRemote(it.path) }
 
   companion object {
-    private const val DEFAULT_PYCHARM_HELPERS_DIR_NAME = ".pycharm_helpers"
-
     private val LOG = logger<PyTargetAwareAdditionalData>()
 
     /**

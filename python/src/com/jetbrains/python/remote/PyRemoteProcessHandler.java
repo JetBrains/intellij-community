@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.remote.BaseRemoteProcessHandler;
 import com.intellij.remote.RemoteProcess;
-import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.remote.RemoteSdkException;
 import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
@@ -88,16 +87,6 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
     destroyProcessImpl();
   }
 
-
-  public static @NotNull PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
-                                                                     @NotNull RemoteSdkCredentials data,
-                                                                     @NotNull GeneralCommandLine commandLine,
-                                                                     @Nullable PyRemotePathMapper pathMapper,
-                                                                     @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider)
-    throws RemoteSdkException {
-    return createProcessHandler(remoteProcess, data.getFullInterpreterPath(), commandLine, pathMapper,
-                                remoteSocketProvider);
-  }
 
   public static @NotNull PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
                                                                      @Nullable String fullInterpreterPath,

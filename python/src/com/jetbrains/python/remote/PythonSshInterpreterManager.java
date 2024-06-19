@@ -9,8 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.remote.RemoteConnectionCredentialsWrapper;
 import com.intellij.remote.RemoteCredentials;
-import com.intellij.remote.RemoteSdkCredentials;
-import com.intellij.remote.RemoteSdkCredentialsProducer;
+import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PathMappingSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.text.MessageFormat;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -31,9 +30,12 @@ public interface PythonSshInterpreterManager {
 
   ExtensionPointName<PythonSshInterpreterManager> EP_NAME = ExtensionPointName.create("Pythonid.sshInterpreterManager");
 
-  void copyFromRemote(@NotNull Project project,
-                      @NotNull RemoteSdkCredentials data,
-                      @NotNull List<PathMappingSettings.PathMapping> mappings);
+  void copyFromRemote(
+    @NotNull Project project,
+    @NotNull RemoteCredentials credentials,
+    @NotNull RemoteSdkProperties sdkProperties,
+    @NotNull List<PathMappingSettings.PathMapping> mapping
+  );
 
   /**
    * Creates form to browse remote box.
@@ -47,9 +49,17 @@ public interface PythonSshInterpreterManager {
    */
   @Nullable Pair<Supplier<String>, JPanel> createServerBrowserForm(final @NotNull Sdk remoteSdk) throws ExecutionException, InterruptedException;
 
-  @NotNull RemoteSdkCredentialsProducer<PyRemoteSdkCredentials> getRemoteSdkCredentialsProducer(
-    @NotNull Function<RemoteCredentials, PyRemoteSdkCredentials> credentialsTransformer,
-    @NotNull RemoteConnectionCredentialsWrapper connectionWrapper
+  @NotNull RemoteCredentials getRemoteCredentials(
+    @NotNull RemoteConnectionCredentialsWrapper wrapper,
+    @Nullable Project project,
+    boolean allowSynchronousInteraction
+  ) throws InterruptedException, ExecutionException;
+
+  void produceRemoteCredentials(
+    @NotNull RemoteConnectionCredentialsWrapper wrapper,
+    @Nullable Project project,
+    boolean allowSynchronousInteraction,
+    @NotNull Consumer<RemoteCredentials> consumer
   );
 
   final class Factory {

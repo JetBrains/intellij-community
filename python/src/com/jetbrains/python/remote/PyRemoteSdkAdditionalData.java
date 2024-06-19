@@ -24,7 +24,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implements PyRemoteSdkAdditionalDataBase {
-  private static final String PYCHARM_HELPERS = ".pycharm_helpers";
+  public static final String PYCHARM_HELPERS = ".pycharm_helpers";
+
   private static final String SKELETONS_PATH = "SKELETONS_PATH";
   private static final String VERSION = "VERSION";
   private static final String RUN_AS_ROOT_VIA_SUDO = "RUN_AS_ROOT_VIA_SUDO";
@@ -45,17 +46,6 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     super(computeFlavor(interpreterPath));
     setInterpreterPath(interpreterPath);
     setRunAsRootViaSudo(runAsRootViaSudo);
-  }
-
-  private RemoteSdkCredentialsProducer<PyRemoteSdkCredentials> getProducer() {
-    PythonSshInterpreterManager manager = PythonSshInterpreterManager.Factory.getInstance();
-    if (manager != null) {
-      return manager.getRemoteSdkCredentialsProducer(credentials -> createPyRemoteSdkCredentials(credentials), myRemoteConnectionCredentialsWrapper);
-    }
-    else {
-      throw new IllegalStateException("No plugin");
-      //TODO:
-    }
   }
 
   @Override
@@ -206,8 +196,35 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   }
 
   @Override
-  public PyRemoteSdkCredentials getRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException {
-    return getProducer().getRemoteSdkCredentials(project, allowSynchronousInteraction);
+  public RemoteSdkCredentials getRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction) {
+    throw new UnsupportedOperationException("Should not be called");
+  }
+
+  @Override
+  public void produceRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction, Consumer<? super RemoteSdkCredentials> consumer) {
+    throw new UnsupportedOperationException("Should not be called");
+  }
+
+  @Override
+  public RemoteCredentials getRemoteCredentials(@Nullable Project project, boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException {
+    var manager = PythonSshInterpreterManager.Factory.getInstance();
+    if (manager != null) {
+      return manager.getRemoteCredentials(myRemoteConnectionCredentialsWrapper, project, allowSynchronousInteraction);
+    }
+    else {
+      throw new IllegalStateException("No plugin");
+    }
+  }
+
+  @Override
+  public void produceRemoteCredentials(@Nullable Project project, boolean allowSynchronousInteraction, @NotNull Consumer<RemoteCredentials> consumer) {
+    var manager = PythonSshInterpreterManager.Factory.getInstance();
+    if (manager != null) {
+      manager.produceRemoteCredentials(myRemoteConnectionCredentialsWrapper, project, allowSynchronousInteraction, consumer);
+    }
+    else {
+      throw new IllegalStateException("No plugin");
+    }
   }
 
   public boolean connectionEquals(PyRemoteSdkAdditionalData data) {
@@ -217,15 +234,6 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   @Override
   public Object getRemoteSdkDataKey() {
     return myRemoteConnectionCredentialsWrapper.getConnectionKey();
-  }
-
-  @Override
-  public void produceRemoteSdkCredentials(
-    @Nullable Project project,
-    boolean allowSynchronousInteraction,
-    Consumer<? super PyRemoteSdkCredentials> remoteSdkCredentialsConsumer
-  ) {
-    getProducer().produceRemoteSdkCredentials(project, allowSynchronousInteraction, remoteSdkCredentialsConsumer);
   }
 
   @Override
