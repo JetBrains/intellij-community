@@ -9,8 +9,17 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.createDurationField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.containers.ComparatorUtil
@@ -92,7 +101,7 @@ object FUSProjectHotStartUpMeasurer {
     class FirstEditorEvent(
       val sourceOfSelectedEditor: SourceOfSelectedEditor,
       val file: VirtualFile,
-      val time: Long
+      val time: Long,
     ) : Event
 
     class NoMoreEditorsEvent(val time: Long) : Event
@@ -203,16 +212,59 @@ object FUSProjectHotStartUpMeasurer {
       return
     }
     channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file, System.nanoTime()))
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      val project = ProjectManager.getInstance().openProjects[0]
+      val fileEditorManager = FileEditorManager.getInstance(project)
+      checkEditorHasBasicHighlight(file, project, fileEditorManager)
+    }
+  }
+
+  /**
+   * Unfortunately, current architecture doesn't allow to check that there is basic highlighting (syntax + maybe folding) in editor.
+   * Here are some heuristics that may save us from bugs, but do not guarantee that.
+   */
+  private fun checkEditorHasBasicHighlight(file: VirtualFile, project: Project, fileEditorManager: FileEditorManager) {
+    val textEditor: TextEditor = fileEditorManager.getEditors(file)[0] as TextEditor
+    // It's marked @NotNull, but before initialization is actually null.
+    // So this is a valid check that highlighter is initialized. It is used for syntax highlighting
+    // via HighlighterIterator from LexerEditorHighlighter.createIterator & IterationState.
+    // See also: EditorHighlighterUpdater.updateHighlighters() and setupHighlighter(),
+    // LexerEditorHighlighter.createIterator, TextEditorImplKt.setHighlighterToEditor
+    textEditor.editor.highlighter
+    // See usages of TextEditorImpl.asyncLoader in PsiAwareTextEditorImpl, especially in span "HighlighterTextEditorInitializer".
+    // It's reasonable to expect loaded editor to provide minimal highlighting the statistic is interested in.
+    if (!textEditor.isEditorLoaded) {
+      thisLogger().error("The editor is not loaded yet")
+    }
+
+    val cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file)
+    if (cachedDocument == null) {
+      thisLogger().error("No cached document for ${file.path}")
+    }
+    else {
+      val markupModel = DocumentMarkupModel.forDocument(cachedDocument, project, false)
+      if (markupModel == null) {
+        thisLogger().error("No markup model for ${file.path} when the editor is opened")
+      }
+    }
   }
 
   suspend fun firstOpenedUnknownEditor(file: VirtualFile, nanoTime: Long) {
     if (!isProperContext()) return
     channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.UnknownEditor, file, nanoTime))
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      val project = serviceAsync<ProjectManager>().openProjects[0]
+      val fileEditorManager = project.serviceAsync<FileEditorManager>()
+      checkEditorHasBasicHighlight(file, project, fileEditorManager)
+    }
   }
 
   suspend fun openedReadme(readmeFile: VirtualFile, nanoTime: Long) {
     if (!isProperContext()) return
     channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.FoundReadmeFile, readmeFile, nanoTime))
+    // Do not check highlights here, because the readme file is opened in preview-only mode with
+    // `readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW)`,
+    // see the caller
   }
 
   fun reportNoMoreEditorsOnStartup(nanoTime: Long) {
@@ -278,7 +330,7 @@ object FUSProjectHotStartUpMeasurer {
 
   private fun applyFrameInteractiveEventIfPossible(
     frameBecameInteractiveEvent: Event.FrameBecameInteractiveEvent?,
-    lastHandledEvent: LastHandledEvent
+    lastHandledEvent: LastHandledEvent,
   ): LastHandledEvent? {
     if (frameBecameInteractiveEvent != null) {
       val durationFromStart = getDurationFromStart(frameBecameInteractiveEvent.time, lastHandledEvent)
@@ -416,8 +468,10 @@ object FUSProjectHotStartUpMeasurer {
       get() = this
   }
 
-  private fun getDurationFromStart(finishTimestampNano: Long = System.nanoTime(),
-                                   lastReportedEvent: LastHandledEvent?): Duration {
+  private fun getDurationFromStart(
+    finishTimestampNano: Long = System.nanoTime(),
+    lastReportedEvent: LastHandledEvent?,
+  ): Duration {
     val duration = (finishTimestampNano - StartUpMeasurer.getStartTime()).toDuration(DurationUnit.NANOSECONDS)
     return if (lastReportedEvent == null) duration else ComparatorUtil.max(duration, lastReportedEvent.durationReportedToFUS)
   }
