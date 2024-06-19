@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
@@ -77,7 +77,7 @@ internal open class FirKDocParameterNameContributor(
         }
         yieldAll(valueParameters)
     }.map { symbol ->
-        val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKind.LocalScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
+        val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKinds.LocalScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
         KtSymbolWithOrigin(symbol, symbolOrigin)
     }
 
