@@ -10,7 +10,6 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerUtilBase;
-import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
@@ -201,10 +200,7 @@ final class BackgroundHighlighter {
     editor.putUserData(HIGHLIGHTED_TEXT, toFind);
     FindManager findManager = FindManager.getInstance(project);
     FindModel findModel = new FindModel();
-    EditorSearchSession editorSearchSession = EditorSearchSession.get(editor);
-    if (editorSearchSession != null) {
-      findModel.copyFrom(findManager.getFindInFileModel());
-    }
+    findModel.copyFrom(findManager.getFindInFileModel());
     findModel.setRegularExpressions(false);
     findModel.setStringToFind(toFind);
     ReadAction.nonBlocking(() -> {
