@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
@@ -34,7 +35,7 @@ private fun createToolbar(): ActionToolbar {
       isOpaque = false
 
       targetComponent = null
-      layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+      layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
       setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }
       setCustomButtonLook(ColoredActionButtonLook())
