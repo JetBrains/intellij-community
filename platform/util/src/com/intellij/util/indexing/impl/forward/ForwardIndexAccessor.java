@@ -6,12 +6,14 @@ import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
 
+@Internal
 public interface ForwardIndexAccessor<Key, Value> {
   /**
    * Method deserializes sequence bytes back into a {@link InputData}, and creates a diff-builder from this input

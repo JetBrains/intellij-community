@@ -22,6 +22,7 @@ import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -48,6 +49,7 @@ import static java.util.stream.Collectors.toSet;
  * Be cautious with enabling detailed (per lookup) reporting: index lookup is one of the most frequent calls
  * in the platform API, hence detailed (per lookup) reporting produces quite a lot of data.
  */
+@Internal
 public final class IndexLookupTimingsReporting {
   private static final Logger LOG = Logger.getInstance(IndexLookupTimingsReporting.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(10));

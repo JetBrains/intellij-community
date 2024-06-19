@@ -11,19 +11,23 @@ import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.IndexedFile;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
 public final class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexEntry, Integer, FileContent>> {
+  @Internal
   public static final TodoIndexers INSTANCE = new TodoIndexers();
 
   private static final ExtensionPointName<ExtraPlaceChecker> EP_NAME = ExtensionPointName.create("com.intellij.todoExtraPlaces");
 
+  @Internal
   private TodoIndexers() {
     super("com.intellij.todoIndexer");
   }
 
+  @Internal
   public static boolean needsTodoIndex(@NotNull IndexedFile file) {
     if (FileBasedIndex.IGNORE_PLAIN_TEXT_FILES && file.getFileType() == PlainTextFileType.INSTANCE) {
       return false;
@@ -52,6 +56,7 @@ public final class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexE
     return false;
   }
 
+  @Internal
   public static boolean belongsToProject(@NotNull Project project, @NotNull VirtualFile file) {
     for (ExtraPlaceChecker checker : EP_NAME.getExtensionList()) {
       if (checker.accept(project, file)) {

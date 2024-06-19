@@ -1,10 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
+import org.jetbrains.annotations.ApiStatus.Internal
+
 
 /**
  * isFull - if the whole project was rescanned (instead of a part of it)
  */
+@Internal
 enum class ScanningType(val isFull: Boolean) {
   /**
    * Full project rescan forced by user via Repair IDE action

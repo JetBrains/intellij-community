@@ -3,6 +3,7 @@ package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Id index is used in the reference searcher and other API that require "plain text" search by the identifier.
@@ -11,6 +12,7 @@ import com.intellij.util.indexing.FileContent;
  * @author traff
  * @see IdIndex
  */
+@ApiStatus.OverrideOnly
 public interface IdIndexer extends DataIndexer<IdIndexEntry, Integer, FileContent> {
   default int getVersion() {
     return 1;

@@ -4,10 +4,10 @@ package com.intellij.util.indexing.impl.storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.forward.*
-import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator.getLayout
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 
 
@@ -15,6 +15,7 @@ import java.io.IOException
  * Encapsulates finding a appropriate [IndexStorageLayout] ([VfsAwareIndexStorageLayout] really) for a [IndexExtension]
  * See [getLayout] method for a details of lookup algo.
  */
+@Internal
 object IndexStorageLayoutLocator {
   private val log = logger<IndexStorageLayoutLocator>()
 

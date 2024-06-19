@@ -69,15 +69,12 @@ com/intellij/platform/workspace/storage/VersionedEntityStorage
 com/intellij/psi/FilePropertyKey
 com/intellij/psi/codeStyle/CodeStyleSettingsServiceListener
 com/intellij/psi/impl/source/codeStyle/json/CodeStyleSchemeJsonDescriptor$PropertyListHolder
-com/intellij/psi/search/FileTypeIndexChangeNotifier
 com/intellij/psi/search/impl/VirtualFileEnumeration
 com/intellij/psi/stubs/StubIndexEx$FileUpdateProcessor
-com/intellij/psi/stubs/StubUpdatingIndexStorage$Data
 com/intellij/slicer/SliceManager$StoredSettingsBean
 com/intellij/ui/tabs/FileColorConfiguration
 com/intellij/util/gist/storage/GistStorage$Gist
 com/intellij/util/gist/storage/GistStorage$GistData
-com/intellij/util/indexing/IndexInfrastructureExtensionUpdateComputation
 com/intellij/util/indexing/IndexableFileSet
 com/intellij/util/indexing/TimestampsImmutable
 com/intellij/util/indexing/dependencies/AppIndexingDependenciesToken
@@ -89,7 +86,5 @@ com/intellij/util/indexing/roots/origin/CustomKindEntityOrigin
 com/intellij/util/indexing/roots/origin/ExternalEntityOrigin
 com/intellij/util/indexing/roots/origin/GenericContentEntityOrigin
 com/intellij/util/indexing/roots/origin/ModuleAwareContentEntityOrigin
-com/intellij/util/indexing/storage/VfsAwareIndexStorageLayout
-com/intellij/util/io/SimpleStringPersistentEnumerator
 com/intellij/util/io/StorageLockContext
 com/intellij/workspaceModel/ide/legacyBridge/ModuleBridge

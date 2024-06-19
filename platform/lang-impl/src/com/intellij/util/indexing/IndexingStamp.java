@@ -11,6 +11,7 @@ import com.intellij.util.indexing.impl.perFileVersion.AutoRefreshingOnVfsCloseRe
 import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -31,6 +32,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *   <li>If we get other event we set indexed state to outdated.</li>
  * </ul>
  */
+@Internal
 public final class IndexingStamp {
   static final long INDEX_DATA_OUTDATED_STAMP = -2L;
   static final long HAS_NO_INDEXED_DATA_STAMP = 0L;

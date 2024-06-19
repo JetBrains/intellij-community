@@ -171,6 +171,7 @@ object IndexStatisticGroup {
   }
 }
 
+@Internal
 class ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = IndexStatisticGroup.GROUP
 }

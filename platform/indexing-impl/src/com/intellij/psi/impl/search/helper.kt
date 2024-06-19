@@ -37,6 +37,7 @@ internal fun <R : Any> searchers(parameters: SearchParameters<R>): List<Searcher
 internal val indicatorOrEmpty: ProgressIndicator
   get() = EmptyProgressIndicator.notNullize(ProgressIndicatorProvider.getGlobalProgressIndicator())
 
+@Internal
 fun <R> runSearch(cs: CoroutineScope, project: Project, query: Query<R>): ReceiveChannel<R> {
   @Suppress("EXPERIMENTAL_API_USAGE")
   return cs.produce(capacity = Channel.UNLIMITED) {

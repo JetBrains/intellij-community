@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import kotlin.ranges.IntRange;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ import java.util.function.IntConsumer;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 
+@Internal
 public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   private static final Logger LOG = Logger.getInstance(MappedFileTypeIndex.class);
 

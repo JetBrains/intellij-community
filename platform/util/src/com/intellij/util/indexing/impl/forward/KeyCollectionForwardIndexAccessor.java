@@ -5,6 +5,7 @@ import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+@Internal
 public final class KeyCollectionForwardIndexAccessor<Key, Value> extends AbstractForwardIndexAccessor<Key, Value, Collection<Key>> {
   public KeyCollectionForwardIndexAccessor(@NotNull DataExternalizer<Collection<Key>> externalizer) {
     super(externalizer);

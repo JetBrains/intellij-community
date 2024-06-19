@@ -5,11 +5,13 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+@Internal
 public interface IntForwardIndexAccessor<Key, Value> extends ForwardIndexAccessor<Key, Value> {
   @Override
   default @NotNull InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {

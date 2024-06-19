@@ -8,6 +8,7 @@ import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.io.IOException;
  * diff is calculated (this is why {@code InputData->DataType} conversion is defined, but no {@code DataType->InputData}
  * conversion is defined)
  */
+@Internal
 public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> implements ForwardIndexAccessor<Key, Value> {
   private final @NotNull DataExternalizer<DataType> myDataTypeExternalizer;
 

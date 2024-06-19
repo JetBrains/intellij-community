@@ -3,12 +3,14 @@ package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Internal
 public final class IndexPatternUtil {
 
   public static IndexPattern @NotNull [] getIndexPatterns() {

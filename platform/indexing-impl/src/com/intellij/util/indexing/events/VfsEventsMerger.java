@@ -16,6 +16,7 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -32,6 +33,7 @@ import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+@Internal
 public final class VfsEventsMerger {
   private static final boolean DEBUG = FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES || Boolean.getBoolean("log.index.vfs.events");
   private static final Logger LOG = MyLoggerFactory.getLoggerInstance();

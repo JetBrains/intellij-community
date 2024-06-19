@@ -7,6 +7,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.hints.AcceptAllRegularFilesIndexingHint;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -51,6 +52,7 @@ public final class FileTypeIndexImpl
   }
 
   @Override
+  @Internal
   public @NotNull UpdatableIndex<FileType, Void, FileContent, ?> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension,
                                                                                            @NotNull VfsAwareIndexStorageLayout<FileType, Void> indexStorageLayout)
     throws StorageException, IOException {

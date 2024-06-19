@@ -3,11 +3,13 @@ package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+@Internal
 public class MapForwardIndexAccessor<Key, Value> extends AbstractMapForwardIndexAccessor<Key, Value, Map<Key, Value>> {
   public MapForwardIndexAccessor(@NotNull DataExternalizer<Map<Key, Value>> externalizer) {
     super(externalizer);

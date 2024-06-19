@@ -2,12 +2,12 @@
 package com.intellij.util.indexing;
 
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-@ApiStatus.OverrideOnly
+@Internal
 public interface CustomImplementationFileBasedIndexExtension<K, V> {
   @NotNull
   UpdatableIndex<K, V, FileContent, ?> createIndexImplementation(@NotNull FileBasedIndexExtension<K, V> extension,

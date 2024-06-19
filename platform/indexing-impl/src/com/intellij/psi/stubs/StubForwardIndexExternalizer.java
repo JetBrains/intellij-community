@@ -8,6 +8,7 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,13 +18,14 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
+@Internal
 public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
   implements DataExternalizer<Map<StubIndexKey<?, ?>, Map<Object, StubIdList>>> {
 
-  @ApiStatus.Internal
+  @Internal
   public static final String USE_SHAREABLE_STUBS_PROP = "idea.uses.shareable.serialized.stubs";
 
-  @ApiStatus.Internal
+  @Internal
   public static final boolean USE_SHAREABLE_STUBS = Boolean.getBoolean(USE_SHAREABLE_STUBS_PROP);
 
 

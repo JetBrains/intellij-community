@@ -9,6 +9,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.id.PlainTextIdIndexer;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@OverrideOnly
 public class PlainTextTodoIndexer extends VersionedTodoIndexer {
   private static final Logger LOG = Logger.getInstance(PlainTextTodoIndexer.class);
 

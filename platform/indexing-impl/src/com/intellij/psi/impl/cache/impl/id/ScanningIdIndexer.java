@@ -8,10 +8,12 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+@OverrideOnly
 public abstract class ScanningIdIndexer implements IdIndexer {
 
   protected abstract WordsScanner createScanner();

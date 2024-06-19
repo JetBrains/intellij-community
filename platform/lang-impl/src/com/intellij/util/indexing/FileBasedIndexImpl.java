@@ -86,6 +86,7 @@ import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.*;
 
 import java.io.IOException;
@@ -121,7 +122,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static final boolean FORBID_LOOKUP_IN_NON_CANCELLABLE_SECTIONS =
     SystemProperties.getBooleanProperty("forbid.index.lookup.in.non.cancellable.section", false);
 
-  @ApiStatus.Internal
+  @Internal
   public static final Logger LOG = Logger.getInstance(FileBasedIndexImpl.class);
 
   private static final boolean USE_GENTLE_FLUSHER = SystemProperties.getBooleanProperty("indexes.flushing.use-gentle-flusher", true);
@@ -175,7 +176,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myRegisteredIndexes = null;
   }
 
-  @ApiStatus.Internal
+  @Internal
   public FileBasedIndexImpl(@NotNull CoroutineScope coroutineScope) {
     this.coroutineScope = coroutineScope;
     ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -383,7 +384,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     requestReindex(file, true);
   }
 
-  @ApiStatus.Internal
+  @Internal
   public void requestReindex(@NotNull VirtualFile file, boolean forceRebuild) {
     GistManager.getInstance().invalidateData(file);
     VfsEventsMerger.tryLog("explicit_request_reindex", file);
@@ -593,7 +594,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     new ProjectDirtyFilesQueue(dirtyFileIds, lastSeenIndex).store(project, vfsCreationStamp);
   }
 
-  @ApiStatus.Internal
+  @Internal
   @NotNull
   public IntSet getAllDirtyFiles(@Nullable Project project) {
     IntSet dirtyFileIds = new IntOpenHashSet();
@@ -881,7 +882,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   public ChangedFilesCollector getChangedFilesCollector() {
     return myChangedFilesCollector.getValue();
   }
@@ -1061,7 +1062,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     });
   }
 
-  @ApiStatus.Internal
+  @Internal
   @NotNull
   public static DocumentContent findLatestContent(@NotNull Document document, @Nullable PsiFile dominantContentFile) {
     return dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() > document.getModificationStamp()
@@ -1220,7 +1221,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   };
 
-  @ApiStatus.Internal
+  @Internal
   @Override
   public void runCleanupAction(@NotNull Runnable cleanupAction) {
     Computable<Boolean> updateComputable = () -> {
@@ -1310,6 +1311,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @NotNull
   @Override
+  @Internal
   public <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId) {
     UpdatableIndex<K, V, FileContent, ?> index = getState().getIndex(indexId);
     if (index == null) {
@@ -1369,7 +1371,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   @Nullable
   public FileIndexesValuesApplier getApplierToRemoveDataFromIndexesForFile(@NotNull VirtualFile file,
                                                                            @NotNull FileIndexingStamp indexingStamp) {
@@ -1389,7 +1391,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                         UnknownFileType.INSTANCE /*todo?*/, false);
   }
 
-  @ApiStatus.Internal
+  @Internal
   @NotNull
   public FileIndexesValuesApplier indexFileContent(@Nullable Project project,
                                                    @NotNull CachedFileContent content,
@@ -1582,7 +1584,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   @Nullable("null in case index update is not needed") <FileIndexMetaData> SingleIndexValueApplier<FileIndexMetaData> createSingleIndexValueApplier(
     @NotNull ID<?, ?> indexId,
     @NotNull VirtualFile file,
@@ -1668,7 +1670,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   @Nullable("null in case index value removal is not necessary")
   SingleIndexValueRemover createSingleIndexRemover(@NotNull ID<?, ?> indexId,
                                                    @Nullable VirtualFile file,
@@ -1721,7 +1723,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
-  @ApiStatus.Internal
+  @Internal
   public @Nullable IndexWritingFile getFileWritingCurrentlyIndexes() {
     return ourWritingIndexFile.get();
   }
@@ -1754,7 +1756,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   @NotNull
   public Collection<FileIndexingRequest> getAllFilesToUpdate() {
     getChangedFilesCollector().ensureUpToDate();
@@ -1792,14 +1794,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return ContainerUtil.find(myIndexableSets, pair -> pair.first.isInSet(file)) != null;
   }
 
-  @ApiStatus.Internal
+  @Internal
   public void dropNontrivialIndexedStates(int inputId) {
     for (ID<?, ?> id : IndexingStamp.getNontrivialFileIndexedStates(inputId)) {
       dropNontrivialIndexedStates(inputId, id);
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   public void dropNontrivialIndexedStates(int inputId, ID<?, ?> indexId) {
     UpdatableIndex<?, ?, FileContent, ?> index = getIndex(indexId);
     index.invalidateIndexedStateForFile(inputId);
@@ -1865,7 +1867,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   @NotNull
   public FilesToUpdateCollector getFilesToUpdateCollector() {
     return myFilesToUpdateCollector;
@@ -2033,7 +2035,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
-  @ApiStatus.Internal
+  @Internal
   @NotNull
   public IntPredicate getAccessibleFileIdFilter(@Nullable Project project) {
     boolean dumb = ActionUtil.isDumbMode(project);
@@ -2063,7 +2065,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return projectIndexableFiles(ObjectUtils.chooseNotNull(project, scope.getProject()));
   }
 
-  @ApiStatus.Internal
+  @Internal
   public void flushIndexes() {
     for (ID<?, ?> id : getRegisteredIndexes().getState().getIndexIDs()) {
       try {
@@ -2075,7 +2077,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   static <K, V> int getIndexExtensionVersion(@NotNull FileBasedIndexExtension<K, V> extension) {
     return extension.getVersion();
   }

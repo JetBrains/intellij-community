@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.VoidDataExternalizer;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.Map;
  * In this setup, forwardIndex become totally useless: we could use inverted index mapping for updates. Hence
  * DataType=Void: nothing to save in forwardIndex.
  */
+@Internal
 public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardIndexAccessor<Integer, V, Void> {
 
   private final NotNullLazyValue<UpdatableIndex<Integer, V, ?, ?>> myIndex;
@@ -75,6 +77,7 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
     return null;
   }
 
+  @Internal
   public static final class SingleValueDiffBuilder<V> extends DirectInputDataDiffBuilder<Integer, V> {
     private final boolean myContainsValue;
     private final @Nullable V myCurrentValue;

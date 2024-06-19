@@ -8,9 +8,9 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.psi.stubs.StubInconsistencyReporter.*
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
-@ApiStatus.Internal
+@Internal
 object StubInconsistencyReportUtil {
   val GROUP = EventLogGroup("mismatch.in.stub.indexes", 1, "FUS",
                             "Collector for breakages of indexes defined in implementation-level terms, " +
@@ -66,6 +66,7 @@ object StubInconsistencyReportUtil {
 }
 
 
+@Internal
 class StubInconsistencyFusCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = StubInconsistencyReportUtil.GROUP
 }

@@ -21,6 +21,7 @@ import java.util.Set;
 /**
  * This storage is needed for indexing yet unsaved data without saving those changes to 'main' backend storage
  */
+@Internal
 public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance(TransientChangesIndexStorage.class);
   private final Map<Key, TransientChangeTrackingValueContainer<Value>> myMap;
