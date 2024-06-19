@@ -148,6 +148,7 @@
     "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myShellPath",
     "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myTabName",
     "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.useShellPrompt",
-    "Pythonid:app:PyCondaPackageService.*"
+    "Pythonid:app:PyCondaPackageService.*",
+    "Pythonid:app:PythonFoldingSettings.*"
   ]
 }
