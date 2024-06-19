@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.observable.util.plus
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -142,13 +143,18 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
     // We cannot use NBRA here because computation is too long and will be canceled too many times by write actions
     // Instead we cancel computation manually less often when we detected relevant change: change in filter, dumb mode or project roots
     val trackers = listOf(DumbService.getInstance(project).modificationTracker, ProjectRootModificationTracker.getInstance(project))
-    val computation: Computation<HealthCheckResult> = {
-      doRunHealthCheck(project, filter.checkAllExpectedIndexableFilesDuringHealthcheck, filter.getFileStatuses())
+    val computation = object : Computation<HealthCheckResult> {
+      override fun compute(checkCancelled: () -> Unit): HealthCheckResult {
+        checkCancelled()
+        val res =  doRunHealthCheck(project, checkCancelled, filter.checkAllExpectedIndexableFilesDuringHealthcheck, filter.getFileStatuses())
+        checkCancelled()
+        return res
+      }
     }
 
     return computation
       .takeIfInSmartMode(project)
-      .takeIfScanningScanningIsCompleted(project)
+      .takeIfScanningIsCompleted(project)
       .takeIfNoChange(trackers)
       .takeIfNoChange(filter)
       .execute(delayBetweenAttempts = 10.seconds,
@@ -166,16 +172,20 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
    * between [com.intellij.util.indexing.roots.IndexableFilesIterator] and [com.intellij.util.indexing.IndexableFilesIndex].
    */
   private fun doRunHealthCheck(project: Project,
+                               checkCancelled: () -> Unit,
                                checkAllExpectedIndexableFiles: Boolean,
                                fileStatuses: Sequence<Pair<FileId, Boolean>>): HealthCheckFinished {
     val nonIndexableFilesInFilter = mutableListOf<FileId>()
     val indexableFilesNotInFilter = mutableListOf<FileId>()
 
-    val shouldBeIndexable = getFilesThatShouldBeIndexable(project)
+    val shouldBeIndexable = getFilesThatShouldBeIndexable(project, checkCancelled)
     val filesInFilter = BitSet()
 
-    for ((fileId, isInFilter) in fileStatuses) { // Sequence instead of BitSet because we need to distinguish false and null
+    fileStatuses.forEachIndexed { index, (fileId, isInFilter) -> // Sequence instead of BitSet because we need to distinguish false and null
       ProgressManager.checkCanceled()
+      if (index % 10000 == 0) {
+        checkCancelled()
+      }
       filesInFilter[fileId] = isInFilter
       if (shouldBeIndexable[fileId]) {
         if (!isInFilter) {
@@ -199,13 +209,13 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
                                IndexableFilesNotInFilterGroup(indexableFilesNotInFilter, shouldBeIndexable))
   }
 
-  private fun getFilesThatShouldBeIndexable(project: Project): IndexableFiles {
+  private fun getFilesThatShouldBeIndexable(project: Project, checkCancelled: () -> Unit): IndexableFiles {
     val indexableFiles = IndexableFiles()
-    getFilesThatShouldBeIndexable(project, if (shouldLogProviders) IndexableFilesSetWithProvidersHandler(indexableFiles) else IndexableFilesSetHandler(indexableFiles))
+    getFilesThatShouldBeIndexable(project, checkCancelled, if (shouldLogProviders) IndexableFilesSetWithProvidersHandler(indexableFiles) else IndexableFilesSetHandler(indexableFiles))
     return indexableFiles
   }
 
-  private fun <T> getFilesThatShouldBeIndexable(project: Project, handler: FilesSetHandler<T>) {
+  private fun <T> getFilesThatShouldBeIndexable(project: Project, checkCancelled: () -> Unit, handler: FilesSetHandler<T>) {
     val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
     val providers = index.getIndexableFilesProviders(project)
     for (provider in providers) {
@@ -217,7 +227,7 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
         }
         true
       }
-      ProgressManager.checkCanceled()
+      checkCancelled()
       provider.iterateFiles(project, outerProcessor, VirtualFileFilter.ALL)
       handler.flushState(state, provider)
     }
@@ -328,48 +338,73 @@ sealed interface HealthCheckResult
 private class HealthCheckFinished(val nonIndexableFilesInFilter: NonIndexableFilesInFilterGroup, val indexableFilesNotInFilter: IndexableFilesNotInFilterGroup) : HealthCheckResult
 private class HealthCheckCancelled(val reason: FilterActionCancellationReason) : HealthCheckResult
 
-typealias Computation<T> = () -> T
+internal interface Computation<T> {
+  fun compute(checkCancelled: () -> Unit): T
+}
 
-private suspend fun <T> Computation<T?>.execute(delayBetweenAttempts: Duration, maxAttempts: Int, valueIfUnsuccessful: T): T {
+private suspend fun <T> Computation<T>.execute(delayBetweenAttempts: Duration, maxAttempts: Int, valueIfUnsuccessful: T): T {
   (0 until maxAttempts).forEach { attempt ->
-    val res = this()
-    if (res != null) {
-      return res
+    try {
+      return this.compute {
+        ProgressManager.checkCanceled() // this one should cancel coroutine
+      }
+    }
+    catch (_: ProcessCanceledException) {
     }
     delay(delayBetweenAttempts)
   }
   return valueIfUnsuccessful
 }
 
-private fun <T> Computation<T?>.takeIfInSmartMode(project: Project): Computation<T?> {
-  return {
-    if (DumbService.getInstance(project).isDumb) null
-    else this()
+private fun <T> Computation<T>.takeIfInSmartMode(project: Project): Computation<T> {
+  val outerCompute = this::compute
+
+  return object : Computation<T> {
+    override fun compute(checkCancelled: () -> Unit): T {
+      return outerCompute {
+        checkCancelled()
+        if (DumbService.getInstance(project).isDumb) {
+          throw ProcessCanceledException()
+        }
+      }
+    }
   }
 }
 
-private fun <T> Computation<T?>.takeIfNoChange(trackers: List<ModificationTracker>): Computation<T?> {
-  return {
-    val tracker = trackers.drop(1).fold(trackers.firstOrNull()) { t1, t2 -> t1?.plus(t2) }
-    val modCount = tracker?.modificationCount
-    val res = this()
-    if (tracker?.modificationCount == modCount) res
-    else null
+private fun <T> Computation<T>.takeIfNoChange(trackers: List<ModificationTracker>): Computation<T> {
+  val outerCompute = this::compute
+
+  return object : Computation<T> {
+    override fun compute(checkCancelled: () -> Unit): T {
+      val tracker = trackers.drop(1).fold(trackers.firstOrNull()) { t1, t2 -> t1?.plus(t2) }
+      val modCount = tracker?.modificationCount
+
+      return outerCompute {
+        checkCancelled()
+        if (tracker?.modificationCount != modCount) {
+          throw ProcessCanceledException()
+        }
+      }
+    }
   }
 }
 
-private fun <T> Computation<T?>.takeIfNoChange(filter: ProjectIndexableFilesFilter): Computation<T?> {
+private fun <T> Computation<T>.takeIfNoChange(filter: ProjectIndexableFilesFilter): Computation<T> {
   return filter.takeIfNoChangesHappened(this)
 }
 
-private fun <T> Computation<T>.takeIfScanningScanningIsCompleted(project: Project): Computation<T?> {
-  return {
-    val service = project.getService(ProjectIndexingDependenciesService::class.java)
-    if (service.isScanningCompleted()) {
-      val res = this()
-      if (service.isScanningCompleted()) res
-      else null
+private fun <T> Computation<T>.takeIfScanningIsCompleted(project: Project): Computation<T> {
+  val outerCompute = this::compute
+
+  return object : Computation<T> {
+    override fun compute(checkCancelled: () -> Unit): T {
+      val service = project.getService(ProjectIndexingDependenciesService::class.java)
+      return outerCompute {
+        checkCancelled()
+        if (!service.isScanningCompleted()) {
+          throw ProcessCanceledException()
+        }
+      }
     }
-    else null
   }
 }

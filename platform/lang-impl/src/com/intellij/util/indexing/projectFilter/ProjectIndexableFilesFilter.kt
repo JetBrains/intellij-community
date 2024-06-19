@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.projectFilter
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.IdFilter
 import java.util.concurrent.atomic.AtomicReference
@@ -34,15 +35,17 @@ internal abstract class ProjectIndexableFilesFilter(protected val project: Proje
     }
   }
 
-  fun <T> takeIfNoChangesHappened(action: Computation<T?>): Computation<T?> {
-    return {
-      val (numberOfParallelUpdates, version) = parallelUpdatesCounter.getCounterAndVersion()
-      if (numberOfParallelUpdates != 0) null
-      else {
-        val res = action()
-        val (numberOfParallelUpdates2, version2) = parallelUpdatesCounter.getCounterAndVersion()
-        if (numberOfParallelUpdates2 != 0 || version2 != version) null
-        else res
+  fun <T> takeIfNoChangesHappened(outerCompute: Computation<T>): Computation<T> {
+    return object : Computation<T> {
+      override fun compute(checkCancelled: () -> Unit): T {
+        val (_, version) = parallelUpdatesCounter.getCounterAndVersion()
+        return outerCompute.compute {
+          checkCancelled()
+          val (numberOfParallelUpdates2, version2) = parallelUpdatesCounter.getCounterAndVersion()
+          if (numberOfParallelUpdates2 != 0 || version2 != version) {
+            throw ProcessCanceledException()
+          }
+        }
       }
     }
   }
