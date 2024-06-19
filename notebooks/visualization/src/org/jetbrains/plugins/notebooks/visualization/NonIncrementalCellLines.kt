@@ -104,7 +104,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
     override fun documentChanged(event: DocumentEvent) {
       ThreadingAssertions.assertWriteAccess()
       val oldIntervals = intervals
-      intervals = intervalsGenerator.makeIntervals(document)
+      intervals = intervalsGenerator.makeIntervals(document, event)
 
       val newAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.newLength))
       val newEvent = createEvent(oldIntervals, intervals, oldAffectedCells, newAffectedCells, event)

@@ -4,6 +4,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
@@ -43,7 +44,7 @@ interface NotebookCellLinesProvider : IntervalsGenerator {
 }
 
 interface IntervalsGenerator {
-  fun makeIntervals(document: Document): List<NotebookCellLines.Interval>
+  fun makeIntervals(document: Document, event: DocumentEvent? = null): List<NotebookCellLines.Interval>
 }
 
 open class NonIncrementalCellLinesProvider protected constructor(private val intervalsGenerator: IntervalsGenerator) : NotebookCellLinesProvider, IntervalsGenerator {
@@ -51,8 +52,8 @@ open class NonIncrementalCellLinesProvider protected constructor(private val int
     NonIncrementalCellLines.get(document, intervalsGenerator)
 
   /* If NotebookCellLines doesn't exist, parse document once and don't create NotebookCellLines instance */
-  override fun makeIntervals(document: Document): List<NotebookCellLines.Interval> =
-    NonIncrementalCellLines.getOrNull(document)?.intervals ?: intervalsGenerator.makeIntervals(document)
+  override fun makeIntervals(document: Document, event: DocumentEvent?): List<NotebookCellLines.Interval> =
+    NonIncrementalCellLines.getOrNull(document)?.intervals ?: intervalsGenerator.makeIntervals(document, event)
 }
 
 internal fun getLanguage(project: Project, document: Document): Language? =
