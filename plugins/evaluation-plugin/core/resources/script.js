@@ -260,15 +260,12 @@ function updatePopup(sessionDiv) {
   // order: () -> suggestions -> features -> contexts
   const needAddFeatures = sessionDiv.classList.contains("diffView")
   const needAddContext = sessionDiv.classList.contains("features")
-  const needAddSuggestions = sessionDiv.classList.contains("contexts")
   closeAllLists()
   if (needAddFeatures) {
     addCommonFeatures(sessionDiv, popup, lookup)
-  } else if (needAddContext) {
-    addContexts(sessionDiv, popup, lookup);
   }
-  else if (needAddSuggestions) {
-    addSuggestions(sessionDiv, popup, lookup);
+  else if (needAddContext) {
+    addContexts(sessionDiv, popup, lookup)
   }
   else {
     addDiffView(sessionDiv, popup, lookup, codeElement.innerText);
@@ -279,7 +276,7 @@ function updatePopup(sessionDiv) {
 // Add the `addDiffView` function
 function addDiffView(sessionDiv, popup, lookup, originalText) {
   sessionDiv.classList.add("diffView")
-  sessionDiv.classList.remove("features", "suggestions", "features")
+  sessionDiv.classList.remove("features", "contexts")
   const diffDiv = document.createElement("DIV");
   diffDiv.setAttribute("class", "diffView");
 
@@ -320,7 +317,7 @@ function addDiffView(sessionDiv, popup, lookup, originalText) {
 
 function addCommonFeatures(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("features")
-  sessionDiv.classList.remove("contexts", "suggestions","diffView")
+  sessionDiv.classList.remove("contexts", "diffView")
   const parts = sessionDiv.id.split(" ")
   const sessionId = parts[0]
   const lookupOrder = parts[1]
@@ -352,7 +349,7 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
 
 function addContexts(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("contexts")
-  sessionDiv.classList.remove("features", "suggestions", "diffView")
+  sessionDiv.classList.remove("features", "diffView")
 
   if (!("cc_context" in lookup["additionalInfo"])) return
 
