@@ -83,7 +83,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
-    boolean isNamespace = isInNamespacePackage(this.mySourceFiles);
+    boolean isNamespace = isInNamespacePackage(mySourceFiles);
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       final PyFile destination = PyClassRefactoringUtil.getOrCreateFile(myDestination, myProject, isNamespace);
       CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
@@ -130,15 +130,11 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     }), getRefactoringName(), null);
   }
 
-  private static boolean isInNamespacePackage(LinkedHashSet<PsiFile> myFiles) {
+  private static boolean isInNamespacePackage(Collection<PsiFile> myFiles) {
     if (myFiles == null || myFiles.isEmpty()) {
       return false;
     }
-
-    PsiFile firstFile = myFiles.iterator().next();
-    PsiDirectory containingDirectory = firstFile.getContainingDirectory();
-
-    return isNamespacePackage(containingDirectory);
+    return ContainerUtil.all(myFiles, (file) -> isNamespacePackage(file.getContainingDirectory()));
   }
 
   @Override

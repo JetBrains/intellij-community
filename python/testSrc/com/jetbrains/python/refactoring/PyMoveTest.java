@@ -423,7 +423,7 @@ public class PyMoveTest extends PyTestCase {
   public void testMoveSymbolDoesntCreateInitPyInSourceRoot() {
     doComparingDirectories(testDir -> {
       final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
-      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/b.py", "MyClass"));
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "pkg/subpkg/b.py", "MyClass"));
     });
   }
 
@@ -431,7 +431,7 @@ public class PyMoveTest extends PyTestCase {
   public void testMoveNotCreateInitPyForNamespacePackagesToAnotherDirectory() {
     doComparingDirectories(testDir -> {
       final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
-      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/B/module_b.py", "myfunc"));
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "pkg/subpkg/B/module_b.py", "myfunc"));
     });
   }
 
@@ -439,7 +439,7 @@ public class PyMoveTest extends PyTestCase {
   public void testMoveNotCreateInitPyForNamespacePackagesInSameDirectory() {
     doComparingDirectories(testDir -> {
       final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
-      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/module_b.py", "myfunc"));
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "pkg/subpkg/module_b.py", "myfunc"));
     });
   }
 
@@ -447,7 +447,7 @@ public class PyMoveTest extends PyTestCase {
   public void testMoveNotCreateInitPyForNamespacePackagesToParentDirectory() {
     doComparingDirectories(testDir -> {
       final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
-      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/B/module_b.py", "myfunc"));
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "pkg/subpkg/B/module_b.py", "myfunc"));
     });
   }
 
@@ -455,7 +455,7 @@ public class PyMoveTest extends PyTestCase {
   public void testMoveNotCreateInitPyForNamespacePackagesToChildDirectory() {
     doComparingDirectories(testDir -> {
       final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
-      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/A/B/module_b.py", "myfunc"));
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "pkg/subpkg/A/B/module_b.py", "myfunc"));
     });
   }
 

@@ -4,6 +4,7 @@ package com.jetbrains.python.refactoring.classes.extractSuperclass;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
@@ -134,6 +135,64 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
     });
   }
 
+  // PY-44858
+  public void testExtractNotCreateInitInAnotherDir(){
+    String baseName = "refactoring/extractsuperclass/extractNotCreateInitInAnotherDir/mypkg/";
+    String pathToSuperclass = "b";
+    String pathToOriginClass = "a";
+    doTestNotCreateInitCommon(baseName, pathToSuperclass, pathToOriginClass);
+  }
+
+  public void testExtractNotCreateInitInSameDir(){
+    String baseName = "refactoring/extractsuperclass/extractNotCreateInitInSameDir/mypkg/";
+    String pathToSuperclass = "a";
+    String pathToOriginClass = "a";
+    doTestNotCreateInitCommon(baseName, pathToSuperclass, pathToOriginClass);
+  }
+
+  public void testExtractNotCreateInitInParentDir(){
+    String baseName = "refactoring/extractsuperclass/extractNotCreateInitInParentDir/mypkg/";
+    String pathToSuperclass = "a/b";
+    String pathToOriginClass = "a";
+    doTestNotCreateInitCommon(baseName, pathToSuperclass, pathToOriginClass);
+  }
+
+  public void testExtractNotCreateInitInChildDir(){
+    String baseName = "refactoring/extractsuperclass/extractNotCreateInitInChildDir/mypkg/";
+    String pathToSuperclass = "b";
+    String pathToOriginClass = "b/a";
+    doTestNotCreateInitCommon(baseName, pathToSuperclass, pathToOriginClass);
+  }
+
+  private void doTestNotCreateInitCommon(String baseName, String pathToSuperclass, String pathToOriginClass){
+    VirtualFile pkg_dir = myFixture.copyDirectoryToProject(baseName, "");
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+    final String className = "Foo";
+    final String superclassName = "Suppa";
+    final PyClass clazz = findClass(className);
+    final List<PyMemberInfo<PyElement>> members = new ArrayList<>();
+    final PyElement member = findMember(className, ".foo");
+    members.add(MembersManager.findMember(clazz, member));
+
+    WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
+      final String path = pkg_dir.getPath() + "/mypkg/" + pathToSuperclass;
+      PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path);
+    });
+
+    VirtualFile vfile = pkg_dir.findFileByRelativePath(pathToOriginClass);
+    vfile = vfile.findChild(PyNames.INIT_DOT_PY);
+    assertNull(vfile);
+
+    vfile = pkg_dir.findFileByRelativePath(pathToSuperclass);
+    assertTrue(vfile.isDirectory());
+    vfile = vfile.findChild(PyNames.INIT_DOT_PY);
+    assertNull(vfile);
+
+    vfile = pkg_dir.findChild(PyNames.INIT_DOT_PY);
+    assertNull(vfile);
+
+  }
+
   // PY-16770
   public void testAbstractMethodDocStringPrefixPreserved() {
     runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
@@ -172,15 +231,15 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
   }
 
   public void testMultifileNew() {
-    String baseName = "refactoring/extractsuperclass/multifile/";
-    myFixture.configureByFile(baseName + "source.py");
+    String baseName = "refactoring/extractsuperclass/multifileNew/";
+    VirtualFile base_dir = myFixture.copyDirectoryToProject(baseName, "");
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     final String className = "Foo";
     final String superclassName = "Suppa";
     final PyClass clazz = findClass(className);
     final List<PyMemberInfo<PyElement>> members = new ArrayList<>();
     final PyElement member = findMember(className, ".foo");
     members.add(MembersManager.findMember(clazz, member));
-    final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
 
     WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
       final String path = base_dir.getPath() + "/a/b";

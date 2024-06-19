@@ -124,6 +124,40 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     return false;
   }
 
+  //PY-44858
+  private void doTestRefactoringNotCreateInitCommon(String pathToOriginFunction, String destination) throws IOException {
+    final String rootBeforePath = getTestName(true) + "/before";
+    final String rootAfterPath = getTestName(true) + "/after";
+    final VirtualFile copiedDirectory = myFixture.copyDirectoryToProject(rootBeforePath, "");
+    myFixture.configureByFile(pathToOriginFunction);
+    runRefactoring(destination, null);
+    PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
+  }
+
+  public void testRefactoringNotCreateInitInAnotherDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/main.py";
+    String destination = "mypkg/b/other.py";
+    doTestRefactoringNotCreateInitCommon(pathToOriginFunction, destination);
+  }
+
+  public void testRefactoringNotCreateInitInSameDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/main.py";
+    String destination = "mypkg/a/other.py";
+    doTestRefactoringNotCreateInitCommon(pathToOriginFunction, destination);
+  }
+
+  public void testRefactoringNotCreateInitInParentDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/b/main.py";
+    String destination = "mypkg/a/other.py";
+    doTestRefactoringNotCreateInitCommon(pathToOriginFunction, destination);
+  }
+
+  public void testRefactoringNotCreateInitInChildDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/main.py";
+    String destination = "mypkg/a/b/other.py";
+    doTestRefactoringNotCreateInitCommon(pathToOriginFunction, destination);
+  }
+
   // PY-6637
   public void testLocalFunctionSimple() {
     doTestSuccess();

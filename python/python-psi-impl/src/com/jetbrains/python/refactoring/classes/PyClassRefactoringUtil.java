@@ -522,8 +522,8 @@ public final class PyClassRefactoringUtil {
   }
 
 
-  public static PsiFile placeFile(Project project, String path, String filename) throws IOException {
-    return placeFile(project, path, filename, null, false);
+  public static PsiFile placeFile(Project project, String path, String filename, boolean isNamespace) throws IOException {
+    return placeFile(project, path, filename, null, isNamespace);
   }
 
   public static PsiFile placeFile(Project project, String path, String filename, @Nullable String content, boolean isNamespace) throws IOException {

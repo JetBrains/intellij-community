@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
+import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isNamespacePackage;
 import static com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil.placeFile;
 
 /**
@@ -89,11 +90,11 @@ public final class PyExtractSuperclassHelper {
     }
 
 
-
+    boolean isNamespace = isClassInNamespacePackage(clazz);
     final String text = "class " + superBaseName + ":\n  pass" + "\n";
     PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
 
-    newClass = placeNewClass(project, newClass, clazz, targetFile);
+    newClass = placeNewClass(project, newClass, clazz, targetFile, isNamespace);
     MembersManager.moveAllMembers(selectedMemberInfos, clazz, newClass);
     if (! newClass.getContainingFile().equals(clazz.getContainingFile())) {
       PyClassRefactoringUtil.optimizeImports(clazz.getContainingFile()); // To remove unneeded imports only if user used different file
@@ -119,7 +120,7 @@ public final class PyExtractSuperclassHelper {
            Comparing.equal(((BackedVirtualFile)file).getOriginFile(), targetFile);
   }
   
-  private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile) {
+  private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile, boolean isNamespace) {
     VirtualFile file = VirtualFileManager.getInstance()
       .findFileByUrl(ApplicationManager.getApplication().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
     // file is the same as the source
@@ -141,10 +142,10 @@ public final class PyExtractSuperclassHelper {
           path = targetFile;
           filename = PyNames.INIT_DOT_PY; // user requested putting the class into this package directly
         }
-        psiFile = placeFile(project, path, filename);
+        psiFile = placeFile(project, path, filename, isNamespace);
       }
       else if (file.isDirectory()) { // existing directory
-        psiFile = placeFile(project, file.getPath(), PyNames.INIT_DOT_PY);
+        psiFile = placeFile(project, file.getPath(), PyNames.INIT_DOT_PY, isNamespace);
       }
       else { // existing file
         psiFile = PsiManager.getInstance(project).findFile(file);
@@ -217,7 +218,7 @@ public final class PyExtractSuperclassHelper {
       else {
         subdir = resultDir.createChildDirectory(lfs, dirs[i]);
       }
-      if ((subdir.findChild(PyNames.INIT_DOT_PY) == null) && !isNamespace) {
+      if (subdir.findChild(PyNames.INIT_DOT_PY) == null && !isNamespace) {
         subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
       }
       /*
@@ -241,4 +242,15 @@ public final class PyExtractSuperclassHelper {
   public static String getRefactoringId() {
     return "refactoring.python.extract.superclass";
   }
+
+  private static boolean isClassInNamespacePackage(@NotNull PyClass clazz) {
+    PsiFile containingFile = clazz.getContainingFile();
+    if (containingFile == null) {
+      return false;
+    }
+
+    PsiDirectory parentDirectory = containingFile.getParent();
+    return parentDirectory != null && isNamespacePackage(parentDirectory);
+  }
+
 }
