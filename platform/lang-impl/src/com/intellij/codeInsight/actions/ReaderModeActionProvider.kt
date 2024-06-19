@@ -13,7 +13,10 @@ import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
+import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -71,8 +74,18 @@ internal class ReaderModeActionProvider : InspectionWidgetActionProvider {
             HelpTooltip()
               .setTitle(myPresentation.description)
               .setDescription(LangBundle.message("action.ReaderModeProvider.description"))
-              .setLink(LangBundle.message("action.ReaderModeProvider.link.configure"))
-              { ShowSettingsUtil.getInstance().showSettingsDialog(project, ReaderModeConfigurable::class.java) }
+              .setLink(LangBundle.message("action.ReaderModeProvider.link.configure")) {
+                ShowSettingsUtil.getInstance().showSettingsDialog(
+                  project,
+                  /*predicate =*/{ it: Configurable? ->
+                    if (it is ConfigurableWrapper) {
+                      val unwrapped = it.configurable
+                      unwrapped is BoundSearchableConfigurable && unwrapped.id == "editor.reader.mode"
+                    } else false
+                  },
+                  /*additionalConfiguration =*/null
+                )
+              }
               .installOn(this)
           }
           else {
