@@ -9,7 +9,6 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -25,33 +24,34 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * This is a copy of com.intellij.codeInspection.inferNullity.NullityInferrer
  * with some modifications to better support J2K. These modifications may be later
- * ported back and this copy may be deleted.
+ * ported back, and this copy may be deleted.
  */
 @SuppressWarnings("DuplicatedCode")
 class J2KNullityInferrer {
     private static final int MAX_PASSES = 10;
     private int numAnnotationsAdded;
-    private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<>();
-    private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<>();
-    private final SmartPointerManager myPointerManager;
 
-    J2KNullityInferrer(@NotNull Project project) {
-        myPointerManager = SmartPointerManager.getInstance(project);
+    // We need an identity set for comparing `PsiType` instances
+    // to differentiate between different type arguments of the same type in the code.
+    //
+    // TODO: operating on `PsiType`s directly is not always correct,
+    //  because a PsiType object can sometimes be recreated (for example, by PsiNewExpressionImpl.getType()),
+    //  and we won't find it in our IdentityHashMap.
+    //  We should try to migrate this logic to PsiTypeElements, which are more persistent.
+    private final Set<PsiType> myNotNullTypes = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Set<PsiType> myNullableTypes = Collections.newSetFromMap(new IdentityHashMap<>());
+
+    Set<PsiType> getNotNullTypes() {
+        return myNotNullTypes;
     }
 
-    public List<SmartPsiElementPointer<? extends PsiModifierListOwner>> getNotNullSet() {
-        return myNotNullSet;
-    }
-
-    public List<SmartPsiElementPointer<? extends PsiModifierListOwner>> getNullableSet() {
-        return myNullableSet;
+    Set<PsiType> getNullableTypes() {
+        return myNullableTypes;
     }
 
     private boolean expressionIsNeverNull(@Nullable PsiExpression expression) {
@@ -185,12 +185,45 @@ class J2KNullityInferrer {
     }
 
     private void registerAnnotation(@NotNull PsiModifierListOwner declaration, boolean isNullable) {
-        final SmartPsiElementPointer<PsiModifierListOwner> declarationPointer = myPointerManager.createSmartPsiElementPointer(declaration);
-        if (isNullable) {
-            myNullableSet.add(declarationPointer);
-        } else {
-            myNotNullSet.add(declarationPointer);
+        PsiType type = getType(declaration);
+        if (type == null) {
+            return;
         }
+        registerTypeNullability(type, isNullable);
+    }
+
+    private static PsiType getType(PsiModifierListOwner declaration) {
+        if (declaration instanceof PsiVariable) {
+            return ((PsiVariable) declaration).getType();
+        }
+        if (declaration instanceof PsiMethod) {
+            return ((PsiMethod) declaration).getReturnType();
+        }
+        return null;
+    }
+
+    private void registerTypeNullability(@NotNull PsiType type, boolean isNullable) {
+        if (isNullable(type)) {
+            // If this type is already nullable:
+            //   - don't try to make it nullable twice
+            //   - or don't try to make it not-null because nullable is stronger than not-null
+            return;
+        }
+
+        if (isNotNull(type) && !isNullable) {
+            // Don't try to make the type not-null twice
+            return;
+        }
+
+        PsiType unwrappedType = unwrap(type);
+
+        if (isNullable) {
+            myNullableTypes.add(unwrappedType);
+            myNotNullTypes.remove(unwrappedType);
+        } else {
+            myNotNullTypes.add(unwrappedType);
+        }
+
         numAnnotationsAdded++;
     }
 
@@ -211,8 +244,14 @@ class J2KNullityInferrer {
         if (NullableNotNullManager.isNotNull(owner)) {
             return true;
         }
-        final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
-        return myNotNullSet.contains(pointer);
+        PsiType type = getType(owner);
+        if (type == null) return false;
+        return isNotNull(type);
+    }
+
+    private boolean isNotNull(@NotNull PsiType type) {
+        PsiType unwrappedType = unwrap(type);
+        return myNotNullTypes.contains(unwrappedType);
     }
 
     private boolean isNullable(@Nullable PsiModifierListOwner owner) {
@@ -220,16 +259,39 @@ class J2KNullityInferrer {
         if (NullableNotNullManager.isNullable(owner)) {
             return true;
         }
-        final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
-        return myNullableSet.contains(pointer);
+        PsiType type = getType(owner);
+        if (type == null) return false;
+        return isNullable(type);
+    }
+
+    private boolean isNullable(@NotNull PsiType type) {
+        PsiType unwrappedType = unwrap(type);
+        return myNullableTypes.contains(unwrappedType);
+    }
+
+    private static @NotNull PsiType unwrap(@NotNull PsiType type) {
+        if (type instanceof PsiCapturedWildcardType capturedWildcardType) {
+            return unwrap(capturedWildcardType.getWildcard());
+        } else if (type instanceof PsiWildcardType wildcardType) {
+            if (wildcardType.isExtends()) return wildcardType.getExtendsBound();
+            if (wildcardType.isSuper()) return wildcardType.getSuperBound();
+        }
+        return type;
     }
 
     private boolean hasNullability(@NotNull PsiModifierListOwner owner) {
         NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
         NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
         if (info != null && !info.isInferred() && info.getNullability() != Nullability.UNKNOWN) return true;
-        final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
-        return myNotNullSet.contains(pointer) || myNullableSet.contains(pointer);
+
+        PsiType type = getType(owner);
+        if (type == null) return false;
+
+        return hasNullability(type);
+    }
+
+    private boolean hasNullability(@NotNull PsiType type) {
+        return isNullable(type) || isNotNull(type);
     }
 
     private class NullityInferrerVisitor extends JavaRecursiveElementWalkingVisitor {

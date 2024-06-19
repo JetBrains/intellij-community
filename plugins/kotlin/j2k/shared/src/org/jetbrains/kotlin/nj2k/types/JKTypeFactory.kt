@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.j2k.Nullability
-import org.jetbrains.kotlin.j2k.Nullability.NotNull
-import org.jetbrains.kotlin.j2k.Nullability.Nullable
+import org.jetbrains.kotlin.j2k.Nullability.*
 import org.jetbrains.kotlin.name.FqNameUnsafe
+import org.jetbrains.kotlin.nj2k.DeclarationNullabilityInfo
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedClassSymbol
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 
 class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
+    internal var declarationNullabilityInfo: DeclarationNullabilityInfo? = null
+
     fun fromPsiType(type: PsiType): JKType = createPsiType(type)
 
     context(KaSession)
@@ -66,6 +68,14 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
     val types by lazy(LazyThreadSafetyMode.NONE) { DefaultTypes() }
 
     private fun createPsiType(type: PsiType): JKType {
+        val nullability = declarationNullabilityInfo?.let {
+            when {
+                it.nullableTypes.contains(type) -> Nullable
+                it.notNullTypes.contains(type) -> NotNull
+                else -> Default
+            }
+        } ?: Default
+
         return when (type) {
             is PsiClassType -> {
                 val target = type.resolve()
@@ -73,10 +83,10 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
 
                 when (target) {
                     null ->
-                        JKClassType(JKUnresolvedClassSymbol(type.rawType().canonicalText, this), parameters)
+                        JKClassType(JKUnresolvedClassSymbol(type.rawType().canonicalText, this), parameters, nullability)
 
                     is PsiTypeParameter ->
-                        JKTypeParameterType(symbolProvider.provideDirectSymbol(target) as JKTypeParameterSymbol)
+                        JKTypeParameterType(symbolProvider.provideDirectSymbol(target) as JKTypeParameterSymbol, nullability)
 
                     is PsiAnonymousClass -> {
                         // If an anonymous class is declared inside the converting code,
@@ -89,13 +99,14 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                     else -> {
                         JKClassType(
                             target.let { symbolProvider.provideDirectSymbol(it) as JKClassSymbol },
-                            parameters
+                            parameters,
+                            nullability
                         )
                     }
                 }
             }
 
-            is PsiArrayType -> JKJavaArrayType(fromPsiType(type.componentType))
+            is PsiArrayType -> JKJavaArrayType(fromPsiType(type.componentType), nullability)
 
             is PsiPrimitiveType -> JKJavaPrimitiveType.fromPsi(type)
 

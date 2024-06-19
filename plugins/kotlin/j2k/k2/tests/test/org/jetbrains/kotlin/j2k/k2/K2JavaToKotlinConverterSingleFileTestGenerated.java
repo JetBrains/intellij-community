@@ -379,6 +379,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("cStyleBrackets.java")
+        public void testCStyleBrackets() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/arrayInitializerExpression/cStyleBrackets.java");
+        }
+
         @TestMetadata("doubleArray.java")
         public void testDoubleArray() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/arrayInitializerExpression/doubleArray.java");

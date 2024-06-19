@@ -825,7 +825,6 @@ class JavaToJKTreeBuilder(
         ).also {
             symbolProvider.provideUniverseSymbol(this, it)
             it.psi = this
-            it.updateNullability()
             it.withFormattingFrom(this)
         }
 
@@ -935,7 +934,6 @@ class JavaToJKTreeBuilder(
                 modality()
             ).also { jkMethod ->
                 jkMethod.psi = this
-                jkMethod.updateNullability()
                 jkMethod.hasRedundantVisibility = isOverrideMethodWithRedundantVisibility(jkMethod.visibility)
                 symbolProvider.provideUniverseSymbol(this, jkMethod)
                 parameterList.node
@@ -970,7 +968,6 @@ class JavaToJKTreeBuilder(
             return parameter.also {
                 symbolProvider.provideUniverseSymbol(this, it)
                 it.psi = this
-                it.updateNullability()
                 it.withFormattingFrom(this)
             }
         }
@@ -994,7 +991,6 @@ class JavaToJKTreeBuilder(
             ).also {
                 symbolProvider.provideUniverseSymbol(this, it)
                 it.psi = this
-                it.updateNullability()
                 it.withFormattingFrom(this)
             }
         }
@@ -1154,7 +1150,7 @@ class JavaToJKTreeBuilder(
      * TODO support not only PsiJavaFile but any PsiElement
      */
     private fun collectNullabilityInfo(element: PsiJavaFile) {
-        val nullityInferrer = J2KNullityInferrer(element.project)
+        val nullityInferrer = J2KNullityInferrer()
         try {
             nullityInferrer.collect(element)
         } catch (e: ProcessCanceledException) {
@@ -1162,14 +1158,9 @@ class JavaToJKTreeBuilder(
         } catch (t: Throwable) {
             LOG.error(t)
         }
-        val nullableSet = nullityInferrer.nullableSet.filterNotNull().toSet()
-        val notNullSet = nullityInferrer.notNullSet.filterNotNull().toSet()
-        declarationNullabilityInfo = DeclarationNullabilityInfo(nullableSet, notNullSet)
-    }
 
-    private fun JKDeclaration.updateNullability() {
-        val info = declarationNullabilityInfo ?: return
-        updateNullability(info)
+        declarationNullabilityInfo = DeclarationNullabilityInfo(nullityInferrer.nullableTypes, nullityInferrer.notNullTypes)
+        typeFactory.declarationNullabilityInfo = declarationNullabilityInfo
     }
 
     private fun PsiImportList?.toJK(saveImports: Boolean): JKImportList =
