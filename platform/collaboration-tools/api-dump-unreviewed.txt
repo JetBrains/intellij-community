@@ -2018,6 +2018,9 @@ f:com.intellij.collaboration.util.ChangesSelectionKt
 - *sf:equalChanges(com.intellij.collaboration.util.ChangesSelection,java.lang.Object):Z
 - sf:getSelectedChange(com.intellij.collaboration.util.ChangesSelection):com.intellij.collaboration.util.RefComparisonChange
 - sf:withLocation(com.intellij.collaboration.util.ChangesSelection$Precise,kotlin.Pair):com.intellij.collaboration.util.ChangesSelection$Precise
+f:com.intellij.collaboration.util.CodeReviewFilesUtil
+- sf:INSTANCE:com.intellij.collaboration.util.CodeReviewFilesUtil
+- *f:closeFilesSafely(com.intellij.openapi.fileEditor.FileEditorManager,java.util.Collection):V
 *a:com.intellij.collaboration.util.CollectableSerializablePersistentStateComponent
 - com.intellij.openapi.components.SerializablePersistentStateComponent
 - <init>(java.lang.Object):V

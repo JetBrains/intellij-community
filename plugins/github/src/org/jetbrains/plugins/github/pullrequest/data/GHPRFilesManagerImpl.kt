@@ -1,14 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.util.CodeReviewFilesUtil
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFileBase
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHNewPRDiffVirtualFile
@@ -64,14 +64,11 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   override fun dispose() {
     if (project.isDisposed) return
     val fileManager = FileEditorManager.getInstance(project)
-    // otherwise the exception is thrown when removing an editor tab
-    (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-      for (file in (files.values + diffFiles.values)) {
-        fileManager.closeFile(file)
-      }
-      newPRDiffFile.get()?.also {
-        fileManager.closeFile(it)
-      }
-      }
+    val files = buildList {
+      addAll(files.values)
+      addAll(diffFiles.values)
+      addIfNotNull(newPRDiffFile.get())
+    }
+    CodeReviewFilesUtil.closeFilesSafely(fileManager, files)
   }
 }
