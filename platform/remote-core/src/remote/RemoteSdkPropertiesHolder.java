@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
+  public static final String DEFAULT_HELPERS_DIR_NAME = ".idea_helpers";
+
   private static final String INTERPRETER_PATH = "INTERPRETER_PATH";
   private static final String HELPERS_PATH = "HELPERS_PATH";
   private static final String VALID = "VALID";

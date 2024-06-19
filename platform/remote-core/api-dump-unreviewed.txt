@@ -323,6 +323,7 @@ com.intellij.remote.RemoteSdkProperties
 - a:setValid(Z):V
 c:com.intellij.remote.RemoteSdkPropertiesHolder
 - com.intellij.remote.RemoteSdkProperties
+- sf:DEFAULT_HELPERS_DIR_NAME:java.lang.String
 - <init>(java.lang.String):V
 - copyTo(com.intellij.remote.RemoteSdkProperties):V
 - equals(java.lang.Object):Z

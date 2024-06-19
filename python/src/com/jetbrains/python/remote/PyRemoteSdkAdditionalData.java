@@ -113,7 +113,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
 
   private PyRemoteSdkCredentials createPyRemoteSdkCredentials(@NotNull RemoteCredentials credentials) {
     PyRemoteSdkCredentialsHolder res = new PyRemoteSdkCredentialsHolder();
-    RemoteSdkCredentialsBuilder.copyCredentials(credentials, res);
+    RemoteCredentialsHolder.copyRemoteCredentials(credentials, res);
     myRemoteSdkProperties.copyTo(res);
     res.setSkeletonsPath(getSkeletonsPath());
     res.setValid(isValid());

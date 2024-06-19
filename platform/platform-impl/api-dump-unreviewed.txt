@@ -23296,13 +23296,6 @@ f:com.intellij.remote.RemoteProcessUtil
 - s:buildRemoteCommand(com.intellij.util.AbstractPathMapper,java.util.Collection):java.lang.String[]
 - s:remapPathsList(java.lang.String,com.intellij.util.PathMapper,java.lang.String):java.lang.String
 - s:toRemoteFileSystemStyle(java.lang.String):java.lang.String
-f:com.intellij.remote.RemoteSdkCredentialsBuilder
-- <init>():V
-- build():com.intellij.remote.RemoteSdkCredentials
-- s:copyCredentials(com.intellij.remote.RemoteCredentials,com.intellij.remote.MutableRemoteCredentials):V
-- s:copyRemoteSdkCredentials(com.intellij.remote.RemoteSdkCredentials,com.intellij.remote.RemoteSdkCredentials):V
-- withCredentials(com.intellij.remote.RemoteCredentials):com.intellij.remote.RemoteSdkCredentialsBuilder
-- withInterpreterPath(java.lang.String):com.intellij.remote.RemoteSdkCredentialsBuilder
 com.intellij.remote.RemoteSdkFactory
 - a:canSaveUnfinished():Z
 - a:createRemoteSdk(com.intellij.openapi.project.Project,com.intellij.remote.RemoteSdkAdditionalData,java.lang.String,java.util.Collection):com.intellij.openapi.projectRoots.Sdk
