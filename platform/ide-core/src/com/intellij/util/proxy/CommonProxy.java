@@ -41,7 +41,6 @@ public final class CommonProxy extends ProxySelector {
 
   private final Object myLock = new Object();
 
-  private final Map<String, AccessToken> myCustomRegistrations = new HashMap<>();
   private final Map<String, AccessToken> myCustomAuthRegistrations = new HashMap<>();
 
   public static CommonProxy getInstance() {
@@ -161,7 +160,7 @@ public final class CommonProxy extends ProxySelector {
       if (register != null) {
         LOG.debug("custom auth set: " + key + ", " + nonStaticAuthenticator);
         //noinspection resource
-        myCustomRegistrations.put(key, register.invoke(nonStaticAuthenticator.asAuthenticator()));
+        myCustomAuthRegistrations.put(key, register.invoke(nonStaticAuthenticator.asAuthenticator()));
       }
     }
   }
