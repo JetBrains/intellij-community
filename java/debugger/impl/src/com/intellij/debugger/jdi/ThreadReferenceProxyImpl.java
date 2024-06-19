@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -239,6 +240,9 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       ThreadReference threadReference = getThreadReference();
       return DebuggerUtilsAsync.frameCount(threadReference)
         .exceptionally(throwable -> {
+          if (throwable instanceof CancellationException cancellationException) {
+            throw cancellationException;
+          }
           Throwable unwrap = DebuggerUtilsAsync.unwrap(throwable);
           if (unwrap instanceof ObjectCollectedException) {
             return 0;
