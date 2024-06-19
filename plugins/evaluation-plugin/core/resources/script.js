@@ -8,12 +8,7 @@ const LC_KEYS = {
 
 const lineDiff = new Diff();
 
-const codeGenPrompts = [
-  "cover this method with logging",
-  "simplify the following method",
-  "add exception handling",
-  "add comments to the code"
-];
+
 document.addEventListener("click", function (e) {
   if (e.target.closest(".multiline") != null) {
     updateMultilinePopup(e)
@@ -140,6 +135,7 @@ function updatePopup(sessionDiv) {
   // order: () -> (suggestions or diffView) -> features -> contexts
   const needAddFeatures = sessionDiv.classList.contains("diffView") || sessionDiv.classList.contains("suggestions")
   const needAddContext = sessionDiv.classList.contains("features")
+  const isCodeGeneration = sessionDiv.classList.contains("code-generation");
   closeAllLists()
   if (needAddFeatures) {
     addCommonFeatures(sessionDiv, popup, lookup)
@@ -148,8 +144,7 @@ function updatePopup(sessionDiv) {
     addContexts(sessionDiv, popup, lookup)
   }
   else {
-    const userPrompt = lookup["additionalInfo"]["aia_user_prompt"];
-    if (codeGenPrompts.includes(userPrompt)) {
+    if (isCodeGeneration) {
       addDiffView(sessionDiv, popup, lookup, codeElement.innerText);
     } else {
       addSuggestions(sessionDiv, popup, lookup);
