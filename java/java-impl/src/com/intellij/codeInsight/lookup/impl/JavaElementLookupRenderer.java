@@ -57,7 +57,7 @@ public final class JavaElementLookupRenderer implements ElementLookupRenderer {
   /**
    * @deprecated use {@link JavaDeprecationUtils#isDeprecated(PsiElement, PsiElement)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isDeprecated(@Nullable PsiElement element) {
     return element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
   }

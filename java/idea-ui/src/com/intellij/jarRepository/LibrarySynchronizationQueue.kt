@@ -12,10 +12,12 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.util.Computable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import kotlin.coroutines.coroutineContext
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Remove after the `workspace.model.custom.library.bridge` registry key removal")
 @Service(Service.Level.PROJECT)
 class LibrarySynchronizationQueue(private val project: Project, private val scope: CoroutineScope) {

@@ -134,7 +134,7 @@ public final class IdeaProjectSettingsService extends ProjectSettingsService imp
    * avoid breaking the older code scenarios.
    */
   @Override
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Sdk chooseAndSetSdk() {
     Logger
       .getInstance(getClass())

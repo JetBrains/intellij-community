@@ -501,7 +501,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   /**
    * @deprecated use {@link OverrideImplementUtil#showJavaOverrideImplementChooser(Editor, PsiElement, boolean, Collection, Collection, java.util.function.Consumer)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable MemberChooser<PsiMethodMember> showOverrideImplementChooser(@NotNull Editor editor,
                                                                             @NotNull PsiElement aClass,
                                                                             final boolean toImplement,
@@ -515,7 +515,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
    * It is used only for backward compatibility.
    * @deprecated use {@link OverrideImplementUtil#showJavaOverrideImplementChooser(Editor, PsiElement, boolean, Collection, Collection, java.util.function.Consumer)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable JavaOverrideImplementMemberChooser showJavaOverrideImplementChooser(@NotNull Editor editor,
                                                                                     @NotNull PsiElement aClass,
                                                                                     final boolean toImplement,

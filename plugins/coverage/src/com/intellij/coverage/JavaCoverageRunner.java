@@ -132,7 +132,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   /**
    * @deprecated This method is not used anymore, as all the runners support JDK 7+.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isJdk7Compatible() {
     return true;
   }

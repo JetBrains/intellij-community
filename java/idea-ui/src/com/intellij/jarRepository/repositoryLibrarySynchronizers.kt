@@ -14,7 +14,9 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Remove after the `workspace.model.custom.library.bridge` registry key removal")
 internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: LibrarySynchronizationQueue,
                                                           private val disposable: Disposable)
@@ -45,6 +47,7 @@ internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: Lib
   }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Remove after the `workspace.model.custom.library.bridge` registry key removal")
 internal class ChangedRepositoryLibrarySynchronizer(private val project: Project,
                                                     private val queue: LibrarySynchronizationQueue) : WorkspaceModelChangeListener {
