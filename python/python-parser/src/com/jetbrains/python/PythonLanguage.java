@@ -4,7 +4,7 @@ package com.jetbrains.python;
 import com.intellij.lang.Language;
 
 
-public class PythonLanguage extends Language {
+public final class PythonLanguage extends Language {
 
   public static final PythonLanguage INSTANCE = new PythonLanguage();
 
@@ -12,7 +12,7 @@ public class PythonLanguage extends Language {
     return INSTANCE;
   }
 
-  protected PythonLanguage() {
+  private PythonLanguage() {
     super("Python");
   }
 

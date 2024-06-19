@@ -8,7 +8,6 @@
     <plugin id="com.intellij.modules.python-core-capable"/>
     <!-- and is Rider -->
     <plugin id="com.intellij.modules.rider"/>
-    <module name="intellij.python.community.impl"/>
     <!-- for library facet etc -->
     <module name="intellij.python.community.plugin.impl"/>
   </dependencies>

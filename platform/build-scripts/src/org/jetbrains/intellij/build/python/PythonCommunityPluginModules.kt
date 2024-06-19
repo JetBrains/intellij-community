@@ -80,7 +80,7 @@ object PythonCommunityPluginModules {
           fileFilter = { path -> !path.endsWith("setup.py") && !path.endsWith("conftest.py") }
         )
       }
-      // required for "Python Console" in intellij.python.community.impl module
+      // required for "Python Console" in PythonCore plugin
       @Suppress("SpellCheckingInspection")
       spec.withProjectLibrary("libthrift")
       spec.excludeProjectLibrary("Gradle")

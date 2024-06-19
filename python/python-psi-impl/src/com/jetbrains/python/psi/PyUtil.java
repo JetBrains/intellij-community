@@ -68,7 +68,7 @@ import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
  * These methods don't depend on the Python runtime.
  *
  * @see PyPsiUtils for utilities used in Python PSI API
- * @see PyUiUtil for UI-related utilities for Python (available in intellij.python.community.impl)
+ * @see PyUiUtil for UI-related utilities for Python (available in PythonCore plugin)
  */
 public final class PyUtil {
 
