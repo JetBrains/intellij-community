@@ -13,10 +13,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.k2.postProcessings.*
-import org.jetbrains.kotlin.j2k.k2.postProcessings.K2ShortenReferenceProcessing
-import org.jetbrains.kotlin.j2k.k2.postProcessings.initializerTypeMismatchProcessing
-import org.jetbrains.kotlin.j2k.k2.postProcessings.smartcastImpossibleProcessing
-import org.jetbrains.kotlin.j2k.k2.postProcessings.uselessCastProcessing
 import org.jetbrains.kotlin.j2k.postProcessings.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -43,7 +39,7 @@ internal class K2J2KPostProcessor : PostProcessor {
         if (converterContext !is NewJ2kConverterContext) error("Invalid converter context for K2 J2K")
         val contextElement = target.files().firstOrNull() ?: return
 
-        // Run analysis and apply the post-processings for each group separately,
+        // Run analysis and apply the post-processings for each group separately
         // so that later groups can depend on the results of earlier groups
         for ((i, group) in processings.withIndex()) {
             ProgressManager.checkCanceled()

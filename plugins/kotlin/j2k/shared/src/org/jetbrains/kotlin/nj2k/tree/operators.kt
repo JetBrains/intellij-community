@@ -118,35 +118,35 @@ interface JKOperatorToken {
         )
 
         private val tokenToKotlinElementType: Map<JKOperatorToken, IElementType> = mapOf(
-          DIV to KtTokens.DIV,
-          MINUS to KtTokens.MINUS,
-          ANDAND to KtTokens.ANDAND,
-          OROR to KtTokens.OROR,
-          PLUS to KtTokens.PLUS,
-          MUL to KtTokens.MUL,
-          GT to KtTokens.GT,
-          GTEQ to KtTokens.GTEQ,
-          LT to KtTokens.LT,
-          LTEQ to KtTokens.LTEQ,
-          PERC to KtTokens.PERC,
+            DIV to KtTokens.DIV,
+            MINUS to KtTokens.MINUS,
+            ANDAND to KtTokens.ANDAND,
+            OROR to KtTokens.OROR,
+            PLUS to KtTokens.PLUS,
+            MUL to KtTokens.MUL,
+            GT to KtTokens.GT,
+            GTEQ to KtTokens.GTEQ,
+            LT to KtTokens.LT,
+            LTEQ to KtTokens.LTEQ,
+            PERC to KtTokens.PERC,
 
-          EQ to KtTokens.EQ,
-          EQEQ to KtTokens.EQEQ,
-          EXCLEQ to KtTokens.EXCLEQ,
+            EQ to KtTokens.EQ,
+            EQEQ to KtTokens.EQEQ,
+            EXCLEQ to KtTokens.EXCLEQ,
 
-          PLUSEQ to KtTokens.PLUSEQ,
-          MINUSEQ to KtTokens.MINUSEQ,
-          DIVEQ to KtTokens.DIVEQ,
-          MULTEQ to KtTokens.MULTEQ,
+            PLUSEQ to KtTokens.PLUSEQ,
+            MINUSEQ to KtTokens.MINUSEQ,
+            DIVEQ to KtTokens.DIVEQ,
+            MULTEQ to KtTokens.MULTEQ,
 
-          PLUSPLUS to KtTokens.PLUSPLUS,
-          MINUSMINUS to KtTokens.MINUSMINUS,
-          EXCL to KtTokens.EXCL,
+            PLUSPLUS to KtTokens.PLUSPLUS,
+            MINUSMINUS to KtTokens.MINUSMINUS,
+            EXCL to KtTokens.EXCL,
 
-          EQEQEQ to KtTokens.EQEQEQ,
-          EXCLEQEQEQ to KtTokens.EXCLEQEQEQ,
+            EQEQEQ to KtTokens.EQEQEQ,
+            EXCLEQEQEQ to KtTokens.EXCLEQEQEQ,
 
-          PERCEQ to KtTokens.PERCEQ,
+            PERCEQ to KtTokens.PERCEQ,
         )
     }
 }

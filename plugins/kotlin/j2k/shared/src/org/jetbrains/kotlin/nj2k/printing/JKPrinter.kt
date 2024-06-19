@@ -3,9 +3,8 @@
 package org.jetbrains.kotlin.nj2k.printing
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
+import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.nj2k.JKElementInfoStorage
 import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.symbols.JKSymbol

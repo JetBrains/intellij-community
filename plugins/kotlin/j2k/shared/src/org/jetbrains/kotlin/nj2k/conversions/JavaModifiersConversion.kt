@@ -4,7 +4,10 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_9
-import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
+import org.jetbrains.kotlin.nj2k.jvmAnnotation
+import org.jetbrains.kotlin.nj2k.moduleApiVersion
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.*
 

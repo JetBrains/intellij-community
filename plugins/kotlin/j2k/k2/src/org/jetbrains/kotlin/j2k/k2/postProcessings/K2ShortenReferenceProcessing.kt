@@ -38,7 +38,7 @@ internal class K2ShortenReferenceProcessing : FileBasedPostProcessing() {
         return Applier(shortenCommand)
     }
 
-    private class Applier(private val shortenCommand: ShortenCommand): PostProcessingApplier {
+    private class Applier(private val shortenCommand: ShortenCommand) : PostProcessingApplier {
         override fun apply() {
             shortenCommand.invokeShortening()
         }

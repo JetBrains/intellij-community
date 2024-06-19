@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.Nullability
-import org.jetbrains.kotlin.j2k.Nullability.*
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.*

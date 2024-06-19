@@ -5,7 +5,10 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.types.JKJavaDisjunctionType
+import org.jetbrains.kotlin.nj2k.types.isNull
+import org.jetbrains.kotlin.nj2k.types.isStringType
+import org.jetbrains.kotlin.nj2k.types.updateNullability
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**

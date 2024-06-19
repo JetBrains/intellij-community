@@ -6,7 +6,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaNonErrorClassType
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
@@ -81,7 +81,7 @@ private val primitiveTypeMapping: Map<String, String> = mapOf(
 
 context(KaSession)
 fun KtParameter.typeFqName(): FqName? {
-    val type = getParameterSymbol().returnType as? KtNonErrorClassType
+    val type = getParameterSymbol().returnType as? KaNonErrorClassType
     return type?.classId?.asSingleFqName()
 }
 
@@ -89,7 +89,7 @@ private val functionalTypeRegex = """(kotlin\.jvm\.functions|kotlin)\.Function[\
 
 context(KaSession)
 fun KtTypeReference.toJK(typeFactory: JKTypeFactory): JKType =
-    typeFactory.fromKtType(getKtType())
+    typeFactory.fromKaType(getKaType())
 
 infix fun JKJavaPrimitiveType.isStrongerThan(other: JKJavaPrimitiveType) =
     jvmPrimitiveTypesPriority.getValue(this.jvmPrimitiveType.primitiveType) >
