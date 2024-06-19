@@ -5438,6 +5438,25 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../shared/tests/testData/newJ2k/nullabilityGenerics")
+    public static class NullabilityGenerics extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("typeParameterNotNullUpperBound.java")
+        public void testTypeParameterNotNullUpperBound() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/typeParameterNotNullUpperBound.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/objectLiteral")
     public static class ObjectLiteral extends AbstractNewJavaToKotlinConverterSingleFileTest {
         @java.lang.Override
