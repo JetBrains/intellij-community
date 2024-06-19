@@ -7,6 +7,7 @@ import java.util.concurrent.CancellationException
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use coroutines instead.")
 object Futures {
 

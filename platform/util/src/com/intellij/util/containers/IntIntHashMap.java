@@ -2,10 +2,12 @@
 package com.intellij.util.containers;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated use {@link Int2IntOpenHashMap} instead
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public final class IntIntHashMap extends Int2IntOpenHashMap {
   private static final int DEFAULT_NULL_VALUE = -1;

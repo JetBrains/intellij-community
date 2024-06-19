@@ -829,7 +829,7 @@ public final class UIUtil {
   /**
    * @deprecated Use {@link FontUtil#getMenuFont()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("unused")
   public static Font getMenuFont() {
     return FontUtil.getMenuFont();
