@@ -1,6 +1,5 @@
 package com.intellij.remoteDev.tests.impl.utils
 
-import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.blockingDispatcher
@@ -35,9 +34,9 @@ suspend fun <T> withTimeoutDumping(title: String,
       //})
 
       val coroutinesDump = dumpCoroutines(outerScope)
+      val failMessage = outerScope.async { failMessageProducer?.invoke() }.await()
       throw TimeoutException(buildString {
         appendLine(message)
-        val failMessage = failMessageProducer?.invoke()
         if (!failMessage.isNullOrBlank()) {
           appendLine(failMessage)
         }
