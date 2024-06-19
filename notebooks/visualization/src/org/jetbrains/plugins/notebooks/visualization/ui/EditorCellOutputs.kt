@@ -32,8 +32,9 @@ class EditorCellOutputs(
   private val onInlayDisposed: (EditorCellOutputs) -> Unit = {},
 ) : EditorCellViewComponent(), Disposable {
 
+  private var foldingVisible: Boolean = false
   private val _outputs = mutableListOf<EditorCellOutput>()
-  val outputs
+  val outputs: List<EditorCellOutput>
     get() = _outputs
 
   private val innerComponent = InnerComponent().also {
@@ -68,10 +69,12 @@ class EditorCellOutputs(
   }
 
   fun showFolding() {
+    foldingVisible = true
     outputs.forEach { it.showFolding() }
   }
 
   fun hideFolding() {
+    foldingVisible = false
     outputs.forEach { it.hideFolding() }
   }
 
@@ -250,6 +253,11 @@ class EditorCellOutputs(
     )
 
     val outputComponent = EditorCellOutput(editor, collapsingComponent, newComponent.disposable)
+    if (foldingVisible) {
+      outputComponent.showFolding()
+    } else {
+      outputComponent.hideFolding()
+    }
     _outputs.add(if (pos == -1) _outputs.size else pos, outputComponent)
     add(outputComponent)
 

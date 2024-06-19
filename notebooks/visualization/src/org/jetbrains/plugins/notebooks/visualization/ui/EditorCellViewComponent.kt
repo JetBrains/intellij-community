@@ -5,6 +5,12 @@ import java.awt.Rectangle
 abstract class EditorCellViewComponent {
 
   var bounds: Rectangle = Rectangle(0, 0, 0, 0)
+    set(value) {
+      if (value != field) {
+        invalidate()
+      }
+      field = value
+    }
 
   private var parent: EditorCellViewComponent? = null
 
@@ -15,11 +21,13 @@ abstract class EditorCellViewComponent {
   fun add(child: EditorCellViewComponent) {
     children.add(child)
     child.parent = this
+    invalidate()
   }
 
   fun remove(child: EditorCellViewComponent) {
     children.remove(child)
     child.parent = null
+    invalidate()
   }
 
   fun dispose() {

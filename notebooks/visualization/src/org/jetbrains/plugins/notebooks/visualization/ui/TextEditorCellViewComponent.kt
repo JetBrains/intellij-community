@@ -55,13 +55,14 @@ class TextEditorCellViewComponent(
 
   override fun calculateBounds(): Rectangle {
     val startOffset = editor.document.getLineStartOffset(interval.lines.first)
-    val location = editor.offsetToXY(startOffset)
+    val startLocation = editor.offsetToXY(startOffset)
     val interval = interval
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
-    val height = editor.offsetToXY(endOffset).y + editor.lineHeight - location.y
-    val width = editor.offsetToXY(endOffset).x - location.x
+    val endLocation = editor.offsetToXY(endOffset)
+    val height = endLocation.y + editor.lineHeight - startLocation.y
+    val width = endLocation.x - startLocation.x
     val dimension = Dimension(width, height)
-    return Rectangle(location, dimension)
+    return Rectangle(startLocation, dimension)
   }
 
 }

@@ -76,6 +76,10 @@ class EditorCell(
     view?.update(force)
   }
 
+  fun updateInput() {
+    view?.updateInput()
+  }
+
   fun onViewportChange() {
     view?.onViewportChanges()
   }
@@ -104,4 +108,6 @@ class EditorCell(
       .filterIsInstance<NotebookCellInlayController.LazyFactory>()
       .firstOrNull { it.getControllerClass() == type.java }
   }
+
+
 }

@@ -12,7 +12,7 @@ class EditorCellInput(
   private val editor: EditorEx,
   private val componentFactory: (EditorCellInput, EditorCellViewComponent?) -> EditorCellViewComponent,
   private val cell: EditorCell,
-): EditorCellViewComponent() {
+) : EditorCellViewComponent() {
 
   val interval: NotebookCellLines.Interval
     get() = cell.intervalPointer.get() ?: error("Invalid interval")
@@ -89,8 +89,7 @@ class EditorCellInput(
   }
 
   fun update(force: Boolean = false) {
-    val oldComponent = if (force) null else _component
-    _component = componentFactory(this, oldComponent)
+    updateInput(force)
     updateGutterIcons()
   }
 
@@ -148,6 +147,18 @@ class EditorCellInput(
         b.union(i)
       }
     return bounds
+  }
+
+  fun updateInput() {
+    updateInput(false)
+  }
+
+  private fun updateInput(force: Boolean) {
+    val oldComponent = if (force) null else _component
+    _component = componentFactory(this, oldComponent)
+    if (bounds != calculateBounds()) {
+      invalidate()
+    }
   }
 }
 

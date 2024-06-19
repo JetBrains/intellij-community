@@ -14,9 +14,7 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.HighlighterLayer
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -70,7 +68,11 @@ class EditorCellView(
         }
       }
       else {
-        TextEditorCellViewComponent(editor, cell)
+        if (currentComponent is TextEditorCellViewComponent) {
+          currentComponent
+        } else {
+          TextEditorCellViewComponent(editor, cell)
+        }
       }
     }, cell)
     .also {
@@ -96,7 +98,7 @@ class EditorCellView(
       disposeController(controller)
     }
     input.dispose()
-    outputs?.dispose()
+    outputs?.let { Disposer.dispose(it) }
     removeCellHighlight()
   }
 
@@ -135,7 +137,12 @@ class EditorCellView(
     invalidate()
   }
 
-  private fun updateOutputs() {
+  fun updateInput() {
+    updateCellHighlight()
+    input.updateInput()
+  }
+
+  internal fun updateOutputs() {
     if (hasOutputs()) {
       if (_outputs == null) {
         _outputs = EditorCellOutputs(editor, { interval })
@@ -238,6 +245,23 @@ class EditorCellView(
         HighlighterTargetArea.LINES_IN_RANGE
       ).also {
         it.lineMarkerRenderer = NotebookGutterLineMarkerRenderer(interval)
+      }
+    }
+
+    if (interval.type == NotebookCellLines.CellType.CODE) {
+      addCellHighlighter {
+        val highlighter = editor.markupModel.addRangeHighlighter(
+          startOffset,
+          endOffset,
+          // Code cell background should be seen behind any syntax highlighting, selection or any other effect.
+          HighlighterLayer.FIRST - 100,
+          TextAttributes().apply {
+            backgroundColor = editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
+          },
+          HighlighterTargetArea.LINES_IN_RANGE
+        )
+        highlighter.customRenderer = NotebookCellHighlighterRenderer
+        highlighter
       }
     }
 
@@ -358,6 +382,7 @@ class EditorCellView(
     )
   }
 
+
   inner class NotebookGutterLineMarkerRenderer(private val interval: NotebookCellLines.Interval) : NotebookLineMarkerRenderer() {
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
       editor as EditorImpl
@@ -407,5 +432,32 @@ class EditorCellView(
   companion object {
     private val LOG = logger<EditorCell>()
     val wasFoldedInRenderedState = Key<Boolean>("jupyter.markdown.folding.was.rendered")
+  }
+}
+
+/**
+ * Renders rectangle in the right part of editor to make filled code cells look like rectangles with margins.
+ * But mostly it's used as a token to filter notebook cell highlighters.
+ */
+private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
+  override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
+    editor as EditorImpl
+    @Suppress("NAME_SHADOWING") g.create().use { g ->
+      val scrollbarWidth = editor.scrollPane.verticalScrollBar.width
+      val oldBounds = g.clipBounds
+      val visibleArea = editor.scrollingModel.visibleArea
+      g.setClip(
+        visibleArea.x + visibleArea.width - scrollbarWidth,
+        oldBounds.y,
+        scrollbarWidth,
+        oldBounds.height
+      )
+
+      g.color = editor.colorsScheme.defaultBackground
+      g.clipBounds.run {
+        val fillX = if (editor.editorKind == EditorKind.DIFF && editor.isMirrored) x + 20 else x
+        g.fillRect(fillX, y, width, height)
+      }
+    }
   }
 }

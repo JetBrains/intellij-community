@@ -64,8 +64,8 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
 
       override fun validateTree() {
         keepScrollingPositionWhile(editor) {
-          manager.validateCells()
           super.validateTree()
+          manager.validateCells()
         }
       }
     }
