@@ -62,7 +62,6 @@ import kotlin.collections.Map.Entry
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.isDirectory
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<RecentProjectsManager>()
@@ -82,10 +81,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     @JvmStatic
     fun getInstanceEx(): RecentProjectsManagerBase = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
 
-    @JvmStatic
-    fun isFileSystemPath(path: String): Boolean {
-      return path.indexOf('/') != -1 || path.indexOf('\\') != -1
-    }
+    fun isFileSystemPath(path: String): Boolean = path.indexOf('/') != -1 || path.indexOf('\\') != -1
   }
 
   private val modCounter = LongAdder()
@@ -851,7 +847,7 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  if (!file.isDirectory()) {
+  if (!Files.isDirectory(file)) {
     val fileName = file.fileName
     if (fileName != null) {
       return FileUtilRt.getNameWithoutExtension(fileName.toString())

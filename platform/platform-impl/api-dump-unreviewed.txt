@@ -4087,7 +4087,6 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - getRecentProjectsActions(Z):com.intellij.openapi.actionSystem.AnAction[]
 - f:getState():com.intellij.ide.RecentProjectManagerState
 - hasPath(java.lang.String):Z
-- sf:isFileSystemPath(java.lang.String):Z
 - p:isOpenProjectsOneByOneRequired():Z
 - pf:isValidProjectPath(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
 - f:loadState(com.intellij.ide.RecentProjectManagerState):V
@@ -4119,15 +4118,16 @@ c:com.intellij.ide.ReopenProjectAction
 - com.intellij.openapi.project.DumbAware
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getBranchName():java.lang.String
-- getProjectDisplayName():java.lang.String
-- getProjectName():java.lang.String
-- getProjectNameToDisplay():java.lang.String
-- getProjectPath():java.lang.String
-- isRemoved():Z
-- setProjectGroup(com.intellij.ide.ProjectGroup):V
+- f:getBranchName():java.lang.String
+- f:getProjectDisplayName():java.lang.String
+- f:getProjectName():java.lang.String
+- f:getProjectNameToDisplay():java.lang.String
+- f:getProjectPath():java.lang.String
+- f:isRemoved():Z
+- f:setProjectGroup(com.intellij.ide.ProjectGroup):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.TooltipEvent
 - <init>(java.awt.event.InputEvent,Z,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V

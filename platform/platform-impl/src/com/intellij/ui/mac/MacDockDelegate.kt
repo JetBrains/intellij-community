@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac
 
 import com.intellij.ide.DataManager
@@ -39,9 +39,9 @@ internal class MacDockDelegate private constructor(private val recentProjectsMen
   override fun updateRecentProjectsMenu() {
     recentProjectsMenu.removeAll()
     for (action in RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false)) {
-      val menuItem = MenuItem((action as ReopenProjectAction).getProjectDisplayName())
+      val menuItem = MenuItem((action as ReopenProjectAction).projectDisplayName)
       menuItem.addActionListener {
-        // Newly opened project won't become an active window, if another application is currently active.
+        // The newly opened project won't become an active window if another application is currently active.
         // This is not what user expects, so we activate our application explicitly.
         Desktop.getDesktop().requestForeground(false)
         ActionUtil.performActionDumbAwareWithCallbacks(

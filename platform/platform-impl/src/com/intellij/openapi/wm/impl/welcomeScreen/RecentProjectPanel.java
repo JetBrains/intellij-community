@@ -495,7 +495,9 @@ public class RecentProjectPanel extends JPanel {
 
     @NlsSafe String getTitle2Text(ReopenProjectAction action, JComponent pathLabel, int leftOffset) {
       String fullText = action.getProjectPath();
-      if (fullText == null || fullText.isEmpty()) return " ";
+      if (fullText.isEmpty()) {
+        return " ";
+      }
 
       fullText = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(fullText), false);
 
@@ -653,7 +655,7 @@ public class RecentProjectPanel extends JPanel {
           final long startTime = System.currentTimeMillis();
           boolean pathIsValid;
           try {
-            pathIsValid = !RecentProjectsManagerBase.isFileSystemPath(path) || isPathAvailable(path);
+            pathIsValid = !RecentProjectsManagerBase.Companion.isFileSystemPath(path) || isPathAvailable(path);
           }
           catch (Exception e) {
             pathIsValid = false;

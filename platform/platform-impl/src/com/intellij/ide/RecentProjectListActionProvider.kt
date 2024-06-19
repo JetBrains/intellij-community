@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.ide.impl.ProjectUtilCore
@@ -125,9 +125,9 @@ open class RecentProjectListActionProvider {
       else projectName
     }
 
-    // It's better don't to remove non-existent projects. Sometimes projects stored
-    // on USB-sticks or flash-cards, and it will be nice to have them in the list
-    // when USB device or SD-card is mounted
+    // It's better don't to remove non-existent projects.
+    // Sometimes projects are stored on USB-sticks or flash-cards, and it will be nice to have them in the list
+    // when a USB device or SD-card is mounted
     return ReopenProjectAction(path, projectName, displayName, branch)
   }
 
@@ -135,7 +135,7 @@ open class RecentProjectListActionProvider {
     val reopenProjectAction = createOpenAction(path, duplicates)
     return RecentProjectItem(
       projectPath = reopenProjectAction.projectPath,
-      projectName = reopenProjectAction.projectName,
+      projectName = reopenProjectAction.projectName ?: "",
       displayName = reopenProjectAction.projectNameToDisplay ?: "",
       branchName = reopenProjectAction.branchName,
       projectGroup = projectGroup
@@ -143,7 +143,7 @@ open class RecentProjectListActionProvider {
   }
 
   /**
-   * Returns true if action corresponds to specified project
+   * Returns true if action corresponds to a specified project
    */
   open fun isCurrentProjectAction(project: Project, action: ReopenProjectAction): Boolean = action.projectPath == project.basePath
 }
