@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * @deprecated use `TextMateService#readBundle` or `TextMateBundleReader`
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class BundleFactory {
   private final PlistReader myPlistReader;
 
@@ -28,7 +28,7 @@ public class BundleFactory {
    * @return Bundle object or null
    * @deprecated use `TextMateService#readBundle#readGrammars` or `TextMateBundleReader`
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public Bundle fromDirectory(@NotNull File directory) throws IOException {
     final BundleType type = BundleType.detectBundleType(directory.toPath());

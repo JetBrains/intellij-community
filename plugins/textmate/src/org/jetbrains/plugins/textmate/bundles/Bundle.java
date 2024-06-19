@@ -57,7 +57,7 @@ public class Bundle {
   /**
    * @deprecated use `TextMateService#readBundle#readPreferences` or `TextMateBundleReader`
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull Collection<File> getPreferenceFiles() {
     switch (myType) {
       case TEXTMATE -> {
@@ -73,7 +73,7 @@ public class Bundle {
   /**
    * @deprecated use `TextMateService#readBundle#readSnippets` or `TextMateBundleReader`
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull Collection<File> getSnippetFiles() {
     switch (myType) {
       case TEXTMATE -> {
@@ -119,7 +119,7 @@ public class Bundle {
   /**
    * @deprecated use `TextMateService#readBundle#readGrammars` or `TextMateBundleReader`
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Collection<String> getExtensions(@NotNull File file, @NotNull Plist plist) {
     return plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList()).getStringArray();
   }
@@ -127,7 +127,7 @@ public class Bundle {
   /**
    * @deprecated use `TextMateService#readBundle#readPreferences` or `TextMateBundleReader`
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<Map.Entry<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
     return Collections.singletonList(PreferencesReadUtil.retrieveSettingsPlist(plistReader.read(file)));
   }
