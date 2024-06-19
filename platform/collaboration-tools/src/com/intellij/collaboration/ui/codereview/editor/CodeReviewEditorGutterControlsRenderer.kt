@@ -6,7 +6,6 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.CustomFoldRegion
@@ -32,7 +31,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
@@ -42,7 +40,6 @@ import kotlin.properties.Delegates.observable
 /**
  * Draws and handles review controls in gutter
  */
-@ApiStatus.Internal
 class CodeReviewEditorGutterControlsRenderer
 private constructor(private val model: CodeReviewEditorGutterControlsModel,
                     private val editor: EditorEx)

@@ -5,14 +5,12 @@ import com.intellij.diff.util.LineRange
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * A UI model for an editor with gutter changes highlighting and a popup with actions for changes
  * This model should exist in the same scope as the editor
  * One model - one editor
  */
-@ApiStatus.Internal
 interface CodeReviewEditorGutterActionableChangesModel : CodeReviewEditorGutterChangesModel {
 
   @get:RequiresEdt

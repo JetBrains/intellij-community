@@ -81,8 +81,14 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
 }
 
 private suspend fun showReview(settings: GithubPullRequestsProjectUISettings, fileVm: GHPRReviewFileEditorViewModel, editor: EditorEx): Nothing {
-  withContext(Dispatchers.Main) {
-    val model = GHPRReviewFileEditorModel(this, settings, fileVm, editor.document)
+  withContext(Dispatchers.Main.immediate) {
+    val reviewHeadContent = fileVm.originalContent.mapNotNull { it?.result?.getOrThrow() }.first()
+
+    val model = GHPRReviewFileEditorModel(this, settings, fileVm)
+    launchNow {
+      ReviewInEditorUtil.trackDocumentDiffSync(reviewHeadContent, editor.document, model::setPostReviewChanges)
+    }
+
     launchNow {
       CodeReviewEditorGutterChangesRenderer.render(model, editor)
     }

@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.ui.EditorTextField
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
@@ -43,7 +42,6 @@ import java.awt.datatransfer.StringSelection
 /**
  * Draws and handles review changes markers in gutter
  */
-@ApiStatus.Internal
 class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorGutterActionableChangesModel,
                                             private val editor: Editor,
                                             disposable: Disposable)

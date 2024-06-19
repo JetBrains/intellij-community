@@ -1289,10 +1289,66 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - <init>(javax.swing.JComponent):V
 - f:isVisible():Z
 - f:setVisible(Z):V
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel
+- com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
+- *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel$Companion
+- a:addDiffHighlightListener(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- a:getBaseContent(com.intellij.diff.util.LineRange):java.lang.String
+- a:getShouldHighlightDiffRanges():Z
+- a:setShouldHighlightDiffRanges(Z):V
+- a:showDiff(java.lang.Integer):V
+*f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel$Companion
+- f:getKEY():com.intellij.openapi.util.Key
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
+- com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource
+- findRange(com.intellij.openapi.vcs.ex.Range):com.intellij.openapi.vcs.ex.Range
+- getRanges():java.util.List
+- a:getReviewRanges():kotlinx.coroutines.flow.StateFlow
+*f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
+- com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
+- *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer$Companion
+- <init>(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor,com.intellij.openapi.Disposable):V
+*f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer$Companion
+- f:render(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor,kotlin.coroutines.Continuation):java.lang.Object
+- f:setupIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor):V
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
+- a:getGutterControlsState():kotlinx.coroutines.flow.StateFlow
+- a:requestNewComment(I):V
+- a:toggleComments(I):V
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$ControlsState
+- a:getLinesWithComments():java.util.Set
+- a:isLineCommentable(I):Z
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$WithMultilineComments
+- com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
+- a:canCreateComment(com.intellij.diff.util.LineRange):Z
+- a:requestNewComment(com.intellij.diff.util.LineRange):V
+*f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
+- com.intellij.openapi.editor.markup.ActiveGutterRenderer
+- com.intellij.openapi.editor.markup.LineMarkerRenderer
+- com.intellij.openapi.editor.markup.LineMarkerRendererEx
+- *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer$Companion
+- canDoAction(com.intellij.openapi.editor.Editor,java.awt.event.MouseEvent):Z
+- doAction(com.intellij.openapi.editor.Editor,java.awt.event.MouseEvent):V
+- getPosition():com.intellij.openapi.editor.markup.LineMarkerRendererEx$Position
+- f:launch(kotlin.coroutines.Continuation):java.lang.Object
+- paint(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.awt.Rectangle):V
+*f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer$Companion
+- f:render(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel,com.intellij.openapi.editor.ex.EditorEx,kotlin.coroutines.Continuation):java.lang.Object
+- f:setupIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel,com.intellij.openapi.editor.ex.EditorEx):V
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
+- a:getInlays():kotlinx.coroutines.flow.StateFlow
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
+- com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
+- com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel
 - com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
 - a:getUpdateRequired():kotlinx.coroutines.flow.StateFlow
 - a:updateBranch():V
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
+- com.intellij.collaboration.ui.codereview.editor.EditorMappedViewModel
+- a:getKey():java.lang.Object
+- a:getLine():kotlinx.coroutines.flow.StateFlow
+- a:isVisible():kotlinx.coroutines.flow.StateFlow
 *f:com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt
 - sf:controlInlaysIn(com.intellij.openapi.editor.ex.EditorEx,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - sf:insertComponentAfter(com.intellij.openapi.editor.ex.EditorEx,I,javax.swing.JComponent,I,kotlin.jvm.functions.Function1):com.intellij.openapi.editor.Inlay
@@ -1310,9 +1366,13 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - f:getREVIEW_CHANGES_STATUS_COLOR():com.intellij.ui.JBColor
 - f:getREVIEW_STATUS_MARKER_COLOR_SCHEME():com.intellij.openapi.diff.LineStatusMarkerColorScheme
 - f:showReviewToolbar(com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel,com.intellij.openapi.editor.Editor,kotlin.coroutines.Continuation):java.lang.Object
+- f:trackDocumentDiffSync(com.intellij.openapi.editor.Document,com.intellij.openapi.editor.Document,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- f:trackDocumentDiffSync(java.lang.CharSequence,com.intellij.openapi.editor.Document,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - f:transferLineFromAfter(java.util.List,I,Z):java.lang.Integer
 - bs:transferLineFromAfter$default(com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil,java.util.List,I,Z,I,java.lang.Object):java.lang.Integer
 - f:transferLineToAfter(java.util.List,I):I
+*f:com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtilKt
+- sf:asLst(com.intellij.diff.util.Range):com.intellij.openapi.vcs.ex.Range
 f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFileDiffAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V

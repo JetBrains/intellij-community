@@ -4,14 +4,12 @@ package com.intellij.collaboration.ui.codereview.editor
 import com.intellij.diff.util.LineRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * A UI model for an editor gutter with review controls
  * This model should exist in the same scope as the gutter
  * One model - one gutter
  */
-@ApiStatus.Internal
 interface CodeReviewEditorGutterControlsModel {
   val gutterControlsState: StateFlow<ControlsState?>
 

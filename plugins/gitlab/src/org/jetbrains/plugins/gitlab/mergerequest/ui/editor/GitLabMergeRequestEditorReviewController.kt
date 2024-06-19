@@ -8,12 +8,12 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterCha
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
 import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 import com.intellij.collaboration.ui.codereview.editor.renderInlays
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.EditorFactoryEvent
@@ -25,11 +25,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
-
-private val LOG = logger<GitLabMergeRequestEditorReviewController>()
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.PROJECT)
@@ -76,38 +75,41 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
   private suspend fun showReview(fileVm: GitLabMergeRequestEditorReviewFileViewModel, editor: EditorEx): Nothing {
     withContext(Dispatchers.Main) {
       val preferences = project.serviceAsync<GitLabMergeRequestsPreferences>()
-      val model = GitLabMergeRequestEditorReviewUIModel(this, preferences, fileVm, editor.document)
-      try {
-        launchNow {
-          CodeReviewEditorGutterChangesRenderer.render(model, editor)
-        }
-        launchNow {
-          CodeReviewEditorGutterControlsRenderer.render(model, editor)
-        }
-        launchNow {
-          editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GitLabMergeRequestEditorMappedComponentModel::key)) { createRenderer(model, it) }
-        }
-        awaitCancellation()
+      val reviewHeadContent = fileVm.headContent.mapNotNull { it?.result?.getOrThrow() }.first()
+
+      val model = GitLabMergeRequestEditorReviewUIModel(this, preferences, fileVm)
+      launchNow {
+        ReviewInEditorUtil.trackDocumentDiffSync(reviewHeadContent, editor.document, model::setPostReviewChanges)
       }
-      finally {
-        withContext(NonCancellable) {
-          Disposer.dispose(model)
+
+      launchNow {
+        CodeReviewEditorGutterChangesRenderer.render(model, editor)
+      }
+      launchNow {
+        CodeReviewEditorGutterControlsRenderer.render(model, editor)
+      }
+      launchNow {
+        editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GitLabMergeRequestEditorMappedComponentModel::key)) {
+          createRenderer(it, fileVm.avatarIconsProvider)
         }
       }
+      awaitCancellation()
     }
   }
 
-  private fun CoroutineScope.createRenderer(model: GitLabMergeRequestEditorReviewUIModel,
-                                            inlayModel: GitLabMergeRequestEditorMappedComponentModel) =
+  private fun CoroutineScope.createRenderer(
+    inlayModel: GitLabMergeRequestEditorMappedComponentModel,
+    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+  ) =
     when (inlayModel) {
       is GitLabMergeRequestEditorMappedComponentModel.Discussion<*> ->
-        GitLabMergeRequestDiscussionInlayRenderer(this, project, inlayModel.vm, model.avatarIconsProvider,
+        GitLabMergeRequestDiscussionInlayRenderer(this, project, inlayModel.vm, avatarIconsProvider,
                                                   GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
       is GitLabMergeRequestEditorMappedComponentModel.DraftNote<*> ->
-        GitLabMergeRequestDraftNoteInlayRenderer(this, project, inlayModel.vm, model.avatarIconsProvider,
+        GitLabMergeRequestDraftNoteInlayRenderer(this, project, inlayModel.vm, avatarIconsProvider,
                                                  GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
       is GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<*> ->
-        GitLabMergeRequestNewDiscussionInlayRenderer(this, project, inlayModel.vm, model.avatarIconsProvider,
+        GitLabMergeRequestNewDiscussionInlayRenderer(this, project, inlayModel.vm, avatarIconsProvider,
                                                      GitLabStatistics.MergeRequestNoteActionPlace.EDITOR, inlayModel::cancel)
 
     }
