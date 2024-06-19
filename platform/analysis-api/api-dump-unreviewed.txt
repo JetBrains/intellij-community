@@ -2825,6 +2825,14 @@ f:com.intellij.modcommand.ModStartTemplate$DependantVariableField
 - range():com.intellij.openapi.util.TextRange
 - varName():java.lang.String
 - withRange(com.intellij.openapi.util.TextRange):com.intellij.modcommand.ModStartTemplate$TemplateField
+f:com.intellij.modcommand.ModStartTemplate$EndField
+- java.lang.Record
+- com.intellij.modcommand.ModStartTemplate$TemplateField
+- <init>(com.intellij.openapi.util.TextRange):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- range():com.intellij.openapi.util.TextRange
+- withRange(com.intellij.openapi.util.TextRange):com.intellij.modcommand.ModStartTemplate$TemplateField
 f:com.intellij.modcommand.ModStartTemplate$ExpressionField
 - java.lang.Record
 - com.intellij.modcommand.ModStartTemplate$TemplateField
@@ -2843,6 +2851,7 @@ com.intellij.modcommand.ModTemplateBuilder
 - field(com.intellij.psi.PsiElement,java.lang.String):com.intellij.modcommand.ModTemplateBuilder
 - a:field(com.intellij.psi.PsiElement,java.lang.String,com.intellij.codeInsight.template.Expression):com.intellij.modcommand.ModTemplateBuilder
 - a:field(com.intellij.psi.PsiElement,java.lang.String,java.lang.String,Z):com.intellij.modcommand.ModTemplateBuilder
+- a:finishAt(I):com.intellij.modcommand.ModTemplateBuilder
 f:com.intellij.modcommand.ModUpdateFileText
 - java.lang.Record
 - com.intellij.modcommand.ModCommand

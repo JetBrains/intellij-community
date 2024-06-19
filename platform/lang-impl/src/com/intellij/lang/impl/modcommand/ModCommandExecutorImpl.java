@@ -283,6 +283,12 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
           builder.replaceElement(psiFile, variableField.range(), variableField.varName(),
                                  variableField.dependantVariableName(), variableField.alwaysStopAt());
         }
+        else if (field instanceof ModStartTemplate.EndField endField) {
+          PsiElement leaf = psiFile.findElementAt(endField.range().getStartOffset());
+          if (leaf != null) {
+            builder.setEndVariableBefore(leaf);
+          }
+        }
       }
 
       final Template tmpl = builder.buildInlineTemplate();

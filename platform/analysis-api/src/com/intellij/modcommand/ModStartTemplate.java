@@ -68,4 +68,16 @@ public record ModStartTemplate(@NotNull VirtualFile file, @NotNull List<@NotNull
       return new DependantVariableField(range, varName, dependantVariableName, alwaysStopAt);
     }
   }
+
+  /**
+   * A field to designate the end offset (where caret should be moved after the template is finished)
+   * 
+   * @param range left bound of the range designates the end position, right bound is ignored
+   */
+  public record EndField(@NotNull TextRange range) implements TemplateField {
+    @Override
+    public @NotNull TemplateField withRange(@NotNull TextRange range) {
+      return new EndField(range);
+    }
+  }
 }

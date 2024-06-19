@@ -439,6 +439,13 @@ final class PsiUpdateImpl {
           myTemplateFields.add(new ModStartTemplate.DependantVariableField(range, varName, dependantVariableName, alwaysStopAt));
           return this;
         }
+
+        @Override
+        public @NotNull ModTemplateBuilder finishAt(int offset) {
+          TextRange range = mapRange(TextRange.create(offset, offset));
+          myTemplateFields.add(new ModStartTemplate.EndField(range));
+          return this;
+        }
       };
     }
 
