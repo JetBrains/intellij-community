@@ -51,6 +51,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -421,7 +422,7 @@ class EditorWindow internal constructor(
     // on unsplit, we transfer composite to another window, so, we launch in the window's scope
     coroutineScope.launch {
       attachAsChildTo(composite.coroutineScope)
-      composite.selectedEditorWithProvider.collect {
+      composite.selectedEditorWithProvider.collectLatest {
         val tabActions = it?.fileEditor?.tabActions
         withContext(Dispatchers.EDT) {
           if (tab.tabPaneActions != tabActions) {
