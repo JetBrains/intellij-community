@@ -26,10 +26,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GitStagingAreaHolder {
   private static final Logger LOG = Logger.getInstance(GitStagingAreaHolder.class);
@@ -107,26 +104,13 @@ public class GitStagingAreaHolder {
    */
   @ApiStatus.Internal
   public @NotNull List<GitFileStatus> refresh(@NotNull RootDirtySet dirtyPaths) throws VcsException {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     VirtualFile root = myRepository.getRoot();
 
     StructuredIdeActivity activity = GitRefreshUsageCollector.logStatusRefresh(myProject, dirtyPaths.isEverythingDirty());
     List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths.collectFilePaths(), true, false, false);
     activity.finished();
 
-    rootRecords.removeIf(record -> {
-      boolean isUnderDirtyScope = isUnder(record, dirtyPaths);
-      if (!isUnderDirtyScope) return true;
-
-      VirtualFile recordRoot = vcsManager.getVcsRootFor(record.getPath());
-      boolean isUnderOurRoot = root.equals(recordRoot) || isSubmoduleStatus(record, recordRoot);
-      if (!isUnderOurRoot) {
-        LOG.warn(String.format("Ignoring change under another root: %s; root: %s; mapped root: %s", record, root, recordRoot));
-        return true;
-      }
-
-      return false;
-    });
+    removeUnwantedRecords(rootRecords, dirtyPaths);
 
     synchronized (LOCK) {
       myRecords.removeIf(record -> isUnder(record, dirtyPaths));
@@ -136,6 +120,47 @@ public class GitStagingAreaHolder {
     BackgroundTaskUtil.syncPublisher(myProject, TOPIC).stagingAreaChanged(myRepository);
 
     return rootRecords;
+  }
+
+  /**
+   * Remove records that we did not query for (not under dirty scope).
+   * Remove records that belong to another VCS root.
+   *
+   * @see git4idea.repo.GitUntrackedFilesHolder#removePathsUnderOtherRoots
+   */
+  private void removeUnwantedRecords(@NotNull Collection<GitFileStatus> rootRecords,
+                                     @NotNull RootDirtySet dirtyPaths) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    VirtualFile repoRoot = myRepository.getRoot();
+
+    int removedFiles = 0;
+    int maxFilesToReport = 10;
+
+    Iterator<GitFileStatus> it = rootRecords.iterator();
+    while (it.hasNext()) {
+      GitFileStatus record = it.next();
+
+      boolean isUnderDirtyScope = isUnder(record, dirtyPaths);
+      if (!isUnderDirtyScope) {
+        it.remove();
+        continue;
+      }
+
+      VirtualFile recordRoot = vcsManager.getVcsRootFor(record.getPath());
+      boolean isUnderOurRoot = repoRoot.equals(recordRoot) || isSubmoduleStatus(record, recordRoot);
+      if (isUnderOurRoot) continue; // keep the record
+
+      it.remove();
+      removedFiles++;
+      if (removedFiles < maxFilesToReport || LOG.isDebugEnabled()) {
+        LOG.warn(String.format("Ignoring change under another root: %s; root: %s; mapped root: %s",
+                               record, repoRoot.getPresentableUrl(),
+                               recordRoot != null ? recordRoot.getPresentableUrl() : "null"));
+      }
+    }
+    if (removedFiles >= maxFilesToReport) {
+      LOG.warn(String.format("Ignoring changed files under another root: %s files total", removedFiles));
+    }
   }
 
   private static boolean isUnder(@NotNull GitFileStatus record, @NotNull RootDirtySet dirtySet) {
