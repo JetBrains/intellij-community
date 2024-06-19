@@ -339,7 +339,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
                                       IndicesBundle.message("maven.indices.updated.for.repo", repositoryInfo.url),
                                       MavenIndexUpdateState.State.CANCELLED))
             }
-            catch (e: Exception) {
+            catch (e: Throwable) {
               if (e !is ProcessCanceledException) {
                 MavenLog.LOG.warn(e)
               }
