@@ -16,7 +16,7 @@ class SetupCloudStep : UndoableEvaluationStep {
 
   override fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
     Registry.get(TOKEN_FROM_ENV).also { tokenFromEnvOriginalValue = it.asBoolean() }.setValue(true)
-    Registry.get(ENDPOINT_TYPE).also { endpointTypeOriginalValue = it.asString() }.setValue("Service")
+    Registry.get(ENDPOINT_TYPE).also { endpointTypeOriginalValue = it.selectedOption ?: "User" }.selectedOption = "Service"
     Registry.get(USE_STAGING_URL).also { stagingOriginalValue = it.asBoolean() }.setValue(true)
     return workspace
   }
@@ -24,13 +24,13 @@ class SetupCloudStep : UndoableEvaluationStep {
   override fun undoStep(): UndoableEvaluationStep.UndoStep {
     return object: UndoableEvaluationStep.UndoStep {
       override val name: String
-        get() = "Undo Cloud Completion step"
+        get() = "Undo Cloud Authentication step"
       override val description: String
         get() = "Reset registry keys"
 
       override fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
         Registry.get(TOKEN_FROM_ENV).setValue(tokenFromEnvOriginalValue)
-        Registry.get(ENDPOINT_TYPE).setValue(endpointTypeOriginalValue)
+        Registry.get(ENDPOINT_TYPE).selectedOption = endpointTypeOriginalValue
         Registry.get(USE_STAGING_URL).setValue(stagingOriginalValue)
         return workspace
       }
