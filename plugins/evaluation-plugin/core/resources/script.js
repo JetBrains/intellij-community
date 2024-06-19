@@ -1,5 +1,3 @@
-import Diff from './diff.js';
-
 const favoriteFeatures = getFavoriteFeaturesFromCookie();
 let isCompletionGolf = false;
 
