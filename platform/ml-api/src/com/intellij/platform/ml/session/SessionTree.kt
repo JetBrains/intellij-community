@@ -405,6 +405,8 @@ typealias AnalysedSessionTree<P> = SessionTree<Unit, AnalysedTierData, P>
 
 typealias AnalysedRootContainer<P> = SessionTree.RootContainer<Unit, AnalysedTierData, P>
 
+typealias AnalysedChildrenContainer<P> = SessionTree.ChildrenContainer<Unit, AnalysedTierData, P>
+
 @get:ApiStatus.Internal
 internal val <R, P> DescribedSessionTree<R, P>.environment: Environment
   get() = Environment.of(this.levelData.mainInstances.keys)
