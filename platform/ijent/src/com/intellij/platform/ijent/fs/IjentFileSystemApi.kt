@@ -52,6 +52,7 @@ sealed interface IjentFileSystemApi {
     interface DoesNotExist : ListDirectoryError, IjentFsError.DoesNotExist
     interface PermissionDenied : ListDirectoryError, IjentFsError.PermissionDenied
     interface NotDirectory : ListDirectoryError, IjentFsError.NotDirectory
+    interface Other : ListDirectoryError, IjentFsError.Other
   }
 
   /**
@@ -66,6 +67,7 @@ sealed interface IjentFileSystemApi {
     interface PermissionDenied : CanonicalizeError, IjentFsError.PermissionDenied
     interface NotDirectory : CanonicalizeError, IjentFsError.NotDirectory
     interface NotFile : CanonicalizeError, IjentFsError.NotFile
+    interface Other : CanonicalizeError, IjentFsError.Other
   }
 
   /**
@@ -78,6 +80,7 @@ sealed interface IjentFileSystemApi {
     interface PermissionDenied : StatError, IjentFsError.PermissionDenied
     interface NotDirectory : StatError, IjentFsError.NotDirectory
     interface NotFile : StatError, IjentFsError.NotFile
+    interface Other : StatError, IjentFsError.Other
   }
 
   /**
@@ -93,6 +96,7 @@ sealed interface IjentFileSystemApi {
     interface PermissionDenied : SameFileError, IjentFsError.PermissionDenied
     interface NotDirectory : SameFileError, IjentFsError.NotDirectory
     interface NotFile : SameFileError, IjentFsError.NotFile
+    interface Other : SameFileError, IjentFsError.Other
   }
 
   suspend fun fileReader(path: IjentPath.Absolute): IjentFsResult<
@@ -104,6 +108,7 @@ sealed interface IjentFileSystemApi {
     interface PermissionDenied : FileReaderError, IjentFsError.PermissionDenied
     interface NotDirectory : FileReaderError, IjentFsError.NotDirectory
     interface NotFile : FileReaderError, IjentFsError.NotFile
+    interface Other : FileReaderError, IjentFsError.Other
   }
 
   /**
@@ -122,6 +127,7 @@ sealed interface IjentFileSystemApi {
     interface PermissionDenied : FileWriterError, IjentFsError.PermissionDenied
     interface NotDirectory : FileWriterError, IjentFsError.NotDirectory
     interface NotFile : FileWriterError, IjentFsError.NotFile
+    interface Other : FileWriterError, IjentFsError.Other
   }
 
   enum class FileWriterCreationMode {

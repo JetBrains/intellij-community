@@ -28,6 +28,8 @@ sealed interface IjentFsError {
    */
   val message: @NlsSafe String
 
+  sealed interface Other : IjentFsError
+
   sealed interface DoesNotExist : IjentFsError
   sealed interface PermissionDenied : IjentFsError
   sealed interface NotDirectory : IjentFsError
@@ -48,6 +50,7 @@ sealed class IjentFsIOException(
       is IjentFsError.NotDirectory -> "Not a directory"
       is IjentFsError.NotFile -> "Not a file"
       is IjentFsError.PermissionDenied -> "Permission denied"
+      is IjentFsError.Other -> "Unexpected rare error"
     }
     return if (additionalMessage.isEmpty()) "$prefix: $where" else "$prefix: $where ($additionalMessage)"
   }

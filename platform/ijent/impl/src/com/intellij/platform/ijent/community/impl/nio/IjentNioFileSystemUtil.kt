@@ -43,6 +43,7 @@ internal fun IjentFsError.throwFileSystemException(): Nothing {
     is IjentFsError.PermissionDenied -> AccessDeniedException(where.toString(), null, message.nullize())
     is IjentFsError.NotDirectory -> NotDirectoryException(where.toString())
     is IjentOpenedFile.SeekError.InvalidValue -> TODO()
+    is IjentFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
   }
 }
 
