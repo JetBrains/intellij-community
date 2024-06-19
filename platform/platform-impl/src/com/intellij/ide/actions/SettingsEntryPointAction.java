@@ -17,6 +17,8 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.CeProcessCanceledException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -53,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 /**
  * @author Alexander Lobas
@@ -314,6 +317,12 @@ public final class SettingsEntryPointAction extends ActionGroup
             updates = true;
             break;
           }
+        }
+        catch (ProcessCanceledException pce) {
+          throw pce;
+        }
+        catch (CancellationException ex) {
+          throw new CeProcessCanceledException(ex);
         }
         catch (Exception e) {
           LOG.error(e);
