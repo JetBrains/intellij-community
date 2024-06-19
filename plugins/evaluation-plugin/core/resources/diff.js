@@ -230,5 +230,3 @@ function buildValues(diff, lastComponent, newString, oldString, useLongestToken)
 
   return components;
 }
-
-export default Diff;
