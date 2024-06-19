@@ -42,6 +42,7 @@ import com.jetbrains.rd.util.reactive.viewNotNull
 import com.jetbrains.rd.util.threading.asRdScheduler
 import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
 import com.jetbrains.rd.util.threading.coroutines.launch
+import com.jetbrains.rd.util.threading.coroutines.waitFor
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -56,6 +57,7 @@ import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 @TestOnly
 @ApiStatus.Internal
@@ -314,7 +316,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
   }
 
 
-  private fun requestFocus(actionTitle: String): Boolean {
+  private suspend fun requestFocus(actionTitle: String): Boolean {
     val projects = ProjectManagerEx.getOpenProjects()
 
     if (projects.size > 1) {
@@ -331,7 +333,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
   }
 
-  private fun requestFocusWithProject(project: Project, actionTitle: String): Boolean {
+  private suspend fun requestFocusWithProject(project: Project, actionTitle: String): Boolean {
     val projectIdeFrame = WindowManager.getInstance().getFrame(project)
     if (projectIdeFrame == null) {
       LOG.info("$actionTitle: No frame yet, nothing to focus")
@@ -347,22 +349,24 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       else {
         LOG.info("$actionTitle: Requesting project focus for '$windowString'")
         ProjectUtil.focusProjectWindow(project, true)
-        if (!projectIdeFrame.isFocusAncestor()) {
-          LOG.error("Failed to request the focus.")
-          return false
+        waitFor(timeout = 5.seconds.toJavaDuration()) {
+          projectIdeFrame.isFocusAncestor()
         }
         return true
       }
     }
   }
 
-  private fun requestFocusNoProject(actionTitle: String): Boolean {
+  private suspend fun requestFocusNoProject(actionTitle: String): Boolean {
     val visibleWindows = Window.getWindows().filter { it.isShowing }
     if (visibleWindows.size != 1) {
       LOG.info("$actionTitle: There are multiple windows, will focus them all. All windows: ${visibleWindows.joinToString(", ")}")
     }
     visibleWindows.forEach {
       AppIcon.getInstance().requestFocus(it)
+      waitFor(timeout = 5.seconds.toJavaDuration()) {
+        it.isFocusAncestor()
+      }
     }
     return true
   }
