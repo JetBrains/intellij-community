@@ -1,5 +1,5 @@
-const favoriteFeatures = getFavoriteFeaturesFromCookie();
-let isCompletionGolf = false;
+const favoriteFeatures = getFavoriteFeaturesFromCookie()
+isCompletionGolf = false
 
 const prefix = "ep@"
 const LC_KEYS = {
