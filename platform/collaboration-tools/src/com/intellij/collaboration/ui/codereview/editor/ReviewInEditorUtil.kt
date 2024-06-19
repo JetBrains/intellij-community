@@ -1,10 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.editor
 
+import com.intellij.collaboration.ui.codereview.editor.action.CodeReviewInEditorToolbarActionGroup
 import com.intellij.diff.util.Range
+import com.intellij.openapi.actionSystem.Constraints
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.ui.JBColor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.withContext
 import java.awt.Color
 
 object ReviewInEditorUtil {
@@ -50,5 +58,32 @@ object ReviewInEditorUtil {
       result -= length2 - length1
     }
     return result
+  }
+
+  /**
+   * Sets up an inspection widget action group for review in editor
+   * Suspends until canceled
+   *
+   * @throws IllegalStateException when the actions were not set up
+   */
+  suspend fun showReviewToolbar(vm: CodeReviewInEditorViewModel, editor: Editor): Nothing {
+    withContext(Dispatchers.Main) {
+      val toolbarActionGroup = DefaultActionGroup(
+        CodeReviewInEditorToolbarActionGroup(vm),
+        Separator.getInstance()
+      )
+
+      val editorMarkupModel = editor.markupModel as? EditorMarkupModel
+      if (editorMarkupModel == null) {
+        error("Editor markup model is not available")
+      }
+      editorMarkupModel.addInspectionWidgetAction(toolbarActionGroup, Constraints.FIRST)
+      try {
+        awaitCancellation()
+      }
+      finally {
+        editorMarkupModel.removeInspectionWidgetAction(toolbarActionGroup)
+      }
+    }
   }
 }

@@ -1309,6 +1309,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 - f:getREVIEW_CHANGES_STATUS_COLOR():com.intellij.ui.JBColor
 - f:getREVIEW_STATUS_MARKER_COLOR_SCHEME():com.intellij.openapi.diff.LineStatusMarkerColorScheme
+- f:showReviewToolbar(com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel,com.intellij.openapi.editor.Editor,kotlin.coroutines.Continuation):java.lang.Object
 - f:transferLineFromAfter(java.util.List,I,Z):java.lang.Integer
 - bs:transferLineFromAfter$default(com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil,java.util.List,I,Z,I,java.lang.Object):java.lang.Integer
 - f:transferLineToAfter(java.util.List,I):I
