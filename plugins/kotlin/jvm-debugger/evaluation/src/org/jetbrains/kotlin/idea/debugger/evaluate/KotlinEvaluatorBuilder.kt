@@ -329,6 +329,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         return K2CodeFragmentParameterInfo(parameters, crossingBounds)
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun CodeFragmentCapturedValue.toDumbCodeFragmentParameter(): CodeFragmentParameter.Dumb? {
         return when (this) {
             is CodeFragmentCapturedValue.Local ->
