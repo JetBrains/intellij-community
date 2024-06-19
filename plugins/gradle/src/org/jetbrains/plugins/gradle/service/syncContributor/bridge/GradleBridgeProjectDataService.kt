@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.service.syncContributor.GradleEntitySource
+import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleEntitySource
 
 @ApiStatus.Internal
 class GradleBridgeProjectDataService : AbstractProjectDataService<GradleBridgeData, Unit>() {

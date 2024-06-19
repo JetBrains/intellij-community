@@ -8,11 +8,11 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncProjectConfigurator.project
+import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
 import java.nio.file.Path
 
 @ApiStatus.Internal
@@ -29,34 +29,56 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
     val project = context.project()
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
+    val linkedProjectRootPath = Path.of(context.projectPath)
+    val linkedProjectRootUrl = linkedProjectRootPath.toVirtualFileUrl(virtualFileUrlManager)
+    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(linkedProjectRootUrl)
+
     val contentRootEntities = storage.entities<ContentRootEntity>()
-
-    val projectRootPath = Path.of(context.projectPath)
-    val projectRootUrl = projectRootPath.toVirtualFileUrl(virtualFileUrlManager)
-    val projectRootEntity = contentRootEntities.find { it.url == projectRootUrl }
-
-    val entitySource = GradleBuildEntitySource(projectRootUrl)
-
-    if (projectRootEntity == null) {
-      addProjectRootEntity(storage, projectRootUrl, entitySource)
+    if (contentRootEntities.all { !isConflictedContentRootEntity(it, linkedProjectEntitySource) }) {
+      configureProjectRoot(storage, linkedProjectEntitySource)
     }
   }
 
-  private fun addProjectRootEntity(
+  private fun isConflictedContentRootEntity(
+    contentRootEntity: ContentRootEntity,
+    entitySource: GradleLinkedProjectEntitySource,
+  ): Boolean {
+    return contentRootEntity.entitySource == entitySource ||
+           contentRootEntity.url == entitySource.projectRootUrl
+  }
+
+  private fun configureProjectRoot(
     storage: MutableEntityStorage,
-    projectRootUrl: VirtualFileUrl,
-    entitySource: GradleEntitySource
+    entitySource: GradleLinkedProjectEntitySource,
+  ) {
+    val moduleEntity = addModuleEntity(storage, entitySource)
+    addContentRootEntity(storage, entitySource, moduleEntity)
+  }
+
+  private fun addModuleEntity(
+    storage: MutableEntityStorage,
+    entitySource: GradleLinkedProjectEntitySource,
+  ): ModuleEntity.Builder {
+    val moduleEntity = ModuleEntity(
+      name = entitySource.projectRootUrl.fileName,
+      entitySource = entitySource,
+      dependencies = emptyList()
+    )
+    storage addEntity moduleEntity
+    return moduleEntity
+  }
+
+  private fun addContentRootEntity(
+    storage: MutableEntityStorage,
+    entitySource: GradleLinkedProjectEntitySource,
+    moduleEntity: ModuleEntity.Builder,
   ) {
     storage addEntity ContentRootEntity(
-      url = projectRootUrl,
+      url = entitySource.projectRootUrl,
       entitySource = entitySource,
       excludedPatterns = emptyList()
     ) {
-      module = ModuleEntity(
-        name = projectRootUrl.fileName,
-        entitySource = entitySource,
-        dependencies = emptyList()
-      )
+      module = moduleEntity
     }
   }
 }
