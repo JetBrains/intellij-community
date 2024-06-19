@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.util.messages.impl
@@ -9,9 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -62,7 +60,7 @@ open class MessageBusImpl : MessageBus {
   @JvmField
   internal val owner: MessageBusOwner
 
-  private var disposeState: BusState = BusState.Alive
+  private var disposeState = BusState.ALIVE
 
   // separate disposable must be used, because container will dispose bus connections in a separate step
   private var connectionDisposable: Disposable? = Disposer.newDisposable()
@@ -93,7 +91,7 @@ open class MessageBusImpl : MessageBus {
   override fun connect(): MessageBusConnection = connect(connectionDisposable!!)
 
   override fun connect(parentDisposable: Disposable): MessageBusConnection {
-    checkDisposed()
+    checkNotDisposed()
     val connection = MessageBusConnectionImpl(this)
     subscribers.add(connection)
     Disposer.register(parentDisposable, connection)
@@ -102,7 +100,7 @@ open class MessageBusImpl : MessageBus {
 
   override fun simpleConnect(): SimpleMessageBusConnection {
     // to avoid registering in a Dispose tree, default handler and deliverImmediately are not supported
-    checkDisposed()
+    checkNotDisposed()
     val connection = SimpleMessageBusConnectionImpl(this)
     subscribers.add(connection)
     return connection
@@ -111,7 +109,7 @@ open class MessageBusImpl : MessageBus {
   override fun connect(coroutineScope: CoroutineScope): SimpleMessageBusConnection {
     val scopeJob = coroutineScope.coroutineContext.job
     scopeJob.ensureActive()
-    checkDisposed()
+    checkNotDisposed()
     val connection = SimpleMessageBusConnectionImpl(this)
     try {
       subscribers.add(connection)
@@ -158,7 +156,7 @@ open class MessageBusImpl : MessageBus {
 
   fun disposeConnectionChildren() {
     // avoid any work on notifyConnectionTerminated
-    disposeState = BusState.Disposing
+    disposeState = BusState.DISPOSE_IN_PROGRESS
     Disposer.disposeChildren(connectionDisposable!!) { true }
   }
 
@@ -168,8 +166,11 @@ open class MessageBusImpl : MessageBus {
   }
 
   override fun dispose() {
-    checkBusDisposed()
-    disposeState = BusState.Disposed(Throwable())
+    if (disposeState == BusState.DISPOSED_STATE) {
+      LOG.error("Already disposed: $this")
+    }
+
+    disposeState = BusState.DISPOSED_STATE
     disposeChildren()
     connectionDisposable?.let {
       Disposer.dispose(it)
@@ -182,7 +183,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   override val isDisposed: Boolean
-    get() = disposeState is BusState.Disposed || owner.isDisposed
+    get() = disposeState == BusState.DISPOSED_STATE || owner.isDisposed
 
   override fun hasUndeliveredEvents(topic: Topic<*>): Boolean {
     if (isDisposed) {
@@ -197,23 +198,9 @@ open class MessageBusImpl : MessageBus {
     return queue.queue.any { it.topic === topic && it.bus === this }
   }
 
-  internal fun checkDisposed() {
-    ProgressManager.checkCanceled()
-    checkBusDisposed()
-    checkOwnerDisposed()
-  }
-
-  private fun checkOwnerDisposed() {
-    if (owner.isDisposed) {
-      throw AlreadyDisposedException(this.toString())
-    }
-  }
-
-  private fun checkBusDisposed() {
-    val disposeState = disposeState
-    if (disposeState is BusState.Disposed) {
-      throw AlreadyDisposedException(this.toString())
-        .initCause(disposeState.where)
+  internal fun checkNotDisposed() {
+    if (isDisposed) {
+      LOG.error("Already disposed: $this")
     }
   }
 
@@ -261,7 +248,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   internal open fun notifyConnectionTerminated(topicAndHandlerPairs: Array<Any>): Boolean {
-    if (disposeState != BusState.Alive) {
+    if (disposeState != BusState.ALIVE) {
       return false
     }
 
@@ -279,7 +266,9 @@ open class MessageBusImpl : MessageBus {
   }
 
   internal fun deliverImmediately(connection: MessageBusConnectionImpl) {
-    checkBusDisposed()
+    if (disposeState == BusState.DISPOSED_STATE) {
+      LOG.error("Already disposed: $this")
+    }
 
     // a light project is not disposed in tests properly, so, connection is not removed
     if (owner.isDisposed) {
@@ -388,10 +377,8 @@ internal class MessageQueue {
 
 private val NA: Any = Any()
 
-private sealed class BusState {
-  data object Alive : BusState()
-  data object Disposing : BusState()
-  class Disposed(val where: Throwable) : BusState()
+private enum class BusState {
+  ALIVE, DISPOSE_IN_PROGRESS, DISPOSED_STATE
 }
 
 private fun pumpWaiting(jobQueue: MessageQueue) {
@@ -458,7 +445,7 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
     }
 
     if (topic.isImmediateDelivery) {
-      bus.checkDisposed()
+      bus.checkNotDisposed()
       publish(method = method, args = args, queue = null)
       return NA
     }
