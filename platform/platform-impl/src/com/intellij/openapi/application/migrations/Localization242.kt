@@ -9,11 +9,14 @@ import java.nio.file.Path
 
 internal fun enableL10nIfPluginInstalled(previousVersion: String?, oldPluginsDir: Path) {
   if (previousVersion == null || StringUtil.compareVersionNumbers(previousVersion, "2024.2") != -1) return
+
   val loadedDescriptors = loadDescriptorsFromOtherIde(oldPluginsDir, null, null, null)
   val bundledL10nPluginsIds = LocalizationUtil.l10nPluginIdToLanguageTag.keys
-  val l10nPluginId = loadedDescriptors.getIdMap().keys.firstOrNull { bundledL10nPluginsIds.contains(it.idString) }
-  if (l10nPluginId != null) {
-    val languageTag = LocalizationUtil.l10nPluginIdToLanguageTag[l10nPluginId.idString]!!
-    EarlyAccessRegistryManager.setAndFlush(mapOf("i18n.locale" to languageTag))
-  }
+
+  loadedDescriptors.getIdMap().keys
+    .firstOrNull { bundledL10nPluginsIds.contains(it.idString) }
+    ?.let {
+      val languageTag = LocalizationUtil.l10nPluginIdToLanguageTag[it.idString]!!
+      EarlyAccessRegistryManager.setAndFlush(mapOf("i18n.locale" to languageTag))
+    }
 }
