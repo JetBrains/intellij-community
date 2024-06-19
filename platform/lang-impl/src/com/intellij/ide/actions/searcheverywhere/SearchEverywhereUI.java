@@ -84,6 +84,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -1121,7 +1122,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   static boolean isPreviewEnabled() {
-    return PreviewExperiment.INSTANCE.isExperimentEnabled() || Registry.is("search.everywhere.preview");
+    return (PreviewExperiment.INSTANCE.isExperimentEnabled() || Registry.is("search.everywhere.preview"))
+           && !PlatformUtils.isJetBrainsClient();
   }
 
   static boolean isShowPreview() {
