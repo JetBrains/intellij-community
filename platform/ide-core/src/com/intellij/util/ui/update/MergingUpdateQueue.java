@@ -2,9 +2,11 @@
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -12,11 +14,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.ChildContext;
-import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
+import kotlin.jvm.functions.Function1;
+import kotlinx.coroutines.flow.Flow;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -25,7 +27,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 
 /**
  * Use this class to postpone task execution and optionally merge identical tasks. This is needed, e.g., to reflect in UI status of some
@@ -33,6 +34,11 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
  * task execution for e.g., 500ms and if new updates are added during this period, they can be simply ignored.
  * <p>
  * Create instance of this class and use {@link #queue(Update)} method to add new tasks.
+ * <p>
+ * Sometimes {@link MergingUpdateQueue} can be used for control flow operations. <b>This kind of usage is discouraged</b>, in favor of
+ * {@link kotlinx.coroutines.flow.Flow} and {@link kotlinx.coroutines.flow.FlowKt#debounce(Flow, Function1)}.
+ * If you are still using {@link MergingUpdateQueue}, you can consider queuing via {@link MergingQueueUtil#queueTracked(MergingUpdateQueue, Update)}
+ * in order to notify the platform about scheduled updates.
  *
  * @see com.intellij.util.concurrency.QueueProcessor
  */
@@ -238,11 +244,15 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
     clearWaiter();
 
-    if (myExecuteInDispatchThread) {
-      myWaiterForMerge.addRequest(this, mergingTimeSpanMillis, getMergerModalityState());
-    }
-    else {
-      myWaiterForMerge.addRequest(this, mergingTimeSpanMillis);
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      // MergingUpdateQueue is considered to be a Flow + debounce
+      // The updates must be executed independently of the caller; so here we forcefully release them from the context
+      if (myExecuteInDispatchThread) {
+        myWaiterForMerge.addRequest(this, mergingTimeSpanMillis, getMergerModalityState());
+      }
+      else {
+        myWaiterForMerge.addRequest(this, mergingTimeSpanMillis);
+      }
     }
   }
 
@@ -373,16 +383,6 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       return;
     }
 
-    ChildContext context = propagateContext() ? Propagation.createChildContext() : null;
-    if (context == null) {
-      queue2(update);
-    }
-    else {
-      queue2(new ContextAwareUpdate(update, context));
-    }
-  }
-
-  private void queue2(@NotNull Update update) {
     boolean active = myActive;
     synchronized (myScheduledUpdates) {
       try {

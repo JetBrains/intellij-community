@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
@@ -27,10 +28,12 @@ import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.util.LocalTimeCounter.currentTime
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.queueTracked
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -119,14 +122,16 @@ class AutoImportProjectTracker(
     currentActivity.updateAndGet {
       it ?: ProjectInitializationDiagnosticService.registerTracker(project, "AutoImportProjectTracker.schedule")
     }
-    dispatcher.queue(PriorityEatUpdate(priority) {
-      if (dispatchIterations - 1 > 0) {
-        schedule(priority, dispatchIterations - 1, action)
-      }
-      else {
-        action()
-        if (dispatcher.isEmpty) {
-          currentActivity.getAndSet(null)?.activityFinished()
+    dispatcher.queueTracked(PriorityEatUpdate(priority) {
+      project.trackActivityBlocking(ExternalSystemActivityKey) {
+        if (dispatchIterations - 1 > 0) {
+          schedule(priority, dispatchIterations - 1, action)
+        }
+        else {
+          action()
+          if (dispatcher.isEmpty) {
+            currentActivity.getAndSet(null)?.activityFinished()
+          }
         }
       }
     })

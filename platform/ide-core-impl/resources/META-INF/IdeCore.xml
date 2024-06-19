@@ -5,6 +5,9 @@
     <extensionPoint name="notificationGroup" beanClass="com.intellij.notification.impl.NotificationGroupEP" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <activityTracker implementation="com.intellij.util.MergingUpdateQueueActivityTracker"/>
+    <applicationService serviceInterface="com.intellij.util.ui.update.MergingUpdateQueueTracker"
+                        serviceImplementation="com.intellij.util.MergingUpdateQueueTrackerImpl"/>
     <applicationService serviceInterface="com.intellij.util.download.DownloadableFileService"
                         serviceImplementation="com.intellij.util.download.impl.DownloadableFileServiceImpl"/>
     <applicationService serviceInterface="com.intellij.notification.NotificationGroupManager"

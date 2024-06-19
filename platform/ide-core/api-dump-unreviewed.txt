@@ -3195,6 +3195,8 @@ com.intellij.util.ui.update.Activatable
 c:com.intellij.util.ui.update.Activatable$Adapter
 - com.intellij.util.ui.update.Activatable
 - <init>():V
+f:com.intellij.util.ui.update.MergingQueueUtil
+- sf:queueTracked(com.intellij.util.ui.update.MergingUpdateQueue,com.intellij.util.ui.update.Update):V
 c:com.intellij.util.ui.update.MergingUpdateQueue
 - com.intellij.openapi.Disposable
 - com.intellij.util.ui.update.Activatable

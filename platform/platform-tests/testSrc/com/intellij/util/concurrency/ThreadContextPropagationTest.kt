@@ -13,8 +13,6 @@ import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -319,29 +317,4 @@ class ThreadContextPropagationTest {
     finished.await()
   }
 
-  @Test
-  fun `merging update queue`() = timeoutRunBlocking {
-    val queue = MergingUpdateQueue("test", 100, true, null)
-    val semaphore = Semaphore(2)
-    val element = TestElement("e1")
-    val element2 = TestElement2("e2")
-    withContext(element) {
-      blockingContext {
-        queue.queue(Update.create("id") {
-          assertEquals(element, currentThreadContext()[TestElementKey])
-          semaphore.up()
-        })
-      }
-      withContext(element2) {
-        blockingContext {
-          queue.queue(Update.create("id") {
-            // no eating occurs since the contexts are different
-            assertEquals(element2, currentThreadContext()[TestElement2Key])
-            semaphore.up()
-          })
-        }
-      }
-    }
-    semaphore.timeoutWaitUp()
-  }
 }
