@@ -737,11 +737,17 @@
     },
 
     "VersionControl": {
-      "Log.Commit": {
-        "currentBranchBackground": "#1c2433",
-        "unmatchedForeground": "Gray7",
-        "hoveredBackground": "#FFFFFFED",
-        "Reference.foreground": "Gray7"
+      "Log": {
+        "Commit": {
+          "currentBranchBackground": "#1c2433",
+          "unmatchedForeground": "Gray7",
+          "hoveredBackground": "#FFFFFFED",
+          "Reference.foreground": "Gray7"
+        },
+        "Graph": {
+          "saturation": 0.6,
+          "brightness": 0.6
+        }
       },
       "FileHistory.Commit.selectedBranchBackground": "#1c2433",
       "MarkerPopup": {

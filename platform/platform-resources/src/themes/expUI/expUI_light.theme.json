@@ -768,11 +768,17 @@
     "MenuBar.borderColor": "Gray3",
 
     "VersionControl": {
-      "Log.Commit": {
-        "currentBranchBackground": "#e8eefa",
-        "unmatchedForeground": "Gray7",
-        "hoveredBackground": "#E9EAEC",
-        "Reference.foreground": "Gray6"
+      "Log": {
+        "Commit": {
+          "currentBranchBackground": "#e8eefa",
+          "unmatchedForeground": "Gray7",
+          "hoveredBackground": "#E9EAEC",
+          "Reference.foreground": "Gray6"
+        },
+        "Graph": {
+          "saturation": 0.6,
+          "brightness": 0.7
+        }
       },
       "FileHistory.Commit.selectedBranchBackground": "Blue11",
       "MarkerPopup": {
