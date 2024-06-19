@@ -29561,18 +29561,6 @@ f:com.intellij.util.MemTester
 f:com.intellij.util.MessageBusUtil
 - <init>():V
 - s:invokeLaterIfNeededOnSyncPublisher(com.intellij.openapi.project.Project,com.intellij.util.messages.Topic,com.intellij.util.Consumer):V
-f:com.intellij.util.PendingEventDispatcher
-- addListener(java.util.EventListener):V
-- addListener(java.util.EventListener,com.intellij.openapi.Disposable):V
-- s:create(java.lang.Class):com.intellij.util.PendingEventDispatcher
-- s:create(java.lang.Class,Z):com.intellij.util.PendingEventDispatcher
-- dispatchPendingEvent(java.util.EventListener):V
-- getListeners():java.util.List
-- getMulticaster():java.util.EventListener
-- hasListeners():Z
-- isDispatching():Z
-- s:isDispatchingAnyEvent():Z
-- removeListener(java.util.EventListener):V
 f:com.intellij.util.PopupUtilsKt
 - sf:getBestBalloonPosition(com.intellij.openapi.actionSystem.DataContext):com.intellij.ui.awt.RelativePoint
 - sf:getBestPopupPosition(com.intellij.openapi.actionSystem.DataContext):com.intellij.ui.awt.RelativePoint
