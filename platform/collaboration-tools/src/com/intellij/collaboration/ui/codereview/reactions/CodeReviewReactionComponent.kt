@@ -9,12 +9,10 @@ import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import javax.swing.JComponent
 
-@ApiStatus.Internal
 object CodeReviewReactionComponent {
   fun createReactionButtonIn(cs: CoroutineScope, presentation: Flow<CodeReviewReactionPillPresentation>, toggle: () -> Unit): JComponent =
     PillButton().apply {

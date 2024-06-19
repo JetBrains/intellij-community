@@ -1569,6 +1569,11 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 - s:values():com.intellij.collaboration.ui.codereview.list.search.ShowDirection[]
+*f:com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionComponent
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionComponent
+- f:createNewReactionButton(kotlin.jvm.functions.Function1):javax.swing.JComponent
+- f:createPickReactionButton(javax.swing.Icon,kotlin.jvm.functions.Function0):javax.swing.JComponent
+- f:createReactionButtonIn(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function0):javax.swing.JComponent
 *:com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionPillPresentation
 - a:getIcon(I):javax.swing.Icon
 - a:getReactionName():java.lang.String
