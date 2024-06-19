@@ -739,7 +739,7 @@
     "VersionControl": {
       "Log": {
         "Commit": {
-          "currentBranchBackground": "#1c2433",
+          "currentBranchBackground": "#283044",
           "unmatchedForeground": "Gray7",
           "hoveredBackground": "#FFFFFFED",
           "Reference.foreground": "Gray7"
