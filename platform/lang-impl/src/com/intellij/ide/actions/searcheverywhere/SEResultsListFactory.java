@@ -65,11 +65,6 @@ abstract class SEResultsListFactory {
   @ApiStatus.Experimental
   protected static final ListCellRenderer<Object> resultsNotificationElementRenderer = new ColoredListCellRenderer<>() {
     @Override
-    protected int getMinHeight() {
-      return 2 * super.getMinHeight();
-    }
-
-    @Override
     protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
       clear();
       mySelected = false;
@@ -79,7 +74,7 @@ abstract class SEResultsListFactory {
       setFont(StartupUiUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.NORMAL)));
       append(((SearchListModel.ResultsNotificationElement)value).label(), new SimpleTextAttributes(
         SimpleTextAttributes.STYLE_PLAIN, UIUtil.getLabelInfoForeground()));
-      setIpad(JBInsets.create(4, 17));
+      setIpad(JBUI.insets(9, 17, 12, 0));
       setMyBorder(null);
     }
   };
