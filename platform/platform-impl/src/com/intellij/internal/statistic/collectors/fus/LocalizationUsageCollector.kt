@@ -11,13 +11,28 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.l10n.LocalizationUtil
 
 class LocalizationUsageCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("localization.info", 2)
-  private val selectedLanguage = GROUP.registerEvent("selected.language", StringEventField.ValidatedByRegexp("value", ".*{2,5}"))
-  private val selectedRegion = GROUP.registerEvent("selected.region", EventFields.Enum<Region>("value"))
+  private val LOCALES = listOf("am", "ar", "as", "az", "bn", "cs", "da", "de", "el", "en", "es", "fa", "fr", "gu",
+                               "ha", "hi", "hu", "ig", "in", "it", "ja", "kk", "kn", "ko", "ml", "mr", "my", "nb",
+                               "ne", "nl", "nn", "no", "or", "pa", "pl", "pt", "ro", "ru", "rw", "sd", "si", "so",
+                               "sv", "ta", "te", "th", "tr", "uk", "ur", "uz", "vi", "yo", "zh", "zh-CN", "zu", "other")
+
+  private val GROUP = EventLogGroup("localization.info", 3)
+  private val selectedLanguage = GROUP.registerEvent("selected.language", StringEventField.ValidatedByAllowedValues("value", LOCALES))
+  private val selectedRegion = GROUP.registerEvent("selected.region", EventFields.Enum("value", Region::class.java))
 
   override fun getMetrics(): Set<MetricEvent> {
     val result = mutableSetOf<MetricEvent>()
-    result.add(selectedLanguage.metric(LocalizationUtil.getLocale().toLanguageTag()))
+
+    val locale = LocalizationUtil.getLocale()
+    val language = if (LOCALES.contains(locale.toLanguageTag())) {
+      locale.toLanguageTag()
+    }
+    else if (LOCALES.contains(locale.language)) {
+      locale.language
+    }
+    else "other"
+    result.add(selectedLanguage.metric(language))
+
     val region = RegionSettings.getRegion()
     result.add(selectedRegion.metric(region))
     return result
