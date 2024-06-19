@@ -115,6 +115,16 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
 
       @Override
+      public void visitClass(@NotNull PsiClass aClass) {
+        if (aClass.isRecord()) {
+          PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+          if (constructor instanceof SyntheticElement) {
+            checkParameters(constructor, holder, List.of(), manager);
+          }
+        }
+      }
+
+      @Override
       public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         checkMethodReference(expression, holder);
 
@@ -932,17 +942,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                                 PsiParameter parameter) {
     if (!REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER || !holder.isOnTheFly()) return;
 
+    PsiVariable owner = Objects.requireNonNullElse(JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter), parameter);
     PsiElement elementToHighlight = null;
-    NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
+    NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(owner);
     if (info != null && !info.isInferred()) {
       if (info.getNullability() == Nullability.NOT_NULL) {
         PsiAnnotation notNullAnnotation = info.getAnnotation();
-        boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
-        elementToHighlight = physical ? notNullAnnotation : parameter.getNameIdentifier();
+        boolean physical = PsiTreeUtil.isAncestor(owner, notNullAnnotation, true);
+        elementToHighlight = physical ? notNullAnnotation : owner.getNameIdentifier();
       }
     }
-    else if (DfaPsiUtil.getTypeNullability(parameter.getType()) == Nullability.NOT_NULL) {
-      elementToHighlight = parameter.getNameIdentifier();
+    else if (DfaPsiUtil.getTypeNullability(owner.getType()) == Nullability.NOT_NULL) {
+      elementToHighlight = owner.getNameIdentifier();
     }
     if (elementToHighlight == null || !JavaNullMethodArgumentUtil.hasNullArgument(method, parameterIdx)) return;
 

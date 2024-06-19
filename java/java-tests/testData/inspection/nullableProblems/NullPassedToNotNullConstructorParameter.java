@@ -17,11 +17,16 @@ class Main111 {
 
     }
   }
+  
+  // IDEA-355111
+  record MyRecord(<warning descr="Parameter annotated @NotNull should not receive 'null' as an argument">@NotNull</warning> Object o,
+                  @NotNull Object o2) {}
 
   static void main() {
     new Main111(null);
     new Main111.SubClass(null);
     new SubClass2(null);
+    new MyRecord(null, "");
 
     new ParamerizedRunnable(null) {
       @Override
