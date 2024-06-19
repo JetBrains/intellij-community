@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyElementTypes;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
@@ -102,10 +102,7 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
   @Nullable
   @Override
   public <T> T getCustomStub(Class<T> stubClass) {
-    if (stubClass.isInstance(myCustomStub)) {
-      return stubClass.cast(myCustomStub);
-    }
-    return null;
+    return ObjectUtils.tryCast(myCustomStub, stubClass);
   }
 
   @Nullable
