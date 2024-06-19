@@ -71,7 +71,7 @@ class GHPROnCurrentBranchService(private val project: Project, parentCs: Corouti
 
       val syncStatus = GitBranchSyncStatus.calcForCurrentBranch(repository)
       if (vm.updateRequired.value) {
-        return GitCurrentBranchPresenter.Presentation(
+        return GitCurrentBranchPresenter.PresentationData(
           GithubIcons.GithubWarning,
           GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
           GithubBundle.message("pull.request.on.branch.out.of.sync", vm.id.number, currentBranchName),
@@ -80,21 +80,21 @@ class GHPROnCurrentBranchService(private val project: Project, parentCs: Corouti
       }
 
       return when (val changesResult = vm.dataLoadingState.value.result) {
-        null -> GitCurrentBranchPresenter.Presentation(
+        null -> GitCurrentBranchPresenter.PresentationData(
           CollaborationToolsUIUtil.animatedLoadingIcon,
           GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
           GithubBundle.message("pull.request.on.branch.loading", vm.id.number, currentBranchName)
         )
         else -> changesResult.fold(
           onSuccess = {
-            GitCurrentBranchPresenter.Presentation(
+            GitCurrentBranchPresenter.PresentationData(
               AllIcons.Vcs.Vendors.Github,
               GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
               GithubBundle.message("pull.request.on.branch.description", vm.id.number, currentBranchName)
             )
           },
           onFailure = {
-            GitCurrentBranchPresenter.Presentation(
+            GitCurrentBranchPresenter.PresentationData(
               AllIcons.Vcs.Vendors.Github,
               GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
               GithubBundle.message("pull.request.on.branch.error", vm.id.number, currentBranchName)

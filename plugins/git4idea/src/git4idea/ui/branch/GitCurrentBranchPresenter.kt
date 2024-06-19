@@ -25,7 +25,6 @@ import javax.swing.Icon
 /**
  * Supplies a branch presentation to [git4idea.ui.toolbar.GitToolbarWidgetAction]
  */
-@ApiStatus.Internal
 interface GitCurrentBranchPresenter {
   companion object {
     private val EP_NAME = ExtensionPointName<GitCurrentBranchPresenter>("Git4Idea.gitCurrentBranchPresenter")
@@ -37,16 +36,24 @@ interface GitCurrentBranchPresenter {
 
   fun getPresentation(repository: GitRepository): Presentation?
 
-  data class Presentation(
-    val icon: Icon?,
-    val text: @Nls String,
-    val description: @Nls String?,
-    val syncStatus: GitBranchSyncStatus = GitBranchSyncStatus.SYNCED
-  )
+  interface Presentation {
+    val icon: Icon?
+    val text: @Nls String
+    val description: @Nls String?
+    val syncStatus: GitBranchSyncStatus
+  }
+
+  @ApiStatus.Internal
+  data class PresentationData(
+    override val icon: Icon?,
+    override val text: @Nls String,
+    override val description: @Nls String?,
+    override val syncStatus: GitBranchSyncStatus = GitBranchSyncStatus.SYNCED,
+  ) : Presentation
 }
 
 private fun getDefaultPresentation(repository: GitRepository): GitCurrentBranchPresenter.Presentation {
-  return GitCurrentBranchPresenter.Presentation(
+  return GitCurrentBranchPresenter.PresentationData(
     repository.calcIcon(),
     calcText(repository),
     repository.calcTooltip(),
