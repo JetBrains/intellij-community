@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ObjectUtils;
@@ -46,6 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 import static com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL;
 import static com.intellij.openapi.actionSystem.impl.EdtDataContextKt.wrapUnsafeData;
+import static com.intellij.reference.SoftReference.dereference;
 
 /**
  * @author gregsh
@@ -154,7 +154,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     FList<ProviderData> cachedData;
     MySink sink = new MySink();
     while (true) {
-      Component component = SoftReference.dereference(myComponentRef.ref);
+      Component component = dereference(myComponentRef.ref);
       sink.keys = null;
       sink.hideEditor = hideEditor(component);
       cacheProviderData(sink, dataProvider, myDataManager);
@@ -173,11 +173,12 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) return SoftReference.dereference(myComponentRef.ref);
+    //noinspection DuplicatedCode
+    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) return dereference(myComponentRef.ref);
     if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.is(dataId)) return myComponentRef.modalContext;
     if (PlatformDataKeys.MODALITY_STATE.is(dataId)) return myComponentRef.modalityState;
     if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId) && myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText;
-    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId) && myComponentRef.speedSearchRef != null) return SoftReference.dereference(myComponentRef.speedSearchRef);
+    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId) && myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get();
     if (myCachedData.isEmpty()) return null;
 
     boolean isEDT = EDT.isCurrentThreadEdt();
@@ -286,6 +287,14 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   }
 
   @Nullable Object getRawDataIfCached(@NotNull String dataId, boolean uiOnly) {
+    //noinspection DuplicatedCode
+    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) return dereference(myComponentRef.ref);
+    if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.is(dataId)) return myComponentRef.modalContext;
+    if (PlatformDataKeys.MODALITY_STATE.is(dataId)) return myComponentRef.modalityState;
+    if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId) && myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText;
+    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId) && myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get();
+    if (myCachedData.isEmpty()) return null;
+
     for (ProviderData map : myCachedData) {
       Object answer = map.uiSnapshot.get(dataId);
       if (answer == null && !uiOnly) answer = map.computedData.get(dataId);
