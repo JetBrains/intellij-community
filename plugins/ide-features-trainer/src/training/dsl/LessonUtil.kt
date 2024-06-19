@@ -60,6 +60,7 @@ import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import org.assertj.swing.timing.Timeout
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
@@ -708,6 +709,7 @@ inline fun <reified ComponentType : Component> LessonContext.highlightAllFoundUi
   }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use inline form instead")
 fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(componentClass: Class<ComponentType>,
                                                                            clearPreviousHighlights: Boolean,
