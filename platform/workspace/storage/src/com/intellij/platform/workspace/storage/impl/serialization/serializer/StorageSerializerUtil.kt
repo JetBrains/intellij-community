@@ -85,7 +85,7 @@ internal class StorageSerializerUtil(
           val typeInfo = kryo.readObject(input, TypeInfo::class.java)
           val entityFamily = kryo.readObject(input, ImmutableEntityFamily::class.java)
 
-          val classId = classCache.getOrPut(typeInfo) { typesResolver.resolveClass(typeInfo.fqName, typeInfo.pluginId).toClassId() }
+          val classId = classCache.getOrPut(typeInfo) { typesResolver.resolveClass(typeInfo.fqName, typeInfo.pluginId, typeInfo.moduleId).toClassId() }
           mutableBarrel.fillEmptyFamilies(classId)
           mutableBarrel.entityFamilies[classId] = entityFamily
         }
@@ -112,10 +112,10 @@ internal class StorageSerializerUtil(
       val childClazzInfo = kryo.readClassAndObject(input) as TypeInfo
 
       val parentClass = classCache.computeIfAbsent(parentClazzInfo, ToIntFunction {
-        (typesResolver.resolveClass(parentClazzInfo.fqName, parentClazzInfo.pluginId) as Class<WorkspaceEntity>).toClassId()
+        (typesResolver.resolveClass(parentClazzInfo.fqName, parentClazzInfo.pluginId, parentClazzInfo.moduleId) as Class<WorkspaceEntity>).toClassId()
       })
       val childClass = classCache.computeIfAbsent(childClazzInfo, ToIntFunction {
-        (typesResolver.resolveClass(childClazzInfo.fqName, childClazzInfo.pluginId) as Class<WorkspaceEntity>).toClassId()
+        (typesResolver.resolveClass(childClazzInfo.fqName, childClazzInfo.pluginId, childClazzInfo.moduleId) as Class<WorkspaceEntity>).toClassId()
       })
 
       val connectionType = ConnectionId.ConnectionType.valueOf(input.readString())
@@ -136,7 +136,7 @@ internal class StorageSerializerUtil(
       val arrayId = input.readInt()
       val clazzInfo = kryo.readClassAndObject(input) as TypeInfo
       val clazz = classCache.computeIfAbsent(clazzInfo, ToIntFunction {
-        typesResolver.resolveClass(clazzInfo.fqName, clazzInfo.pluginId).toClassId()
+        typesResolver.resolveClass(clazzInfo.fqName, clazzInfo.pluginId, clazzInfo.moduleId).toClassId()
       })
       return createEntityId(arrayId, clazz)
     }
@@ -313,7 +313,7 @@ internal class StorageSerializerUtil(
 
   private fun SerializableEntityId.toEntityId(classCache: Object2IntWithDefaultMap<TypeInfo>): EntityId {
     val classId = classCache.computeIfAbsent(type, ToIntFunction {
-      typesResolver.resolveClass(name = this.type.fqName, pluginId = this.type.pluginId).toClassId()
+      typesResolver.resolveClass(name = this.type.fqName, pluginId = this.type.pluginId, moduleId = this.type.moduleId).toClassId()
     })
     return createEntityId(arrayId = this.arrayId, clazz = classId)
   }

@@ -166,7 +166,7 @@ internal class StorageClassesRegistrar(
   }
 
   private fun registerKotlinCollectionsInKotlinPlugin(kryo: Kryo) {
-    val classLoader = typesResolver.getClassLoader(kotlinPluginId)
+    val classLoader = typesResolver.getClassLoader(kotlinPluginId, null)
     if (classLoader != null) {
       kotlinCollectionsToRegistrar.forEach {
         val classInKotlinPlugin = classLoader.loadClass(it.name)

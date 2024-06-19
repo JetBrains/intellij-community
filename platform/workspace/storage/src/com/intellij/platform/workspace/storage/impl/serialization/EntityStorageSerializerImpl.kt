@@ -260,7 +260,7 @@ public class EntityStorageSerializerImpl(
     val nonObjectCount = input.readVarInt(true)
     repeat(nonObjectCount) {
       val objectClass = kryo.readClassAndObject(input) as TypeInfo
-      val resolvedClass = typesResolver.resolveClass(objectClass.fqName, objectClass.pluginId)
+      val resolvedClass = typesResolver.resolveClass(objectClass.fqName, objectClass.pluginId, objectClass.pluginId)
       classCache.putIfAbsent(objectClass, resolvedClass.toClassId())
       kryo.register(resolvedClass)
     }

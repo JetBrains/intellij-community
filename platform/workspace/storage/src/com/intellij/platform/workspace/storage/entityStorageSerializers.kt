@@ -15,8 +15,8 @@ public interface EntityStorageSerializer {
 
 @ApiStatus.Internal
 public interface EntityTypesResolver {
-  public fun getPluginId(clazz: Class<*>): String?
-  public fun resolveClass(name: String, pluginId: String?): Class<*>
+  public fun getPluginIdAndModuleId(clazz: Class<*>): Pair<String?, String?>
+  public fun resolveClass(name: String, pluginId: String?, moduleId: String?): Class<*>
 
   /**
    * Method is used to register collections from the kotlin plugin in kryo.
@@ -27,7 +27,7 @@ public interface EntityTypesResolver {
    * In addition, plugin developers are not recommended to use a different version of kotlin-stdlib than the version for intellij-platform.
    */
   @Obsolete
-  public fun getClassLoader(pluginId: String?): ClassLoader?
+  public fun getClassLoader(pluginId: String?, moduleId: String?): ClassLoader?
 }
 
 public sealed class SerializationResult {

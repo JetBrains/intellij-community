@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.metadata.resolver
 
 import com.intellij.platform.workspace.storage.EntityTypesResolver
+import com.intellij.platform.workspace.storage.impl.serialization.ModuleId
 import com.intellij.platform.workspace.storage.impl.serialization.PluginId
 import com.intellij.platform.workspace.storage.metadata.MetadataHash
 import com.intellij.platform.workspace.storage.metadata.MetadataStorage
@@ -23,7 +24,7 @@ internal interface TypeMetadataResolver {
 
   fun resolveTypeMetadataHashOrNull(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash?
 
-  fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataStorage
+  fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId, moduleId: ModuleId): MetadataStorage
 
   companion object {
     internal fun getInstance(): TypeMetadataResolver = INSTANCE
@@ -51,6 +52,6 @@ internal object TypeMetadataResolverImpl: TypeMetadataResolver {
   override fun resolveTypeMetadataHashOrNull(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash? =
     metadataStorage.getMetadataHashByTypeFqnOrNull(typeFqn)
 
-  override fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataStorage =
-    MetadataStorageResolver.resolveMetadataStorage(typesResolver, typeFqn, pluginId)
+  override fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId, moduleId: ModuleId): MetadataStorage =
+    MetadataStorageResolver.resolveMetadataStorage(typesResolver, typeFqn, pluginId, moduleId)
 }
