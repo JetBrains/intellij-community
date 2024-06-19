@@ -6,5 +6,6 @@
     <lineCompletionVisitorFactory implementation="com.intellij.cce.visitor.KotlinLineCompletionVisitorFactory"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinDocGenerationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinRenameVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCodeGenerationVisitor"/>
   </extensions>
 </idea-plugin>
