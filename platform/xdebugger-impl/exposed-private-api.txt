@@ -1,6 +1,4 @@
-com/intellij/xdebugger/impl/XDebuggerExecutionPointManager
 com/intellij/xdebugger/impl/XDebuggerState
-com/intellij/xdebugger/impl/breakpoints/ui/tree/BreakpointsCheckboxTree$Delegate
 com/intellij/xdebugger/impl/ui/EmbeddedComboBoxUI
 com/intellij/xdebugger/memory/component/InstancesTracker$MyState
 com/intellij/xdebugger/memory/utils/AbstractTableModelWithColumns$TableColumnDescriptor

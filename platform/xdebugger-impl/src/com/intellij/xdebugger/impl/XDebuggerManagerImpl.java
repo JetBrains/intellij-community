@@ -65,6 +65,7 @@ import com.intellij.xdebugger.ui.DebuggerColors;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -224,6 +225,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return myPinToTopManager;
   }
 
+  @ApiStatus.Internal
   public @NotNull XDebuggerExecutionPointManager getExecutionPointManager() {
     return myExecutionPointManager;
   }
