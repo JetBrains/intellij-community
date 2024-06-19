@@ -19,7 +19,7 @@ import com.intellij.refactoring.LightMultiFileTestCase;
 
 abstract class GroovyMoveTestBase extends LightMultiFileTestCase {
 
-  protected void doTest(String newPackageName, String[] names) {
+  protected void doTest(String newPackageName, String... names) {
     doTest(() -> perform(newPackageName, names));
   }
 
