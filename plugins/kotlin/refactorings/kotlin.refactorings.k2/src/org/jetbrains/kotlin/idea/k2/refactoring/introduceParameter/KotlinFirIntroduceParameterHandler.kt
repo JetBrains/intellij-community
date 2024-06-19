@@ -13,8 +13,13 @@ import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
@@ -152,7 +157,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
             return
         }
 
-        var message: String? = null
+        var message: @Nls String? = null
         var suggestedNames: List<String> = listOf()
         val descriptorToType = analyzeInModalWindow(targetParent, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             val expressionType = expressionTypeEvaluator.invoke(this)
@@ -293,6 +298,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         ).show()
     }
 
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     private fun introduceParameterDescriptor(
         originalExpression: KtExpression,
         targetParent: KtNamedDeclaration,
@@ -327,7 +333,8 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
                         val lambdaArgument = expressionToReplace
                             .getStrictParentOfType<KtLambdaArgument>()!!
                         val lambdaArgumentName = if (shouldLambdaParameterBeNamed(lambdaArgument)) {
-                            analyze(lambdaArgument) { NamedArgumentUtils.getStableNameFor(lambdaArgument) }
+                            //it's under potemkin progress
+                            allowAnalysisOnEdt { allowAnalysisFromWriteAction { analyze(lambdaArgument) { NamedArgumentUtils.getStableNameFor(lambdaArgument) } } }
                         } else null
                         lambdaArgument
                             .moveInsideParenthesesAndReplaceWith(replacingExpression, lambdaArgumentName)
