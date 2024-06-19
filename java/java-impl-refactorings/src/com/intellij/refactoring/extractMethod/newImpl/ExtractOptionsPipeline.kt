@@ -56,7 +56,7 @@ object ExtractMethodPipeline {
     if (targetClass.isInterface && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, targetClass)) return null
     if (extractOptions.targetClass == targetClass) return extractOptions
     val sourceMember = PsiTreeUtil.getContextOfType(extractOptions.elements.first(), PsiMember::class.java)
-    val targetMember = PsiTreeUtil.getChildOfType(targetClass, PsiMember::class.java)
+    val targetMember = generateSequence (sourceMember) { PsiTreeUtil.getParentOfType(it, PsiMember::class.java) }.find { member -> member.containingClass == targetClass }
     if (sourceMember == null || targetMember == null) return null
 
     val typeParameters = findRequiredTypeParameters(targetClass, extractOptions.elements)
@@ -209,10 +209,13 @@ object ExtractMethodPipeline {
     if (isInnerClass && !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, targetClass)) return null
     val memberUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
     if (memberUsages.any(::isNotExtractableUsage)) return null
-    val addedParameters = memberUsages.groupBy(MemberUsage::member).entries
+    val memberParameters = memberUsages.groupBy(MemberUsage::member).entries
       .map { (member: PsiMember, usages: List<MemberUsage>) ->
         createInputParameter(member, usages.map(MemberUsage::reference)) ?: return null
       }
+    val topmostClass = PsiTreeUtil.getTopmostParentOfType(targetClass, PsiMember::class.java) ?: targetClass
+    val localParameters = analyzer.findOuterLocals(targetClass, topmostClass)?.map(::inputParameterOf) ?: return null
+    val addedParameters = memberParameters + localParameters
     return extractOptions.copy(
       inputParameters = extractOptions.inputParameters + addedParameters,
       isStatic = true,

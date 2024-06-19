@@ -358,6 +358,23 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testMakeStaticPassLocalParameters(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    shouldSelectTargetClass("Anonymous.*")
+    doTest()
+  }
+
+  fun testNotStaticByDefault(){
+    shouldSelectTargetClass("Anonymous.*")
+    doTest()
+  }
+
+  fun testChangeTargetClassAndMakeStatic(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    shouldSelectTargetClass("Test.*")
+    doTest()
+  }
+
   fun testIntroduceObjectConflictInsideNestedClass(){
     doTest {
       renameTemplate("Result")
