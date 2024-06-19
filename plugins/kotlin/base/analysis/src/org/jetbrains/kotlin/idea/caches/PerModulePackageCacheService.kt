@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Key
@@ -28,12 +29,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.DumbModeAccessType
+import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.firstOrNull
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
@@ -386,6 +387,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         private fun onEvents(events: List<VFileEvent>, isAfter: Boolean) {
             val service = getInstance(project)
             val fileManager = PsiManagerEx.getInstanceEx(project).fileManager
+            val fileIndexFacade = FileIndexFacade.getInstance(project)
             if (events.size >= FULL_DROP_THRESHOLD) {
                 service.onTooComplexChange()
             } else {
@@ -396,7 +398,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
                     }
                     .filter {
                         val vFile = it.file!!
-                        vFile.isDirectory || vFile.isKotlinFileType()
+                        vFile.isDirectory || (fileIndexFacade.isInContent(vFile) && vFile.isKotlinFileType())
                     }
                     .filter {
                         // It expected that content change events will be duplicated with more precise PSI events and processed
