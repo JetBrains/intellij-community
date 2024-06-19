@@ -35,15 +35,16 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
+import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -136,7 +137,7 @@ internal abstract class AbstractNewKotlinFileAction : CreateFileFromTemplateActi
                         return
                     }
                 }
-                CreateFromTemplateAction.moveCaretAfterNameIdentifier(ktClass)
+                moveCaretAfterNameIdentifier(ktClass)
             } else {
                 val editor = createdElement.editor() ?: return
                 val lineCount = editor.document.lineCount
@@ -293,7 +294,8 @@ fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiD
         // Old JPS configurator logic
         // TODO: Unify with other auto-configuration logic in NewKotlinFileConfigurationHook
         val configurator = KotlinProjectConfigurator.EP_NAME.extensions.firstOrNull {
-            it.isApplicable(module)
+            // Gradle is already covered by the auto-configuration feature in NewKotlinFileConfigurationHook
+            it.isApplicable(module) && module.buildSystemType != BuildSystemType.Gradle
         }
         if (configurator != null) {
             ReadAction.nonBlocking(Callable {
