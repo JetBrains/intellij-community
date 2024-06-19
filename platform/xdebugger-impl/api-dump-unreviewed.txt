@@ -96,6 +96,20 @@ a:com.intellij.xdebugger.attach.osHandlers.UnixAttachOSHandler
 - getUid():I
 - p:getenv(java.lang.String):java.lang.String
 - isOurProcess(I):Z
+*a:com.intellij.xdebugger.impl.CustomComponentEvaluator
+- com.intellij.xdebugger.frame.XFullValueEvaluator
+- <init>(java.lang.String):V
+- createComponent(java.lang.String):javax.swing.JComponent
+- show(java.awt.event.MouseEvent,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
+- p:showValuePopup(java.awt.event.MouseEvent,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,javax.swing.JComponent,java.lang.Runnable):V
+*pf:com.intellij.xdebugger.impl.CustomComponentEvaluator$EvaluationCallback
+- com.intellij.xdebugger.frame.XFullValueEvaluator$XFullValueEvaluationCallback
+- <init>(javax.swing.JComponent,com.intellij.xdebugger.impl.CustomComponentEvaluator,com.intellij.openapi.project.Project):V
+- errorOccurred(java.lang.String):V
+- evaluated(java.lang.String):V
+- evaluated(java.lang.String,java.awt.Font):V
+- isObsolete():Z
+- f:setObsolete():V
 f:com.intellij.xdebugger.impl.BreakpointManagerState
 - com.intellij.openapi.components.BaseState
 - <init>():V
@@ -196,19 +210,6 @@ f:com.intellij.xdebugger.impl.InlineTextValuePopupProvider
 - <init>():V
 - accepts(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):Z
 - showPopup(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator,com.intellij.openapi.editor.Editor,java.awt.Point,java.lang.Runnable):V
-f:com.intellij.xdebugger.impl.InlineWatchState
-- com.intellij.openapi.components.BaseState
-- <init>():V
-- <init>(com.intellij.xdebugger.XExpression):V
-- <init>(com.intellij.xdebugger.XExpression,I):V
-- <init>(com.intellij.xdebugger.XExpression,I,java.lang.String):V
-- b:<init>(com.intellij.xdebugger.XExpression,I,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:getFileUrl():java.lang.String
-- f:getLine():I
-- f:getWatchState():com.intellij.xdebugger.impl.WatchState
-- f:setFileUrl(java.lang.String):V
-- f:setLine(I):V
-- f:setWatchState(com.intellij.xdebugger.impl.WatchState):V
 f:com.intellij.xdebugger.impl.PinToTopManagerState
 - com.intellij.openapi.components.BaseState
 - <init>():V
@@ -222,11 +223,6 @@ f:com.intellij.xdebugger.impl.WatchState
 - com.intellij.xdebugger.impl.breakpoints.XExpressionState
 - <init>():V
 - <init>(com.intellij.xdebugger.XExpression):V
-f:com.intellij.xdebugger.impl.WatchesManagerState
-- com.intellij.openapi.components.BaseState
-- <init>():V
-- f:getExpressions():java.util.List
-- f:getInlineExpressionStates():java.util.List
 a:com.intellij.xdebugger.impl.XDebugProcessConfiguratorStarter
 - com.intellij.xdebugger.XDebugProcessStarter
 - <init>():V
@@ -307,19 +303,6 @@ f:com.intellij.xdebugger.impl.XDebugSessionImpl
 - unsetPaused():V
 - updateBreakpointPresentation(com.intellij.xdebugger.breakpoints.XLineBreakpoint,javax.swing.Icon,java.lang.String):V
 - updateExecutionPosition():V
-f:com.intellij.xdebugger.impl.XDebuggerActionsCollector
-- sf:EVENT_FRAMES_UPDATED:java.lang.String
-- sf:FILE_TYPES:java.lang.String
-- sf:FRAMES_PER_TYPE:java.lang.String
-- sf:INSTANCE:com.intellij.xdebugger.impl.XDebuggerActionsCollector
-- sf:PLACE_FRAMES_VIEW:java.lang.String
-- sf:PLACE_THREADS_VIEW:java.lang.String
-- sf:TOTAL_FRAMES:java.lang.String
-- sf:frameSelected:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:sessionChanged:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:threadSelected:com.intellij.internal.statistic.eventLog.events.EventId1
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:logFramesUpdated(J,java.util.List):V
 f:com.intellij.xdebugger.impl.XDebuggerHistoryManager
 - com.intellij.openapi.components.PersistentStateComponent
 - <init>():V
@@ -361,11 +344,6 @@ f:com.intellij.xdebugger.impl.XDebuggerManagerImpl
 - startSessionAndShowTab(java.lang.String,com.intellij.execution.ui.RunContentDescriptor,Z,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
 - startSessionAndShowTab(java.lang.String,com.intellij.xdebugger.XDebugProcessStarter,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.xdebugger.XDebugSession
 - startSessionAndShowTab(java.lang.String,javax.swing.Icon,com.intellij.execution.ui.RunContentDescriptor,Z,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
-f:com.intellij.xdebugger.impl.XDebuggerPerformanceCollector
-- sf:INSTANCE:com.intellij.xdebugger.impl.XDebuggerPerformanceCollector
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:logBreakpointReached(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType):V
-- sf:logExecutionPointReached(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType,java.lang.String,J):V
 c:com.intellij.xdebugger.impl.XDebuggerSupport
 - com.intellij.xdebugger.impl.DebuggerSupport
 - <init>():V
@@ -449,8 +427,6 @@ f:com.intellij.xdebugger.impl.XDebuggerWatchesManager
 - getInlineWatches():java.util.List
 - getWatches(java.lang.String):java.util.List
 - inlineWatchesRemoved(java.util.List,com.intellij.xdebugger.impl.inline.XInlineWatchesView):V
-- loadState(com.intellij.xdebugger.impl.WatchesManagerState):V
-- saveState(com.intellij.xdebugger.impl.WatchesManagerState):com.intellij.xdebugger.impl.WatchesManagerState
 - setWatches(java.lang.String,java.util.List):V
 - showInplaceEditor(com.intellij.xdebugger.XSourcePosition,com.intellij.openapi.editor.Editor,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XExpression):V
 e:com.intellij.xdebugger.impl.XSourceKind
@@ -962,23 +938,8 @@ c:com.intellij.xdebugger.impl.breakpoints.BreakpointState$LogExpression
 - com.intellij.xdebugger.impl.breakpoints.XExpressionState
 - <init>():V
 - s:create(Z,com.intellij.xdebugger.XExpression):com.intellij.xdebugger.impl.breakpoints.BreakpointState$LogExpression
-f:com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 f:com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollectorKt
 - sf:getType(com.intellij.xdebugger.breakpoints.XBreakpointType):java.util.List
-f:com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector
-- sf:INSTANCE:com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- f:getTYPE_FIELD():com.intellij.internal.statistic.eventLog.events.StringEventField
-- sf:reportBreakpointVerified(com.intellij.xdebugger.breakpoints.XBreakpoint,J):V
-- sf:reportNewBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.breakpoints.XBreakpointType,Z):V
-f:com.intellij.xdebugger.impl.breakpoints.BreakpointsUtilValidator
-- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
-- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
-- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
-- <init>():V
-- getRuleId():java.lang.String
 c:com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 - <init>():V
 - getErrorMessage():java.lang.String
@@ -1130,7 +1091,6 @@ f:com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 - getProject():com.intellij.openapi.project.Project
 - init():V
 - isDefaultBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint):Z
-- loadState(com.intellij.xdebugger.impl.BreakpointManagerState):V
 - noStateLoaded():V
 - rememberRemovedBreakpoint(com.intellij.xdebugger.impl.breakpoints.XBreakpointBase):V
 - removeAllBreakpoints():V
@@ -1138,7 +1098,6 @@ f:com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 - removeBreakpointListener(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointListener):V
 - removeDefaultBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint):V
 - restoreLastRemovedBreakpoint():com.intellij.xdebugger.breakpoints.XBreakpoint
-- saveState(com.intellij.xdebugger.impl.BreakpointManagerState):com.intellij.xdebugger.impl.BreakpointManagerState
 - setBreakpointsDialogSettings(com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState):V
 - setDefaultGroup(java.lang.String):V
 - s:statesAreDifferent(com.intellij.xdebugger.impl.breakpoints.BreakpointState,com.intellij.xdebugger.impl.breakpoints.BreakpointState,Z):Z
@@ -1507,17 +1466,6 @@ c:com.intellij.xdebugger.impl.evaluate.CodeFragmentInputComponent
 - addComponent(javax.swing.JPanel,javax.swing.JPanel):V
 - getInputEditor():com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
 - getMainComponent():javax.swing.JPanel
-f:com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector
-- sf:DIALOG_OPEN:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:EVALUATE:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:HISTORY_CHOOSE:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:HISTORY_SHOW:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:INLINE_EVALUATE:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:INPUT_FOCUS:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:INSTANCE:com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector
-- sf:MODE_SWITCH:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:WATCH_FROM_INLINE_ADD:com.intellij.internal.statistic.eventLog.events.EventId1
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 a:com.intellij.xdebugger.impl.evaluate.EvaluationInputComponent
 - p:<init>(java.lang.String):V
 - a:addComponent(javax.swing.JPanel,javax.swing.JPanel):V
@@ -2354,10 +2302,6 @@ c:com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl$SettingsState
 - getGeneralSettings():com.intellij.xdebugger.impl.settings.XDebuggerGeneralSettings
 - setDataViewSettings(com.intellij.xdebugger.impl.settings.XDebuggerDataViewSettings):V
 - setGeneralSettings(com.intellij.xdebugger.impl.settings.XDebuggerGeneralSettings):V
-f:com.intellij.xdebugger.impl.settings.XDebuggerSettingsStatisticsCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- getMetrics():java.util.Set
 c:com.intellij.xdebugger.impl.ui.BreakpointEditor
 - b:$$$getRootComponent$$$():javax.swing.JComponent
 - <init>():V
@@ -2633,10 +2577,6 @@ f:com.intellij.xdebugger.impl.ui.XDebugTabLayoutSettings$XDebugVariablesLayoutSe
 - isSelected():Z
 - restore():V
 - setSelected(Z):V
-f:com.intellij.xdebugger.impl.ui.XDebugThreadsFramesViewChangeCollector
-- sf:INSTANCE:com.intellij.xdebugger.impl.ui.XDebugThreadsFramesViewChangeCollector
-- f:framesViewSelected(java.lang.String):V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 a:com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
 - com.intellij.ui.Expandable
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.evaluation.EvaluationMode,java.lang.String,com.intellij.xdebugger.XSourcePosition):V

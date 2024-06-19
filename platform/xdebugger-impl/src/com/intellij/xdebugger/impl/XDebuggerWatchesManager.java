@@ -23,6 +23,7 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,7 @@ public final class XDebuggerWatchesManager {
     return inlineWatches.values().stream().flatMap(l -> l.stream()).collect(Collectors.toList());
   }
 
+  @ApiStatus.Internal
   public @NotNull WatchesManagerState saveState(@NotNull WatchesManagerState state) {
     List<ConfigurationState> expressions = state.getExpressions();
     expressions.clear();
@@ -86,6 +88,7 @@ public final class XDebuggerWatchesManager {
     inlineWatches.clear();
   }
 
+  @ApiStatus.Internal
   public void loadState(@NotNull WatchesManagerState state) {
     clearContext();
 

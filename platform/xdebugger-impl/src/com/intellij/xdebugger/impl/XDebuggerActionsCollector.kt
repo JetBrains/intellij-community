@@ -13,9 +13,11 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.xdebugger.frame.XStackFrame
+import org.jetbrains.annotations.ApiStatus
 
 private const val UNKNOWN_TYPE = "Unknown"
 
+@ApiStatus.Internal
 object XDebuggerActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 

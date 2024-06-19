@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.components.BaseState
@@ -12,7 +12,9 @@ import com.intellij.xdebugger.impl.breakpoints.LineBreakpointState
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState
 import com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Tag("breakpoint-manager")
 class BreakpointManagerState : BaseState() {
   @get:XCollection(propertyElementName = "default-breakpoints")
@@ -31,7 +33,7 @@ class BreakpointManagerState : BaseState() {
 }
 
 @Tag("watches-manager")
-class WatchesManagerState : BaseState() {
+internal class WatchesManagerState : BaseState() {
   @get:Property(surroundWithTag = false)
   @get:XCollection
   val expressions by list<ConfigurationState>()
@@ -42,7 +44,7 @@ class WatchesManagerState : BaseState() {
 }
 
 @Tag("configuration")
-class ConfigurationState @JvmOverloads constructor(name: String? = null,
+internal class ConfigurationState @JvmOverloads constructor(name: String? = null,
                                                    expressions: List<XExpression>? = null) : BaseState() {
   @get:Attribute
   var name by string()
@@ -65,7 +67,7 @@ class ConfigurationState @JvmOverloads constructor(name: String? = null,
 }
 
 @Tag("inline-watch")
-class InlineWatchState @JvmOverloads  constructor(expression: XExpression? = null, line: Int = -1, fileUrl: String? = null) : BaseState() {
+internal class InlineWatchState @JvmOverloads  constructor(expression: XExpression? = null, line: Int = -1, fileUrl: String? = null) : BaseState() {
 
   @get:Attribute
   var fileUrl by string()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.xdebugger.evaluation.EvaluationMode
 
-object DebuggerEvaluationStatisticsCollector : CounterUsagesCollector() {
+internal object DebuggerEvaluationStatisticsCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("debugger.evaluate.usage", 4)
 
   @JvmField

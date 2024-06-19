@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 
-object XDebuggerPerformanceCollector : CounterUsagesCollector() {
+internal object XDebuggerPerformanceCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private val GROUP = EventLogGroup("debugger.performance", 4)
