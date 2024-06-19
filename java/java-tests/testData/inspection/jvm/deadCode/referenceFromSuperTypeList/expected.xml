@@ -4,7 +4,7 @@
     <file>A.kt</file>
     <line>9</line>
     <entry_point TYPE="class" FQNAME="YYY.Companion" />
-    <description>No class references has been found. Class static initializer is not reachable.</description>
+    <description>Class is never used.</description>
   </problem>
 
   <problem>
@@ -12,6 +12,6 @@
     <line>11</line>
     <highlighted_element>const val T = &quot;T&quot;</highlighted_element>
     <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
-    <description>Field has no usages.</description>
+    <description>Field is never used.</description>
   </problem>
 </problems>

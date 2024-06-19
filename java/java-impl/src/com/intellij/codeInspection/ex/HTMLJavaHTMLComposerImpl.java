@@ -222,8 +222,10 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     else if (refElement instanceof RefParameter) {
       message = AnalysisBundle.message("inspection.export.results.parameter");
     }
-    else if (refElement instanceof RefField) {
-      message = AnalysisBundle.message("inspection.export.results.field");
+    else if (refElement instanceof RefField field) {
+      message = field.isEnumConstant() 
+                ? AnalysisBundle.message("inspection.export.results.enum.constant")
+                : AnalysisBundle.message("inspection.export.results.field");
     }
     else if (refElement instanceof RefMethod method) {
       message = AnalysisBundle.message(

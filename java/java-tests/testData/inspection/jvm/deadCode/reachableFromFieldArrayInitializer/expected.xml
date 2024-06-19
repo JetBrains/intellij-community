@@ -5,7 +5,7 @@
     <file>Test.kt</file>
     <line>7</line>
     <entry_point TYPE="class" FQNAME="Test.Companion" />
-    <description>No class references has been found. Class static initializer is not reachable.</description>
+    <description>Class is never used.</description>
   </problem>
 </problems>
 

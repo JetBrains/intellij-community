@@ -54,7 +54,7 @@
   <problem>
     <file>Lambda.java</file>
     <line>6</line>
-    <description>Field has no usages.</description>
+    <description>Field is never used.</description>
   </problem>
   <problem>
     <file>Lambda.java</file>
@@ -95,12 +95,12 @@
   <problem>
     <file>AnonymousClass.java</file>
     <line>6</line>
-    <description>Field has no usages.</description>
+    <description>Field is never used.</description>
   </problem>
   <problem>
     <file>AnonymousClass.java</file>
     <line>9</line>
-    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;All instantiations are not reachable from the entry points.&lt;/li&gt;&lt;/ul&gt;</description>
   </problem>
   <problem>
     <file>AnonymousClass.java</file>
@@ -110,12 +110,12 @@
   <problem>
     <file>AnonymousClass.java</file>
     <line>14</line>
-    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;All instantiations are not reachable from the entry points.&lt;/li&gt;&lt;/ul&gt;</description>
   </problem>
   <problem>
     <file>AnonymousClass.java</file>
     <line>19</line>
-    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;All instantiations are not reachable from the entry points.&lt;/li&gt;&lt;/ul&gt;</description>
   </problem>
   <problem>
     <file>AnonymousClass.java</file>

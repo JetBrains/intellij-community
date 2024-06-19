@@ -87,7 +87,9 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
 
         if (!field.isUsedForReading() && field.isUsedForWriting()) {
           if (field.isOnlyAssignedInInitializer()) {
-            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis1"));
+            buf.append(field.isEnumConstant()
+                       ? AnalysisBundle.message("inspection.dead.code.problem.synopsis.enum.constant")
+                       : AnalysisBundle.message("inspection.dead.code.problem.synopsis1"));
             return;
           }
 
@@ -106,37 +108,50 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       }
 
       @Override public void visitClass(@NotNull RefClass refClass) {
+        String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, true);
         if (refClass.isAnonymous()) {
           buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis10"));
-        } else if (refClass.isInterface() || refClass.isAbstract()) {
-          String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, true);
-          buf.append("&nbsp;");
+        } else if (refClass.isAnnotationType()) {
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis11", classOrInterface));
+        }
+        else if (refClass.isEnum()) {
+          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis11", classOrInterface));
+        }
+        else {
+          if (refClass.isInterface() || refClass.isAbstract()) {
+            int nDerived = getImplementationsCount(refClass);
 
-          int nDerived = getImplementationsCount(refClass);
-
-          if (nDerived == 0) {
-            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis23", classOrInterface));
-          } else if (nDerived == 1) {
-            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis24", classOrInterface));
-          } else {
-            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis25", classOrInterface, nDerived));
-          }
-        } else if (refClass.isUtilityClass()) {
-          buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis11"));
-        } else {
-          int nInstantiationsCount = getInstantiationsCount(refClass);
-
-          if (nInstantiationsCount == 0) {
-            int nImplementations = getImplementationsCount(refClass);
-            if (nImplementations != 0) {
-              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis19", nImplementations));
-            } else {
-              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis13"));
+            if (nDerived == 0) {
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis23", classOrInterface));
             }
-          } else if (nInstantiationsCount == 1) {
-            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis12"));
-          } else {
-            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis20", nInstantiationsCount));
+            else if (nDerived == 1) {
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis24", classOrInterface));
+            }
+            else {
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis25", classOrInterface, nDerived));
+            }
+          }
+          else if (refClass.isUtilityClass()) {
+            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis11", classOrInterface));
+          }
+          else {
+            int nInstantiationsCount = getInstantiationsCount(refClass);
+
+            if (nInstantiationsCount == 0) {
+              int nImplementations = getImplementationsCount(refClass);
+              if (nImplementations != 0) {
+                buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis19", nImplementations));
+              }
+              else {
+                buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis13", classOrInterface));
+              }
+            }
+            else if (nInstantiationsCount == 1) {
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis12", classOrInterface));
+            }
+            else {
+              buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis20", nInstantiationsCount, classOrInterface));
+            }
           }
         }
       }

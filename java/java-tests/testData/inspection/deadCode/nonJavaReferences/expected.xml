@@ -3,7 +3,7 @@
   <problem>
     <file>Test.java</file>
     <line>2</line>
-    <description>Field has no usages.</description>
+    <description>Field is never used.</description>
   </problem>
 </problems>
 

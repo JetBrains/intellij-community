@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.uast.UastMetaLanguage;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,15 +20,26 @@ public abstract class HTMLJavaHTMLComposer implements HTMLComposerExtension<HTML
   public abstract void appendClassOrInterface(@NotNull StringBuilder buf, @NotNull RefClass refClass, boolean capitalizeFirstLetter);
 
   public static String getClassOrInterface(@NotNull RefClass refClass, boolean capitalizeFirstLetter) {
-    if (refClass.isInterface()) {
-      return capitalizeFirstLetter ? AnalysisBundle.message("inspection.export.results.capitalized.interface") : AnalysisBundle.message("inspection.export.results.interface");
+    String message;
+    if (refClass.isAnnotationType()) {
+      message = AnalysisBundle.message("inspection.export.results.annotation.type");
+    }
+    else if (refClass.isInterface()) {
+      message = AnalysisBundle.message("inspection.export.results.interface");
     }
     else if (refClass.isAbstract()) {
-      return capitalizeFirstLetter ? AnalysisBundle.message("inspection.export.results.capitalized.abstract.class") : AnalysisBundle.message("inspection.export.results.abstract.class");
+      message = AnalysisBundle.message("inspection.export.results.abstract.class");
+    }
+    else if (refClass.isEnum()) {
+      message = AnalysisBundle.message("inspection.export.results.enum.class");
+    }
+    else if (refClass.isRecord()) {
+      message = AnalysisBundle.message("inspection.export.results.record.class");
     }
     else {
-      return capitalizeFirstLetter ? AnalysisBundle.message("inspection.export.results.capitalized.class") : AnalysisBundle.message("inspection.export.results.class");
+      message = AnalysisBundle.message("inspection.export.results.class");
     }
+    return capitalizeFirstLetter ? Strings.capitalize(message) : message;
   }
 
   public abstract void appendClassExtendsImplements(@NotNull StringBuilder buf, @NotNull RefClass refClass);

@@ -3,17 +3,17 @@
   <problem>
     <file>Test.java</file>
     <line>1</line>
-    <description>Class has 2 instantiations, but they are not reachable from entry points.</description>
+    <description>Enum is never used.</description>
   </problem>
   <problem>
     <file>Test.java</file>
     <line>2</line>
-    <description>Field has no usages.</description>
+    <description>Enum constant is never used.</description>
   </problem>
   <problem>
     <file>Test.java</file>
     <line>2</line>
-    <description>Field has no usages.</description>
+    <description>Enum constant is never used.</description>
   </problem>
 </problems>
 

@@ -12,14 +12,14 @@
     <file>NonUtility.java</file>
     <line>2</line>
     <problem_class>unused declaration</problem_class>
-    <description>Field has no usages.</description>
+    <description>Field is never used.</description>
   </problem>
 
   <problem>
     <file>NonUtility.java</file>
     <line>3</line>
     <problem_class>unused declaration</problem_class>
-    <description>Field has no usages.</description>
+    <description>Field is never used.</description>
   </problem>
 
   <problem>
