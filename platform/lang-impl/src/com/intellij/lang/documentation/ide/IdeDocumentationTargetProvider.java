@@ -48,6 +48,7 @@ public interface IdeDocumentationTargetProvider {
 
   // I am really sorry that I have to extend the API in such a way, but, I guess, all people who ever wanted to extend it, did so
   // with a default implementation. This is going to be used in Rider, see README.MD in com.jetbrains.rdclient.quickDoc.mixproj
+  @ApiStatus.Internal
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
   default @NotNull List<? extends @NotNull DocumentationTarget> documentationTargetsForInlineDoc(
