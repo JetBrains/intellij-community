@@ -9,9 +9,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
@@ -47,7 +45,8 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         newName: String,
         allRenames: MutableMap<PsiElement, String>,
         scope: SearchScope
-    ) {}
+    ) {
+    }
 
     override fun checkUsagesRetargeting(
         declaration: KtNamedDeclaration,
@@ -57,8 +56,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     ) {
         if (declaration is KtClassLikeDeclaration) {
             checkClassNameShadowing(declaration, newName.quoteIfNeeded(), originalUsages, newUsages)
-        }
-        else if (declaration is KtTypeParameter) {
+        } else if (declaration is KtTypeParameter) {
             //it's impossible to fix type parameter usages, let's try to fix external usages
             checkClassLikeNameShadowing(declaration, newName.quoteIfNeeded(), newUsages)
         }
@@ -102,35 +100,11 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         shortenReferences(element)
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
-        fun KtCallableDeclaration.overridesNothing(): Boolean {
-            val declaration = this
-
-            @OptIn(KaAllowAnalysisFromWriteAction::class)
-            allowAnalysisFromWriteAction {
-                analyze(this) {
-                    val declarationSymbol = declaration.symbol as? KaCallableSymbol ?: return false
-
-                    val callableSymbol = when (declarationSymbol) {
-                        is KaValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
-                        else -> declarationSymbol
-                    }
-                    return callableSymbol.directlyOverriddenSymbols.none()
-                }
-            }
+        val declaration = element as? KtCallableDeclaration ?: return
+        if (overridesNothing(declaration)) {
+            declaration.removeModifier(KtTokens.OVERRIDE_KEYWORD)
         }
-
-        fun dropOverrideKeywordIfNecessary(declaration: KtCallableDeclaration) {
-            if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD) && declaration.overridesNothing()) {
-                declaration.removeModifier(KtTokens.OVERRIDE_KEYWORD)
-            }
-        }
-
-        allowAnalysisOnEdt {
-            dropOverrideKeywordIfNecessary(element as? KtCallableDeclaration ?: return)
-        }
-
     }
 
     override fun findAllOverridingMethods(psiMethod: PsiElement, scope: SearchScope): List<PsiElement> {

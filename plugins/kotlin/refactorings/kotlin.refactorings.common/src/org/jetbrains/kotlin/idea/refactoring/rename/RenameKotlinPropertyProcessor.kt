@@ -374,6 +374,8 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
       }
     }
 
+      val wasRequiredOverride = (element.unwrapped as? KtNamedFunction)?.let { renameRefactoringSupport.overridesNothing(it) } != true
+
       val (adjustedUsages, refKindUsages) = @OptIn(KaAllowAnalysisFromWriteAction::class) allowAnalysisFromWriteAction {
           val adjustedUsages = if (element is KtParameter) {
               usages.filterNot {
@@ -428,9 +430,11 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
     usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
 
-    renameRefactoringSupport.dropOverrideKeywordIfNecessary(element)
+      if (wasRequiredOverride) {
+          renameRefactoringSupport.dropOverrideKeywordIfNecessary(element)
+      }
 
-    listener?.elementRenamed(element)
+      listener?.elementRenamed(element)
   }
 
 }

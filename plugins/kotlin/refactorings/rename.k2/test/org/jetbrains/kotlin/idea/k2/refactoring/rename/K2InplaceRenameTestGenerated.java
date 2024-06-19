@@ -645,6 +645,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedParameter.kt");
     }
 
+    @TestMetadata("RedundantOverride.kt")
+    public void testRedundantOverride() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/RedundantOverride.kt");
+    }
+
     @TestMetadata("SameNameFunctionByImplicitReceiver.kt")
     public void testSameNameFunctionByImplicitReceiver() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/SameNameFunctionByImplicitReceiver.kt");

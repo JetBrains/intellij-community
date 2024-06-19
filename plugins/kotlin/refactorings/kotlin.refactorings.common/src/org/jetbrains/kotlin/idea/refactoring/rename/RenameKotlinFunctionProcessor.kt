@@ -26,9 +26,10 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.withExpectedActuals
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
+import org.jetbrains.kotlin.idea.search.declarationsSearch.hasOverridingElement
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
@@ -247,6 +248,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
     }
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {
+        val wasRequiredOverride = (element.unwrapped as? KtNamedFunction)?.let { renameRefactoringSupport.overridesNothing(it) } != true
         val simpleUsages = ArrayList<UsageInfo>(usages.size)
         val ambiguousImportUsages = SmartList<UsageInfo>()
         val simpleImportUsages = SmartList<UsageInfo>()
@@ -274,8 +276,10 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
         usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
 
-        (element.unwrapped as? KtNamedDeclaration)?.let {
-            renameRefactoringSupport.dropOverrideKeywordIfNecessary(it)
+        if (wasRequiredOverride) {
+            (element.unwrapped as? KtNamedDeclaration)?.let {
+                renameRefactoringSupport.dropOverrideKeywordIfNecessary(it)
+            }
         }
     }
 

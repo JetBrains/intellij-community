@@ -6,7 +6,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -43,6 +52,26 @@ interface KotlinRenameRefactoringSupport {
     fun isCompanionObjectClassReference(psiReference: PsiReference): Boolean
 
     fun shortenReferencesLater(element: KtElement)
+
+    fun overridesNothing(declaration: KtCallableDeclaration): Boolean {
+        if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
+
+        @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
+        allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(declaration) {
+
+                    val declarationSymbol = declaration.symbol as? KaCallableSymbol ?: return false
+
+                    val callableSymbol = when (declarationSymbol) {
+                        is KaValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
+                        else -> declarationSymbol
+                    }
+                    return !callableSymbol.directlyOverriddenSymbols.iterator().hasNext()
+                }
+            }
+        }
+    }
 
     fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration)
 

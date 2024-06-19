@@ -645,6 +645,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/QuotedParameter.kt");
     }
 
+    @TestMetadata("RedundantOverride.kt")
+    public void testRedundantOverride() throws Exception {
+        runTest("testData/refactoring/rename/inplace/RedundantOverride.kt");
+    }
+
     @TestMetadata("SameNameFunctionByImplicitReceiver.kt")
     public void testSameNameFunctionByImplicitReceiver() throws Exception {
         runTest("testData/refactoring/rename/inplace/SameNameFunctionByImplicitReceiver.kt");
