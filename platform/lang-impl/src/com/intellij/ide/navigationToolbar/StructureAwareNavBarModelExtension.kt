@@ -73,6 +73,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   override fun getParent(psiElement: PsiElement?): PsiElement? {
     if (isAcceptableLanguage(psiElement)) {
       val file = psiElement?.containingFile ?: return null
+      if (psiElement == file) return null
       val model = buildStructureViewModel(file)
       if (model != null) {
         val parentInModel = findParentInModel(model.root, psiElement)
