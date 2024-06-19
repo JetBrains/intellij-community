@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,5 +52,5 @@ public interface Surrounder extends WriteActionAware {
   @Nullable
   TextRange surroundElements(@NotNull Project project,
                              @NotNull Editor editor,
-                             PsiElement @NotNull [] elements) throws IncorrectOperationException;
+                             PsiElement @NotNull [] elements);
 }

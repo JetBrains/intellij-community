@@ -23,8 +23,7 @@ public abstract class PyStatementSurrounder implements Surrounder {
     throws IncorrectOperationException;
 
   @Override
-  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
-    throws IncorrectOperationException {
+  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) {
     return surroundStatement(project, editor, elements);
   }
 }

@@ -50,7 +50,7 @@ class KotlinRuntimeTypeCastSurrounder : Surrounder {
         return TypeUtils.canHaveSubtypes(KotlinTypeChecker.DEFAULT, type)
     }
 
-    override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement?>): TextRange? {
+    override fun surroundElements(project: Project, editor: Editor, elements: Array<PsiElement>): TextRange? {
         val expression = elements.singleOrNull() as? KtExpression ?: return null
         val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
         val debuggerSession = debuggerContext.debuggerSession
