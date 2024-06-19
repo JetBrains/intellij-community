@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.high-level-api-impl-base-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-tests-for-ide:2.0.0-ij241.15989-9">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-tests-for-ide:2.0.0-ij241-287">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-ij241.15989-9/high-level-api-impl-base-tests-for-ide-2.0.0-ij241.15989-9.jar">
-          <sha256sum>0bc4c4b04067772e6e6295322be4190096f7e9f9fa57317a3e88674594cb6205</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-ij241-287/high-level-api-impl-base-tests-for-ide-2.0.0-ij241-287.jar">
+          <sha256sum>f47840e385213a09950ed3b3be610dda203ec86c6fde9bad41abe966b30cb934</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-ij241.15989-9/high-level-api-impl-base-tests-for-ide-2.0.0-ij241.15989-9.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-ij241-287/high-level-api-impl-base-tests-for-ide-2.0.0-ij241-287.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-ij241.15989-9/high-level-api-impl-base-tests-for-ide-2.0.0-ij241.15989-9-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-ij241-287/high-level-api-impl-base-tests-for-ide-2.0.0-ij241-287-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
