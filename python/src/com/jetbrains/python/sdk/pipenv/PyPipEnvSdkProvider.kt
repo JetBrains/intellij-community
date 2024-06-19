@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.packaging.pipenv.PyPipEnvPackageManagementService
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -35,7 +36,7 @@ class PyPipEnvSdkProvider : PySdkProvider {
                                                sdk: Sdk,
                                                isPyCharm: Boolean,
                                                associatedModulePath: String?): PyInterpreterInspectionQuickFixData? {
-    if (sdk.isPipEnv) {
+    if (sdk.isPipEnv && !PlatformUtils.isFleetBackend()) {
       val message = when {
         associatedModulePath != null -> when {
           isPyCharm -> PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.associated.with.another.project", associatedModulePath)

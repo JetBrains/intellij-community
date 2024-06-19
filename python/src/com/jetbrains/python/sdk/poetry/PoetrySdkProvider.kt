@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.PyInterpreterInspectionQuickFixData
@@ -24,7 +25,7 @@ class PoetrySdkProvider : PySdkProvider {
                                                sdk: Sdk,
                                                isPyCharm: Boolean,
                                                associatedModulePath: String?): PyInterpreterInspectionQuickFixData? {
-    if (sdk.isPoetry) {
+    if (sdk.isPoetry && !PlatformUtils.isFleetBackend()) {
       val projectUnit = if (isPyCharm) "project" else "module"
       val message = when {
         associatedModulePath != null ->
