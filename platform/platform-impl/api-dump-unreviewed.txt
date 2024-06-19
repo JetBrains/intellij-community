@@ -17590,6 +17590,12 @@ f:com.intellij.openapi.project.configuration.ChannelingProgressIndicator
 - setIndeterminate(Z):V
 - setText(java.lang.String):V
 - setText2(java.lang.String):V
+com.intellij.openapi.project.configuration.ConfigurationResult
+com.intellij.openapi.project.configuration.ConfigurationResult$Failure
+- com.intellij.openapi.project.configuration.ConfigurationResult
+- a:getMessage():java.lang.String
+com.intellij.openapi.project.configuration.ConfigurationResult$Success
+- com.intellij.openapi.project.configuration.ConfigurationResult
 f:com.intellij.openapi.project.configuration.EmptyLoggingService
 - com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService
 - <init>():V

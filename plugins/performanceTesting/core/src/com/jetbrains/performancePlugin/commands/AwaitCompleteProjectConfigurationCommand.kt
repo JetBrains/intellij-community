@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.configuration.ConfigurationResult
 import com.intellij.openapi.project.configuration.awaitCompleteProjectConfiguration
 import com.intellij.openapi.ui.playback.PlaybackContext
 
@@ -20,7 +21,10 @@ class AwaitCompleteProjectConfigurationCommand(text: String, line: Int) : Perfor
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    context.project.awaitCompleteProjectConfiguration { str -> LOG.info(str) }
+    val result = context.project.awaitCompleteProjectConfiguration { str -> LOG.info(str) }
+    if (result is ConfigurationResult.Failure) {
+      LOG.error(result.message)
+    }
   }
 
   override fun getName(): String {

@@ -4,13 +4,9 @@ package com.intellij.warmup.util
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.configuration.HeadlessLogging
+import com.intellij.openapi.project.configuration.ConfigurationResult
 import com.intellij.openapi.project.configuration.awaitCompleteProjectConfiguration
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.selects.select
+import com.intellij.util.asSafely
 
 internal suspend fun configureProjectByActivities(args: OpenProjectArgs): Project {
   val projectFile = getProjectFile(args)
@@ -22,9 +18,9 @@ internal suspend fun configureProjectByActivities(args: OpenProjectArgs): Projec
   } ?: throw RuntimeException("Failed to open project, null is returned")
 
   val configurationError = runTaskAndLogTime("awaiting completion predicates") {
-    val configurationError = awaitProjectConfigurationOrFail(project).await()
+    val result = project.awaitCompleteProjectConfiguration(WarmupLogger::logInfo)
     dumpThreadsAfterConfiguration()
-    configurationError
+    result.asSafely<ConfigurationResult.Failure>()?.message
   }
   if (configurationError != null) {
     WarmupLogger.logError("Project configuration has failed: $configurationError")
@@ -35,37 +31,4 @@ internal suspend fun configureProjectByActivities(args: OpenProjectArgs): Projec
 
   WarmupLogger.logInfo("Project is ready for the import")
   return project
-}
-
-private fun CoroutineScope.getFailureDeferred() : Deferred<String> {
-  return async {
-    val firstFatal = HeadlessLogging.loggingFlow().first { (level, _) -> level == HeadlessLogging.SeverityKind.Fatal }
-    firstFatal.message.representation()
-  }
-}
-
-private fun CoroutineScope.getConfigurationDeferred(project : Project) : Deferred<Unit> {
-  return async {
-    withLoggingProgressReporter {
-      project.awaitCompleteProjectConfiguration(WarmupLogger::logInfo)
-    }
-  }
-}
-
-private fun CoroutineScope.awaitProjectConfigurationOrFail(project : Project) : Deferred<String?> {
-  val abortDeferred = getFailureDeferred()
-  val deferredConfiguration = getConfigurationDeferred(project)
-
-  return async {
-    select<String?> {
-      deferredConfiguration.onAwait {
-        abortDeferred.cancel()
-        null
-      }
-      abortDeferred.onAwait { it ->
-        deferredConfiguration.cancel()
-        it
-      }
-    }
-  }
 }
