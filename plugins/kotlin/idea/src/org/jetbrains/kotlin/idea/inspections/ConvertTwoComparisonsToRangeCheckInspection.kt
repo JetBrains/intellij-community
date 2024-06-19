@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.FlexibleType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isPrimitiveNumberType
@@ -154,9 +155,11 @@ class ConvertTwoComparisonsToRangeCheckInspection :
         if (!min.isSimple() || !max.isSimple()) return null
 
         val context = value.analyze()
-        val valType = value.getType(context)
-        val minType = min.getType(context)
-        val maxType = max.getType(context)
+
+        fun KtExpression.type(): KotlinType? = getType(context)?.let { if (it is FlexibleType) it.lowerBound else it }
+        val valType = value.type()
+        val minType = min.type()
+        val maxType = max.type()
 
         if (valType == null || minType == null || maxType == null) return null
 

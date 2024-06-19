@@ -4287,6 +4287,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/nonConstants.kt");
         }
 
+        @TestMetadata("platformType.kt")
+        public void testPlatformType() throws Exception {
+            runTest("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/platformType.kt");
+        }
+
         @TestMetadata("recursiveCall.kt")
         public void testRecursiveCall() throws Exception {
             runTest("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/recursiveCall.kt");
