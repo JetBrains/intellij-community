@@ -44,25 +44,25 @@ class GradleContentRootSyncContributor : GradleSyncContributor {
 
     val contentRootEntities = storage.entities<ContentRootEntity>()
 
-    for (gradleBuild in context.allBuilds) {
-      val buildPath = gradleBuild.buildIdentifier.rootDir.toPath()
+    for (buildModel in context.allBuilds) {
+      val buildPath = buildModel.buildIdentifier.rootDir.toPath()
       val buildUrl = buildPath.toVirtualFileUrl(virtualFileUrlManager)
 
       val buildEntitySource = GradleBuildEntitySource(buildUrl)
 
       val contentRootEntitiesToAdd = LinkedHashMap<VirtualFileUrl, GradleLightProject>()
 
-      for (gradleProject in gradleBuild.projects) {
-        val contentRootPath = gradleProject.projectDirectory.toPath()
+      for (projectModel in buildModel.projects) {
+        val contentRootPath = projectModel.projectDirectory.toPath()
         val contentRootUrl = contentRootPath.toVirtualFileUrl(virtualFileUrlManager)
         val contentRootEntity = contentRootEntities.find { it.url == contentRootUrl }
         if (contentRootEntity == null) {
-          contentRootEntitiesToAdd[contentRootUrl] = gradleProject
+          contentRootEntitiesToAdd[contentRootUrl] = projectModel
         }
       }
 
-      for (gradleProject in contentRootEntitiesToAdd.values) {
-        addContentRootEntity(context, project, storage, gradleBuild, gradleProject, buildEntitySource)
+      for (projectModel in contentRootEntitiesToAdd.values) {
+        addContentRootEntity(context, project, storage, buildModel, projectModel, buildEntitySource)
       }
     }
   }
@@ -71,14 +71,14 @@ class GradleContentRootSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     project: Project,
     storage: MutableEntityStorage,
-    gradleBuild: GradleLightBuild,
-    gradleProject: GradleLightProject,
-    entitySource: GradleEntitySource
+    buildModel: GradleLightBuild,
+    projectModel: GradleLightProject,
+    entitySource: GradleEntitySource,
   ) {
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-    val contentRootPath = gradleProject.projectDirectory.toPath()
+    val contentRootPath = projectModel.projectDirectory.toPath()
     val contentRootUrl = contentRootPath.toVirtualFileUrl(virtualFileUrlManager)
-    val moduleName = resolveUniqueModuleName(context, storage, gradleBuild, gradleProject)
+    val moduleName = resolveUniqueModuleName(context, storage, buildModel, projectModel)
     storage addEntity ContentRootEntity(
       url = contentRootUrl,
       entitySource = entitySource,
@@ -95,10 +95,10 @@ class GradleContentRootSyncContributor : GradleSyncContributor {
   private fun resolveUniqueModuleName(
     context: ProjectResolverContext,
     storage: MutableEntityStorage,
-    gradleBuild: GradleLightBuild,
-    gradleProject: GradleLightProject
+    buildModel: GradleLightBuild,
+    projectModel: GradleLightProject,
   ): String {
-    for (moduleNameCandidate in generateModuleNames(context, gradleBuild, gradleProject)) {
+    for (moduleNameCandidate in generateModuleNames(context, buildModel, projectModel)) {
       val moduleId = ModuleId(moduleNameCandidate)
       if (storage.resolve(moduleId) == null) {
         return moduleNameCandidate
@@ -109,21 +109,21 @@ class GradleContentRootSyncContributor : GradleSyncContributor {
 
   private fun generateModuleNames(
     context: ProjectResolverContext,
-    gradleBuild: GradleLightBuild,
-    gradleProject: GradleLightProject
+    buildModel: GradleLightBuild,
+    projectModel: GradleLightProject,
   ): Iterable<String> {
-    val moduleName = resolveModuleName(context, gradleBuild, gradleProject)
-    val modulePath = gradleProject.projectDirectory.toPath()
+    val moduleName = resolveModuleName(context, buildModel, projectModel)
+    val modulePath = projectModel.projectDirectory.toPath()
     return ModuleNameGenerator.generate(null, moduleName, modulePath, ".")
   }
 
   private fun resolveModuleName(
     context: ProjectResolverContext,
-    gradleBuild: GradleLightBuild,
-    gradleProject: GradleLightProject
+    buildModel: GradleLightBuild,
+    projectModel: GradleLightProject,
   ): String {
-    val moduleName = resolveGradleProjectQualifiedName(gradleBuild, gradleProject)
-    val buildSrcGroup = context.getBuildSrcGroup(gradleBuild.name, gradleBuild.buildIdentifier)
+    val moduleName = resolveGradleProjectQualifiedName(buildModel, projectModel)
+    val buildSrcGroup = context.getBuildSrcGroup(buildModel.name, buildModel.buildIdentifier)
     if (buildSrcGroup.isNullOrBlank()) {
       return moduleName
     }
@@ -131,15 +131,15 @@ class GradleContentRootSyncContributor : GradleSyncContributor {
   }
 
   private fun resolveGradleProjectQualifiedName(
-    gradleBuild: GradleLightBuild,
-    gradleProject: GradleLightProject
+    buildModel: GradleLightBuild,
+    projectModel: GradleLightProject,
   ): String {
-    if (gradleProject.path == ":") {
-      return gradleBuild.name
+    if (projectModel.path == ":") {
+      return buildModel.name
     }
-    if (gradleProject.path.startsWith(":")) {
-      return gradleBuild.name + gradleProject.path.replace(":", ".")
+    if (projectModel.path.startsWith(":")) {
+      return buildModel.name + projectModel.path.replace(":", ".")
     }
-    return gradleProject.path.replace(":", ".")
+    return projectModel.path.replace(":", ".")
   }
 }
