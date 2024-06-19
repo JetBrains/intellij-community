@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,11 +10,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Allows to mark some elements as implicitly used,
- * so "Unused declaration" inspection would treat <b>all code</b> reachable from those elements as used.
- * <p/>
+ * Allows marking some elements as implicitly used.
+ * The "Unused declaration" inspection will treat <b>all code</b> reachable from these elements as used.
+ * <p>
  * 
- * Entry points can be configured by the user. Common examples are main methods, tests, etc
+ * Entry points can be configured by the user. Common examples are main methods, tests, etc.
  * 
  * @see com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
  * @see com.intellij.codeInsight.daemon.ImplicitUsageProvider
@@ -24,14 +23,14 @@ public abstract class EntryPoint implements JDOMExternalizable , Cloneable {
   private static final Logger LOG = Logger.getInstance(EntryPoint.class);
 
   /**
-   * @return presentable name to be shown at unused declaration's settings page, "Entry Points" tab 
+   * @return presentable name to be shown at unused declaration's settings page, under the "Entry Points" tab 
    */
   public abstract @NotNull @Nls String getDisplayName();
 
   /**
    * @param refElement element in ref graph
    * @param psiElement corresponding psi element, 
-   * @return true if element should be treated as entry point
+   * @return true if the specified element should be treated as an entry point
    */
   public abstract boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement);
   public abstract boolean isEntryPoint(@NotNull PsiElement psiElement);
@@ -48,7 +47,7 @@ public abstract class EntryPoint implements JDOMExternalizable , Cloneable {
 
   /**
    * @return annotations which signal that element is used. 
-   *         In batch mode, elements with these annotations are added to the entries points of the run
+   *         In batch mode, elements with these annotations are added to the entry points of the run
    */
   public String @Nullable [] getIgnoreAnnotations() {
     return null;
