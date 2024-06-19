@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -232,9 +231,10 @@ internal object CallableMetadataProvider {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun buildClassType(symbol: KaClassLikeSymbol): KtType = buildClassType(symbol) {
         repeat(symbol.typeParameters.size) {
-            argument(KtStarTypeProjection(token))
+            argument(buildStarTypeProjection())
         }
     }
 

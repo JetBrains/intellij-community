@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
@@ -64,10 +64,11 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
             }
 
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         private fun KaClassLikeSymbol.buildStarProjectedType(): KtType =
             buildClassType(this@buildStarProjectedType) {
                 repeat(typeParameters.size) {
-                    argument(KtStarTypeProjection(token))
+                    argument(buildStarTypeProjection())
                 }
             }
 

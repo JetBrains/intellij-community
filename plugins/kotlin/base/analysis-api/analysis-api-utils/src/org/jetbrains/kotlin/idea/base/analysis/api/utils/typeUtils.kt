@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -29,9 +29,10 @@ infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun buildClassTypeWithStarProjections(symbol: KaClassOrObjectSymbol, nullability: KtTypeNullability): KtType =
     buildClassType(symbol) {
         repeat(symbol.typeParameters.size) {
-            argument(KtStarTypeProjection(token))
+            argument(buildStarTypeProjection())
         }
     }.withNullability(nullability)
