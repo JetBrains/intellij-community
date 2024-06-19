@@ -950,6 +950,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         return StringUtil.first(name, 60, true); // fallback to previous behaviour
       }
 
+      //we cannot cut HTML formatted strings
+      if (name.startsWith("<html>")) return name;
+
       // we have a min size for SE, which is ~40 symbols, don't spend time for trimming, let's use a shortcut
       if (name.length() < 40) return name;
 
@@ -1004,6 +1007,10 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @ActionText
     @NotNull
     private static String getName(@Nullable @ActionText String text, @Nullable @ActionText String groupName, boolean toggle) {
+      if (text != null && text.startsWith("<html>") && text.endsWith("</html>")) {
+        String rawText = text.substring(6, text.length() - 7);
+        return "<html>" + getName(rawText, groupName, toggle) + "</html>";
+      }
       return toggle && StringUtil.isNotEmpty(groupName)
              ? StringUtil.isNotEmpty(text) ? groupName + ": " + text
                                            : groupName : StringUtil.notNullize(text);
