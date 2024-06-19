@@ -149,7 +149,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
               for (descriptor in itemsProvider.createItemDescriptors(match.text, match.similarity, pattern)) {
                 val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
                 mutex.withLock { prepareDescriptor() }?.let {
-                  if (!sentNotification) {
+                  if (noStandardResults && !sentNotification) {
                     notifyCallback?.accept(SemanticSearchBundle.getMessage("search.everywhere.no.exact.matches"))
                     sentNotification = true
                   }

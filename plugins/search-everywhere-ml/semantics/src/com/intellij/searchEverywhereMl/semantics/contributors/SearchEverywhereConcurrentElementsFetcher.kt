@@ -88,7 +88,7 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
                 ensureActive()
                 val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
                 mutex.withLock { prepareDescriptor() }?.let {
-                  if (!sentNotification) {
+                  if (noStandardResults && !sentNotification) {
                     notifyCallback?.accept(SemanticSearchBundle.getMessage("search.everywhere.no.exact.matches"))
                     sentNotification = true
                   }
