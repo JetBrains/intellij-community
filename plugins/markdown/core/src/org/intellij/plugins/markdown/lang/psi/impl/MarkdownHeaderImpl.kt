@@ -10,6 +10,7 @@ import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElement
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementType
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Please use {@link MarkdownHeader} instead.", ReplaceWith("MarkdownHeader"))
 abstract class MarkdownHeaderImpl: MarkdownStubBasedPsiElementBase<MarkdownStubElement<*>>, PsiExternalReferenceHost {
   constructor(node: ASTNode) : super(node)

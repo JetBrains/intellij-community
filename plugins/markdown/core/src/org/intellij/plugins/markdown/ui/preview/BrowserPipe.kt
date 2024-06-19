@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Base interface for communication channels with browser-based previews.
@@ -14,6 +15,7 @@ import com.intellij.openapi.Disposable
  */
 interface BrowserPipe: Disposable {
   interface Handler {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use #processMessageReceived instead", replaceWith = ReplaceWith("processMessageReceived()"))
     fun messageReceived(data: String): Unit = throw UnsupportedOperationException()
 
