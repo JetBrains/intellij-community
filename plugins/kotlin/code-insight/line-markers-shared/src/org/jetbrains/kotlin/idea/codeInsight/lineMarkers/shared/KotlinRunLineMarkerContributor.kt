@@ -3,10 +3,12 @@ package org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared
 
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
+import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
+import org.jetbrains.kotlin.idea.base.codeInsight.findMainOwner
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -26,11 +28,17 @@ internal class KotlinRunLineMarkerContributor : RunLineMarkerContributor() {
         val detector = KotlinMainFunctionDetector.getInstanceDumbAware(element.project)
         if (!detector.isMain(function)) return null
 
+        if (DumbService.isDumb(element.project) && !detector.hasSingleMain(function)) return null
+
         val module = function.containingKtFile.module ?: return null
         if (module.isTestModule) return null
         if (!module.platform.idePlatformKind.tooling.acceptsAsEntryPoint(function)) return null
 
         val icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.TestStateRun)
         return Info(icon, ExecutorAction.getActions(Int.MAX_VALUE), null)
+    }
+
+    private fun KotlinMainFunctionDetector.hasSingleMain(mainFunction: KtNamedFunction): Boolean {
+        return this.findMainOwner(mainFunction) != null
     }
 }
