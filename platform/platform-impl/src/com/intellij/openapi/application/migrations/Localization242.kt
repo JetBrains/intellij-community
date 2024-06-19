@@ -13,7 +13,7 @@ internal fun enableL10nIfPluginInstalled(previousVersion: String?, oldPluginsDir
   val loadedDescriptors = loadDescriptorsFromOtherIde(oldPluginsDir, null, null, null)
   val bundledL10nPluginsIds = LocalizationUtil.l10nPluginIdToLanguageTag.keys
 
-  loadedDescriptors.getIdMap().keys
+  loadedDescriptors.enabledPluginsById.keys
     .firstOrNull { bundledL10nPluginsIds.contains(it.idString) }
     ?.let {
       val languageTag = LocalizationUtil.l10nPluginIdToLanguageTag[it.idString]!!

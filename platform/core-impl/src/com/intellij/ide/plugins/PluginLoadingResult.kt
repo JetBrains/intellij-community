@@ -19,7 +19,8 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   private val incompletePlugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
   @JvmField
-  internal val enabledPluginsById: HashMap<PluginId, IdeaPluginDescriptorImpl> = HashMap()
+  @ApiStatus.Internal
+  val enabledPluginsById: HashMap<PluginId, IdeaPluginDescriptorImpl> = HashMap()
 
   private val idMap = HashMap<PluginId, IdeaPluginDescriptorImpl>()
   @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
