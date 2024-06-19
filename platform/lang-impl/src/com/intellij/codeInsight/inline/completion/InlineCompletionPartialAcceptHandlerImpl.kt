@@ -16,6 +16,8 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
+import kotlin.collections.plusAssign
+import kotlin.collections.sorted
 
 @ApiStatus.Experimental
 internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartialAcceptHandler {
@@ -251,15 +253,14 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     skipOffsets: List<Int>,
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement> {
-    val newSkipOffsets = insertSkipSymbolsWithAdditionalLineBreaks(
+    val newSkipOffsets = insertSkipOffsetsAndAdditionalLines(
       originalEditor,
       finalOffset,
       completion.drop(prefixLength),
-      prefixLength,
-      skipOffsets,
+      skipOffsets.map { it - prefixLength },
       elements
     )
-    return elements.insertSkipElementsAt(newSkipOffsets.map { it - prefixLength })
+    return elements.insertSkipElementsAt(newSkipOffsets)
   }
 
   /**
@@ -277,18 +278,16 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
    * * For each non-existent line used in insertion, we compute leading whitespaces.
    * * If line or leading whitespaces do not exist, we add them to the editor and add their offsets to new skip elements.
    *
-   * @return the initial skip offsets with new skip offsets responsible to newly inserted symbols.
+   * @return the initial skip offsets with new skip offsets responsible to newly inserted whitespaces.
    */
-  private fun insertSkipSymbolsWithAdditionalLineBreaks(
+  private fun insertSkipOffsetsAndAdditionalLines(
     originalEditor: Editor,
     finalOffset: Int,
     trimmedCompletion: String,
-    prefixLength: Int,
     skipOffsets: List<Int>,
     elements: List<InlineCompletionElement>
   ): List<Int> {
     val initialSkipOffsets = skipOffsets
-      .map { it - prefixLength }
       .filter { it < trimmedCompletion.length && it >= 0 }
       .distinct()
       .sorted()
@@ -296,26 +295,37 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
       return emptyList()
     }
 
-    val lineNumberToOffsets = List(trimmedCompletion.count { it == '\n' } + 1) { mutableListOf<Int>() }
-    var elementIndex = 0
-    var lineNumber = 0
-    var currentOffset = 0
-    for (skipOffset in initialSkipOffsets) {
-      while (elementIndex < elements.size && currentOffset + elements[elementIndex].text.length < skipOffset) {
-        currentOffset += elements[elementIndex].text.length
-        lineNumber += elements[elementIndex].text.count { it == '\n' }
-        elementIndex++
-      }
-      check(elementIndex < elements.size)
-      val element = elements[elementIndex]
-      val relativeSkipOffset = skipOffset - currentOffset
-      lineNumber += element.text.take(relativeSkipOffset).count { it == '\n' }
-      lineNumberToOffsets[lineNumber] += skipOffset
-    }
+    val numberOfLines = trimmedCompletion.count { it == '\n' } + 1
+    val lineNumberToOffsets = mapOffsetsToLineNumber(numberOfLines, trimmedCompletion, initialSkipOffsets)
+    val linesToInsert = computeLinesToInsertForSkipOffsets(lineNumberToOffsets, elements, trimmedCompletion)
+    doInsertSkipOffsetsAndAdditionalLines(originalEditor, finalOffset, trimmedCompletion, elements, linesToInsert, lineNumberToOffsets)
 
-    val lineToExists = MutableList(lineNumberToOffsets.size) { false }
+    return (initialSkipOffsets + linesToInsert.flatMap { it.whitespaceStart until it.whitespaceEnd }).distinct()
+  }
+
+  private fun labelSkipOffsets(elements: List<InlineCompletionElement>): List<Boolean> {
+    val labels = MutableList(elements.sumOf { it.text.length }) { false }
+    var offset = 0
+    for (element in elements) {
+      repeat(element.text.length) {
+        labels[offset] = element is InlineCompletionSkipTextElement
+        offset++
+      }
+    }
+    return labels
+  }
+
+  /**
+   * For each line in a completion, computes whether there is already an actual line in an editor.
+   * Computation is based on checking instance of [InlineCompletionSkipTextElement]:
+   * if such an element contains `\n`, then there is an actual line in an editor.
+   *
+   * The first line is always considered as existent because the caret is located on it.
+   */
+  private fun computeExistenceOfLines(numberOfLines: Int, elements: List<InlineCompletionElement>): List<Boolean> {
+    val lineToExists = MutableList(numberOfLines) { false }
     lineToExists[0] = true
-    lineNumber = 0
+    var lineNumber = 0
     for (element in elements) {
       val newLinesNumber = element.text.count { it == '\n' }
       if (element is InlineCompletionSkipTextElement) {
@@ -325,28 +335,87 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
       }
       lineNumber += newLinesNumber
     }
+    return lineToExists
+  }
 
-    val lineBreaksOffsets = trimmedCompletion.indices.filter { trimmedCompletion[it] == '\n' }
+  /**
+   * For each offset of [offsets], it computes the corresponding line number in [completion].
+   *
+   * @return mapping `line number -> all offsets in this line`.
+   */
+  private fun mapOffsetsToLineNumber(numberOfLines: Int, completion: String, offsets: List<Int>): List<List<Int>> {
+    val lineNumberToOffsets = List(numberOfLines) { mutableListOf<Int>() }
+    var lineNumber = 0
+    var currentOffset = 0
+    for (offset in offsets) {
+      while (currentOffset < offset) {
+        if (completion[currentOffset] == '\n') {
+          lineNumber++
+        }
+        currentOffset++
+      }
+      lineNumberToOffsets[lineNumber] += offset
+    }
+    return lineNumberToOffsets
+  }
 
-    data class LineFix(val lineNumber: Int, val startSkip: Int, val endSkip: Int)
-
-    val lineFixes = mutableListOf<LineFix>()
+  /**
+   * This method computes all the descriptors for lines inside the [completion] that contain the initially skipped offsets.
+   * Each descriptor contains the line number and what content should be inserted in the line.
+   * This content is made of only whitespaces and defined by the offsets in the [completion].
+   *
+   * If returned offsets are equal, nothing is needed to be inserted in this line,
+   * because it's already present in an editor.
+   *
+   * @param lineNumberToOffsets is a mapping from line number in the completion to all the
+   *        skipped offsets that need to be inserted in the editor (see [mapOffsetsToLineNumber]).
+   * @return all the [LineToInsert] that need to be processed to insert the initial skip offsets.
+   * @see LineToInsert
+   * @see insertSkipOffsetsAndAdditionalLines
+   */
+  private fun computeLinesToInsertForSkipOffsets(
+    lineNumberToOffsets: List<List<Int>>,
+    elements: List<InlineCompletionElement>,
+    completion: String
+  ): List<LineToInsert> {
+    val newLinesDescriptors = mutableListOf<LineToInsert>()
+    val lineToExists = computeExistenceOfLines(lineNumberToOffsets.size, elements)
+    val lineBreaksOffsets = completion.indices.filter { completion[it] == '\n' }
     for (lineNum in lineNumberToOffsets.indices.filter { lineNumberToOffsets[it].isNotEmpty() }) {
       if (lineToExists[lineNum]) {
         val lineStart = lineBreaksOffsets.getOrNull(lineNum - 1)?.plus(1) ?: 0
-        lineFixes += LineFix(lineNum, lineStart, lineStart) // To insert skip symbols on the already existent line
+        newLinesDescriptors += LineToInsert(lineNum, lineStart, lineStart) // To insert skip symbols on the already existent line
         continue
       }
-      check(lineNumber > 0)
+      check(lineNum > 0)
       val breakStart = lineBreaksOffsets[lineNum - 1]
-      val rangeEnd = breakStart + trimmedCompletion.countWhilePredicate(start = breakStart) { it.isWhitespace() }
-      lineFixes += LineFix(lineNum, breakStart, rangeEnd)
+      val rangeEnd = breakStart + completion.countWhilePredicate(start = breakStart) { it.isWhitespace() }
+      newLinesDescriptors += LineToInsert(lineNum, breakStart, rangeEnd)
     }
+    return newLinesDescriptors
+  }
 
-    var insertionOffset = finalOffset
+  /**
+   * The final stage of [insertSkipOffsetsAndAdditionalLines].
+   *
+   * Literally inserts symbols defined by skip offsets and new lines defined by [linesToInsert] at corresponding [startOffset].
+   * The inserted skip offsets are located in [lineNumberToOffsets]: they are grouped by line number.
+   *
+   * @param linesToInsert the result of [computeLinesToInsertForSkipOffsets]
+   * @param lineNumberToOffsets the result of [mapOffsetsToLineNumber]
+   */
+  private fun doInsertSkipOffsetsAndAdditionalLines(
+    originalEditor: Editor,
+    startOffset: Int,
+    completion: String,
+    elements: List<InlineCompletionElement>,
+    linesToInsert: List<LineToInsert>,
+    lineNumberToOffsets: List<List<Int>>
+  ) {
+    var currentOffset = 0
+    var insertionOffset = startOffset
     val labeledSkipOffsets = labelSkipOffsets(elements)
-    currentOffset = 0
-    for ((lineNum, newSkipOffsetStart, newSkipOffsetEnd) in lineFixes) {
+    for ((lineNum, newSkipOffsetStart, newSkipOffsetEnd) in linesToInsert) {
       while (currentOffset < newSkipOffsetStart) {
         if (labeledSkipOffsets[currentOffset]) {
           insertionOffset++
@@ -358,7 +427,7 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
           insertionOffset++
         }
         else {
-          originalEditor.document.insertString(insertionOffset, trimmedCompletion[i].toString())
+          originalEditor.document.insertString(insertionOffset, completion[i].toString())
           insertionOffset++
         }
       }
@@ -374,27 +443,11 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
           focusOffset++
         }
         if (!labeledSkipOffsets[currentSkipOffset]) {
-          originalEditor.document.insertString(insertionOffset, trimmedCompletion[currentSkipOffset].toString())
+          originalEditor.document.insertString(insertionOffset, completion[currentSkipOffset].toString())
           insertionOffset++
         }
       }
     }
-
-    return (initialSkipOffsets + lineFixes.flatMap { it.startSkip until it.endSkip })
-      .distinct()
-      .map { it + prefixLength }
-  }
-
-  private fun labelSkipOffsets(elements: List<InlineCompletionElement>): List<Boolean> {
-    val labels = MutableList(elements.sumOf { it.text.length }) { false }
-    var offset = 0
-    for (element in elements) {
-      repeat(element.text.length) {
-        labels[offset] = element is InlineCompletionSkipTextElement
-        offset++
-      }
-    }
-    return labels
   }
 
   private fun String.countWhilePredicate(start: Int = 0, end: Int = length, predicate: (Char) -> Boolean): Int {
@@ -453,6 +506,20 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     LETTER_OR_DIGIT_AFTER_SYMBOLS,
     SYMBOLS_AFTER_LETTER_OR_DIGIT
   }
+
+  /**
+   * First, see [insertSkipOffsetsAndAdditionalLines].
+   *
+   * Represents a descriptor for a line that needs to be inserted in an editor with skip offsets.
+   * When such a line is inserted, we insert `\n` and the leading whitespaces in this line.
+   * So, it always looks like `\n + some spaces and tabs`.
+   *
+   * @param lineNumberInCompletion to which line **in the completion** it corresponds
+   * @param whitespaceStart the offset in the completion from which the inserted whitespaces start.
+   *        This offset always corresponds to the `\n` **before** this line.
+   * @param whitespaceEnd the offset in the completion where the insertion part ends. It's end-*exclusive*.
+   */
+  private data class LineToInsert(val lineNumberInCompletion: Int, val whitespaceStart: Int, val whitespaceEnd: Int)
 
   companion object {
     private val LOG = logger<InlineCompletionPartialAcceptHandler>()
