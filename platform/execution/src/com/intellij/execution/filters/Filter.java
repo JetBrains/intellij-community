@@ -12,6 +12,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ui.NamedColorUtil;
+import kotlin.Lazy;
+import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,17 +135,18 @@ public interface Filter extends PossiblyDumbAware {
   }
 
   class ResultItem {
-    private static final Map<TextAttributesKey, TextAttributes> GRAYED_BY_NORMAL_CACHE = new ConcurrentHashMap<>(2);
-
-    static {
-      Application application = ApplicationManager.getApplication();
-      if (application != null) {
-        application.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, __ -> {
-          // invalidate cache on Appearance Theme/Editor Scheme change
-          GRAYED_BY_NORMAL_CACHE.clear();
-        });
-      }
-    }
+    private static final Lazy<Map<TextAttributesKey, TextAttributes>> GRAYED_BY_NORMAL_CACHE =
+      LazyKt.lazy(() -> {
+        ConcurrentHashMap<TextAttributesKey, TextAttributes> map = new ConcurrentHashMap<>(2);
+        Application application = ApplicationManager.getApplication();
+        if (application != null) {
+          application.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, __ -> {
+            // invalidate cache on Appearance Theme/Editor Scheme change
+            map.clear();
+          });
+        }
+        return map;
+      });
 
     private final int highlightStartOffset;
     private final int highlightEndOffset;
@@ -213,7 +216,7 @@ public interface Filter extends PossiblyDumbAware {
     }
 
     private static @Nullable TextAttributes getGrayedHyperlinkAttributes(@NotNull TextAttributesKey normalHyperlinkAttrsKey) {
-      TextAttributes grayedHyperlinkAttrs = GRAYED_BY_NORMAL_CACHE.get(normalHyperlinkAttrsKey);
+      TextAttributes grayedHyperlinkAttrs = GRAYED_BY_NORMAL_CACHE.getValue().get(normalHyperlinkAttrsKey);
       if (grayedHyperlinkAttrs == null) {
         EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
         TextAttributes normalHyperlinkAttrs = globalScheme.getAttributes(normalHyperlinkAttrsKey);
@@ -221,7 +224,7 @@ public interface Filter extends PossiblyDumbAware {
           grayedHyperlinkAttrs = normalHyperlinkAttrs.clone();
           grayedHyperlinkAttrs.setForegroundColor(NamedColorUtil.getInactiveTextColor());
           grayedHyperlinkAttrs.setEffectColor(NamedColorUtil.getInactiveTextColor());
-          GRAYED_BY_NORMAL_CACHE.put(normalHyperlinkAttrsKey, grayedHyperlinkAttrs);
+          GRAYED_BY_NORMAL_CACHE.getValue().put(normalHyperlinkAttrsKey, grayedHyperlinkAttrs);
         }
       }
       return grayedHyperlinkAttrs;
