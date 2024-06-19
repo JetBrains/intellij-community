@@ -39,6 +39,6 @@ internal class SubprojectManager(private val workspace: Project) {
 
 internal fun getSubprojectManager(project: Project) = project.service<SubprojectManager>()
 
-internal fun getAllSubprojects(project: Project): Collection<Subproject> {
+fun getAllSubprojects(project: Project): Collection<Subproject> {
   return getSubprojectManager(project).getAllSubprojects()
 }

@@ -13,6 +13,7 @@ import com.intellij.ide.workspace.SubprojectDeleteProvider
 import com.intellij.ide.workspace.getAllSubprojects
 import com.intellij.ide.workspace.isWorkspace
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -87,6 +88,7 @@ private class SubprojectNode(original: PsiDirectoryNode,
   override fun update(data: PresentationData) {
     super.update(data)
     data.setIcon(subproject.handler.subprojectIcon)
+    data.setAttributesKey(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES)
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
@@ -102,7 +104,7 @@ private class WorkspaceNode(project: Project, value: PsiDirectory, viewSettings:
   private val subprojectMap = HashMap<PsiDirectory, Subproject?>()
 
   override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
-    val subprojects = getAllSubprojects(project).associateBy { it.projectPath }
+    val subprojects = getAllSubprojects(project).associateBy { it.projectPath }.toMutableMap()
     subprojectMap.clear()
     val children = projectNode.children.filter { it !is ExternalLibrariesNode }
     val newChildren = ArrayList<AbstractTreeNode<*>>(children.size)
@@ -117,8 +119,15 @@ private class WorkspaceNode(project: Project, value: PsiDirectory, viewSettings:
       subprojectMap[directoryNode.value] = subproject
       val node = if (subproject != null) SubprojectNode(directoryNode, subproject) else directoryNode
       newChildren.add(node)
+      subprojects.remove(path)
     }
-    return newChildren
+    val notMapped = subprojects.mapNotNull {
+      val virtualFile = LocalFileSystem.getInstance().findFileByPath(it.key) ?: return@mapNotNull null
+      val psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFile) ?: return@mapNotNull null
+      subprojectMap[psiDirectory] = it.value
+      SubprojectNode(PsiDirectoryNode(project, psiDirectory, settings), it.value)
+    }
+    return newChildren + notMapped
   }
 
   override fun update(data: PresentationData) {

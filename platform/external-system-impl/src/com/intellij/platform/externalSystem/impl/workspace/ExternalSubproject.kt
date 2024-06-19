@@ -4,7 +4,7 @@ package com.intellij.platform.externalSystem.impl.workspace
 import com.intellij.ide.workspace.Subproject
 import com.intellij.ide.workspace.SubprojectHandler
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
@@ -12,6 +12,6 @@ class ExternalSubproject(val projectInfo: ExternalProjectInfo, override val hand
 
   override val name: String
     get() = projectInfo.externalProjectStructure?.data?.externalName
-            ?: FileUtil.getNameWithoutExtension(projectPath)
+            ?: PathUtil.getFileName(projectPath)
   override val projectPath: String get() = projectInfo.externalProjectPath
 }

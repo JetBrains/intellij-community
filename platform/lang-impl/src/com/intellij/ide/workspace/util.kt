@@ -37,7 +37,9 @@ internal fun addToWorkspace(workspace: Project, projectPaths: List<String>) {
 
 internal fun removeSubprojects(workspace: Project, subprojects: Collection<Subproject>) {
   subprojects.groupBy { it.handler }.forEach {
-    it.key.removeSubprojects(workspace, it.value)
+    if (it.value.isNotEmpty()) {
+      it.key.removeSubprojects(workspace, it.value)
+    }
   }
 }
 

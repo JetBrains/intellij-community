@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.workspace
 
 import com.intellij.ide.workspace.ImportedProjectSettings
+import com.intellij.ide.workspace.Subproject
+import com.intellij.ide.workspace.SubprojectHandler
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
@@ -11,7 +13,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.externalSystem.impl.workspace.ExternalSubproject
 import com.intellij.platform.externalSystem.impl.workspace.ExternalSubprojectHandler
+import com.intellij.util.PathUtil
 import icons.GradleIcons
 import org.jetbrains.plugins.gradle.service.project.open.canOpenGradleProject
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
@@ -32,8 +36,35 @@ internal class GradleSubprojectHandler : ExternalSubprojectHandler(GradleConstan
     return ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId() == GradleConstants.SYSTEM_ID.id
   }
 
+  override fun getSubprojects(workspace: Project): List<Subproject> {
+    val imported = super.getSubprojects(workspace)
+    val linkedProjectsSettings = GradleSettings.getInstance(workspace).linkedProjectsSettings
+    val notImported = linkedProjectsSettings.mapNotNull { projectInfo ->
+      if (imported.any { it.projectPath == projectInfo.externalProjectPath }) null else NotImported(projectInfo, this)
+    }
+    return imported + notImported
+  }
+
+  override fun removeSubprojects(workspace: Project, subprojects: List<Subproject>) {
+    super.removeSubprojects(workspace, subprojects.filterIsInstance<ExternalSubproject>())
+    val notImportedSubprojects = subprojects.filterIsInstance<NotImported>()
+    if (notImportedSubprojects.isNotEmpty()) {
+      notImportedSubprojects.forEach {
+        GradleSettings.getInstance(workspace).unlinkExternalProject(it.projectPath)
+      }
+      ExternalSystemUtil.refreshProjects(ImportSpecBuilder(workspace, GradleConstants.SYSTEM_ID))
+    }
+  }
+
   override val subprojectIcon: Icon
     get() = GradleIcons.GradleSubproject
+
+  private class NotImported(val projectInfo: GradleProjectSettings, override val handler: SubprojectHandler): Subproject {
+    override val name: String
+      get() = PathUtil.getFileName(projectPath)
+    override val projectPath: String
+      get() = projectInfo.externalProjectPath
+  }
 }
 
 private class GradleImportedProjectSettings(project: Project): ImportedProjectSettings {
