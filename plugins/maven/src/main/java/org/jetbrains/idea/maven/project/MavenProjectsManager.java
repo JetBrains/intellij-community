@@ -644,7 +644,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   /**
    * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenSyncSpec)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected abstract List<Module> updateAllMavenProjectsSync(MavenImportSpec spec);
 
   public synchronized void removeManagedFiles(@NotNull List<@NotNull VirtualFile> files) {
@@ -670,6 +670,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return doForceUpdateProjects(projects);
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   protected abstract AsyncPromise<Void> doForceUpdateProjects(@NotNull Collection<@NotNull MavenProject> projects);
 

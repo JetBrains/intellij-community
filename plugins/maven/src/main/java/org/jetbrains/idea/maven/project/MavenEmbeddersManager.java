@@ -103,7 +103,7 @@ public class MavenEmbeddersManager {
   /**
    * @deprecated use {@link MavenEmbeddersManager#getEmbedder(Key, String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   // used in third-party plugins
   public synchronized MavenEmbedderWrapper getEmbedder(Key kind, String ignoredWorkingDirectory, @NotNull String multiModuleProjectDirectory) {
