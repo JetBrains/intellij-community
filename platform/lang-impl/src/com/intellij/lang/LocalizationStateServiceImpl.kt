@@ -22,6 +22,7 @@ internal class LocalizationStateServiceImpl : LocalizationStateService, Persiste
     val localizationProperty = EarlyAccessRegistryManager.getString(LocalizationUtil.LOCALIZATION_KEY)
     if (!localizationProperty.isNullOrEmpty()) {
       setSelectedLocale(localizationProperty)
+      EarlyAccessRegistryManager.setString(LocalizationUtil.LOCALIZATION_KEY, "")
     }
   }
 
