@@ -165,6 +165,21 @@ class J2KNullityInferrer {
     }
 
     public void collect(@NotNull PsiFile file) {
+        // Step 1: mark all types with known nullability inferred from Java DFA
+        file.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
+                super.visitTypeElement(typeElement);
+                PsiType type = typeElement.getType();
+                Nullability nullability = DfaPsiUtil.getTypeNullability(type);
+                switch (nullability) {
+                    case NULLABLE -> registerNullableType(type);
+                    case NOT_NULL -> registerNotNullType(type);
+                }
+            }
+        });
+
+        // Step 2: infer nullability for the rest of types
         int prevNumAnnotationsAdded;
         int pass = 0;
         do {
@@ -200,6 +215,14 @@ class J2KNullityInferrer {
             return ((PsiMethod) declaration).getReturnType();
         }
         return null;
+    }
+
+    private void registerNullableType(@NotNull PsiType type) {
+        registerTypeNullability(type, true);
+    }
+
+    private void registerNotNullType(@NotNull PsiType type) {
+        registerTypeNullability(type, false);
     }
 
     private void registerTypeNullability(@NotNull PsiType type, boolean isNullable) {

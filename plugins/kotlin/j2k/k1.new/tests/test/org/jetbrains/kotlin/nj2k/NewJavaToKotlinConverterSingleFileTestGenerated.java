@@ -5455,6 +5455,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("nullabilityAnnotations.java")
+        public void testNullabilityAnnotations() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/nullabilityAnnotations.java");
+        }
+
         @TestMetadata("typeParameterNotNullUpperBound.java")
         public void testTypeParameterNotNullUpperBound() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/typeParameterNotNullUpperBound.java");
