@@ -153,6 +153,7 @@ fun ProjectFileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSo
     }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("use ProjectFileIndex.getKotlinSourceRootType(VirtualFile)")
 fun FileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSourceRootType? {
     // Ignore injected files

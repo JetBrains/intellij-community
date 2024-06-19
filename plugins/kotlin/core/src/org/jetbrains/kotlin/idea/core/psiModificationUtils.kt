@@ -229,6 +229,7 @@ private fun deleteElementWithDelimiters(element: PsiElement) {
     parent.deleteChildRange(from, to)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
     ReplaceWith("this.getOrCreateCompanionObject()", "org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject")

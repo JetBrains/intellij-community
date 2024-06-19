@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceCoordinates
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.tooling.core.UnsafeApi
@@ -36,6 +37,7 @@ fun KotlinSourceSetModuleId(coordinates: IdeaKotlinSourceCoordinates): KotlinSou
 val GradleSourceSetData.kotlinSourceSetModuleId: KotlinSourceSetModuleId get() = KotlinSourceSetModuleId(id)
 
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use 'findKotlinSourceSetDataNode' instead", replaceWith = ReplaceWith("findKotlinSourceSetDataNode"))
 fun DataNode<*>.findSourceSetNode(id: KotlinSourceSetModuleId): DataNode<GradleSourceSetData>? {
     val projectNode = safeCastDataNode<ProjectData>() ?: ExternalSystemApiUtil.findParent(this, ProjectKeys.PROJECT) ?: return null
