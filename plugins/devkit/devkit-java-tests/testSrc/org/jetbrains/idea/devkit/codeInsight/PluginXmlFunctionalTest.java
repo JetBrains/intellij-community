@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean;
@@ -15,7 +14,6 @@ import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.LanguageExtensionPoint;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,7 +27,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
@@ -54,24 +51,20 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInsight")
 public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   private TempDirTestFixture myTempDirFixture;
-  private PluginXmlDomInspection myInspection;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myTempDirFixture.setUp();
-    myInspection = new PluginXmlDomInspection();
-    myFixture.enableInspections(myInspection, new XmlUnresolvedReferenceInspection());
+    myFixture.enableInspections(new PluginXmlDomInspection(), new XmlUnresolvedReferenceInspection());
     RecursionManager.assertOnRecursionPrevention(getTestRootDisposable());
   }
 
@@ -755,90 +748,6 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   public void testExtensionPointValidity() {
     doHighlightingTest(getTestName(true) + ".xml");
   }
-
-  public void testRegistrationCheck() throws IOException {
-    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"));
-    Module anotherModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "anotherModule",
-                                                 myTempDirFixture.findOrCreateDir("../anotherModuleDir"));
-    ModuleRootModificationUtil.addModuleLibrary(anotherModule, VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(AnAction.class))));
-    Module additionalModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "additionalModule",
-                                                 myTempDirFixture.findOrCreateDir("../additionalModuleDir"));
-    ModuleRootModificationUtil.addModuleLibrary(anotherModule, VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(LanguageExtensionPoint.class))));
-    ModuleRootModificationUtil.addDependency(getModule(), anotherModule);
-    ModuleRootModificationUtil.addDependency(getModule(), additionalModule);
-    PluginXmlDomInspection.PluginModuleSet moduleSet = new PluginXmlDomInspection.PluginModuleSet();
-    moduleSet.modules.add(getModule().getName());
-    moduleSet.modules.add(additionalModule.getName());
-    myInspection.PLUGINS_MODULES.add(moduleSet);
-
-    VirtualFile dependencyModuleClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClass.java",
-                                                            "../anotherModuleDir/DependencyModuleClass.java");
-    VirtualFile dependencyModuleLanguageExtensionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyLanguageExtension.java",
-                                                            "../anotherModuleDir/MyLanguageExtension.java");
-    VirtualFile dependencyModuleLanguageExtensionPointClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyLanguageExtensionPoint.java",
-                                                            "../anotherModuleDir/MyLanguageExtensionPoint.java");
-    VirtualFile dependencyModuleFileTypeExtensionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyFileTypeExtension.java",
-                                                            "../anotherModuleDir/MyFileTypeExtension.java");
-    VirtualFile dependencyModuleFileTypeExtensionPointClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyFileTypeExtensionPoint.java",
-                                                            "../anotherModuleDir/MyFileTypeExtensionPoint.java");
-    VirtualFile dependencyModuleActionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleAction.java",
-                                                            "../anotherModuleDir/DependencyModuleAction.java");
-    VirtualFile dependencyModuleClassWithEp = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClassWithEpName.java",
-                                                                  "../anotherModuleDir/DependencyModuleClassWithEpName.java");
-    VirtualFile dependencyModulePlugin = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModulePlugin.xml",
-                                                             "../anotherModuleDir/META-INF/DependencyModulePlugin.xml");
-    VirtualFile additionalModuleClass = myFixture.copyFileToProject("registrationCheck/additionalModule/AdditionalModuleClass.java",
-                                                                "../additionalModuleDir/AdditionalModuleClass.java");
-    VirtualFile mainModuleClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleClass.java",
-                                                      "MainModuleClass.java");
-    VirtualFile mainModuleBeanClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleBeanClass.java",
-                                                          "MainModuleBeanClass.java");
-    VirtualFile mainModulePlugin = myFixture.copyFileToProject("registrationCheck/module/MainModulePlugin.xml",
-                                                       "META-INF/MainModulePlugin.xml");
-
-    myFixture.configureFromExistingVirtualFile(dependencyModuleClass);
-    myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionClass);
-    myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionPointClass);
-    myFixture.configureFromExistingVirtualFile(dependencyModuleFileTypeExtensionClass);
-    myFixture.configureFromExistingVirtualFile(dependencyModuleFileTypeExtensionPointClass);
-    myFixture.configureFromExistingVirtualFile(dependencyModuleActionClass);
-    myFixture.configureFromExistingVirtualFile(dependencyModuleClassWithEp);
-    myFixture.configureFromExistingVirtualFile(dependencyModulePlugin);
-    myFixture.configureFromExistingVirtualFile(additionalModuleClass);
-    myFixture.configureFromExistingVirtualFile(mainModuleClass);
-    myFixture.configureFromExistingVirtualFile(mainModuleBeanClass);
-    myFixture.configureFromExistingVirtualFile(mainModulePlugin);
-
-    myFixture.allowTreeAccessForAllFiles();
-
-    myFixture.testHighlighting(true, false, false, dependencyModulePlugin);
-    myFixture.testHighlighting(true, false, false, mainModulePlugin);
-    List<HighlightInfo> highlightInfos = myFixture.doHighlighting(HighlightSeverity.WARNING);
-    assertSize(5, highlightInfos);
-
-    for (HighlightInfo info : highlightInfos) {
-      List<IntentionAction> ranges = actions(info);
-      assertSize(1, ranges);
-      IntentionAction quickFix = ranges.get(0);
-      myFixture.launchAction(quickFix);
-    }
-
-    myFixture.checkResultByFile("../anotherModuleDir/META-INF/DependencyModulePlugin.xml",
-                                "registrationCheck/dependencyModule/DependencyModulePlugin_after.xml",
-                                true);
-    myFixture.checkResultByFile("META-INF/MainModulePlugin.xml",
-                                "registrationCheck/module/MainModulePlugin_after.xml",
-                                true);
-  }
-  static List<IntentionAction> actions(HighlightInfo info) {
-    List<IntentionAction> result = new ArrayList<>();
-    info.findRegisteredQuickFix((descriptor,range) -> {
-      result.add(descriptor.getAction());
-      return null;
-    });
-    return result;
-  }
-
 
   public void testValuesMaxLengths() {
     doHighlightingTest("ValuesMaxLengths.xml");

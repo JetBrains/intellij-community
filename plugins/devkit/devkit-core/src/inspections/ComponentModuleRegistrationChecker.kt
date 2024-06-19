@@ -38,9 +38,12 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
-class ComponentModuleRegistrationChecker(private val moduleToModuleSet: SynchronizedClearableLazy<MutableMap<String, PluginXmlDomInspection.PluginModuleSet>>,
-                                         private val ignoredClasses: MutableList<String>,
-                                         private val annotationHolder: DomElementAnnotationHolder) {
+internal class ComponentModuleRegistrationChecker(
+  private val moduleToModuleSet: SynchronizedClearableLazy<MutableMap<String, PluginXmlRegistrationCheckInspection.PluginModuleSet>>,
+  private val ignoredClasses: MutableList<String>,
+  private val annotationHolder: DomElementAnnotationHolder,
+) {
+
   fun checkProperModule(extensionPoint: ExtensionPoint) {
     val effectiveEpClass = extensionPoint.effectiveClass
     if (shouldCheckExtensionPointClassAttribute(effectiveEpClass) &&
@@ -199,8 +202,10 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Synchron
     return null
   }
 
-  inner class MoveRegistrationQuickFix(private val myTargetModule: Module,
-                                       private val myTargetFileName: String) : LocalQuickFix {
+  inner class MoveRegistrationQuickFix(
+    private val myTargetModule: Module,
+    private val myTargetFileName: String,
+  ) : LocalQuickFix {
 
     override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
       return IntentionPreviewInfo.EMPTY

@@ -601,14 +601,14 @@
     </inspection_tool>
     <inspection_tool class="PageflowModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="PagesModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="PluginXmlValidity" enabled="true" level="ERROR" enabled_by_default="true">
-      <option name="myRegistrationCheckIgnoreClassList">
+    <inspection_tool class="PluginXmlRegistrationCheck" enabled="true" level="ERROR" enabled_by_default="true">
+      <option name="ignoreClasses">
         <set>
           <option value="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider" />
           <option value="com.intellij.openapi.application.IdeUrlTrackingParametersProvider" />
         </set>
       </option>
-      <option name="PLUGINS_MODULES">
+      <option name="pluginsModules">
         <modules-set>
           <module name="intellij.platform.analysis" />
           <module name="intellij.platform.builtInServer" />
@@ -767,6 +767,7 @@
         </modules-set>
       </option>
     </inspection_tool>
+    <inspection_tool class="PluginXmlValidity" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="PointcutMethodStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PointlessArithmeticExpressionJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PointlessBinding" enabled="false" level="WARNING" enabled_by_default="false" />
