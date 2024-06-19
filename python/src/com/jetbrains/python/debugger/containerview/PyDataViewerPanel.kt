@@ -220,6 +220,12 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
       catch (e: PyDebuggerException) {
         LOG.error(e)
       }
+      catch (e: Exception) {
+        if (e.message?.let { "Numpy is not available" in it } == true) {
+          setError(PyBundle.message("debugger.data.view.numpy.is.not.available", type), modifier)
+        }
+        LOG.error(e)
+      }
     }
   }
 
