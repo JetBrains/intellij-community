@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
-import com.intellij.execution.Location
-import com.intellij.execution.PsiLocation
 import com.intellij.execution.RunManager.Companion.getInstance
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.application.ApplicationConfiguration
@@ -17,23 +15,25 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.refactoring.RefactoringFactory
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.fixtures.EditorTestFixture
+import com.intellij.util.containers.addIfNotNull
 import org.jdom.Element
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 import java.io.File
 
 private const val RUN_PREFIX = "// RUN:"
 private const val RUN_FILE_PREFIX = "// RUN_FILE:"
+private const val NO_CONFIGURATION_ATTRIBUTE = "// NO_CONFIGURATION_IN_DUMB_MODE"
 
 abstract class AbstractRunConfigurationTest  : AbstractRunConfigurationBaseTest() {
     fun testDependencyModuleClasspath() {
@@ -69,6 +69,8 @@ abstract class AbstractRunConfigurationTest  : AbstractRunConfigurationBaseTest(
     fun testClassesAndObjects() = checkClasses()
 
     fun testTopLevelAndObject() = checkClasses()
+
+    fun testRunConfigurationProducerDumbMode() = checkClasses()
 
     fun testInJsModule() = checkClasses(Platform.JavaScript)
 
@@ -191,6 +193,7 @@ abstract class AbstractRunConfigurationTest  : AbstractRunConfigurationBaseTest(
 
         val expectedClasses = ArrayList<String>()
         val actualClasses = ArrayList<String>()
+        val actualClassesInDumb = mutableListOf<String>()
         var expectedFileRun: String? = null
 
         val fileName = "test.kt"
@@ -207,13 +210,15 @@ abstract class AbstractRunConfigurationTest  : AbstractRunConfigurationBaseTest(
                         if (expectedClass.isNotEmpty()) expectedClasses.add(expectedClass)
                         check(declaration != null)
 
-                        val dataContext = MapDataContext()
-                        dataContext.put(Location.DATA_KEY, PsiLocation(project, declaration))
-                        val context = ConfigurationContext.getFromContext(dataContext)
-                        val actualClass = (context.configuration?.configuration as? KotlinRunConfiguration)?.runClass
-                        if (actualClass != null) {
-                            actualClasses.add(actualClass)
-                        }
+                        val actualClassInDumbMode = getKotlinRunConfigurationInDumbMode(declaration, platform)?.runClass
+                        actualClassesInDumb.addIfNotNull(actualClassInDumbMode)
+
+                        val actualClass = getKotlinRunConfiguration(declaration)?.runClass
+                        actualClasses.addIfNotNull(actualClass)
+                    }
+                    text.startsWith(NO_CONFIGURATION_ATTRIBUTE) -> {
+                        check(declaration != null)
+                        assertNull(getKotlinRunConfigurationInDumbMode(declaration, platform))
                     }
                     text.startsWith(RUN_FILE_PREFIX) -> {
                         val fileRun = text.substring(RUN_FILE_PREFIX.length).trim()
@@ -228,14 +233,27 @@ abstract class AbstractRunConfigurationTest  : AbstractRunConfigurationBaseTest(
 
         testFile.accept(visitor)
         assertEquals(expectedClasses, actualClasses)
+        assertEquals(expectedClasses, actualClassesInDumb)
         expectedFileRun?.let {
-            val dataContext = MapDataContext()
-            dataContext.put(Location.DATA_KEY, PsiLocation(project, testFile))
-            val context = ConfigurationContext.getFromContext(dataContext)
-            val actualFileRun = (context.configuration?.configuration as? KotlinRunConfiguration)?.runClass
+            val actualFileRun = getKotlinRunConfiguration(testFile)?.runClass
 
             assertEquals(it, actualFileRun)
         }
+    }
+
+    private fun getKotlinRunConfigurationInDumbMode(psiElement: PsiElement, platform: Platform): KotlinRunConfiguration? {
+        if (platform == Platform.JavaScript) return null
+
+        return DumbModeTestUtils.computeInDumbModeSynchronously(project) {
+            val runConfiguration = getKotlinRunConfiguration(psiElement)
+
+            runConfiguration
+        }
+    }
+
+    private fun getKotlinRunConfiguration(psiElement: PsiElement): KotlinRunConfiguration? {
+        val context = ConfigurationContext(psiElement)
+        return context.configuration?.configuration as? KotlinRunConfiguration
     }
 
     private fun createConfigurationFromObject(@Suppress("SameParameterValue") objectFqn: String): KotlinRunConfiguration {
