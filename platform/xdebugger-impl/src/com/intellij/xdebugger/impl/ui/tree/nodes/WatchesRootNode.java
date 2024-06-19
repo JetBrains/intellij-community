@@ -166,6 +166,11 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
         }
       });
     }
+
+    @Override
+    public @NotNull XEvaluationOrigin getEvaluationOrigin() {
+      return XEvaluationOrigin.INLINE;
+    }
   }
 
   public void removeResultNode() {

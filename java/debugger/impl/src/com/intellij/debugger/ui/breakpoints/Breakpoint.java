@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionException;
+import com.intellij.debugger.engine.evaluation.statistics.JavaDebuggerEvaluatorStatisticsCollector;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -55,6 +56,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointActionsPanel;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
@@ -359,16 +361,19 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         }
 
         TextWithImports logMessage = getLogMessage();
+        ExpressionEvaluator evaluator = null;
         try {
           SourcePosition position = ContextUtil.getSourcePosition(context);
           PsiElement element = ContextUtil.getContextElement(context, position);
-          ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject,
+          evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject,
             () -> EvaluatorCache.cacheOrGet("LogMessageEvaluator", event.request(), element, logMessage, () ->
               createExpressionEvaluator(myProject, element, position, logMessage, this::createLogMessageCodeFragment)));
           Value eval = evaluator.evaluate(context);
+          JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(myProject, evaluator, true, XEvaluationOrigin.BREAKPOINT_LOG);
           buf.append(eval instanceof VoidValue ? "void" : DebuggerUtils.getValueAsString(context, eval));
         }
         catch (EvaluateException e) {
+          JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(myProject, evaluator, false, XEvaluationOrigin.BREAKPOINT_LOG);
           buf.append(JavaDebuggerBundle.message("error.unable.to.evaluate.expression"))
             .append(" \"").append(logMessage).append("\"")
             .append(" : ").append(e.getMessage());
@@ -441,9 +446,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         }
       }
 
+      ExpressionEvaluator evaluator = null;
       try {
         SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
-        ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, () -> {
+        evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, () -> {
           // IMPORTANT: calculate context psi element basing on the location where the exception
           // has been hit, not on the location where it was set. (For line breakpoints these locations are the same, however,
           // for method, exception and field breakpoints these locations differ)
@@ -453,10 +459,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
                                            () -> createExpressionEvaluator(myProject,
                                                                            contextPsiElement,
                                                                            contextSourcePosition,
-                                                                           condition,
+                                                                             condition,
                                                                            this::createConditionCodeFragment));
         });
-        if (!DebuggerUtilsEx.evaluateBoolean(evaluator, context)) {
+        boolean evaluationResult = DebuggerUtilsEx.evaluateBoolean(evaluator, context);
+        JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(myProject, evaluator, true, XEvaluationOrigin.BREAKPOINT_CONDITION);
+        if (!evaluationResult) {
           return false;
         }
       }
@@ -464,6 +472,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         if (ex.getCause() instanceof VMDisconnectedException) {
           return false;
         }
+        JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(myProject, evaluator, false, XEvaluationOrigin.BREAKPOINT_CONDITION);
         throw EvaluateExceptionUtil.createEvaluateException(
           JavaDebuggerBundle.message("error.failed.evaluating.breakpoint.condition", condition, ex.getMessage())
         );

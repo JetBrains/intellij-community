@@ -2033,6 +2033,7 @@ c:com.intellij.xdebugger.impl.inline.InlineWatchNodeImpl
 - com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 - com.intellij.xdebugger.impl.inline.InlineWatchNode
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,com.intellij.xdebugger.impl.inline.InlineWatch,com.intellij.xdebugger.frame.XStackFrame):V
+- getEvaluationOrigin():com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
 - getLink():com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 - getPosition():com.intellij.xdebugger.XSourcePosition
 - getValueContainer():com.intellij.xdebugger.frame.XValue
@@ -3374,6 +3375,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 - p:<init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.frame.XNamedValue):V
 - computePresentationIfNeeded():V
 - p:evaluated():V
+- getEvaluationOrigin():com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
 - getExpression():com.intellij.xdebugger.XExpression
 - getValueContainer():com.intellij.xdebugger.frame.XValue
 c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
@@ -3433,6 +3435,23 @@ a:com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
 a:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase
 - com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback
 - <init>():V
+com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackWithOrigin
+- a:getOrigin():com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+e:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- java.lang.Enum
+- sf:BREAKPOINT_CONDITION:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- sf:BREAKPOINT_LOG:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- sf:DIALOG:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- sf:EDITOR:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- sf:INLINE:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- sf:INLINE_WATCH:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- sf:RENDERER:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- sf:UNSPECIFIED:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- sf:UNSPECIFIED_WATCH:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- sf:WATCH:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+- s:values():com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin[]
 c:com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.frame.XStackFrame):V

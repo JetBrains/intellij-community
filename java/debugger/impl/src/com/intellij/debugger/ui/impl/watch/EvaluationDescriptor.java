@@ -22,6 +22,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
   private Modifier myModifier;
   protected TextWithImports myText;
+
+  public static final Key<ExpressionEvaluator> EXPRESSION_EVALUATOR_KEY = Key.create("EXPRESSION_EVALUATOR");
 
   protected EvaluationDescriptor(TextWithImports text, Project project, Value value) {
     super(project, value);
@@ -81,6 +84,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
 
       ExpressionEvaluator evaluator = getEvaluator(thisEvaluationContext);
+      putUserData(EXPRESSION_EVALUATOR_KEY, evaluator);
 
       if (!thisEvaluationContext.getDebugProcess().isAttached()) {
         throw EvaluateExceptionUtil.PROCESS_EXITED;
