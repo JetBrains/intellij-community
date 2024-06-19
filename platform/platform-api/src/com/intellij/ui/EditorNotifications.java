@@ -85,7 +85,19 @@ public abstract class EditorNotifications {
 
   public abstract void updateNotifications(@NotNull VirtualFile file);
 
+  /**
+   * This method is broken and should have been named {@link #removeNotificationsForProvider}.
+   * It DOES NOT RUN {@link EditorNotificationProvider#collectNotificationData} to check if there are any new notifications.
+   * Use {@link #updateAllNotifications} instead.
+   *
+   * @deprecated until its implementation matches expectations from its name
+   */
+  @Deprecated
   public abstract void updateNotifications(@NotNull EditorNotificationProvider provider);
+
+  public void removeNotificationsForProvider(@NotNull EditorNotificationProvider provider) {
+    updateNotifications(provider);
+  }
 
   public abstract void updateAllNotifications();
 

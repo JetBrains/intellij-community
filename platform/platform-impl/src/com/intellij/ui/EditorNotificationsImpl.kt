@@ -160,7 +160,9 @@ class EditorNotificationsImpl(private val project: Project,
     check(fileToUpdateNotificationJob.isEmpty())
   }
 
+  @Deprecated("Deprecated in Java")
   override fun updateNotifications(provider: EditorNotificationProvider) {
+    // TODO: run [updateEditors] instead to check for the new notifications
     for (file in FileEditorManager.getInstance(project).openFilesWithRemotes) {
       for (editor in getEditors(file).toList()) {
         updateNotification(fileEditor = editor, provider = provider, component = null)
