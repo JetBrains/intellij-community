@@ -152,7 +152,7 @@ class Diff {
     return newPos;
   }
 
-  equals(left, right, options) {
+  baseEquals(left, right, options) {
     if (options.comparator) {
       return options.comparator(left, right);
     } else {
@@ -186,52 +186,45 @@ class Diff {
     return changeObjects;
   }
 
-  lineDiff = {
-    tokenize: function(value, options) {
-      if (options.stripTrailingCr) {
-        value = value.replace(/\r\n/g, '\n');
-      }
-
-      let retLines = [],
-        linesAndNewlines = value.split(/(\n|\r\n)/);
-
-      if (!linesAndNewlines[linesAndNewlines.length - 1]) {
-        linesAndNewlines.pop();
-      }
-
-      for (let i = 0; i < linesAndNewlines.length; i++) {
-        let line = linesAndNewlines[i];
-
-        if (i % 2 && !options.newlineIsToken) {
-          retLines[retLines.length - 1] += line;
-        } else {
-          retLines.push(line);
-        }
-      }
-
-      return retLines;
-    },
-
-    equals: function(left, right, options) {
-      if (options.ignoreWhitespace) {
-        if (!options.newlineIsToken || !left.includes('\n')) {
-          left = left.trim();
-        }
-        if (!options.newlineIsToken || !right.includes('\n')) {
-          right = right.trim();
-        }
-      }
-      return Diff.prototype.equals.call(this, left, right, options);
+  tokenize(value, options) {
+    if (options && options.stripTrailingCr) {
+      value = value.replace(/\r\n/g, '\n');
     }
-  };
 
-  diffLines(oldStr, newStr, callback) {
-    return this.lineDiff.diff(oldStr, newStr, callback);
+    let retLines = [],
+      linesAndNewlines = value.split(/(\n|\r\n)/);
+
+    if (!linesAndNewlines[linesAndNewlines.length - 1]) {
+      linesAndNewlines.pop();
+    }
+
+    for (let i = 0; i < linesAndNewlines.length; i++) {
+      let line = linesAndNewlines[i];
+
+      if (i % 2 && (!options || !options.newlineIsToken)) {
+        retLines[retLines.length - 1] += line;
+      } else {
+        retLines.push(line);
+      }
+    }
+
+    return retLines;
   }
 
-  diffTrimmedLines(oldStr, newStr, callback) {
-    let options = this.generateOptions(callback, {ignoreWhitespace: true});
-    return this.lineDiff.diff(oldStr, newStr, options);
+  equals(left, right, options) {
+    if (options.ignoreWhitespace) {
+      if (!options.newlineIsToken || !left.includes('\n')) {
+        left = left.trim();
+      }
+      if (!options.newlineIsToken || !right.includes('\n')) {
+        right = right.trim();
+      }
+    }
+    return this.baseEquals(left, right, options);
+  }
+
+  diffLines(oldStr, newStr, callback) {
+    return this.diff(oldStr, newStr, { callback });
   }
 
   generateOptions(options, defaults) {
