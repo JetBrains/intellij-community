@@ -23,12 +23,12 @@ class MultiLaunchProfileState(
 ) : RunProfileState {
   override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult? {
     val isDumb = DumbService.isDumb(project)
-    val isServices = RunDashboardManager.getInstance(project).isShowInDashboard(configuration)
+    val isServiceView = RunDashboardManager.getInstance(project).isShowInDashboard(configuration)
     val factory = configuration.factory ?: throw CantRunException("factory is null")
     executor ?: throw CantRunException("executor is null")
     project.lifetime.launchBackground {
       val activity = RunConfigurationUsageTriggerCollector.trigger(project, factory, executor, configuration,
-                                                                   checkRunning(), false, isDumb, isServices)
+                                                                   checkRunning(), false, isDumb, isServiceView)
       ExecutionEngine.getInstance(project).execute(configuration, getExecutionMode(executor), activity)
       RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationUsageTriggerCollector.RunConfigurationFinishType.UNKNOWN)
     }
