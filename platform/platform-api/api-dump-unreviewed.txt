@@ -2421,6 +2421,8 @@ com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware
 - createEditorAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.AsyncFileEditorProvider$Builder
+- *:createFileEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:createFileEditor$suspendImpl(com.intellij.openapi.fileEditor.AsyncFileEditorProvider,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.fileEditor.AsyncFileEditorProvider$Builder
 - <init>():V
 - a:build():com.intellij.openapi.fileEditor.FileEditor

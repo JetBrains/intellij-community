@@ -13,7 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 interface AsyncFileEditorProvider : FileEditorProvider, DumbAware {
   /**
@@ -22,12 +22,12 @@ interface AsyncFileEditorProvider : FileEditorProvider, DumbAware {
    */
   @RequiresBlockingContext
   @RequiresReadLock
+  @OverrideOnly
   fun createEditorAsync(project: Project, file: VirtualFile): Builder {
     throw IllegalStateException("Should not be called")
   }
 
   @Experimental
-  @Internal
   suspend fun createFileEditor(
     project: Project,
     file: VirtualFile,

@@ -12,8 +12,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public interface JBAccountInfoService {
-
   final class JBAData {
     public final @NotNull String id;
     @NlsSafe public final @Nullable String loginName;

@@ -46,7 +46,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     file: VirtualFile,
     document: Document?,
     editorCoroutineScope: CoroutineScope,
-  ): FileEditor {
+  ): TextEditor {
     val asyncLoader = createAsyncEditorLoader(
       provider = this,
       project = project,

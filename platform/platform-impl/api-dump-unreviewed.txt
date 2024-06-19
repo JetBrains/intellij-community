@@ -25120,18 +25120,6 @@ f:com.intellij.ui.HoverHyperlinkLabel
 - getOriginalText():java.lang.String
 - removeHyperlinkListener(javax.swing.event.HyperlinkListener):V
 - setText(java.lang.String):V
-com.intellij.ui.JBAccountInfoService
-- getAccessToken():java.util.concurrent.Future
-- getIdToken():java.lang.String
-- s:getInstance():com.intellij.ui.JBAccountInfoService
-- a:getUserData():com.intellij.ui.JBAccountInfoService$JBAData
-- a:invokeJBALogin(java.util.function.Consumer,java.lang.Runnable):V
-f:com.intellij.ui.JBAccountInfoService$JBAData
-- f:email:java.lang.String
-- f:id:java.lang.String
-- f:loginName:java.lang.String
-- f:presentableName:java.lang.String
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
 c:com.intellij.ui.JBProgressBar
 - javax.swing.JProgressBar
 - <init>():V
