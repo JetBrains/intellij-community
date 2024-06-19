@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +28,7 @@ public interface JBAccountInfoService {
     }
   }
 
-  @Nullable
-  JBAccountInfoService.JBAData getUserData();
+  @Nullable JBAccountInfoService.JBAData getUserData();
 
   default @Nullable String getIdToken() {
     return null;
@@ -43,12 +43,15 @@ public interface JBAccountInfoService {
   /**
    * Starts the auth flow by opening the browser and waiting for the user to proceed with logging in.
    */
+  @ApiStatus.Internal
+  @SuppressWarnings("unused")
   @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode);
 
   static @Nullable JBAccountInfoService getInstance() {
     return JBAccountInfoServiceHolder.INSTANCE;
   }
 
+  @ApiStatus.Internal
   enum LoginMode {
     /**
      * Open the auth URL in the browser, start the built-in server, and await for the auth callback.
@@ -62,6 +65,7 @@ public interface JBAccountInfoService {
     MANUAL,
   }
 
+  @ApiStatus.Internal
   interface LoginSession extends AutoCloseable {
     /**
      * The returned CompletableFuture can be used to await the completion of the auth flow,
@@ -79,15 +83,13 @@ public interface JBAccountInfoService {
     void close();
   }
 
-  sealed interface LoginResult permits LoginResult.LoginFailed,
-                                       LoginResult.LoginSuccessful {
-    record LoginSuccessful(@NotNull JBAData jbaUser) implements LoginResult {
-    }
-
-    record LoginFailed(@NotNull String errorMessage) implements LoginResult {
-    }
+  @ApiStatus.Internal
+  sealed interface LoginResult permits LoginResult.LoginFailed, LoginResult.LoginSuccessful {
+    record LoginSuccessful(@NotNull JBAData jbaUser) implements LoginResult { }
+    record LoginFailed(@NotNull String errorMessage) implements LoginResult { }
   }
 
+  @ApiStatus.Internal
   interface AuthStateListener extends EventListener {
     @NotNull Topic<AuthStateListener> TOPIC = new Topic<>(AuthStateListener.class);
 
