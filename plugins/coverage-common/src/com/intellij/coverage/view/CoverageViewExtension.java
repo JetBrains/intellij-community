@@ -123,7 +123,7 @@ public abstract class CoverageViewExtension {
    * The root node should return a correct list of children instead.
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<AbstractTreeNode<?>> createTopLevelNodes() {
     return Collections.emptyList();
   }

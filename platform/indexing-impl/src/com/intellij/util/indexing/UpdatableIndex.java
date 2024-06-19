@@ -33,7 +33,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
   /**
    * @deprecated use {@linkplain #setIndexedStateForFileOnFileIndexMetaData(int, Object, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileIndexMetaData data) {
     throw new IllegalStateException("Please override setIndexedStateForFileOnFileIndexMetaData(int, FileIndexMetaData, boolean)");
   }
@@ -47,7 +47,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
   /**
    * @deprecated use {@linkplain #setIndexedStateForFile(int, IndexedFile, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
     throw new IllegalStateException("Please override setIndexedStateForFile(int, IndexedFile, boolean)");
   }

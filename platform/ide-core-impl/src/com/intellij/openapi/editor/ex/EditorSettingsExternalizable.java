@@ -32,18 +32,18 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   /**
    * @deprecated Use {@link PropNames#PROP_IS_VIRTUAL_SPACE} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final @NonNls String PROP_VIRTUAL_SPACE = PropNames.PROP_IS_VIRTUAL_SPACE;
   /**
    * @deprecated Use {@link PropNames#PROP_BREADCRUMBS_PER_LANGUAGE} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final @NonNls String PROP_BREADCRUMBS_PER_LANGUAGE = PropNames.PROP_BREADCRUMBS_PER_LANGUAGE;
 
   /**
    * @deprecated Use {@link PropNames#PROP_ENABLE_RENDERED_DOC} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final @NonNls String PROP_DOC_COMMENT_RENDERING = PropNames.PROP_ENABLE_RENDERED_DOC;
 
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);

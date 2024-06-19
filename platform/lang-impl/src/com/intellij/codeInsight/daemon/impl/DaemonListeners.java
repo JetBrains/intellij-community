@@ -523,7 +523,7 @@ public final class DaemonListeners implements Disposable {
   /**
    * @deprecated use {@link #canChangeFileSilently(PsiFileSystemItem, boolean, ThreeState)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
     PluginException.reportDeprecatedUsage("this method", "");
     return canChangeFileSilently(file, true, ThreeState.UNSURE);

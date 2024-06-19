@@ -21,6 +21,7 @@ import java.util.*
 @ApiStatus.Internal
 class MetricEvent(@NonNls val eventId: String, data: FeatureUsageData? = null, recorderId: String) {
   @TestOnly
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Recorder ID should be explicitly provided", replaceWith = ReplaceWith("MetricEvent(eventId, @Nullable data, recorderId)"),
               DeprecationLevel.WARNING)
   @JvmOverloads

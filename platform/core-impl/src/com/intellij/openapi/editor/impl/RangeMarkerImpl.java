@@ -191,6 +191,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   /**
    * @deprecated do not use because it can mess internal offsets
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public final void documentChanged(@NotNull DocumentEvent e) {
     doChangeUpdate(e);

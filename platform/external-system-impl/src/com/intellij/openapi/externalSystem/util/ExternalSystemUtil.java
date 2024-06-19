@@ -726,7 +726,7 @@ public final class ExternalSystemUtil {
   /**
    * @deprecated use {@link #createFailureResult(String, Throwable, ProjectSystemId, Project, String, DataContext)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public static @NotNull FailureResultImpl createFailureResult(
     @NotNull @Nls(capitalization = Sentence) String title,

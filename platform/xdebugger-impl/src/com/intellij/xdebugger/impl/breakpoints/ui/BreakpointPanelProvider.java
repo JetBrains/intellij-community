@@ -17,7 +17,7 @@ public abstract class BreakpointPanelProvider<B> {
   /**
    * @deprecated instead register at {@link XBreakpointGroupingRule#EP}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules);
 
   public interface BreakpointsListener {

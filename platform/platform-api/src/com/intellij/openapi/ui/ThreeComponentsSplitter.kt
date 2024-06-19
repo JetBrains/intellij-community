@@ -17,6 +17,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
@@ -219,6 +220,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #ThreeComponentsSplitter()}")
   constructor(@Suppress("UNUSED_PARAMETER") parentDisposable: Disposable) : this(false)
 

@@ -35,7 +35,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.*;
 /**
  * @deprecated use {@link UpdateInspectionOptionFix} instead.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class SetInspectionOptionFix extends IntentionAndQuickFixAction implements LowPriorityAction, Iconable {
   private final String myShortName;
   private final String myProperty;

@@ -56,7 +56,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   /**
    * @deprecated Use {@link SdkListPresenter#create} instead. Wrapping is handled by {@code listItemSupplier}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull <T> ListCellRenderer<T> forType(@NotNull Function<? super T, ? extends SdkListItem> unwrap) {
     return new ListCellRenderer<>() {
       @Override

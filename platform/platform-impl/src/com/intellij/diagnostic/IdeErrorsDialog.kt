@@ -49,6 +49,7 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ActionEvent
@@ -1002,6 +1003,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     }
 
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use {@link PluginUtil#findPluginId} ", ReplaceWith("PluginUtil.getInstance().findPluginId(t)"))
     fun findPluginId(t: Throwable): PluginId? =
       PluginUtil.getInstance().findPluginId(t)

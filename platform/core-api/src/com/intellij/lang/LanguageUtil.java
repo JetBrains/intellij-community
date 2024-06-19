@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +94,7 @@ public final class LanguageUtil {
   /**
    * @deprecated see {@link Language#getTransitiveDialects()}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull Set<Language> getAllDerivedLanguages(@NotNull Language base) {
     Set<Language> result = new HashSet<>();

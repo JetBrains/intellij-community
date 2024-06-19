@@ -116,6 +116,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * URL of the built-in custom plugin repository instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public abstract String getBuiltinPluginsUrl();
 
