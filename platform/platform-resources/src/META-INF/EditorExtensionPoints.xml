@@ -75,6 +75,10 @@
       interface="com.intellij.codeInsight.inline.completion.InlineCompletionProvider"
       dynamic="true"/>
     <extensionPoint
+      name="inline.completion.partial.accept.handler"
+      interface="com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionPartialAcceptHandler"
+      dynamic="true"/>
+    <extensionPoint
       name="inline.completion.element.manipulator"
       interface="com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator"
       dynamic="true"/>

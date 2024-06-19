@@ -107,6 +107,7 @@ public interface IdeActions {
   String ACTION_LOOKUP_DOWN = "EditorLookupDown";
 
   String ACTION_INSERT_INLINE_COMPLETION = "InsertInlineCompletionAction";
+  String ACTION_INSERT_INLINE_COMPLETION_WORD = "InsertInlineCompletionWordAction";
   String ACTION_NEXT_INLINE_COMPLETION_SUGGESTION = "NextInlineCompletionSuggestionAction";
   String ACTION_PREV_INLINE_COMPLETION_SUGGESTION = "PrevInlineCompletionSuggestionAction";
   String ACTION_CALL_INLINE_COMPLETION = "CallInlineCompletionAction";

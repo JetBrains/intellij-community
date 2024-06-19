@@ -15,6 +15,11 @@ private class InlineCompletionActionsPromoter : ActionPromoter {
       return emptyList()
     }
 
-    return actions.filter { it is InsertInlineCompletionAction || it is SwitchInlineCompletionVariantAction }
+    // Fixed order of actions' priority
+    actions.filterIsInstance<InsertInlineCompletionAction>().takeIf { it.isNotEmpty() }?.let { return it }
+    actions.filterIsInstance<SwitchInlineCompletionVariantAction>().takeIf { it.isNotEmpty() }?.let { return it }
+    actions.filterIsInstance<InsertInlineCompletionWordAction>().takeIf { it.isNotEmpty() }?.let { return it }
+
+    return emptyList()
   }
 }

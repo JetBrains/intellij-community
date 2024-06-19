@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
+import org.jetbrains.annotations.ApiStatus
 
 class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class InsertInlineCompletionHandler : EditorWriteActionHandler() {
@@ -91,6 +92,23 @@ class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), 
 
       val listener = InlineCompletion.getHandlerOrNull(editor) ?: return
       listener.invoke(InlineCompletionEvent.DirectCall(editor, curCaret, dataContext))
+    }
+  }
+}
+
+@ApiStatus.Experimental
+class InsertInlineCompletionWordAction : EditorAction(Handler()), HintManagerImpl.ActionToIgnore {
+  private class Handler : EditorWriteActionHandler() {
+    override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+      // TODO call insert if possible
+      if (InlineCompletionSession.getOrNull(editor) != null) {
+        val event = InlineCompletionEvent.InsertNextWord(editor)
+        InlineCompletion.getHandlerOrNull(editor)?.invokeEvent(event)
+      }
+    }
+
+    override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+      return InlineCompletionContext.getOrNull(editor)?.startOffset() == caret.offset
     }
   }
 }

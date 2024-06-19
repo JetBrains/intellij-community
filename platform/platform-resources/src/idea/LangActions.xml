@@ -505,6 +505,9 @@
       <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
         <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
       </action>
+      <action id="InsertInlineCompletionWordAction"
+              class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionWordAction"
+              use-shortcut-of="EditorNextWord"/>
       <action id="NextInlineCompletionSuggestionAction" class="com.intellij.codeInsight.inline.completion.SwitchInlineCompletionVariantAction$Next">
         <keyboard-shortcut first-keystroke="alt CLOSE_BRACKET" keymap="$default"/>
       </action>
