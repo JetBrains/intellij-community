@@ -3710,8 +3710,8 @@ e:com.intellij.platform.lang.lsWidget.LanguageServicePopupSection
 - f:createWidgetAction():com.intellij.openapi.actionSystem.AnAction
 - p:createWidgetInlineActions():java.util.List
 - pa:createWidgetMainAction():com.intellij.openapi.actionSystem.AnAction
-- getStatusBarText():java.lang.String
-- getStatusBarTooltip():java.lang.String
+- a:getStatusBarIcon():javax.swing.Icon
+- a:getStatusBarTooltip():java.lang.String
 - a:getWidgetActionLocation():com.intellij.platform.lang.lsWidget.LanguageServicePopupSection
 - isError():Z
 *a:com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItemsProvider
