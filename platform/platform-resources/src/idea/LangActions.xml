@@ -508,6 +508,9 @@
       <action id="InsertInlineCompletionWordAction"
               class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionWordAction"
               use-shortcut-of="EditorNextWord"/>
+      <action id="InsertInlineCompletionLineAction"
+              class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionLineAction"
+              use-shortcut-of="EditorLineEnd"/>
       <action id="NextInlineCompletionSuggestionAction" class="com.intellij.codeInsight.inline.completion.SwitchInlineCompletionVariantAction$Next">
         <keyboard-shortcut first-keystroke="alt CLOSE_BRACKET" keymap="$default"/>
       </action>

@@ -23,6 +23,14 @@ interface InlineCompletionPartialAcceptHandler {
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement>
 
+  @RequiresEdt
+  @RequiresWriteLock
+  fun insertNextLine(
+    editor: Editor,
+    file: PsiFile,
+    elements: List<InlineCompletionElement>
+  ): List<InlineCompletionElement>
+
   companion object {
     private val EP = ExtensionPointName<InlineCompletionPartialAcceptHandler>("com.intellij.inline.completion.partial.accept.handler")
 

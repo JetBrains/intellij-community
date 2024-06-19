@@ -132,14 +132,9 @@ interface InlineCompletionEvent {
     }
   }
 
-  /**
-   * **This event is not intended to be a start of the inline completion.**
-   *
-   * This event is to be called when some inline completion suggestion is already rendered.
-   * It inserts the first word from the suggestion to the editor.
-   */
+  @ApiStatus.Internal
   @ApiStatus.Experimental
-  class InsertNextWord @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent {
+  sealed class PartialAccept @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val caretModel = editor.caretModel
       if (caretModel.caretCount != 1) return null
@@ -155,6 +150,24 @@ interface InlineCompletionEvent {
       )
     }
   }
+
+  /**
+   * **This event is not intended to be a start of the inline completion.**
+   *
+   * This event is to be called when some inline completion suggestion is already rendered.
+   * It inserts the first word from the suggestion to the editor.
+   */
+  @ApiStatus.Experimental
+  class InsertNextWord @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor)
+
+  /**
+   * **This event is not intended to be a start of the inline completion.**
+   *
+   * This event is to be called when some inline completion suggestion is already rendered.
+   * It inserts the first line from the suggestion to the editor.
+   */
+  @ApiStatus.Experimental
+  class InsertNextLine @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor)
 }
 
 @RequiresBlockingContext

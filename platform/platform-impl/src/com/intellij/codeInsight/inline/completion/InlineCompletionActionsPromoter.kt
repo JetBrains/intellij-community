@@ -19,6 +19,7 @@ private class InlineCompletionActionsPromoter : ActionPromoter {
     actions.filterIsInstance<InsertInlineCompletionAction>().takeIf { it.isNotEmpty() }?.let { return it }
     actions.filterIsInstance<SwitchInlineCompletionVariantAction>().takeIf { it.isNotEmpty() }?.let { return it }
     actions.filterIsInstance<InsertInlineCompletionWordAction>().takeIf { it.isNotEmpty() }?.let { return it }
+    actions.filterIsInstance<InsertInlineCompletionLineAction>().takeIf { it.isNotEmpty() }?.let { return it }
 
     return emptyList()
   }

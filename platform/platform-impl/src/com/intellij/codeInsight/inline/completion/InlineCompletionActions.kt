@@ -112,3 +112,23 @@ class InsertInlineCompletionWordAction : EditorAction(Handler()), HintManagerImp
     }
   }
 }
+
+@ApiStatus.Experimental
+class InsertInlineCompletionLineAction : EditorAction(Handler()), HintManagerImpl.ActionToIgnore {
+  private class Handler : EditorWriteActionHandler() {
+    override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+      val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
+      val session = InlineCompletionSession.getOrNull(editor) ?: return
+      if (!session.context.textToInsert().any { it == '\n' }) {
+        handler.insert()
+      }
+      else {
+        handler.invokeEvent(InlineCompletionEvent.InsertNextLine(editor))
+      }
+    }
+
+    override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+      return InlineCompletionContext.getOrNull(editor)?.startOffset() == caret.offset
+    }
+  }
+}

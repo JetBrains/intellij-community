@@ -85,6 +85,11 @@ interface InlineCompletionSuggestionUpdateManager {
             onInsertNextWord(event, variant)
           }
         }
+        is InlineCompletionEvent.InsertNextLine -> {
+          ignoreDocumentAndCaretChanges(event.editor) {
+            onInsertNextLine(event, variant)
+          }
+        }
         else -> onCustomEvent(event, variant)
       }
     }
@@ -105,6 +110,11 @@ interface InlineCompletionSuggestionUpdateManager {
     @RequiresEdt
     @RequiresBlockingContext
     fun onInsertNextWord(event: InlineCompletionEvent.InsertNextWord, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
+
+    @ApiStatus.Experimental
+    @RequiresEdt
+    @RequiresBlockingContext
+    fun onInsertNextLine(event: InlineCompletionEvent.InsertNextLine, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     @RequiresEdt
     @RequiresBlockingContext
@@ -148,6 +158,18 @@ interface InlineCompletionSuggestionUpdateManager {
       val file = InlineCompletionSession.getOrNull(event.editor)?.request?.file ?: return Invalidated
       val partialAcceptHandler = InlineCompletionPartialAcceptHandler.get()
       val newElements = partialAcceptHandler.insertNextWord(event.editor, file, variant.elements)
+      return Changed(variant.copy(elements = newElements))
+    }
+
+    override fun onInsertNextLine(event: InlineCompletionEvent.InsertNextLine, variant: InlineCompletionVariant.Snapshot): UpdateResult {
+      // TODO merge two methods
+      if (!variant.isActive) {
+        // Update of the current variant must invalidate all other variants, hard to maintain all the variants.
+        return Invalidated
+      }
+      val file = InlineCompletionSession.getOrNull(event.editor)?.request?.file ?: return Invalidated
+      val partialAcceptHandler = InlineCompletionPartialAcceptHandler.get()
+      val newElements = partialAcceptHandler.insertNextLine(event.editor, file, variant.elements)
       return Changed(variant.copy(elements = newElements))
     }
 

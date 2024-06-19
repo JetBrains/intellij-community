@@ -16,7 +16,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
-import kotlin.time.measureTimedValue
 
 @ApiStatus.Experimental
 internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartialAcceptHandler {
@@ -31,6 +30,19 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     val textWithCompletion = editor.document.text.substring(0, offset) + completion
     return withFakeEditor(textWithCompletion, offset, file.fileType, editor.project) { editorWithCompletion ->
       executeInsertNextWord(editor, editorWithCompletion, file, offset, completion, elements)
+    }
+  }
+
+  override fun insertNextLine(
+    editor: Editor,
+    file: PsiFile,
+    elements: List<InlineCompletionElement>
+  ): List<InlineCompletionElement> {
+    val completion = elements.joinToString("") { it.text }
+    val offset = editor.caretModel.offset
+    val textWithCompletion = editor.document.text.substring(0, offset) + completion
+    return withFakeEditor(textWithCompletion, offset, file.fileType, editor.project) { editorWithCompletion ->
+      executeInsertNextLine(editor, editorWithCompletion, file, offset, completion, elements)
     }
   }
 
@@ -101,6 +113,40 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     }
     insertedPrefixLength = maxOf(insertedPrefixLength, 1)
     return doInsert(originalEditor, offset, completion, insertedPrefixLength, skipOffsetsAfterInsertion, elements)
+  }
+
+  private fun executeInsertNextLine(
+    originalEditor: Editor,
+    editorWithCompletion: Editor,
+    originalFile: PsiFile,
+    offset: Int,
+    completion: String,
+    elements: List<InlineCompletionElement>
+  ): List<InlineCompletionElement> {
+    var newLineAppeared = false
+    var insertionLength = 0
+    for (element in elements) {
+      if (element.text.contains('\n')) {
+        newLineAppeared = true
+        val newLineOffset = element.text.indexOf('\n')
+        val prefixLength = newLineOffset + element.text.count(startFrom = newLineOffset) { it.isWhitespace() }
+        insertionLength += prefixLength
+        if (prefixLength < element.text.length) {
+          break
+        }
+      }
+      else if (!newLineAppeared) {
+        insertionLength += element.text.length
+      }
+      else {
+        val prefixLength = element.text.count(startFrom = 0) { it.isWhitespace() }
+        insertionLength += prefixLength
+        if (prefixLength < element.text.length) {
+          break
+        }
+      }
+    }
+    return doInsert(originalEditor, offset, completion, insertionLength, emptyList(), elements)
   }
 
   private fun HighlighterIterator.findClosingQuoteOffset(quoteHandler: QuoteHandler): Int? {
@@ -208,6 +254,15 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     val suffix = skipOffsets.joinToString("") { completion[it].toString() }
     originalEditor.document.insertString(finalOffset, suffix)
     return elements.insertSkipElementsAt(skipOffsets.map { it - prefixLength })
+  }
+
+  private fun String.count(startFrom: Int, predicate: (Char) -> Boolean): Int {
+    for (i in startFrom until length) {
+      if (!predicate(this[i])) {
+        return i - startFrom
+      }
+    }
+    return length - startFrom
   }
 
   private inline fun <T> withFakeEditor(
