@@ -24,7 +24,10 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
-import org.junit.*
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -638,6 +641,15 @@ class JpsSplitModuleAndContentRootTest {
                                 forceFilesRewrite = true) { builder, orphanage, configLocation ->
       val toRemove = builder.entities(ModuleEntity::class.java).single().contentRoots.filter { it.entitySource !is JpsImportedEntitySource }
       toRemove.forEach { builder.removeEntity(it) }
+    }
+  }
+
+  @Test
+  fun `load and remove one additional root`() {
+    checkSaveProjectAfterChange("before/loadAndRemoveOneAdditionalRoot", "after/loadAndRemoveOneAdditionalRoot",
+                                forceFilesRewrite = true) { builder, orphanage, configLocation ->
+      val toRemove = builder.entities(ModuleEntity::class.java).single().contentRoots.filter { it.entitySource !is JpsImportedEntitySource }
+      toRemove.first().also { builder.removeEntity(it) }
     }
   }
 
