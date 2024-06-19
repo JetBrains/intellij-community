@@ -47,6 +47,11 @@ class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testSpacesInFqnAnnotations() = doTest()
 
+  fun testKeepLineBreaks() {
+    commonSettings.KEEP_LINE_BREAKS = true
+    doTest()
+  }
+
   private fun doTest() {
     val testName = getTestName(false)
     myFixture.configureByFile("$testName.java")
