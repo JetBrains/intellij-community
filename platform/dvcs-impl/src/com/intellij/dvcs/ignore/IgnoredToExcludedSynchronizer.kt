@@ -250,7 +250,7 @@ class IgnoredToExcludeNotificationProvider : EditorNotificationProvider, DumbAwa
 
   private fun muteAction(project: Project) = Runnable {
     project.service<IgnoredToExcludedSynchronizer>().muteForCurrentProject()
-    EditorNotifications.getInstance(project).updateNotifications(this@IgnoredToExcludeNotificationProvider)
+    EditorNotifications.getInstance(project).removeNotificationsForProvider(this@IgnoredToExcludeNotificationProvider)
   }
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
