@@ -26,7 +26,7 @@ public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
     return getRemoteSdkCredentials(project, allowSynchronousInteraction);
   }
 
-  default void produceRemoteCredentials(@Nullable Project project, boolean allowSynchronousInteraction, Consumer<RemoteCredentials> consumer) {
+  default void produceRemoteCredentials(@Nullable Project project, boolean allowSynchronousInteraction, @NotNull Consumer<RemoteCredentials> consumer) {
     produceRemoteSdkCredentials(project, allowSynchronousInteraction, consumer);
   }
 }
