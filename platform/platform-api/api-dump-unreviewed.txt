@@ -653,7 +653,6 @@ f:com.intellij.ide.Prefs
 - sf:CHINA:com.intellij.ide.Region
 - sf:EUROPE:com.intellij.ide.Region
 - sf:NOT_SET:com.intellij.ide.Region
-- sf:OTHER:com.intellij.ide.Region
 - s:valueOf(java.lang.String):com.intellij.ide.Region
 - s:values():com.intellij.ide.Region[]
 *f:com.intellij.ide.RegionSettings

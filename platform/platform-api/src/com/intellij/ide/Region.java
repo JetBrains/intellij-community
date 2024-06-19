@@ -9,11 +9,10 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Experimental
 public enum Region {
-  NOT_SET,
   AFRICA,
   AMERICA,
   ASIA,
   CHINA,
   EUROPE,
-  OTHER // Rest of the World
+  NOT_SET
 }
