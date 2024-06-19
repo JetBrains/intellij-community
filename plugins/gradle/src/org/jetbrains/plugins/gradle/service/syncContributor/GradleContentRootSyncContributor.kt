@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.service.syncContributor
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
-import com.intellij.openapi.externalSystem.service.project.ModuleNameGenerator
+import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleNameGenerator
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
