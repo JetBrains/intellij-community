@@ -251,7 +251,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             platforms = listOf(
                 KMPTestPlatform.Js,
                 KMPTestPlatform.NativeLinux,
-                // KMPTestPlatform.CommonNativeJvm, uncomment after KTIJ-29826 is fixed
+                KMPTestPlatform.CommonNativeJvm,
             ),
         ) {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
