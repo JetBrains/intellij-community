@@ -88,7 +88,6 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addSuspend", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addTypeAnnotationToValueParameter", pattern = pattern)
             model("$idea/quickfix/addUnsafeVarianceAnnotation", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/addValVar", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addVarianceModifier", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/assignToProperty", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/callFromPublicInline", pattern = pattern, isIgnored = true)
