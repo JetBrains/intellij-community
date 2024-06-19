@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
@@ -16,18 +16,34 @@ public final class JavaPsiStringTemplateUtil {
    */
   @Contract("null -> false")
   public static boolean isStrTemplate(@Nullable PsiExpression processor) {
+    return isStrTemplate(processor, false);
+  }
+
+  /**
+   * @param processor       template processor expression to check
+   * @param allowUnresolved consider unresolved STR expression as valid when true
+   * @return true if the supplied processor is the standard StringTemplate.STR processor; false otherwise
+   */
+  @Contract("null, _ -> false")
+  public static boolean isStrTemplate(@Nullable PsiExpression processor, boolean allowUnresolved) {
     processor = PsiUtil.skipParenthesizedExprDown(processor);
-    if (processor instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)processor).resolve();
-      if (target instanceof PsiField) {
-        PsiField field = (PsiField)target;
-        if (field.getName().equals("STR")) {
-          PsiClass containingClass = field.getContainingClass();
-          return containingClass != null && JAVA_LANG_STRING_TEMPLATE.equals(containingClass.getQualifiedName());
-        }
-      }
+    if (!(processor instanceof PsiReferenceExpression)) {
+      return false;
     }
-    return false;
+    PsiReferenceExpression referenceExpression = (PsiReferenceExpression)processor;
+    if (!"STR".equals(referenceExpression.getReferenceName())) {
+      return false;
+    }
+    PsiElement target = referenceExpression.resolve();
+    if (allowUnresolved && target == null && referenceExpression.getQualifierExpression() == null) {
+      return true;
+    }
+    if (!(target instanceof PsiField)) {
+      return false;
+    }
+    PsiField field = (PsiField)target;
+    PsiClass containingClass = field.getContainingClass();
+    return containingClass != null && JAVA_LANG_STRING_TEMPLATE.equals(containingClass.getQualifiedName());
   }
 
   public static TextRange getContentRange(PsiFragment fragment) {

@@ -7,8 +7,8 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiStringTemplateUtil;
 import com.intellij.psi.util.PsiPrecedenceUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -30,15 +30,7 @@ public final class StringTemplateReverseMigrationInspection extends AbstractBase
         PsiTemplate template = expression.getTemplate();
         PsiLiteralExpression literal = expression.getLiteralExpression();
         if (template == null && literal == null) return;
-        PsiExpression processor = PsiUtil.deparenthesizeExpression(expression.getProcessor());
-        if (!(processor instanceof PsiReferenceExpression reference) || !"STR".equals(reference.getReferenceName())) return;
-        PsiElement target = reference.resolve();
-        if (target != null) {
-          if (!(target instanceof PsiField field)) return;
-          PsiClass aClass = field.getContainingClass();
-          if (aClass == null || !CommonClassNames.JAVA_LANG_STRING_TEMPLATE.equals(aClass.getQualifiedName())) return;
-        }
-        else if (reference.getQualifierExpression() != null) return;
+        if (!JavaPsiStringTemplateUtil.isStrTemplate(expression.getProcessor())) return;
         if (template != null && ContainerUtil.exists(template.getFragments(), f -> f.getValue() == null)) return;
         if (literal != null && literal.getValue() == null) return;
         holder.registerProblem(expression,
