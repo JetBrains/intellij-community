@@ -10,6 +10,7 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.util.ImportsUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -113,9 +114,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   private boolean isShadowed(@NotNull PsiMethod candidate) {
     if (myCurrentFileContext instanceof PsiImportStaticStatement) {
       for (JavaResolveResult result : getResults()) {
-        if (result.getElement() != candidate &&
-            result.isAccessible() &&
-            !(result.getCurrentFileResolveScope() instanceof PsiImportStaticStatement)) return true;
+        PsiMethod method = ObjectUtils.tryCast(result.getElement(), PsiMethod.class);
+        if (method != null && method != candidate && result.isAccessible() &&
+            !(result.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) &&
+            isInterfaceStaticMethodAccessibleThroughInheritance(method)) return true;
       }
     }
     return false;

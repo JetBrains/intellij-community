@@ -38,6 +38,10 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun testStaticImportArrayCopyOfAccess() {
+    doTest()
+  }
+
   fun testJavaShebang() {
     val file = myFixture.configureByText("hello",
                                          """#!/path/to/java
