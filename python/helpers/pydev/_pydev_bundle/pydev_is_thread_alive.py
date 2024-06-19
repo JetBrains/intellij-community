@@ -21,8 +21,12 @@ elif hasattr(_temp, 'isAlive'):
         return t.isAlive()
 
 # Python >=3.13
-else:
+elif hasattr(_temp, 'is_alive'):
     def is_thread_alive(t):
         return t.is_alive()
+
+else:
+    def is_thread_alive(t):
+        raise RuntimeError('Cannot determine how to check if thread is alive')
 
 del _temp
