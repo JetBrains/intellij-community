@@ -511,9 +511,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                      @NotNull AtomicBoolean stopped,
                                                                      @NotNull Processor<? super VirtualFile> localProcessor) {
     ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
-    if (!app.isDispatchThread()) {
-      CoreProgressManager.assertUnderProgress(progress);
-    }
+    // doesn't work with coroutine based progress
+    // if (!app.isDispatchThread()) {
+    //  CoreProgressManager.assertUnderProgress(progress);
+    //}
     List<VirtualFile> processedFiles = Collections.synchronizedList(new ArrayList<>(files.size()));
     while (true) {
       ProgressManager.checkCanceled();
