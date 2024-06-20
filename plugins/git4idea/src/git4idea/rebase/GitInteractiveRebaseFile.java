@@ -45,14 +45,12 @@ class GitInteractiveRebaseFile {
         continue;
       }
       String command = s.spaceToken();
-      GitRebaseEntry.Action action = GitRebaseEntry.parseAction(command);
+      final GitRebaseEntry.Action action = GitRebaseEntry.parseAction(command);
 
       String hash = s.spaceToken();
       while (true) {
-        GitRebaseEntry.Action newAction = action.parseParameter(hash);
-        if (newAction == null) break;
-
-        action = newAction;
+        boolean paramConsumed = action.consumeParameter(hash);
+        if (!paramConsumed) break;
         hash = s.spaceToken();
       }
 

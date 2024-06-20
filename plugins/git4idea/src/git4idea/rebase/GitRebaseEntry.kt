@@ -19,12 +19,16 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
     object DROP : KnownAction("drop", "d", nameKey = "rebase.entry.action.name.drop")
     object REWORD : KnownAction("reword", "r", nameKey = "rebase.entry.action.name.reword")
     object SQUASH : KnownAction("squash", "s", nameKey = "rebase.entry.action.name.squash")
-    class FIXUP(val overrideMessage: Boolean = false) : KnownAction("fixup", "f", nameKey = "rebase.entry.action.name.fixup") {
-      override fun parseParameter(parameter: String): Action? {
+    class FIXUP : KnownAction("fixup", "f", nameKey = "rebase.entry.action.name.fixup") {
+      var overrideMessage: Boolean = false
+        private set
+
+      override fun consumeParameter(parameter: String): Boolean {
         if (!overrideMessage && parameter == "-c" || parameter == "-C") {
-          return FIXUP(true)
+          overrideMessage = true
+          return true
         }
-        return null
+        return false
       }
     }
     object UPDATE_REF : KnownAction("update-ref", isCommit = false, nameKey = "rebase.entry.action.name.update.ref")
@@ -33,7 +37,7 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
 
     val visibleName: Supplier<@NlsContexts.Button String> get() = GitBundle.messagePointer(nameKey)
 
-    open fun parseParameter(parameter: String): Action? = null
+    protected open fun consumeParameter(parameter: String): Boolean = false
 
     override fun toString(): String = command
   }
