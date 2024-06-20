@@ -179,7 +179,8 @@ class InternalDecoratorImpl internal constructor(
         if (c !is ActionButton &&
             c !is Divider &&
             c !is JTextComponent &&
-            c !is JComboBox<*>) {
+            c !is JComboBox<*> &&
+            c !is EditorTextField) {
           c.background = bg
         }
       }
