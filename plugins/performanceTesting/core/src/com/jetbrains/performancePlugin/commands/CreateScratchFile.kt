@@ -1,7 +1,10 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.lang.Language
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -26,12 +29,22 @@ internal class CreateScratchFile(text: String, line: Int) : PlaybackCommandCorou
       }
       val fileName = it.first()
       val fileContent = it.last().replace("\\n", "\n").replace("_", " ")
+      deleteFileIfExist(context, fileName)
       ScratchRootType.getInstance().createScratchFile(
         context.project,
         fileName,
         Language.findLanguageByID("TEXT"),
         fileContent
       )
+    }
+  }
+
+  private suspend fun deleteFileIfExist(context: PlaybackContext, fileName: String) {
+    val prevFile = readAction { ScratchRootType.getInstance().findFile(context.project, fileName, ScratchFileService.Option.existing_only) }
+    if (prevFile != null && prevFile.exists()) {
+      writeAction {
+        prevFile.delete(this)
+      }
     }
   }
 }
