@@ -33,6 +33,9 @@ import java.util.function.IntPredicate;
 public final class LowLevelSearchUtil {
   private static final Logger LOG = Logger.getInstance(LowLevelSearchUtil.class);
 
+  private LowLevelSearchUtil() {
+  }
+
   // TRUE/FALSE -> injected psi has been discovered and processor returned true/false;
   // null -> there were nothing injected found
   private static Boolean processInjectedFile(PsiElement element,

@@ -6,7 +6,8 @@ import com.intellij.util.ThreeState
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.IndexedFile
 import com.intellij.util.indexing.SubstitutedFileType
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 /**
  * Base implementation of filetype-hint-aware [com.intellij.util.indexing.FileBasedIndex.InputFilter].
@@ -24,7 +25,8 @@ import org.jetbrains.annotations.ApiStatus
  *
  * @see com.intellij.psi.LanguageSubstitutor
  */
-@ApiStatus.Experimental
+@Experimental
+@OverrideOnly
 abstract class BaseFileTypeInputFilter(private val fileTypeStrategy: FileTypeSubstitutionStrategy) : FileBasedIndex.ProjectSpecificInputFilter,
                                                                                                      FileTypeIndexingHint {
   final override fun acceptsFileTypeFastPath(fileType: FileType): ThreeState {

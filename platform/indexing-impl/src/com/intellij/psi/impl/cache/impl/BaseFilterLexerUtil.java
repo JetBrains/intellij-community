@@ -21,6 +21,9 @@ import java.util.Map;
 
 public final class BaseFilterLexerUtil {
 
+  private BaseFilterLexerUtil() {
+  }
+
   public static @NotNull Map<IdIndexEntry, Integer> calcIdEntries(@NotNull FileContent content,
                                                                   @NotNull IdAndToDoScannerBasedOnFilterLexer indexer) {
     boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;

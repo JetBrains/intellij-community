@@ -1,8 +1,6 @@
 f:com.intellij.find.ngrams.TrigramIndex
 - com.intellij.util.indexing.ScalarIndexExtension
 - sf:INDEX_ID:com.intellij.util.indexing.ID
-- <init>():V
-- createExternalizer():com.intellij.util.io.DataExternalizer
 - dependsOnFileContent():Z
 - getIndexer():com.intellij.util.indexing.DataIndexer
 - getInputFilter():com.intellij.util.indexing.FileBasedIndex$InputFilter
@@ -13,7 +11,6 @@ f:com.intellij.find.ngrams.TrigramIndex
 f:com.intellij.ide.todo.TodoFilter
 - java.lang.Cloneable
 - <init>():V
-- <init>(org.jdom.Element,java.util.List):V
 - accept(com.intellij.psi.search.PsiTodoSearchHelper,com.intellij.psi.PsiFile):Z
 - addTodoPattern(com.intellij.psi.search.TodoPattern):V
 - clone():com.intellij.ide.todo.TodoFilter
@@ -38,7 +35,6 @@ a:com.intellij.psi.impl.cache.impl.BaseFilterLexer
 - pf:scanWordsInToken(I,Z,Z):V
 - start(java.lang.CharSequence,I,I,I):V
 f:com.intellij.psi.impl.cache.impl.BaseFilterLexerUtil
-- <init>():V
 - s:calcIdEntries(com.intellij.util.indexing.FileContent,com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer):java.util.Map
 - s:calcTodoEntries(com.intellij.util.indexing.FileContent,com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer):java.util.Map
 com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer
@@ -91,7 +87,6 @@ c:com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer
 - <init>():V
 - map(com.intellij.util.indexing.FileContent):java.util.Map
 f:com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry
-- <init>(java.lang.String,Z):V
 - equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.psi.impl.cache.impl.todo.TodoIndexers
@@ -115,7 +110,6 @@ com.intellij.psi.impl.search.IndexPatternBuilder
 - a:getCommentTokenSet(com.intellij.psi.PsiFile):com.intellij.psi.tree.TokenSet
 - a:getIndexingLexer(com.intellij.psi.PsiFile):com.intellij.lexer.Lexer
 f:com.intellij.psi.impl.search.LowLevelSearchUtil
-- <init>():V
 - s:processElementsContainingWordInElement(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.PsiElement,com.intellij.util.text.StringSearcher,Z,com.intellij.openapi.progress.ProgressIndicator):Z
 - s:processTexts(java.lang.CharSequence,I,I,com.intellij.util.text.StringSearcher,java.util.function.IntPredicate):Z
 c:com.intellij.psi.impl.search.PsiSearchHelperImpl

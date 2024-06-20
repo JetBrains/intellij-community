@@ -2,6 +2,7 @@
 
 package com.intellij.psi.impl.cache.impl.todo;
 
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,6 +12,7 @@ public final class TodoIndexEntry {
   final String pattern;
   final boolean caseSensitive;
 
+  @Internal
   public TodoIndexEntry(@NotNull String pattern, final boolean caseSensitive) {
     this.pattern = pattern;
     this.caseSensitive = caseSensitive;
