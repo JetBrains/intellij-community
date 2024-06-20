@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.startup.multiProcess;
 
-import com.intellij.openapi.application.CustomConfigMigrationOption;
 import com.intellij.openapi.application.PathCustomizer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.impl.P3SupportInstaller;
@@ -20,17 +19,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
-import static com.intellij.idea.Main.customTargetDirectoryToImportConfig;
-import static com.intellij.idea.Main.isConfigImportNeeded;
-
 /**
- * An implementation of {@link PathCustomizer} which configures separate config, system and log paths for each process started from the IDE
- * distribution.
- * This is needed to allow running multiple processes of the same IDE.
+ * An implementation of {@link PathCustomizer} which configures separate config, system and log paths for the frontend variant of the IDE.
+ * This is needed to allow running multiple frontend processes for the IDE in parallel with the IDE process.
  */
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "FieldCanBeLocal", "UseOfSystemOutOrSystemErr"})
 @ApiStatus.Experimental
-public final class PerProcessPathCustomizer implements PathCustomizer {
+public final class FrontendProcessPathCustomizer implements PathCustomizer {
   private static final String LOCK_FILE_NAME = "process.lock";
 
   private static final Set<String> FILES_TO_KEEP = ContainerUtil.newHashSet(
@@ -80,9 +75,9 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
     boolean customizePluginsPath = useCustomPluginsPath(originalPluginsPath);
     String pluginsPath = customizePluginsPath ? originalPluginsPath + File.separator + "frontend" : originalPluginsPath;
     boolean migratePlugins = customizePluginsPath && !Files.exists(Paths.get(pluginsPath));
-    prepareConfig(newConfig, PathManager.getConfigDir(), migratePlugins);
+    PerProcessPathCustomization.prepareConfig(newConfig, PathManager.getConfigDir(), migratePlugins);
 
-    Path startupScriptDir = isInFrontendMode() ? getStartupScriptDir().resolve("frontend") : getStartupScriptDir();
+    Path startupScriptDir = isInFrontendMode() ? PerProcessPathCustomization.getStartupScriptDir().resolve("frontend") : PerProcessPathCustomization.getStartupScriptDir();
     P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(new ClientP3Support());
     enabled = true;
     return new CustomPaths(newConfig.toString(), newSystem.toString(), pluginsPath, newLog.toString(), startupScriptDir);
@@ -124,30 +119,6 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
 
   public static boolean isEnabled() {
     return enabled;
-  }
-
-  public static Path getStartupScriptDir() {
-    return PathManager.getSystemDir().resolve("startup-script");
-  }
-
-  public static void prepareConfig(Path newConfig, Path oldConfigPath, boolean migratePlugins) {
-    try {
-      if (isConfigImportNeeded(oldConfigPath)) {
-        customTargetDirectoryToImportConfig = oldConfigPath;
-      }
-      else if (migratePlugins) {
-        // The config directory exists, but the plugins for the frontend process weren't migrated,
-        // so we trigger importing of config from the local IDE to migrate the plugins.
-        customTargetDirectoryToImportConfig = newConfig;
-        new CustomConfigMigrationOption.MigrateFromCustomPlace(oldConfigPath).writeConfigMarkerFile(newConfig);
-      }
-      CustomConfigFiles.prepareConfigDir(newConfig, oldConfigPath);
-    }
-    catch (IOException e) {
-      System.err.println("Failed to prepare config directory " + newConfig);
-      //noinspection CallToPrintStackTrace
-      e.printStackTrace();
-    }
   }
 
   private static @Nullable Path computeLogDirPath(Path baseLogDir, int directoryCounter) {

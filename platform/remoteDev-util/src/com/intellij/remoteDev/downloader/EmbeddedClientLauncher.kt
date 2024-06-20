@@ -227,7 +227,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Didea.platform.prefix=JetBrainsClient",
       "-Dide.no.platform.update=true",
       "-Didea.initially.ask.config=never",
-      "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.PerProcessPathCustomizer",
+      "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.FrontendProcessPathCustomizer",
       "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
       "-Dintellij.platform.root.module=${getRootFrontendModule().stringId}",
       "-Dintellij.platform.product.mode=${ProductMode.FRONTEND.id}",
