@@ -40,7 +40,7 @@ fun collectCallCandidates(callElement: KtElement): List<KaCallCandidateInfo> {
     }
 
     if (candidates.isEmpty()) return emptyList()
-    val fileSymbol = callElement.containingKtFile.let { it.getOriginalKtFile() ?: it }.getFileSymbol()
+    val fileSymbol = callElement.containingKtFile.getFileSymbol()
 
     return candidates.filter { filterCandidate(it, callElement, fileSymbol, explicitReceiver) }
 }

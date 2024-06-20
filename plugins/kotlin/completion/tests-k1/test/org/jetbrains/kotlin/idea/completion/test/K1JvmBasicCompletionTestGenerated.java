@@ -1710,6 +1710,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/namedArguments/PrivateFunction.kt");
             }
 
+            @TestMetadata("PrivateFunction2.kt")
+            public void testPrivateFunction2() throws Exception {
+                runTest("../testData/basic/common/namedArguments/PrivateFunction2.kt");
+            }
+
             @TestMetadata("TypeAliasParameter.kt")
             public void testTypeAliasParameter() throws Exception {
                 runTest("../testData/basic/common/namedArguments/TypeAliasParameter.kt");

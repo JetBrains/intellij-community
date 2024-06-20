@@ -1814,6 +1814,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/namedArguments/PrivateFunction.kt");
         }
 
+        @TestMetadata("PrivateFunction2.kt")
+        public void testPrivateFunction2() throws Exception {
+            runTest("../../completion/testData/basic/common/namedArguments/PrivateFunction2.kt");
+        }
+
         @TestMetadata("TypeAliasParameter.kt")
         public void testTypeAliasParameter() throws Exception {
             runTest("../../completion/testData/basic/common/namedArguments/TypeAliasParameter.kt");
