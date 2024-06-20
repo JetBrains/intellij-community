@@ -165,7 +165,8 @@ public final class ChainCompletionContext {
     else {
       PsiClass psiClass = null;
       String name = myRefService.getName(nameId);
-      PsiClass resolvedClass = JavaPsiFacade.getInstance(getProject()).findClass(name, myResolveScope);
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      PsiClass resolvedClass = DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> facade.findClass(name, myResolveScope));
       if (resolvedClass != null && accessValidator().test(resolvedClass)) {
         psiClass = resolvedClass;
       }
