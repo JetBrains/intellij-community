@@ -2,10 +2,11 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 
 interface KotlinChangeSignatureConflictFilter {
-    fun keepConflict(reference: PsiReference): Boolean
+    fun skipUsage(parameter: PsiNamedElement, reference: PsiReference): Boolean
 
     companion object {
         val EP_NAME = ExtensionPointName.create<KotlinChangeSignatureConflictFilter>("org.jetbrains.kotlin.changeSignatureConflictFilter")
