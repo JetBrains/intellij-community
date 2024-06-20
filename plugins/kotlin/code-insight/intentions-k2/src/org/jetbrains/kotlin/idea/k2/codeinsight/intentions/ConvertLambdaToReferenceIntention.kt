@@ -327,6 +327,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     if (!lambdaParameterIsSuspend && calleeFunctionIsSuspend == true) return false
     if (lambdaParameterIsSuspend && calleeFunctionIsSuspend == false && !languageVersionSettings.supportsFeature(LanguageFeature.SuspendConversion)) return false
 
+    @OptIn(KaExperimentalApi::class)
     if (symbol.typeParameters.isNotEmpty() && lambdaExpression.parentValueArgument()?.parent is KtCallExpression) return false
 
     // No references to Java synthetic properties

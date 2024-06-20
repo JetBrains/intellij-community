@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
@@ -239,6 +241,7 @@ private sealed class SimplifiedSignature {
 
             val containerFqName = if (considerContainer) symbol.getContainerFqName() else null
 
+            @OptIn(KaExperimentalApi::class)
             return when (callableSignature) {
                 is KtVariableLikeSignature<*> -> createSimplifiedSignature(callableSignature, isVariableCall, containerFqName)
                 is KtFunctionLikeSignature<*> -> FunctionLikeSimplifiedSignature(

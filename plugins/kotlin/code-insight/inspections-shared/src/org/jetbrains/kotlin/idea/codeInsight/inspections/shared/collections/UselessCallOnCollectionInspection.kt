@@ -3,10 +3,12 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -80,6 +82,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         val callableName = resolvedCall.symbol.callableId?.callableName?.asString() ?: return
         if (callableName == "filterIsInstance") {
             if (receiverTypeArgument is KtTypeArgumentWithVariance && receiverTypeArgument.variance == Variance.IN_VARIANCE) return
+            @OptIn(KaExperimentalApi::class)
             val typeParameterDescriptor = resolvedCall.symbol.typeParameters.singleOrNull() ?: return
             val argumentType = resolvedCall.typeArgumentsMapping[typeParameterDescriptor] ?: return
             if (receiverTypeArgumentType is KtFlexibleType || !receiverTypeArgumentType.isSubTypeOf(argumentType)) return

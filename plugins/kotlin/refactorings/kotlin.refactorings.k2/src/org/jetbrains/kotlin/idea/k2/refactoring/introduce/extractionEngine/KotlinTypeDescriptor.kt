@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
@@ -57,6 +58,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun createTuple(outputValues: List<OutputValue<KtType>>): KtType {
         analyze(data.commonParent) {
             val boxingClass = when (outputValues.size) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
@@ -233,6 +233,7 @@ internal object CallableMetadataProvider {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun buildClassType(symbol: KaClassLikeSymbol): KtType = buildClassType(symbol) {
+        @OptIn(KaExperimentalApi::class)
         repeat(symbol.typeParameters.size) {
             argument(buildStarTypeProjection())
         }

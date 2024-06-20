@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
@@ -10,10 +10,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.parentOfType
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.Modality
@@ -276,7 +276,9 @@ internal class FirWhenWithSubjectConditionContributor(
         isSingleCondition: Boolean,
     ) {
         val isPrefixNeeded = isPrefixNeeded(symbol)
-        val typeArgumentsCount = (symbol as? KaSymbolWithTypeParameters)?.typeParameters?.size ?: 0
+
+        @OptIn(KaExperimentalApi::class)
+        val typeArgumentsCount = (symbol as? KaDeclarationSymbol)?.typeParameters?.size ?: 0
         val lookupObject = WhenConditionLookupObject(symbol.name, fqName, isPrefixNeeded, isSingleCondition, typeArgumentsCount)
 
         LookupElementBuilder.create(lookupObject, getIsPrefix(isPrefixNeeded) + lookupString)
