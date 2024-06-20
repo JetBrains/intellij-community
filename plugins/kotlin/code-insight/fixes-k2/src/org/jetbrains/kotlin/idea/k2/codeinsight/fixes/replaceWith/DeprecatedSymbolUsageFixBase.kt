@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory.IntentionBased
@@ -66,7 +67,7 @@ object DeprecationFixFactory {
             else -> null
         } ?: return emptyList()
         val expression = (referenceExpression.parent as? KtCallExpression)?.takeIf {
-            (kaSymbol as? KaFunctionSymbol)?.isOperator == true && referenceExpression.mainReference.resolve() is KtValVarKeywordOwner
+            (kaSymbol as? KaNamedFunctionSymbol)?.isOperator == true && referenceExpression.mainReference.resolve() is KtValVarKeywordOwner
         } ?: referenceExpression
         val replaceWithData =
             fetchReplaceWithPattern(kaSymbol) ?: return emptyList()

@@ -320,7 +320,7 @@ class CodeInliner(
                     return Argument(expression, expression.getKtType(), isNamed = single.isNamed())
                 }
                 val parameterType = parameter.getReturnKtType()
-                val elementType = parameterType.getArrayElementType() ?: return null
+                val elementType = parameterType.arrayElementType ?: return null
                 val expression = psiFactory.buildExpression {
                     appendFixedText(arrayOfFunctionName(elementType))
                     appendFixedText("(")

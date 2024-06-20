@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.parentsOfType
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -31,8 +32,9 @@ internal fun <T> Collection<T>.toSortedStringSet(): Set<String> = map { it.toStr
  * In the resulting map symbols that cannot be imported (e.g., local symbols) are associated with `null` key.
  */
 context(KaSession)
+@OptIn(KaIdeApi::class)
 internal fun KtReference.getResolvedSymbolsGroupedByImportableFqName(): Map<FqName?, List<KaSymbol>> = resolveToImportableSymbols()
-    .groupBy { symbol -> symbol.getImportableName() }
+    .groupBy { symbol -> symbol.importableFqName }
 
 context(KaSession)
 private fun KtReference.resolveToImportableSymbols(): Collection<KaSymbol> =

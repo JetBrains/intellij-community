@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
+@OptIn(KaIdeApi::class)
 internal class ImportMemberIntention :
     KotlinApplicableModCommandAction<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
     HighPriorityAction {
@@ -61,6 +63,7 @@ internal class ImportMemberIntention :
 }
 
 context(KaSession)
+@OptIn(KaIdeApi::class)
 private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): ImportMemberIntention.Context? {
     return when (symbol) {
         is KaConstructorSymbol,
@@ -90,7 +93,7 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
         is KaCallableSymbol -> {
             val callableId = symbol.callableId ?: return null
             if (callableId.callableName.isSpecial) return null
-            if (symbol.getImportableName() == null) return null
+            if (symbol.importableFqName == null) return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
                 classShortenStrategy = { ShortenStrategy.DO_NOT_SHORTEN },

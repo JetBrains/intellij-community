@@ -151,7 +151,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
                 for ((argument, param) in arguments.asReversed()) {
                     idx--
                     val defaultValue = param.symbol.defaultValue
-                        ?: callableSymbol.getAllOverriddenSymbols()
+                        ?: callableSymbol.allOverriddenSymbols
                             .mapNotNull {
                                 val params = (it as? KtFunctionLikeSymbol)?.valueParameters
                                 params?.getOrNull(idx)?.defaultValue

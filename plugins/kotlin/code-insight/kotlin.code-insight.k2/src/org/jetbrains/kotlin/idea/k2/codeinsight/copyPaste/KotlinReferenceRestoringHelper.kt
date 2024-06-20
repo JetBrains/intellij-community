@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaSymbolBasedReference
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import kotlin.collections.flatMap
 
 internal object KotlinReferenceRestoringHelper {
+    @OptIn(KaImplementationDetail::class)
     fun collectSourceReferenceInfos(sourceFile: KtFile, startOffsets: IntArray, endOffsets: IntArray): List<KotlinSourceReferenceInfo> {
         var currentStartOffsetInPastedText = 0
 
