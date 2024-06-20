@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -85,8 +85,12 @@ class GradleSystemPropertiesTest: GradleImportingTestCase() {
   private fun createGradleTaskListener(taskOutputSystemProperties: MutableMap<String, String>) =
     object : ExternalSystemTaskNotificationListener {
       override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-        Gson().fromJson<Map<String, String>>(text, Map::class.java)?.let {
-          taskOutputSystemProperties.putAll(it)
+        try {
+          Gson().fromJson<Map<String, String>>(text, Map::class.java)?.let {
+            taskOutputSystemProperties.putAll(it)
+          }
+        } catch (ignore: Exception) {
+          // do not fail test on extra lines in the output
         }
       }
     }
