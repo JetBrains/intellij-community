@@ -7,6 +7,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.getOrCreateUserData
 import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.Lifetime
+import org.jetbrains.annotations.ApiStatus
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -14,12 +15,14 @@ val <T> T.lifetime: Lifetime where T : UserDataHolder, T : Disposable by userDat
   it.createLifetime()
 }
 
+@ApiStatus.Internal
 fun <T> UserDataHolder.putUserData(lt: Lifetime, key: Key<T>, value: T) {
   assert(getUserData(key) == null) { "getUserData($key) == null" }
   putUserData(key, value)
   lt.onTermination { putUserData(key, null) }
 }
 
+@ApiStatus.Internal
 fun <T> userData(key: Key<T>): ReadWriteProperty<UserDataHolder, T?> {
   return object : ReadWriteProperty<UserDataHolder, T?> {
     override fun getValue(thisRef: UserDataHolder, property: KProperty<*>): T? {
@@ -32,6 +35,7 @@ fun <T> userData(key: Key<T>): ReadWriteProperty<UserDataHolder, T?> {
   }
 }
 
+@ApiStatus.Internal
 fun <T> userData(name: String? = null): ReadWriteProperty<UserDataHolder, T?> {
   return object : ReadWriteProperty<UserDataHolder, T?> {
     private var key: Key<T>? = name?.let { Key.create(name) }
@@ -52,6 +56,7 @@ fun <T> userData(name: String? = null): ReadWriteProperty<UserDataHolder, T?> {
   }
 }
 
+@ApiStatus.Internal
 fun <TThis : UserDataHolder, TValue> userData(lazyDefaultValue: (TThis) -> TValue): ReadWriteProperty<TThis, TValue> {
   return object : ReadWriteProperty<TThis, TValue> {
     private var key: Key<TValue>? = null
@@ -74,6 +79,7 @@ fun <TThis : UserDataHolder, TValue> userData(lazyDefaultValue: (TThis) -> TValu
   }
 }
 
+@ApiStatus.Internal
 fun <TThis : UserDataHolder, TValue> userData(key: Key<TValue>, lazyDefaultValue: (TThis) -> TValue): ReadWriteProperty<TThis, TValue> {
   return object : ReadWriteProperty<TThis, TValue> {
     override fun getValue(thisRef: TThis, property: KProperty<*>): TValue {

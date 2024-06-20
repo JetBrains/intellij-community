@@ -3,7 +3,9 @@ package com.intellij.openapi.rd.util
 
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 fun ProgressIndicatorEx.subscribeOnCancel(action: () -> Unit) {
   addStateDelegate(object : AbstractProgressIndicatorExBase() {
     override fun cancel() {

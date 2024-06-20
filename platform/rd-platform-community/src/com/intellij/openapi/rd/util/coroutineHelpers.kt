@@ -14,6 +14,7 @@ import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -27,6 +28,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * [cancellationScheduler] and [handlerScheduler] are passed to [IRdEndpoint.set]
  * Coroutine dispatcher is being chosen in the following order: handlerScheduler (if not null) -> coroutineContext (if it has) -> this.protocol.scheduler (if not null) -> SynchronousScheduler
  */
+@ApiStatus.Internal
 @DelicateCoroutinesApi
 fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspend(
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
@@ -45,6 +47,7 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspend(
 /**
  * The same as [setSuspend] but add [ClientId] into [coroutineContext] to restore it in [handler]
  */
+@ApiStatus.Internal
 fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
   coroutineStart: CoroutineStart = CoroutineStart.DEFAULT,
@@ -65,6 +68,7 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
  *
  * Coroutine dispatcher is being chosen in the following order: handlerScheduler (if not null) -> coroutineContext (if it has) -> this.protocol.scheduler (if not null) -> SynchronousScheduler
  */
+@ApiStatus.Internal
 @DelicateCoroutinesApi
 fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, coroutineContext: CoroutineContext = EmptyCoroutineContext, coroutineStart: CoroutineStart = CoroutineStart.DEFAULT, handler: suspend (T) -> Unit) {
   advise(lifetime) {
@@ -77,6 +81,7 @@ fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, coroutineContext: CoroutineC
 /**
  * The same as [adviseSuspend] but adds ClientId into [coroutineContext] to restore it in [handler]
  */
+@ApiStatus.Internal
 fun<T> ISource<T>.adviseSuspendPreserveClientId(lifetime: Lifetime, coroutineContext: CoroutineContext = EmptyCoroutineContext, coroutineStart: CoroutineStart = CoroutineStart.DEFAULT, handler: suspend (T) -> Unit) {
   advise(lifetime) {
     lifetime.launch(coroutineContext + ClientId.coroutineContext() + getSuitableDispatcher(null, coroutineContext), coroutineStart) {

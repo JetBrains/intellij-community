@@ -453,6 +453,7 @@ suspend fun <T> lifetimedCoroutineScope(lifetime: Lifetime, action: suspend Coro
   com.jetbrains.rd.util.threading.coroutines.lifetimedCoroutineScope(lifetime, action)
 
 
+// See IJPL-157034
 @ExperimentalCoroutinesApi
 fun <T> Deferred<T>.toPromise(): Promise<T> = AsyncPromiseWithoutLogError<T>().also { promise ->
   invokeOnCompletion { throwable ->
@@ -465,6 +466,7 @@ fun <T> Deferred<T>.toPromise(): Promise<T> = AsyncPromiseWithoutLogError<T>().a
   }
 }
 
+// See IJPL-157034
 fun <T> CompletableFuture<T>.toPromise(): Promise<T> = AsyncPromiseWithoutLogError<T>().also { promise ->
   whenComplete { result, throwable ->
     if (throwable != null) {

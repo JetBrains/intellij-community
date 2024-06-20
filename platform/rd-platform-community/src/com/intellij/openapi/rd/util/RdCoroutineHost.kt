@@ -9,8 +9,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
+@ApiStatus.Internal
 class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
   companion object {
     val instance by lazy {
