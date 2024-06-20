@@ -128,8 +128,14 @@ object PluginAutoUpdateRepository {
         false
       }
     }
-    applyPluginUpdates(updates, logDeferred)
-    runCatching { clearUpdates() }.getOrLogException { e ->
+    runCatching {
+      applyPluginUpdates(updates, logDeferred)
+    }.getOrLogException { e ->
+      logDeferred.await().error("Error occurred during application of plugin updates", e)
+    }
+    runCatching {
+      clearUpdates()
+    }.getOrLogException { e ->
       logDeferred.await().warn("Failed to clear plugin auto update directory", e)
     }
   }
@@ -160,7 +166,7 @@ object PluginAutoUpdateRepository {
     val updateDescriptors = span("update descriptors loading") {
       updates.mapValues { (_, info) ->
         val updateFile = autoupdatesDir.resolve(info.updateFilename)
-        async(Dispatchers.Default) {
+        async(Dispatchers.IO) {
           runCatching { loadDescriptorFromArtifact(updateFile, null) }
         }
       }.mapValues { it.value.await() }
@@ -191,7 +197,7 @@ object PluginAutoUpdateRepository {
     }
   }
 
-  private data class UpdateApplicationCheck(
+  private data class UpdateCheckResult(
     val updatesToApply: Set<PluginId>,
     val rejectedUpdates: Map<PluginId, String>,
   )
@@ -199,7 +205,7 @@ object PluginAutoUpdateRepository {
   private fun determineValidUpdates(
     currentDescriptors: PluginLoadingResult,
     updates: Map<PluginId, IdeaPluginDescriptorImpl>,
-  ): UpdateApplicationCheck {
+  ): UpdateCheckResult {
     val updatesToApply = mutableSetOf<PluginId>()
     val rejectedUpdates = mutableMapOf<PluginId, String>()
     // checks mostly duplicate what is written in com.intellij.ide.plugins.PluginInstaller.installFromDisk. FIXME, I guess
@@ -230,7 +236,7 @@ object PluginAutoUpdateRepository {
       // TODO check signature ? com.intellij.ide.plugins.marketplace.PluginSignatureChecker; probably also should be done after download
       updatesToApply.add(id)
     }
-    return UpdateApplicationCheck(updatesToApply, rejectedUpdates)
+    return UpdateCheckResult(updatesToApply, rejectedUpdates)
   }
 
   /**
