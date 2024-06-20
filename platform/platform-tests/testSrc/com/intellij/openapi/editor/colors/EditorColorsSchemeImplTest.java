@@ -17,7 +17,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.assertj.core.api.Assertions;
 import org.jdom.Element;
@@ -783,7 +782,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
 
     try {
       final AtomicBoolean handlerProcessed = new AtomicBoolean();
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, scheme -> {
+      ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorColorsManager.TOPIC, scheme -> {
         assertEquals("Should have received actual scheme", fontName, scheme.getEditorFontName());
         handlerProcessed.set(true);
       });
