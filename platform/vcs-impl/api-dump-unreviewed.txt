@@ -218,6 +218,9 @@ f:com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder
 - s:buildPatch(com.intellij.openapi.project.Project,java.util.Collection,java.nio.file.Path,Z,Z):java.util.List
 - s:buildPatch(com.intellij.openapi.project.Project,java.util.Collection,java.nio.file.Path,Z,Z,java.lang.Runnable):java.util.List
 - s:isBinaryRevision(com.intellij.openapi.vcs.changes.ContentRevision):Z
+f:com.intellij.openapi.diff.impl.patch.NotAPatchException
+- com.intellij.openapi.diff.impl.patch.PatchSyntaxException
+- <init>():V
 f:com.intellij.openapi.diff.impl.patch.PatchFileHeaderInfo
 - equals(java.lang.Object):Z
 - getAuthor():com.intellij.vcs.log.VcsUser
@@ -243,6 +246,7 @@ f:com.intellij.openapi.diff.impl.patch.PatchReader
 c:com.intellij.openapi.diff.impl.patch.PatchSyntaxException
 - java.lang.Exception
 - <init>(I,java.lang.String):V
+- <init>(java.lang.String):V
 - getLine():I
 - getMessage():java.lang.String
 f:com.intellij.openapi.diff.impl.patch.PatchUtil

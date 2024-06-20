@@ -3,10 +3,7 @@ package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TestDataFile
-import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.*
 import com.intellij.vcs.log.impl.VcsUserImpl
 import junit.framework.TestCase
 import java.io.File
@@ -82,6 +79,13 @@ class PatchReaderTest : HeavyPlatformTestCase() {
   @Throws(Exception::class)
   fun testPatchHeaderWithLongName() {
     doTest(PatchFileHeaderInfo(subjectLine, longName, baseRevision))
+  }
+
+  @Throws(Exception::class)
+  fun testNotAPatch() {
+    UsefulTestCase.assertThrows(PatchSyntaxException::class.java) {
+      read()
+    }
   }
 
   private fun doTestPatchCount(expected: Int) {
