@@ -6,7 +6,9 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion
+import com.jetbrains.jsonSchema.impl.MergedJsonSchemaObject
 import com.jetbrains.jsonSchema.impl.light.*
+import com.jetbrains.jsonSchema.impl.light.nodes.InheritedJsonSchemaObjectView
 import com.jetbrains.jsonSchema.impl.light.versions.v201909.JsonSchema201909Strategy
 import com.jetbrains.jsonSchema.impl.light.versions.v202012.JsonSchema202012Strategy
 import org.jetbrains.annotations.ApiStatus
@@ -86,5 +88,56 @@ interface JsonSchemaInterpretationStrategy {
   val referenceResolvers: Sequence<JsonSchemaReferenceResolver>
 
   fun getValidations(schemaNode: JsonSchemaObject, type: JsonSchemaType?, value: JsonValueAdapter): Sequence<JsonSchemaValidation>
-  fun inheritBaseSchema(baseSchema: JsonSchemaObject, childSchema: JsonSchemaObject): JsonSchemaObject
+
+  fun inheritBaseSchema(baseSchema: JsonSchemaObject, childSchema: JsonSchemaObject): JsonSchemaObject {
+    return when {
+      baseSchema == childSchema -> childSchema
+      doesAlreadyInheritAnything(baseSchema) -> InheritedJsonSchemaObjectView(baseSchema, childSchema)
+      isIfThenElseBranchWithNonEmptyParent(baseSchema, childSchema) -> InheritedJsonSchemaObjectView(baseSchema, childSchema)
+      isApplicatorBranchWithNonEmptyParent(baseSchema, childSchema) -> InheritedJsonSchemaObjectView(baseSchema, childSchema)
+      !isSameSchemaFileNodes(baseSchema, childSchema) -> InheritedJsonSchemaObjectView(baseSchema, childSchema)
+      else -> childSchema
+    }
+  }
+
+  fun doesAlreadyInheritAnything(jsonSchemaObject: JsonSchemaObject): Boolean {
+    return jsonSchemaObject is MergedJsonSchemaObject && jsonSchemaObject.isInherited
+  }
+
+  private fun isSameSchemaFileNodes(baseSchema: JsonSchemaObject, childSchema: JsonSchemaObject): Boolean {
+    return baseSchema.fileUrl == null
+           || !baseSchema.fileUrl.isNullOrBlank() && baseSchema.fileUrl == childSchema.fileUrl
+           || baseSchema.rawFile != null && baseSchema.rawFile == childSchema.rawFile
+  }
+
+  private fun isNodeWithDifferentPointers(
+    baseSchema: JsonSchemaObject,
+    childSchema: JsonSchemaObject,
+  ): Boolean {
+    return baseSchema.pointer != childSchema.pointer
+  }
+
+  private fun isApplicatorBranchWithNonEmptyParent(
+    baseSchema: JsonSchemaObject,
+    childSchema: JsonSchemaObject,
+  ): Boolean {
+    if (!baseSchema.hasChildFieldsExcept(ONE_OF, ALL_OF, ANY_OF)) return false
+
+    return sequence {
+      yieldAll(baseSchema.oneOf.orEmpty())
+      yieldAll(baseSchema.anyOf.orEmpty())
+      yieldAll(baseSchema.allOf.orEmpty())
+    }.any { it == childSchema }
+  }
+
+  private fun isIfThenElseBranchWithNonEmptyParent(
+    baseSchema: JsonSchemaObject,
+    childSchema: JsonSchemaObject,
+  ): Boolean {
+    if (!baseSchema.hasChildFieldsExcept(IF, THEN, ELSE)) return false
+
+    return baseSchema.ifThenElse?.any { condition ->
+      condition.then == childSchema || condition.`else` == childSchema
+    } ?: false
+  }
 }

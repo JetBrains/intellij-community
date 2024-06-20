@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.impl.light.nodes
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
+import com.jetbrains.jsonSchema.impl.MergedJsonSchemaObject
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectMerger
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.collections.immutable.toImmutableSet
@@ -18,7 +19,7 @@ internal object LightweightJsonSchemaObjectMerger : JsonSchemaObjectMerger {
   }
 }
 
-internal fun <T> MergedJsonSchemaObjectView.mergeLists(memberReference: JsonSchemaObject.() -> List<T>?): List<T>? {
+internal fun <T> MergedJsonSchemaObject.mergeLists(memberReference: JsonSchemaObject.() -> List<T>?): List<T>? {
   val first = base.memberReference()
   val second = other.memberReference()
 
@@ -30,7 +31,7 @@ internal fun <T> MergedJsonSchemaObjectView.mergeLists(memberReference: JsonSche
   return ContainerUtil.concat(first, second)
 }
 
-internal fun <K, V> MergedJsonSchemaObjectView.mergeMaps(memberReference: JsonSchemaObject.() -> Map<K, V>?): Map<K, V>? {
+internal fun <K, V> MergedJsonSchemaObject.mergeMaps(memberReference: JsonSchemaObject.() -> Map<K, V>?): Map<K, V>? {
   val first = base.memberReference()
   val second = other.memberReference()
 
@@ -55,36 +56,40 @@ internal fun <T> mergeSets(first: Set<T>?, second: Set<T>?): Set<T>? {
   return merged.toImmutableSet()
 }
 
-internal fun MergedJsonSchemaObjectView.booleanOr(memberReference: JsonSchemaObject.() -> Boolean): Boolean {
+internal fun booleanOr(base: JsonSchemaObject, other: JsonSchemaObject, memberReference: JsonSchemaObject.() -> Boolean): Boolean {
   val first = base.memberReference()
   if (first) return true
   ProgressManager.checkCanceled()
   return other.memberReference()
 }
 
-internal fun MergedJsonSchemaObjectView.booleanAnd(memberReference: JsonSchemaObject.() -> Boolean): Boolean {
+internal fun booleanAnd(base: JsonSchemaObject, other: JsonSchemaObject, memberReference: JsonSchemaObject.() -> Boolean): Boolean {
   val first = base.memberReference()
   if (!first) return false
   ProgressManager.checkCanceled()
   return other.memberReference()
 }
 
-internal fun MergedJsonSchemaObjectView.booleanAndNullable(memberReference: JsonSchemaObject.() -> Boolean?): Boolean? {
+internal fun booleanAndNullable(base: JsonSchemaObject, other: JsonSchemaObject, memberReference: JsonSchemaObject.() -> Boolean?): Boolean? {
   val first = base.memberReference()
   if (first == false) return false
   ProgressManager.checkCanceled()
   return other.memberReference()
 }
 
-internal fun <V> MergedJsonSchemaObjectView.booleanOrWithArgument(memberReference: JsonSchemaObject.(V) -> Boolean, argument: V): Boolean {
+internal fun <V> booleanOrWithArgument(base: JsonSchemaObject, other: JsonSchemaObject, memberReference: JsonSchemaObject.(V) -> Boolean, argument: V): Boolean {
   val first = base.memberReference(argument)
   if (first) return true
   ProgressManager.checkCanceled()
   return other.memberReference(argument)
 }
 
-internal fun <T> MergedJsonSchemaObjectView.baseIfConditionOrOther(memberReference: JsonSchemaObject.() -> T,
-                                                                   condition: (T) -> Boolean): T {
+internal fun <T> baseIfConditionOrOther(
+  base: JsonSchemaObject,
+  other: JsonSchemaObject,
+  memberReference: JsonSchemaObject.() -> T,
+  condition: (T) -> Boolean,
+): T {
   ProgressManager.checkCanceled()
   val baseResult = base.memberReference()
   ProgressManager.checkCanceled()
@@ -93,9 +98,13 @@ internal fun <T> MergedJsonSchemaObjectView.baseIfConditionOrOther(memberReferen
   return other.memberReference()
 }
 
-internal fun <T, V> MergedJsonSchemaObjectView.baseIfConditionOrOtherWithArgument(memberReference: JsonSchemaObject.(V) -> T,
-                                                                                  argument: V,
-                                                                                  condition: (T) -> Boolean): T {
+internal fun <T, V> baseIfConditionOrOtherWithArgument(
+  base: JsonSchemaObject,
+  other: JsonSchemaObject,
+  memberReference: JsonSchemaObject.(V) -> T,
+  argument: V,
+  condition: (T) -> Boolean,
+): T {
   ProgressManager.checkCanceled()
   val baseResult = base.memberReference(argument)
   ProgressManager.checkCanceled()

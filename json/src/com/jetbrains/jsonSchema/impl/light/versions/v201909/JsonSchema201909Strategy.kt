@@ -6,7 +6,6 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import com.jetbrains.jsonSchema.impl.light.*
-import com.jetbrains.jsonSchema.impl.light.nodes.LightweightJsonSchemaObjectMerger
 import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
 import com.jetbrains.jsonSchema.impl.validations.getSchema7AndEarlierValidations
 
@@ -26,15 +25,5 @@ internal data object JsonSchema201909Strategy : JsonSchemaInterpretationStrategy
 
   override fun getValidations(schemaNode: JsonSchemaObject, type: JsonSchemaType?, value: JsonValueAdapter): Sequence<JsonSchemaValidation> {
     return getSchema7AndEarlierValidations(schemaNode, type, value)
-  }
-
-  override fun inheritBaseSchema(baseSchema: JsonSchemaObject, childSchema: JsonSchemaObject): JsonSchemaObject {
-    if (baseSchema === childSchema
-        || baseSchema.fileUrl == null
-        || !baseSchema.fileUrl.isNullOrBlank() && baseSchema.fileUrl == childSchema.fileUrl
-        || baseSchema.rawFile != null && baseSchema.rawFile == childSchema.rawFile) {
-      return childSchema
-    }
-    return LightweightJsonSchemaObjectMerger.mergeObjects(baseSchema, childSchema, baseSchema)
   }
 }

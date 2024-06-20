@@ -27,6 +27,7 @@ internal data object RemoteSchemaReferenceResolver : JsonSchemaReferenceResolver
                        referenceOwner: JsonSchemaObjectBackedByJacksonBase,
                        service: JsonSchemaService): JsonSchemaObject? {
     val resolvedRemoteSchema = resolveRemoteSchemaByUrl(reference, referenceOwner, service) ?: return null
+    if (true) return referenceOwner.rootSchemaObject.schemaInterpretationStrategy.inheritBaseSchema(referenceOwner, resolvedRemoteSchema)
     return resolvedRemoteSchema
   }
 }

@@ -6,13 +6,17 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver
-import com.jetbrains.jsonSchema.impl.inheritBaseSchemaIfNeeded
+import com.jetbrains.jsonSchema.impl.light.nodes.inheritBaseSchemaIfNeeded
 
 internal class IfThenElseBranchOperation(schemaObject: JsonSchemaObject, expansionRequest: JsonSchemaNodeExpansionRequest?, private val jsonSchemaService: JsonSchemaService) : Operation(schemaObject, expansionRequest) {
   override fun map(visited: MutableSet<JsonSchemaObject>) {
     if (visited.contains(mySourceNode)) return
 
     val effectiveBranches = computeEffectiveIfThenElseBranches(myExpansionRequest, mySourceNode)
+      ?.mapNotNull {
+        if (visited.contains(it)) null
+        else inheritBaseSchemaIfNeeded(mySourceNode, it)
+      }
     if (!effectiveBranches.isNullOrEmpty()) {
       myChildOperations.addAll(effectiveBranches.map { ProcessDefinitionsOperation(it, jsonSchemaService, myExpansionRequest) })
     }

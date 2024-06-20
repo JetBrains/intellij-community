@@ -26,8 +26,4 @@ internal data object JsonSchema7Strategy : JsonSchemaInterpretationStrategy {
   override fun getValidations(schemaNode: JsonSchemaObject, type: JsonSchemaType?, value: JsonValueAdapter): Sequence<JsonSchemaValidation> {
     return getSchema7AndEarlierValidations(schemaNode, type, value)
   }
-
-  override fun inheritBaseSchema(baseSchema: JsonSchemaObject, childSchema: JsonSchemaObject): JsonSchemaObject {
-    return childSchema
-  }
 }

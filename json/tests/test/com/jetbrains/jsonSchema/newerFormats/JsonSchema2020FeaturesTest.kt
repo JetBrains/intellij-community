@@ -841,4 +841,49 @@ internal class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
       "\"bar\"", "\"biz\""
     )
   }
+
+  fun `test if-then-else schema with adjacent properties completion`() {
+    // todo implement inheritanceStrategy for if-else, oneOf/anyOF/allOf
+    // and generic cases and write a test with inherited required properties as well
+    doTestSchemaCompletion(
+      """
+        {
+          "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          
+          "if": {
+            "type": "object",
+            "required": [ "foo" ]
+          },
+          "then": {
+            "properties": {
+              "bar": {
+                "type": "string"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "wrong": {
+                "type": "string"
+              }
+            }
+          },
+          "properties": {
+            "buz": {
+              "type": "string"
+            }
+          }
+        }
+      """.trimIndent(),
+      """
+        {
+          "foo": "hello"
+          <caret>
+        }
+      """.trimIndent(),
+      CompletionType.SMART,
+      "\"bar\"", "\"buz\""
+    )
+  }
 }

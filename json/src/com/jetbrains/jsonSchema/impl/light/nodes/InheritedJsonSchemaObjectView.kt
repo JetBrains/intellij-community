@@ -13,26 +13,24 @@ import com.jetbrains.jsonSchema.impl.MergedJsonSchemaObject
 import com.jetbrains.jsonSchema.impl.light.legacy.LegacyJsonSchemaObjectMerger
 import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
 
-internal class MergedJsonSchemaObjectView(
+internal class InheritedJsonSchemaObjectView(
   override val base: JsonSchemaObject,
   override val other: JsonSchemaObject,
-  private val pointTo: JsonSchemaObject,
 ) : JsonSchemaObject(), MergedJsonSchemaObject {
-
   private fun getMergedSchemaInterpretationStrategy(): JsonSchemaInterpretationStrategy? {
-    return pointTo.rootSchemaObject.asSafely<RootJsonSchemaObjectBackedByJackson>()?.schemaInterpretationStrategy
+    return other.rootSchemaObject.asSafely<RootJsonSchemaObjectBackedByJackson>()?.schemaInterpretationStrategy
   }
 
   override fun getPointer(): String {
-    return pointTo.pointer
+    return other.pointer
   }
 
   override fun getFileUrl(): String? {
-    return pointTo.fileUrl
+    return other.fileUrl
   }
 
   override fun getRawFile(): VirtualFile? {
-    return pointTo.rawFile
+    return other.rawFile
   }
 
   // important to see the following two methods together - they must resolve other's ref according to the resolver logic
@@ -45,7 +43,7 @@ internal class MergedJsonSchemaObjectView(
   }
 
   override fun hasChildNode(vararg childNodeName: String): Boolean {
-    return booleanOrWithArgument(JsonSchemaObject::hasChildNode, childNodeName)
+    return other.hasChildNode(*childNodeName)
   }
 
   override fun hasChildFieldsExcept(namesToSkip: Array<String>): Boolean {
@@ -68,9 +66,7 @@ internal class MergedJsonSchemaObjectView(
   }
 
   override fun isValidByExclusion(): Boolean {
-    return LegacyJsonSchemaObjectMerger.computeMergedExclusionAndType(base.type, other.type, other.typeVariants)?.isValidByExclusion
-           ?: LegacyJsonSchemaObjectMerger.mergeTypeVariantSets(base.typeVariants, other.typeVariants)?.isValidByExclusion
-           ?: base.isValidByExclusion
+    return other.isValidByExclusion
   }
 
   override fun getDefinitionNames(): Iterator<String> {
@@ -130,8 +126,7 @@ internal class MergedJsonSchemaObjectView(
   }
 
   override fun getType(): JsonSchemaType? {
-    return LegacyJsonSchemaObjectMerger.computeMergedExclusionAndType(base.type, other.type, other.typeVariants)?.type
-           ?: base.type
+    return other.type
   }
 
   override fun getMultipleOf(): Number? {
@@ -179,7 +174,7 @@ internal class MergedJsonSchemaObjectView(
   }
 
   override fun hasOwnExtraPropertyProhibition(): Boolean {
-    return !pointTo.additionalPropertiesAllowed
+    return !other.additionalPropertiesAllowed
   }
 
   override fun getPropertyNamesSchema(): JsonSchemaObject? {
@@ -259,23 +254,23 @@ internal class MergedJsonSchemaObjectView(
   }
 
   override fun getAllOf(): List<JsonSchemaObject>? {
-    return mergeLists(JsonSchemaObject::getAllOf)
+    return other.allOf
   }
 
   override fun getAnyOf(): List<JsonSchemaObject>? {
-    return mergeLists(JsonSchemaObject::getAnyOf)
+    return other.anyOf
   }
 
   override fun getOneOf(): List<JsonSchemaObject>? {
-    return mergeLists(JsonSchemaObject::getOneOf)
+    return other.oneOf
   }
 
   override fun getNot(): JsonSchemaObject? {
-    return baseIfConditionOrOther(JsonSchemaObject::getNot, Any?::isNotNull)
+    return other.not
   }
 
   override fun getIfThenElse(): List<IfThenElse>? {
-    return mergeLists(JsonSchemaObject::getIfThenElse)
+    return other.ifThenElse
   }
 
   override fun getTypeVariants(): Set<JsonSchemaType>? {
@@ -375,14 +370,12 @@ internal class MergedJsonSchemaObjectView(
   }
 
   override fun resolveRefSchema(service: JsonSchemaService): JsonSchemaObject? {
-    return other.resolveRefSchema(service)
+    return other.resolveRefSchema(service) ?: base.resolveRefSchema(service)
   }
 
-  override fun mergeTypes(
-    selfType: JsonSchemaType?,
-    otherType: JsonSchemaType?,
-    otherTypeVariants: MutableSet<JsonSchemaType>?,
-  ): JsonSchemaType? {
+  override fun mergeTypes(selfType: JsonSchemaType?,
+                          otherType: JsonSchemaType?,
+                          otherTypeVariants: MutableSet<JsonSchemaType>?): JsonSchemaType? {
     throw UnsupportedOperationException("Must not call mergeTypes on light aggregated object")
   }
 
@@ -403,30 +396,30 @@ internal class MergedJsonSchemaObjectView(
   }
 }
 
-private fun <T, V> MergedJsonSchemaObjectView.baseIfConditionOrOtherWithArgument(
+private fun <T, V> InheritedJsonSchemaObjectView.baseIfConditionOrOtherWithArgument(
   memberReference: JsonSchemaObject.(V) -> T,
   argument: V,
   condition: (T) -> Boolean,
 ): T {
-  return baseIfConditionOrOtherWithArgument(base, other, memberReference, argument, condition)
+  return baseIfConditionOrOtherWithArgument(other, base, memberReference, argument, condition)
 }
 
-private fun <T> MergedJsonSchemaObjectView.baseIfConditionOrOther(memberReference: JsonSchemaObject.() -> T, condition: (T) -> Boolean): T {
-  return baseIfConditionOrOther(base, other, memberReference, condition)
+private fun <T> InheritedJsonSchemaObjectView.baseIfConditionOrOther(memberReference: JsonSchemaObject.() -> T, condition: (T) -> Boolean): T {
+  return baseIfConditionOrOther(other, base, memberReference, condition)
 }
 
-private fun <V> MergedJsonSchemaObjectView.booleanOrWithArgument(memberReference: JsonSchemaObject.(V) -> Boolean, argument: V): Boolean {
-  return booleanOrWithArgument(base, other, memberReference, argument)
+private fun <V> InheritedJsonSchemaObjectView.booleanOrWithArgument(memberReference: JsonSchemaObject.(V) -> Boolean, argument: V): Boolean {
+  return booleanOrWithArgument(other, base, memberReference, argument)
 }
 
-private fun MergedJsonSchemaObjectView.booleanAndNullable(memberReference: JsonSchemaObject.() -> Boolean?): Boolean? {
-  return booleanAndNullable(base, other, memberReference)
+private fun InheritedJsonSchemaObjectView.booleanAndNullable(memberReference: JsonSchemaObject.() -> Boolean?): Boolean? {
+  return booleanAndNullable(other, base, memberReference)
 }
 
-private fun MergedJsonSchemaObjectView.booleanAnd(memberReference: JsonSchemaObject.() -> Boolean): Boolean {
-  return booleanAnd(base, other, memberReference)
+private fun InheritedJsonSchemaObjectView.booleanAnd(memberReference: JsonSchemaObject.() -> Boolean): Boolean {
+  return booleanAnd(other, base, memberReference)
 }
 
-private fun MergedJsonSchemaObjectView.booleanOr(memberReference: JsonSchemaObject.() -> Boolean): Boolean {
-  return booleanOr(base, other, memberReference)
+private fun InheritedJsonSchemaObjectView.booleanOr(memberReference: JsonSchemaObject.() -> Boolean): Boolean {
+  return booleanOr(other, base, memberReference)
 }

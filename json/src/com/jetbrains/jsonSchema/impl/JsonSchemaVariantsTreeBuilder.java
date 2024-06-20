@@ -19,9 +19,9 @@ import java.util.HashSet;
 import java.util.List;
 
 import static com.jetbrains.jsonSchema.JsonPointerUtil.isSelfReference;
-import static com.jetbrains.jsonSchema.impl.JsonSchemaInheritanceKt.inheritBaseSchemaIfNeeded;
 import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
 import static com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectMergerKt.getJsonSchemaObjectMerger;
+import static com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaInheritanceKt.inheritBaseSchemaIfNeeded;
 
 public final class JsonSchemaVariantsTreeBuilder {
 
