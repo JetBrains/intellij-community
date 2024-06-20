@@ -79,7 +79,7 @@ open class MarketplacePluginDownloadService {
           else {
             val contentDisposition: String? = request.connection.getHeaderField("Content-Disposition")
             val url = request.connection.url.toString()
-            guessPluginFile(contentDisposition, url, file, pluginUrl)
+            guessPluginFilenameAndRenameDownloadedFile(contentDisposition, url, file, pluginUrl)
           }
         })
   }
@@ -142,7 +142,7 @@ open class MarketplacePluginDownloadService {
         renameFileToZipRoot(file)
       }
       else {
-        guessPluginFile(guessFileParameters.contentDisposition, guessFileParameters.url, file, pluginUrl)
+        guessPluginFilenameAndRenameDownloadedFile(guessFileParameters.contentDisposition, guessFileParameters.url, file, pluginUrl)
       }
     }
     catch (e: HttpRequests.HttpStatusException) {
@@ -188,7 +188,7 @@ open class MarketplacePluginDownloadService {
   }
 }
 
-private fun guessPluginFile(contentDisposition: String?, url: String, file: File, pluginUrl: String): File {
+private fun guessPluginFilenameAndRenameDownloadedFile(contentDisposition: String?, url: String, file: File, pluginUrl: String): File {
   val fileName: String = guessFileName(contentDisposition, url, file, pluginUrl)
   val newFile = File(file.parentFile, fileName)
   FileUtil.rename(file, newFile)
