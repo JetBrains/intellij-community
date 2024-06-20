@@ -227,27 +227,24 @@ fun Document.bindTextIn(cs: CoroutineScope, textFlow: MutableStateFlow<String>) 
 }
 
 fun Document.bindTextIn(cs: CoroutineScope, textFlow: StateFlow<String>, setter: (String) -> Unit) {
-  cs.launchNow(CoroutineName("Downstream text binding for $this")) {
-    val listener = object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        setter(text)
-      }
-    }
-    addDocumentListener(listener)
-    try {
-      awaitCancellation()
-    }
-    finally {
-      removeDocumentListener(listener)
+  val listener = object : DocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
+      setter(text)
     }
   }
-
-  cs.launchNow(CoroutineName("Upstream text binding for $this")) {
-    textFlow.collect { newText ->
+  cs.launchNow(CoroutineName("Text binding for $this")) {
+    textFlow.collectScoped { newText ->
       if (text != newText) {
         writeAction {
           setText(newText.filter { it != '\r' })
         }
+      }
+      addDocumentListener(listener)
+      try {
+        awaitCancellation()
+      }
+      finally {
+        removeDocumentListener(listener)
       }
     }
   }
