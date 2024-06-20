@@ -6,9 +6,11 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_ALWAYS
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
@@ -22,6 +24,7 @@ class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
     super.setUp()
     commonSettings.KEEP_LINE_BREAKS = false
     commonSettings.METHOD_ANNOTATION_WRAP = WRAP_ALWAYS
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_1_8)
     ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations)
   }
 
@@ -49,6 +52,11 @@ class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testKeepLineBreaks() {
     commonSettings.KEEP_LINE_BREAKS = true
+    doTest()
+  }
+
+  fun testLowLanguageLevel() {
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_1_7)
     doTest()
   }
 

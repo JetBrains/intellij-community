@@ -2,7 +2,9 @@
 package com.intellij.psi.formatter.java
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.formatter.java.TypeAnnotationUtil.KNOWN_TYPE_ANNOTATIONS
 import com.intellij.psi.formatter.java.TypeAnnotationUtil.isTypeAnnotation
@@ -32,10 +34,14 @@ internal object TypeAnnotationUtil {
   @JvmStatic
   fun isTypeAnnotation(annotation: ASTNode): Boolean {
     val node = annotation.psi as? PsiAnnotation ?: return false
+
+    val languageLevel = LanguageLevelProjectExtension.getInstance(node.project).languageLevel
+    if (languageLevel.isLessThan(LanguageLevel.JDK_1_8)) return false
+
     val next = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace::class.java, PsiAnnotation::class.java)
     if (next is PsiKeyword) return false
+    
     val psiReference: PsiJavaCodeReferenceElement = node.nameReferenceElement ?: return false
-
     if (psiReference.isQualified) {
       return KNOWN_TYPE_ANNOTATIONS.contains(getCanonicalTextOfTheReference(psiReference))
     }
