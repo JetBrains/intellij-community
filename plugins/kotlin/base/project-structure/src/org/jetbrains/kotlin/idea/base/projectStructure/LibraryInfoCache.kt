@@ -16,7 +16,6 @@ import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -137,7 +136,16 @@ class LibraryInfoCache(project: Project) : Disposable {
             value: List<LibraryInfo>,
         ) {
             cache[key] = value
-            deduplicationCache.getOrPut(root) { mutableListOf() } += key
+            val libraries = deduplicationCache.getOrPut(root) { mutableListOf() }
+
+            with(libraries.iterator()) {
+                while (hasNext()) {
+                    val next = next()
+                    if (next.isDisposed) remove()
+                }
+            }
+
+            libraries += key
         }
 
         private fun cachedDeduplicatedValue(
@@ -265,7 +273,8 @@ class LibraryInfoCache(project: Project) : Disposable {
             cache: MutableMap<LibraryEx, List<LibraryInfo>>,
         ): Collection<List<LibraryInfo>> {
             val outdatedValues = mutableListOf<List<LibraryInfo>>()
-            for ((root, invalidatedLibraries) in keys.groupBy { it.firstRoot() }) {
+            val groupBy = keys.groupBy { it.firstRoot() }
+            for ((root, invalidatedLibraries) in groupBy) {
                 val deduplicatedLibraries = deduplicationCache[root] ?: continue
                 if (deduplicatedLibraries.isEmpty()) continue
                 deduplicatedLibraries.removeAll(invalidatedLibraries)
