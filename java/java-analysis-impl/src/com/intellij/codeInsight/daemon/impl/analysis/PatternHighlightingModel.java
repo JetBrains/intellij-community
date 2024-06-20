@@ -238,7 +238,7 @@ final class PatternHighlightingModel {
       return new PatternTypeTestDescription(type);
     }
     else if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {
-      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(deconstructionPattern.getTypeElement().getType());
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
       if (psiClass == null || !psiClass.isRecord()) return null;
       if (deconstructionPattern.getDeconstructionList().getDeconstructionComponents().length != psiClass.getRecordComponents().length) {
         return null;
