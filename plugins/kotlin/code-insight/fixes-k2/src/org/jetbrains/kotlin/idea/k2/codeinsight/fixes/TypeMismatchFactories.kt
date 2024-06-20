@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
 import org.jetbrains.kotlin.psi.KtExpression
@@ -33,7 +33,7 @@ object TypeMismatchFactories {
 
     val smartcastImpossibleFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.SmartcastImpossible ->
         val psi = diagnostic.psi
-        val actualType = psi.getKtType()
+        val actualType = psi.expressionType
             ?: return@IntentionBased emptyList()
 
         getFixesForTypeMismatch(psi, expectedType = diagnostic.desiredType, actualType = actualType)
@@ -42,21 +42,21 @@ object TypeMismatchFactories {
     context(KaSession)
     private fun getFixesForTypeMismatch(
         psi: PsiElement,
-        expectedType: KtType,
-        actualType: KtType
+        expectedType: KaType,
+        actualType: KaType
     ): List<AddExclExclCallFix> {
         // TODO: Add more fixes than just AddExclExclCallFix when available.
         if (!expectedType.canBeNull && actualType.canBeNull) {
             // We don't want to offer AddExclExclCallFix if we know the expression is definitely null, e.g.:
             //
             //   if (nullableInt == null) {
-            //     val x: Int = nullableInt  // No AddExclExclCallFix here
+            //     val x: Int = nullableInt // No AddExclExclCallFix here
             //   }
             if (psi.safeAs<KtExpression>()?.isDefinitelyNull == true) {
                 return emptyList()
             }
-            val nullableExpectedType = expectedType.withNullability(KtTypeNullability.NULLABLE)
-            if (actualType.isSubTypeOf(nullableExpectedType)) {
+            val nullableExpectedType = expectedType.withNullability(KaTypeNullability.NULLABLE)
+            if (actualType.isSubtypeOf(nullableExpectedType)) {
                 return listOfNotNull(psi.asAddExclExclCallFix())
             }
         }
