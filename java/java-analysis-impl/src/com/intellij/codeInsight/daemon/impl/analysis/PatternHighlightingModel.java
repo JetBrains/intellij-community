@@ -238,6 +238,11 @@ final class PatternHighlightingModel {
       return new PatternTypeTestDescription(type);
     }
     else if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(deconstructionPattern.getTypeElement().getType());
+      if (psiClass == null || !psiClass.isRecord()) return null;
+      if (deconstructionPattern.getDeconstructionList().getDeconstructionComponents().length != psiClass.getRecordComponents().length) {
+        return null;
+      }
       List<PatternDescription> deconstructionList = new ArrayList<>();
       for (PsiPattern component : deconstructionPattern.getDeconstructionList().getDeconstructionComponents()) {
         PatternDescription description = createDescription(component);
@@ -531,28 +536,36 @@ final class PatternHighlightingModel {
     if (cachedResult != null) {
       return new ReduceResult(cachedResult.patterns(), cachedResult.patterns().size() != existedPatterns.size());
     }
-    PatternDeconstructionDescription first = deconstructionExistedPatterns.get(0);
 
-    for (int i = 0; i < first.list().size(); i++) {
-      for (PatternDeconstructionDescription basePattern : deconstructionExistedPatterns) {
-        PatternDescription baseDescription = basePattern.list().get(i);
-        if (!(baseDescription instanceof PatternTypeTestDescription baseTypeDescription)) continue;
-        if (baseTypeDescription.myPsiClass == null) continue;
-        if (!PatternsInSwitchBlockHighlightingModel.isAbstractSealed(baseTypeDescription.myPsiClass)) continue;
-        for (PatternDeconstructionDescription comparedPattern : deconstructionExistedPatterns) {
-          if (comparedPattern == basePattern) continue;
-          PatternDescription comparedDescription = comparedPattern.list().get(i);
-          if (!(comparedDescription instanceof PatternTypeTestDescription comparedTypeDescription)) continue;
-          if (comparedTypeDescription.myPsiClass == null) continue;
-          if (baseTypeDescription.myPsiClass.getManager()
-            .areElementsEquivalent(baseTypeDescription.myPsiClass, comparedTypeDescription.myPsiClass)) {
-            continue;
+    Map<PsiType, Set<PatternDeconstructionDescription>> deconstructionPatternsByType =
+      StreamEx.of(deconstructionExistedPatterns)
+        .groupingBy(t -> t.type(), Collectors.toSet());
+
+    for (Set<PatternDeconstructionDescription> deconstructionExistedPatternWithTheSameType : deconstructionPatternsByType.values()) {
+      for (PatternDeconstructionDescription basePattern : deconstructionExistedPatternWithTheSameType) {
+        List<? extends PatternDescription> patternDescriptions = basePattern.list();
+        for (int i = 0; i < patternDescriptions.size(); i++) {
+          PatternDescription baseDescription = patternDescriptions.get(i);
+          if (!(baseDescription instanceof PatternTypeTestDescription baseTypeDescription)) continue;
+          if (baseTypeDescription.myPsiClass == null) continue;
+          if (!PatternsInSwitchBlockHighlightingModel.isAbstractSealed(baseTypeDescription.myPsiClass)) continue;
+          for (PatternDeconstructionDescription comparedPattern : deconstructionExistedPatternWithTheSameType) {
+            if (comparedPattern == basePattern) continue;
+            if (!comparedPattern.type().equals(basePattern.type())) continue;
+            if (comparedPattern.list().size() != patternDescriptions.size()) continue;
+            PatternDescription comparedDescription = comparedPattern.list().get(i);
+            if (!(comparedDescription instanceof PatternTypeTestDescription comparedTypeDescription)) continue;
+            if (comparedTypeDescription.myPsiClass == null) continue;
+            if (baseTypeDescription.myPsiClass.getManager()
+              .areElementsEquivalent(baseTypeDescription.myPsiClass, comparedTypeDescription.myPsiClass)) {
+              continue;
+            }
+            if (!baseTypeDescription.type.isAssignableFrom(comparedTypeDescription.type)) continue;
+            if (!isDirectSealedPath(comparedTypeDescription.myPsiClass, baseTypeDescription.myPsiClass, cache, new HashSet<>())) {
+              continue;
+            }
+            result.addAll(createPatternsFrom(i, Set.of(comparedDescription), basePattern));
           }
-          if (!baseTypeDescription.type.isAssignableFrom(comparedTypeDescription.type)) continue;
-          if (!isDirectSealedPath(comparedTypeDescription.myPsiClass, baseTypeDescription.myPsiClass, cache, new HashSet<>())) {
-            continue;
-          }
-          result.addAll(createPatternsFrom(i, Set.of(comparedDescription), basePattern));
         }
       }
     }

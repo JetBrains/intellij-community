@@ -20,7 +20,11 @@ public class SwitchStatementsWithoutDefaultInspectionTest extends LightJavaInspe
     myInspection.m_ignoreFullyCoveredEnums = false;
     doTest();
   }
-  
+
+  public void testBrokenRecords() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
