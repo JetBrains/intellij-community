@@ -402,14 +402,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (file.getParent() == null) {
       throw new IOException(IdeCoreBundle.message("cannot.delete.root.directory", file.getPath()));
     }
-
     if (!auxDelete(file)) {
-      File ioFile = convertToIOFile(file);
-      if (!FileUtil.delete(ioFile)) {
-        throw new IOException(IdeCoreBundle.message("delete.failed.error", ioFile.getPath()));
-      }
+      var nioFile = convertToNioFileAndCheck(file, false);
+      NioFiles.deleteRecursively(nioFile);
     }
-
     auxNotifyCompleted(handler -> handler.delete(file));
   }
 
