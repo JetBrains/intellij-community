@@ -23,8 +23,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -63,12 +61,10 @@ public class PsiDocTokenImpl extends LeafPsiElement implements PsiDocToken{
   @Override
   public @NotNull Collection<? extends @NotNull PsiSymbolReference> getOwnReferences() {
     if (getTokenType() == JavaDocTokenType.DOC_TAG_NAME && getText().equals("@inheritDoc")) {
-      final PsiDocTagValue value = getParent() instanceof PsiDocTag ? ((PsiDocTag)getParent()).getValueElement() : null;
-      final String explicitSuper = value != null ? value.getText() : null;
       return Collections.singleton(
         JavaPsiImplementationHelper
           .getInstance(getProject())
-          .getInheritDocSymbol(this, explicitSuper)
+          .getInheritDocSymbol(this)
       );
     }
     return super.getOwnReferences();

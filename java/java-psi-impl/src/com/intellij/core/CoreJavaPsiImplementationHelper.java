@@ -63,7 +63,7 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
   }
 
   @Override
-  public @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token, @Nullable String explicitSuper) {
+  public @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token) {
     throw new UnsupportedOperationException();
   }
 

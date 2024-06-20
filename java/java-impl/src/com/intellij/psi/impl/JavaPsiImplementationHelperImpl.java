@@ -397,7 +397,7 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
   }
 
   @Override
-  public @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token, @Nullable String explicitSuper) {
+  public @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token) {
     return new PsiSymbolReference() {
       @Override
       public @NotNull PsiElement getElement() {
@@ -418,7 +418,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
           var containingClass = method.getContainingClass();
           if (containingClass == null) return List.of();
 
-          final var target = findTargetRecursively(containingClass, method, docTag, explicitSuper, false, new HashSet<>());
+          final var valueElement = token.getParent() instanceof PsiDocTag tag ? tag.getValueElement() : null;
+          final var target = findTargetRecursively(containingClass, method, docTag, valueElement != null ? valueElement.getText() : null, false, new HashSet<>());
           if (target != null) {
             return List.of(new SnippetRegionSymbol(target.getContainingFile(), getSnippetRange(target)));
           }
