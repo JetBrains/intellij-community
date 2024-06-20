@@ -346,6 +346,28 @@ private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLo
   return list
 }
 
+suspend fun loadDescriptors(
+  zipFilePoolDeferred: Deferred<ZipFilePool>,
+  mainClassLoaderDeferred: Deferred<ClassLoader>?,
+): Pair<DescriptorListLoadingContext, PluginLoadingResult> {
+  val isUnitTestMode = PluginManagerCore.isUnitTestMode
+  val isRunningFromSources = PluginManagerCore.isRunningFromSources()
+  val result = DescriptorListLoadingContext(
+    isMissingSubDescriptorIgnored = true,
+    isMissingIncludeIgnored = isUnitTestMode,
+    checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
+  ).use { context ->
+    context to loadDescriptors(
+      context = context,
+      isUnitTestMode = isUnitTestMode,
+      isRunningFromSources = isRunningFromSources,
+      zipFilePoolDeferred = zipFilePoolDeferred,
+      mainClassLoaderDeferred = mainClassLoaderDeferred,
+    )
+  }
+  return result
+}
+
 @Suppress("DeferredIsResult")
 internal fun CoroutineScope.scheduleLoading(
   zipFilePoolDeferred: Deferred<ZipFilePool>,
@@ -353,22 +375,10 @@ internal fun CoroutineScope.scheduleLoading(
   logDeferred: Deferred<Logger>?,
 ): Deferred<PluginSet> {
   val resultDeferred = async(CoroutineName("plugin descriptor loading")) {
-    val isUnitTestMode = PluginManagerCore.isUnitTestMode
-    val isRunningFromSources = PluginManagerCore.isRunningFromSources()
-    val result = DescriptorListLoadingContext(
-      isMissingSubDescriptorIgnored = true,
-      isMissingIncludeIgnored = isUnitTestMode,
-      checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
-    ).use { context ->
-      context to loadDescriptors(
-        context = context,
-        isUnitTestMode = isUnitTestMode,
-        isRunningFromSources = isRunningFromSources,
-        zipFilePoolDeferred = zipFilePoolDeferred,
-        mainClassLoaderDeferred = mainClassLoaderDeferred,
-      )
-    }
-    result
+    loadDescriptors(
+      zipFilePoolDeferred = zipFilePoolDeferred,
+      mainClassLoaderDeferred = mainClassLoaderDeferred,
+    )
   }
   val pluginSetDeferred = async {
     val pair = resultDeferred.await()
