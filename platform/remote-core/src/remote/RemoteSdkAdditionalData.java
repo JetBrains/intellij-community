@@ -11,9 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
-public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
-  extends SdkAdditionalData, RemoteSdkCredentialsProducer<T>, RemoteSdkProperties {
-
+public interface RemoteSdkAdditionalData extends SdkAdditionalData, RemoteSdkProperties {
   @NotNull RemoteConnectionCredentialsWrapper connectionCredentials();
 
   <C> void setCredentials(Key<C> key, C credentials);
@@ -22,11 +20,9 @@ public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
 
   void switchOnConnectionType(CredentialsCase<?>... cases);
 
-  default RemoteCredentials getRemoteCredentials(@Nullable Project project, boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException {
-    return getRemoteSdkCredentials(project, allowSynchronousInteraction);
-  }
+  RemoteCredentials getRemoteCredentials(@Nullable Project project, boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException;
 
-  default void produceRemoteCredentials(@Nullable Project project, boolean allowSynchronousInteraction, @NotNull Consumer<RemoteCredentials> consumer) {
-    produceRemoteSdkCredentials(project, allowSynchronousInteraction, consumer);
-  }
+  void produceRemoteCredentials(@Nullable Project project, boolean allowSynchronousInteraction, @NotNull Consumer<RemoteCredentials> consumer);
+
+  Object getRemoteSdkDataKey();
 }

@@ -23,9 +23,9 @@ public abstract class CredentialsManager {
 
   public abstract List<CredentialsType<?>> getAllTypes();
 
-  public abstract void loadCredentials(String interpreterPath, @Nullable Element element, RemoteSdkAdditionalData<?> data);
+  public abstract void loadCredentials(String interpreterPath, @Nullable Element element, RemoteSdkAdditionalData data);
 
-  public static void updateOutdatedSdk(@NotNull RemoteSdkAdditionalData<?> data, @Nullable Project project) {
+  public static void updateOutdatedSdk(@NotNull RemoteSdkAdditionalData data, @Nullable Project project) {
     if (!(data.getRemoteConnectionType() instanceof OutdatedCredentialsType)) {
       return;
     }
@@ -43,7 +43,7 @@ public abstract class CredentialsManager {
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   private static void recogniseCredentialType(@Nullable SdkAdditionalData additionalData, CredentialsType credentialsType) {
-    if (!(additionalData instanceof RemoteSdkAdditionalData<?> data)) return;
+    if (!(additionalData instanceof RemoteSdkAdditionalData data)) return;
     if (data.getRemoteConnectionType() != CredentialsType.UNKNOWN) return;
 
     String credentialsId = data.connectionCredentials().getId();
@@ -71,7 +71,7 @@ public abstract class CredentialsManager {
   }
 
   private static void forgetCredentialType(@Nullable SdkAdditionalData additionalData, CredentialsType<?> credentialsType) {
-    if (!(additionalData instanceof RemoteSdkAdditionalData<?> data)) return;
+    if (!(additionalData instanceof RemoteSdkAdditionalData data)) return;
     if (data.getRemoteConnectionType() != credentialsType) return;
     Element root = new Element("root");
     data.connectionCredentials().save(root);

@@ -253,48 +253,14 @@ a:com.intellij.remote.RemoteProcess
 - a:setWindowSize(I,I):V
 com.intellij.remote.RemoteSdkAdditionalData
 - com.intellij.openapi.projectRoots.SdkAdditionalData
-- com.intellij.remote.RemoteSdkCredentialsProducer
 - com.intellij.remote.RemoteSdkProperties
 - a:connectionCredentials():com.intellij.remote.RemoteConnectionCredentialsWrapper
 - a:getRemoteConnectionType():com.intellij.remote.CredentialsType
-- getRemoteCredentials(com.intellij.openapi.project.Project,Z):com.intellij.remote.RemoteCredentials
-- produceRemoteCredentials(com.intellij.openapi.project.Project,Z,java.util.function.Consumer):V
+- a:getRemoteCredentials(com.intellij.openapi.project.Project,Z):com.intellij.remote.RemoteCredentials
+- a:getRemoteSdkDataKey():java.lang.Object
+- a:produceRemoteCredentials(com.intellij.openapi.project.Project,Z,java.util.function.Consumer):V
 - a:setCredentials(com.intellij.openapi.util.Key,java.lang.Object):V
 - a:switchOnConnectionType(com.intellij.remote.ext.CredentialsCase[]):V
-com.intellij.remote.RemoteSdkCredentials
-- com.intellij.remote.MutableRemoteCredentials
-- com.intellij.remote.RemoteSdkProperties
-- a:getFullInterpreterPath():java.lang.String
-c:com.intellij.remote.RemoteSdkCredentialsHolder
-- com.intellij.remote.RemoteCredentialsHolder
-- com.intellij.remote.RemoteSdkCredentials
-- <init>(java.lang.String):V
-- copyRemoteSdkCredentialsTo(com.intellij.remote.RemoteSdkCredentialsHolder):V
-- equals(java.lang.Object):Z
-- getDefaultHelpersName():java.lang.String
-- getFullInterpreterPath():java.lang.String
-- getHelpersPath():java.lang.String
-- getInterpreterPath():java.lang.String
-- getPathMappings():com.intellij.util.PathMappingSettings
-- getRemoteSdkProperties():com.intellij.remote.RemoteSdkPropertiesHolder
-- getSdkId():java.lang.String
-- hashCode():I
-- isHelpersVersionChecked():Z
-- isRunAsRootViaSudo():Z
-- isValid():Z
-- load(org.jdom.Element):V
-- save(org.jdom.Element):V
-- setHelpersPath(java.lang.String):V
-- setHelpersVersionChecked(Z):V
-- setInterpreterPath(java.lang.String):V
-- setPathMappings(com.intellij.util.PathMappingSettings):V
-- setRunAsRootViaSudo(Z):V
-- setSdkId(java.lang.String):V
-- setValid(Z):V
-com.intellij.remote.RemoteSdkCredentialsProducer
-- a:getRemoteSdkCredentials(com.intellij.openapi.project.Project,Z):com.intellij.remote.RemoteSdkCredentials
-- a:getRemoteSdkDataKey():java.lang.Object
-- a:produceRemoteSdkCredentials(com.intellij.openapi.project.Project,Z,java.util.function.Consumer):V
 c:com.intellij.remote.RemoteSdkException
 - com.intellij.execution.ExecutionExceptionWithAttachments
 - <init>(java.lang.String):V

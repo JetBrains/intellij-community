@@ -71,7 +71,7 @@ public abstract class CredentialsType<T> {
     return Integer.MAX_VALUE;
   }
 
-  public void saveCredentials(RemoteSdkAdditionalData<?> data, CredentialsCase<T>... cases) {
+  public void saveCredentials(RemoteSdkAdditionalData data, CredentialsCase<T>... cases) {
     for (var credentialsCase : cases) {
       if (credentialsCase.getType() == this) {
         T credentials = createCredentials();

@@ -67,7 +67,7 @@ public abstract class PythonRemoteInterpreterManager {
 
   public static @NotNull PyRemotePathMapper appendBasicMappings(@Nullable Project project,
                                                                 @Nullable PyRemotePathMapper pathMapper,
-                                                                @NotNull RemoteSdkAdditionalData<?> data) {
+                                                                @NotNull RemoteSdkAdditionalData data) {
     @NotNull PyRemotePathMapper newPathMapper = PyRemotePathMapper.cloneMapper(pathMapper);
 
     addHelpersMapping(data, newPathMapper);

@@ -180,16 +180,6 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   }
 
   @Override
-  public RemoteSdkCredentials getRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction) {
-    throw new UnsupportedOperationException("Should not be called");
-  }
-
-  @Override
-  public void produceRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction, Consumer<? super RemoteSdkCredentials> consumer) {
-    throw new UnsupportedOperationException("Should not be called");
-  }
-
-  @Override
   public RemoteCredentials getRemoteCredentials(@Nullable Project project, boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException {
     var manager = PythonSshInterpreterManager.Factory.getInstance();
     if (manager == null) throw new IllegalStateException("No plugin");
