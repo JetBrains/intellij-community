@@ -23,9 +23,6 @@ import kotlin.test.assertEquals
  */
 abstract class AbstractKotlinGradleTaskRunConfigurationProducerTest : AbstractKotlinGradleCodeInsightBaseTest() {
 
-    @TestDisposable
-    protected lateinit var testRootDisposable: Disposable
-
     @ParameterizedTest
     @AllGradleVersionsSource("""
         "project_tasks_register_name",
