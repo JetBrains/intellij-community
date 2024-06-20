@@ -7,6 +7,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.PsiTypesUtil
+import groovy.transform.NamedParam
+import groovy.transform.NamedParams
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapTypeFromNamedArgs
@@ -14,6 +16,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.Convers
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.collectNamedParams
 
+/**
+ * Named arguments in groovy are stored as [LinkedHashMap] in [GrMapTypeFromNamedArgs] whereas
+ * Groovy [NamedParams] annotation usually stored as [Map].
+ * The [GrNamedParamsConverter] ensures that:
+ * 1) [GrMapTypeFromNamedArgs] are being converted to the exactly one [NamedParams] annotation.
+ * 2) All required named params are present in [GrMapTypeFromNamedArgs] (see [NamedParam.required]).
+ * 3) All types of named arguments are convertible to the value type of dictionary corresponding to the [NamedParams] annotation.
+ */
 class GrNamedParamsConverter : GrTypeConverter() {
 
   override fun isApplicableTo(position: Position): Boolean {
