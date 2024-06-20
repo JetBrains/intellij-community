@@ -49,6 +49,10 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     myState.setCheckNeeded(value);
   }
 
+  public boolean isPluginsAutoUpdateEnabled() { return myState.isPluginsAutoUpdateEnabled(); }
+
+  public void setPluginsAutoUpdateEnabled(boolean value) { myState.setPluginsAutoUpdateEnabled(value); }
+
   public boolean isPluginsCheckNeeded() {
     return myState.isPluginsCheckNeeded();
   }

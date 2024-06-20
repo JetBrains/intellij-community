@@ -70,6 +70,13 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
         checkBox(IdeBundle.message("updates.plugins.settings.checkbox"))
           .bindSelected(settings.state::isPluginsCheckNeeded)
       }
+      indent {
+        row {
+          checkBox(IdeBundle.message("updates.plugins.autoupdate.settings.checkbox"))
+            .bindSelected(settings.state::isPluginsAutoUpdateEnabled)
+            .comment(IdeBundle.message("updates.plugins.autoupdate.settings.comment"))
+        }
+      }
 
       row {
         if (checkNowEnabled) {
