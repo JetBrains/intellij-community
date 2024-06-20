@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
@@ -286,7 +285,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
             }
           }
           modelsProvider.getModifiableModuleModel().disposeModule(module);
-          ModuleBuilder.deleteModuleFile(path);
         }
       }
       finally {

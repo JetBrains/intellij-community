@@ -663,18 +663,22 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       val fileUrl = getActualFileUrl(source)
       if (fileUrl != null) {
         val affectedImportedSourceStoredExternally = when {
-          source is JpsImportedEntitySource && source.storedExternally -> sourcesStoredInternally[source.internalFile]
-          source is JpsImportedEntitySource && !source.storedExternally -> sourcesStoredExternally[source.internalFile]
           source is JpsFileEntitySource -> sourcesStoredExternally[source]
           else -> null
         }
-        // When user removes module from project we don't delete corresponding *.iml file located under project directory by default
-        // (because it may be included in other projects). However we do remove the module file if module actually wasn't removed, just
-        // its storage has been changed, e.g. if module was marked as imported from external system, or the place where module imported
-        // from external system was changed, or part of a module configuration is imported from external system and data stored in *.iml
-        // file was removed.
-        val deleteObsoleteFile = source in internalSourceConvertedToImported || (affectedImportedSourceStoredExternally != null &&
-                                                                                 affectedImportedSourceStoredExternally !in obsoleteSources)
+        // When user removes module from the project, we don't delete corresponding *.iml file located under project directory by default
+        // because it may be included in other projects.
+        //
+        // However, we do remove the module file if:
+        // - Module is imported from the external build system (like maven).
+        // - Module actually wasn't removed, just its storage has been changed, e.g: if module was marked as imported from the external system
+        //   (aka mavenize module).
+        // - Imported module had user-configured information (like custom content roots). This additional information is stored in the local
+        //    `.iml` file, and the `.iml` should be removed in case all custom elements are removed.
+        // - TO DO: Fill new cases if found!
+        val deleteObsoleteFile = shouldDeleteImportedFile(source, fileUrl) ||
+                                 source in internalSourceConvertedToImported ||
+                                 (affectedImportedSourceStoredExternally != null && affectedImportedSourceStoredExternally !in obsoleteSources)
         processObsoleteSource(fileUrl, deleteObsoleteFile, writer, affectedEntityTypeSerializers, affectedModuleListSerializers, storage)
         val actualSource = if (source is JpsImportedEntitySource && !source.storedExternally) source.internalFile else source
         if (actualSource is JpsProjectFileEntitySource.FileInDirectory) {
@@ -794,6 +798,17 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         mergeSerializerEntitiesMap(serializersToRun, serializer, entitiesMap)
       }
     }
+  }
+
+  private fun shouldDeleteImportedFile(source: EntitySource, fileUrl: String): Boolean {
+    // Always remove files that were generated during importing from external build systems like gradle, maven, sbt.
+    // Example: If module was imported from gradle, and then it was removed in gradle, we don't need to keep the `.iml` file for this module
+    return source is JpsImportedEntitySource
+           // Except a corner case: We load `iml` files with broken structure that has duplicated modules.
+           // This may happen if we have two `modules.xml` files (one in `.idea` and the second in `external_build_system`) and they
+           //   both refer to the same `module.iml`. The duplicated module entity will be automatically removed, but the `module.iml` file
+           //   should not be removed as it contains information about the module.
+           && fileSerializersByUrl.getValues(fileUrl).size == 1
   }
 
   override fun changeEntitySourcesToDirectoryBasedFormat(builder: MutableEntityStorage) {
