@@ -15,8 +15,10 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
+import java.util.LinkedList
 import kotlin.collections.plusAssign
 import kotlin.collections.sorted
 
@@ -65,7 +67,11 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     var insertedPrefixLength = 0
     var searchState = INIT
     val skipOffsetsAfterInsertion = mutableListOf<Int>()
+    val stuckDetector = IteratorStuckDetector(iterator)
     iteratorLabel@ while (!iterator.atEnd()) {
+      if (!stuckDetector.iterateIfStuck()) {
+        break
+      }
       val (startOffset, _, tokenText) = iterator.getTokenInfoRelativelyTo(completion, offset) ?: continue
       val foundQuotePair = iterator.checkForOpenQuoteAndReturnPair(
         tokenOffset = startOffset,
@@ -113,7 +119,7 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
       iterator.advance()
     }
     insertedPrefixLength = maxOf(insertedPrefixLength, 1)
-    return doInsert(originalEditor, offset, completion, insertedPrefixLength, skipOffsetsAfterInsertion, elements)
+    return doInsert(originalEditor, originalFile.project, offset, completion, insertedPrefixLength, skipOffsetsAfterInsertion, elements)
   }
 
   private fun executeInsertNextLine(
@@ -124,6 +130,7 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     completion: String,
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement> {
+    val textWithCompletion = editorWithCompletion.document.text
     var prefixLength = 0
     for (sym in completion) {
       prefixLength++
@@ -137,14 +144,17 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     val fileType = originalFile.fileType
     val braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator)
     val quoteHandler = TypedHandler.getQuoteHandler(originalFile, originalEditor)
+    val stuckDetector = IteratorStuckDetector(iterator)
     while (!iterator.atEnd() && iterator.start < offset + prefixLength) {
+      if (!stuckDetector.iterateIfStuck()) {
+        break
+      }
       val (startOffset, _, tokenText) = iterator.getTokenInfoRelativelyTo(completion, offset) ?: continue
-
       val foundQuotePair = iterator.checkForOpenQuoteAndReturnPair(
         tokenOffset = startOffset,
         tokenText = tokenText,
         initialOffset = offset,
-        textWithCompletion = completion,
+        textWithCompletion = textWithCompletion,
         quoteHandler = quoteHandler
       )
       if (foundQuotePair != null) {
@@ -158,12 +168,15 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
           }
           break // no other braces and literals are expected
         }
-        // Iterator is placed right before the closing quote, so just continue
+        // Iterator is placed right before the closing quote
+        if (!iterator.atEnd()) {
+          iterator.advance()
+        }
         continue
       }
       val foundBracesPair = iterator.checkForOpenBraceAndReturnPair(
         tokenText = tokenText,
-        textWithCompletion = completion,
+        textWithCompletion = textWithCompletion,
         fileType = fileType,
         braceMatcher = braceMatcher
       )
@@ -184,9 +197,11 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
         }
       }
 
-      iterator.advance()
+      if (!iterator.atEnd()) {
+        iterator.advance()
+      }
     }
-    return doInsert(originalEditor, offset, completion, prefixLength, skipOffsetsAfterInsertion, elements)
+    return doInsert(originalEditor, originalFile.project, offset, completion, prefixLength, skipOffsetsAfterInsertion, elements)
   }
 
   private fun HighlighterIterator.checkForOpenBraceAndReturnPair(
@@ -212,10 +227,8 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     if (tokenType == null) {
       return null
     }
-    val startOffset = start
-    val endOffset = end
-    val text = completion.substring(maxOf(startOffset - completionOffset, 0), endOffset - completionOffset)
-    return RelativeTokenInfo(startOffset, endOffset, text).takeIf { text.isNotEmpty() }
+    val text = completion.substring(maxOf(start - completionOffset, 0), end - completionOffset)
+    return RelativeTokenInfo(start, end, text).takeIf { text.isNotEmpty() }
   }
 
   private fun HighlighterIterator.checkForOpenQuoteAndReturnPair(
@@ -265,6 +278,7 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
 
   private fun doInsert(
     originalEditor: Editor,
+    project: Project,
     offset: Int,
     completion: String,
     prefixLength: Int,
@@ -272,7 +286,7 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement> {
     val elementsAfterPrefixInsertion = doInsertPrefix(originalEditor, offset, completion.take(prefixLength), elements)
-    return doInsertSuffix(
+    val result = doInsertSuffix(
       originalEditor,
       originalEditor.caretModel.offset,
       completion,
@@ -280,6 +294,8 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
       skipOffsets,
       elementsAfterPrefixInsertion
     )
+    PsiDocumentManager.getInstance(project).commitDocument(originalEditor.document)
+    return result
   }
 
   private fun doInsertPrefix(
@@ -288,7 +304,7 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     prefix: String,
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement> {
-    val finalElements = elements.toMutableList()
+    val finalElements = LinkedList(elements)
     var prefixDone = 0
     while (prefixDone < prefix.length) {
       val prefixLeft = prefix.length - prefixDone
@@ -330,7 +346,7 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
       }
     }
     originalEditor.caretModel.moveToOffset(offset + prefix.length)
-    return finalElements
+    return finalElements.toMutableList()
   }
 
   private fun doInsertSuffix(
@@ -391,8 +407,8 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     return (initialSkipOffsets + linesToInsert.flatMap { it.whitespaceStart until it.whitespaceEnd }).distinct()
   }
 
-  private fun labelSkipOffsets(elements: List<InlineCompletionElement>): List<Boolean> {
-    val labels = MutableList(elements.sumOf { it.text.length }) { false }
+  private fun labelSkipOffsets(elements: List<InlineCompletionElement>): BooleanArray {
+    val labels = BooleanArray(elements.sumOf { it.text.length }) { false }
     var offset = 0
     for (element in elements) {
       repeat(element.text.length) {
@@ -584,6 +600,22 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
         LETTER_OR_DIGIT_AFTER_SYMBOLS -> null
         SYMBOLS_AFTER_LETTER_OR_DIGIT -> SYMBOLS_AFTER_LETTER_OR_DIGIT
       }
+    }
+  }
+
+  private class IteratorStuckDetector(private val iterator: HighlighterIterator) {
+
+    private var lastStartOffset: Int? = null
+
+    fun iterateIfStuck(): Boolean {
+      if (iterator.start == lastStartOffset) {
+        iterator.advance()
+      }
+      if (iterator.atEnd()) {
+        return false
+      }
+      lastStartOffset = iterator.start
+      return true
     }
   }
 
