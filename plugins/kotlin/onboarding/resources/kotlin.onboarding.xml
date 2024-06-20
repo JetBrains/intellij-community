@@ -40,7 +40,7 @@
     <registryKey
             key="minimum.usage.time.before.showing.k2.survey"
             description="In how many seconds after the start of K2 usage to show the survey"
-            defaultValue="86400"
+            defaultValue="345600"
             restartRequired="false"/>
   </extensions>
 
