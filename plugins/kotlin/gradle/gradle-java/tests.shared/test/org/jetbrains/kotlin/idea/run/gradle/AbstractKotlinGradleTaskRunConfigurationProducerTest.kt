@@ -4,12 +4,11 @@ package org.jetbrains.kotlin.idea.run.gradle
 import com.intellij.testFramework.assertInstanceOf
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.AbstractKotlinGradleCodeInsightBaseTest
-import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.idea.run.getConfiguration
+import org.jetbrains.kotlin.idea.testFramework.gradle.assumeThatKotlinDslScriptsModelImportIsSupported
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertEquals
 
@@ -38,14 +37,6 @@ abstract class AbstractKotlinGradleTaskRunConfigurationProducerTest : AbstractKo
                 val taskConfiguration = assertInstanceOf<GradleRunConfiguration>(configurationFromContext.configuration)
                 assertEquals(listOf(taskName), taskConfiguration.settings.taskNames)
                 assertEquals("${project.name} [$taskName]", taskConfiguration.name)
-            }
-        }
-    }
-
-    companion object {
-        private fun assumeThatKotlinDslScriptsModelImportIsSupported(gradleVersion: GradleVersion) {
-            Assumptions.assumeTrue(kotlinDslScriptsModelImportSupported(gradleVersion.version)) {
-                "Gradle ${gradleVersion.version} doesn't support Kotlin DSL Scripts Model import."
             }
         }
     }
