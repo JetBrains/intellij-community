@@ -1683,5 +1683,7 @@
               class="com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreview"
               icon="AllIcons.Actions.CloseDarkGrey"/>
     </group>
+
+    <action id="plugins.autoupdate.repository.view" class="com.intellij.openapi.application.PluginsAutoUpdateRepositoryViewAction" internal="true"/>
   </actions>
 </idea-plugin>
