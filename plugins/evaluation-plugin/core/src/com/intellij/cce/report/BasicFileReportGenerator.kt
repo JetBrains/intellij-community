@@ -31,6 +31,7 @@ open class BasicFileReportGenerator(
         onChange = "changeLookupOrder()"
       }
       codeBlocks(text, sessions, maxLookupOrder)
+      script { src = "../res/diff.js" }
       script { src = "../res/script.js" }
     }
   }

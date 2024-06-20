@@ -65,12 +65,6 @@ abstract class FileReportGenerator(
     meta(charset = "UTF-8")
     title(reportTitle)
     script { src = "../res/pako.min.js" }
-    script {
-      src = "../res/diff.js"
-    }
-    script {
-      src = "../res/script.js"
-    }
     script { src = dirs.filesDir.relativize(resourcePath).toString() }
     link {
       href = "../res/style.css"
