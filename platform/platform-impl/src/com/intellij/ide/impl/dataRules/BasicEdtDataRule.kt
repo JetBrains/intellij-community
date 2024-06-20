@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.EdtDataRule
 import com.intellij.openapi.actionSystem.PlatformDataKeys.*
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -21,11 +22,17 @@ internal class BasicEdtDataRule : EdtDataRule {
       sink[CUT_PROVIDER] = editor.getCutProvider()
       sink[DELETE_ELEMENT_PROVIDER] = editor.getDeleteProvider()
     }
-    if (editor != null && snapshot[FILE_EDITOR] == null &&
-        editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY) != true) {
-      sink[FILE_EDITOR] = TextEditorProvider.getInstance().getTextEditor(editor)
+    if (editor != null && editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY) != true) {
+      val fileEditor = snapshot[FILE_EDITOR]
+      if (fileEditor == null || fileEditor !is TextEditor || fileEditor.editor != editor) {
+        // not applied per-snapshot if fileEditor is present
+        sink[FILE_EDITOR] = TextEditorProvider.getInstance().getTextEditor(editor)
+        // but lazy is still applied per-layer
+        sink.lazy(FILE_EDITOR) {
+          TextEditorProvider.getInstance().getTextEditor(editor)
+        }
+      }
     }
-
     // navigatables
     val items = snapshot[SELECTED_ITEMS]
     val navigatables = items?.filterIsInstance<Navigatable>()
