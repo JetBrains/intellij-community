@@ -11,21 +11,15 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.utils.vfs.getPsiFile
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.Directives
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getMethodMetadata
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.toSlashEndingDirPath
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.idea.test.TestFiles
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import java.io.File
 import java.lang.reflect.Method
 
-abstract class AbstractGradleCodeInsightTest: GradleCodeInsightBaseTestCase() {
+abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBaseTest() {
 
     protected open val filesBasedTest: Boolean = true
 
@@ -54,8 +48,6 @@ abstract class AbstractGradleCodeInsightTest: GradleCodeInsightBaseTestCase() {
         get() = runReadAction { getFile(mainTestDataFile.path).getPsiFile(project) }
 
     override fun setUp() {
-        assumeThatKotlinIsSupported(gradleVersion)
-
         super.setUp()
 
         loadTestDataFiles()
@@ -67,7 +59,6 @@ abstract class AbstractGradleCodeInsightTest: GradleCodeInsightBaseTestCase() {
     override fun tearDown() {
         runAll(
             { _testDataFiles = null },
-            { KotlinSdkType.removeKotlinSdkInTests() },
             { super.tearDown() }
         )
     }
