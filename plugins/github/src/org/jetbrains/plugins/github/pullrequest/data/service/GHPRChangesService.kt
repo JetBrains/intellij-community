@@ -8,6 +8,8 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 interface GHPRChangesService {
 
+  suspend fun areAllRevisionsFetched(revisions: List<String>): Boolean
+
   suspend fun fetch(refspec: String)
 
   suspend fun loadCommitsFromApi(pullRequestId: GHPRIdentifier): Collection<GHCommit>

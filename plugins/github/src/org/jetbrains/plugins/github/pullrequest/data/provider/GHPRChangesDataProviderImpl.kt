@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 import com.google.common.graph.GraphBuilder
 import com.google.common.graph.ImmutableGraph
 import com.google.common.graph.Traverser
-import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
@@ -46,6 +45,11 @@ internal class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
     return getLoader(refs).loadChanges()
   }
 
+  override suspend fun ensureAllRevisionsFetched() {
+    val refs = loadReferences()
+    return getLoader(refs).fetchRevisions()
+  }
+
   private suspend fun getLoader(refs: GHPRBranchesRefs): ChangesDataLoader =
     requestsGuard.withLock {
       val current = requests
@@ -69,19 +73,6 @@ internal class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
       requests = null
     }
     _changesNeedReloadSignal.tryEmit(Unit)
-  }
-
-  //TODO: don't fetch when all revision already present
-  override suspend fun ensureAllRevisionsFetched() {
-    coroutineScope {
-      launch {
-        val refs = loadReferences()
-        changesService.fetch(refs.baseRef)
-      }
-      launch {
-        changesService.fetch("refs/pull/${pullRequestId.number}/head:")
-      }
-    }
   }
 
   override suspend fun loadPatchFromMergeBase(commitSha: String, filePath: String): FilePatch? {
@@ -110,8 +101,29 @@ internal class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
       changesService.createChangesProvider(pullRequestId, references.baseRefOid, references.mergeBaseRefOid, references.headRefOid, references.commits)
     }
 
+    private val fetchRequest = cs.async(start = CoroutineStart.LAZY) {
+      val references = referencesRequest.await()
+      val revisions = buildList {
+        add(references.baseRefOid)
+        references.commits.mapTo(this) { it.oid }
+      }
+      if (changesService.areAllRevisionsFetched(revisions)) return@async
+      coroutineScope {
+        launch {
+          changesService.fetch(references.baseRefOid)
+        }
+        launch {
+          changesService.fetch("refs/pull/${pullRequestId.number}/head:")
+        }
+      }
+      check(changesService.areAllRevisionsFetched(revisions)) {
+        "Missing some pull request revisions"
+      }
+    }
+
     suspend fun loadCommits(): List<GHCommit> = referencesRequest.await().commits
     suspend fun loadChanges(): GitBranchComparisonResult = changesRequest.await()
+    suspend fun fetchRevisions() = fetchRequest.await()
 
     fun cancel() {
       referencesRequest.cancel()

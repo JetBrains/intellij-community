@@ -65,6 +65,13 @@ class GHPRChangesServiceImpl(parentCs: CoroutineScope,
       LOG.info("Error occurred while fetching \"$refspec\"", it)
     }
 
+  override suspend fun areAllRevisionsFetched(revisions: List<String>): Boolean =
+    runCatching {
+      GitCodeReviewUtils.testRevisionsExist(gitRemote.repository, revisions)
+    }.processErrorAndGet {
+      LOG.info("Error occurred while seeking revisions $revisions", it)
+    }
+
   override suspend fun loadCommitsFromApi(pullRequestId: GHPRIdentifier): List<GHCommit> =
     runCatching {
       ApiPageUtil.createGQLPagesFlow {
