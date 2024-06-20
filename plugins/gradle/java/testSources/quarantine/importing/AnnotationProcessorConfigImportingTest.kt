@@ -429,9 +429,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     }
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
-    val processorConfigProfileImpl = ProcessorConfigProfileImpl("other")
-    processorConfigProfileImpl.addModuleName(nonGradleModule.name)
-    config.addModuleProcessorProfile(processorConfigProfileImpl)
+    config.addNewProcessorProfile("other").addModuleName(nonGradleModule.name)
 
     importProject(
       createBuildScriptBuilder()

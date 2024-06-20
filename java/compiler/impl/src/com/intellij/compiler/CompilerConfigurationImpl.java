@@ -573,6 +573,13 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @Override
+  public @NotNull ProcessorConfigProfile addNewProcessorProfile(@NotNull String profileName) {
+    ProcessorConfigProfileImpl profile = new ProcessorConfigProfileImpl(profileName);
+    addModuleProcessorProfile(profile);
+    return profile;
+  }
+
+  @Override
   @NotNull
   public ProcessorConfigProfile getAnnotationProcessingConfiguration(Module module) {
     Map<Module, ProcessorConfigProfile> map = myProcessorsProfilesMap;

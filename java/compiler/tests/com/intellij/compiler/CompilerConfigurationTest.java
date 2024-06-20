@@ -7,7 +7,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jdom.JDOMException;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
-import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -58,9 +57,8 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
 
   public void testUpdateAnnotationsProfilesOnModuleRename() {
     Module module = createModule("foo");
-    ProcessorConfigProfileImpl profile = new ProcessorConfigProfileImpl("foo");
+    ProcessorConfigProfile profile = getConfiguration().addNewProcessorProfile("foo");
     profile.addModuleName("foo");
-    getConfiguration().addModuleProcessorProfile(profile);
     assertSame(profile, getConfiguration().getAnnotationProcessingConfiguration(module));
 
     ModuleGroupTestsKt.renameModule(module, "bar");

@@ -554,9 +554,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   fun testNotRemoveEmptyUserProfile() = runBlocking {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
     WriteAction.runAndWait<RuntimeException> {
-      val moduleProfile: ProcessorConfigProfile = ProcessorConfigProfileImpl("test-profile")
-      moduleProfile.isEnabled = true
-      compilerConfiguration.addModuleProcessorProfile(moduleProfile)
+      compilerConfiguration.addNewProcessorProfile("test-profile").isEnabled = true
     }
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"))
 
@@ -573,9 +571,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
     val profileName =getModuleProfileName("test-profile")
     WriteAction.runAndWait<RuntimeException> {
-      val moduleProfile: ProcessorConfigProfile = ProcessorConfigProfileImpl(profileName)
-      moduleProfile.isEnabled = true
-      compilerConfiguration.addModuleProcessorProfile(moduleProfile)
+      compilerConfiguration.addNewProcessorProfile(profileName).isEnabled = true
     }
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile(profileName))
 
