@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.settings.json
 
-import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.serialization.MutableAccessor
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -47,18 +47,9 @@ internal fun listAppComponents(): List<ComponentDescriptor> {
   }
 
   val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
+  val localAppSession = ClientSessionsManager.getAppSession(ClientId.localId) as ComponentManagerImpl
   componentManager.processAllImplementationClasses(::processImplementationClass)
-
-  // Process hardcoded list of per-client services
-  // TODO fix `processAllImplementationClasses` to support per-client declarations as well
-  val corePluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor
-  val perClientServices = listOf(
-    EditorSettingsExternalizable::class.java to corePluginDescriptor,
-    CodeInsightSettings::class.java to corePluginDescriptor
-  )
-  for ((aClass, descriptor) in perClientServices) {
-    processImplementationClass(aClass, descriptor)
-  }
+  localAppSession.processAllImplementationClasses(::processImplementationClass)
 
   descriptors.sortWith(
     compareBy<ComponentDescriptor> { it.name }.thenBy { it.aClass.name }
