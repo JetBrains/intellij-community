@@ -25,6 +25,8 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.StringReader
 import java.util.*
+import kotlin.io.path.Path
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 
 internal const val DEPRECATED_MODULE_MANAGER_COMPONENT_NAME = "DeprecatedModuleOptionManager"
@@ -1082,6 +1084,20 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     writer.saveComponent(fileUrl, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, null)
     writer.saveComponent(fileUrl, TEST_MODULE_PROPERTIES_COMPONENT_NAME, null)
     writer.saveComponent(fileUrl, ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME, null)
+
+    manuallyRemoveImlFile(fileUrl)
+  }
+
+  // We manually remove the `.iml` file as it's not removed by component store due to IJPL-926
+  // Probably there is no need to set `null` to the components, but let's do it just in case.
+  // If IJPL-926 is fixed, this manual removal should go away and only `saveComponent(..., null)` should remain.
+  private fun manuallyRemoveImlFile(fileUrl: String) {
+    val path = Path(JpsPathUtil.urlToPath(fileUrl))
+    // Check that `iml` with a correct case is removed on case-insensitive systems
+    // `path.exists()` check should be done as `toRealPath` will break if the file doesn't exist.
+    if (path.exists() && path.toString() == path.toRealPath().toString()) {
+      path.deleteIfExists()
+    }
   }
 
   private fun getModuleFileUrl(source: JpsProjectFileEntitySource.FileInDirectory,
