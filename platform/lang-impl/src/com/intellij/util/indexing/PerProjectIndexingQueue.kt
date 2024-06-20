@@ -15,17 +15,22 @@ import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.longs.LongSets
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.LockSupport
+import java.util.concurrent.locks.ReadWriteLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.withLock
 
 private class PerProviderSinkFactory() {
   private val activeSinksCount: AtomicInteger = AtomicInteger()
@@ -43,6 +48,7 @@ private class PerProviderSinkFactory() {
       if (cancelActiveSinks.get()) {
         ProgressManager.getGlobalProgressIndicator()?.cancel()
         ProgressManager.checkCanceled()
+        LOG.error("Could not cancel file addition")
       }
 
       doAddFile(file)
@@ -60,6 +66,7 @@ private class PerProviderSinkFactory() {
     if (cancelActiveSinks.get()) {
       ProgressManager.getGlobalProgressIndicator()?.cancel()
       ProgressManager.checkCanceled()
+      LOG.error("Could not cancel sink creation")
     }
 
     return PerProviderSinkImpl(addFile)
@@ -83,7 +90,7 @@ private class PerProviderSinkFactory() {
   }
 }
 
-@ApiStatus.Internal
+@Internal
 @Service(Service.Level.PROJECT)
 class PerProjectIndexingQueue(private val project: Project) {
   /**
@@ -98,13 +105,30 @@ class PerProjectIndexingQueue(private val project: Project) {
 
   private val sinkFactory = PerProviderSinkFactory()
 
-  // Files that will be re-indexed
-  private val filesSoFar: MutableStateFlow<PersistentSet<VirtualFile>> = MutableStateFlow(persistentSetOf())
+  @Internal
+  class QueuedFiles {
+    // Files that will be re-indexed
+    private val filesSoFar: MutableStateFlow<PersistentSet<VirtualFile>> = MutableStateFlow(persistentSetOf())
 
-  private val estimatedFilesCount: Flow<Int> = filesSoFar.map { it.size }
+    internal val estimatedFilesCount: Flow<Int> = filesSoFar.map { it.size }
 
-  // Ids of scannings from which [filesSoFar] came
-  private var scanningIds: LongSet = createSetForScanningIds()
+    // Ids of scannings from which [filesSoFar] came
+    internal val scanningIdsSoFar: LongSet = createSetForScanningIds()
+
+    val size: Int get() = filesSoFar.value.size
+
+    val files: Set<VirtualFile> get() = filesSoFar.value
+
+    val scanningIds: LongSet get() = LongSets.unmodifiable(scanningIdsSoFar)
+
+    internal fun addFile(file: VirtualFile, scanningId: Long) {
+      scanningIdsSoFar.add(scanningId)
+      filesSoFar.update { it.add(file) }
+    }
+  }
+
+  private val queuedFiles: MutableStateFlow<QueuedFiles> = MutableStateFlow(QueuedFiles())
+  private val queuedFilesLock: ReadWriteLock = ReentrantReadWriteLock()
 
   @Volatile
   private var allowFlushing: Boolean = true
@@ -114,10 +138,10 @@ class PerProjectIndexingQueue(private val project: Project) {
       LOG.info("Flushing is not allowed at the moment")
       return
     }
-    val (filesInQueue, scanningIds) = getAndResetQueuedFiles()
-    if (filesInQueue.size > 0) {
+    val snapshot = getAndResetQueuedFiles()
+    if (snapshot.size > 0) {
       // note that DumbModeWhileScanningTrigger will not finish dumb mode until scanning is finished
-      UnindexedFilesIndexer(project, filesInQueue, reason, scanningIds).queue(project)
+      UnindexedFilesIndexer(project, snapshot.files, reason, snapshot.scanningIds).queue(project)
     }
     else {
       LOG.info("Finished for " + project.name + ". No files to index with loading content.")
@@ -141,20 +165,14 @@ class PerProjectIndexingQueue(private val project: Project) {
   }
 
   private fun getFilesAndClear(): Collection<VirtualFile> {
-    val files = getAndResetQueuedFiles()
-    return files.fileSet
+    val snapshot = getAndResetQueuedFiles()
+    return snapshot.files
   }
 
-  private data class QueuedFiles(
-    val fileSet: Set<VirtualFile>,
-    val scanningIds: LongSet
-  )
-
   private fun getAndResetQueuedFiles(): QueuedFiles {
-    val filesInQueue = filesSoFar.getAndUpdate { persistentSetOf() }
-    val idsOfScannings = scanningIds // we only use scanning ids for diagnostics. TODO: maybe fix non-atomic update
-    scanningIds = createSetForScanningIds()
-    return QueuedFiles(filesInQueue,  LongSets.unmodifiable(idsOfScannings))
+    return queuedFilesLock.writeLock().withLock {
+      queuedFiles.getAndUpdate { QueuedFiles() }
+    }
   }
 
   /**
@@ -162,8 +180,13 @@ class PerProjectIndexingQueue(private val project: Project) {
    * Will throw [ProcessCanceledException] if the queue is suspended via [cancelAllTasksAndWait]
    */
   fun getSink(provider: IndexableFilesIterator, scanningId: Long): PerProviderSink {
-    scanningIds.add(scanningId)
-    return sinkFactory.newSink { vFile -> filesSoFar.update { it.add(vFile) } }
+    return sinkFactory.newSink { vFile ->
+      // readLock here is to make sure that queuedFiles does not change during the operation
+      queuedFilesLock.readLock().withLock {
+        // .value for each file, because we want to put files into a new queue after getAndResetQueuedFiles invocation
+        queuedFiles.value.addFile(vFile, scanningId)
+      }
+    }
   }
 
   /**
@@ -184,7 +207,8 @@ class PerProjectIndexingQueue(private val project: Project) {
     sinkFactory.resumeProducers()
   }
 
-  fun estimatedFilesCount(): Flow<Int> = estimatedFilesCount
+  @OptIn(ExperimentalCoroutinesApi::class)
+  fun estimatedFilesCount(): Flow<Int> = queuedFiles.flatMapLatest { it.estimatedFilesCount }
 
   companion object {
     private val LOG = logger<PerProjectIndexingQueue>()
@@ -193,8 +217,8 @@ class PerProjectIndexingQueue(private val project: Project) {
 
   @TestOnly
   class TestCompanion(private val q: PerProjectIndexingQueue) {
-    fun getAndResetQueuedFiles(): Pair<Set<VirtualFile>, Int> {
-      return q.getAndResetQueuedFiles().let { Pair(it.fileSet, it.fileSet.size) }
+    fun getAndResetQueuedFiles(): QueuedFiles {
+      return q.getAndResetQueuedFiles()
     }
   }
 }

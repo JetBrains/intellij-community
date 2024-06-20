@@ -118,6 +118,9 @@ class PerProviderSinkTest : LightPlatformTestCase() {
             catch (pce: ProcessCanceledException) {
               TestCase.fail("Should not throw PCE in non-cancellable section")
             }
+            catch (t: Throwable) {
+              assertEquals("Could not cancel sink creation", t.message)
+            }
           }
           nonCancelableSectionCompeteNormally.set(true)
         }
@@ -184,10 +187,8 @@ class PerProviderSinkTest : LightPlatformTestCase() {
       }
 
       val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
-      // Don't test latch: it is always `null` because in unit tests [UnindexedFilesScanner.shouldScanInSmartMode()] reports `false`
-      //TestCase.assertTrue("Total files: $totalFiles, latch: $currentLatch", (totalFiles < DUMB_MODE_THRESHOLD) == (currentLatch == null))
       val totalFilesInThisQueue = filesInQueue.size
-      TestCase.assertEquals(totalFiles, totalFilesInThisQueue)
+      TestCase.assertEquals("iteration $i", totalFiles, totalFilesInThisQueue)
       totalFilesSum += totalFilesInThisQueue
       Thread.sleep(50)
     }
@@ -200,9 +201,10 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     TestCase.assertEquals(filesSubmitted.get(), totalFilesSum)
   }
 
-  private fun getAndResetQueuedFiles(queue: PerProjectIndexingQueue):
-    Pair<Set<VirtualFile>, Int> =
-    PerProjectIndexingQueue.TestCompanion(queue).getAndResetQueuedFiles()
+  private fun getAndResetQueuedFiles(queue: PerProjectIndexingQueue): Pair<Set<VirtualFile>, Int> {
+    val queuedFiles = PerProjectIndexingQueue.TestCompanion(queue).getAndResetQueuedFiles()
+    return Pair(queuedFiles.files, queuedFiles.size)
+  }
 
   private class FakeIterator : IndexableFilesIterator {
     override fun getDebugName(): String = "FakeIterator"
