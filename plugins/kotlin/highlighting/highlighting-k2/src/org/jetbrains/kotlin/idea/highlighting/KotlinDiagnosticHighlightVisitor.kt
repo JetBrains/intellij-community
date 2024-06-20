@@ -19,14 +19,9 @@ import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
-import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
-import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
+import org.jetbrains.kotlin.analysis.api.diagnostics.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
-import org.jetbrains.kotlin.idea.core.script.scriptConfigurationMissingForK2
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
@@ -65,8 +60,6 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     }
 
     private fun analyzeFile(file: KtFile): MutableMap<TextRange, MutableList<HighlightInfo.Builder>> {
-        if (scriptConfigurationMissingForK2(file)) return mutableMapOf()
-
         analyze(file) {
             val analysis = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             val diagnostics = analysis

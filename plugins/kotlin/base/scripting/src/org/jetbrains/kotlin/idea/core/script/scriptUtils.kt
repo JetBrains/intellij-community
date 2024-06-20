@@ -71,10 +71,6 @@ fun logScriptingConfigurationErrors(file: VirtualFile, snapshot: ScriptConfigura
     }
 }
 
-fun scriptConfigurationMissingForK2(file: KtFile): Boolean = file.isScript()
-        && KotlinPluginModeProvider.isK2Mode()
-        && K2ScriptDependenciesProvider.getInstanceIfCreated(file.project)?.getConfiguration(file.virtualFile) == null
-
 fun getAllDefinitions(project: Project): List<ScriptDefinition> =
     if (KotlinPluginModeProvider.isK2Mode()) {
         K2ScriptDefinitionProvider.getInstanceIfCreated(project)?.currentDefinitions?.toList() ?: emptyList()
@@ -87,10 +83,10 @@ suspend fun configureGradleScriptsK2(
     project: Project,
     scripts: Set<ScriptModel>,
 ) {
+    project.waitForSmartMode()
+
     K2ScriptDependenciesProvider.getInstance(project).reloadConfigurations(scripts, javaHome)
     project.createScriptModules(scripts)
-
-    project.waitForSmartMode()
 
     writeAction {
         project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()

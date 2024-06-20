@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import kotlinx.coroutines.CoroutineScope
@@ -25,11 +26,13 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
             cs.launch(Dispatchers.IO) {
-                val newRoot = buildRootsManager.loadLinkedRoot(it)
-                buildRootsManager.add(newRoot)
+                writeAction {
+                    val newRoot = buildRootsManager.loadLinkedRoot(it)
+                    buildRootsManager.add(newRoot)
 
-                if (KotlinPluginModeProvider.isK2Mode()) {
-                    (newRoot as? Imported)?.let { root -> loadScriptConfigurations(root, it) }
+                    if (newRoot is Imported && KotlinPluginModeProvider.isK2Mode()) {
+                        launch { loadScriptConfigurations(newRoot, it) }
+                    }
                 }
             }
         }
