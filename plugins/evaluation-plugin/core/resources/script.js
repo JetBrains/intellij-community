@@ -119,8 +119,6 @@ function getLookup(sessionDiv) {
 
 function updatePopup(sessionDiv) {
   const lookup = getLookup(sessionDiv)
-  console.log(lookup)
-  console.log(lookup["additionalInfo"])
   const popup = document.createElement("DIV")
   popup.setAttribute("class", "autocomplete-items")
   const prefixDiv = document.createElement("DIV")
