@@ -639,7 +639,11 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     val root = rootProjects[0]
     val problems = root.getProblems()
     UsefulTestCase.assertSize(1, problems)
-    assertTrue(problems[0]!!.description!!.contains("Could not find artifact xxx:yyy:jar:1"))
+    val description = if (mavenVersionIsOrMoreThan("3.9.8"))
+      "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved"
+    else
+      "Could not find artifact xxx:yyy:jar:1"
+    assertTrue(problems[0]!!.description!!.contains(description))
   }
 
   @Test
@@ -726,12 +730,20 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
     var problems = getModules(root)[0].getProblems()
     UsefulTestCase.assertSize(1, problems)
-    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains("Could not find artifact xxx:xxx:jar:1"))
+    val description = if (mavenVersionIsOrMoreThan("3.9.8"))
+      "Unresolveable build extension: Plugin xxx:xxx:1 or one of its dependencies could not be resolved"
+    else
+      "Could not find artifact xxx:xxx:jar:1"
+    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
 
 
     problems = getModules(root)[1].getProblems()
     UsefulTestCase.assertSize(1, problems)
-    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains("Could not find artifact yyy:yyy:jar:1"))
+    val description2 = if (mavenVersionIsOrMoreThan("3.9.8"))
+      "Unresolveable build extension: Plugin yyy:yyy:1 or one of its dependencies could not be resolved"
+    else
+      "Could not find artifact yyy:yyy:jar:1"
+    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description2))
   }
 
   @Test
@@ -803,7 +815,13 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     val root = rootProjects[0]
     val problems = root.getProblems()
     UsefulTestCase.assertSize(2, problems)
-    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains("Could not find artifact xxx:yyy:jar:1"))
+
+    val description = if (mavenVersionIsOrMoreThan("3.9.8"))
+      "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved"
+    else
+      "Could not find artifact xxx:yyy:jar:1"
+    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
+
     assertTrue(problems[1]!!.description, problems[1]!!.description!!.contains("Unresolved plugin: 'xxx:yyy:1'"))
   }
 
