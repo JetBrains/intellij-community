@@ -625,6 +625,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.jetbrains.python.console.runnerFactory"
+                    interface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.remoteSdkValidator" interface="com.jetbrains.python.sdk.PyRemoteSdkValidator" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyTestFixtureExtension"
                     interface="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureExtension" dynamic="true"/>
