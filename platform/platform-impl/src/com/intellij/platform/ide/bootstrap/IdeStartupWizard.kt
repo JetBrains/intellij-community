@@ -27,8 +27,7 @@ val isIdeStartupDialogEnabled: Boolean
 
 val isIdeStartupWizardEnabled: Boolean
   get() = !ApplicationManagerEx.isInIntegrationTest() &&
-          System.getProperty("intellij.startup.wizard", "true").toBoolean() &&
-          IdeStartupExperiment.isWizardExperimentEnabled()
+          System.getProperty("intellij.startup.wizard", "true").toBoolean()
 
 @ExperimentalCoroutinesApi
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
