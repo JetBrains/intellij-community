@@ -166,9 +166,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   override fun dispose() {
-    if (disposeState == BusState.DISPOSED_STATE) {
-      LOG.error("Already disposed: $this")
-    }
+    checkBusDisposed()
 
     disposeState = BusState.DISPOSED_STATE
     disposeChildren()
@@ -200,6 +198,12 @@ open class MessageBusImpl : MessageBus {
 
   internal fun checkDisposed() {
     if (isDisposed) {
+      LOG.error("Already disposed: $this")
+    }
+  }
+
+  private fun checkBusDisposed() {
+    if (disposeState == BusState.DISPOSED_STATE) {
       LOG.error("Already disposed: $this")
     }
   }
@@ -266,9 +270,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   internal fun deliverImmediately(connection: MessageBusConnectionImpl) {
-    if (disposeState == BusState.DISPOSED_STATE) {
-      LOG.error("Already disposed: $this")
-    }
+    checkBusDisposed()
 
     // a light project is not disposed in tests properly, so, connection is not removed
     if (owner.isDisposed) {
