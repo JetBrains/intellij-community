@@ -32,7 +32,7 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 77);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 78);
 
   public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
@@ -41,7 +41,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   private static final BooleanEventField IS_RERUN = EventFields.Boolean("is_rerun");
   private static final BooleanEventField IS_RUNNING_CURRENT_FILE = EventFields.Boolean("is_running_current_file");
   private static final BooleanEventField IS_DUMB_MODE = EventFields.Boolean("dumb");
-  private static final BooleanEventField IS_SERVICE_VIEW = EventFields.Boolean("serviceView");
+  private static final BooleanEventField IS_SERVICE_VIEW = EventFields.Boolean("service_view");
 
   /**
    * The type of the target the run configuration is being executed with. {@code null} stands for the local machine target.
