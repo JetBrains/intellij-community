@@ -8,7 +8,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.idea.run.getConfiguration
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
-import org.jetbrains.plugins.gradle.testFramework.AbstractGradleCodeInsightBaseTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
@@ -21,7 +21,7 @@ import kotlin.test.assertEquals
 /**
  * @see org.jetbrains.kotlin.idea.gradleJava.run.KotlinGradleTaskRunConfigurationProducer
  */
-abstract class AbstractKotlinGradleTaskRunConfigurationProducerTest : AbstractGradleCodeInsightBaseTestCase() {
+abstract class AbstractKotlinGradleTaskRunConfigurationProducerTest : GradleCodeInsightBaseTestCase() {
 
     @TestDisposable
     protected lateinit var testRootDisposable: Disposable

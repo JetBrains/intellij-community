@@ -16,7 +16,7 @@ import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.groovy.util.BaseTest
 
-abstract class AbstractGradleCodeInsightBaseTestCase : GradleProjectTestCase(), BaseTest {
+abstract class GradleCodeInsightBaseTestCase : GradleProjectTestCase(), BaseTest {
 
   private var _codeInsightFixture: JavaCodeInsightTestFixture? = null
   val codeInsightFixture: JavaCodeInsightTestFixture
