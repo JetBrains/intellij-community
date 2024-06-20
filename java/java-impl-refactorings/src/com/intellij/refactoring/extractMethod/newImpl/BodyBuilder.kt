@@ -32,7 +32,8 @@ class BodyBuilder(private val factory: PsiElementFactory) {
         is EmptyOutput -> throw IllegalStateException()
       }
       is UnconditionalFlow -> when (dataOutput) {
-        is VariableOutput, is EmptyOutput -> "return;"
+        is VariableOutput -> "return ${dataOutput.variable.name};"
+        is EmptyOutput -> "return;"
         is ExpressionOutput -> "return $returnExpression;"
         ArtificialBooleanOutput -> throw IllegalStateException()
       }

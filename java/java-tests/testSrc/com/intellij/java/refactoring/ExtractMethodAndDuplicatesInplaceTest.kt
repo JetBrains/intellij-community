@@ -136,6 +136,10 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testUnconditionalExitWithReturn(){
+    doTest()
+  }
+
   fun testRuntimeCatchMayChangeSemantic1(){
     assertThrows(RefactoringErrorHintException::class.java, JavaRefactoringBundle.message("extract.method.error.many.exits")) {
       doTest()

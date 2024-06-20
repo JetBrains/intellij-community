@@ -47,7 +47,6 @@ fun findExtractOptions(elements: List<PsiElement>, inferNullity: Boolean = true)
       variableData.nullability != Nullability.NOT_NULL && flowOutput is ConditionalFlow -> null
       flowOutput is ConditionalFlow && ! canExtractStatementsFromScope(flowOutput.statements, elements) -> null
       flowOutput is ConditionalFlow -> variableData.copy(nullability = Nullability.NULLABLE)
-      flowOutput is UnconditionalFlow -> null
       else -> variableData
     }
     else -> findFlowData(analyzer, flowOutput)
