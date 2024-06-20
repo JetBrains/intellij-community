@@ -1,3 +1,3 @@
 // CONFIGURE_LIBRARY: KotlinTestJunit
-// REF: (<root>).FooTest
+// REF: FooTest
 class <caret>Foo

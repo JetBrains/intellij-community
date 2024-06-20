@@ -42,7 +42,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  private static PsiClass @NotNull [] getSupers(@NotNull PsiClass psiClass) {
+  public static PsiClass @NotNull [] getSupers(@NotNull PsiClass psiClass) {
     if (psiClass.isAnnotationType()) {
       return getMetaAnnotations(psiClass);
     }

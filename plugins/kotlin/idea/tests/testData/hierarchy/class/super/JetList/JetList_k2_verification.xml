@@ -1,0 +1,5 @@
+<node text="List (kotlin.collections)" base="true">
+  <node text="Collection (kotlin.collections)">
+    <node text="Iterable (kotlin.collections)"/>
+  </node>
+</node>

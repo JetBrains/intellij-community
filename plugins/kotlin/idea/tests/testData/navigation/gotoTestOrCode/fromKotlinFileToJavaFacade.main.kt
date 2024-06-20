@@ -1,5 +1,5 @@
 // CONFIGURE_LIBRARY: JUnit
-// REF: (<root>).FromKotlinFileToJavaFacade_mainKt
+// REF: FromKotlinFileToJavaFacade_mainKt
 import junit.framework.TestCase
 
 fun fo<caret>o() { }

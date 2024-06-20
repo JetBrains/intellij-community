@@ -2,8 +2,11 @@
 package org.jetbrains.kotlin.idea
 
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestFixture
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -13,7 +16,6 @@ import java.io.IOException
 
 @RunWith(JUnit38ClassRunner::class)
 abstract class KotlinHierarchyViewTestBase : KotlinLightCodeInsightFixtureTestCase() {
-    private val hierarchyFixture = HierarchyViewTestFixture()
 
     @Throws(Exception::class)
     protected open fun doHierarchyTest(
@@ -22,11 +24,16 @@ abstract class KotlinHierarchyViewTestBase : KotlinLightCodeInsightFixtureTestCa
     ) {
         myFixture.configureByFiles(*fileNames)
         val expectedStructure = loadExpectedStructure()
-        HierarchyViewTestFixture.doHierarchyTest(treeStructureComputable.compute(), expectedStructure)
+        val treeStructure = treeStructureComputable.compute()
+        runWithModalProgressBlocking(myFixture.project, "") {
+            readAction {
+                HierarchyViewTestFixture.doHierarchyTest(treeStructure, expectedStructure)
+            }
+        }
     }
 
     @Throws(IOException::class)
-    private fun loadExpectedStructure(): String {
+    protected open fun loadExpectedStructure(): String {
         val verificationFile = File(testDataDirectory, getTestName(false) + "_verification.xml")
         return FileUtil.loadFile(verificationFile)
     }

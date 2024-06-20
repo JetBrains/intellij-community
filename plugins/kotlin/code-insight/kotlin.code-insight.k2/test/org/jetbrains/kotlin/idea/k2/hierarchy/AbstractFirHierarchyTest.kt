@@ -1,16 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.hierarchy
 
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx
 import com.intellij.ide.hierarchy.HierarchyProvider
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.ide.hierarchy.LanguageCallHierarchy
-import com.intellij.ide.hierarchy.LanguageMethodHierarchy
+import com.intellij.ide.hierarchy.LanguageTypeHierarchy
 import com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase
 import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure
+import com.intellij.ide.hierarchy.type.TypeHierarchyTreeStructure
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
@@ -19,15 +22,16 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ArrayUtil
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinHierarchyViewTestBase
 import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.calls.KotlinCalleeTreeStructure
 import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.calls.KotlinCallerTreeStructure
+import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types.KotlinSubtypesHierarchyTreeStructure
+import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types.KotlinSupertypesHierarchyTreeStructure
+import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types.KotlinTypeHierarchyTreeStructure
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.createTextEditorBasedDataContext
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import java.io.File
 
@@ -61,11 +65,41 @@ abstract class AbstractFirHierarchyTest : KotlinHierarchyViewTestBase() {
         )
     }
 
+    protected fun doTypeClassHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        val element = getElementAtCaret(LanguageTypeHierarchy.INSTANCE)
+
+        when (element) {
+            is KtClassOrObject ->
+                KotlinTypeHierarchyTreeStructure(
+                    project,
+                    element,
+                    HierarchyBrowserBaseEx.SCOPE_PROJECT
+                )
+            else ->
+                TypeHierarchyTreeStructure(project, element as PsiClass, HierarchyBrowserBaseEx.SCOPE_PROJECT)
+        }
+    }
+
+    protected fun doSuperClassHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        KotlinSupertypesHierarchyTreeStructure(
+            project,
+            getElementAtCaret(LanguageTypeHierarchy.INSTANCE) as KtClassOrObject
+        )
+    }
+
+    protected fun doSubClassHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        KotlinSubtypesHierarchyTreeStructure(
+            project,
+            getElementAtCaret(LanguageTypeHierarchy.INSTANCE) as KtClassOrObject,
+            HierarchyBrowserBaseEx.SCOPE_PROJECT
+        )
+    }
 
     private fun getElementAtCaret(extension: LanguageExtension<HierarchyProvider>): PsiElement {
         val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
         val dataContext = createTextEditorBasedDataContext(project, editor, editor.caretModel.currentCaret)
         return BrowseHierarchyActionBase.findProvider(extension, file, file, dataContext)?.getTarget(dataContext)
+            ?: BrowseHierarchyActionBase.findProvider(extension, TargetElementUtil.findTargetElement(editor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED or TargetElementUtil.ELEMENT_NAME_ACCEPTED), file, dataContext)?.getTarget(dataContext)
             ?: throw RefactoringErrorHintException("Cannot apply action for element at caret")
     }
 
@@ -86,16 +120,13 @@ abstract class AbstractFirHierarchyTest : KotlinHierarchyViewTestBase() {
             return ArrayUtil.toStringArray(files)
         }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     @Throws(Exception::class)
     override fun doHierarchyTest(
         treeStructureComputable: Computable<out HierarchyTreeStructure>,
         vararg fileNames: String
     ) {
         try {
-            allowAnalysisOnEdt {
-                super.doHierarchyTest(treeStructureComputable, *fileNames)
-            }
+            super.doHierarchyTest(treeStructureComputable, *fileNames)
         } catch (e: RefactoringErrorHintException) {
             val file = File(folderName, "messages.txt")
             if (file.exists()) {
@@ -106,9 +137,20 @@ abstract class AbstractFirHierarchyTest : KotlinHierarchyViewTestBase() {
             }
         } catch (failure: ComparisonFailure) {
             val actual = failure.actual
-            val verificationFile = File(testDataDirectory, getTestName(false) + "_verification.xml")
+            var verificationFile = File(testDataDirectory, getTestName(false) + "_k2_verification.xml")
+            if (!verificationFile.exists()) {
+                verificationFile = File(testDataDirectory, getTestName(false) + "_verification.xml")
+            }
             KotlinTestUtils.assertEqualsToFile(verificationFile, actual)
         }
+    }
+
+    override fun loadExpectedStructure(): String {
+        var verificationFile = File(testDataDirectory, getTestName(false) + "_k2_verification.xml")
+        if (!verificationFile.exists()) {
+            verificationFile = File(testDataDirectory, getTestName(false) + "_verification.xml")
+        }
+        return verificationFile.readText()
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

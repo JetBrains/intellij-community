@@ -1,0 +1,5 @@
+<node text="MyClass ()" base="true">
+  <node text="Any (kotlin)"/>
+  <node text="A ()"/>
+  <node text="B ()"/>
+</node>

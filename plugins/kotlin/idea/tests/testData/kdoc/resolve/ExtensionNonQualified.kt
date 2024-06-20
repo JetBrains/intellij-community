@@ -7,4 +7,4 @@ fun Foo.foo(){}
  */
 fun test() {}
 
-// REF: (<root>).Foo.foo()
+// REF: Foo.foo()

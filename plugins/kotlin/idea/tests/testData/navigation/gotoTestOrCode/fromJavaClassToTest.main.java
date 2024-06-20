@@ -1,5 +1,5 @@
 // CONFIGURE_LIBRARY: JUnit
-// REF: (<root>).FooTest2
+// REF: FooTest2
 // REF: FooTest
 import junit.framework.TestCase;
 

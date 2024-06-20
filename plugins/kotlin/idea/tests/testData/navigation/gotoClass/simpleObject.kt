@@ -3,4 +3,4 @@ object SimpleObject {
 }
 
 // SEARCH_TEXT: SimpleObject
-// REF: (<root>).SimpleObject
+// REF: SimpleObject

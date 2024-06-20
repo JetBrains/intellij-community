@@ -4,4 +4,4 @@
 class Foo {
 }
 
-// REF: (<root>).Foo
+// REF: Foo

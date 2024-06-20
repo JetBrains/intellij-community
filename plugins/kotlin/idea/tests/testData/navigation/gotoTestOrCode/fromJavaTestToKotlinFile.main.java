@@ -1,5 +1,5 @@
 // CONFIGURE_LIBRARY: JUnit
-// REF: (<root>).Foo
+// REF: Foo
 // REF: /src.fromJavaTestToKotlinFile.kt
 // REF: /src.fromJavaTestToKotlinFile.2.kt
 import junit.framework.TestCase;

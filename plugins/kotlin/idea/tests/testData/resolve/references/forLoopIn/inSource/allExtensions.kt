@@ -11,6 +11,6 @@ fun Iterator.next(): Any
 fun Iterator.hasNext(): Boolean
 
 // MULTIRESOLVE
-// REF: (<root>).Foo.iterator()
-// REF: (<root>).Iterator.next()
-// REF: (<root>).Iterator.hasNext()
+// REF: Foo.iterator()
+// REF: Iterator.next()
+// REF: Iterator.hasNext()

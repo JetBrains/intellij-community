@@ -5,4 +5,4 @@ fun foo() {}
 
 fun bar() {}
 
-// REF: (<root>).bar()
+// REF: bar()

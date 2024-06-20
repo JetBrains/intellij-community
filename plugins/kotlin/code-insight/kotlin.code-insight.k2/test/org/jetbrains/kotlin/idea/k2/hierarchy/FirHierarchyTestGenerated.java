@@ -260,4 +260,281 @@ public abstract class FirHierarchyTestGenerated extends AbstractFirHierarchyTest
             runTest("../../idea/tests/testData/hierarchy/calls/callees/kotlinProperty/");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/hierarchy/class/type")
+    public static class Type extends AbstractFirHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTypeClassHierarchyTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("CaretAtAnnotation")
+        public void testCaretAtAnnotation() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretAtAnnotation/");
+        }
+
+        @TestMetadata("CaretAtConstructor")
+        public void testCaretAtConstructor() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretAtConstructor/");
+        }
+
+        @TestMetadata("CaretAtFabricMethod")
+        public void testCaretAtFabricMethod() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretAtFabricMethod/");
+        }
+
+        @TestMetadata("CaretAtImport")
+        public void testCaretAtImport() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretAtImport/");
+        }
+
+        @TestMetadata("CaretAtJavaType")
+        public void testCaretAtJavaType() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretAtJavaType/");
+        }
+
+        @TestMetadata("CaretAtModifierList")
+        public void testCaretAtModifierList() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretAtModifierList/");
+        }
+
+        @TestMetadata("CaretAtReceiverExtFun")
+        public void testCaretAtReceiverExtFun() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretAtReceiverExtFun/");
+        }
+
+        @TestMetadata("CaretAtSuperCall")
+        public void testCaretAtSuperCall() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretAtSuperCall/");
+        }
+
+        @TestMetadata("CaretAtSuperTypeCallEntry")
+        public void testCaretAtSuperTypeCallEntry() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretAtSuperTypeCallEntry/");
+        }
+
+        @TestMetadata("CaretAtSupertypesList")
+        public void testCaretAtSupertypesList() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretAtSupertypesList/");
+        }
+
+        @TestMetadata("CaretAtTypeReference")
+        public void testCaretAtTypeReference() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretAtTypeReference/");
+        }
+
+        @TestMetadata("CaretInClassBody")
+        public void testCaretInClassBody() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/CaretInClassBody/");
+        }
+
+        @TestMetadata("ClassFromClass")
+        public void testClassFromClass() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/ClassFromClass/");
+        }
+
+        @TestMetadata("ClassFromObject")
+        public void testClassFromObject() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/ClassFromObject/");
+        }
+
+        @TestMetadata("ClassInClassObject")
+        public void testClassInClassObject() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/ClassInClassObject/");
+        }
+
+        @TestMetadata("ClassInPackage")
+        public void testClassInPackage() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/ClassInPackage/");
+        }
+
+        @TestMetadata("InnerClass")
+        public void testInnerClass() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/InnerClass/");
+        }
+
+        @TestMetadata("JKJHierarchy")
+        public void testJKJHierarchy() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/JKJHierarchy/");
+        }
+
+        @TestMetadata("JavaFromKotlin")
+        public void testJavaFromKotlin() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/JavaFromKotlin/");
+        }
+
+        @TestMetadata("JavaFromKotlinByRef")
+        public void testJavaFromKotlinByRef() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/JavaFromKotlinByRef/");
+        }
+
+        @TestMetadata("JavaFromKotlinForKotlinClass")
+        public void testJavaFromKotlinForKotlinClass() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/JavaFromKotlinForKotlinClass/");
+        }
+
+        @TestMetadata("JavaStyleClassLiteralInvalidCode")
+        public void testJavaStyleClassLiteralInvalidCode() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/JavaStyleClassLiteralInvalidCode/");
+        }
+
+        @TestMetadata("JetInt")
+        public void testJetInt() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/JetInt/");
+        }
+
+        @TestMetadata("KJKHierarchy")
+        public void testKJKHierarchy() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/KJKHierarchy/");
+        }
+
+        @TestMetadata("KotlinFromJava")
+        public void testKotlinFromJava() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/KotlinFromJava/");
+        }
+
+        @TestMetadata("KotlinFromJavaByRef")
+        public void testKotlinFromJavaByRef() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/KotlinFromJavaByRef/");
+        }
+
+        @TestMetadata("KotlinFromKotlinByRef")
+        public void testKotlinFromKotlinByRef() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/KotlinFromKotlinByRef/");
+        }
+
+        @TestMetadata("Object")
+        public void testObject() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/Object/");
+        }
+
+        @TestMetadata("TwoChildren")
+        public void testTwoChildren() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/type/TwoChildren/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/hierarchy/class/super")
+    public static class Super extends AbstractFirHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doSuperClassHierarchyTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("JetList")
+        public void testJetList() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/super/JetList/");
+        }
+
+        @TestMetadata("MultiTypeAlias")
+        public void testMultiTypeAlias() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/super/MultiTypeAlias/");
+        }
+
+        @TestMetadata("TwoInterfaces")
+        public void testTwoInterfaces() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/super/TwoInterfaces/");
+        }
+
+        @TestMetadata("TypeAlias")
+        public void testTypeAlias() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/super/TypeAlias/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/hierarchy/class/sub")
+    public static class Sub extends AbstractFirHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doSubClassHierarchyTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AllFromClass")
+        public void testAllFromClass() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/AllFromClass/");
+        }
+
+        @TestMetadata("AllFromInterface")
+        public void testAllFromInterface() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/AllFromInterface/");
+        }
+
+        @TestMetadata("ClassFromClass")
+        public void testClassFromClass() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/ClassFromClass/");
+        }
+
+        @TestMetadata("ClassFromInterface")
+        public void testClassFromInterface() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/ClassFromInterface/");
+        }
+
+        @TestMetadata("ConstructorCallCaretAfter")
+        public void testConstructorCallCaretAfter() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/ConstructorCallCaretAfter/");
+        }
+
+        @TestMetadata("ConstructorCallCaretBefore")
+        public void testConstructorCallCaretBefore() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/ConstructorCallCaretBefore/");
+        }
+
+        @TestMetadata("InterfaceFromClass")
+        public void testInterfaceFromClass() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/InterfaceFromClass/");
+        }
+
+        @TestMetadata("InterfaceFromInterface")
+        public void testInterfaceFromInterface() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/InterfaceFromInterface/");
+        }
+
+        @TestMetadata("MultiTypeAlias")
+        public void testMultiTypeAlias() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/MultiTypeAlias/");
+        }
+
+        @TestMetadata("ObjectFromClass")
+        public void testObjectFromClass() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/ObjectFromClass/");
+        }
+
+        @TestMetadata("ObjectFromInterface")
+        public void testObjectFromInterface() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/ObjectFromInterface/");
+        }
+
+        @TestMetadata("SecondaryConstructorCallCaretAfter")
+        public void testSecondaryConstructorCallCaretAfter() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/SecondaryConstructorCallCaretAfter/");
+        }
+
+        @TestMetadata("SecondaryConstructorCallCaretBefore")
+        public void testSecondaryConstructorCallCaretBefore() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/SecondaryConstructorCallCaretBefore/");
+        }
+
+        @TestMetadata("TypeAlias")
+        public void testTypeAlias() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/TypeAlias/");
+        }
+    }
 }

@@ -16,6 +16,7 @@ import com.intellij.ui.ExperimentalUI
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import javax.swing.Icon
@@ -49,7 +50,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
         val name = declaration.fqName
         val parent = declaration.parent
         val containerText = if (name != null) {
-            val qualifiedContainer = name.parent().toString()
+            val qualifiedContainer = name.parent().takeUnless { it == FqName.ROOT }?.toString() ?: return null
             if (parent is KtFile && declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
                 KotlinBundle.message("presentation.text.in.container", parent.name, qualifiedContainer)
             } else {
