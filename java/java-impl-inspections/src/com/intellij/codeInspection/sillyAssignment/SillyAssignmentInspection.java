@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.sillyAssignment;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
@@ -9,7 +10,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -141,7 +141,7 @@ public final class SillyAssignmentInspection extends AbstractBaseJavaLocalInspec
     @NotNull
     @Override
     public String getFamilyName() {
-      return JavaBundle.message("assignment.to.itself.quickfix.name");
+      return InspectionsBundle.message("assignment.to.itself.quickfix.name");
     }
 
     @Override
@@ -154,23 +154,17 @@ public final class SillyAssignmentInspection extends AbstractBaseJavaLocalInspec
       if (parent instanceof PsiVariable) {
         expression.delete();
       }
-      if (!(parent instanceof PsiAssignmentExpression assignmentExpression)) {
-        return;
-      }
-      final PsiExpression lhs = assignmentExpression.getLExpression();
-      final PsiExpression rhs = assignmentExpression.getRExpression();
-      if (PsiTreeUtil.isAncestor(lhs, expression, false)) {
-        if (rhs != null) {
-          assignmentExpression.replace(rhs);
+      else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
+        PsiElement grandParent = PsiUtil.skipParenthesizedExprUp(assignmentExpression.getParent());
+        if (grandParent instanceof PsiAssignmentExpression) {
+          grandParent.replace(assignmentExpression);
         }
-        else {
-          assignmentExpression.delete();
-        }
-      }
-      else {
-        final PsiElement grandParent = assignmentExpression.getParent();
-        if (grandParent instanceof PsiExpressionStatement) {
+        else if (grandParent instanceof PsiExpressionStatement) {
           grandParent.delete();
+        }
+        else if (grandParent instanceof PsiVariable variable) {
+          PsiExpression rhs = assignmentExpression.getRExpression();
+          variable.setInitializer(rhs == null ? null : (PsiExpression)rhs.copy());
         }
         else {
           assignmentExpression.replace(expression);
