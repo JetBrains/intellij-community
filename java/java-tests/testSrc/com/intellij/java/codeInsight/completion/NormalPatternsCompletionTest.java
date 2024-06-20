@@ -317,6 +317,29 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
                             }""");
   }
 
+  @NeedsIndex.Full
+  public void testHasTheSameName() {
+    myFixture.configureByText("a.java", """
+      record Point(int x1, int x2);
+      class X {
+        void test(Object o) {
+          int x1 = 0;
+          if(o instanceof Point(<caret>)
+        }
+      }""");
+    myFixture.completeBasic();
+    selectItem(0);
+    myFixture.checkResult(
+      """
+        record Point(int x1, int x2);
+        class X {
+          void test(Object o) {
+            int x1 = 0;
+            if(o instanceof Point(int x2, int x3)
+          }
+        }""");
+  }
+
   private void selectItem(int index) {
     LookupElement[] elements = myFixture.getLookupElements();
     assertNotNull(elements);

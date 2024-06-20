@@ -21,6 +21,7 @@ import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
@@ -166,8 +167,10 @@ public final class JavaPatternCompletionUtil {
     static PatternModel create(@NotNull PsiClass record, @NotNull PsiElement context, boolean onlyDeconstructionList) {
       JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(record.getProject());
       PsiDeconstructionPattern deconstructionPattern = PsiTreeUtil.getParentOfType(context, PsiDeconstructionPattern.class);
-      List<String> names =
-        ContainerUtil.map(record.getRecordComponents(), cmp -> manager.suggestUniqueVariableName(cmp.getName(), context, true));
+      List<String> names = new ArrayList<>();
+      for (PsiRecordComponent component : record.getRecordComponents()) {
+        names.add(manager.suggestUniqueVariableName(component.getName(), context, true, v -> false, name -> !names.contains(name)));
+      }
       List<PsiType> types = findTypes(deconstructionPattern, record);
       return new PatternModel(record, names, types, onlyDeconstructionList);
     }

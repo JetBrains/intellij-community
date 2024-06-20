@@ -118,7 +118,8 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
       PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(recordType));
       if (recordClass == null || !recordClass.isRecord()) return null;
       for (PsiRecordComponent recordComponent : recordClass.getRecordComponents()) {
-        String nextName = codeStyleManager.suggestUniqueVariableName(recordComponent.getName(), block, false);
+        String nextName = codeStyleManager.suggestUniqueVariableName(recordComponent.getName(), block, false, v -> false,
+                                                                     name -> !variableNames.contains(name));
         variableNames.add(nextName);
       }
       for (List<PsiType> branch : branches.getValue()) {
