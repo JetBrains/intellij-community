@@ -112,5 +112,12 @@ interface GradleSyncContributor {
      * @see org.jetbrains.plugins.gradle.service.syncContributor.GradleContentRootSyncContributor
      */
     const val CONTENT_ROOT_CONTRIBUTOR = 1000
+
+    /**
+     * The [SOURCE_ROOT_CONTRIBUTOR] configures the IDE content roots and source folder structure for each Gradle source sets.
+     *
+     * @see org.jetbrains.plugins.gradle.service.syncContributor.GradleSourceRootSyncContributor
+     */
+    const val SOURCE_ROOT_CONTRIBUTOR = 2000
   }
 }
