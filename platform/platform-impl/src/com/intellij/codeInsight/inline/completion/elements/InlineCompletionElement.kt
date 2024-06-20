@@ -3,14 +3,17 @@ package com.intellij.codeInsight.inline.completion.elements
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import java.awt.Rectangle
 
 /**
  * Default cases to use:
  * - [InlineCompletionGrayTextElement] default gray text element to render
- * - [InlineCompletionSkipTextElement] allows to skip over already existed elements
+ * - [InlineCompletionTextElement] text element with custom attributes to render
+ * - [InlineCompletionSkipTextElement] allows to jump over already existing text in an editor
  */
+@ApiStatus.NonExtendable
 interface InlineCompletionElement {
 
   /**
