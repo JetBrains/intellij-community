@@ -35,6 +35,7 @@ import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
 import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus.Internal;
 
 import java.time.Instant;
 import java.util.*;
@@ -46,6 +47,7 @@ import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexe
  * UnindexedFilesIndexer is to index files: explicitly provided (see providerToFiles in constructor), and implicitly marked as dirty, e.g.,
  * by VFS (as reported by FileBasedIndexImpl#getFilesToUpdate).
  */
+@Internal
 public final class UnindexedFilesIndexer extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesIndexer.class);
   private final @NotNull Project myProject;
