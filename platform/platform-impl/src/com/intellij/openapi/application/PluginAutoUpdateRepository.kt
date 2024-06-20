@@ -177,7 +177,11 @@ object PluginAutoUpdateRepository {
     for (id in updateCheck.updatesToApply) {
       val update = updates[id]!!
       runCatching {
-        PluginInstaller.unpackPlugin(getAutoUpdateDirPath().resolve(update.updateFilename), Path.of(update.pluginPath).parent)
+        val pluginPath = Path.of(update.pluginPath)
+        if (pluginPath.exists()) {
+          pluginPath.delete(true)
+        }
+        PluginInstaller.unpackPlugin(getAutoUpdateDirPath().resolve(update.updateFilename), pluginPath.parent)
       }.onFailure {
         logDeferred.await().warn("Failed to apply update for plugin $id", it)
       }.onSuccess {
