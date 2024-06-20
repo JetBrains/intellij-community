@@ -18403,6 +18403,7 @@ f:com.intellij.openapi.updateSettings.impl.UpdateOptions
 - f:getWhatsNewShownFor():I
 - f:isCheckNeeded():Z
 - f:isObsoleteCustomRepositoriesCleanNeeded():Z
+- f:isPluginsAutoUpdateEnabled():Z
 - f:isPluginsCheckNeeded():Z
 - f:isShowWhatsNewEditor():Z
 - f:isThirdPartyPluginsAllowed():Z
@@ -18410,6 +18411,7 @@ f:com.intellij.openapi.updateSettings.impl.UpdateOptions
 - f:setLastBuildChecked(java.lang.String):V
 - f:setLastTimeChecked(J):V
 - f:setObsoleteCustomRepositoriesCleanNeeded(Z):V
+- f:setPluginsAutoUpdateEnabled(Z):V
 - f:setPluginsCheckNeeded(Z):V
 - f:setShowWhatsNewEditor(Z):V
 - f:setThirdPartyPluginsAllowed(Z):V
@@ -18432,6 +18434,7 @@ c:com.intellij.openapi.updateSettings.impl.UpdateSettings
 - getWhatsNewShownFor():I
 - isCheckNeeded():Z
 - isObsoleteCustomRepositoriesCleanNeeded():Z
+- isPluginsAutoUpdateEnabled():Z
 - isPluginsCheckNeeded():Z
 - isShowWhatsNewEditor():Z
 - isThirdPartyPluginsAllowed():Z
@@ -18439,6 +18442,7 @@ c:com.intellij.openapi.updateSettings.impl.UpdateSettings
 - saveLastCheckedInfo():V
 - setCheckNeeded(Z):V
 - setObsoleteCustomRepositoriesCleanNeeded(Z):V
+- setPluginsAutoUpdateEnabled(Z):V
 - setPluginsCheckNeeded(Z):V
 - setSelectedChannelStatus(com.intellij.openapi.updateSettings.impl.ChannelStatus):V
 - setThirdPartyPluginsAllowed(Z):V
