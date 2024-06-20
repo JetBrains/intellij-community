@@ -348,12 +348,17 @@ public final class PluginDownloader {
     return appliedWithoutRestart;
   }
 
-  private @NotNull File tryDownloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
+  // This is a hacky way to get around the fact that prepareToInstall does more than it should. FIXME
+  void setOldFile(@Nullable Path oldFile) {
+    myOldFile = oldFile;
+  }
+
+  @NotNull File tryDownloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
     ThreadingAssertions.assertBackgroundThread();
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-    LOG.info("tryDownloadPlugin: " + myPluginId + " | " + myPluginVersion + " | " + myPluginUrl);
+    LOG.info("downloading plugin " + myPluginName + "(" + myPluginId + ") version " + myPluginVersion + " from " + myPluginUrl);
     MarketplacePluginDownloadService downloader = myDownloadService != null ? myDownloadService : new MarketplacePluginDownloadService();
     return myOldFile != null ?
            downloader.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator) :
