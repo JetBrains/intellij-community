@@ -20,7 +20,11 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.xdebugger.XDebugSession;
@@ -68,7 +72,27 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   protected String getTestAppPath() {
     return new File(PluginPathManager.getPluginHomePath("stream-debugger") + "/testData/debug/").getAbsolutePath();
   }
-  
+
+  @Override
+  protected void setUpModule() {
+    super.setUpModule();
+
+    // Here we're explicitly modifying module language version through ModifiableRootModel
+    // because for some reasons language level modification made inside testing
+    // infrastructure doesn't work
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ModifiableRootModel modifiableRootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+      LanguageLevelModuleExtension extension = modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class);
+      extension.setLanguageLevel(LanguageLevel.JDK_16);
+      modifiableRootModel.commit();
+    });
+  }
+
+  @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_16;
+  }
+
   @Override
   protected void tearDown() throws Exception {
     try {
