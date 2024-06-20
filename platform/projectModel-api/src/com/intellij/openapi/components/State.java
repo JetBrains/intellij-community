@@ -93,6 +93,7 @@ public @interface State {
    * @see ServiceDescriptor#client
    */
   @ApiStatus.Experimental
+  @ApiStatus.Internal
   boolean perClient() default false;
 
   abstract class NameGetter implements Supplier<@Nls String> {

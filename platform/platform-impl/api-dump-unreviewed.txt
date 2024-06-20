@@ -790,6 +790,7 @@ f:com.intellij.codeInsight.actions.ReaderModeSettingsImpl
 - getUseActiveSchemeForVisualFormatting():Z
 - getVisualFormattingChosenScheme():com.intellij.codeInsight.actions.ReaderModeSettings$Scheme
 - loadState(com.intellij.codeInsight.actions.ReaderModeSettingsImpl$State):V
+- noStateLoaded():V
 - setEnableVisualFormatting(Z):V
 - setEnabled(Z):V
 - setIncreaseLineSpacing(Z):V

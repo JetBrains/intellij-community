@@ -9,6 +9,7 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -283,6 +284,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     markerText = text;
   }
 
+  @ApiStatus.Internal
   public static final class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
 
     private Configurable[] myKids;

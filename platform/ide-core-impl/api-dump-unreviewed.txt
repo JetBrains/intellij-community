@@ -541,6 +541,7 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - isWheelFontChangePersistent():Z
 - isWhitespacesShown():Z
 - loadState(com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet):V
+- noStateLoaded():V
 - resetDefaultBreadcrumbVisibility():V
 - setAddCaretsOnDoubleCtrl(Z):V
 - setAdditionalPageAtBottom(Z):V

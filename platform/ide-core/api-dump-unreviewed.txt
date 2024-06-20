@@ -228,6 +228,7 @@ f:com.intellij.ide.GeneralSettings
 - f:isUseDefaultBrowser():Z
 - f:isUseSafeWrite():Z
 - loadState(com.intellij.ide.GeneralSettingsState):V
+- noStateLoaded():V
 - f:setAutoSaveIfInactive(Z):V
 - f:setBackgroundSync(Z):V
 - f:setConfirmExit(Z):V
