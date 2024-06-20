@@ -838,8 +838,6 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateTypeParameterJavaDoc(StringBuilder buffer, PsiTypeParameter parameter, boolean generatePrologue) {
-    if (parameter instanceof PsiAnonymousClass) return;
-
     if (generatePrologue) generatePrologue(buffer);
 
     if (!isRendered()) {
