@@ -36,9 +36,6 @@ public class PsiParenthesizedExpressionImpl extends ExpressionPsiElement impleme
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.LPARENTH:
         return findChildByType(LPARENTH);
 
@@ -47,6 +44,9 @@ public class PsiParenthesizedExpressionImpl extends ExpressionPsiElement impleme
 
       case ChildRole.EXPRESSION:
         return findChildByType(EXPRESSION_BIT_SET);
+
+      default:
+        return null;
 
     }
   }

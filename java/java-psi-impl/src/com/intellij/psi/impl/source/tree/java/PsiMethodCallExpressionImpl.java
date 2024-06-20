@@ -90,14 +90,14 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.METHOD_EXPRESSION:
         return getFirstChildNode();
 
       case ChildRole.ARGUMENT_LIST:
         return findChildByType(JavaElementType.EXPRESSION_LIST);
+
+      default:
+        return null;
     }
   }
 

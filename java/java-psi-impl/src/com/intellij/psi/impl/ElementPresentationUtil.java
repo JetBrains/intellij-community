@@ -191,8 +191,8 @@ public final class ElementPresentationUtil {
       case CLASS_KIND_INTERFACE: noun = JavaPsiBundle.message("node.interface.tooltip"); break;
       case CLASS_KIND_JUNIT_TEST: noun = JavaPsiBundle.message("node.junit.test.tooltip"); break;
       case CLASS_KIND_RUNNABLE: noun = JavaPsiBundle.message("node.runnable.class.tooltip"); break;
-      default:
-      case CLASS_KIND_CLASS: noun = JavaPsiBundle.message("node.class.tooltip"); break;
+      case CLASS_KIND_CLASS: 
+      default: noun = JavaPsiBundle.message("node.class.tooltip");
     }
     return noun;
   }

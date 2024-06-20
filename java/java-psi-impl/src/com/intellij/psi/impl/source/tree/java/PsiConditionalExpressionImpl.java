@@ -122,9 +122,6 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.CONDITION:
         return getFirstChildNode();
 
@@ -148,6 +145,9 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
         ASTNode colon = findChildByRole(ChildRole.COLON);
         if (colon == null) return null;
         return ElementType.EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
+
+      default:
+        return null;
     }
   }
 

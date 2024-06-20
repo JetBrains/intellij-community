@@ -94,9 +94,6 @@ public class ParameterListElement extends CompositeElement implements Constants 
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.LPARENTH:
         TreeElement firstNode = getFirstChildNode();
         return firstNode.getElementType() == LPARENTH ? firstNode : null;
@@ -104,6 +101,9 @@ public class ParameterListElement extends CompositeElement implements Constants 
       case ChildRole.RPARENTH:
         TreeElement lastNode = getLastChildNode();
         return lastNode.getElementType() == RPARENTH ? lastNode : null;
+
+      default:
+        return null;
     }
   }
 

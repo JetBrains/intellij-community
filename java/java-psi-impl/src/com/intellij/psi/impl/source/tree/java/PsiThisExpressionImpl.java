@@ -22,8 +22,8 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiThisExpression, Constants {
@@ -66,9 +66,6 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.QUALIFIER:
         if (getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE){
           return getFirstChildNode();
@@ -82,6 +79,9 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
 
       case ChildRole.THIS_KEYWORD:
         return getLastChildNode();
+
+      default:
+        return null;
     }
   }
 

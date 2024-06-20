@@ -254,9 +254,6 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.REFERENCE_PARAMETER_LIST:
         return findChildByType(JavaElementType.REFERENCE_PARAMETER_LIST);
 
@@ -300,6 +297,9 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         else{
           return null;
         }
+
+      default:
+        return null;
     }
   }
 

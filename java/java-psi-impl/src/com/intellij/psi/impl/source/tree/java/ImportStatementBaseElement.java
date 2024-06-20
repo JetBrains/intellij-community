@@ -37,9 +37,6 @@ public class ImportStatementBaseElement extends CompositeElement {
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.IMPORT_KEYWORD:
         return getFirstChildNode();
 
@@ -51,6 +48,9 @@ public class ImportStatementBaseElement extends CompositeElement {
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);
+
+      default:
+        return null;
     }
   }
 

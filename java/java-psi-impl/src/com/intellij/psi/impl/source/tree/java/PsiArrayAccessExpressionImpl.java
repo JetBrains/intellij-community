@@ -41,9 +41,6 @@ public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implement
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.ARRAY:
         return getFirstChildNode();
 
@@ -64,6 +61,9 @@ public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implement
 
       case ChildRole.RBRACKET:
         return findChildByType(RBRACKET);
+
+      default:
+        return null;
     }
   }
 

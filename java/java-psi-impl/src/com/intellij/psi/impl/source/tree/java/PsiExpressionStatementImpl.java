@@ -31,14 +31,14 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.EXPRESSION:
         return findChildByType(ElementType.EXPRESSION_BIT_SET);
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);
+
+      default:
+        return null;
     }
   }
 

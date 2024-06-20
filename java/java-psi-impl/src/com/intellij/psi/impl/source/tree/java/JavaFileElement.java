@@ -39,14 +39,14 @@ public class JavaFileElement extends FileElement {
   public @Nullable ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.PACKAGE_STATEMENT:
         return findChildByType(JavaElementType.PACKAGE_STATEMENT);
 
       case ChildRole.IMPORT_LIST:
         return findChildByType(JavaElementType.IMPORT_LIST);
+
+      default:
+        return null;
     }
   }
 

@@ -77,9 +77,6 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.LOPERAND:
         return getFirstChildNode();
 
@@ -88,6 +85,9 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
 
       case ChildRole.OPERATION_SIGN:
         return findChildByType(OUR_OPERATIONS_BIT_SET);
+
+      default:
+        return null;
     }
   }
 

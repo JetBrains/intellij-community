@@ -65,14 +65,14 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.OPERATION_SIGN:
         return getFirstChildNode();
 
       case ChildRole.OPERAND:
         return ElementType.EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
+
+      default:
+        return null;
     }
   }
 

@@ -226,9 +226,6 @@ public class ClassElement extends CompositeElement implements Constants {
     assert ChildRole.isUnique(role);
 
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.DOC_COMMENT:
         return PsiImplUtil.findDocComment(this);
 
@@ -284,6 +281,9 @@ public class ClassElement extends CompositeElement implements Constants {
             if (treeNext.getElementType() == AT) return treeNext;
           }
         }
+        return null;
+
+      default:
         return null;
     }
   }

@@ -48,9 +48,6 @@ public final class PsiImportStaticReferenceElementImpl extends CompositePsiEleme
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.REFERENCE_NAME:
         return findChildByType(JavaTokenType.IDENTIFIER);
 
@@ -60,6 +57,9 @@ public final class PsiImportStaticReferenceElementImpl extends CompositePsiEleme
 
       case ChildRole.DOT:
         return findChildByType(JavaTokenType.DOT);
+
+      default:
+        return null;
     }
   }
 

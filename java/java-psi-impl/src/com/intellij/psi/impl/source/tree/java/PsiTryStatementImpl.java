@@ -91,9 +91,6 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.TRY_KEYWORD:
         return findChildByType(TRY_KEYWORD);
 
@@ -111,6 +108,9 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
             return child;
           }
         }
+        return null;
+
+      default:
         return null;
     }
   }

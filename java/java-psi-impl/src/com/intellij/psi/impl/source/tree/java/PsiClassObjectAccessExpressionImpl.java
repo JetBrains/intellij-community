@@ -37,9 +37,6 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.TYPE:
         return findChildByType(TYPE);
 
@@ -48,6 +45,9 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
 
       case ChildRole.CLASS_KEYWORD:
         return findChildByType(CLASS_KEYWORD);
+
+      default:
+        return null;
     }
   }
 

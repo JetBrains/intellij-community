@@ -41,9 +41,6 @@ public class FieldElement extends CompositeElement{
   public ASTNode findChildByRole(int role){
     assert (ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.DOC_COMMENT:
         return PsiImplUtil.findDocComment(this);
 
@@ -64,6 +61,9 @@ public class FieldElement extends CompositeElement{
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);
+
+      default:
+        return null;
     }
   }
 

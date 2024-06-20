@@ -38,9 +38,6 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.STATEMENT:
         return PsiImplUtil.findStatementChild(this);
 
@@ -49,6 +46,9 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
 
       case ChildRole.LABEL_NAME:
         return getFirstChildNode();
+
+      default:
+        return null;
     }
   }
 

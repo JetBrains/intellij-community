@@ -98,9 +98,6 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.QUALIFIER:
         return getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE ? getFirstChildNode() : null;
 
@@ -109,6 +106,9 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
 
       case ChildRole.SUPER_KEYWORD:
         return getLastChildNode();
+
+      default:
+        return null;
     }
   }
 

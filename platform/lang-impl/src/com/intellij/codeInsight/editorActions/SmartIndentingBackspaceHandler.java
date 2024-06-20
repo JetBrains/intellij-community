@@ -100,9 +100,11 @@ public final class SmartIndentingBackspaceHandler extends AbstractIndentingBacks
         case '\t':
           width = tabSize * (width / tabSize + 1);
           break;
+        case ' ':
+          width++;
+          break;
         default:
           LOG.error("Unexpected whitespace character: " + ((int)c));
-        case ' ':
           width++;
       }
     }

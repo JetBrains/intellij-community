@@ -41,9 +41,6 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.OPERAND:
         return findChildByType(EXPRESSION_BIT_SET);
 
@@ -52,6 +49,9 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
 
       case ChildRole.TYPE:
         return findChildByType(TYPE);
+
+      default:
+        return null;
     }
   }
 

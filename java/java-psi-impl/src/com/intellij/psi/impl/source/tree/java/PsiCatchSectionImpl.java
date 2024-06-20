@@ -191,9 +191,6 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   @Override
   public ASTNode findChildByRole(int role) {
     switch(role) {
-      default:
-        return null;
-
       case ChildRole.PARAMETER:
         return findChildByType(PARAMETER);
 
@@ -208,6 +205,9 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
 
       case ChildRole.CATCH_BLOCK:
         return findChildByType(CODE_BLOCK);
+
+      default:
+        return null;
     }
   }
 
