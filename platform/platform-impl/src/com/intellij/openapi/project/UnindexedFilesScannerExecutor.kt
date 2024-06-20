@@ -2,6 +2,7 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.flow.Flow
@@ -14,6 +15,7 @@ interface UnindexedFilesScannerExecutor {
   val isRunning: StateFlow<Boolean>
   val hasQueuedTasks: Boolean
   val startedOrStoppedEvent: Flow<*>
+  val modificationTracker: ModificationTracker
 
   fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable)
   fun suspendQueue()

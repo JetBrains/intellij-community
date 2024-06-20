@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Future
 import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.LockSupport
 import java.util.function.Predicate
 
@@ -54,6 +56,11 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
    * TODO: [isRunning] should be a shared flow without deduplication, then we wont need [startedOrStoppedEvent]
    */
   override val startedOrStoppedEvent: MutableStateFlow<Int> = MutableStateFlow(0)
+
+  private val modCount = AtomicLong()
+  override val modificationTracker: ModificationTracker = object : ModificationTracker {
+    override fun getModificationCount(): Long = modCount.get()
+  }
 
   private class ScheduledScanningTask(val task: UnindexedFilesScanner, val futureHistory: SettableFuture<ProjectScanningHistory>) {
     fun close() = task.close()
@@ -132,6 +139,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           // We don't care about finishing scanning without a write action. This looks harmless at the moment
           isRunning.value = false
           startedOrStoppedEvent.getAndUpdate(Int::inc)
+          modCount.incrementAndGet()
         }
       }
     }

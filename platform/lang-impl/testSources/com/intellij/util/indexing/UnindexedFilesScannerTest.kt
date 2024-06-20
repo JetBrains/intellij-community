@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.CheckedDisposable
@@ -240,6 +241,23 @@ class UnindexedFilesScannerTest {
     // this is the second run. If data was removed, contentless indexer will be applied during scanning and this will fail the test
     scanAndIndexFiles(filesAndDirs)
     captureIndexingResults(indexers).assertNoIndexerIndexedFiles()
+  }
+
+  @Test
+  fun `test scanning increases mod count of DumbService even if dumb mode was not triggered`() {
+    val dir = tempDir.createDir()
+    val oneDirIterator = SingleRootIndexableFilesIterator(dir.toUri().toString())
+
+    val dumbService = DumbService.getInstance(project)
+    val dumbModCount1 = dumbService.modificationTracker.modificationCount
+
+    val (scanningStat, dirtyFiles) = scanFiles(oneDirIterator)
+    assertThat(dirtyFiles).isEmpty()
+    assertEquals(0, scanningStat.numberOfFilesForIndexing)
+    IndexingTestUtil.waitUntilIndexesAreReady(project) // wait until flows in UnindexedFilesScannerExecutorImpl are updated
+
+    val dumbModCount2 = dumbService.modificationTracker.modificationCount
+    assertEquals(dumbModCount1 + 1, dumbModCount2)
   }
 
   private fun registerFiletype(filetype: FakeFileType) {

@@ -644,7 +644,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   override fun getModificationCount(): Long {
-    return myState.value.modificationCounter
+    // todo: drop mod tracker in scanner executor after there is a proper way to track indexes updates IJPL-472
+    return myState.value.modificationCounter + UnindexedFilesScannerExecutor.getInstance(project).modificationTracker.modificationCount
   }
 
   internal val dumbStateAsFlow: StateFlow<DumbState> = myState
