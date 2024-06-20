@@ -150,7 +150,9 @@ open class ManagedPersistentCache<K, V>(
       IOUtil.deleteAllFilesStartingWith(mapBuilder.file)
     }
     if (map == null) {
-      logger.error("cannot create persistent map $name", exception)
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        logger.error("cannot create persistent map $name", exception)
+      }
       return null
     }
     logger.info("created persistent map $name with size ${map.keysCount()}")
