@@ -78,6 +78,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testIdeadev2326() { doTestMethod(); }
   public void testMethodTypeParameter() { doTestMethod(); }
   public void testMethodTypeParameter2() { doTestAtCaret(); }
+  public void testMethodTypeParameter3() { doTestAtCaret(); }
   public void testInheritedDocInThrows() { doTestMethod(); }
   public void testInheritedDocInThrows1() { doTestMethod(); }
   public void testEscapeValues() { doTestClass(); }
