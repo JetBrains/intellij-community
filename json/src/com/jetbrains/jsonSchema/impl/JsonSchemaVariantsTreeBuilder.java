@@ -189,25 +189,25 @@ public final class JsonSchemaVariantsTreeBuilder {
 
   private static @NotNull Pair<ThreeState, JsonSchemaObject> arrayOrNumericPropertyElementStep(int idx, @NotNull JsonSchemaObject parent) {
     if (parent.getItemsSchema() != null) {
-      return Pair.create(ThreeState.UNSURE, parent.getItemsSchema());
+      return Pair.create(ThreeState.UNSURE, inheritBaseSchemaIfNeeded(parent, parent.getItemsSchema()));
     }
     if (parent.getItemsSchemaList() != null) {
       final var list = parent.getItemsSchemaList();
       if (idx >= 0 && idx < list.size()) {
-        return Pair.create(ThreeState.UNSURE, list.get(idx));
+        return Pair.create(ThreeState.UNSURE, inheritBaseSchemaIfNeeded(parent, list.get(idx)));
       }
     }
     final String keyAsString = String.valueOf(idx);
     var propWithNameOrNull = parent.getPropertyByName(keyAsString);
     if (propWithNameOrNull != null) {
-      return Pair.create(ThreeState.UNSURE, propWithNameOrNull);
+      return Pair.create(ThreeState.UNSURE, inheritBaseSchemaIfNeeded(parent, propWithNameOrNull));
     }
     final JsonSchemaObject matchingPatternPropertySchema = parent.getMatchingPatternPropertySchema(keyAsString);
     if (matchingPatternPropertySchema != null) {
-      return Pair.create(ThreeState.UNSURE, matchingPatternPropertySchema);
+      return Pair.create(ThreeState.UNSURE, inheritBaseSchemaIfNeeded(parent, matchingPatternPropertySchema));
     }
     if (parent.getAdditionalItemsSchema() != null) {
-      return Pair.create(ThreeState.UNSURE, parent.getAdditionalItemsSchema());
+      return Pair.create(ThreeState.UNSURE, inheritBaseSchemaIfNeeded(parent, parent.getAdditionalItemsSchema()));
     }
     if (Boolean.FALSE.equals(parent.getAdditionalItemsAllowed())) {
       return Pair.create(ThreeState.NO, null);
@@ -216,10 +216,10 @@ public final class JsonSchemaVariantsTreeBuilder {
     JsonSchemaObject unevaluatedItemsSchema = parent.getUnevaluatedItemsSchema();
     if (unevaluatedItemsSchema != null) {
       if (Boolean.TRUE.equals(unevaluatedItemsSchema.getConstantSchema())) {
-        return Pair.create(ThreeState.YES, unevaluatedItemsSchema);
+        return Pair.create(ThreeState.YES, inheritBaseSchemaIfNeeded(parent, unevaluatedItemsSchema));
       }
       else {
-        return Pair.create(ThreeState.UNSURE, unevaluatedItemsSchema);
+        return Pair.create(ThreeState.UNSURE, inheritBaseSchemaIfNeeded(parent, unevaluatedItemsSchema));
       }
     }
 
