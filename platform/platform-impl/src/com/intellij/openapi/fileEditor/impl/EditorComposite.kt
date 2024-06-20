@@ -49,7 +49,6 @@ import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -83,6 +82,8 @@ class PrecomputedFlow(@JvmField val model: EditorCompositeModel) : Flow<EditorCo
   }
 }
 
+private val INITIAL_EMPTY = ArrayList<FileEditorWithProvider>()
+
 /**
  * An abstraction over one or several file editors opened in the same tab (e.g., designer and code-behind).
  * It's a composite that can be pinned in the tab list or opened as a preview, not concrete file editors.
@@ -109,8 +110,7 @@ open class EditorComposite internal constructor(
    * Currently selected editor
    */
   @JvmField
-  @Internal
-  val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = _selectedEditorWithProvider.asStateFlow()
+  internal val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = _selectedEditorWithProvider.asStateFlow()
 
   private val topComponents = HashMap<FileEditor, JComponent>()
   private val bottomComponents = HashMap<FileEditor, JComponent>()
@@ -119,7 +119,8 @@ open class EditorComposite internal constructor(
   /**
    * Editors opened in the composite
    */
-  private val fileEditorWithProviderList = ContainerUtil.createLockFreeCopyOnWriteList<FileEditorWithProvider>()
+  private val fileEditorWithProviders = MutableStateFlow<List<FileEditorWithProvider>>(INITIAL_EMPTY)
+
   private val dispatcher = EventDispatcher.create(EditorCompositeListener::class.java)
 
   internal var selfBorder: Boolean = false
@@ -158,25 +159,7 @@ open class EditorComposite internal constructor(
   suspend fun waitForAvailable() {
     // make sure that init is started
     initDeferred.complete(Unit)
-
-    if (selectedEditorWithProvider.value != null || fileEditorWithProviderList.isNotEmpty()) {
-      return
-    }
-
-    flow {
-      // skip initial null value
-      var isInitialValue = true
-      selectedEditorWithProvider.collect { value ->
-        if (isInitialValue) {
-          isInitialValue = false
-          if (value == null) {
-            return@collect
-          }
-        }
-
-        emit(value)
-      }
-    }.first()
+    fileEditorWithProviders.firstOrNull { it !== INITIAL_EMPTY }
   }
 
   private suspend fun handleModel(model: EditorCompositeModel) {
@@ -342,9 +325,7 @@ open class EditorComposite internal constructor(
     // Only after applyFileEditorsInEdt - for external clients composite API should use _actual_ _applied_ state, not intermediate.
     // For example, see EditorHistoryManager -
     // we will get assertion if we return a non-empty list of editors but do not set selected file editor.
-    fileEditorWithProviderList.clear()
-    fileEditorWithProviderList.addAll(fileEditorWithProviders)
-
+    this.fileEditorWithProviders.value = fileEditorWithProviders
     _selectedEditorWithProvider.value = fileEditorWithProviderToSelect
   }
 
@@ -369,7 +350,7 @@ open class EditorComposite internal constructor(
     get() = providerSequence.toList()
 
   internal val providerSequence: Sequence<FileEditorProvider>
-    get() = fileEditorWithProviderList.asSequence().map { it.provider }
+    get() = fileEditorWithProviders.value.asSequence().map { it.provider }
 
   private fun createTabbedPaneWrapper(
     component: EditorCompositePanel?,
@@ -463,16 +444,16 @@ open class EditorComposite internal constructor(
     get() = allEditors.toTypedArray()
 
   final override val allEditors: List<FileEditor>
-    get() = fileEditorWithProviderList.map { it.fileEditor }
+    get() = fileEditorWithProviders.value.map { it.fileEditor }
 
   override val allEditorsWithProviders: List<FileEditorWithProvider>
-    get() = java.util.List.copyOf(fileEditorWithProviderList)
+    get() = java.util.List.copyOf(fileEditorWithProviders.value)
 
   fun getTopComponents(editor: FileEditor): List<JComponent> {
     return topComponents.get(editor)!!.components.mapNotNull { (it as? NonOpaquePanel)?.targetComponent }
   }
 
-  internal fun containsFileEditor(editor: FileEditor): Boolean = fileEditorWithProviderList.any { it.fileEditor === editor }
+  internal fun containsFileEditor(editor: FileEditor): Boolean = fileEditorWithProviders.value.any { it.fileEditor === editor }
 
   open val tabs: JBTabs?
     get() = tabbedPaneWrapper?.let { (it.tabbedPane as JBTabsPaneImpl).tabs }
@@ -529,7 +510,7 @@ open class EditorComposite internal constructor(
   }
 
   fun setDisplayName(editor: FileEditor, name: @NlsContexts.TabTitle String) {
-    val index = fileEditorWithProviderList.indexOfFirst { it.fileEditor == editor }
+    val index = fileEditorWithProviders.value.indexOfFirst { it.fileEditor == editor }
     assert(index != -1)
     displayNames.put(editor, name)
     tabbedPaneWrapper?.setTitleAt(index, name)
@@ -546,29 +527,30 @@ open class EditorComposite internal constructor(
     get() = selectedEditorWithProvider.value
 
   fun setSelectedEditor(providerId: String) {
-    val fileEditorWithProvider = fileEditorWithProviderList.firstOrNull { it.provider.editorTypeId == providerId } ?: return
+    val fileEditorWithProvider = fileEditorWithProviders.value.firstOrNull { it.provider.editorTypeId == providerId } ?: return
     setSelectedEditor(fileEditorWithProvider)
   }
 
   internal fun setSelectedEditor(provider: FileEditorProvider) {
-    val fileEditorWithProvider = fileEditorWithProviderList.firstOrNull { it.provider == provider } ?: return
+    val fileEditorWithProvider = fileEditorWithProviders.value.firstOrNull { it.provider == provider } ?: return
     setSelectedEditor(fileEditorWithProvider)
   }
 
   fun setSelectedEditor(editor: FileEditor) {
-    val newSelection = fileEditorWithProviderList.firstOrNull { it.fileEditor == editor }
+    val newSelection = fileEditorWithProviders.value.firstOrNull { it.fileEditor == editor }
     LOG.assertTrue(newSelection != null, "Unable to find editor=$editor")
     setSelectedEditor(newSelection!!)
   }
 
   fun setSelectedEditor(editorWithProvider: FileEditorWithProvider) {
-    if (fileEditorWithProviderList.size == 1) {
+    val fileEditorWithProviders = fileEditorWithProviders.value
+    if (fileEditorWithProviders.size == 1) {
       LOG.assertTrue(tabbedPaneWrapper == null)
-      LOG.assertTrue(editorWithProvider == fileEditorWithProviderList[0])
+      LOG.assertTrue(editorWithProvider == fileEditorWithProviders.get(0))
       return
     }
 
-    val index = fileEditorWithProviderList.indexOf(editorWithProvider)
+    val index = fileEditorWithProviders.indexOf(editorWithProvider)
     LOG.assertTrue(index != -1)
     LOG.assertTrue(tabbedPaneWrapper != null)
     tabbedPaneWrapper!!.selectedIndex = index
@@ -598,7 +580,7 @@ open class EditorComposite internal constructor(
     }
     finally {
       _selectedEditorWithProvider.value = null
-      for (editor in fileEditorWithProviderList) {
+      for (editor in fileEditorWithProviders.value) {
         @Suppress("DEPRECATION")
         if (!Disposer.isDisposed(editor.fileEditor)) {
           Disposer.dispose(editor.fileEditor)
@@ -611,20 +593,20 @@ open class EditorComposite internal constructor(
   @RequiresEdt
   fun addEditor(editor: FileEditor, provider: FileEditorProvider) {
     val editorWithProvider = FileEditorWithProvider(editor, provider)
-    fileEditorWithProviderList.add(editorWithProvider)
+    fileEditorWithProviders.update { it + editorWithProvider }
     FileEditor.FILE_KEY.set(editor, file)
     if (!clientId.isLocal) {
       assignClientId(editor, clientId)
     }
 
     when {
-      fileEditorWithProviderList.size == 1 -> {
-        val fileEditorWithProvider = fileEditorWithProviderList.get(0)
+      fileEditorWithProviders.value.size == 1 -> {
+        val fileEditorWithProvider = fileEditorWithProviders.value.get(0)
         setEditorComponent(fileEditorWithProvider.fileEditor)
         _selectedEditorWithProvider.value = fileEditorWithProvider
       }
       tabbedPaneWrapper == null -> {
-        setTabbedPaneComponent(createTabbedPaneWrapper(compositePanel, fileEditorWithProviderList))
+        setTabbedPaneComponent(createTabbedPaneWrapper(compositePanel, fileEditorWithProviders.value))
       }
       else -> {
         val component = createEditorComponent(editor)
@@ -634,7 +616,7 @@ open class EditorComposite internal constructor(
 
     focusWatcher.deinstall(focusWatcher.topComponent)
     focusWatcher.install(compositePanel)
-    if (fileEditorWithProviderList.size == 1) {
+    if (fileEditorWithProviders.value.size == 1) {
       preferredFocusedComponent?.requestFocusInWindow()
     }
     dispatcher.multicaster.editorAdded(editorWithProvider)
@@ -642,31 +624,34 @@ open class EditorComposite internal constructor(
 
   @RequiresEdt
   internal fun removeEditor(editorTypeId: String) {
-    val fileEditorWithProviderList = fileEditorWithProviderList
-    for (i in fileEditorWithProviderList.indices.reversed()) {
-      val (fileEditor, provider) = fileEditorWithProviderList.get(i)
+    val fileEditorWithProviderList = fileEditorWithProviders
+    val toRemove = mutableListOf<FileEditorWithProvider>()
+    for ((index, item) in fileEditorWithProviderList.value.asReversed().withIndex()) {
+      val (fileEditor, provider) = item
       if (provider.editorTypeId != editorTypeId) {
         continue
       }
 
-      tabbedPaneWrapper?.removeTabAt(i)
-      fileEditorWithProviderList.removeAt(i)
+      tabbedPaneWrapper?.removeTabAt(index)
+      toRemove.add(item)
       topComponents.remove(fileEditor)
       bottomComponents.remove(fileEditor)
       displayNames.remove(fileEditor)
       Disposer.dispose(fileEditor)
     }
 
-    if (fileEditorWithProviderList.isEmpty()) {
+    fileEditorWithProviderList.update { oldList -> oldList.toMutableList().also { it.removeAll(toRemove)} }
+
+    if (fileEditorWithProviderList.value.isEmpty()) {
       compositePanel.removeAll()
     }
-    else if (fileEditorWithProviderList.size == 1 && tabbedPaneWrapper != null) {
+    else if (fileEditorWithProviderList.value.size == 1 && tabbedPaneWrapper != null) {
       tabbedPaneWrapper = null
-      setEditorComponent(fileEditorWithProviderList.single().fileEditor)
+      setEditorComponent(fileEditorWithProviderList.value.single().fileEditor)
     }
 
     if (selectedEditorWithProvider.value?.provider?.editorTypeId == editorTypeId) {
-      _selectedEditorWithProvider.value = fileEditorWithProviderList.firstOrNull()
+      _selectedEditorWithProvider.value = fileEditorWithProviderList.value.firstOrNull()
     }
     focusWatcher.deinstall(focusWatcher.topComponent)
     focusWatcher.install(compositePanel)
@@ -674,6 +659,7 @@ open class EditorComposite internal constructor(
   }
 
   internal fun currentStateAsFileEntry(): FileEntry? {
+    val fileEditorWithProviderList = fileEditorWithProviders.value
     if (fileEditorWithProviderList.isEmpty()) {
       // not initialized
       return null
@@ -702,7 +688,7 @@ open class EditorComposite internal constructor(
     val selectedEditorWithProvider = selectedEditorWithProvider.value
     val element = Element(TAG)
     element.setAttribute(FILE_ATTRIBUTE, file.url)
-    for (fileEditorWithProvider in fileEditorWithProviderList) {
+    for (fileEditorWithProvider in fileEditorWithProviders.value) {
       val providerElement = Element(PROVIDER_ELEMENT)
       val provider = fileEditorWithProvider.provider
 
