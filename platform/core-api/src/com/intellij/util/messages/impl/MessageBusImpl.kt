@@ -6,10 +6,12 @@ package com.intellij.util.messages.impl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.isMessageBusThrowsWhenDisposed
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -203,13 +205,24 @@ open class MessageBusImpl : MessageBus {
   private fun checkBusDisposed() {
     val state = disposeState
     if (state is BusState.Disposed) {
-      LOG.error("Already disposed: $this", state.where)
+      if (isMessageBusThrowsWhenDisposed) {
+        throw AlreadyDisposedException(this.toString())
+          .initCause(state.where)
+      }
+      else {
+        LOG.error("Already disposed: $this", state.where)
+      }
     }
   }
 
   private fun checkOwnerDisposed() {
     if (owner.isDisposed) {
-      LOG.error("Already disposed: $this")
+      if (isMessageBusThrowsWhenDisposed) {
+        throw AlreadyDisposedException(this.toString())
+      }
+      else {
+        LOG.error("Already disposed: $this")
+      }
     }
   }
 
