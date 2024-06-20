@@ -38,6 +38,12 @@ fun isNamespacePackage(element: PsiElement): Boolean {
   return false
 }
 
+fun isInNamespacePackage(element: PsiElement): Boolean {
+  val myFile = element.containingFile ?: return false
+  val parentDirectory = myFile.containingDirectory
+  return parentDirectory != null && isNamespacePackage(parentDirectory)
+}
+
 private val TOKENS_TO_SKIP = TokenSet.create(PyTokenTypes.DOCSTRING,
                                              PyTokenTypes.END_OF_LINE_COMMENT,
                                              PyTokenTypes.LINE_BREAK,

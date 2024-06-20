@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.*;
+import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
 import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isNamespacePackage;
 
 /**
@@ -91,7 +92,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    boolean isNamespace = isFunctionInNamespacePackage(myFunction);
+    boolean isNamespace = isInNamespacePackage(myFunction);
     final PyFile targetFile = PyClassRefactoringUtil.getOrCreateFile(myDestinationPath, myProject, isNamespace);
     if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
       throw new IncorrectOperationException(
@@ -242,16 +243,6 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return inSameFile(element, myFunction) &&
            !belongsToFunction(element) &&
            !(ScopeUtil.getScopeOwner(element) instanceof PsiFile); 
-  }
-
-  private static boolean isFunctionInNamespacePackage(PyFunction myFunction){
-    PsiFile containingFile = myFunction.getContainingFile();
-    if (containingFile == null) {
-      return false;
-    }
-
-    PsiDirectory parentDirectory = containingFile.getParent();
-    return parentDirectory != null && isNamespacePackage(parentDirectory);
   }
 
   protected static class AnalysisResult {

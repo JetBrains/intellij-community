@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
+import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
 import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isNamespacePackage;
 import static com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil.placeFile;
 
@@ -90,7 +91,7 @@ public final class PyExtractSuperclassHelper {
     }
 
 
-    boolean isNamespace = isClassInNamespacePackage(clazz);
+    boolean isNamespace = isInNamespacePackage(clazz);
     final String text = "class " + superBaseName + ":\n  pass" + "\n";
     PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
 
@@ -241,16 +242,6 @@ public final class PyExtractSuperclassHelper {
 
   public static String getRefactoringId() {
     return "refactoring.python.extract.superclass";
-  }
-
-  private static boolean isClassInNamespacePackage(@NotNull PyClass clazz) {
-    PsiFile containingFile = clazz.getContainingFile();
-    if (containingFile == null) {
-      return false;
-    }
-
-    PsiDirectory parentDirectory = containingFile.getParent();
-    return parentDirectory != null && isNamespacePackage(parentDirectory);
   }
 
 }
