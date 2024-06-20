@@ -2,29 +2,22 @@
 package org.jetbrains.plugins.gradle.quarantine.setup
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.workspace.setWorkspace
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.writeText
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.testFramework.utils.vfs.createFile
-import com.intellij.testFramework.withProjectAsync
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.setup.GradleOpenProjectTestCase
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import java.nio.file.Files.createTempDirectory
 
 
 class GradleOpenProjectTest : GradleOpenProjectTestCase() {
@@ -293,22 +286,4 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
         }
     }
   }
-
-  @Test
-  fun `test attach to non-gradle project`() {
-    val workspaceRoot = createTempDirectory("workspace")
-    val projectManager = ProjectManagerEx.getInstanceEx()
-    runBlocking {
-      closeOpenedProjectsIfFailAsync {
-        projectManager.openProjectAsync(workspaceRoot, OpenProjectTask(isNewProject = true))!!
-      }.withProjectAsync { project ->
-        (project as ProjectEx).setProjectName("workspace")
-        setWorkspace(project) // todo: remove, this should work for any project
-      }.useProjectAsync { project ->
-        val projectInfo = getSimpleProjectInfo("linked_project")
-        initProject(projectInfo)
-        attachProject(project, "linked_project")
-        Assertions.assertEquals("workspace", project.name)
-      }
-    }
-  }}
+}

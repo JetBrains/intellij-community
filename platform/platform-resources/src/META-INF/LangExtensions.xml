@@ -1730,15 +1730,6 @@
     <recoveryAction implementation="com.intellij.util.indexing.ReindexAction"/>
     <recoveryAction implementation="com.intellij.util.indexing.RefreshIndexableFilesAction"/>
 
-    <projectAttachProcessor implementation="com.intellij.ide.workspace.WorkspaceAttachProcessor" order="last"/>
-    <treeStructureProvider implementation="com.intellij.ide.workspace.projectView.WorkspaceTreeStructureProvider" order="last"/>
-    <projectViewNodeDecorator implementation="com.intellij.ide.workspace.projectView.WorkspaceProjectViewNodeDecorator" order="last"/>
-    <workspace.subprojectHandler implementation="com.intellij.ide.workspace.DefaultSubprojectHandler" order="last"/>
-
-    <edtDataRule implementation="com.intellij.ide.workspace.projectView.WorkspaceTreeStructureProvider$DataRule"/>
-
-    <workspace.settingsImporter implementation="com.intellij.ide.workspace.DefaultWorkspaceSettingsImporter"/>
-
     <postStartupActivity implementation="com.intellij.codeInsight.documentation.DocumentationSettingsListener"/>
     <projectService serviceInterface="com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider"
                     serviceImplementation="com.intellij.lang.documentation.ide.impl.IdeDocumentationTargetProviderImpl"/>

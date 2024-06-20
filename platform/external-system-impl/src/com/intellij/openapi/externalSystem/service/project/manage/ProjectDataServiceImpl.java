@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.ide.workspace.WorkspaceSettingsKt;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -45,7 +44,7 @@ public final class ProjectDataServiceImpl extends AbstractProjectDataService<Pro
       return;
     }
     
-    if (!project.getName().equals(projectData.getInternalName()) && !WorkspaceSettingsKt.isWorkspace(project)) {
+    if (!project.getName().equals(projectData.getInternalName())) {
       renameProject(projectData.getInternalName(), projectData.getOwner(), project);
     }
   }

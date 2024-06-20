@@ -2835,19 +2835,6 @@ c:com.intellij.openapi.externalSystem.view.TasksNode
 - getName():java.lang.String
 - isVisible():Z
 - p:update(com.intellij.ide.projectView.PresentationData):V
-*f:com.intellij.platform.externalSystem.impl.workspace.ExternalSubproject
-- com.intellij.ide.workspace.Subproject
-- <init>(com.intellij.openapi.externalSystem.model.ExternalProjectInfo,com.intellij.ide.workspace.SubprojectHandler):V
-- getHandler():com.intellij.ide.workspace.SubprojectHandler
-- getName():java.lang.String
-- f:getProjectInfo():com.intellij.openapi.externalSystem.model.ExternalProjectInfo
-- getProjectPath():java.lang.String
-*a:com.intellij.platform.externalSystem.impl.workspace.ExternalSubprojectHandler
-- com.intellij.ide.workspace.SubprojectHandler
-- <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId):V
-- getSubprojects(com.intellij.openapi.project.Project):java.util.List
-- f:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
-- removeSubprojects(com.intellij.openapi.project.Project,java.util.List):V
 f:icons.ExternalSystemIcons
 - sf:Task:javax.swing.Icon
 - <init>():V

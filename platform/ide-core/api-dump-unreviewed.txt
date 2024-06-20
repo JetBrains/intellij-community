@@ -670,27 +670,6 @@ com.intellij.ide.wizard.StepWithSubSteps
 - a:doPreviousAction():V
 - a:isFirst():Z
 - a:isLast():Z
-com.intellij.ide.workspace.ImportedProjectSettings
-- a:applyTo(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-*:com.intellij.ide.workspace.Subproject
-- a:getHandler():com.intellij.ide.workspace.SubprojectHandler
-- a:getName():java.lang.String
-- a:getProjectPath():java.lang.String
-*:com.intellij.ide.workspace.SubprojectHandler
-- *sf:Companion:com.intellij.ide.workspace.SubprojectHandler$Companion
-- a:canImportFromFile(com.intellij.openapi.vfs.VirtualFile):Z
-- a:getSubprojectIcon():javax.swing.Icon
-- a:getSubprojects(com.intellij.openapi.project.Project):java.util.List
-- a:importFromProject(com.intellij.openapi.project.Project):com.intellij.ide.workspace.ImportedProjectSettings
-- a:removeSubprojects(com.intellij.openapi.project.Project,java.util.List):V
-- suppressGenericImportFor(com.intellij.openapi.module.Module):Z
-*f:com.intellij.ide.workspace.SubprojectHandler$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-com.intellij.ide.workspace.WorkspaceSettingsImporter
-- sf:Companion:com.intellij.ide.workspace.WorkspaceSettingsImporter$Companion
-- a:importFromProject(com.intellij.openapi.project.Project):com.intellij.ide.workspace.ImportedProjectSettings
-f:com.intellij.ide.workspace.WorkspaceSettingsImporter$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.navigation.NavigationItemFileStatus
 - s:get(com.intellij.navigation.NavigationItem):com.intellij.openapi.vcs.FileStatus
 c:com.intellij.notification.BrowseNotificationAction

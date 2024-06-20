@@ -1656,12 +1656,6 @@
       <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
     </group>
 
-    <group id="WorkspaceContextMenuGroup">
-      <action id="AddToWorkspace" class="com.intellij.ide.workspace.configuration.AddProjectsToWorkspaceAction"/>
-      <separator/>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
-    </group>
-
     <action id="FileChooser.LightEditGotoOpenedFile"
             class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"
             icon="AllIcons.General.Locate">
