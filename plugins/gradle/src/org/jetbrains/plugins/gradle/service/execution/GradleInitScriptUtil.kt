@@ -274,8 +274,8 @@ fun createInitScript(prefix: String, content: String): Path {
   }
 }
 
-private fun loadToolingExtensionProvidingInitScript(
-  toolingExtensionClasses: Set<Class<*>> = setOf(GradleToolingExtensionImplClass::class.java, GradleToolingExtensionClass::class.java)
+fun loadToolingExtensionProvidingInitScript(
+  toolingExtensionClasses: Set<Class<*>> = setOf(GradleToolingExtensionImplClass::class.java, GradleToolingExtensionClass::class.java),
 ): String {
   val tapiClasspath = getToolingExtensionsJarPaths(toolingExtensionClasses)
     .toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" }

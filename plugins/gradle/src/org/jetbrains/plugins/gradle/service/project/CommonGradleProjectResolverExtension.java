@@ -10,7 +10,6 @@ import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSour
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelProvider;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension;
 import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl;
@@ -799,19 +798,21 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
                                     @NotNull Map<String, String> parameters) {
     initScriptConsumer.consume(GradleInitScriptUtil.loadCommonTasksUtilsScript());
 
-    String dispatchPort = parameters.get(GradleProjectResolverExtension.DEBUG_DISPATCH_PORT_KEY);
+    String dispatchPort = parameters.get(DEBUG_DISPATCH_PORT_KEY);
     if (dispatchPort == null) {
       return;
     }
 
-    String debugOptions = parameters.get(GradleProjectResolverExtension.DEBUG_OPTIONS_KEY);
+    String debugOptions = parameters.get(DEBUG_OPTIONS_KEY);
     if (debugOptions == null) {
       debugOptions = "";
     }
     List<String> lines = new ArrayList<>();
 
-    String esRtJarPath = FileUtil.toCanonicalPath(PathManager.getJarPathForClass(ExternalSystemSourceType.class));
-    lines.add("initscript { dependencies { classpath files(mapPath(\"" + esRtJarPath + "\")) } }"); // bring external-system-rt.jar
+    String classPathInitScript = GradleInitScriptUtil.loadToolingExtensionProvidingInitScript(
+      Collections.singleton(ExternalSystemSourceType.class)
+    );
+    lines.add(classPathInitScript);
 
     for (DebuggerBackendExtension extension : DebuggerBackendExtension.EP_NAME.getExtensionList()) {
       lines.addAll(extension.initializationCode(project, dispatchPort, debugOptions));
