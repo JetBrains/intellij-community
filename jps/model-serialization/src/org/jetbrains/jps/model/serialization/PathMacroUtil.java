@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,22 +16,36 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class PathMacroUtil {
+  @ApiStatus.Internal
   @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
+  @ApiStatus.Internal
   @NonNls public static final String PROJECT_NAME_MACRO_NAME = "PROJECT_NAME";
 
+  @ApiStatus.Internal
   @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+  @ApiStatus.Internal
   public static final String DEPRECATED_MODULE_DIR = "$" + MODULE_DIR_MACRO_NAME + "$";
+  @ApiStatus.Internal
   public static final String MODULE_WORKING_DIR_NAME = "MODULE_WORKING_DIR";
+  @ApiStatus.Internal
   public static final String MODULE_WORKING_DIR = "$" + MODULE_WORKING_DIR_NAME + "$";
 
+  @ApiStatus.Internal
   @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
+  @ApiStatus.Internal
   @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
+  @ApiStatus.Internal
   @NonNls public static final String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";
+  @ApiStatus.Internal
   @NonNls public static final String APPLICATION_PLUGINS_DIR = "APPLICATION_PLUGINS_DIR";
+  @ApiStatus.Internal
   @NonNls public static final String USER_HOME_NAME = "USER_HOME";
 
   private static volatile Map<String, String> ourGlobalMacrosForIde;
   private static volatile Map<String, String> globalMacrosForStandalone;
+
+  private PathMacroUtil() {
+  }
 
   public static @Nullable String getModuleDir(@NotNull String moduleFilePath) {
     String moduleDir = PathUtilRt.getParentPath(moduleFilePath);

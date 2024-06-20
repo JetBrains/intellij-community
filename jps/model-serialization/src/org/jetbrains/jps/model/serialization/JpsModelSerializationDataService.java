@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class JpsModelSerializationDataService {
+  private JpsModelSerializationDataService() {
+  }
 
   public static Map<String, String> computeAllPathVariables(JpsGlobal global) {
     Map<String, String> pathVariables = new HashMap<>(PathMacroUtil.getGlobalSystemMacros(false));
@@ -47,7 +49,7 @@ public final class JpsModelSerializationDataService {
     return child;
   }
 
-
+  @ApiStatus.Internal
   @Nullable
   public static JpsProjectSerializationDataExtension getProjectExtension(@NotNull JpsProject project) {
     return project.getContainer().getChild(JpsProjectSerializationDataExtensionImpl.ROLE);
@@ -59,6 +61,7 @@ public final class JpsModelSerializationDataService {
     return extension != null ? extension.getBaseDirectory() : null;
   }
 
+  @ApiStatus.Internal
   @Nullable
   public static JpsModuleSerializationDataExtension getModuleExtension(@NotNull JpsModule project) {
     return project.getContainer().getChild(JpsModuleSerializationDataExtensionImpl.ROLE);

@@ -5,16 +5,9 @@ a:com.intellij.openapi.application.PathMacroFilter
 - skipPathMacros(org.jdom.Element):Z
 f:com.intellij.openapi.components.ExpandMacroToPathMap
 - com.intellij.openapi.components.PathMacroMap
-- <init>():V
-- addMacroExpand(java.lang.String,java.lang.String):V
-- hashCode():I
 - put(java.lang.String,java.lang.String):V
-- putAll(com.intellij.openapi.components.ExpandMacroToPathMap):V
-- substitute(java.lang.String,Z):java.lang.String
 a:com.intellij.openapi.components.PathMacroMap
 - <init>():V
-- getAttributeValue(org.jdom.Attribute,com.intellij.openapi.application.PathMacroFilter,Z,Z):java.lang.String
-- a:hashCode():I
 - a:substitute(java.lang.String,Z):java.lang.String
 - f:substitute(java.lang.String,Z,Z):java.lang.CharSequence
 - f:substitute(org.jdom.Element,Z):V
@@ -26,16 +19,9 @@ f:org.jetbrains.jps.model.serialization.CannotLoadJpsModelException
 - getFile():java.io.File
 f:org.jetbrains.jps.model.serialization.JDomSerializationUtil
 - sf:COMPONENT_ELEMENT:java.lang.String
-- <init>():V
-- s:addComponent(org.jdom.Element,org.jdom.Element):V
-- s:createComponentElement(java.lang.String):org.jdom.Element
 - s:findComponent(org.jdom.Element,java.lang.String):org.jdom.Element
-- s:findOrCreateComponentElement(org.jdom.Element,java.lang.String):org.jdom.Element
-- s:isComponent(java.lang.String,org.jdom.Element):Z
 a:org.jetbrains.jps.model.serialization.JpsElementExtensionSerializerBase
 - p:<init>(java.lang.String,java.lang.String):V
-- getComponentName():java.lang.String
-- getConfigFileName():java.lang.String
 - a:loadExtension(org.jetbrains.jps.model.JpsElement,org.jdom.Element):V
 - loadExtensionWithDefaultSettings(org.jetbrains.jps.model.JpsElement):V
 - saveExtension(org.jetbrains.jps.model.JpsElement,org.jdom.Element):V
@@ -47,76 +33,42 @@ a:org.jetbrains.jps.model.serialization.JpsGlobalExtensionSerializer
 - org.jetbrains.jps.model.serialization.JpsElementExtensionSerializerBase
 - p:<init>(java.lang.String,java.lang.String):V
 f:org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
-- <init>():V
 - s:computeAllPathVariables(org.jetbrains.jps.model.JpsGlobal):java.util.Map
 - s:getBaseDirectory(org.jetbrains.jps.model.JpsProject):java.io.File
 - s:getBaseDirectory(org.jetbrains.jps.model.module.JpsModule):java.io.File
-- s:getModuleExtension(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.serialization.module.JpsModuleSerializationDataExtension
 - s:getPathVariableValue(org.jetbrains.jps.model.JpsGlobal,java.lang.String):java.lang.String
-- s:getProjectExtension(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.serialization.JpsProjectSerializationDataExtension
 a:org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
 - <init>():V
-- createLibraryTableReference(java.lang.String):org.jetbrains.jps.model.JpsElementReference
-- getArtifactExtensionSerializers():java.util.List
 - getArtifactTypePropertiesSerializers():java.util.List
 - s:getExtensions():java.lang.Iterable
 - getFacetConfigurationSerializers():java.util.List
 - getGlobalExtensionSerializers():java.util.List
 - getLibraryPropertiesSerializers():java.util.List
-- getLibraryRootTypeSerializers():java.util.List
-- getLibraryTableLevelId(org.jetbrains.jps.model.JpsElementReference):java.lang.String
 - getModulePropertiesSerializers():java.util.List
 - getModuleSourceRootPropertiesSerializers():java.util.List
 - getPackagingElementSerializers():java.util.List
 - getProjectExtensionSerializers():java.util.List
 - getRunConfigurationPropertiesSerializers():java.util.List
 - getSdkPropertiesSerializers():java.util.List
-- getSdkRootTypeSerializers():java.util.List
-- loadModuleDependencyProperties(org.jetbrains.jps.model.module.JpsDependencyElement,org.jdom.Element):V
 - loadModuleOptions(org.jetbrains.jps.model.module.JpsModule,org.jdom.Element):V
-- loadRootModel(org.jetbrains.jps.model.module.JpsModule,org.jdom.Element):V
 a:org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer
 - org.jetbrains.jps.model.serialization.JpsElementExtensionSerializerBase
 - sf:WORKSPACE_FILE:java.lang.String
 - <init>(java.lang.String,java.lang.String):V
-org.jetbrains.jps.model.serialization.JpsProjectSerializationDataExtension
-- org.jetbrains.jps.model.JpsElement
-- a:getBaseDirectory():java.io.File
 a:org.jetbrains.jps.model.serialization.JpsSerializationManager
-- <init>():V
+- p:<init>():V
 - s:getInstance():org.jetbrains.jps.model.serialization.JpsSerializationManager
 - loadModel(java.lang.String,java.lang.String):org.jetbrains.jps.model.JpsModel
 - a:loadModel(java.lang.String,java.lang.String,Z):org.jetbrains.jps.model.JpsModel
 - a:loadProject(java.lang.String,java.util.Map):org.jetbrains.jps.model.JpsProject
 - a:loadProject(java.lang.String,java.util.Map,Z):org.jetbrains.jps.model.JpsProject
 f:org.jetbrains.jps.model.serialization.PathMacroUtil
-- sf:APPLICATION_CONFIG_DIR:java.lang.String
-- sf:APPLICATION_HOME_DIR:java.lang.String
-- sf:APPLICATION_PLUGINS_DIR:java.lang.String
-- sf:DEPRECATED_MODULE_DIR:java.lang.String
-- sf:DIRECTORY_STORE_NAME:java.lang.String
-- sf:MODULE_DIR_MACRO_NAME:java.lang.String
-- sf:MODULE_WORKING_DIR:java.lang.String
-- sf:MODULE_WORKING_DIR_NAME:java.lang.String
-- sf:PROJECT_DIR_MACRO_NAME:java.lang.String
-- sf:PROJECT_NAME_MACRO_NAME:java.lang.String
-- sf:USER_HOME_NAME:java.lang.String
-- <init>():V
 - s:getGlobalSystemMacroValue(java.lang.String):java.lang.String
 - s:getGlobalSystemMacroValue(java.lang.String,Z):java.lang.String
 - s:getGlobalSystemMacros():java.util.Map
 - s:getGlobalSystemMacros(Z):java.util.Map
 - s:getModuleDir(java.lang.String):java.lang.String
 - s:getUserHomePath():java.lang.String
-f:org.jetbrains.jps.model.serialization.artifact.JpsArtifactDummyPropertiesSerializer
-- org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSerializer
-- <init>(java.lang.String,org.jetbrains.jps.model.artifact.JpsArtifactType):V
-- loadProperties(java.util.List):org.jetbrains.jps.model.JpsDummyElement
-a:org.jetbrains.jps.model.serialization.artifact.JpsArtifactExtensionSerializer
-- p:<init>(java.lang.String,org.jetbrains.jps.model.JpsElementChildRole):V
-- getId():java.lang.String
-- getRole():org.jetbrains.jps.model.JpsElementChildRole
-- a:loadExtension(org.jdom.Element):org.jetbrains.jps.model.JpsElement
 a:org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSerializer
 - org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer
 - <init>(java.lang.String,org.jetbrains.jps.model.artifact.JpsArtifactType):V
@@ -128,7 +80,6 @@ a:org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer
 - a:load(org.jdom.Element):org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
 - save(org.jetbrains.jps.model.artifact.elements.JpsPackagingElement,org.jdom.Element):V
 f:org.jetbrains.jps.model.serialization.facet.FacetState
-- f:subFacets:java.util.List
 - <init>():V
 - equals(java.lang.Object):Z
 - getConfiguration():org.jdom.Element
@@ -165,9 +116,6 @@ a:org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer
 - getComponentName():java.lang.String
 - a:loadProperties(org.jdom.Element):org.jetbrains.jps.model.JpsElement
 - saveProperties(org.jetbrains.jps.model.JpsElement,org.jdom.Element):V
-org.jetbrains.jps.model.serialization.module.JpsModuleSerializationDataExtension
-- org.jetbrains.jps.model.JpsElement
-- a:getBaseDirectory():java.io.File
 f:org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootDummyPropertiesSerializer
 - org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 - <init>(org.jetbrains.jps.model.module.JpsModuleSourceRootType,java.lang.String):V

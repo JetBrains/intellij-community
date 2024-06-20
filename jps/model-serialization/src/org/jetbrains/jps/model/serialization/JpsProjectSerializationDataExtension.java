@@ -15,11 +15,17 @@
  */
 package org.jetbrains.jps.model.serialization;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsProject;
 
 import java.io.File;
 
+/**
+ * Use {@link JpsModelSerializationDataService#getBaseDirectory(JpsProject)} to get the directory where the project configuration is stored.
+ */
+@ApiStatus.Internal
 public interface JpsProjectSerializationDataExtension extends JpsElement {
   @NotNull
   File getBaseDirectory();
