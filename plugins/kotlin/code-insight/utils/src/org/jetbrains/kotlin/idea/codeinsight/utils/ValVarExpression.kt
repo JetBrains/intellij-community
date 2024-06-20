@@ -13,7 +13,7 @@ object ValVarExpression : Expression() {
 
     override fun calculateResult(context: ExpressionContext?): Result = TextResult("val")
 
-    override fun calculateQuickResult(context: ExpressionContext?): Result? = calculateResult(context)
+    override fun calculateQuickResult(context: ExpressionContext?): Result = calculateResult(context)
 
     override fun calculateLookupItems(context: ExpressionContext?): Array<LookupElement> = cachedLookupElements
 }
