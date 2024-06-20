@@ -64,7 +64,7 @@ object PluginAutoUpdateRepository {
   const val PLUGIN_AUTO_UPDATE_DIRECTORY_NAME: String = "plugins-auto-update"
   private const val STATE_FILE_NAME: String = ".autoupdate.data"
 
-  fun getAutoUpdateDirPath(): Path = PathManager.getConfigDir().resolve(PLUGIN_AUTO_UPDATE_DIRECTORY_NAME)
+  fun getAutoUpdateDirPath(): Path = PathManager.getStartupScriptDir().resolve(PLUGIN_AUTO_UPDATE_DIRECTORY_NAME)
 
   private fun getAutoUpdateStatePath(): Path = getAutoUpdateDirPath().resolve(STATE_FILE_NAME)
 
