@@ -418,7 +418,7 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
           var containingClass = method.getContainingClass();
           if (containingClass == null) return List.of();
 
-          final var target = findTargetRecursively(containingClass, method, docTag, explicitSuper, false);
+          final var target = findTargetRecursively(containingClass, method, docTag, explicitSuper, false, new HashSet<>());
           if (target != null) {
             return List.of(new SnippetRegionSymbol(target.getContainingFile(), getSnippetRange(target)));
           }
@@ -444,8 +444,12 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
                                                                 @NotNull PsiMethod method,
                                                                 @Nullable PsiDocTag docTag,
                                                                 @Nullable String explicitSuper,
-                                                                boolean checkClass) {
+                                                                boolean checkClass,
+                                                                @NotNull HashSet<PsiClass> visitedSet) {
         if ("java.lang.Object".equals(psiClass.getQualifiedName())) return null;
+        if (visitedSet.contains(psiClass)) return null;
+
+        visitedSet.add(psiClass);
 
         // Check class
         PsiElement target = null;
@@ -455,7 +459,7 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
         // Check super class
         final PsiClass superClass = psiClass.getSuperClass();
         if (superClass != null) {
-          target = findTargetRecursively(superClass, method, docTag, explicitSuper, true);
+          target = findTargetRecursively(superClass, method, docTag, explicitSuper, true, visitedSet);
           if (target != null) return target;
         }
 
