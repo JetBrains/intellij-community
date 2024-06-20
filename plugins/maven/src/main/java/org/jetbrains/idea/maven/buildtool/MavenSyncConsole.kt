@@ -94,7 +94,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
       .withRestartAction(restartAction)
     descriptor.isActivateToolWindowWhenFailed = explicit
     descriptor.isActivateToolWindowWhenAdded = false
-    descriptor.isNavigateToError = if (explicit) ThreeState.YES else ThreeState.UNSURE
+    descriptor.isNavigateToError = if (explicit) ThreeState.YES else ThreeState.NO
 
     mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, SyncBundle.message("maven.sync.project.title", myProject.name)))
     debugLog("maven sync: started importing $myProject")
