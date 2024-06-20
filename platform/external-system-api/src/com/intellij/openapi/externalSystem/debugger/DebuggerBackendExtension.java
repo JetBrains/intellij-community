@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Provides ability to preconfigure tasks run by external system and to attach them with debugger.
+ * Provides an ability to preconfigure tasks run by external system and to attach them with debugger.
  */
 public interface DebuggerBackendExtension {
   ExtensionPointName<DebuggerBackendExtension> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.debuggerBackend");
@@ -23,15 +23,7 @@ public interface DebuggerBackendExtension {
   String id();
 
   default List<String> initializationCode(@Nullable Project project, @NotNull String dispatchPort, @NotNull String parameters) {
-    return initializationCode(dispatchPort, parameters);
-  }
-
-  /**
-   * @deprecated use {@link #initializationCode(Project, String, String)}
-   */
-  @Deprecated
-  default List<String> initializationCode(@NotNull String dispatchPort, @NotNull String parameters) {
-    return new ArrayList();
+    return new ArrayList<>();
   }
 
   RunnerAndConfigurationSettings debugConfigurationSettings(@NotNull Project project,
@@ -39,7 +31,7 @@ public interface DebuggerBackendExtension {
                                                             @NotNull String processParameters);
 
   default HashMap<String, String> splitParameters(@NotNull String processParameters) {
-    HashMap<String, String> result = new HashMap();
+    HashMap<String, String> result = new HashMap<>();
 
     final String[] envVars = processParameters.split(ForkedDebuggerHelper.PARAMETERS_SEPARATOR);
     for (String envVar : envVars) {
