@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.editorActions.QuoteHandler
 import com.intellij.codeInsight.editorActions.TypedHandler
+import com.intellij.codeInsight.highlighting.BraceMatcher
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil
 import com.intellij.codeInsight.inline.completion.InlineCompletionPartialAcceptHandlerImpl.SearchState.*
 import com.intellij.codeInsight.inline.completion.elements.*
@@ -65,35 +66,33 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     var searchState = INIT
     val skipOffsetsAfterInsertion = mutableListOf<Int>()
     iteratorLabel@ while (!iterator.atEnd()) {
-      iterator.tokenType ?: break
-      val startOffset = iterator.start
-      val endOffset = iterator.end
-      val tokenText = completion.substring(maxOf(0, startOffset - offset), endOffset - offset)
-      if (tokenText.isEmpty()) {
-        continue
-      }
-      if (offset <= startOffset && quoteHandler != null && quoteHandler.isOpeningQuote(iterator, startOffset)) {
-        val quote = tokenText.takeWhile { it == tokenText[0] }
-        insertedPrefixLength += quote.length
-        val quoteEndOffset = iterator.findClosingQuoteOffset(quoteHandler)
-        if (quoteEndOffset != null) {
-          val closingQuote = textWithCompletion.substring(
-            quoteEndOffset,
-            minOf(quoteEndOffset + quote.length, textWithCompletion.length)
-          )
-          if (closingQuote == quote) {
-            repeat(quote.length) {
-              skipOffsetsAfterInsertion += quoteEndOffset + it - offset
-            }
+      val (startOffset, _, tokenText) = iterator.getTokenInfoRelativelyTo(completion, offset) ?: continue
+      val foundQuotePair = iterator.checkForOpenQuoteAndReturnPair(
+        tokenOffset = startOffset,
+        tokenText = tokenText,
+        initialOffset = offset,
+        textWithCompletion = textWithCompletion,
+        quoteHandler = quoteHandler
+      )
+      if (foundQuotePair != null) {
+        insertedPrefixLength += foundQuotePair.quote.length
+        if (foundQuotePair.closingQuoteOffset != null) {
+          repeat(foundQuotePair.quote.length) {
+            skipOffsetsAfterInsertion += foundQuotePair.closingQuoteOffset + it - offset
           }
         }
         break
       }
-      if (braceMatcher.isLBraceToken(iterator, textWithCompletion, fileType)) {
-        insertedPrefixLength += tokenText.length
-        val isMatched = BraceMatchingUtil.matchBrace(textWithCompletion, fileType, iterator, true)
-        if (isMatched) {
-          for (i in iterator.start until iterator.end) {
+      val foundBracesPair = iterator.checkForOpenBraceAndReturnPair(
+        tokenText = tokenText,
+        textWithCompletion = textWithCompletion,
+        fileType = fileType,
+        braceMatcher = braceMatcher
+      )
+      if (foundBracesPair != null) {
+        insertedPrefixLength += foundBracesPair.bracket.length
+        if (foundBracesPair.closingBracketRange != null) {
+          for (i in foundBracesPair.closingBracketRange) {
             skipOffsetsAfterInsertion += i - offset
           }
         }
@@ -125,30 +124,119 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
     completion: String,
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement> {
-    var newLineAppeared = false
-    var insertionLength = 0
-    for (element in elements) {
-      if (element.text.contains('\n')) {
-        newLineAppeared = true
-        val newLineOffset = element.text.indexOf('\n')
-        val prefixLength = newLineOffset + element.text.countWhilePredicate(start = newLineOffset) { it.isWhitespace() }
-        insertionLength += prefixLength
-        if (prefixLength < element.text.length) {
-          break
-        }
-      }
-      else if (!newLineAppeared) {
-        insertionLength += element.text.length
-      }
-      else {
-        val prefixLength = element.text.countWhilePredicate(start = 0) { it.isWhitespace() }
-        insertionLength += prefixLength
-        if (prefixLength < element.text.length) {
-          break
-        }
+    var prefixLength = 0
+    for (sym in completion) {
+      prefixLength++
+      if (sym == '\n') {
+        prefixLength += completion.countWhilePredicate(start = prefixLength) { it.isWhitespace() }
+        break
       }
     }
-    return doInsert(originalEditor, offset, completion, insertionLength, emptyList(), elements)
+    val skipOffsetsAfterInsertion = mutableListOf<Int>()
+    var iterator = editorWithCompletion.highlighter.createIterator(offset)
+    val fileType = originalFile.fileType
+    val braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator)
+    val quoteHandler = TypedHandler.getQuoteHandler(originalFile, originalEditor)
+    while (!iterator.atEnd() && iterator.start < offset + prefixLength) {
+      val (startOffset, _, tokenText) = iterator.getTokenInfoRelativelyTo(completion, offset) ?: continue
+
+      val foundQuotePair = iterator.checkForOpenQuoteAndReturnPair(
+        tokenOffset = startOffset,
+        tokenText = tokenText,
+        initialOffset = offset,
+        textWithCompletion = completion,
+        quoteHandler = quoteHandler
+      )
+      if (foundQuotePair != null) {
+        val closingOffset = foundQuotePair.closingQuoteOffset
+        if (closingOffset == null) {
+          break // The literal covers the left of the completion
+        }
+        if (closingOffset >= offset + prefixLength) {
+          repeat(foundQuotePair.quote.length) {
+            skipOffsetsAfterInsertion += closingOffset + it - offset
+          }
+          break // no other braces and literals are expected
+        }
+        // Iterator is placed right before the closing quote, so just continue
+        continue
+      }
+      val foundBracesPair = iterator.checkForOpenBraceAndReturnPair(
+        tokenText = tokenText,
+        textWithCompletion = completion,
+        fileType = fileType,
+        braceMatcher = braceMatcher
+      )
+      if (foundBracesPair != null) {
+        val closingBracketRange = foundBracesPair.closingBracketRange
+        if (closingBracketRange != null) {
+          if (closingBracketRange.start >= offset + prefixLength) {
+            for (i in closingBracketRange) {
+              skipOffsetsAfterInsertion += i - offset
+            }
+            iterator = editorWithCompletion.highlighter.createIterator(startOffset)
+          }
+          // Otherwise, it's optimization: we start from the closing brace in the inserted prefix
+          // We rely on that the completion respects brackets balance
+        }
+        else {
+          iterator = editorWithCompletion.highlighter.createIterator(startOffset)
+        }
+      }
+
+      iterator.advance()
+    }
+    return doInsert(originalEditor, offset, completion, prefixLength, skipOffsetsAfterInsertion, elements)
+  }
+
+  private fun HighlighterIterator.checkForOpenBraceAndReturnPair(
+    tokenText: String,
+    textWithCompletion: String,
+    fileType: FileType,
+    braceMatcher: BraceMatcher
+  ): FoundBracesPair? {
+    if (!braceMatcher.isLBraceToken(this, textWithCompletion, fileType)) {
+      return null
+    }
+    val isMatched = BraceMatchingUtil.matchBrace(textWithCompletion, fileType, this, true)
+    return FoundBracesPair(
+      tokenText,
+      if (isMatched) start until end else null
+    )
+  }
+
+  private fun HighlighterIterator.getTokenInfoRelativelyTo(
+    completion: String,
+    completionOffset: Int
+  ): RelativeTokenInfo? {
+    if (tokenType == null) {
+      return null
+    }
+    val startOffset = start
+    val endOffset = end
+    val text = completion.substring(maxOf(startOffset - completionOffset, 0), endOffset - completionOffset)
+    return RelativeTokenInfo(startOffset, endOffset, text).takeIf { text.isNotEmpty() }
+  }
+
+  private fun HighlighterIterator.checkForOpenQuoteAndReturnPair(
+    tokenOffset: Int,
+    tokenText: String,
+    initialOffset: Int,
+    textWithCompletion: String,
+    quoteHandler: QuoteHandler?
+  ): FoundQuotesPair? {
+    if (quoteHandler == null || initialOffset > tokenOffset || !quoteHandler.isOpeningQuote(this, tokenOffset)) {
+      return null
+    }
+    val quote = tokenText.takeWhile { it == tokenText[0] }
+    val quoteEndOffset = findClosingQuoteOffset(quoteHandler)
+    val closingQuote = quoteEndOffset?.let { quoteEndOffset ->
+      textWithCompletion.substring(
+        quoteEndOffset,
+        minOf(quoteEndOffset + quote.length, textWithCompletion.length)
+      )
+    }
+    return FoundQuotesPair(quote, quoteEndOffset?.takeIf { quote == closingQuote })
   }
 
   private fun HighlighterIterator.findClosingQuoteOffset(quoteHandler: QuoteHandler): Int? {
@@ -520,6 +608,17 @@ internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartia
    * @param whitespaceEnd the offset in the completion where the insertion part ends. It's end-*exclusive*.
    */
   private data class LineToInsert(val lineNumberInCompletion: Int, val whitespaceStart: Int, val whitespaceEnd: Int)
+
+  private data class FoundQuotesPair(val quote: String, val closingQuoteOffset: Int?)
+
+  private data class FoundBracesPair(val bracket: String, val closingBracketRange: IntRange?)
+
+  /**
+   * @param startOffset corresponds to the start offset of the token **in the whole document**
+   * @param endOffset corresponds to the end offset of the token **in the whole document**
+   * @param text corresponds to the text of the token trimmed by the start of the completion
+   */
+  private data class RelativeTokenInfo(val startOffset: Int, val endOffset: Int, val text: String)
 
   companion object {
     private val LOG = logger<InlineCompletionPartialAcceptHandler>()

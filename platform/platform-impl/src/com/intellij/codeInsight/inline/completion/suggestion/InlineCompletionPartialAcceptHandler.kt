@@ -32,7 +32,7 @@ interface InlineCompletionPartialAcceptHandler {
   ): List<InlineCompletionElement>
 
   companion object {
-    private val EP = ExtensionPointName<InlineCompletionPartialAcceptHandler>("com.intellij.inline.completion.partial.accept.handler")
+    private val EP = ExtensionPointName.create<InlineCompletionPartialAcceptHandler>("com.intellij.inline.completion.partial.accept.handler")
 
     internal fun get(): InlineCompletionPartialAcceptHandler {
       val extensions = EP.extensionList
