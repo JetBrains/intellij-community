@@ -2,44 +2,43 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.isError
 
-class ChangeAccessorTypeFix(element: KtPropertyAccessor) : KotlinQuickFixAction<KtPropertyAccessor>(element) {
-    private fun getType(): KotlinType? = element!!.property.resolveToDescriptorIfAny()?.type?.takeUnless(KotlinType::isError)
+class ChangeAccessorTypeFix(
+    element: KtPropertyAccessor,
+    private val typePresentation: String,
+    private val typeSourceCode: String,
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtPropertyAccessor, Unit>(element, Unit) {
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile) = getType() != null
+    override fun getFamilyName(): String = KotlinBundle.message("fix.change.accessor.family")
 
-    override fun getFamilyName() = KotlinBundle.message("fix.change.accessor.family")
-
-    override fun getText(): String {
-        val element = element ?: return ""
-        val type = getType() ?: return familyName
-        val renderedType = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(type)
-
-        return if (element.isGetter) {
-            KotlinBundle.message("fix.change.accessor.getter", renderedType)
+    override fun getPresentation(
+        context: ActionContext,
+        element: KtPropertyAccessor,
+    ): Presentation {
+        val actionName = if (element.isGetter) {
+            KotlinBundle.message("fix.change.accessor.getter", typePresentation)
         } else {
-            KotlinBundle.message("fix.change.accessor.setter.parameter", renderedType)
+            KotlinBundle.message("fix.change.accessor.setter.parameter", typePresentation)
         }
+        return Presentation.of(actionName)
     }
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        val type = getType()!!
-        val newTypeReference = KtPsiFactory(project).createType(IdeDescriptorRenderers.SOURCE_CODE.renderType(type))
-
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtPropertyAccessor,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
+        val newTypeReference = KtPsiFactory(actionContext.project).createType(typeSourceCode)
         val typeReference = if (element.isGetter) element.returnTypeReference else element.parameter!!.typeReference
 
         val insertedTypeRef = typeReference!!.replaced(newTypeReference)
