@@ -9,7 +9,6 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
@@ -99,10 +98,9 @@ class GradleContentRootSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     storage: MutableEntityStorage,
     contentRootData: GradleContentRootData,
-  ): WorkspaceEntity.Builder<*> {
+  ) {
     val moduleEntity = addModuleEntity(context, storage, contentRootData)
     addContentRootEntity(storage, contentRootData, moduleEntity)
-    return moduleEntity
   }
 
   private fun addModuleEntity(
