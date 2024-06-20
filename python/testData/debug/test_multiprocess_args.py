@@ -10,6 +10,6 @@ def run(name):
     subprocess.Popen(('%s' % sys.executable, os.path.join(dir_path, "test_multiprocess_args_child.py"), name, "etc etc"))
 
 if __name__ == '__main__':
-    p = multiprocessing.Process(target=run, args=("subprocess",)).start()
+    multiprocessing.Process(target=run, args=("subprocess",)).start()
     while True:
         time.sleep(0.1)
