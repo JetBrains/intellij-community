@@ -1294,6 +1294,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     final List<Descriptor> descriptors = toolDescriptors.getNonDefaultDescriptors();
     for (Descriptor descriptor : descriptors) {
+      if (descriptor.getScope() == null) {
+        // Missing scope -> profile will return default descriptor info instead
+        continue;
+      }
       if (profile.isToolEnabled(descriptor.getKey(), descriptor.getScope(), project) != descriptor.isEnabled()) {
         return true;
       }
