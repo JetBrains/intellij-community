@@ -1275,6 +1275,10 @@ private fun loadDescriptorFromResource(
           // no package in run from sources - load module from main classpath
           subDescriptor.jarFiles = Collections.emptyList()
         }
+        // Android Studio (b/348440247): in our dev builds 'isRunningFromSources' is false, yet we still need to init 'jarFiles' here (like above).
+        if (java.lang.Boolean.getBoolean("idea.force.use.core.classloader") && subDescriptor.packagePrefix == null) {
+          subDescriptor.jarFiles = Collections.emptyList()
+        }
         module.descriptor = subDescriptor
       }
     }
