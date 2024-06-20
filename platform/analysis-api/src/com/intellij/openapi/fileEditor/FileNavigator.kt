@@ -1,23 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.fileEditor;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.fileEditor
 
-import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.components.service
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 
-public interface FileNavigator {
-  static FileNavigator getInstance() {
-    return ApplicationManager.getApplication().getService(FileNavigator.class);
+interface FileNavigator {
+  companion object {
+    @RequiresBlockingContext
+    @JvmStatic
+    fun getInstance(): FileNavigator = service<FileNavigator>()
   }
 
-  default boolean canNavigate(@NotNull OpenFileDescriptor descriptor) {
-    return descriptor.getFile().isValid();
-  }
+  fun canNavigate(descriptor: OpenFileDescriptor): Boolean = descriptor.file.isValid
 
-  default boolean canNavigateToSource(@NotNull OpenFileDescriptor descriptor) {
-    return descriptor.getFile().isValid();
-  }
+  fun canNavigateToSource(descriptor: OpenFileDescriptor): Boolean = descriptor.file.isValid
 
-  void navigate(@NotNull OpenFileDescriptor descriptor, boolean requestFocus);
+  fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean)
 
-  boolean navigateInEditor(@NotNull OpenFileDescriptor descriptor, boolean requestFocus);
+  fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean
 }

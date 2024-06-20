@@ -15450,13 +15450,6 @@ a:com.intellij.openapi.fileEditor.ChangeEditorSplitAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-f:com.intellij.openapi.fileEditor.FileNavigatorImpl
-- com.intellij.openapi.fileEditor.FileNavigator
-- <init>():V
-- canNavigateToSource(com.intellij.openapi.fileEditor.OpenFileDescriptor):Z
-- navigate(com.intellij.openapi.fileEditor.OpenFileDescriptor,Z):V
-- *f:navigateIgnoringContextEditor(com.intellij.pom.Navigatable):Z
-- navigateInEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor,Z):Z
 f:com.intellij.openapi.fileEditor.LayoutActionsFloatingToolbar
 - com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - <init>(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.Disposable):V

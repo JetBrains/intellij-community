@@ -3184,11 +3184,14 @@ com.intellij.openapi.fileEditor.FileEditorProvider
 - readState(org.jdom.Element,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditorState
 - writeState(com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.project.Project,org.jdom.Element):V
 com.intellij.openapi.fileEditor.FileNavigator
+- sf:Companion:com.intellij.openapi.fileEditor.FileNavigator$Companion
 - canNavigate(com.intellij.openapi.fileEditor.OpenFileDescriptor):Z
 - canNavigateToSource(com.intellij.openapi.fileEditor.OpenFileDescriptor):Z
 - s:getInstance():com.intellij.openapi.fileEditor.FileNavigator
 - a:navigate(com.intellij.openapi.fileEditor.OpenFileDescriptor,Z):V
 - a:navigateInEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor,Z):Z
+f:com.intellij.openapi.fileEditor.FileNavigator$Companion
+- f:getInstance():com.intellij.openapi.fileEditor.FileNavigator
 com.intellij.openapi.fileEditor.FileOpenedSyncListener
 - sf:Companion:com.intellij.openapi.fileEditor.FileOpenedSyncListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic

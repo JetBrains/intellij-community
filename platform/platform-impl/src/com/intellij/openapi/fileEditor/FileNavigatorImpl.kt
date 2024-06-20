@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
 import com.intellij.ide.DataManager
@@ -9,7 +9,9 @@ import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class FileNavigatorImpl : FileNavigator {
   private val ignoreContextEditor = ThreadLocal<Boolean?>()
 
@@ -93,8 +95,7 @@ private fun navigateInAnyFileEditor(descriptor: OpenFileDescriptor, focusEditor:
   val editors = fileEditorManager.openFileEditor(descriptor, focusEditor)
   for (editor in editors) {
     if (editor is TextEditor) {
-      val e = editor.editor
-      fileEditorManager.runWhenLoaded(e) { OpenFileDescriptor.unfoldCurrentLine(e) }
+      fileEditorManager.runWhenLoaded(editor.editor) { OpenFileDescriptor.unfoldCurrentLine(editor.editor) }
     }
   }
   return !editors.isEmpty()
