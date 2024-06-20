@@ -54,7 +54,7 @@ internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, st
   try {
     PathManager.loadProperties()
     addBootstrapTiming("properties loading", startupTimings)
-    PathManager.customizePaths()
+    PathManager.customizePaths(args)
     addBootstrapTiming("customizePaths", startupTimings)
     P3SupportInstaller.seal()
 

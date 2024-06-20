@@ -29,7 +29,7 @@ class P3PathCustomizer : PathCustomizer {
     const val optionName = "p3.project.location"
   }
 
-  override fun customizePaths(): PathCustomizer.CustomPaths {
+  override fun customizePaths(args: List<String>): PathCustomizer.CustomPaths {
     var projectLocation = System.getProperty(optionName)
     if (projectLocation.isNullOrEmpty())
       projectLocation = "JetBrains_P3_Default_Project_Location"

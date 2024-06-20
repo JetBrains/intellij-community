@@ -46,7 +46,6 @@ public final class PathManager {
   private static final String LOG_DIRECTORY = "log";
   private static final String CONFIG_DIRECTORY = "config";
   private static final String SYSTEM_DIRECTORY = "system";
-  private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
   private static final String COMMUNITY_MARKER = "intellij.idea.community.main.iml";
   private static final String ULTIMATE_MARKER = ".ultimate.root.marker";
   private static final String PRODUCT_INFO_JSON = "product-info.json";
@@ -58,6 +57,7 @@ public final class PathManager {
   private static volatile String ourHomePath;
   private static volatile List<Path> ourBinDirectories;
   private static Path ourCommonDataPath;
+  private static String ourPathSelector = System.getProperty(PROPERTY_PATHS_SELECTOR);
   private static String ourConfigPath;
   private static String ourSystemPath;
   private static String ourScratchPath;
@@ -332,9 +332,19 @@ public final class PathManager {
   @ApiStatus.Internal
   @SuppressWarnings("IdentifierGrammar")
   public static @Nullable String getPathsSelector() {
-    return PATHS_SELECTOR;
+    return ourPathSelector;
   }
 
+  /**
+   * Provides a way to update the path selected. This is a temporary solution, it'll be removed when RDCT-1474 is fixed.
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static void setPathSelector(@NotNull String newValue) {
+    ourPathSelector = newValue;
+    System.setProperty(PROPERTY_PATHS_SELECTOR, newValue);
+  }
+  
   /**
    * Returns the path to the directory where settings are stored.
    * Usually, you don't need to access this directory directly, use {@link com.intellij.openapi.components.PersistentStateComponent} instead.
@@ -351,7 +361,7 @@ public final class PathManager {
     if (path == null) {
       String explicit = getExplicitPath(PROPERTY_CONFIG_PATH);
       ourConfigPath = path = explicit != null ? explicit :
-                  PATHS_SELECTOR != null ? getDefaultConfigPathFor(PATHS_SELECTOR) :
+                             ourPathSelector != null ? getDefaultConfigPathFor(ourPathSelector) :
                   getHomePath() + '/' + CONFIG_DIRECTORY;
     }
     return path;
@@ -412,7 +422,8 @@ public final class PathManager {
     if (path == null) {
       String explicit = getExplicitPath(PROPERTY_PLUGINS_PATH);
       ourPluginPath = path = explicit != null ? explicit :
-        PATHS_SELECTOR != null && System.getProperty(PROPERTY_CONFIG_PATH) == null ? getDefaultPluginPathFor(PATHS_SELECTOR) :
+                             ourPathSelector != null && System.getProperty(PROPERTY_CONFIG_PATH) == null ? getDefaultPluginPathFor(
+                               ourPathSelector) :
         getConfigPath() + '/' + PLUGINS_DIRECTORY;
     }
     return path;
@@ -431,7 +442,7 @@ public final class PathManager {
    */
   public static @Nullable String getCustomOptionsDirectory() {
     // do not use getConfigPath() here - as it may be not yet defined
-    return PATHS_SELECTOR != null ? getDefaultConfigPathFor(PATHS_SELECTOR) : null;
+    return ourPathSelector != null ? getDefaultConfigPathFor(ourPathSelector) : null;
   }
 
   /**
@@ -452,7 +463,7 @@ public final class PathManager {
     if (path == null) {
       String explicit = getExplicitPath(PROPERTY_SYSTEM_PATH);
       ourSystemPath = path = explicit != null ? explicit :
-        PATHS_SELECTOR != null ? getDefaultSystemPathFor(PATHS_SELECTOR) :
+                             ourPathSelector != null ? getDefaultSystemPathFor(ourPathSelector) :
         getHomePath() + '/' + SYSTEM_DIRECTORY;
     }
     return path;
@@ -505,7 +516,8 @@ public final class PathManager {
     if (path == null) {
       String explicit = getExplicitPath(PROPERTY_LOG_PATH);
       ourLogPath = path = explicit != null ? explicit :
-        PATHS_SELECTOR != null && System.getProperty(PROPERTY_SYSTEM_PATH) == null ? getDefaultLogPathFor(PATHS_SELECTOR) :
+                          ourPathSelector != null && System.getProperty(PROPERTY_SYSTEM_PATH) == null ? getDefaultLogPathFor(
+                            ourPathSelector) :
         getSystemPath() + '/' + LOG_DIRECTORY;
     }
     return path;
@@ -704,7 +716,7 @@ public final class PathManager {
   }
 
   @ApiStatus.Internal
-  public static void customizePaths() {
+  public static void customizePaths(List<String> args) {
     String property = System.getProperty(SYSTEM_PATHS_CUSTOMIZER);
     if (property == null) return;
 
@@ -712,7 +724,7 @@ public final class PathManager {
       Class<?> aClass = PathManager.class.getClassLoader().loadClass(property);
       Object customizer = aClass.getConstructor().newInstance();
       if (customizer instanceof PathCustomizer) {
-        PathCustomizer.CustomPaths paths = ((PathCustomizer)customizer).customizePaths();
+        PathCustomizer.CustomPaths paths = ((PathCustomizer)customizer).customizePaths(args);
         if (paths != null) {
           ourOriginalConfigDir = getConfigDir();
           ourOriginalSystemDir = getSystemDir();

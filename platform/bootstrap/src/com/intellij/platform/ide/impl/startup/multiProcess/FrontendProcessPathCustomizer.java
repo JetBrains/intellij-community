@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathCustomizer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.impl.P3SupportInstaller;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.util.UriUtilKt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -12,11 +13,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -39,7 +43,9 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
   private static volatile boolean enabled;
 
   @Override
-  public CustomPaths customizePaths() {
+  public CustomPaths customizePaths(@NotNull List<String> args) {
+    updatePathSelectorForCommunityEditions(args);
+    
     Path newConfig;
     Path basePerProcessDir = getFolderForPerProcessData();
 
@@ -81,6 +87,35 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
     P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(new ClientP3Support());
     enabled = true;
     return new CustomPaths(newConfig.toString(), newSystem.toString(), pluginsPath, newLog.toString(), startupScriptDir);
+  }
+
+  /**
+   * Currently, we use the same frontend distribution for IntelliJ IDEA Community and Ultimate, and for PyCharm Community and Professional.
+   * To use the proper settings directory, this method updates the path selector based on the product code specified in the join link in
+   * the command line arguments. This won't be needed when we use different frontend distributions for different editions (RDCT-1474).
+   */
+  private static void updatePathSelectorForCommunityEditions(@NotNull List<String> args) {
+    String pathsSelector = PathManager.getPathsSelector();
+    String ideaUltimateSelector = "IntelliJIdea";
+    String pycharmProfessionalSelector = "PyCharm";
+    if (pathsSelector == null || !pathsSelector.startsWith(ideaUltimateSelector) && !pathsSelector.startsWith(pycharmProfessionalSelector)
+        || args.size() < 2 || !"thinClient".equals(args.get(0))) {
+      return;
+    }
+
+    try {
+      var uri = new URI(args.get(1));
+      var productCode = UriUtilKt.getFragmentParameters(uri).get("p");
+      if (productCode.equals("IC") && pathsSelector.startsWith(ideaUltimateSelector)) {
+        PathManager.setPathSelector("IdeaIC" + pathsSelector.substring(ideaUltimateSelector.length()));
+      }
+      else if (productCode.equals("PC") && pathsSelector.startsWith(pycharmProfessionalSelector)) {
+        PathManager.setPathSelector("PyCharmCE" + pathsSelector.substring(pycharmProfessionalSelector.length()));
+      }
+    }
+    catch (URISyntaxException e) {
+      System.err.println("Failed to update path selector: " + e);
+    }
   }
 
   private static @NotNull Path getFolderForPerProcessData() {
