@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.diff.*;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.*;
+import com.intellij.diff.editor.DiffViewerVirtualFile;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.impl.ui.DiffToolChooser;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
@@ -90,6 +91,7 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
  * @see CacheDiffRequestProcessor
  * @see CacheDiffRequestProcessor.Simple
  * @see com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+ * @see DiffViewerVirtualFile
  */
 public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedDisposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);

@@ -18,6 +18,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.LinkedListWithSum
 import kotlin.math.max
 
+/**
+ * Utility methods to show a mutable diff window that allows swapping compared files on-the-fly.
+ *
+ * See [com.intellij.diff.actions.ShowBlankDiffWindowAction]
+ */
 object BlankDiffWindowUtil {
   val BLANK_KEY = Key.create<Boolean>("Diff.BlankWindow")
 

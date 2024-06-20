@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Set;
 
-@ApiStatus.Internal
+/**
+ * Consider using {@link BaseShowDiffAction} instead.
+ */
 public class CompareFilesAction extends BaseShowDiffAction {
 
   /**

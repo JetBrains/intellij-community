@@ -21,6 +21,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.merge.MergeTool;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.LineRange;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.Navigatable;
@@ -34,13 +35,25 @@ public interface DiffDataKeys {
   DataKey<LineRange> CURRENT_CHANGE_RANGE = DataKey.create("diff_current_change_range");
 
   DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("diff_request");
-  DataKey<DiffRequest> DIFF_REQUEST_TO_COMPARE = DataKey.create("diff_request_to_compare");
   DataKey<DiffContext> DIFF_CONTEXT = DataKey.create("diff_context");
   DataKey<FrameDiffTool.DiffViewer> DIFF_VIEWER = DataKey.create("diff_frame_viewer");
-  DataKey<FrameDiffTool.DiffViewer> WRAPPING_DIFF_VIEWER = DataKey.create("main_diff_frame_viewer"); // if DiffViewerWrapper is used
+  /**
+   * @see com.intellij.diff.impl.DiffViewerWrapper
+   */
+  DataKey<FrameDiffTool.DiffViewer> WRAPPING_DIFF_VIEWER = DataKey.create("main_diff_frame_viewer");
 
   DataKey<MergeTool.MergeViewer> MERGE_VIEWER = DataKey.create("merge_viewer");
 
   DataKey<PrevNextDifferenceIterable> PREV_NEXT_DIFFERENCE_ITERABLE = DataKey.create("prev_next_difference_iterable");
   DataKey<DiffChangedRangeProvider> EDITOR_CHANGED_RANGE_PROVIDER = DataKey.create("diff_changed_range_provider");
+
+  /**
+   * A simple way to enable a "Compare Files" action for a given context.
+   * <p>
+   * Not to be confused with {@link #DIFF_REQUEST} key that is available in context of
+   * an already-visible {@link FrameDiffTool.DiffViewer}.
+   * <p>
+   * See also {@link com.intellij.diff.actions.ShowDiffAction} and {@link AnActionExtensionProvider} for more flexibility.
+   */
+  DataKey<DiffRequest> DIFF_REQUEST_TO_COMPARE = DataKey.create("diff_request_to_compare");
 }

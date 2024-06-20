@@ -34,11 +34,31 @@ a:com.intellij.diff.DiffContextEx
 - a:reopenDiffRequest():V
 - a:setWindowTitle(java.lang.String):V
 - a:showProgressBar(Z):V
+a:com.intellij.diff.actions.BaseShowDiffAction
+- com.intellij.openapi.project.DumbAwareAction
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- s:createMutableChainFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.actions.impl.MutableDiffRequestChain
+- s:createMutableChainFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.actions.impl.MutableDiffRequestChain
+- pa:getDiffRequestChain(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.diff.chains.DiffRequestChain
+- ps:hasContent(com.intellij.openapi.vfs.VirtualFile):Z
+- pa:isAvailable(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.diff.actions.BlankDiffWindowUtil
 - sf:INSTANCE:com.intellij.diff.actions.BlankDiffWindowUtil
 - sf:REMEMBER_CONTENT_KEY:com.intellij.openapi.util.Key
 - sf:createBlankDiffRequestChain(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent):com.intellij.diff.actions.impl.MutableDiffRequestChain
 - bs:createBlankDiffRequestChain$default(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,I,java.lang.Object):com.intellij.diff.actions.impl.MutableDiffRequestChain
+c:com.intellij.diff.actions.CompareFilesAction
+- com.intellij.diff.actions.BaseShowDiffAction
+- sf:DIFF_REQUEST:com.intellij.openapi.actionSystem.DataKey
+- sf:LAST_USED_FILE_KEY:java.lang.String
+- sf:LAST_USED_FOLDER_KEY:java.lang.String
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- p:getDiffRequest(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.diff.requests.DiffRequest
+- p:getDiffRequestChain(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.diff.chains.DiffRequestChain
+- p:isAvailable(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.diff.actions.impl.DiffEdtDataRule
 - com.intellij.openapi.actionSystem.EdtDataRule
 - <init>():V

@@ -17,11 +17,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public abstract class BaseShowDiffAction extends DumbAwareAction {
   BaseShowDiffAction() {
     setEnabledInModalContext(true);
@@ -56,17 +54,17 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
   protected abstract DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e);
 
   @NotNull
-  protected static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
-                                                                       @NotNull VirtualFile file1,
-                                                                       @NotNull VirtualFile file2) {
+  public static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
+                                                                    @NotNull VirtualFile file1,
+                                                                    @NotNull VirtualFile file2) {
     return createMutableChainFromFiles(project, file1, file2, null);
   }
 
   @NotNull
-  protected static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
-                                                                       @NotNull VirtualFile file1,
-                                                                       @NotNull VirtualFile file2,
-                                                                       @Nullable VirtualFile baseFile) {
+  public static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
+                                                                    @NotNull VirtualFile file1,
+                                                                    @NotNull VirtualFile file2,
+                                                                    @Nullable VirtualFile baseFile) {
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
     DiffRequestFactory requestFactory = DiffRequestFactory.getInstance();
 
