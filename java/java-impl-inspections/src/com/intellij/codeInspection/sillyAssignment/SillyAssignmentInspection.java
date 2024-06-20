@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sillyAssignment;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -56,9 +56,11 @@ public final class SillyAssignmentInspection extends AbstractBaseJavaLocalInspec
 
       @Override public void visitVariable(final @NotNull PsiVariable variable) {
         final PsiExpression initializer = PsiUtil.deparenthesizeExpression(variable.getInitializer());
-        if (initializer instanceof PsiAssignmentExpression) {
-          final PsiExpression lExpr = PsiUtil.deparenthesizeExpression(((PsiAssignmentExpression)initializer).getLExpression());
-          checkExpression(variable, lExpr);
+        if (initializer instanceof PsiAssignmentExpression assignment) {
+          if (assignment.getOperationTokenType() != JavaTokenType.EQ) {
+            return; // skip red unfixable code for local variables and green unfixable code for fields
+          } 
+          checkExpression(variable, PsiUtil.deparenthesizeExpression(assignment.getLExpression()));
         }
         else {
           checkExpression(variable, initializer);
