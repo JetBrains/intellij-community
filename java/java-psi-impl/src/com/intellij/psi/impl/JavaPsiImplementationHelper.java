@@ -38,4 +38,8 @@ public abstract class JavaPsiImplementationHelper {
   public abstract @NotNull PsiSymbolReference getSnippetRegionSymbol(@NotNull PsiSnippetAttributeValue value);
 
   public abstract @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token, @Nullable String explicitSuper);
+  /**
+   * Returns a PsiSymbolReference corresponding to the {@code @inheritDoc} token.
+   * This makes it possible to navigate to the inherited doc.
+   */
 }
