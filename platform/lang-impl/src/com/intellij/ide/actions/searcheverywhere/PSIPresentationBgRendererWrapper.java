@@ -100,9 +100,16 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
       return new FoundItemDescriptor<>(new PsiItemWithSimilarity<>(descriptorWithPresentation.getItem(),
                                                                    itemWithSimilarity.getSimilarityScore()), elementDescriptor.getWeight());
     }
+
     if (elementDescriptor.getItem() instanceof PsiElement psi) {
       TargetPresentation presentation = presentationCalculator.apply(psi);
       return new FoundItemDescriptor<>(new PsiItemWithPresentation(psi, presentation), elementDescriptor.getWeight());
+    }
+
+    if (elementDescriptor.getItem() instanceof PsiElementNavigationItem psiElementNavigationItem) {
+      var realElement = psiElementNavigationItem.getTargetElement();
+      TargetPresentation presentation = presentationCalculator.apply(realElement);
+      return new FoundItemDescriptor<>(new PsiItemWithPresentation(realElement, presentation), elementDescriptor.getWeight());
     }
 
     return elementDescriptor;
