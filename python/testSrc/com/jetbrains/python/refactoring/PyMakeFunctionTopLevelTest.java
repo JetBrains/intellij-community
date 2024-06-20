@@ -124,7 +124,6 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     return false;
   }
 
-  //PY-44858
   private void doTestRefactoringNotCreateInitCommon(String pathToOriginFunction, String destination) throws IOException {
     final String rootBeforePath = getTestName(true) + "/before";
     final String rootAfterPath = getTestName(true) + "/after";
@@ -134,24 +133,28 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
   }
 
+  //PY-44858
   public void testRefactoringNotCreateInitInAnotherDir() throws IOException {
     String pathToOriginFunction = "mypkg/a/main.py";
     String destination = "mypkg/b/other.py";
     doTestRefactoringNotCreateInitCommon(pathToOriginFunction, destination);
   }
 
+  //PY-44858
   public void testRefactoringNotCreateInitInSameDir() throws IOException {
     String pathToOriginFunction = "mypkg/a/main.py";
     String destination = "mypkg/a/other.py";
     doTestRefactoringNotCreateInitCommon(pathToOriginFunction, destination);
   }
 
+  //PY-44858
   public void testRefactoringNotCreateInitInParentDir() throws IOException {
     String pathToOriginFunction = "mypkg/a/b/main.py";
     String destination = "mypkg/a/other.py";
     doTestRefactoringNotCreateInitCommon(pathToOriginFunction, destination);
   }
 
+  //PY-44858
   public void testRefactoringNotCreateInitInChildDir() throws IOException {
     String pathToOriginFunction = "mypkg/a/main.py";
     String destination = "mypkg/a/b/other.py";

@@ -143,6 +143,7 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
     doTestNotCreateInitCommon(baseName, pathToSuperclass, pathToOriginClass);
   }
 
+  // PY-44858
   public void testExtractNotCreateInitInSameDir(){
     String baseName = "refactoring/extractsuperclass/extractNotCreateInitInSameDir/mypkg/";
     String pathToSuperclass = "a";
@@ -150,6 +151,7 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
     doTestNotCreateInitCommon(baseName, pathToSuperclass, pathToOriginClass);
   }
 
+  // PY-44858
   public void testExtractNotCreateInitInParentDir(){
     String baseName = "refactoring/extractsuperclass/extractNotCreateInitInParentDir/mypkg/";
     String pathToSuperclass = "a/b";
@@ -157,6 +159,7 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
     doTestNotCreateInitCommon(baseName, pathToSuperclass, pathToOriginClass);
   }
 
+  // PY-44858
   public void testExtractNotCreateInitInChildDir(){
     String baseName = "refactoring/extractsuperclass/extractNotCreateInitInChildDir/mypkg/";
     String pathToSuperclass = "b";
