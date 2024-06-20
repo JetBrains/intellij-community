@@ -15,10 +15,16 @@
  */
 package org.jetbrains.jps.service;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.concurrent.ExecutorService;
 
 public abstract class SharedThreadPool implements ExecutorService {
   public static SharedThreadPool getInstance() {
     return JpsServiceManager.getInstance().getService(SharedThreadPool.class);
+  }
+
+  @ApiStatus.Internal
+  protected SharedThreadPool() {
   }
 }

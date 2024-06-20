@@ -2,6 +2,7 @@
 package org.jetbrains.jps.model.java;
 
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -33,10 +34,12 @@ public class JpsJavaSdkType extends JpsSdkType<JpsDummyElement> implements JpsEl
     return "java sdk type";
   }
 
+  @ApiStatus.Internal
   public static int getJavaVersion(@Nullable JpsSdk<?> sdk) {
     return parseVersion(sdk != null && sdk.getSdkType() instanceof JpsJavaSdkType ? sdk.getVersionString() : null);
   }
 
+  @ApiStatus.Internal
   public static int parseVersion(String javaVersionString) {
     JavaVersion version = JavaVersion.tryParse(javaVersionString);
     return version != null ? version.feature : 0;
@@ -46,6 +49,7 @@ public class JpsJavaSdkType extends JpsSdkType<JpsDummyElement> implements JpsEl
    * A value to pass with "-source", "-target" and "--release" compiler options.
    * Should work for Javac as well as ECJ-based compilers.
    */
+  @ApiStatus.Internal
   @NotNull
   public static String complianceOption(@NotNull JavaVersion version) {
     // for "-source" and "-target" options, a compiler accepts both "x" and "1.x" formats; for "--release" - only "x"

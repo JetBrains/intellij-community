@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.artifact;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
@@ -30,6 +31,7 @@ public interface JpsArtifact extends JpsNamedElement, JpsReferenceableElement<Jp
   @Nullable
   String getOutputPath();
 
+  @ApiStatus.Internal
   void setOutputPath(@Nullable String outputPath);
 
   @Nullable
@@ -38,14 +40,17 @@ public interface JpsArtifact extends JpsNamedElement, JpsReferenceableElement<Jp
   @NotNull
   JpsCompositePackagingElement getRootElement();
 
+  @ApiStatus.Internal
   void setRootElement(@NotNull JpsCompositePackagingElement rootElement);
 
+  @ApiStatus.Internal
   boolean isBuildOnMake();
 
   @NotNull
   @Override
   JpsArtifactReference createReference();
 
+  @ApiStatus.Internal
   void setBuildOnMake(boolean buildOnMake);
 
   JpsElement getProperties();

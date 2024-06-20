@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.ex;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -26,6 +27,7 @@ public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implemen
   protected JpsElementBase() {
   }
 
+  @ApiStatus.Internal
   public void setParent(@Nullable JpsElementBase<?> parent) {
     if (myParent != null && parent != null) {
       throw new AssertionError("Parent for " + this + " is already set: " + myParent);
@@ -40,6 +42,7 @@ public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implemen
   protected void fireElementChanged() {
   }
 
+  @ApiStatus.Internal
   protected static void setParent(@NotNull JpsElement element, @Nullable JpsElementBase<?> parent) {
     ((JpsElementBase<?>)element).setParent(parent);
   }

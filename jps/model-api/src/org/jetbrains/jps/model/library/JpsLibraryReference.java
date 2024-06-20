@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.library;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElement;
@@ -33,5 +34,6 @@ public interface JpsLibraryReference extends JpsElementReference<JpsLibrary> {
   @Override
   JpsLibraryReference asExternal(@NotNull JpsModel model);
 
+  @ApiStatus.Internal
   JpsElementReference<? extends JpsCompositeElement> getParentReference();
 }

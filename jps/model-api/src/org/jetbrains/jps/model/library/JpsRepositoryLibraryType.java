@@ -15,9 +15,11 @@
  */
 package org.jetbrains.jps.model.library;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementTypeBase;
 
+@ApiStatus.Internal
 public class JpsRepositoryLibraryType extends JpsElementTypeBase<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>
   implements JpsLibraryType<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> {
 

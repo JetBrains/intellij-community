@@ -55,7 +55,6 @@ org.jetbrains.jps.model.JpsElementContainer
 org.jetbrains.jps.model.JpsElementCreator
 - a:create():org.jetbrains.jps.model.JpsElement
 a:org.jetbrains.jps.model.JpsElementFactory
-- <init>():V
 - a:createDummyElement():org.jetbrains.jps.model.JpsDummyElement
 - a:createLibraryReference(java.lang.String,org.jetbrains.jps.model.JpsElementReference):org.jetbrains.jps.model.library.JpsLibraryReference
 - a:createModuleReference(java.lang.String):org.jetbrains.jps.model.module.JpsModuleReference
@@ -77,8 +76,6 @@ a:org.jetbrains.jps.model.JpsEncodingConfigurationService
 - a:getGlobalEncoding(org.jetbrains.jps.model.JpsGlobal):java.lang.String
 - s:getInstance():org.jetbrains.jps.model.JpsEncodingConfigurationService
 - a:getProjectEncoding(org.jetbrains.jps.model.JpsModel):java.lang.String
-- a:setEncodingConfiguration(org.jetbrains.jps.model.JpsProject,java.lang.String,java.util.Map):org.jetbrains.jps.model.JpsEncodingProjectConfiguration
-- a:setGlobalEncoding(org.jetbrains.jps.model.JpsGlobal,java.lang.String):V
 org.jetbrains.jps.model.JpsEncodingProjectConfiguration
 - org.jetbrains.jps.model.JpsElement
 - a:getEncoding(java.io.File):java.lang.String
@@ -91,17 +88,12 @@ org.jetbrains.jps.model.JpsExcludePattern
 org.jetbrains.jps.model.JpsFileTypesConfiguration
 - org.jetbrains.jps.model.JpsElement
 - a:getIgnoredPatternString():java.lang.String
-- a:setIgnoredPatternString(java.lang.String):V
 org.jetbrains.jps.model.JpsGlobal
 - org.jetbrains.jps.model.JpsCompositeElement
 - org.jetbrains.jps.model.JpsReferenceableElement
-- a:addLibrary(org.jetbrains.jps.model.library.JpsLibraryType,java.lang.String):org.jetbrains.jps.model.library.JpsLibrary
-- a:addSdk(java.lang.String,java.lang.String,java.lang.String,org.jetbrains.jps.model.library.sdk.JpsSdkType):org.jetbrains.jps.model.library.JpsTypedLibrary
-- a:addSdk(java.lang.String,java.lang.String,java.lang.String,org.jetbrains.jps.model.library.sdk.JpsSdkType,org.jetbrains.jps.model.JpsElement):org.jetbrains.jps.model.library.JpsTypedLibrary
 - a:getFileTypesConfiguration():org.jetbrains.jps.model.JpsFileTypesConfiguration
 - a:getLibraryCollection():org.jetbrains.jps.model.library.JpsLibraryCollection
 - a:getPathMapper():org.jetbrains.jps.model.serialization.JpsPathMapper
-- a:setPathMapper(org.jetbrains.jps.model.serialization.JpsPathMapper):V
 org.jetbrains.jps.model.JpsModel
 - a:getGlobal():org.jetbrains.jps.model.JpsGlobal
 - a:getProject():org.jetbrains.jps.model.JpsProject
@@ -113,10 +105,6 @@ org.jetbrains.jps.model.JpsNamedElement
 org.jetbrains.jps.model.JpsProject
 - org.jetbrains.jps.model.JpsCompositeElement
 - org.jetbrains.jps.model.JpsReferenceableElement
-- a:addLibrary(java.lang.String,org.jetbrains.jps.model.library.JpsLibraryType):org.jetbrains.jps.model.library.JpsLibrary
-- a:addModule(java.lang.String,org.jetbrains.jps.model.module.JpsModuleType):org.jetbrains.jps.model.module.JpsModule
-- a:addModule(org.jetbrains.jps.model.module.JpsModule):V
-- a:addRunConfiguration(java.lang.String,org.jetbrains.jps.model.runConfiguration.JpsRunConfigurationType,org.jetbrains.jps.model.JpsElement):org.jetbrains.jps.model.runConfiguration.JpsTypedRunConfiguration
 - a:getLibraryCollection():org.jetbrains.jps.model.library.JpsLibraryCollection
 - a:getModel():org.jetbrains.jps.model.JpsModel
 - a:getModules():java.util.List
@@ -125,8 +113,6 @@ org.jetbrains.jps.model.JpsProject
 - a:getRunConfigurations():java.util.List
 - a:getRunConfigurations(org.jetbrains.jps.model.runConfiguration.JpsRunConfigurationType):java.lang.Iterable
 - a:getSdkReferencesTable():org.jetbrains.jps.model.module.JpsSdkReferencesTable
-- a:removeModule(org.jetbrains.jps.model.module.JpsModule):V
-- a:setName(java.lang.String):V
 org.jetbrains.jps.model.JpsReferenceableElement
 - a:createReference():org.jetbrains.jps.model.JpsElementReference
 org.jetbrains.jps.model.JpsSimpleElement
@@ -139,19 +125,7 @@ org.jetbrains.jps.model.JpsTypedElement
 - a:getType():org.jetbrains.jps.model.JpsElementType
 org.jetbrains.jps.model.JpsUrlList
 - org.jetbrains.jps.model.JpsElement
-- a:addUrl(java.lang.String):V
 - a:getUrls():java.util.List
-- a:removeUrl(java.lang.String):V
-c:org.jetbrains.jps.model.artifact.DirectoryArtifactType
-- org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties
-- org.jetbrains.jps.model.artifact.JpsArtifactType
-- sf:INSTANCE:org.jetbrains.jps.model.artifact.DirectoryArtifactType
-- <init>():V
-c:org.jetbrains.jps.model.artifact.JarArtifactType
-- org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties
-- org.jetbrains.jps.model.artifact.JpsArtifactType
-- sf:INSTANCE:org.jetbrains.jps.model.artifact.JarArtifactType
-- <init>():V
 org.jetbrains.jps.model.artifact.JpsArtifact
 - org.jetbrains.jps.model.JpsCompositeElement
 - org.jetbrains.jps.model.JpsNamedElement
@@ -162,18 +136,12 @@ org.jetbrains.jps.model.artifact.JpsArtifact
 - a:getOutputPath():java.lang.String
 - a:getProperties():org.jetbrains.jps.model.JpsElement
 - a:getRootElement():org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement
-- a:isBuildOnMake():Z
-- a:setBuildOnMake(Z):V
-- a:setOutputPath(java.lang.String):V
-- a:setRootElement(org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement):V
 org.jetbrains.jps.model.artifact.JpsArtifactReference
 - org.jetbrains.jps.model.JpsElementReference
 - a:asExternal(org.jetbrains.jps.model.JpsModel):org.jetbrains.jps.model.artifact.JpsArtifactReference
 - a:getArtifactName():java.lang.String
 a:org.jetbrains.jps.model.artifact.JpsArtifactService
 - <init>():V
-- a:addArtifact(org.jetbrains.jps.model.JpsProject,java.lang.String,org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement,org.jetbrains.jps.model.artifact.JpsArtifactType,org.jetbrains.jps.model.JpsElement):org.jetbrains.jps.model.artifact.JpsArtifact
-- a:createArtifact(java.lang.String,org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement,org.jetbrains.jps.model.artifact.JpsArtifactType,org.jetbrains.jps.model.JpsElement):org.jetbrains.jps.model.artifact.JpsArtifact
 - a:createReference(java.lang.String):org.jetbrains.jps.model.artifact.JpsArtifactReference
 - a:getArtifacts(org.jetbrains.jps.model.JpsProject):java.util.List
 - s:getInstance():org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -183,7 +151,6 @@ org.jetbrains.jps.model.artifact.JpsArtifactType
 org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement
 - org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement
 - a:getArchiveName():java.lang.String
-- a:setArchiveName(java.lang.String):V
 org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement
 - org.jetbrains.jps.model.artifact.elements.JpsComplexPackagingElement
 - a:getArtifactReference():org.jetbrains.jps.model.artifact.JpsArtifactReference
@@ -194,29 +161,21 @@ org.jetbrains.jps.model.artifact.elements.JpsComplexPackagingElement
 - a:getSubstitution():java.util.List
 org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement
 - org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
-- a:addChild(org.jetbrains.jps.model.artifact.elements.JpsPackagingElement):org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
 - a:getChildren():java.util.List
-- a:removeChild(org.jetbrains.jps.model.artifact.elements.JpsPackagingElement):V
 org.jetbrains.jps.model.artifact.elements.JpsDirectoryCopyPackagingElement
 - org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
 - a:getDirectoryPath():java.lang.String
-- a:setDirectoryPath(java.lang.String):V
 org.jetbrains.jps.model.artifact.elements.JpsDirectoryPackagingElement
 - org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement
 - a:getDirectoryName():java.lang.String
-- a:setDirectoryName(java.lang.String):V
 org.jetbrains.jps.model.artifact.elements.JpsExtractedDirectoryPackagingElement
 - org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
 - a:getFilePath():java.lang.String
 - a:getPathInJar():java.lang.String
-- a:setFilePath(java.lang.String):V
-- a:setPathInJar(java.lang.String):V
 org.jetbrains.jps.model.artifact.elements.JpsFileCopyPackagingElement
 - org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
 - a:getFilePath():java.lang.String
 - a:getRenamedOutputFileName():java.lang.String
-- a:setFilePath(java.lang.String):V
-- a:setRenamedOutputFileName(java.lang.String):V
 org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
 - org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
 - a:getLibraryReference():org.jetbrains.jps.model.library.JpsLibraryReference
@@ -262,8 +221,6 @@ a:org.jetbrains.jps.model.ex.JpsElementBase
 - getBulkModificationSupport():org.jetbrains.jps.model.JpsElement$BulkModificationSupport
 - p:getModel():org.jetbrains.jps.model.JpsModel
 - getParent():org.jetbrains.jps.model.ex.JpsElementBase
-- ps:setParent(org.jetbrains.jps.model.JpsElement,org.jetbrains.jps.model.ex.JpsElementBase):V
-- setParent(org.jetbrains.jps.model.ex.JpsElementBase):V
 c:org.jetbrains.jps.model.ex.JpsElementChildRoleBase
 - org.jetbrains.jps.model.JpsElementChildRole
 - p:<init>(java.lang.String):V
@@ -278,8 +235,6 @@ f:org.jetbrains.jps.model.ex.JpsElementCollectionRole
 a:org.jetbrains.jps.model.ex.JpsElementContainerEx
 - org.jetbrains.jps.model.JpsElementContainer
 - <init>():V
-- pa:getDataLock():java.lang.Object
-- pa:getElementsMap():java.util.Map
 a:org.jetbrains.jps.model.ex.JpsElementReferenceBase
 - org.jetbrains.jps.model.ex.JpsElementBase
 - org.jetbrains.jps.model.JpsElementReference
@@ -300,12 +255,6 @@ a:org.jetbrains.jps.model.ex.JpsExElementFactory
 - a:createContainer(org.jetbrains.jps.model.ex.JpsCompositeElementBase):org.jetbrains.jps.model.ex.JpsElementContainerEx
 - a:createContainerCopy(org.jetbrains.jps.model.ex.JpsElementContainerEx,org.jetbrains.jps.model.ex.JpsCompositeElementBase):org.jetbrains.jps.model.ex.JpsElementContainerEx
 - s:getInstance():org.jetbrains.jps.model.ex.JpsExElementFactory
-c:org.jetbrains.jps.model.ex.JpsFactoryElementChildRoleBase
-- org.jetbrains.jps.model.JpsElementChildRole
-- org.jetbrains.jps.model.JpsElementCreator
-- p:<init>(java.lang.String,org.jetbrains.jps.model.JpsElementCreator):V
-- create():org.jetbrains.jps.model.JpsElement
-- s:create(java.lang.String,org.jetbrains.jps.model.JpsElementCreator):org.jetbrains.jps.model.ex.JpsFactoryElementChildRoleBase
 a:org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase
 - org.jetbrains.jps.model.ex.JpsCompositeElementBase
 - org.jetbrains.jps.model.JpsNamedElement
@@ -317,12 +266,6 @@ a:org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
 - <init>():V
 - a:createMatcher(java.lang.String):com.intellij.openapi.fileTypes.FileNameMatcher
 - s:getInstance():org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
-org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension
-- org.jetbrains.jps.model.JpsElement
-- a:getExplodedUrl():java.lang.String
-- a:isExcludeExploded():Z
-- a:setExcludeExploded(Z):V
-- a:setExplodedUrl(java.lang.String):V
 org.jetbrains.jps.model.java.JavaModuleIndex
 - org.jetbrains.jps.model.JpsElement
 - a:getModuleInfoFile(org.jetbrains.jps.model.module.JpsModule,Z):java.io.File
@@ -338,8 +281,6 @@ c:org.jetbrains.jps.model.java.JavaResourceRootProperties
 - createCopy():org.jetbrains.jps.model.java.JavaResourceRootProperties
 - getRelativeOutputPath():java.lang.String
 - isForGeneratedSources():Z
-- setForGeneratedSources(Z):V
-- setRelativeOutputPath(java.lang.String):V
 f:org.jetbrains.jps.model.java.JavaResourceRootType
 - org.jetbrains.jps.model.ex.JpsElementTypeBase
 - org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -362,7 +303,6 @@ f:org.jetbrains.jps.model.java.JavaSourceRootType
 - createDefaultProperties():org.jetbrains.jps.model.java.JavaSourceRootProperties
 - isForTests():Z
 a:org.jetbrains.jps.model.java.JdkVersionDetector
-- <init>():V
 - a:detectJdkVersionInfo(java.lang.String):org.jetbrains.jps.model.java.JdkVersionDetector$JdkVersionInfo
 - a:detectJdkVersionInfo(java.lang.String,java.util.concurrent.ExecutorService):org.jetbrains.jps.model.java.JdkVersionDetector$JdkVersionInfo
 - s:formatVersionString(com.intellij.util.lang.JavaVersion):java.lang.String
@@ -436,8 +376,6 @@ org.jetbrains.jps.model.java.JpsJavaDependencyExtension
 - org.jetbrains.jps.model.JpsElement
 - a:getScope():org.jetbrains.jps.model.java.JpsJavaDependencyScope
 - a:isExported():Z
-- a:setExported(Z):V
-- a:setScope(org.jetbrains.jps.model.java.JpsJavaDependencyScope):V
 e:org.jetbrains.jps.model.java.JpsJavaDependencyScope
 - java.lang.Enum
 - sf:COMPILE:org.jetbrains.jps.model.java.JpsJavaDependencyScope
@@ -449,7 +387,6 @@ e:org.jetbrains.jps.model.java.JpsJavaDependencyScope
 - s:values():org.jetbrains.jps.model.java.JpsJavaDependencyScope[]
 a:org.jetbrains.jps.model.java.JpsJavaExtensionService
 - <init>():V
-- a:addJavaSdk(org.jetbrains.jps.model.JpsGlobal,java.lang.String,java.lang.String):org.jetbrains.jps.model.library.JpsTypedLibrary
 - a:createProductionModuleOutput(org.jetbrains.jps.model.module.JpsModuleReference):org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement
 - a:createProductionModuleSource(org.jetbrains.jps.model.module.JpsModuleReference):org.jetbrains.jps.model.java.JpsProductionModuleSourcePackagingElement
 - a:createResourceRootProperties(java.lang.String,Z):org.jetbrains.jps.model.java.JavaResourceRootProperties
@@ -457,7 +394,6 @@ a:org.jetbrains.jps.model.java.JpsJavaExtensionService
 - a:createSourceRootProperties(java.lang.String):org.jetbrains.jps.model.java.JavaSourceRootProperties
 - a:createSourceRootProperties(java.lang.String,Z):org.jetbrains.jps.model.java.JavaSourceRootProperties
 - a:createTestModuleOutput(org.jetbrains.jps.model.module.JpsModuleReference):org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement
-- a:createWrappedJavaSdkReference(org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper,org.jetbrains.jps.model.library.sdk.JpsSdkReference):org.jetbrains.jps.model.library.sdk.JpsSdkReference
 - s:dependencies(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 - s:dependencies(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 - a:enumerateDependencies(java.util.Collection):org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
@@ -466,20 +402,14 @@ a:org.jetbrains.jps.model.java.JpsJavaExtensionService
 - a:getCompilerConfiguration(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration
 - a:getDependencies(org.jetbrains.jps.model.module.JpsModule,org.jetbrains.jps.model.java.JpsJavaClasspathKind,Z):java.util.List
 - a:getDependencyExtension(org.jetbrains.jps.model.module.JpsDependencyElement):org.jetbrains.jps.model.java.JpsJavaDependencyExtension
-- a:getExplodedDirectoryExtension(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension
 - s:getInstance():org.jetbrains.jps.model.java.JpsJavaExtensionService
 - a:getJavaModuleIndex(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.java.JavaModuleIndex
 - a:getLanguageLevel(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.java.LanguageLevel
 - a:getModuleExtension(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.java.JpsJavaModuleExtension
-- a:getOrCreateDependencyExtension(org.jetbrains.jps.model.module.JpsDependencyElement):org.jetbrains.jps.model.java.JpsJavaDependencyExtension
-- a:getOrCreateExplodedDirectoryExtension(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension
-- a:getOrCreateModuleExtension(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.java.JpsJavaModuleExtension
-- a:getOrCreateProjectExtension(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.java.JpsJavaProjectExtension
 - a:getOutputDirectory(org.jetbrains.jps.model.module.JpsModule,Z):java.io.File
 - a:getOutputUrl(org.jetbrains.jps.model.module.JpsModule,Z):java.lang.String
 - a:getProjectExtension(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.java.JpsJavaProjectExtension
 - a:getTestModuleProperties(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.module.JpsTestModuleProperties
-- a:setTestModuleProperties(org.jetbrains.jps.model.module.JpsModule,org.jetbrains.jps.model.module.JpsModuleReference):V
 c:org.jetbrains.jps.model.java.JpsJavaLibraryType
 - org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties
 - org.jetbrains.jps.model.library.JpsLibraryType
@@ -494,11 +424,6 @@ org.jetbrains.jps.model.java.JpsJavaModuleExtension
 - a:getTestOutputUrl():java.lang.String
 - a:isExcludeOutput():Z
 - a:isInheritOutput():Z
-- a:setExcludeOutput(Z):V
-- a:setInheritOutput(Z):V
-- a:setLanguageLevel(org.jetbrains.jps.model.java.LanguageLevel):V
-- a:setOutputUrl(java.lang.String):V
-- a:setTestOutputUrl(java.lang.String):V
 c:org.jetbrains.jps.model.java.JpsJavaModuleType
 - org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties
 - org.jetbrains.jps.model.module.JpsModuleType
@@ -508,21 +433,14 @@ org.jetbrains.jps.model.java.JpsJavaProjectExtension
 - org.jetbrains.jps.model.JpsElement
 - a:getLanguageLevel():org.jetbrains.jps.model.java.LanguageLevel
 - a:getOutputUrl():java.lang.String
-- a:setLanguageLevel(org.jetbrains.jps.model.java.LanguageLevel):V
-- a:setOutputUrl(java.lang.String):V
 c:org.jetbrains.jps.model.java.JpsJavaSdkType
 - org.jetbrains.jps.model.library.sdk.JpsSdkType
 - org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties
 - sf:INSTANCE:org.jetbrains.jps.model.java.JpsJavaSdkType
 - <init>():V
-- s:complianceOption(com.intellij.util.lang.JavaVersion):java.lang.String
 - createDefaultProperties():org.jetbrains.jps.model.JpsDummyElement
 - s:getJavaExecutable(org.jetbrains.jps.model.library.sdk.JpsSdk):java.lang.String
-- s:getJavaVersion(org.jetbrains.jps.model.library.sdk.JpsSdk):I
 - getPresentableName():java.lang.String
-- s:parseVersion(java.lang.String):I
-org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper
-- a:getJavaSdkName(org.jetbrains.jps.model.JpsElement):java.lang.String
 f:org.jetbrains.jps.model.java.JpsNativeLibraryRootType
 - org.jetbrains.jps.model.library.JpsOrderRootType
 - sf:INSTANCE:org.jetbrains.jps.model.java.JpsNativeLibraryRootType
@@ -584,27 +502,13 @@ c:org.jetbrains.jps.model.java.compiler.EclipseCompilerOptions
 - ECJ_TOOL_PATH:java.lang.String
 - PROCEED_ON_ERROR:Z
 - <init>():V
-org.jetbrains.jps.model.java.compiler.JavaCompilers
-- sf:ECLIPSE_EMBEDDED_ID:java.lang.String
-- sf:ECLIPSE_ID:java.lang.String
-- sf:JAVAC_API_ID:java.lang.String
-- sf:JAVAC_ID:java.lang.String
-c:org.jetbrains.jps.model.java.compiler.JikesCompilerOptions
-- org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
-- IS_EMACS_ERRORS_MODE:Z
-- JIKES_PATH:java.lang.String
-- <init>():V
 org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes
-- a:addExcludedDirectory(java.lang.String,Z):V
-- a:addExcludedFile(java.lang.String):V
 - a:getExcludedDirectories():java.util.Set
 - a:getExcludedFiles():java.util.Set
 - a:getRecursivelyExcludedDirectories():java.util.Set
 - a:isExcluded(java.io.File):Z
 org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration
 - org.jetbrains.jps.model.JpsElement
-- a:addAnnotationProcessingProfile():org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
-- a:addResourcePattern(java.lang.String):V
 - a:getAnnotationProcessingProfile(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 - a:getAnnotationProcessingProfiles():java.util.Collection
 - a:getByteCodeTargetLevel(java.lang.String):java.lang.String
@@ -615,20 +519,10 @@ org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration
 - a:getJavaCompilerId():java.lang.String
 - a:getNotNullAnnotations():java.util.List
 - a:getResourcePatterns():java.util.List
-- a:getValidationConfiguration():org.jetbrains.jps.model.java.compiler.JpsValidationConfiguration
-- a:getValidationExcludes():org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes
 - a:isAddNotNullAssertions():Z
 - a:isClearOutputDirectoryOnRebuild():Z
 - a:isResourceFile(java.io.File,java.io.File):Z
-- a:setAddNotNullAssertions(Z):V
-- a:setClearOutputDirectoryOnRebuild(Z):V
-- a:setCompilerOptions(java.lang.String,org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions):V
 - a:setJavaCompilerId(java.lang.String):V
-- a:setModuleByteCodeTargetLevel(java.lang.String,java.lang.String):V
-- a:setNotNullAnnotations(java.util.List):V
-- a:setProjectByteCodeTargetLevel(java.lang.String):V
-- a:setUseReleaseOption(Z):V
-- a:setValidationConfiguration(Z,java.util.Set):V
 - a:useReleaseOption():Z
 c:org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 - org.jetbrains.jps.model.java.compiler.CompilerOptions
@@ -640,9 +534,6 @@ c:org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 - MAXIMUM_HEAP_SIZE:I
 - PREFER_TARGET_JDK_COMPILER:Z
 - <init>():V
-org.jetbrains.jps.model.java.compiler.JpsValidationConfiguration
-- a:isValidateOnBuild():Z
-- a:isValidatorEnabled(java.lang.String):Z
 org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 - org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration
 - sf:DEFAULT_PRODUCTION_DIR_NAME:java.lang.String
@@ -669,15 +560,9 @@ org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 - a:setProcOnly(Z):V
 - a:setProcessorPath(java.lang.String):V
 - a:setUseProcessorModulePath(Z):V
-c:org.jetbrains.jps.model.java.compiler.RmicCompilerOptions
-- org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
-- GENERATE_IIOP_STUBS:Z
-- IS_EANABLED:Z
-- <init>():V
 org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationProperties
 - org.jetbrains.jps.model.JpsElement
 - a:getMainClass():java.lang.String
-- a:setMainClass(java.lang.String):V
 c:org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationState
 - MAIN_CLASS_NAME:java.lang.String
 - <init>():V
@@ -688,33 +573,23 @@ f:org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationTy
 org.jetbrains.jps.model.library.JpsLibrary
 - org.jetbrains.jps.model.JpsNamedElement
 - org.jetbrains.jps.model.JpsReferenceableElement
-- a:addRoot(java.io.File,org.jetbrains.jps.model.library.JpsOrderRootType):V
-- a:addRoot(java.lang.String,org.jetbrains.jps.model.library.JpsOrderRootType):V
-- a:addRoot(java.lang.String,org.jetbrains.jps.model.library.JpsOrderRootType,org.jetbrains.jps.model.library.JpsLibraryRoot$InclusionOptions):V
 - a:asTyped(org.jetbrains.jps.model.library.JpsLibraryType):org.jetbrains.jps.model.library.JpsTypedLibrary
 - a:createReference():org.jetbrains.jps.model.library.JpsLibraryReference
-- a:delete():V
 - a:getFiles(org.jetbrains.jps.model.library.JpsOrderRootType):java.util.List
 - a:getPaths(org.jetbrains.jps.model.library.JpsOrderRootType):java.util.List
 - a:getProperties():org.jetbrains.jps.model.JpsElement
 - a:getRootUrls(org.jetbrains.jps.model.library.JpsOrderRootType):java.util.List
 - a:getRoots(org.jetbrains.jps.model.library.JpsOrderRootType):java.util.List
 - a:getType():org.jetbrains.jps.model.library.JpsLibraryType
-- a:removeUrl(java.lang.String,org.jetbrains.jps.model.library.JpsOrderRootType):V
 org.jetbrains.jps.model.library.JpsLibraryCollection
-- a:addLibrary(java.lang.String,org.jetbrains.jps.model.library.JpsLibraryType):org.jetbrains.jps.model.library.JpsLibrary
-- a:addLibrary(java.lang.String,org.jetbrains.jps.model.library.JpsLibraryType,org.jetbrains.jps.model.JpsElement):org.jetbrains.jps.model.library.JpsTypedLibrary
-- a:addLibrary(org.jetbrains.jps.model.library.JpsLibrary):V
 - a:findLibrary(java.lang.String):org.jetbrains.jps.model.library.JpsLibrary
 - a:findLibrary(java.lang.String,org.jetbrains.jps.model.library.JpsLibraryType):org.jetbrains.jps.model.library.JpsTypedLibrary
 - a:getLibraries():java.util.List
 - a:getLibraries(org.jetbrains.jps.model.library.JpsLibraryType):java.lang.Iterable
-- a:removeLibrary(org.jetbrains.jps.model.library.JpsLibrary):V
 org.jetbrains.jps.model.library.JpsLibraryReference
 - org.jetbrains.jps.model.JpsElementReference
 - a:asExternal(org.jetbrains.jps.model.JpsModel):org.jetbrains.jps.model.library.JpsLibraryReference
 - a:getLibraryName():java.lang.String
-- a:getParentReference():org.jetbrains.jps.model.JpsElementReference
 org.jetbrains.jps.model.library.JpsLibraryRoot
 - org.jetbrains.jps.model.JpsElement
 - a:getInclusionOptions():org.jetbrains.jps.model.library.JpsLibraryRoot$InclusionOptions
@@ -730,48 +605,11 @@ e:org.jetbrains.jps.model.library.JpsLibraryRoot$InclusionOptions
 - s:values():org.jetbrains.jps.model.library.JpsLibraryRoot$InclusionOptions[]
 org.jetbrains.jps.model.library.JpsLibraryType
 - org.jetbrains.jps.model.JpsElementType
-c:org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-- sf:DEFAULT_PACKAGING:java.lang.String
-- <init>(java.lang.String):V
-- <init>(java.lang.String,java.lang.String,java.lang.String):V
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,java.util.List):V
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,java.util.List,java.util.List):V
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,java.util.List,java.util.List,java.lang.String):V
-- <init>(java.lang.String,java.lang.String,java.lang.String,Z):V
-- <init>(java.lang.String,java.lang.String,java.lang.String,Z,java.util.List):V
-- <init>(java.lang.String,java.lang.String,Z,java.util.List):V
-- <init>(java.lang.String,java.lang.String,Z,java.util.List,java.util.List,java.lang.String):V
-- <init>(java.lang.String,Z,java.util.List):V
-- <init>(java.lang.String,Z,java.util.List,java.util.List,java.lang.String):V
-- equals(java.lang.Object):Z
-- getArtifactId():java.lang.String
-- getArtifactsVerification():java.util.List
-- getExcludedDependencies():java.util.List
-- getGroupId():java.lang.String
-- getJarRepositoryId():java.lang.String
-- getMavenId():java.lang.String
-- getPackaging():java.lang.String
-- getVersion():java.lang.String
-- hashCode():I
-- isIncludeTransitiveDependencies():Z
-- isVerifySha256Checksum():Z
-c:org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor$ArtifactVerification
-- <init>(java.lang.String,java.lang.String):V
-- equals(java.lang.Object):Z
-- getSha256sum():java.lang.String
-- getUrl():java.lang.String
-- hashCode():I
 a:org.jetbrains.jps.model.library.JpsOrderRootType
 - sf:COMPILED:org.jetbrains.jps.model.library.JpsOrderRootType
 - sf:DOCUMENTATION:org.jetbrains.jps.model.library.JpsOrderRootType
 - sf:SOURCES:org.jetbrains.jps.model.library.JpsOrderRootType
 - <init>():V
-c:org.jetbrains.jps.model.library.JpsRepositoryLibraryType
-- org.jetbrains.jps.model.ex.JpsElementTypeBase
-- org.jetbrains.jps.model.library.JpsLibraryType
-- s:INSTANCE:org.jetbrains.jps.model.library.JpsRepositoryLibraryType
-- <init>():V
-- f:getTypeId():java.lang.String
 org.jetbrains.jps.model.library.JpsTypedLibrary
 - org.jetbrains.jps.model.JpsTypedElement
 - org.jetbrains.jps.model.library.JpsLibrary
@@ -785,8 +623,6 @@ org.jetbrains.jps.model.library.sdk.JpsSdk
 - a:getSdkProperties():org.jetbrains.jps.model.JpsElement
 - a:getSdkType():org.jetbrains.jps.model.library.sdk.JpsSdkType
 - a:getVersionString():java.lang.String
-- a:setHomePath(java.lang.String):V
-- a:setVersionString(java.lang.String):V
 org.jetbrains.jps.model.library.sdk.JpsSdkReference
 - org.jetbrains.jps.model.JpsElementReference
 - a:getSdkName():java.lang.String
@@ -810,13 +646,6 @@ org.jetbrains.jps.model.module.JpsDependenciesEnumerator
 - a:withoutSdk():org.jetbrains.jps.model.module.JpsDependenciesEnumerator
 org.jetbrains.jps.model.module.JpsDependenciesList
 - org.jetbrains.jps.model.JpsElement
-- a:addLibraryDependency(org.jetbrains.jps.model.library.JpsLibrary):org.jetbrains.jps.model.module.JpsLibraryDependency
-- a:addLibraryDependency(org.jetbrains.jps.model.library.JpsLibraryReference):org.jetbrains.jps.model.module.JpsLibraryDependency
-- a:addModuleDependency(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.module.JpsModuleDependency
-- a:addModuleDependency(org.jetbrains.jps.model.module.JpsModuleReference):org.jetbrains.jps.model.module.JpsModuleDependency
-- a:addModuleSourceDependency():V
-- a:addSdkDependency(org.jetbrains.jps.model.library.sdk.JpsSdkType):V
-- a:clear():V
 - a:getDependencies():java.util.List
 org.jetbrains.jps.model.module.JpsDependenciesRootsEnumerator
 - a:getRoots():java.util.Collection
@@ -824,7 +653,6 @@ org.jetbrains.jps.model.module.JpsDependenciesRootsEnumerator
 org.jetbrains.jps.model.module.JpsDependencyElement
 - org.jetbrains.jps.model.JpsCompositeElement
 - a:getContainingModule():org.jetbrains.jps.model.module.JpsModule
-- a:remove():V
 org.jetbrains.jps.model.module.JpsLibraryDependency
 - org.jetbrains.jps.model.module.JpsDependencyElement
 - a:getLibrary():org.jetbrains.jps.model.library.JpsLibrary
@@ -833,15 +661,8 @@ org.jetbrains.jps.model.module.JpsModule
 - org.jetbrains.jps.model.JpsCompositeElement
 - org.jetbrains.jps.model.JpsNamedElement
 - org.jetbrains.jps.model.JpsReferenceableElement
-- a:addExcludePattern(java.lang.String,java.lang.String):V
-- a:addModuleLibrary(java.lang.String,org.jetbrains.jps.model.library.JpsLibraryType):org.jetbrains.jps.model.library.JpsLibrary
-- a:addModuleLibrary(org.jetbrains.jps.model.library.JpsLibrary):V
-- a:addSourceRoot(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType):org.jetbrains.jps.model.module.JpsModuleSourceRoot
-- a:addSourceRoot(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType,org.jetbrains.jps.model.JpsElement):org.jetbrains.jps.model.module.JpsModuleSourceRoot
-- a:addSourceRoot(org.jetbrains.jps.model.module.JpsModuleSourceRoot):V
 - a:asTyped(org.jetbrains.jps.model.module.JpsModuleType):org.jetbrains.jps.model.module.JpsTypedModule
 - a:createReference():org.jetbrains.jps.model.module.JpsModuleReference
-- a:delete():V
 - a:getContentRootsList():org.jetbrains.jps.model.JpsUrlList
 - a:getDependenciesList():org.jetbrains.jps.model.module.JpsDependenciesList
 - a:getExcludePatterns():java.util.List
@@ -855,8 +676,6 @@ org.jetbrains.jps.model.module.JpsModule
 - a:getSdkReferencesTable():org.jetbrains.jps.model.module.JpsSdkReferencesTable
 - a:getSourceRoots():java.util.List
 - a:getSourceRoots(org.jetbrains.jps.model.module.JpsModuleSourceRootType):java.lang.Iterable
-- a:removeExcludePattern(java.lang.String,java.lang.String):V
-- a:removeSourceRoot(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType):V
 org.jetbrains.jps.model.module.JpsModuleDependency
 - org.jetbrains.jps.model.module.JpsDependencyElement
 - a:getModule():org.jetbrains.jps.model.module.JpsModule
@@ -893,7 +712,6 @@ org.jetbrains.jps.model.module.JpsSdkDependency
 org.jetbrains.jps.model.module.JpsSdkReferencesTable
 - org.jetbrains.jps.model.JpsCompositeElement
 - a:getSdkReference(org.jetbrains.jps.model.library.sdk.JpsSdkType):org.jetbrains.jps.model.library.sdk.JpsSdkReference
-- a:setSdkReference(org.jetbrains.jps.model.library.sdk.JpsSdkType,org.jetbrains.jps.model.library.sdk.JpsSdkReference):V
 org.jetbrains.jps.model.module.JpsTestModuleProperties
 - org.jetbrains.jps.model.JpsElement
 - a:getProductionModule():org.jetbrains.jps.model.module.JpsModule
@@ -934,29 +752,21 @@ org.jetbrains.jps.model.serialization.JpsPathMapper
 - sf:IDENTITY:org.jetbrains.jps.model.serialization.JpsPathMapper
 - a:mapUrl(java.lang.String):java.lang.String
 a:org.jetbrains.jps.service.JpsServiceManager
-- <init>():V
 - a:getExtensions(java.lang.Class):java.lang.Iterable
 - s:getInstance():org.jetbrains.jps.service.JpsServiceManager
 - a:getService(java.lang.Class):java.lang.Object
 a:org.jetbrains.jps.service.SharedThreadPool
 - java.util.concurrent.ExecutorService
-- <init>():V
 - s:getInstance():org.jetbrains.jps.service.SharedThreadPool
-f:org.jetbrains.jps.util.JpsChecksumUtil
-- <init>():V
-- s:getSha256Checksum(java.nio.file.Path):java.lang.String
 f:org.jetbrains.jps.util.JpsPathUtil
 - sf:FILE_URL_PREFIX:java.lang.String
 - sf:JAR_SEPARATOR:java.lang.String
 - sf:JAR_URL_PREFIX:java.lang.String
 - <init>():V
-- s:getDefaultProjectName(java.nio.file.Path):java.lang.String
 - s:getLibraryRootUrl(java.io.File):java.lang.String
 - s:isJrtUrl(java.lang.String):Z
 - s:isUnder(java.util.Set,java.io.File):Z
-- s:normalizeProjectName(java.lang.String):java.lang.String
 - s:pathToUrl(java.lang.String):java.lang.String
-- s:readProjectName(java.nio.file.Path):java.lang.String
 - s:urlToFile(java.lang.String):java.io.File
 - s:urlToOsPath(java.lang.String):java.lang.String
 - s:urlToPath(java.lang.String):java.lang.String

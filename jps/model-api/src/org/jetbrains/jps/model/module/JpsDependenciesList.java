@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.module;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -24,24 +25,31 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import java.util.List;
 
 public interface JpsDependenciesList extends JpsElement {
+  @ApiStatus.Internal
   @NotNull
   JpsModuleDependency addModuleDependency(@NotNull JpsModule module);
 
+  @ApiStatus.Internal
   @NotNull
   JpsModuleDependency addModuleDependency(@NotNull JpsModuleReference moduleReference);
 
+  @ApiStatus.Internal
   @NotNull
   JpsLibraryDependency addLibraryDependency(@NotNull JpsLibrary libraryElement);
 
+  @ApiStatus.Internal
   @NotNull
   JpsLibraryDependency addLibraryDependency(@NotNull JpsLibraryReference libraryReference);
 
+  @ApiStatus.Internal
   void addModuleSourceDependency();
 
+  @ApiStatus.Internal
   void addSdkDependency(@NotNull JpsSdkType<?> sdkType);
 
   @NotNull
   List<JpsDependencyElement> getDependencies();
 
+  @ApiStatus.Internal
   void clear();
 }

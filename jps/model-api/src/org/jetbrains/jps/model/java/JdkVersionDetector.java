@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -14,6 +15,10 @@ import java.util.concurrent.ExecutorService;
 public abstract class JdkVersionDetector {
   public static JdkVersionDetector getInstance() {
     return JpsServiceManager.getInstance().getService(JdkVersionDetector.class);
+  }
+
+  @ApiStatus.Internal
+  protected JdkVersionDetector() {
   }
 
   public abstract @Nullable JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath);

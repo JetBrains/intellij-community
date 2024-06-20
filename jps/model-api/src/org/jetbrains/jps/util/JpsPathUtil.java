@@ -4,6 +4,7 @@ package org.jetbrains.jps.util;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,7 @@ public final class JpsPathUtil {
     return url.startsWith("jrt://");
   }
 
+  @ApiStatus.Internal
   public static @Nullable String readProjectName(@NotNull Path projectDir) {
     String s;
     try (Stream<String> stream = Files.lines(projectDir.resolve(".name"))) {
@@ -84,6 +86,7 @@ public final class JpsPathUtil {
     return normalizeProjectName(s);
   }
 
+  @ApiStatus.Internal
   public static @Nullable String normalizeProjectName(@Nullable String s) {
     if (s == null) {
       return null;
@@ -95,6 +98,7 @@ public final class JpsPathUtil {
 
   private static final String UNNAMED_PROJECT = "<unnamed>";
 
+  @ApiStatus.Internal
   public static @NotNull String getDefaultProjectName(@NotNull Path projectDir) {
     Path parent = projectDir.getParent();
     if (parent != null) {

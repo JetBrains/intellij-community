@@ -15,11 +15,17 @@
  */
 package org.jetbrains.jps.service;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.ServiceLoader;
 
 public abstract class JpsServiceManager {
   public static JpsServiceManager getInstance() {
     return InstanceHolder.INSTANCE;
+  }
+
+  @ApiStatus.Internal
+  protected JpsServiceManager() {
   }
 
   public abstract <T> T getService(Class<T> serviceClass);

@@ -32,6 +32,10 @@ public abstract class JpsElementFactory {
     return JpsServiceManager.getInstance().getService(JpsElementFactory.class);
   }
 
+  @ApiStatus.Internal
+  protected JpsElementFactory() {
+  }
+
   /**
    * JpsModel API isn't supposed to be used for creating model from scratch, use 
    * {@link org.jetbrains.jps.model.serialization.JpsSerializationManager} to load the model from .idea directory.

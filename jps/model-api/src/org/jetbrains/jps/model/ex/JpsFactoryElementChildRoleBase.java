@@ -15,11 +15,13 @@
  */
 package org.jetbrains.jps.model.ex;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementCreator;
 
+@ApiStatus.Internal
 public class JpsFactoryElementChildRoleBase<E extends JpsElement> extends JpsElementChildRole<E> implements JpsElementCreator<E> {
   private final String myDebugName;
   private final JpsElementCreator<E> myFactoryImpl;

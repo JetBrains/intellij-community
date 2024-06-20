@@ -15,6 +15,9 @@
  */
 package org.jetbrains.jps.model.java.compiler;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public interface JavaCompilers {
   String JAVAC_ID = "Javac";
   String JAVAC_API_ID = "compAPI";

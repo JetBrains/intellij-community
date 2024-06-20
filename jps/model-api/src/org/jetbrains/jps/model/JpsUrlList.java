@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -23,7 +24,9 @@ public interface JpsUrlList extends JpsElement {
   @NotNull
   List<String> getUrls();
 
+  @ApiStatus.Internal
   void addUrl(@NotNull String url);
 
+  @ApiStatus.Internal
   void removeUrl(@NotNull String url);
 }

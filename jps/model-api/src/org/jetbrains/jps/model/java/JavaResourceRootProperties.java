@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
@@ -33,12 +34,14 @@ public class JavaResourceRootProperties extends JpsElementBase<JavaResourceRootP
     return myForGeneratedSources;
   }
 
+  @ApiStatus.Internal
   public void setRelativeOutputPath(@NotNull String relativeOutputPath) {
     if (!Objects.equals(myRelativeOutputPath, relativeOutputPath)) {
       myRelativeOutputPath = relativeOutputPath;
     }
   }
 
+  @ApiStatus.Internal
   public void setForGeneratedSources(boolean forGeneratedSources) {
     if (myForGeneratedSources != forGeneratedSources) {
       myForGeneratedSources = forGeneratedSources;
