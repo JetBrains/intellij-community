@@ -77,44 +77,39 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
     boolean migratePlugins = customizePluginsPath && !Files.exists(Paths.get(pluginsPath));
     PerProcessPathCustomization.prepareConfig(newConfig, PathManager.getConfigDir(), migratePlugins);
 
-    Path startupScriptDir = isInFrontendMode() ? PerProcessPathCustomization.getStartupScriptDir().resolve("frontend") : PerProcessPathCustomization.getStartupScriptDir();
+    Path startupScriptDir = PerProcessPathCustomization.getStartupScriptDir().resolve("frontend");
     P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(new ClientP3Support());
     enabled = true;
     return new CustomPaths(newConfig.toString(), newSystem.toString(), pluginsPath, newLog.toString(), startupScriptDir);
   }
 
   private static @NotNull Path getFolderForPerProcessData() {
-    if (isInFrontendMode()) {
-      String pathsSelector = PathManager.getPathsSelector();
-      if (pathsSelector != null && !pathsSelector.startsWith("JetBrainsClient")) {
-        return PathManager.getSystemDir().resolve("frontend");
-      }
+    String pathsSelector = PathManager.getPathsSelector();
+    if (pathsSelector != null && !isGenericJetBrainsClient(pathsSelector)) {
+      return PathManager.getSystemDir().resolve("frontend");
     }
     return Paths.get(PathManager.getTempPath());
+  }
+
+  private static boolean isGenericJetBrainsClient(String pathsSelector) {
+    //this won't be needed as soon as we stop building a 'generic' variant of the frontend (GTW-8851)
+    return pathsSelector.startsWith("JetBrainsClient");
   }
 
   private static @NotNull Path getBaseLogDir() {
     String baseLogDirPath = PathManager.getLogPath();
     String pathsSelector = PathManager.getPathsSelector();
-    if (pathsSelector != null && baseLogDirPath.equals(PathManager.getDefaultLogPathFor(pathsSelector)) && isInFrontendMode() &&
-        !pathsSelector.startsWith("JetBrainsClient")) {
+    if (pathsSelector != null && baseLogDirPath.equals(PathManager.getDefaultLogPathFor(pathsSelector)) &&
+        !isGenericJetBrainsClient(pathsSelector)) {
       return Paths.get(baseLogDirPath, "frontend");
     }
     return Paths.get(baseLogDirPath);
   }
 
   private static boolean useCustomPluginsPath(String originalPluginsPath) {
-    if (!isInFrontendMode()) return false;
-    
     String pathsSelector = PathManager.getPathsSelector();
-    if (pathsSelector == null || pathsSelector.startsWith("JetBrainsClient")) return false;
-
-    return originalPluginsPath.equals(PathManager.getDefaultPluginPathFor(pathsSelector));
-  }
-
-  //todo move logic specific for frontend processes to a separate class
-  private static boolean isInFrontendMode() {
-    return "frontend".equals(System.getProperty("intellij.platform.product.mode"));
+    return pathsSelector != null && !isGenericJetBrainsClient(pathsSelector) &&
+           originalPluginsPath.equals(PathManager.getDefaultPluginPathFor(pathsSelector));
   }
 
   public static boolean isEnabled() {
