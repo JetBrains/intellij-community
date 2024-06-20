@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.util.messages.impl
@@ -91,7 +91,7 @@ open class MessageBusImpl : MessageBus {
   override fun connect(): MessageBusConnection = connect(connectionDisposable!!)
 
   override fun connect(parentDisposable: Disposable): MessageBusConnection {
-    checkNotDisposed()
+    checkDisposed()
     val connection = MessageBusConnectionImpl(this)
     subscribers.add(connection)
     Disposer.register(parentDisposable, connection)
@@ -100,7 +100,7 @@ open class MessageBusImpl : MessageBus {
 
   override fun simpleConnect(): SimpleMessageBusConnection {
     // to avoid registering in a Dispose tree, default handler and deliverImmediately are not supported
-    checkNotDisposed()
+    checkDisposed()
     val connection = SimpleMessageBusConnectionImpl(this)
     subscribers.add(connection)
     return connection
@@ -109,7 +109,7 @@ open class MessageBusImpl : MessageBus {
   override fun connect(coroutineScope: CoroutineScope): SimpleMessageBusConnection {
     val scopeJob = coroutineScope.coroutineContext.job
     scopeJob.ensureActive()
-    checkNotDisposed()
+    checkDisposed()
     val connection = SimpleMessageBusConnectionImpl(this)
     try {
       subscribers.add(connection)
@@ -198,7 +198,7 @@ open class MessageBusImpl : MessageBus {
     return queue.queue.any { it.topic === topic && it.bus === this }
   }
 
-  internal fun checkNotDisposed() {
+  internal fun checkDisposed() {
     if (isDisposed) {
       LOG.error("Already disposed: $this")
     }
@@ -445,7 +445,7 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
     }
 
     if (topic.isImmediateDelivery) {
-      bus.checkNotDisposed()
+      bus.checkDisposed()
       publish(method = method, args = args, queue = null)
       return NA
     }
