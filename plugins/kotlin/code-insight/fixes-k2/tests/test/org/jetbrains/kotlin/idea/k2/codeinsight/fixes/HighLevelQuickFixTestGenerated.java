@@ -234,6 +234,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/addExclExclCall/typeMismatch/assignmentRValue.kt");
             }
 
+            @TestMetadata("condition.kt")
+            public void testCondition() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addExclExclCall/typeMismatch/condition.kt");
+            }
+
             @TestMetadata("initializer.kt")
             public void testInitializer() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/addExclExclCall/typeMismatch/initializer.kt");
@@ -5407,7 +5412,54 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addEqEqTrue")
+    public static class AddEqEqTrue extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("argument.kt")
+        public void testArgument() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addEqEqTrue/argument.kt");
+        }
+
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addEqEqTrue/assignment.kt");
+        }
+
+        @TestMetadata("condition.kt")
+        public void testCondition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addEqEqTrue/condition.kt");
+        }
+
+        @TestMetadata("initializer.kt")
+        public void testInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addEqEqTrue/initializer.kt");
+        }
+
+        @TestMetadata("notBoolean.kt")
+        public void testNotBoolean() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addEqEqTrue/notBoolean.kt");
+        }
+
+        @TestMetadata("notBoolean2.kt")
+        public void testNotBoolean2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addEqEqTrue/notBoolean2.kt");
+        }
+
+        @TestMetadata("return.kt")
+        public void testReturn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addEqEqTrue/return.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/addFunModifier")
@@ -6046,8 +6098,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter/simple.kt");
         }
     }
-
-
 
 
 

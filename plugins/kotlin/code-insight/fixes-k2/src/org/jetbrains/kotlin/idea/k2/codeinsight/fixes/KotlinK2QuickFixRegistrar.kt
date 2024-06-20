@@ -250,6 +250,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(TypeMismatchFactories.assignmentTypeMismatch)
         registerFactory(TypeMismatchFactories.initializerTypeMismatch)
         registerFactory(TypeMismatchFactories.smartcastImpossibleFactory)
+        registerFactory(TypeMismatchFactories.conditionTypeMismatchFactory)
 
         registerFactory(WrapWithSafeLetCallFixFactories.forUnsafeCall)
         registerFactory(WrapWithSafeLetCallFixFactories.forUnsafeImplicitInvokeCall)

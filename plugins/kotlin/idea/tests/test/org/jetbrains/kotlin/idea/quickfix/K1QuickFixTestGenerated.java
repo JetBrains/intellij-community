@@ -795,6 +795,26 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("argument.kt")
+        public void testArgument() throws Exception {
+            runTest("testData/quickfix/addEqEqTrue/argument.kt");
+        }
+
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("testData/quickfix/addEqEqTrue/assignment.kt");
+        }
+
+        @TestMetadata("condition.kt")
+        public void testCondition() throws Exception {
+            runTest("testData/quickfix/addEqEqTrue/condition.kt");
+        }
+
+        @TestMetadata("initializer.kt")
+        public void testInitializer() throws Exception {
+            runTest("testData/quickfix/addEqEqTrue/initializer.kt");
+        }
+
         @TestMetadata("notBoolean.kt")
         public void testNotBoolean() throws Exception {
             runTest("testData/quickfix/addEqEqTrue/notBoolean.kt");
@@ -805,14 +825,9 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/addEqEqTrue/notBoolean2.kt");
         }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/quickfix/addEqEqTrue/simple.kt");
-        }
-
-        @TestMetadata("simple2.kt")
-        public void testSimple2() throws Exception {
-            runTest("testData/quickfix/addEqEqTrue/simple2.kt");
+        @TestMetadata("return.kt")
+        public void testReturn() throws Exception {
+            runTest("testData/quickfix/addEqEqTrue/return.kt");
         }
     }
 
@@ -840,6 +855,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("assignmentRValue.kt")
             public void testAssignmentRValue() throws Exception {
                 runTest("testData/quickfix/addExclExclCall/typeMismatch/assignmentRValue.kt");
+            }
+
+            @TestMetadata("condition.kt")
+            public void testCondition() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/typeMismatch/condition.kt");
             }
 
             @TestMetadata("initializer.kt")
