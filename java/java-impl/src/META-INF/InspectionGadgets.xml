@@ -636,7 +636,7 @@
                      implementationClass="com.siyeh.ig.controlflow.ContinueStatementWithLabelInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DefaultNotLastCaseInSwitch" bundle="messages.InspectionGadgetsBundle"
                      key="default.not.last.case.in.switch.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.DefaultNotLastCaseInSwitchInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DoubleNegation" bundle="messages.InspectionGadgetsBundle" key="double.negation.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
@@ -1679,7 +1679,7 @@
                      implementationClass="com.siyeh.ig.numeric.CharUsedInArithmeticContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ComparisonOfShortAndChar" bundle="messages.InspectionGadgetsBundle"
                      key="comparison.of.short.and.char.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.ComparisonOfShortAndCharInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ComparisonToNaN" bundle="messages.InspectionGadgetsBundle" key="comparison.to.nan.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
