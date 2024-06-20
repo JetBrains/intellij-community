@@ -681,7 +681,7 @@ public abstract class TodoTreeBuilder implements Disposable {
         scheduleMarkFileAsDirtyAndUpdateTree(file);
         return;
       }
-      // If added element if PsiFile and it doesn't contains TODOs, then do nothing
+      // If added element is PsiFile and it doesn't contains TODOs, then do nothing
       PsiElement child = e.getChild();
       if (child instanceof PsiFile psiFile) {
         scheduleMarkFileAsDirtyAndUpdateTree(psiFile);
