@@ -55,7 +55,7 @@
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.ktModuleFactory"
-            interface="org.jetbrains.kotlin.idea.base.projectStructure.KtModuleFactory"
+            interface="org.jetbrains.kotlin.idea.base.projectStructure.KaModuleFactory"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.analysis.additionalKDocResolutionProvider"
@@ -98,11 +98,8 @@
     <applicationInitializedListener implementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner"/>
 
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl"/>
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KotlinModuleDependentsProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.IdeKotlinModuleDependentsProvider"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>

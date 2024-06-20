@@ -82,7 +82,7 @@ internal class OperatorToFunctionIntention :
     private fun parentIsUsedAsExpression(element: PsiElement): Boolean =
         when (val parent = element.parent) {
             is KtLoopExpression, is KtFile -> false
-            is KtIfExpression, is KtWhenExpression -> (parent as KtExpression).isUsedAsExpression()
+            is KtIfExpression, is KtWhenExpression -> (parent as KtExpression).isUsedAsExpression
             else -> true
         }
 

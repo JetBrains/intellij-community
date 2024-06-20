@@ -6,9 +6,10 @@ import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -32,7 +33,7 @@ class KotlinSmartStepTargetFilterer(
 
     fun visitInlineFunction(function: KtNamedFunction) {
         val label = analyze(function) {
-            val symbol = function.getSymbol()
+            val symbol = function.symbol
             KotlinMethodSmartStepTarget.calcLabel(symbol)
         }
         val currentCount = functionCounter.increment(label) - 1
@@ -87,7 +88,7 @@ class KotlinSmartStepTargetFilterer(
 
     private fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean {
         analyze(declaration) {
-            val symbol = declaration.getSymbol() as? KaFunctionLikeSymbol ?: return false
+            val symbol = declaration.symbol as? KaFunctionSymbol ?: return false
             return owner == symbol.getJvmInternalClassName() && signature == symbol.getJvmSignature()
         }
     }
@@ -127,7 +128,7 @@ private fun MutableMap<String, Int>.increment(key: String): Int {
 }
 
 context(KaSession)
-private fun KaFunctionLikeSymbol.getJvmSignature(): String? {
+private fun KaFunctionSymbol.getJvmSignature(): String? {
     val element = psi ?: return null
     val receiver = receiverType?.jvmName(element) ?: ""
     val parameterTypes = valueParameters.map { it.returnType.jvmName(element) ?: return null }.joinToString("")
@@ -136,6 +137,7 @@ private fun KaFunctionLikeSymbol.getJvmSignature(): String? {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun KtType.jvmName(element: PsiElement): String? {
     if (this !is KtNonErrorClassType) return null
     val psiType = asPsiType(element, allowErrorTypes = false) ?: return null

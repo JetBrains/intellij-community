@@ -16,6 +16,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -77,7 +78,7 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
                   renderKotlinDeclaration(
                       itReference.mainReference.resolve() as KtFunctionLiteral,
                       quickNavigation,
-                      symbolFinder = { (it as? KaFunctionLikeSymbol)?.valueParameters?.firstOrNull() })
+                      symbolFinder = { (it as? KaFunctionSymbol)?.valueParameters?.firstOrNull() })
               }
           }
       }
@@ -148,7 +149,7 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
 
 context(KaSession)
 private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
-    val containingSymbol = ktDeclaration.getSymbol().getContainingSymbol()
+    val containingSymbol = ktDeclaration.symbol.containingSymbol
     val fqName = (containingSymbol as? KaClassLikeSymbol)?.classId?.asFqNameString()
         ?: (ktDeclaration.containingFile as? KtFile)?.packageFqName?.takeIf { !it.isRoot }?.asString()
 
@@ -199,7 +200,7 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
             val symbol = referenceExpression.resolveCallOld()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KaNamedSymbol
             val name = symbol?.name?.asString()
             if (name != null && symbol is KaDeclarationSymbol) {
-                val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol
+                val containingClass = symbol.containingSymbol as? KaClassOrObjectSymbol
                 val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
                 val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
                     val navigationElement = superClass.psi?.navigationElement
@@ -258,7 +259,7 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
             return
         }
 
-        val symbol = symbolFinder(declaration.getSymbol())
+        val symbol = symbolFinder(declaration.symbol)
         if (symbol !is KaDeclarationSymbol) return
 
         renderKotlinSymbol(symbol, declaration, onlyDefinition, true, preBuild)
@@ -282,7 +283,7 @@ private fun renderKDoc(
         }
     } else if (declaration is KtFunction &&
         symbol is KaCallableSymbol &&
-        symbol.getAllOverriddenSymbols().any { it.psi is PsiMethod }) {
+        symbol.allOverriddenSymbols.any { it.psi is PsiMethod }) {
         LightClassUtil.getLightClassMethod(declaration)?.let {
             stringBuilder.insert(KDocTemplate.DescriptionBodyTemplate.FromJava()) {
                 body = generateJavadoc(it)
@@ -292,6 +293,7 @@ private fun renderKDoc(
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun findKDoc(symbol: KtSymbol): KDocContent? {
     val ktElement = symbol.psi?.navigationElement as? KtElement
     ktElement?.findKDocByPsi()?.let {
@@ -299,7 +301,7 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
     }
 
     if (symbol is KaCallableSymbol) {
-        symbol.getAllOverriddenSymbols().forEach { overrider ->
+        symbol.allOverriddenSymbols.forEach { overrider ->
             findKDoc(overrider)?.let {
                 return it
             }
@@ -307,10 +309,10 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
     }
 
     if (symbol is KaValueParameterSymbol) {
-        val containingSymbol = symbol.getContainingSymbol() as? KaFunctionSymbol
+        val containingSymbol = symbol.containingSymbol as? KaNamedFunctionSymbol
         if (containingSymbol != null) {
             val idx = containingSymbol.valueParameters.indexOf(symbol)
-            containingSymbol.getExpectsForActual().filterIsInstance<KaFunctionSymbol>().mapNotNull { expectFunction ->
+            containingSymbol.getExpectsForActual().filterIsInstance<KaNamedFunctionSymbol>().mapNotNull { expectFunction ->
                 findKDoc(expectFunction.valueParameters[idx])
             }.firstOrNull()?.let { return it }
         }
@@ -320,6 +322,7 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun @receiver:Nls StringBuilder.renderKotlinSymbol(symbol: KaDeclarationSymbol,
                                                            declaration: KtDeclaration,
                                                            onlyDefinition: Boolean,

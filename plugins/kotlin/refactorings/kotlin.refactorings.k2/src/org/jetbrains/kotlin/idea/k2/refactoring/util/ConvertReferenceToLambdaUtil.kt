@@ -4,13 +4,14 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.types.Variance
 object ConvertReferenceToLambdaUtil {
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun prepareLambdaExpressionText(
         element: KtCallableReferenceExpression,
     ): String? {
@@ -57,11 +59,11 @@ object ConvertReferenceToLambdaUtil {
         val receiverSymbol = receiverExpression?.getQualifiedElementSelector()?.mainReference?.resolveToSymbol()
         val acceptsReceiverAsParameter = receiverSymbol is KaClassOrObjectSymbol &&
                 !matchingParameterIsExtension &&
-                (callableSymbol as? KaFunctionSymbol)?.isStatic != true && !receiverSymbol.classKind.isObject &&
-                (callableSymbol?.getContainingSymbol() != null || callableSymbol?.isExtension == true || symbol is KaNamedClassOrObjectSymbol && symbol.isInner)
+                (callableSymbol as? KaNamedFunctionSymbol)?.isStatic != true && !receiverSymbol.classKind.isObject &&
+                (callableSymbol?.containingSymbol != null || callableSymbol?.isExtension == true || symbol is KaNamedClassOrObjectSymbol && symbol.isInner)
 
         val parameterNamesAndTypes =
-            if (callableSymbol is KaFunctionLikeSymbol) {
+            if (callableSymbol is KaFunctionSymbol) {
                 val paramNameAndTypes = callableSymbol.valueParameters.map { it.name.asString() to it.returnType }
                 if (matchingParameterType != null) {
                     val parameterSize =

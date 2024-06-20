@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -30,6 +31,7 @@ internal class SpecifyTypeExplicitlyIntention:
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun skip(element: KtCallableDeclaration): Boolean =
         element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             .any { diagnostic ->

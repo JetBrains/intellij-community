@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
@@ -76,9 +76,10 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
     override fun returnType(ktNamedDeclaration: KtNamedDeclaration): KtType? =
         analyze(data.commonParent) { ktNamedDeclaration.getReturnKtType() }
 
+    @OptIn(KaExperimentalApi::class)
     override fun renderForMessage(ktNamedDeclaration: KtNamedDeclaration): String {
         return analyze(data.commonParent) {
-            ktNamedDeclaration.getSymbol().render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
+            ktNamedDeclaration.symbol.render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
         }
     }
 
@@ -90,6 +91,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
 
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun renderTypeWithoutApproximation(kotlinType: KtType): String {
         return analyze(data.commonParent) {
             kotlinType.render(position = Variance.INVARIANT)
@@ -102,6 +104,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun renderType(
         ktType: KtType, isReceiver: Boolean, variance: Variance
     ): String = analyze(data.commonParent) {
@@ -125,6 +128,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
  * @return true if [typeToCheck] doesn't contain unresolved components in the scope of [scope] and is "denotable"
  */
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: MutableSet<TypeParameter>): Boolean {
     require(scope.containingFile is KtFile)
     ((typeToCheck as? KtTypeParameterType)?.symbol?.psi as? KtTypeParameter)?.let { typeParameter ->

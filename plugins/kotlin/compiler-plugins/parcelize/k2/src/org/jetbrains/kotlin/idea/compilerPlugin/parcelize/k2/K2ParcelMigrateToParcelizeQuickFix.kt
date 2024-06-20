@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -55,7 +54,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
 
         context(KaSession)
         override val KtCallableDeclaration.overrideCount: Int
-            get() = getSymbolOfType<KaCallableSymbol>().getAllOverriddenSymbols().size
+            get() = getSymbolOfType<KaCallableSymbol>().allOverriddenSymbols.count()
 
         context(KaSession)
         override val KtProperty.isJvmField: Boolean

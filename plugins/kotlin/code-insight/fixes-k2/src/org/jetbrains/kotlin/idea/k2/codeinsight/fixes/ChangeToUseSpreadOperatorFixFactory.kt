@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -24,7 +23,7 @@ internal object ChangeToUseSpreadOperatorFixFactory {
     val changeToUseSpreadOperatorFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         val element = diagnostic.psi as? KtReferenceExpression ?: return@ModCommandBased emptyList()
         val callExpression = element.getStrictParentOfType<KtCallExpression>() ?: return@ModCommandBased emptyList()
-        val arrayElementType = diagnostic.actualType.getArrayElementType()?.unwrap() ?: return@ModCommandBased emptyList()
+        val arrayElementType = diagnostic.actualType.arrayElementType?.unwrap() ?: return@ModCommandBased emptyList()
         val functionCall = (callExpression.resolveCallOld() as? KaErrorCallInfo)?.candidateCalls?.singleOrNull() as? KaFunctionCall<*>
             ?: return@ModCommandBased emptyList()
 

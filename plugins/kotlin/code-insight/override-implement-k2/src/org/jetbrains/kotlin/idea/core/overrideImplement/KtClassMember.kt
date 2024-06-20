@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
@@ -96,6 +97,7 @@ internal fun createKtClassMember(
 ): KtClassMember = KtClassMember(memberInfo, bodyType, preferConstructorParameter)
 
 context(KaSession)
+@KaExperimentalApi
 @ApiStatus.Internal
 fun generateMember(
     project: Project,
@@ -132,7 +134,7 @@ fun generateMember(
 
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
 
-            val containingSymbol = targetClass?.getSymbol() as? KaClassOrObjectSymbol
+            val containingSymbol = targetClass?.symbol as? KaClassOrObjectSymbol
             otherModifiersProvider = object : KtRendererOtherModifiersProvider {
                 //copy from KtRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
                 override fun getOtherModifiers(
@@ -144,7 +146,7 @@ fun generateMember(
                         if (s.isActual) add(KtTokens.ACTUAL_KEYWORD)
                     }
 
-                    if (s is KaFunctionSymbol) {
+                    if (s is KaNamedFunctionSymbol) {
                         if (s.isExternal) add(KtTokens.EXTERNAL_KEYWORD)
                         if (s.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
                         if (s.isInline) add(KtTokens.INLINE_KEYWORD)
@@ -200,7 +202,7 @@ fun generateMember(
 
 
     val newMember: KtCallableDeclaration = when (symbol) {
-        is KaFunctionSymbol -> generateFunction(project, symbol, renderer, bodyType)
+        is KaNamedFunctionSymbol -> generateFunction(project, symbol, renderer, bodyType)
         is KtPropertySymbol -> generateProperty(project, symbol, renderer, bodyType)
         else -> error("Unknown member to override: $symbol")
     }
@@ -254,6 +256,7 @@ private fun KaClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annota
 }
 
 context(KaSession)
+@KaExperimentalApi
 private fun generateConstructorParameter(
     project: Project,
     symbol: KaCallableSymbol,
@@ -263,9 +266,10 @@ private fun generateConstructorParameter(
 }
 
 context(KaSession)
+@KaExperimentalApi
 private fun generateFunction(
     project: Project,
-    symbol: KaFunctionSymbol,
+    symbol: KaNamedFunctionSymbol,
     renderer: KtDeclarationRenderer,
     bodyType: BodyType,
 ): KtCallableDeclaration {
@@ -285,6 +289,7 @@ private fun generateFunction(
 }
 
 context(KaSession)
+@KaExperimentalApi
 private fun generateProperty(
     project: Project,
     symbol: KtPropertySymbol,
@@ -307,6 +312,7 @@ private fun generateProperty(
     return KtPsiFactory(project).createProperty(symbol.render(renderer) + body)
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun <T> KaSession.generateUnsupportedOrSuperCall(
     project: Project, symbol: T, bodyType: BodyType, canBeEmpty: Boolean = true
 ): String where T : KaNamedSymbol, T : KaCallableSymbol {
@@ -314,7 +320,7 @@ private fun <T> KaSession.generateUnsupportedOrSuperCall(
         BodyType.EmptyOrTemplate -> return ""
         BodyType.FromTemplate -> {
             val templateKind = when (symbol) {
-                is KaFunctionSymbol -> TemplateKind.FUNCTION
+                is KaNamedFunctionSymbol -> TemplateKind.FUNCTION
                 is KtPropertySymbol -> TemplateKind.PROPERTY_INITIALIZER
                 else -> throw IllegalArgumentException("$symbol must be either a function or a property")
             }
@@ -337,7 +343,7 @@ private fun <T> KaSession.generateUnsupportedOrSuperCall(
             }
             append(".").append(symbol.name.render())
 
-            if (symbol is KaFunctionSymbol) {
+            if (symbol is KaNamedFunctionSymbol) {
                 val paramTexts = symbol.valueParameters.map {
                     val renderedName = it.name.render()
                     if (it.isVararg) "*$renderedName" else renderedName

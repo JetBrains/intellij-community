@@ -61,7 +61,7 @@ internal class WeighingContext private constructor(
             if (symbol in symbols) return true
 
             val overriddenSymbols = contextualOverriddenSymbols.getOrPut(symbol.name) {
-                symbols.flatMap { it.getAllOverriddenSymbols() }.toSet()
+                symbols.flatMap { it.allOverriddenSymbols }.toSet()
             }
 
             return symbol.unwrapFakeOverrides in overriddenSymbols

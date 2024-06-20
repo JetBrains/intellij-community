@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
@@ -125,7 +125,7 @@ internal fun KtExpression.getKotlinType(): KtType? {
     if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.text == "as?") {
         val call = resolveCallOld()?.singleFunctionCallOrNull()
         if (call != null) {
-            val functionReturnType = (call.partiallyAppliedSymbol.symbol as? KaFunctionSymbol)?.returnType
+            val functionReturnType = (call.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol)?.returnType
             if (functionReturnType is KtTypeParameterType) {
                 val upperBound = functionReturnType.symbol.upperBounds.singleOrNull()
                 if (upperBound != null) {
@@ -139,8 +139,8 @@ internal fun KtExpression.getKotlinType(): KtType? {
 
 context(KaSession)
 internal fun KtType.getJvmAwareArrayElementType(): KtType? {
-    if (!isArrayOrPrimitiveArray()) return null
-    val type = getArrayElementType() ?: return null
+    if (!isArrayOrPrimitiveArray) return null
+    val type = arrayElementType ?: return null
     if (this.isClassTypeWithClassId(StandardClassIds.Array) && type.isPrimitive) {
         return type.withNullability(KtTypeNullability.NULLABLE)
     }
@@ -225,7 +225,7 @@ internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
     val index = expr.valueArguments.indexOf(lambdaArgument)
     assert(index >= 0)
     val resolvedCall = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
-    val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol
+    val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol
     if (symbol == null || !symbol.isInline) return null
     val parameterSymbol = resolvedCall.argumentMapping[lambdaExpression]?.symbol ?: return null
     if (parameterSymbol.isNoinline) return null

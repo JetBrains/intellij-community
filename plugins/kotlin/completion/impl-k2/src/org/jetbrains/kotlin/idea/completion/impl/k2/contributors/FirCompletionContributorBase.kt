@@ -9,8 +9,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
@@ -66,7 +67,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     protected val visibleScope = basicContext.visibleScope
 
 
-    protected val scopeNameFilter: KtScopeNameFilter =
+    protected val scopeNameFilter: (Name) -> Boolean =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
     context(KaSession)
@@ -99,6 +100,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     protected fun addCallableSymbolToCompletion(
         context: WeighingContext,
         signature: KtCallableSignature<*>,
@@ -110,7 +112,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         val symbol = signature.symbol
         val name = when (symbol) {
             is KaNamedSymbol -> symbol.name
-            is KaConstructorSymbol -> (symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.name
+            is KaConstructorSymbol -> (symbol.containingSymbol as? KaNamedClassOrObjectSymbol)?.name
             else -> null
         } ?: return
 

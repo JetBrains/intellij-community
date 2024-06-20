@@ -16,11 +16,12 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.toMultiMap
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
-import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -183,16 +184,17 @@ private fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun KtNamedDeclaration.isVisibleTo(usage: PsiElement): Boolean {
     val file = (usage.containingFile as? KtFile)?.getFileSymbol() ?: return false
-    val symbol = getSymbol()
+    val symbol = symbol
     if (symbol !is KaSymbolWithVisibility) return false
     return isVisible(symbol, file, position = usage)
 }
 
 private fun KtNamedDeclaration.kotlinIsVisibleTo(usage: KtElement) = when {
-    !isPhysical -> analyzeCopy(this, DanglingFileResolutionMode.PREFER_SELF) { isVisibleTo(usage) }
-    !usage.isPhysical -> analyzeCopy(usage, DanglingFileResolutionMode.PREFER_SELF) { isVisibleTo(usage) }
+    !isPhysical -> analyzeCopy(this, KaDanglingFileResolutionMode.PREFER_SELF) { isVisibleTo(usage) }
+    !usage.isPhysical -> analyzeCopy(usage, KaDanglingFileResolutionMode.PREFER_SELF) { isVisibleTo(usage) }
     else -> analyze(this) { isVisibleTo(usage) }
 }
 
@@ -252,7 +254,7 @@ private fun checkVisibilityConflictForNonMovedUsages(
 fun KtNamedDeclaration.isMemberThatCanBeSkipped(): Boolean {
     if (containingClass() == null) return false
     analyze(this) {
-        val symbol = getSymbol() as? KaSymbolWithVisibility ?: return false
+        val symbol = symbol as? KaSymbolWithVisibility ?: return false
         val visibility = symbol.visibility
         if (visibility == Visibilities.Public || visibility == Visibilities.Protected) return true
     }
@@ -344,7 +346,7 @@ fun checkModuleDependencyConflictsForInternalUsages(
             tryFindConflict {
                 val usageElement = usageInfo.element ?: return@tryFindConflict null
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
-                analyzeCopy(refExprCopy, DanglingFileResolutionMode.PREFER_SELF) {
+                analyzeCopy(refExprCopy, KaDanglingFileResolutionMode.PREFER_SELF) {
                     if (refExprCopy.mainReference.resolveToSymbol() == null) {
                         val module = refExprCopy.containingModule() ?: return@analyzeCopy null
                         usageElement.createAccessibilityConflictInternal(referencedDeclaration, module)

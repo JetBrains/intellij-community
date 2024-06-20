@@ -2,13 +2,13 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.sessions
 
 import com.intellij.openapi.module.ModuleManager
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
 import java.io.File
@@ -55,10 +55,10 @@ sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<Sess
     }
 
     @OptIn(LLFirInternals::class)
-    private fun getAllModuleSessions(mainModule: KtModule): List<LLFirSession> {
+    private fun getAllModuleSessions(mainModule: KaModule): List<LLFirSession> {
         val projectModules = ModuleManager.getInstance(mainModule.project).modules
             .flatMap { it.sourceModuleInfos }
-            .map { it.toKtModule() }
+            .map { it.toKaModule() }
 
         val resolveSession = LLFirResolveSessionService.getInstance(mainModule.project).getFirResolveSession(mainModule)
         return projectModules.map(resolveSession::getSessionFor)

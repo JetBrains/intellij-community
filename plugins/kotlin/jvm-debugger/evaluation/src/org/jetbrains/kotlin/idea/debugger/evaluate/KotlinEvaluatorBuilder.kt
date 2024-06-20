@@ -29,11 +29,12 @@ import org.jetbrains.eval4j.jdi.JDIEval
 import org.jetbrains.eval4j.jdi.asJdiValue
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.eval4j.jdi.makeInitialFrame
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KaCompilerFacility
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
-import org.jetbrains.kotlin.analysis.api.components.KtCompilerFacility
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
@@ -260,6 +261,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun compiledCodeFragmentDataK2Impl(context: ExecutionContext): CompiledCodeFragmentData {
         val module = codeFragment.module
 
@@ -268,8 +270,8 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 put(CommonConfigurationKeys.MODULE_NAME, module.name)
             }
             put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, codeFragment.languageVersionSettings)
-            put(KtCompilerFacility.CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
-            put(KtCompilerFacility.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
+            put(KaCompilerFacility.CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
+            put(KaCompilerFacility.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
             // Compile lambdas to anonymous classes, so that toString would show something sensible for them.
             put(JVMConfigurationKeys.LAMBDAS, JvmClosureGenerationScheme.CLASS)
         }
@@ -310,6 +312,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
+    @KaExperimentalApi
     private fun computeCodeFragmentParameterInfo(result: KaCompilationResult.Success): K2CodeFragmentParameterInfo {
         val parameters = ArrayList<CodeFragmentParameter.Dumb>(result.capturedValues.size)
         val crossingBounds = HashSet<CodeFragmentParameter.Dumb>()

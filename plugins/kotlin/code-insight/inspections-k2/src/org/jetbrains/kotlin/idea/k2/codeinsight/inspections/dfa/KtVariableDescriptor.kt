@@ -11,12 +11,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.psi.*
 
 class KtVariableDescriptor(
-    val module: KtModule,
+    val module: KaModule,
     val pointer: KaSymbolPointer<KtVariableLikeSymbol>,
     val type: DfType,
     val hash: Int
@@ -140,7 +140,7 @@ class KtVariableDescriptor(
             if (!isTrackableProperty(symbol)) return null
             val parent = expr.parent
             var qualifier: DfaVariableValue? = null
-            if ((symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KaClassKind.OBJECT) {
+            if ((symbol.containingSymbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.OBJECT) {
                 // property in an object: singleton, can track
                 return varFactory.createVariableValue(symbol.variableDescriptor(), null)
             }
@@ -160,7 +160,7 @@ class KtVariableDescriptor(
                 if (functionLiteral != null && type != null) {
                     qualifier = varFactory.createVariableValue(KtLambdaThisVariableDescriptor(functionLiteral, type.toDfType()))
                 } else {
-                    val classOrObject = symbol.getContainingSymbol() as? KaClassOrObjectSymbol
+                    val classOrObject = symbol.containingSymbol as? KaClassOrObjectSymbol
                     if (classOrObject != null) {
                         val dfType = TypeConstraints.exactClass(classOrObject.classDef()).instanceOf().asDfType()
                         qualifier = varFactory.createVariableValue(KtThisDescriptor(dfType))

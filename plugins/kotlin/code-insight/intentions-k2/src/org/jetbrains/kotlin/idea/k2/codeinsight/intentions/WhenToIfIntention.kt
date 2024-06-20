@@ -42,7 +42,7 @@ internal class WhenToIfIntention :
     context(KaSession)
     private fun KtWhenExpression.hasNoElseButUsedAsExpression(): Boolean {
         val lastEntry = entries.last()
-        return !lastEntry.isElse && isUsedAsExpression()
+        return !lastEntry.isElse && isUsedAsExpression
     }
 
     /**
@@ -112,7 +112,7 @@ internal class WhenToIfIntention :
          */
         if (element.isTrueOrFalseCondition()) return Context(isNullableSubject)
         if (element.isSubjectUsedByOneOrZeroBranch()) return Context(isNullableSubject)
-        if (subject != null && subject !is KtNameReferenceExpression && !element.isUsedAsExpression()) {
+        if (subject != null && subject !is KtNameReferenceExpression && !element.isUsedAsExpression) {
             return Context(isNullableSubject, getNewNameForExpression(subject))
         }
         return Context(isNullableSubject)

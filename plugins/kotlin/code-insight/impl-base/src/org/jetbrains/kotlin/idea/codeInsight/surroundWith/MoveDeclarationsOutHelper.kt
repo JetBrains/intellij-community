@@ -7,6 +7,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtilCore
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -115,7 +116,7 @@ private fun createVariableAssignment(property: KtProperty): KtBinaryExpression {
     return assignment
 }
 
-@OptIn(KaAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
 private fun createVariableDeclaration(property: KtProperty, generateDefaultInitializers: Boolean): KtProperty {
     allowAnalysisOnEdt {
         @OptIn(KaAllowAnalysisFromWriteAction::class)

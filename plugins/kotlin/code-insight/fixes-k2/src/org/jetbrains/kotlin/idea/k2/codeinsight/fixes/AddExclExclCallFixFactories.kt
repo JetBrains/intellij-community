@@ -2,9 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
 import org.jetbrains.kotlin.psi.*
@@ -82,13 +83,14 @@ object AddExclExclCallFixFactories {
         //   if (nullableInt == null) {
         //     val x = nullableInt.length  // No AddExclExclCallFix here
         //   }
-        if (target?.safeAs<KtExpression>()?.isDefinitelyNull() == true) {
+        if (target?.safeAs<KtExpression>()?.isDefinitelyNull == true) {
             return emptyList()
         }
 
         return listOfNotNull(target.asAddExclExclCallFix(hasImplicitReceiver = hasImplicitReceiver))
     }
 
+    @OptIn(KaExperimentalApi::class)
     val iteratorOnNullableFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.IteratorOnNullable ->
         val expression = diagnostic.psi as? KtExpression
             ?: return@IntentionBased emptyList()
@@ -99,10 +101,10 @@ object AddExclExclCallFixFactories {
 
         // NOTE: This is different from FE1.0 in that we offer the fix even if the function does NOT have the `operator` modifier.
         // Adding `!!` will then surface the error that `operator` should be added (with corresponding fix).
-        val typeScope = type.getTypeScope()?.getDeclarationScope()
+        val typeScope = type.scope?.declarationScope
             ?: return@IntentionBased emptyList()
         val hasValidIterator = typeScope.getCallableSymbols(OperatorNameConventions.ITERATOR)
-            .filter { it is KaFunctionSymbol && it.valueParameters.isEmpty() }.singleOrNull() != null
+            .filter { it is KaNamedFunctionSymbol && it.valueParameters.isEmpty() }.singleOrNull() != null
         if (hasValidIterator) {
             listOfNotNull(expression.asAddExclExclCallFix())
         } else {

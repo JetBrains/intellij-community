@@ -5,11 +5,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -139,6 +139,7 @@ object ChangeSignatureFixFactory {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun prepareChangeInfo(psi: PsiElement, input: Input): KotlinChangeInfo? {
         if (input.type == ChangeType.CHANGE_FUNCTIONAL) {
             return prepareFunctionalLiteralChangeInfo(psi as KtLambdaExpression, input)
@@ -257,6 +258,7 @@ object ChangeSignatureFixFactory {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun getKtType(argumentExpression: KtExpression?): KtType? {
         var ktType = argumentExpression?.getKtType()
         val typeKind = ktType?.functionTypeKind
@@ -313,7 +315,7 @@ object ChangeSignatureFixFactory {
         ktCallableSymbol: KaCallableSymbol,
         element: PsiElement,
     ): List<ParameterQuickFix> {
-        if (ktCallableSymbol !is KaFunctionLikeSymbol) return emptyList()
+        if (ktCallableSymbol !is KaFunctionSymbol) return emptyList()
         val name = getDeclarationName(ktCallableSymbol) ?: return emptyList()
         val valueArgument = element.parentOfType<KtValueArgument>(true) ?: return emptyList()
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
@@ -341,8 +343,8 @@ object ChangeSignatureFixFactory {
         element: PsiElement,
     ): List<ParameterQuickFix> {
         if (symbol !is KtParameterSymbol) return emptyList()
-        val containingSymbol = symbol.getContainingSymbol() as? KaFunctionLikeSymbol ?: return emptyList()
-        if (containingSymbol is KaFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
+        val containingSymbol = symbol.containingSymbol as? KaFunctionSymbol ?: return emptyList()
+        if (containingSymbol is KaNamedFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
             containingSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED ||
             containingSymbol.origin == KtSymbolOrigin.LIBRARY
         ) return emptyList()
@@ -363,6 +365,7 @@ object ChangeSignatureFixFactory {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun createMismatchParameterTypeFix(
         element: PsiElement,
         expectedType: KtType
@@ -372,7 +375,7 @@ object ChangeSignatureFixFactory {
 
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
         val functionLikeSymbol =
-            ((callElement.resolveCallOld() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)?.symbol as? KaFunctionLikeSymbol
+            ((callElement.resolveCallOld() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)?.symbol as? KaFunctionSymbol
                 ?: return emptyList()
 
         val name = getDeclarationName(functionLikeSymbol) ?: return emptyList()
@@ -406,16 +409,16 @@ object ChangeSignatureFixFactory {
 }
 
 context(KaSession)
-internal fun getDeclarationName(functionLikeSymbol: KaFunctionLikeSymbol): String? {
+internal fun getDeclarationName(functionLikeSymbol: KaFunctionSymbol): String? {
     return when(functionLikeSymbol) {
         is KaConstructorSymbol -> {
             val constructorSymbol = functionLikeSymbol
-            if ((constructorSymbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.isInline == true) {
+            if ((constructorSymbol.containingSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true) {
                 null
             } else constructorSymbol.containingClassId?.shortClassName
         }
 
-        is KaFunctionSymbol -> {
+        is KaNamedFunctionSymbol -> {
             functionLikeSymbol.name
         }
 

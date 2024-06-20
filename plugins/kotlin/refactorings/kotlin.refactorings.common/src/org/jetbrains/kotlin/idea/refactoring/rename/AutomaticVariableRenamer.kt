@@ -122,7 +122,7 @@ class AutomaticVariableRenamer(
 private fun KtCallableDeclaration.isCollectionLikeOf(classPsiElement: PsiNamedElement): Boolean {
     analyze(this) {
         fun KtType.isCollectionLikeOf(classPsiElement: PsiNamedElement): Boolean {
-            if (isArrayOrPrimitiveArray() || isClassTypeWithClassId(StandardClassIds.Collection) || getAllSuperTypes().any { it.isClassTypeWithClassId(StandardClassIds.Collection) }) {
+            if (isArrayOrPrimitiveArray || isClassTypeWithClassId(StandardClassIds.Collection) || getAllSuperTypes().any { it.isClassTypeWithClassId(StandardClassIds.Collection) }) {
                 val typeArgument = (this as? KtNonErrorClassType)?.ownTypeArguments?.singleOrNull()?.type ?: return false
                 if (typeArgument.expandedSymbol?.psi == classPsiElement) {
                     return true

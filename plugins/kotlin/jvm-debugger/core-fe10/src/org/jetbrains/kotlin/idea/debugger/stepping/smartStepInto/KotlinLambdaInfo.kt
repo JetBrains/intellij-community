@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -25,7 +25,7 @@ data class KotlinLambdaInfo(
 
 context(KaSession)
 internal fun KotlinLambdaInfo(
-    methodSymbol: KaFunctionLikeSymbol,
+    methodSymbol: KaFunctionSymbol,
     argumentSymbol: KaValueParameterSymbol,
     callerMethodOrdinal: Int,
     isNameMangledInBytecode: Boolean,
@@ -45,7 +45,7 @@ internal fun KotlinLambdaInfo(
 )
 
 context(KaSession)
-private fun countParameterIndex(methodSymbol: KaFunctionLikeSymbol, argumentSymbol: KaValueParameterSymbol): Int {
+private fun countParameterIndex(methodSymbol: KaFunctionSymbol, argumentSymbol: KaValueParameterSymbol): Int {
     var resultIndex = methodSymbol.valueParameters.indexOf(argumentSymbol)
 
     if (methodSymbol.isExtension)

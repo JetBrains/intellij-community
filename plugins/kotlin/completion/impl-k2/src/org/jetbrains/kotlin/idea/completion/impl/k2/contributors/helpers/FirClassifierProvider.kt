@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -17,7 +17,7 @@ internal object FirClassifierProvider {
     fun getAvailableClassifiersCurrentScope(
         originalKtFile: KtFile,
         position: KtElement,
-        scopeNameFilter: KtScopeNameFilter,
+        scopeNameFilter: (Name) -> Boolean,
         visibilityChecker: CompletionVisibilityChecker
     ): Sequence<KaClassifierSymbolWithContainingScopeKind> =
         originalKtFile.getScopeContextForPosition(position).scopes.asSequence().flatMap { scopeWithKind ->
@@ -30,7 +30,7 @@ internal object FirClassifierProvider {
     context(KaSession)
     fun getAvailableClassifiersFromIndex(
         symbolProvider: KtSymbolFromIndexProvider,
-        scopeNameFilter: KtScopeNameFilter,
+        scopeNameFilter: (Name) -> Boolean,
         visibilityChecker: CompletionVisibilityChecker
     ): Sequence<KaClassifierSymbol> {
         val kotlinDeclarations = symbolProvider.getKotlinClassesByNameFilter(

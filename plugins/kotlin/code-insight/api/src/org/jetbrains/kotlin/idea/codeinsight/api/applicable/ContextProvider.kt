@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -35,7 +35,7 @@ internal fun <E : KtElement, C> ContextProvider<E, C>.getElementContext(
     element: E,
 ): C? = if (element.isPhysical) analyze(element) {
     prepareContext(element)
-} else analyzeCopy(element, DanglingFileResolutionMode.PREFER_SELF) {
+} else analyzeCopy(element, KaDanglingFileResolutionMode.PREFER_SELF) {
     prepareContext(element)
 }
 

@@ -77,9 +77,9 @@ fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>
     )
 
     val analyzeResult = analyzeInModalWindow(declaration, KotlinK2RefactoringsBundle.message("resolving.super.methods.progress.title")) {
-        (declaration.getSymbol() as? KaCallableSymbol)?.let { callableSymbol ->
+        (declaration.symbol as? KaCallableSymbol)?.let { callableSymbol ->
             callableSymbol.originalContainingClassForOverride?.let { containingClass ->
-                val overriddenSymbols = callableSymbol.getAllOverriddenSymbols()
+                val overriddenSymbols = callableSymbol.allOverriddenSymbols
 
                 val renderToPsi = overriddenSymbols.mapNotNull {
                     it.psi?.let { psi ->

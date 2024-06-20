@@ -23,7 +23,7 @@ class FirCompletionDummyIdentifierProviderService : AbstractCompletionDummyIdent
 //            val reference = nameReferenceExpression.mainReference
 //            val targets = reference.resolveToSymbols()
 //            targets.isNotEmpty() && targets.all { target ->
-//                target is KaFunctionSymbol || target is KaClassOrObjectSymbol && target.classKind == KaClassKind.CLASS
+//                target is KaNamedFunctionSymbol || target is KaClassOrObjectSymbol && target.classKind == KaClassKind.CLASS
 //            }
 //        }
     }

@@ -25,7 +25,7 @@ fun KtDotQualifiedExpression.isToString(): Boolean {
     if (referenceExpression.getReferencedName() != OperatorNameConventions.TO_STRING.asString()) return false
     return analyze(callExpression) {
         referenceExpression.mainReference.resolveToSymbols().any { symbol ->
-            val functionSymbol = symbol as? KaFunctionSymbol ?: return@any false
+            val functionSymbol = symbol as? KaNamedFunctionSymbol ?: return@any false
             functionSymbol.valueParameters.isEmpty() && functionSymbol.returnType.isString
         }
     }

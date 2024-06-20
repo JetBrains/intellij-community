@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import com.intellij.util.applyIf
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
-import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -44,7 +44,7 @@ context(KaSession)
 internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
     scopeContext: KtScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
-    scopeNameFilter: KtScopeNameFilter,
+    scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = sequence {
@@ -78,7 +78,7 @@ context(KaSession)
 internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
     scopeContext: KtScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
-    scopeNameFilter: KtScopeNameFilter,
+    scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = scopeContext.scopes.asSequence()
@@ -92,15 +92,16 @@ internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
  * @param indexInTower index of implicit receiver's scope in scope tower if it is known, otherwise null.
  */
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 internal fun collectNonExtensionsForType(
     type: KtType,
     visibilityChecker: CompletionVisibilityChecker,
-    scopeNameFilter: KtScopeNameFilter,
+    scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
     indexInTower: Int? = null,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> {
-    val typeScope = type.getTypeScope() ?: return emptySequence()
+    val typeScope = type.scope ?: return emptySequence()
 
     val callables = typeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
         .applyIf(!sessionParameters.allowSyntheticJavaProperties) { filter { it.symbol !is KtSyntheticJavaPropertySymbol } }
@@ -109,7 +110,7 @@ internal fun collectNonExtensionsForType(
         }
 
     val innerClasses = typeScope.getClassifierSymbols(scopeNameFilter).filterIsInstance<KaNamedClassOrObjectSymbol>().filter { it.isInner }
-    val innerClassesConstructors = innerClasses.flatMap { it.getDeclaredMemberScope().getConstructors() }.map { it.asSignature() }
+    val innerClassesConstructors = innerClasses.flatMap { it.declaredMemberScope.constructors }.map { it.asSignature() }
 
     val nonExtensionsFromType = (callables + innerClassesConstructors).filterNonExtensions(visibilityChecker, symbolFilter)
 
@@ -125,13 +126,14 @@ private val KtSyntheticJavaPropertySymbol.getterAndUnitSetter: List<KaCallableSy
     get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol?.takeIf { it.returnType.isUnit })
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
     type: KtType,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
     symbolFilter: (KaCallableSymbol) -> Boolean
 ): Sequence<KtCallableSignature<*>> {
-    val syntheticJavaPropertiesTypeScope = type.getSyntheticJavaPropertiesScope() ?: return this
+    val syntheticJavaPropertiesTypeScope = type.syntheticJavaPropertiesScope ?: return this
     val syntheticProperties = syntheticJavaPropertiesTypeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
         .filterNonExtensions(visibilityChecker, symbolFilter)
         .filterIsInstance<KtCallableSignature<KtSyntheticJavaPropertySymbol>>()
@@ -146,10 +148,11 @@ private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
  * To get them use [collectNonExtensionsForType].
  */
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 internal fun collectNonExtensionsFromScope(
     scope: KtScope,
     visibilityChecker: CompletionVisibilityChecker,
-    scopeNameFilter: KtScopeNameFilter,
+    scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignature<*>> = scope.getCallableSymbols(scopeNameFilter.getAndSetAware())
@@ -170,7 +173,7 @@ private fun Sequence<KtCallableSignature<*>>.filterNonExtensions(
  * Returns a filter aware of prefixes. For example, a variable with the name `prop` satisfies the filter for all the following prefixes:
  * "p", "getP", "setP"
  */
-private fun KtScopeNameFilter.getAndSetAware(): KtScopeNameFilter = { name ->
+private fun ((Name) -> Boolean).getAndSetAware(): (Name) -> Boolean = { name ->
     listOfNotNull(name, name.toJavaGetterName(), name.toJavaSetterName()).any(this)
 }
 
@@ -194,5 +197,5 @@ private fun isEnumEntriesProperty(symbol: KaCallableSymbol): Boolean {
     return symbol is KtPropertySymbol &&
             symbol.isStatic &&
             symbol.callableId?.callableName == StandardNames.ENUM_ENTRIES &&
-            (symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KaClassKind.ENUM_CLASS
+            (symbol.containingSymbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.ENUM_CLASS
 }

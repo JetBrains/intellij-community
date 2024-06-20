@@ -20,9 +20,9 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclaration
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderMerger
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinFileBasedDeclarationProvider
 import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
-import org.jetbrains.kotlin.analysis.project.structure.KtBuiltinsModule
-import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinBinaryRootToPackageIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class IdeKotlinDeclarationProviderFactory(private val project: Project) : KotlinDeclarationProviderFactory() {
-    override fun createDeclarationProvider(scope: GlobalSearchScope, contextualModule: KtModule?): KotlinDeclarationProvider {
+    override fun createDeclarationProvider(scope: GlobalSearchScope, contextualModule: KaModule?): KotlinDeclarationProvider {
         val mainProvider = IdeKotlinDeclarationProvider(project, scope, contextualModule)
 
         if (contextualModule is KtSourceModuleByModuleInfoForOutsider) {
@@ -69,7 +69,7 @@ internal class IdeKotlinDeclarationProviderMerger(private val project: Project) 
 private class IdeKotlinDeclarationProvider(
     private val project: Project,
     val scope: GlobalSearchScope,
-    private val contextualModule: KtModule?,
+    private val contextualModule: KaModule?,
 ) : KotlinDeclarationProvider() {
     private val stubIndex: StubIndex = StubIndex.getInstance()
     private val psiManager = PsiManager.getInstance(project)
@@ -137,18 +137,18 @@ private class IdeKotlinDeclarationProvider(
 
     override fun computePackageNames(): Set<String>? = computePackageNames(contextualModule)
 
-    private fun computePackageNames(module: KtModule?): Set<String>? = when (module) {
+    private fun computePackageNames(module: KaModule?): Set<String>? = when (module) {
         is KtSourceModuleByModuleInfo -> computeSourceModulePackageSet(module)
-        is SdkKtModuleByModuleInfo -> computeSdkModulePackageSet(module)
+        is KtSdkLibraryModuleByModuleInfo -> computeSdkModulePackageSet(module)
         is KtLibraryModuleByModuleInfo -> computeLibraryModulePackageSet(module)
-        is KtLibrarySourceModule -> computePackageNames(module.binaryLibrary)
-        is KtBuiltinsModule -> StandardClassIds.builtInsPackages.mapTo(mutableSetOf()) { it.asString() }
+        is KaLibrarySourceModule -> computePackageNames(module.binaryLibrary)
+        is KaBuiltinsModule -> StandardClassIds.builtInsPackages.mapTo(mutableSetOf()) { it.asString() }
         else -> null
     }
 
     private fun computeSourceModulePackageSet(module: KtSourceModuleByModuleInfo): Set<String>? = null // KTIJ-27450
 
-    private fun computeSdkModulePackageSet(module: SdkKtModuleByModuleInfo): Set<String>? =
+    private fun computeSdkModulePackageSet(module: KtSdkLibraryModuleByModuleInfo): Set<String>? =
         computePackageSetFromBinaryRoots(module.moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES))
 
     private fun computeLibraryModulePackageSet(module: KtLibraryModuleByModuleInfo): Set<String>? =

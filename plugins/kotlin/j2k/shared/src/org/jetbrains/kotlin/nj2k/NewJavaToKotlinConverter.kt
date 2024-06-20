@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
@@ -80,7 +80,7 @@ class NewJavaToKotlinConverter(
         forInlining: Boolean = false
     ): Result = allowAnalysisOnEdt {
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
-        val targetKtModule = targetModule?.productionOrTestSourceModuleInfo?.toKtModule()
+        val targetKtModule = targetModule?.productionOrTestSourceModuleInfo?.toKaModule()
 
         // TODO
         // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)

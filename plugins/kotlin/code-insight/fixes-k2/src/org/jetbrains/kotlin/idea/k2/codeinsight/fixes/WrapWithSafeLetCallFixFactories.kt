@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -226,6 +227,7 @@ object WrapWithSafeLetCallFixFactories {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun createWrapWithSafeLetCallInputForNullableExpression(
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
@@ -275,7 +277,7 @@ object WrapWithSafeLetCallFixFactories {
         return when {
             parent is KtProperty && expression == parent.initializer -> {
                 if (parent.typeReference == null) return true
-                val symbol = parent.getSymbol()
+                val symbol = parent.symbol
                 (symbol as? KaCallableSymbol)?.returnType?.isMarkedNullable ?: true
             }
             parent is KtValueArgument && expression == parent.getArgumentExpression() -> {

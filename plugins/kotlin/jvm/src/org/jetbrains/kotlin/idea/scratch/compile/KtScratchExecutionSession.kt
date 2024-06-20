@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
@@ -149,6 +150,7 @@ class KtScratchExecutionSession(
         backgroundProcessIndicator?.cancel()
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun compileFileToTempDir(psiFile: KtFile, expressions: List<ScratchExpression>): File? {
         if (!executor.checkForErrors(psiFile, expressions)) return null
 

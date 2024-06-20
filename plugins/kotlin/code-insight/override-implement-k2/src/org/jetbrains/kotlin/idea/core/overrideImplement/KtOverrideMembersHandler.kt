@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.overrideImplement
 
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
@@ -24,7 +25,8 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
         }
     }
 
-    context(KaSession)
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> =
         classOrObject.getClassOrObjectSymbol()?.let { getOverridableMembers(it) }.orEmpty().map { (symbol, bodyType, containingSymbol) ->
             @NlsSafe
@@ -42,15 +44,16 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
             )
         }
 
-    context(KaSession)
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun getOverridableMembers(classOrObjectSymbol: KaClassOrObjectSymbol): List<OverrideMember> {
         return buildList {
-            classOrObjectSymbol.getMemberScope().getCallableSymbols().forEach { symbol ->
+            classOrObjectSymbol.memberScope.getCallableSymbols().forEach { symbol ->
                 if (!symbol.isVisibleInClass(classOrObjectSymbol)) return@forEach
                 val implementationStatus = symbol.getImplementationStatus(classOrObjectSymbol) ?: return@forEach
                 if (!implementationStatus.isOverridable) return@forEach
 
-                val intersectionSymbols = symbol.getIntersectionOverriddenSymbols()
+                val intersectionSymbols = symbol.intersectionOverriddenSymbols
                 val symbolsToProcess = if (intersectionSymbols.size <= 1) {
                     listOf(symbol)
                 } else {
@@ -79,7 +82,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassOrObjectSymbol): L
                         }
                         (classOrObjectSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true &&
                                 containingSymbol?.classId == StandardClassIds.Any -> {
-                            if ((symbolToProcess as? KaFunctionSymbol)?.name?.asString() in listOf("equals", "hashCode")) {
+                            if ((symbolToProcess as? KaNamedFunctionSymbol)?.name?.asString() in listOf("equals", "hashCode")) {
                                 continue
                             } else {
                                 BodyType.Super

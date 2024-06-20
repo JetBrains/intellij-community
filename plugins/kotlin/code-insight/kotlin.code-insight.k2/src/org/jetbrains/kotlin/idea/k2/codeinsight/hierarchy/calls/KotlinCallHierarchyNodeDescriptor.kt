@@ -15,13 +15,14 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.ui.LayeredIcon
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -141,13 +142,13 @@ class KotlinCallHierarchyNodeDescriptor(
                     return null
                 }
                 else -> {
-                    var declarationSymbol = element.getSymbol()
+                    var declarationSymbol = element.symbol
                     val elementText: String?
                     when (element) {
                         is KtClassOrObject -> {
                             when {
                                 element is KtObjectDeclaration && element.isCompanion() -> {
-                                    val containingDescriptor = declarationSymbol.getContainingSymbol()
+                                    val containingDescriptor = declarationSymbol.containingSymbol
                                     if (containingDescriptor !is KaClassOrObjectSymbol) return null
                                     declarationSymbol = containingDescriptor
                                     elementText = renderClassOrObject(declarationSymbol)
@@ -165,7 +166,7 @@ class KotlinCallHierarchyNodeDescriptor(
                             }
                         }
                         is KtNamedFunction, is KtConstructor<*> -> {
-                            if (declarationSymbol !is KaFunctionLikeSymbol) return null
+                            if (declarationSymbol !is KaFunctionSymbol) return null
                             elementText = renderNamedFunction(declarationSymbol)
                         }
                         is KtProperty -> {
@@ -176,7 +177,7 @@ class KotlinCallHierarchyNodeDescriptor(
 
                     if (elementText == null) return null
                     var containerText: String? = null
-                    var containerDescriptor = declarationSymbol.getContainingSymbol()
+                    var containerDescriptor = declarationSymbol.containingSymbol
                     while (containerDescriptor != null) {
                         if (containerDescriptor is KaPackageSymbol) {
                             break
@@ -186,7 +187,7 @@ class KotlinCallHierarchyNodeDescriptor(
                             val identifier = name.identifier
                             containerText = if (containerText != null) "$identifier.$containerText" else identifier
                         }
-                        containerDescriptor = containerDescriptor.getContainingSymbol()
+                        containerDescriptor = containerDescriptor.containingSymbol
                     }
                     return if (containerText != null) "$containerText.$elementText" else elementText
                 }
@@ -194,8 +195,9 @@ class KotlinCallHierarchyNodeDescriptor(
         }
 
         context(KaSession)
-        fun renderNamedFunction(symbol: KaFunctionLikeSymbol): String? {
-            val name = ((symbol as? KaFunctionSymbol)?.name ?: ((symbol as? KaConstructorSymbol)?.getContainingSymbol() as? KaClassOrObjectSymbol)?.name)?.asString() ?: return null
+        @OptIn(KaExperimentalApi::class)
+        fun renderNamedFunction(symbol: KaFunctionSymbol): String? {
+            val name = ((symbol as? KaNamedFunctionSymbol)?.name ?: ((symbol as? KaConstructorSymbol)?.containingSymbol as? KaClassOrObjectSymbol)?.name)?.asString() ?: return null
             val paramTypes =
                 StringUtil.join(
                     symbol.valueParameters,

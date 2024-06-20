@@ -21,6 +21,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
@@ -283,6 +284,7 @@ class KotlinBytecodeToolWindow(
                 "No Kotlin source file is opened.\n" +
                 "*/"
 
+        @OptIn(KaExperimentalApi::class)
         fun getBytecodeForFile(
             ktFile: KtFile,
             configuration: CompilerConfiguration,
@@ -356,6 +358,7 @@ class KotlinBytecodeToolWindow(
          *
          * If this approach for some reason filters out all output files, the full list is returned defensively.
          */
+        @KaExperimentalApi
         private fun getRelevantClassFiles(
             ktFile: KtFile,
             outputFiles: List<KtCompiledFile>,
@@ -369,6 +372,7 @@ class KotlinBytecodeToolWindow(
                 .ifEmpty { classFiles }
         }
 
+        @KaExperimentalApi
         @ApiStatus.Internal
         fun KaSession.compileSingleFile(
             ktFile: KtFile,

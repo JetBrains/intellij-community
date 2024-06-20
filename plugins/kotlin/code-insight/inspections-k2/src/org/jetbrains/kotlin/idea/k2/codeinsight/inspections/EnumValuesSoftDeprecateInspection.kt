@@ -49,7 +49,7 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
     context(KaSession)
     private fun isDeclarationAnnotatedWith(element: PsiElement, annotationClassId: ClassId): Boolean {
         if (element !is KtDeclaration) return false
-        return true == (element.getSymbol() as? KtAnnotated)?.hasAnnotation(annotationClassId)
+        return true == (element.symbol as? KtAnnotated)?.hasAnnotation(annotationClassId)
     }
 
     /**

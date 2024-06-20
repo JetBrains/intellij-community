@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch
 import com.intellij.psi.PsiComment
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
@@ -28,6 +28,7 @@ internal fun getCommentText(comment: PsiComment): String {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 internal fun KtType.renderNames(): Array<String> = arrayOf(
     render(KtTypeRendererForSource.WITH_SHORT_NAMES.with {
         classIdRenderer = KaClassTypeQualifierRenderer.WITH_SHORT_NAMES
@@ -47,7 +48,7 @@ internal val MatchingHandler.withinHierarchyTextFilterSet: Boolean
 context(KaSession)
 fun KtExpression.findDispatchReceiver(): KtType? {
     val symbol = resolveCallOld()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return null
-    val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol ?: return null
+    val containingClass = symbol.containingSymbol as? KaClassOrObjectSymbol ?: return null
     val classId = containingClass.classId ?: return null
     val fromKotlinPkg = classId.packageFqName.asString().startsWith("kotlin")
     val isFunctionCall = classId.relativeClassName.asString().startsWith("Function")

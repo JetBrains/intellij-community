@@ -7,6 +7,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -272,6 +273,7 @@ class KotlinNameSuggester(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun getPresentableType(type: KtType): KtType = type.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
 
     /**

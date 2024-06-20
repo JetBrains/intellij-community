@@ -46,10 +46,10 @@ fun KtModifierKeywordToken.toVisibility(): Visibility = when (this) {
 context(KaSession)
 private fun explicitVisibilityRequired(symbol: KaSymbolWithVisibility): Boolean {
     if ((symbol as? KaConstructorSymbol)?.isPrimary == true) return false // 1
-    if (symbol is KtPropertySymbol && (symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.isData == true) return false // 2
-    if ((symbol as? KaCallableSymbol)?.getAllOverriddenSymbols()?.isNotEmpty() == true) return false // 3
+    if (symbol is KtPropertySymbol && (symbol.containingSymbol as? KaNamedClassOrObjectSymbol)?.isData == true) return false // 2
+    if ((symbol as? KaCallableSymbol)?.allOverriddenSymbols?.any() == true) return false // 3
     if (symbol is KaPropertyAccessorSymbol) return false // 4
-    if (symbol is KtPropertySymbol && (symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS) return false // 5
+    if (symbol is KtPropertySymbol && (symbol.containingSymbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS) return false // 5
     return true
 }
 
@@ -74,7 +74,7 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
             analyze(property) {
                 property
                     .getSymbolOfType<KtPropertySymbol>()
-                    .getAllOverriddenSymbols()
+                    .allOverriddenSymbols
                     .forEach { overriddenSymbol ->
                         val visibility = (overriddenSymbol as? KtPropertySymbol)?.setter?.visibility?.toKeywordToken()
                         if (visibility != null) return visibility
@@ -100,7 +100,7 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
         hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
             analyze(this) {
                 getSymbolOfType<KaCallableSymbol>()
-                    .getAllOverriddenSymbols()
+                    .allOverriddenSymbols
                     .mapNotNull { (it as? KaSymbolWithVisibility)?.visibility }
                     .maxWithOrNull { v1, v2 -> Visibilities.compare(v1, v2) ?: -1 }
                     ?.toKeywordToken()

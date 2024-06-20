@@ -43,7 +43,7 @@ internal object PreferContextualCallablesWeigher {
             yield(symbol)
 
             // compute and check overridden symbols only if `symbol` is not suitable
-            yieldAll(symbol.getAllOverriddenSymbols())
+            yieldAll(symbol.allOverriddenSymbols)
         }
 
         lookupElement.isContextualCallable = symbolsToCheck.any { contextualSymbolsCache.symbolIsPresentInContext(it) }

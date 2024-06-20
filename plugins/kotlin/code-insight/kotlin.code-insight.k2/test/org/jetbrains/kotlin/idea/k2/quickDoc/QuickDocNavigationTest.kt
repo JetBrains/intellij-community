@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.editor.quickDoc
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
@@ -17,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.Assert
@@ -48,8 +49,8 @@ class QuickDocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testJdkClass() {
         val target = resolveDocLink("ArrayList")
-        assertInstanceOf(target, KtTypeAlias::class.java)
-        Assert.assertEquals("ArrayList", (target as KtTypeAlias).name)
+        assertInstanceOf(target, PsiClass::class.java)
+        Assert.assertEquals("ArrayList", (target as PsiClass).name)
     }
 
     fun testStdlibFunction() {
@@ -86,6 +87,12 @@ class QuickDocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
         val target = resolveDocLink("doc.topLevelProperty")
         assertInstanceOf(target, KtProperty::class.java)
         Assert.assertEquals("topLevelProperty", (target as KtProperty).name)
+    }
+
+    fun testTopLevelExtensionPropertyWithThis() {
+        val target = resolveDocLink("this")
+        assertInstanceOf(target, KtTypeReference::class.java)
+        Assert.assertEquals("A", (target as KtTypeReference).text)
     }
 
     private fun resolveDocLink(linkText: String): PsiElement? {

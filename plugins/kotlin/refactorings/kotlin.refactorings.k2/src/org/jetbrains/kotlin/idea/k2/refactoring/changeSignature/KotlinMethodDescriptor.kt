@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.refactoring.changeSignature.MethodDescriptor.ReadWriteOption
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -21,14 +22,14 @@ import org.jetbrains.kotlin.types.Variance
 class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
     KotlinModifiableMethodDescriptor<KotlinParameterInfo, Visibility> {
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     internal val oldReturnType: String = allowAnalysisOnEdt {
         analyze(callable) {
             (callable as? KtCallableDeclaration)?.getReturnKtType()?.render(position = Variance.INVARIANT) ?: ""
         }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     internal val oldReceiverType: String? = allowAnalysisOnEdt {
         analyze(callable) {
             (callable as? KtCallableDeclaration)?.receiverTypeReference?.getKtType()?.render(position = Variance.INVARIANT)
@@ -97,7 +98,7 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
     @OptIn(KaAllowAnalysisOnEdt::class)
     private val _visibility = allowAnalysisOnEdt {
         analyze(callable) {
-            (callable.getSymbol() as? KaSymbolWithVisibility)?.visibility ?: Visibilities.Public
+            (callable.symbol as? KaSymbolWithVisibility)?.visibility ?: Visibilities.Public
         }
     }
 

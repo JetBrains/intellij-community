@@ -5,12 +5,12 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
@@ -55,8 +55,8 @@ object ChangeTypeQuickFixFactories {
     }
 
     val changeFunctionReturnTypeOnOverride = changeReturnTypeOnOverride<KaFirDiagnostic.ReturnTypeMismatchOnOverride>(
-        getCallableSymbol = { it.function as KaFunctionSymbol },
-        getSuperCallableSymbol = { it.superFunction as KaFunctionSymbol },
+        getCallableSymbol = { it.function as KaNamedFunctionSymbol },
+        getSuperCallableSymbol = { it.superFunction as KaNamedFunctionSymbol },
     )
 
     val changePropertyReturnTypeOnOverride = changeReturnTypeOnOverride<KaFirDiagnostic.PropertyTypeMismatchOnOverride>(
@@ -70,6 +70,7 @@ object ChangeTypeQuickFixFactories {
     )
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun getActualType(ktType: KtType): KtType {
         val typeKind = ktType.functionTypeKind
         when (typeKind) {
@@ -97,7 +98,7 @@ object ChangeTypeQuickFixFactories {
             else -> return candidateType
         }
         val returnedExpressions = if (functionOrGetter != null) {
-            val declarationSymbol = functionOrGetter.getSymbol()
+            val declarationSymbol = functionOrGetter.symbol
             functionOrGetter
                 .collectDescendantsOfType<KtReturnExpression> { it.getReturnTargetSymbol() == declarationSymbol }
                 .mapNotNull { it.returnedExpression }
@@ -232,7 +233,7 @@ object ChangeTypeQuickFixFactories {
                 add(UpdateTypeQuickFix(entryWithWrongType, TargetType.VARIABLE, createTypeInfo(diagnostic.destructingType)))
 
                 val classSymbol = (diagnostic.psi.getKtType() as? KtNonErrorClassType)?.symbol as? KaSymbolWithMembers ?: return@buildList
-                val componentFunction = classSymbol.getMemberScope()
+                val componentFunction = classSymbol.memberScope
                     .getCallableSymbols(diagnostic.componentFunctionName)
                     .firstOrNull()?.psi as? KtCallableDeclaration
                     ?: return@buildList

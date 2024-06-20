@@ -29,7 +29,7 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
 
 
             val isUsedAsExpression by lazy {
-                analyze(expression) { expression.isUsedAsExpression() }
+                analyze(expression) { expression.isUsedAsExpression }
             }
 
             expression.ifKeyword

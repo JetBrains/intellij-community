@@ -82,11 +82,11 @@ class KotlinSafeDeleteUsageSearcher : SafeDeleteUsageSearcher {
                     return runReadAction {
                         val classOrObject = ktElement.containingClassOrObject
                         analyze(ktElement) {
-                            val elementClassSymbol = classOrObject?.getSymbol() as? KaClassOrObjectSymbol ?: return@analyze
+                            val elementClassSymbol = classOrObject?.symbol as? KaClassOrObjectSymbol ?: return@analyze
                             val superMethods =
-                                (ktElement.getSymbol() as? KaCallableSymbol)?.getDirectlyOverriddenSymbols() ?: return@analyze
+                                (ktElement.symbol as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return@analyze
                             val abstractExternalSuper = superMethods.find {
-                                val superClassSymbol = it.getContainingSymbol() as? KaClassOrObjectSymbol ?: return@find false
+                                val superClassSymbol = it.containingSymbol as? KaClassOrObjectSymbol ?: return@find false
                                 if ((it as? KaSymbolWithModality)?.modality != Modality.ABSTRACT) return@find false
                                 return@find !superClassSymbol.isSubClassOf(elementClassSymbol)
                             }

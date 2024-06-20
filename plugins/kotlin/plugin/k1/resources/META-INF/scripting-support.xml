@@ -25,8 +25,8 @@
 
     <fileEditorProvider id="KtsScratchFileEditorProvider" implementation="org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorProvider"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.KtFe10CompilerPluginsProvider"
-                    serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
+                    serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.KotlinFe10CompilerPluginsProvider"/>
 
   </extensions>
 

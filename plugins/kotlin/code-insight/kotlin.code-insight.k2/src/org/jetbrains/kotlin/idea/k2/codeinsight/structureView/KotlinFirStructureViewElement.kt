@@ -128,7 +128,7 @@ class KotlinFirStructureViewElement(
             else -> runReadAction {
                 if (!DumbService.isDumb(element.getProject())) {
                     analyze(element) {
-                        modifier.invoke(this, element.getSymbol())
+                        modifier.invoke(this, element.symbol)
                     }
                 } else {
                     null

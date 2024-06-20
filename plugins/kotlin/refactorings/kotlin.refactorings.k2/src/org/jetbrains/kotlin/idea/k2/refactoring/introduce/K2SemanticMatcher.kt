@@ -208,7 +208,7 @@ object K2SemanticMatcher {
      */
     private data class MatchingContext(
         val symbols: MutableMap<KtSymbol, KtSymbol> = mutableMapOf(),
-        val blockBodyOwners: MutableMap<KaFunctionLikeSymbol, KaFunctionLikeSymbol> = mutableMapOf(),
+        val blockBodyOwners: MutableMap<KaFunctionSymbol, KaFunctionSymbol> = mutableMapOf(),
         val parameterSubstitution: MutableMap<PsiNamedElement, KtElement?> = mutableMapOf(),
     ) {
         context(KaSession)
@@ -232,7 +232,7 @@ object K2SemanticMatcher {
         }
 
         context(KaSession)
-        fun areBlockBodyOwnersEqualOrAssociated(targetFunction: KaFunctionLikeSymbol, patternFunction: KaFunctionLikeSymbol): Boolean =
+        fun areBlockBodyOwnersEqualOrAssociated(targetFunction: KaFunctionSymbol, patternFunction: KaFunctionSymbol): Boolean =
             targetFunction == patternFunction || blockBodyOwners[targetFunction] == patternFunction
 
         // TODO: current approach doesn't work on pairs of types such as `List<U>` and `List<T>`, where `U` and `T` are associated
@@ -248,8 +248,8 @@ object K2SemanticMatcher {
 
         context(KaSession)
         fun associateSymbolsForDeclarations(targetDeclaration: KtDeclaration, patternDeclaration: KtDeclaration) {
-            val targetSymbol = targetDeclaration.getSymbol()
-            val patternSymbol = patternDeclaration.getSymbol()
+            val targetSymbol = targetDeclaration.symbol
+            val patternSymbol = patternDeclaration.symbol
 
             if (targetSymbol is KtDestructuringDeclarationSymbol && patternSymbol is KtDestructuringDeclarationSymbol) {
                 for ((targetEntry, patternEntry) in targetSymbol.entries.zip(patternSymbol.entries)) {
@@ -832,8 +832,8 @@ object K2SemanticMatcher {
         patternExpression: KtReturnExpression,
         context: MatchingContext,
     ): Boolean {
-        val targetReturnTargetSymbol = targetExpression.getReturnTargetSymbol() as? KaFunctionLikeSymbol ?: return false
-        val patternReturnTargetSymbol = patternExpression.getReturnTargetSymbol() as? KaFunctionLikeSymbol ?: return false
+        val targetReturnTargetSymbol = targetExpression.getReturnTargetSymbol() as? KaFunctionSymbol ?: return false
+        val patternReturnTargetSymbol = patternExpression.getReturnTargetSymbol() as? KaFunctionSymbol ?: return false
 
         return context.areBlockBodyOwnersEqualOrAssociated(targetReturnTargetSymbol, patternReturnTargetSymbol)
     }
@@ -893,7 +893,7 @@ object K2SemanticMatcher {
     ): Boolean = context.areTypesEqualOrAssociated(targetTypeReference.getKtType(), patternTypeReference.getKtType())
 
     context(KaSession)
-    private fun KtFunction.getFunctionLikeSymbol(): KaFunctionLikeSymbol = getSymbolOfType<KaFunctionLikeSymbol>()
+    private fun KtFunction.getFunctionLikeSymbol(): KaFunctionSymbol = getSymbolOfType<KaFunctionSymbol>()
 
     context(KaSession)
     private fun KtCallableDeclaration.getCallableSymbol(): KaCallableSymbol = getSymbolOfType<KaCallableSymbol>()

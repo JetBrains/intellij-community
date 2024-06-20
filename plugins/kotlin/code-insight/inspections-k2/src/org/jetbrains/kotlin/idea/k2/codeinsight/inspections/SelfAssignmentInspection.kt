@@ -101,6 +101,6 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
             is KtNameReferenceExpression -> return receiverExpression.mainReference.resolveToSymbol()
         }
 
-        return callSymbol.getContainingSymbol() as? KaClassOrObjectSymbol
+        return callSymbol.containingSymbol as? KaClassOrObjectSymbol
     }
 }

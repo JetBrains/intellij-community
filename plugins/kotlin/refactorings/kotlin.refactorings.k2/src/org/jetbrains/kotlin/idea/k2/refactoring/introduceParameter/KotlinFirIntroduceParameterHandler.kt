@@ -14,6 +14,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -89,7 +90,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
                         super.visitKtElement(element)
 
                         val symbol = element.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                        val callableSymbol = targetParent.getSymbol() as? KaCallableSymbol
+                        val callableSymbol = targetParent.symbol as? KaCallableSymbol
                         if (callableSymbol != null) {
                             if ((symbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol == callableSymbol.receiverParameter || (symbol?.extensionReceiver as? KaImplicitReceiverValue)?.symbol == callableSymbol.receiverParameter) {
                                 usages.putValue(receiverTypeRef, element)
@@ -150,6 +151,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
      * run change signature refactoring, just like [invoke], but with configurable expression type, and name
      * (to be reused in "create parameter from usage" where both type and name are fixed, and computed a bit differently from the regular "introduce parameter")
      */
+    @OptIn(KaExperimentalApi::class)
     fun addParameter(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration, expressionTypeEvaluator: KaSession.()->KtType?, nameSuggester:  KaSession.(KtType)->List<String>) {
         val physicalExpression = expression.substringContextOrThis
         if (physicalExpression is KtProperty && physicalExpression.isLocal && physicalExpression.nameIdentifier == null) {
@@ -272,6 +274,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         )
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun showDialog(
         project: Project,
         editor: Editor,
@@ -298,7 +301,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         ).show()
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class, KaAllowAnalysisFromWriteAction::class)
     private fun introduceParameterDescriptor(
         originalExpression: KtExpression,
         targetParent: KtNamedDeclaration,

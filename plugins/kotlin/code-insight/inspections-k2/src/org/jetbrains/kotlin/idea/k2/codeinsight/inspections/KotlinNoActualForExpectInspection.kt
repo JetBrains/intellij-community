@@ -40,7 +40,7 @@ class KotlinNoActualForExpectInspection : AbstractKotlinInspection() {
     private fun KtDeclaration.hasOptionalExpectationAnnotation(): Boolean {
         if (annotationEntries.isEmpty()) return false
         return analyze(this) {
-            getSymbol().annotations.any { annotation ->
+            symbol.annotations.any { annotation ->
                 annotation.classId == StandardClassIds.Annotations.OptionalExpectation
             }
         }

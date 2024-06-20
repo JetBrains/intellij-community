@@ -29,15 +29,15 @@ internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
         when (symbol) {
             is KaSymbolWithMembers -> {
                 val scope = if (symbol is KaNamedClassOrObjectSymbol && symbol.classKind.isObject) {
-                    symbol.getMemberScope()
+                    symbol.memberScope
                 } else {
-                    symbol.getStaticMemberScope()
+                    symbol.staticMemberScope
                 }
 
                 KtScopeWithKind(scope, KaScopeKind.StaticMemberScope(scopeIndex), token)
             }
 
-            is KtPackageSymbol -> KtScopeWithKind(symbol.getPackageScope(), KaScopeKind.PackageMemberScope(scopeIndex), token)
+            is KtPackageSymbol -> KtScopeWithKind(symbol.packageScope, KaScopeKind.PackageMemberScope(scopeIndex), token)
             else -> null
         }
     }

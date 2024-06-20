@@ -15,6 +15,7 @@ import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -250,6 +251,7 @@ class ImportQuickFix(
             return listOfNotNull(quickFix)
         }
 
+        @KaExperimentalApi
         private val renderer: KtDeclarationRenderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
             modifiersRenderer = modifiersRenderer.with {
                 visibilityProvider = KaRendererVisibilityModifierProvider.WITH_IMPLICIT_VISIBILITY
@@ -262,6 +264,7 @@ class ImportQuickFix(
 
 
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         private fun renderSymbol(symbol: KaDeclarationSymbol): String = prettyPrint {
             val fqName = symbol.getFqName()
             if (symbol is KaNamedClassOrObjectSymbol) {
@@ -340,7 +343,7 @@ class ImportQuickFix(
         }
 
         context(KaSession)
-        private fun KaNamedClassOrObjectSymbol.isNested(): Boolean = getContainingSymbol() is KaNamedClassOrObjectSymbol
+        private fun KaNamedClassOrObjectSymbol.isNested(): Boolean = containingSymbol is KaNamedClassOrObjectSymbol
 
         context(KaSession)
         private fun KaDeclarationSymbol.getImportKind(): ImportFixHelper.ImportKind? = when {
@@ -348,9 +351,9 @@ class ImportQuickFix(
             this is KtPropertySymbol -> ImportFixHelper.ImportKind.PROPERTY
             this is KtJavaFieldSymbol -> ImportFixHelper.ImportKind.PROPERTY
 
-            this is KaFunctionSymbol && isOperator -> ImportFixHelper.ImportKind.OPERATOR
-            this is KaFunctionSymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
-            this is KaFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
+            this is KaNamedFunctionSymbol && isOperator -> ImportFixHelper.ImportKind.OPERATOR
+            this is KaNamedFunctionSymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
+            this is KaNamedFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
 
             this is KaNamedClassOrObjectSymbol && classKind.isObject -> ImportFixHelper.ImportKind.OBJECT
             this is KaNamedClassOrObjectSymbol -> ImportFixHelper.ImportKind.CLASS
@@ -377,6 +380,7 @@ class ImportQuickFix(
             getFqNameIfPackageOrNonLocal() ?: error("Unexpected null for fully-qualified name of importable symbol")
 
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         private fun createPriorityForImportableSymbol(
             prioritizer: ImportPrioritizer,
             expressionImportWeigher: ExpressionImportWeigher,

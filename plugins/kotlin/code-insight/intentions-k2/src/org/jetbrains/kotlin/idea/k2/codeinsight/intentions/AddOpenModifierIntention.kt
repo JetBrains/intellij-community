@@ -32,13 +32,13 @@ internal class AddOpenModifierIntention :
     override fun prepareContext(element: KtCallableDeclaration): Unit? {
         // The intention's applicability cannot solely depend on the PSI because compiler plugins may introduce modality different from
         // explicit syntax and language defaults.
-        val elementSymbol = element.getSymbol() as? KaSymbolWithModality ?: return null
+        val elementSymbol = element.symbol as? KaSymbolWithModality ?: return null
         if (elementSymbol.modality == Modality.OPEN || elementSymbol.modality == Modality.ABSTRACT) {
             return null
         }
 
         val owner = element.containingClassOrObject ?: return null
-        val ownerSymbol = owner.getSymbol() as? KaSymbolWithModality ?: return null
+        val ownerSymbol = owner.symbol as? KaSymbolWithModality ?: return null
         val isApplicable = (owner.hasModifier(KtTokens.ENUM_KEYWORD)
                 || ownerSymbol.modality == Modality.OPEN
                 || ownerSymbol.modality == Modality.ABSTRACT

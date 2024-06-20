@@ -10,6 +10,7 @@ import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
@@ -62,7 +63,7 @@ class SmartStepTargetVisitor(
             if (symbol is KtPropertySymbol) {
                 return recordProperty(expression, symbol)
             }
-            if (symbol is KaFunctionSymbol) {
+            if (symbol is KaNamedFunctionSymbol) {
                 val declaration = symbol.psi ?: return false
                 if (declaration is PsiMethod) {
                     append(MethodSmartStepTarget(declaration, null, expression, true, lines))
@@ -86,6 +87,7 @@ class SmartStepTargetVisitor(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun recordProperty(expression: KtExpression, symbol: KtPropertySymbol): Boolean {
         val targetType = (expression as? KtNameReferenceExpression)?.computeTargetType()
         if (symbol is KtSyntheticJavaPropertySymbol) {
@@ -110,7 +112,7 @@ class SmartStepTargetVisitor(
             val property = symbol.psi as? KtProperty ?: return false
             val delegate = property.delegate ?: return false
             val delegatedMethod = findDelegatedMethod(delegate, targetType) ?: return false
-            val delegatedSymbol = delegatedMethod.getSymbol() as? KaFunctionLikeSymbol ?: return false
+            val delegatedSymbol = delegatedMethod.symbol as? KaFunctionSymbol ?: return false
             val methodInfo = CallableMemberInfo(delegatedSymbol, countExistingMethodCalls(delegatedMethod))
             val label = propertyAccessLabel(symbol, delegatedSymbol)
             appendPropertyFilter(methodInfo, delegatedMethod, label, expression, lines)
@@ -219,7 +221,7 @@ class SmartStepTargetVisitor(
     context(KaSession)
     private fun createJavaLambdaInfo(
         declaration: PsiMethod,
-        methodSymbol: KaFunctionLikeSymbol,
+        methodSymbol: KaFunctionSymbol,
         argumentSymbol: KaValueParameterSymbol,
     ): KotlinLambdaInfo {
         val callerMethodOrdinal = countExistingMethodCalls(declaration)
@@ -229,15 +231,15 @@ class SmartStepTargetVisitor(
     context(KaSession)
     private fun createKotlinLambdaInfo(
         declaration: KtDeclaration,
-        methodSymbol: KaFunctionLikeSymbol,
+        methodSymbol: KaFunctionSymbol,
         argumentSymbol: KaValueParameterSymbol,
     ): KotlinLambdaInfo? {
         val callerMethodOrdinal = countExistingMethodCalls(declaration)
         return if (argumentSymbol.returnType.isFunctionalInterfaceType) {
             val samClassSymbol = argumentSymbol.returnType.expandedSymbol ?: return null
-            val scope = samClassSymbol.getMemberScope()
+            val scope = samClassSymbol.memberScope
             val funMethodSymbol = scope.getCallableSymbols()
-                .filterIsInstance<KaFunctionSymbol>()
+                .filterIsInstance<KaNamedFunctionSymbol>()
                 .singleOrNull { it.modality == Modality.ABSTRACT }
                 ?: return null
             KotlinLambdaInfo(
@@ -342,7 +344,7 @@ class SmartStepTargetVisitor(
                 return
             }
 
-            if (declaration == null && !(symbol is KaFunctionSymbol && symbol.isBuiltinFunctionInvoke)) {
+            if (declaration == null && !(symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke)) {
                 return
             }
 
@@ -361,7 +363,7 @@ class SmartStepTargetVisitor(
             }
 
             val callLabel = KotlinMethodSmartStepTarget.calcLabel(symbol)
-            val label = if (symbol is KaFunctionSymbol && symbol.isBuiltinFunctionInvoke && highlightExpression is KtSimpleNameExpression) {
+            val label = if (symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke && highlightExpression is KtSimpleNameExpression) {
                 "${highlightExpression.text}.$callLabel"
             } else {
                 callLabel
@@ -382,12 +384,12 @@ class SmartStepTargetVisitor(
     }
 
     context(KaSession)
-    private fun getFunctionDeclaration(symbol: KaFunctionLikeSymbol): PsiElement? {
-        if (symbol is KaFunctionSymbol && symbol.isBuiltinFunctionInvoke) return null
+    private fun getFunctionDeclaration(symbol: KaFunctionSymbol): PsiElement? {
+        if (symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke) return null
         symbol.psi?.let { return it }
         // null is returned for implemented by delegation methods in K1
-        if (symbol !is KaFunctionSymbol) return null
-        return symbol.getAllOverriddenSymbols().firstNotNullOfOrNull { it.psi }
+        if (symbol !is KaNamedFunctionSymbol) return null
+        return symbol.allOverriddenSymbols.firstNotNullOfOrNull { it.psi }
     }
 
     private fun checkLineRangeFits(lineRange: IntRange?): Boolean =

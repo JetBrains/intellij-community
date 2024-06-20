@@ -4,6 +4,7 @@
  */
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
@@ -32,6 +33,7 @@ fun KtType.isEnum(): Boolean {
  *
  * TODO should be moved to [KtFlexibleTypeRenderer] and removed from here, see KT-64138
  */
+@KaExperimentalApi
 object KtFlexibleTypeAsUpperBoundRenderer : KtFlexibleTypeRenderer {
     override fun renderType(
         analysisSession: KaSession,

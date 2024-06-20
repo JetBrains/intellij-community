@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -87,6 +88,7 @@ abstract class KtGenerateMembersHandler(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun createMemberEntries(
         editor: Editor,
         currentClass: KtClassOrObject,
@@ -184,8 +186,8 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
             for (existingDeclaration in existingDeclarations) {
                 val node: DoublyLinkedNode<MemberEntry> = DoublyLinkedNode(MemberEntry.ExistingEntry(existingDeclaration))
                 sentinelTailNode.prepend(node)
-                val callableSymbol = existingDeclaration.getSymbol() as? KaCallableSymbol ?: continue
-                for (overriddenSymbol in callableSymbol.getAllOverriddenSymbols()) {
+                val callableSymbol = existingDeclaration.symbol as? KaCallableSymbol ?: continue
+                for (overriddenSymbol in callableSymbol.allOverriddenSymbols) {
                     put(overriddenSymbol.psi ?: continue, node)
                 }
             }
@@ -344,6 +346,7 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
     }
 
     companion object {
+        @KaExperimentalApi
         val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
             annotationRenderer = annotationRenderer.with {
                 annotationFilter = KaRendererAnnotationsFilter.NONE

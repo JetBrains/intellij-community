@@ -6,6 +6,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
@@ -55,9 +57,9 @@ class VariableCallTarget(
 class FunctionCallTarget(
     override val caller: KtElement,
     override val call: KaCall,
-    override val partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionLikeSymbol>
-) : TypedCallTarget<KaFunctionLikeSymbol, KtFunctionLikeSignature<KaFunctionLikeSymbol>> {
-    override val symbol: KaFunctionLikeSymbol
+    override val partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>
+) : TypedCallTarget<KaFunctionSymbol, KtFunctionLikeSignature<KaFunctionSymbol>> {
+    override val symbol: KaFunctionSymbol
         get() = partiallyAppliedSymbol.symbol
 }
 
@@ -153,6 +155,7 @@ object KotlinCallProcessor {
         return current
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun handle(element: KtElement, processor: KotlinCallTargetProcessor): Boolean {
         analyze(element) {
             fun handleSpecial(element: KtElement, filter: (KtSymbol) -> Boolean): Boolean {
@@ -162,9 +165,10 @@ object KotlinCallProcessor {
                         continue
                     }
 
+                    @OptIn(KaImplementationDetail::class)
                     val shouldContinue = with(processor) {
                         when (symbol) {
-                            is KaFunctionLikeSymbol -> {
+                            is KaFunctionSymbol -> {
                                 val signature = symbol.asSignature()
                                 val partiallyAppliedSymbol = KaPartiallyAppliedFunctionSymbol(signature, null, null)
                                 val call = KaSimpleFunctionCall(partiallyAppliedSymbol, linkedMapOf(), mapOf(), isImplicitInvoke = false)
@@ -189,7 +193,7 @@ object KotlinCallProcessor {
             }
 
             if (element is KtForExpression) {
-                return handleSpecial(element) { it is KaFunctionLikeSymbol }
+                return handleSpecial(element) { it is KaFunctionSymbol }
             }
 
             if (element is KtDestructuringDeclarationEntry) {
