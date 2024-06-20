@@ -5,4 +5,4 @@ class A() {
 }
 /* IGNORE_K2 */
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeAccessorTypeFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeAccessorTypeFixFactory$createAction$1
