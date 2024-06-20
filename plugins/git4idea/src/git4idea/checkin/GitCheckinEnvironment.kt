@@ -969,6 +969,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     }
 
     @Throws(VcsException::class)
+    @JvmStatic
     fun runWithMessageFile(project: Project, root: VirtualFile, message: @NonNls String,
                            task: ThrowableConsumer<in File, out VcsException>) {
       val messageFile = try {
