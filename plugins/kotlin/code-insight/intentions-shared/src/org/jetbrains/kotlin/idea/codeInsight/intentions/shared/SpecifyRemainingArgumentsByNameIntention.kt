@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiWhiteSpace
@@ -30,22 +32,22 @@ internal sealed class SpecifyRemainingArgumentsByNameIntention(
     override fun getFamilyName(): String = familyName
 
     /**
-     * Returns whether the [argument] should be specified by this inspection.
-     * The inspection is only shown if at least one argument satisfies this function.
+     * Returns whether the [argument] should be specified by this intention.
+     * The intention is only shown if at least one argument satisfies this function.
      */
     internal abstract fun shouldSpecifyArgument(argument: RemainingNamedArgumentData): Boolean
 
     /**
-     * Return true if the inspection should be offered to the user.
+     * Return true if the intention should be offered to the user.
      * This is used to hide implementations of this class if another one with the same effect is already shown.
      */
-    internal abstract fun shouldOfferInspection(remainingArguments: List<RemainingNamedArgumentData>): Boolean
+    internal abstract fun shouldOfferIntention(remainingArguments: List<RemainingNamedArgumentData>): Boolean
 
     override fun getApplicableRanges(element: KtValueArgumentList): List<TextRange> {
         val firstArgument = element.arguments.firstOrNull() ?: return ApplicabilityRange.self(element)
         val lastArgument = element.arguments.lastOrNull() ?: firstArgument
 
-        // We only want the inspection to show if the caret is near the start or end of the argument list
+        // We only want the intention to show if the caret is near the start or end of the argument list
         val startTextRange = TextRange(0, firstArgument.startOffsetInParent)
         val endTextRange = TextRange(lastArgument.startOffsetInParent + lastArgument.textLength, element.textLength)
 
@@ -111,6 +113,10 @@ internal sealed class SpecifyRemainingArgumentsByNameIntention(
         }
     }
 
+    override fun getPresentation(context: ActionContext, element: KtValueArgumentList): Presentation? {
+        return super.getPresentation(context, element)?.withPriority(PriorityAction.Priority.HIGH)
+    }
+
     context(KaSession)
     override fun prepareContext(element: KtValueArgumentList): List<RemainingNamedArgumentData>? {
         val functionCall = element.parent as? KtCallExpression ?: return null
@@ -126,7 +132,7 @@ internal sealed class SpecifyRemainingArgumentsByNameIntention(
             RemainingNamedArgumentData(parameter.name, parameter.hasDefaultValue)
         }
 
-        if (!shouldOfferInspection(remainingArguments)) return null
+        if (!shouldOfferIntention(remainingArguments)) return null
 
         return remainingArguments
             .filter { shouldSpecifyArgument(it) }
@@ -138,7 +144,7 @@ internal class SpecifyAllRemainingArgumentsByNameIntention : SpecifyRemainingArg
     KotlinBundle.getMessage("specify.all.remaining.arguments.by.name")
 ) {
     override fun shouldSpecifyArgument(argument: RemainingNamedArgumentData): Boolean = true
-    override fun shouldOfferInspection(remainingArguments: List<RemainingNamedArgumentData>): Boolean = true
+    override fun shouldOfferIntention(remainingArguments: List<RemainingNamedArgumentData>): Boolean = true
 }
 
 internal class SpecifyRemainingRequiredArgumentsByNameIntention : SpecifyRemainingArgumentsByNameIntention(
@@ -146,7 +152,7 @@ internal class SpecifyRemainingRequiredArgumentsByNameIntention : SpecifyRemaini
 ) {
     override fun shouldSpecifyArgument(argument: RemainingNamedArgumentData): Boolean = !argument.hasDefault
 
-    override fun shouldOfferInspection(remainingArguments: List<RemainingNamedArgumentData>): Boolean {
+    override fun shouldOfferIntention(remainingArguments: List<RemainingNamedArgumentData>): Boolean {
         val argumentsWithDefault = remainingArguments.count { it.hasDefault }
         return argumentsWithDefault in (1..<remainingArguments.size)
     }
