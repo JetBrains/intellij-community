@@ -648,8 +648,8 @@ f:com.intellij.ide.Prefs
 *e:com.intellij.ide.Region
 - java.lang.Enum
 - sf:AFRICA:com.intellij.ide.Region
-- sf:AMERICA:com.intellij.ide.Region
-- sf:ASIA:com.intellij.ide.Region
+- sf:AMERICAS:com.intellij.ide.Region
+- sf:APAC:com.intellij.ide.Region
 - sf:CHINA:com.intellij.ide.Region
 - sf:EUROPE:com.intellij.ide.Region
 - sf:NOT_SET:com.intellij.ide.Region

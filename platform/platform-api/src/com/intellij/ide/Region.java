@@ -11,8 +11,8 @@ import org.jetbrains.annotations.ApiStatus;
 public enum Region {
   NOT_SET("not_set"),
   AFRICA("africa"),
-  AMERICA("america"),
-  ASIA("asia"),
+  AMERICAS("americas"),
+  APAC("apac"),
   CHINA("china"),
   EUROPE("europe");
 
