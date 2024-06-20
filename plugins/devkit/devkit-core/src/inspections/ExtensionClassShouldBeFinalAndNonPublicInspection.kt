@@ -36,7 +36,7 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInsp
         val isPublic = extensionClassShouldNotBePublicProvider.isPublic(clazz)
         if (isFinal && !isPublic) return true
         if (!ExtensionUtil.isInstantiatedExtension(clazz) { false }) return true
-        if (!isFinal && !haveInheritors(clazz)) {
+        if (!isFinal && !hasInheritors(clazz)) {
           val actions = createModifierActions(clazz, modifierRequest(JvmModifier.FINAL, true))
           val errorMessageProvider = getProvider(ExtensionClassShouldBeFinalErrorMessageProviders, language) ?: return true
           val message = errorMessageProvider.provideErrorMessage()
@@ -54,8 +54,8 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInsp
   }
 }
 
-private fun haveInheritors(aClass: PsiClass): Boolean {
-  return DirectClassInheritorsSearch.search(aClass).any()
+private fun hasInheritors(aClass: PsiClass): Boolean {
+  return DirectClassInheritorsSearch.search(aClass).findFirst() != null
 }
 
 private fun isAnnotatedAsVisibleForTesting(clazz: JvmClass): Boolean {
