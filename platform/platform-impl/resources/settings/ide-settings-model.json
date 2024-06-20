@@ -2605,6 +2605,62 @@
       ]
     },
     {
+      "name": "RubyDocker",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.ruby",
+      "classFqn": "com.intellij.docker.remote.ruby.settings.RubyDockerSettings",
+      "storage": "other.xml",
+      "properties": [
+        {
+          "name": "gemsCopyMode",
+          "type": "Enum",
+          "javaType": "com.intellij.docker.remote.ruby.settings.RubyDockerSettings$RubyDockerGemsCopyMode",
+          "variants": [
+            {
+              "value": "running_container_or_image",
+              "mapTo": "RUNNING_CONTAINER_OR_IMAGE"
+            },
+            {
+              "value": "always_image",
+              "mapTo": "ALWAYS_IMAGE"
+            }
+          ]
+        },
+        {
+          "name": "internalCommandMode",
+          "type": "Enum",
+          "javaType": "com.intellij.docker.remote.ruby.run.RubyDockerComposeCommandType",
+          "variants": [
+            {
+              "value": "exec",
+              "mapTo": "EXEC"
+            },
+            {
+              "value": "up",
+              "mapTo": "UP"
+            },
+            {
+              "value": "run",
+              "mapTo": "RUN"
+            },
+            {
+              "value": "sdk_container",
+              "mapTo": "SDK_CONTAINER"
+            },
+            {
+              "value": "mixed",
+              "mapTo": "MIXED"
+            }
+          ]
+        },
+        {
+          "name": "noDeps",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
       "name": "DockerTreeFilter",
       "scope": "app",
       "pluginId": "Docker",
@@ -10844,6 +10900,229 @@
           "name": "moduleParameters",
           "type": "Unsupported",
           "javaType": "java.util.Map"
+        }
+      ]
+    },
+    {
+      "name": "RubyDuplocatorSettings",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.ruby",
+      "classFqn": "org.jetbrains.plugins.ruby.duplocator.RubyDuplocatorSettings",
+      "storage": "other.xml",
+      "properties": [
+        {
+          "name": "distinguish_variables",
+          "mapTo": "DISTINGUISH_VARIABLES",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "distinguish_fields",
+          "mapTo": "DISTINGUISH_FIELDS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "distinguish_methods",
+          "mapTo": "DISTINGUISH_METHODS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "distinguish_literals",
+          "mapTo": "DISTINGUISH_LITERALS",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "lower_bound",
+          "mapTo": "LOWER_BOUND",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "discard_cost",
+          "mapTo": "DISCARD_COST",
+          "type": "Integer",
+          "javaType": "int"
+        }
+      ]
+    },
+    {
+      "name": "GemManagerSettings",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.ruby",
+      "classFqn": "org.jetbrains.plugins.ruby.gem.GemManager",
+      "storage": "$CACHE_FILE$",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "RubySdkGemsetsSettings",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.ruby",
+      "classFqn": "org.jetbrains.plugins.ruby.gem.ui.RubySdkGemsetsSettings",
+      "storage": "gemmanager.xml",
+      "properties": [
+        {
+          "name": "myModuleToSdkMap",
+          "type": "Unsupported",
+          "javaType": "java.util.HashMap"
+        },
+        {
+          "name": "mySdkToGemsetsMap",
+          "type": "Unsupported",
+          "javaType": "java.util.HashMap"
+        },
+        {
+          "name": "myDefaultSdkToGemsetsMap",
+          "type": "Unsupported",
+          "javaType": "java.util.HashMap"
+        },
+        {
+          "name": "myShowSdkPathFlag",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "RubyI18nFoldingSettings",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.ruby",
+      "classFqn": "org.jetbrains.plugins.ruby.i18n.folding.I18nFoldingSettings",
+      "storage": "editor.xml",
+      "properties": [
+        {
+          "name": "collapseI18nMessages",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "collapse_i18n_messages",
+          "mapTo": "COLLAPSE_I18N_MESSAGES",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "RailsApplicationSettings",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.ruby",
+      "classFqn": "org.jetbrains.plugins.ruby.rails.facet.RailsApplicationSettings",
+      "storage": "rubysettings.xml",
+      "properties": [
+        {
+          "name": "wizardRailsFacetPreconfigureDBName",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "wizardRailsFacetPreconfigureSkipTUnitFiles",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "wizardRailsFacetTemplates",
+          "type": "Unsupported",
+          "javaType": "java.lang.String[]"
+        }
+      ]
+    },
+    {
+      "name": "RubyEditorOptions",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.ruby",
+      "classFqn": "org.jetbrains.plugins.ruby.ruby.actions.editor.RubyEditorOptions",
+      "storage": "editor.xml",
+      "properties": [
+        {
+          "name": "highlightRDocInComments",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "prolongComments",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "startInterpolationOnHash",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "RubyCodeinsightSettings",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.ruby",
+      "classFqn": "org.jetbrains.plugins.ruby.ruby.codeInsight.RubyCodeInsightSettings",
+      "storage": "editor.xml",
+      "properties": [
+        {
+          "name": "preselectFirstCompletionElement",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "myPreselectFirstCompletionElement",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "RubyStubsGeneratedCache",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.ruby",
+      "classFqn": "org.jetbrains.plugins.ruby.ruby.codeInsight.nativerb.RubyStubBuilderService",
+      "storage": "gemmanager.xml",
+      "properties": [
+        {
+          "name": "map",
+          "type": "Unsupported",
+          "javaType": "java.util.Map"
+        }
+      ]
+    },
+    {
+      "name": "RubyTypeRenderersSettings",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.ruby",
+      "classFqn": "org.jetbrains.plugins.ruby.ruby.debugger.renderers.RubyTypeRenderersSettings",
+      "storage": "ruby-debugger-type-renderers-settings.xml",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "namespace",
+          "type": "Unsupported",
+          "javaType": "org.jdom.Namespace"
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "javaType": "java.lang.String"
         }
       ]
     },
