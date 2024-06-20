@@ -123,7 +123,7 @@ internal class LoadedGitLabMergeRequest(
 
   override val changes: SharedFlow<GitLabMergeRequestChanges> = mergeRequestDetailsState
     .distinctUntilChangedBy(GitLabMergeRequestFullDetails::diffRefs)
-    .mapScoped { details -> GitLabMergeRequestChangesImpl(project, this, api, glMetadata, projectMapping, details) }
+    .mapScoped { details -> GitLabMergeRequestChangesImpl(this, api, glMetadata, projectMapping, details) }
     .modelFlow(cs, LOG)
 
   private val stateEventsHolder =

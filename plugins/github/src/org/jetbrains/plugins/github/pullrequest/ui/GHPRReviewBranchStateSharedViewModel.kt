@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui
 
-import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
+import git4idea.remote.hosting.GitCodeReviewUtils
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.infoFlow
 import kotlinx.coroutines.CoroutineScope
@@ -48,7 +48,7 @@ internal class GHPRReviewBranchStateSharedViewModel(
         else -> supervisorScope {
           emit(false)
           val res = runCatching {
-            !dataContext.changesService.isAncestor(headRev, currentRev)
+            !GitCodeReviewUtils.testIsAncestor(repository, headRev, currentRev)
           }
           emit(res.getOrNull() ?: false)
         }

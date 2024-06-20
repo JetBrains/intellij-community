@@ -10,17 +10,13 @@ import com.intellij.openapi.diff.impl.patch.BinaryFilePatch
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
-import git4idea.commands.Git
-import git4idea.commands.GitCommand
-import git4idea.commands.GitLineHandler
-import git4idea.fetch.GitFetchSupport
 import git4idea.remote.GitRemoteUrlCoordinates
+import git4idea.remote.hosting.GitCodeReviewUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.fold
 import org.jetbrains.plugins.github.api.GHGQLRequests
@@ -64,27 +60,9 @@ class GHPRChangesServiceImpl(parentCs: CoroutineScope,
 
   override suspend fun fetch(refspec: String) =
     runCatching {
-      withContext(Dispatchers.IO) {
-        coroutineToIndicator {
-          GitFetchSupport.fetchSupport(project).fetch(gitRemote.repository, gitRemote.remote, refspec).throwExceptionIfFailed()
-        }
-      }
+      GitCodeReviewUtils.fetch(gitRemote.repository, gitRemote.remote, refspec)
     }.processErrorAndGet {
       LOG.info("Error occurred while fetching \"$refspec\"", it)
-    }
-
-  override suspend fun isAncestor(potentialAncestorRev: String, rev: String): Boolean =
-    runCatching {
-      withContext(Dispatchers.IO) {
-        coroutineToIndicator {
-          val h = GitLineHandler(project, gitRemote.repository.root, GitCommand.MERGE_BASE)
-          h.setSilent(true)
-          h.addParameters("--is-ancestor", potentialAncestorRev, rev)
-          Git.getInstance().runCommand(h).success()
-        }
-      }
-    }.processErrorAndGet {
-      LOG.info("Error occurred while checking revision ancestry relation", it)
     }
 
   override suspend fun loadCommitsFromApi(pullRequestId: GHPRIdentifier): List<GHCommit> =
