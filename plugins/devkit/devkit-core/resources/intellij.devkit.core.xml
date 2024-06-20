@@ -567,7 +567,7 @@
       implementation="org.jetbrains.idea.devkit.inspections.PluginXmlExternalAnnotatorsFilter"/>
 
     <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
-    <console.folding order="first" implementation="org.jetbrains.idea.devkit.FailedTestDebugLogConsoleFolding"/>
+    <console.folding order="first" implementation="org.jetbrains.idea.devkit.run.FailedTestDebugLogConsoleFolding"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
 
