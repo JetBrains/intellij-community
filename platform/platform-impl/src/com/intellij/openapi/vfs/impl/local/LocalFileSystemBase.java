@@ -613,11 +613,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public void setTimeStamp(@NotNull VirtualFile file, long timeStamp) {
-    File ioFile = convertToIOFile(file);
-    if (ioFile.exists() && !ioFile.setLastModified(timeStamp)) {
-      LOG.warn("Failed: " + file.getPath() + ", new:" + timeStamp + ", old:" + ioFile.lastModified());
-    }
+  public void setTimeStamp(@NotNull VirtualFile file, long timeStamp) throws IOException {
+    var nioFile = convertToNioFileAndCheck(file, false);
+    Files.setLastModifiedTime(nioFile, FileTime.fromMillis(timeStamp));
   }
 
   @Override
