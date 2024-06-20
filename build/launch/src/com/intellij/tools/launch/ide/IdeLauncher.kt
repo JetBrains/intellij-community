@@ -67,7 +67,7 @@ object IdeLauncher {
         add("-Djdk.attach.allowAttachSelf")
         add("-Djdk.module.illegalAccess.silent=true")
         add("-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
-        add("-Dkotlinx.coroutines.debug=off")
+        add("-Dkotlinx.coroutines.debug=on")
         add("-Dsun.awt.disablegrab=true")
         add("-Dsun.io.useCanonCaches=false")
         add("-Dteamcity.build.tempDir=${environmentPaths.tempFolder}")
