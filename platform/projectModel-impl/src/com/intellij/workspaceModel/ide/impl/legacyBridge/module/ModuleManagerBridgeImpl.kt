@@ -448,7 +448,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     }
   }
 
-  private fun createModuleInstanceWithoutCreatingComponents(
+  protected fun createModuleInstanceWithoutCreatingComponents(
     moduleEntity: ModuleEntity,
     versionedStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
