@@ -674,6 +674,18 @@ private fun doUpdateAndShowResult(
   // disabled plugins are excluded from updates, see IDEA-273418, TODO refactor
   // probably it can lead to disabled plugins becoming incompatible without a notification in platform update dialog
   val updatesForPlugins = updatesForEnabledPlugins // + nonIgnored(pluginUpdates.allDisabled)
+
+  // TODO revise this
+  val pluginAutoUpdateService = service<PluginAutoUpdateService>()
+  if (platformUpdates !is PlatformUpdates.Loaded) {
+    pluginAutoUpdateService.onPluginUpdatesCheck(updatesForPlugins)
+  } else {
+    if (pluginAutoUpdateService.isAutoUpdateEnabled()) {
+      val (pluginUpdates, _) = UpdateChecker.getInternalPluginUpdates(indicator = indicator)
+      pluginAutoUpdateService.onPluginUpdatesCheck(nonIgnored(pluginUpdates.allEnabled))
+    }
+  }
+
   if (!showResults) {
     if (platformUpdates is PlatformUpdates.Loaded) {
       UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins, pluginUpdates.incompatible)
