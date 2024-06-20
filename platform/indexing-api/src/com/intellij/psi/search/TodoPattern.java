@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,10 +23,12 @@ public final class TodoPattern implements Cloneable {
   private static final @NonNls String CASE_SENS_ATT = "case-sensitive";
   private static final @NonNls String PATTERN_ATT = "pattern";
 
+  @Internal
   public TodoPattern(@NotNull TodoAttributes attributes) {
     this("", attributes, false);
   }
 
+  @Internal
   public TodoPattern(@NotNull Element state, @NotNull TextAttributes defaultTodoAttributes) {
     attributes = new TodoAttributes(state, defaultTodoAttributes);
     indexPattern = new IndexPattern(state.getAttributeValue(PATTERN_ATT, "").trim(),

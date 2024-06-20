@@ -12,7 +12,7 @@ import org.jetbrains.annotations.TestOnly;
  * @author max
  */
 
-public class WordOccurrence {
+public final class WordOccurrence {
   private Kind myKind;
   private CharSequence myText;
   private int myStart;
@@ -40,7 +40,7 @@ public class WordOccurrence {
    * @param end end offset in initial char sequence.
    * @param kind The type of text where the word was encountered (code, comments or literals).
    */
-  public final void init(final CharSequence text, int start, int end, @Nullable final Kind kind) {
+  public void init(final CharSequence text, int start, int end, @Nullable final Kind kind) {
     myKind = kind;
     myText = text;
     myStart = start;

@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see PsiSearchHelper#getUseScope(PsiElement)
  */
+@OverrideOnly
 public abstract class UseScopeEnlarger {
   @ApiStatus.Internal
   public static final ExtensionPointName<UseScopeEnlarger> EP_NAME = ExtensionPointName.create("com.intellij.useScopeEnlarger");

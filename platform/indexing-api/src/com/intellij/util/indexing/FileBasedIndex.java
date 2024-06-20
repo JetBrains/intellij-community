@@ -22,6 +22,8 @@ import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.ApiStatus.NonExtendable;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +33,7 @@ import java.util.*;
  * @see FileBasedIndexExtension
  * @author dmitrylomov
  */
+@NonExtendable
 public abstract class FileBasedIndex {
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator);
 
@@ -351,6 +354,7 @@ public abstract class FileBasedIndex {
    * And the only use case is to optimize indexed file count when the corresponding indexer is relatively slow.
    */
   @ApiStatus.Experimental
+  @OverrideOnly
   public interface ProjectSpecificInputFilter extends InputFilter {
     @Override
     default boolean acceptInput(@NotNull VirtualFile file) {
@@ -364,6 +368,7 @@ public abstract class FileBasedIndex {
   /**
    * @see DefaultFileTypeSpecificInputFilter
    */
+  @OverrideOnly
   public interface FileTypeSpecificInputFilter extends InputFilter {
     void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink);
   }

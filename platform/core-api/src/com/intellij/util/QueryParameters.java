@@ -2,11 +2,13 @@
 package com.intellij.util;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * An interface to be (optionally, but preferably) implemented by {@link QueryExecutor} parameters to provide additional data.
  */
+@OverrideOnly
 public interface QueryParameters {
   default @Nullable Project getProject() {
     return null;

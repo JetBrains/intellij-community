@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * Override {@link #acceptInput(VirtualFile)} for additional filtering (e.g., file location, fixed filenames,
  * original file type).
  */
+@OverrideOnly
 public class DefaultFileTypeSpecificInputFilter implements FileBasedIndex.FileTypeSpecificInputFilter {
   private final FileType[] myFileTypes;
 

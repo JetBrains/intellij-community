@@ -118,13 +118,13 @@ a:com.intellij.lang.cacheBuilder.VersionedWordsScanner
 - com.intellij.lang.cacheBuilder.WordsScanner
 - <init>():V
 - getVersion():I
-c:com.intellij.lang.cacheBuilder.WordOccurrence
+f:com.intellij.lang.cacheBuilder.WordOccurrence
 - <init>(java.lang.CharSequence,I,I,com.intellij.lang.cacheBuilder.WordOccurrence$Kind):V
 - getBaseText():java.lang.CharSequence
 - getEnd():I
 - getKind():com.intellij.lang.cacheBuilder.WordOccurrence$Kind
 - getStart():I
-- f:init(java.lang.CharSequence,I,I,com.intellij.lang.cacheBuilder.WordOccurrence$Kind):V
+- init(java.lang.CharSequence,I,I,com.intellij.lang.cacheBuilder.WordOccurrence$Kind):V
 f:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
 - sf:CODE:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
 - sf:COMMENTS:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
@@ -134,7 +134,6 @@ f:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
 com.intellij.lang.cacheBuilder.WordsScanner
 - a:processWords(java.lang.CharSequence,com.intellij.util.Processor):V
 f:com.intellij.lang.findUsages.DescriptiveNameUtil
-- <init>():V
 - s:getDescriptiveName(com.intellij.psi.PsiElement):java.lang.String
 - s:getMetaDataName(com.intellij.psi.meta.PsiMetaData):java.lang.String
 c:com.intellij.lang.findUsages.EmptyFindUsagesProvider
@@ -234,7 +233,6 @@ f:com.intellij.psi.impl.cache.CacheManager$SERVICE
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.impl.cache.CacheManager
 f:com.intellij.psi.search.FileTypeIndex
 - *sf:INDEX_CHANGE_TOPIC:com.intellij.util.messages.Topic
-- <init>():V
 - s:containsFileOfType(com.intellij.openapi.fileTypes.FileType,com.intellij.psi.search.GlobalSearchScope):Z
 - s:getFiles(com.intellij.openapi.fileTypes.FileType,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
 - s:getIndexedFileType(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.fileTypes.FileType
@@ -242,7 +240,6 @@ f:com.intellij.psi.search.FileTypeIndex
 *:com.intellij.psi.search.FileTypeIndex$IndexChangeListener
 - a:onChangedForFileType(com.intellij.openapi.fileTypes.FileType):V
 f:com.intellij.psi.search.FilenameIndex
-- <init>():V
 - s:getAllFilenames(com.intellij.openapi.project.Project):java.lang.String[]
 - s:getAllFilesByExt(com.intellij.openapi.project.Project,java.lang.String):java.util.Collection
 - s:getAllFilesByExt(com.intellij.openapi.project.Project,java.lang.String,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
@@ -257,7 +254,7 @@ f:com.intellij.psi.search.FilenameIndex
 - s:processFilesByName(java.lang.String,Z,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.project.Project):Z
 - s:processFilesByName(java.lang.String,Z,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.project.Project,com.intellij.util.indexing.IdFilter):Z
 - s:processFilesByNames(java.util.Set,Z,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter,com.intellij.util.Processor):Z
-c:com.intellij.psi.search.IndexPattern
+f:com.intellij.psi.search.IndexPattern
 - sf:EMPTY_ARRAY:com.intellij.psi.search.IndexPattern[]
 - <init>(java.lang.String,Z):V
 - equals(java.lang.Object):Z
@@ -343,7 +340,7 @@ com.intellij.psi.search.PsiTodoSearchHelper
 - a:processFilesWithTodoItems(com.intellij.util.Processor):Z
 f:com.intellij.psi.search.PsiTodoSearchHelper$SERVICE
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.search.PsiTodoSearchHelper
-c:com.intellij.psi.search.QuerySearchRequest
+f:com.intellij.psi.search.QuerySearchRequest
 - f:collector:com.intellij.psi.search.SearchRequestCollector
 - f:processor:com.intellij.util.Processor
 - f:query:com.intellij.util.Query
@@ -354,12 +351,6 @@ a:com.intellij.psi.search.RequestResultProcessor
 - equals(java.lang.Object):Z
 - hashCode():I
 - a:processTextOccurrence(com.intellij.psi.PsiElement,I,com.intellij.util.Processor):Z
-a:com.intellij.psi.search.RequestResultProcessor$BulkResultProcessor
-- com.intellij.psi.search.RequestResultProcessor
-- <init>():V
-- <init>(java.lang.Object[]):V
-- processTextOccurrence(com.intellij.psi.PsiElement,I,com.intellij.util.Processor):Z
-- a:processTextOccurrences(com.intellij.psi.PsiElement,I[],com.intellij.util.Processor):Z
 com.intellij.psi.search.ScopeOptimizer
 - s:calculateOverallRestrictedUseScope(java.util.List,com.intellij.psi.PsiElement):com.intellij.psi.search.SearchScope
 - getRestrictedUseScope(com.intellij.psi.PsiElement):com.intellij.psi.search.SearchScope
@@ -380,7 +371,7 @@ c:com.intellij.psi.search.SearchRequestQuery
 - com.intellij.util.AbstractQuery
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.search.SearchRequestCollector):V
 - p:processResults(com.intellij.util.Processor):Z
-c:com.intellij.psi.search.SearchSession
+f:com.intellij.psi.search.SearchSession
 - com.intellij.openapi.util.UserDataHolderBase
 - <init>():V
 - <init>(com.intellij.psi.PsiElement[]):V
@@ -412,9 +403,7 @@ com.intellij.psi.search.TodoItem
 - a:getTextRange():com.intellij.openapi.util.TextRange
 f:com.intellij.psi.search.TodoPattern
 - java.lang.Cloneable
-- <init>(com.intellij.psi.search.TodoAttributes):V
 - <init>(java.lang.String,com.intellij.psi.search.TodoAttributes,Z):V
-- <init>(org.jdom.Element,com.intellij.openapi.editor.markup.TextAttributes):V
 - clone():com.intellij.psi.search.TodoPattern
 - equals(java.lang.Object):Z
 - getAttributes():com.intellij.psi.search.TodoAttributes
@@ -502,7 +491,6 @@ a:com.intellij.psi.stubs.StringStubIndexExtension
 - getVersion():I
 - traceKeyHashToVirtualFileMapping():Z
 a:com.intellij.psi.stubs.StubIndex
-- <init>():V
 - a:forceRebuild(java.lang.Throwable):V
 - a:getAllKeys(com.intellij.psi.stubs.StubIndexKey,com.intellij.openapi.project.Project):java.util.Collection
 - getContainingFiles(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):java.util.Set

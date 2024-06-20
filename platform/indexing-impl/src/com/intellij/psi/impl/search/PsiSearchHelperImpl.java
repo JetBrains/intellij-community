@@ -1090,9 +1090,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       @Override
       public boolean execute(@NotNull PsiElement scope, int @NotNull [] offsetsInScope, @NotNull StringSearcher searcher) {
         ProgressManager.checkCanceled();
-        if (wrapped instanceof RequestResultProcessor.BulkResultProcessor) {
-          return ((RequestResultProcessor.BulkResultProcessor)wrapped).processTextOccurrences(scope, offsetsInScope, consumer);
-        }
 
         return LowLevelSearchUtil.processElementsAtOffsets(scope, searcher, !ignoreInjectedPsi,
                                                            getOrCreateIndicator(), offsetsInScope,

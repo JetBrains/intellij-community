@@ -29,6 +29,9 @@ public final class FilenameIndex {
   @ApiStatus.Internal
   public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
+  private FilenameIndex() {
+  }
+
   private static class CancellationChecker{
 
     private int iterationNo;

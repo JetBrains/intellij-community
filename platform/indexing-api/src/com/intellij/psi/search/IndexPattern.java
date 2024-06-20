@@ -15,7 +15,7 @@ import java.util.regex.PatternSyntaxException;
  * A single pattern the occurrences of which in comments are indexed by IDEA.
  * @see IndexPatternProvider#getIndexPatterns()
  */
-public class IndexPattern {
+public final class IndexPattern {
 
   public static final IndexPattern[] EMPTY_ARRAY = new IndexPattern[0];
 

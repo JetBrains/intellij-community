@@ -21,6 +21,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CharSequenceHashStubIndexExtension<Psi extends PsiElement> extends AbstractStubIndex<CharSequence, Psi> {
@@ -36,6 +37,7 @@ public abstract class CharSequenceHashStubIndexExtension<Psi extends PsiElement>
     return CharSequenceHashInlineKeyDescriptor.INSTANCE;
   }
 
+  @OverrideOnly
   public boolean doesKeyMatchPsi(@NotNull CharSequence key, @NotNull Psi psi) {
     return true;
   }
