@@ -54,6 +54,8 @@
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                         serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"
                         overrides="true"/>
+
+    <codeInsight.codeVision.settings.defaults implementation="com.intellij.ide.java.JavaCodeVisionSettingsDefaults"/>
   </extensions>
 
   <actions>

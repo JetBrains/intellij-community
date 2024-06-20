@@ -2723,7 +2723,6 @@
     <codeInsight.daemonBoundCodeVisionProvider
       implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemCodeVisionProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector"/>
-    <postStartupActivity implementation="com.intellij.codeInsight.daemon.impl.JavaCodeVisionMigrator"/>
     <notificationGroup id="Clean artifact" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Compiler" displayType="NONE" bundle="messages.JavaCompilerBundle" key="notification.group.compiler"/>
     <notificationGroup id="Build Profiler" displayType="STICKY_BALLOON" hideFromSettings="true"/>

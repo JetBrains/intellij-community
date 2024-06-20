@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.settings
 
+import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus.Experimental
 
@@ -10,8 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 interface CodeVisionSettingsDefaults {
   companion object {
-    private val EP_NAME =
-      ExtensionPointName.create<CodeVisionSettingsDefaults>("com.intellij.codeInsight.codeVision.settings.defaults")
+    private val EP_NAME = ExtensionPointName.create<CodeVisionSettingsDefaults>("com.intellij.codeInsight.codeVision.settings.defaults")
 
     fun getInstance(): CodeVisionSettingsDefaults = EP_NAME.extensionList.firstOrNull() ?: NONE
   }
@@ -21,8 +21,10 @@ interface CodeVisionSettingsDefaults {
    * enabled by default.
    */
   val defaultEnablementForProviderId: Map<String, Boolean>
+    get() = emptyMap()
 
-  private object NONE : CodeVisionSettingsDefaults {
-    override val defaultEnablementForProviderId: Map<String, Boolean> = emptyMap()
-  }
+  val defaultPosition: CodeVisionAnchorKind
+    get() = CodeVisionAnchorKind.Top
+
+  private object NONE : CodeVisionSettingsDefaults
 }

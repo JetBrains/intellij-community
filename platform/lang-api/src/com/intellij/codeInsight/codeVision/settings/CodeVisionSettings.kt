@@ -10,6 +10,7 @@ import java.util.*
 @State(name = "CodeVisionSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
 class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
   companion object {
+    @JvmStatic
     fun getInstance(): CodeVisionSettings = ApplicationManager.getApplication().service<CodeVisionSettings>()
 
     @Deprecated(message = "Use CodeVisionSettings.getInstance()", ReplaceWith("getInstance()"))
@@ -29,7 +30,7 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
 
   class State {
     var isEnabled: Boolean = true
-    var defaultPosition: String = "Top"
+    var defaultPosition: String? = null // determined by CodeVisionSettingsDefaults
     var visibleMetricsAboveDeclarationCount: Int = 5
     var visibleMetricsNextToDeclarationCount: Int = 5
 
@@ -55,7 +56,7 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     }
 
   var defaultPosition: CodeVisionAnchorKind
-    get() = CodeVisionAnchorKind.valueOf(state.defaultPosition)
+    get() = defaultPositionValue()
     set(value) {
       state.defaultPosition = value.name
       listener.defaultPositionChanged(value)
@@ -136,8 +137,8 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     return when (position) {
       CodeVisionAnchorKind.Top -> visibleMetricsAboveDeclarationCount
       CodeVisionAnchorKind.Right -> visibleMetricsNextToDeclarationCount
-      CodeVisionAnchorKind.Default -> getAnchorLimit(CodeVisionAnchorKind.valueOf(state.defaultPosition))
-      else -> getAnchorLimit(CodeVisionAnchorKind.valueOf(state.defaultPosition))
+      CodeVisionAnchorKind.Default -> getAnchorLimit(defaultPositionValue())
+      else -> getAnchorLimit(defaultPositionValue())
     }
   }
 
@@ -147,7 +148,7 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     when (defaultPosition) {
       CodeVisionAnchorKind.Top -> visibleMetricsAboveDeclarationCount = i
       CodeVisionAnchorKind.Right -> visibleMetricsNextToDeclarationCount = i
-      CodeVisionAnchorKind.Default -> setAnchorLimit(CodeVisionAnchorKind.valueOf(state.defaultPosition), i)
+      CodeVisionAnchorKind.Default -> setAnchorLimit(defaultPositionValue(), i)
       else -> {}
     }
   }
@@ -158,6 +159,15 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
 
   override fun loadState(state: State): Unit = synchronized(stateLock) {
     this.state = state
+  }
+
+  private fun defaultPositionValue(): CodeVisionAnchorKind {
+    return state.defaultPosition?.let { CodeVisionAnchorKind.valueOf(it) }
+           ?: CodeVisionSettingsDefaults.getInstance().defaultPosition
+  }
+
+  fun resetDefaultPosition() {
+    state.defaultPosition = null
   }
 
   interface CodeVisionSettingsListener {
