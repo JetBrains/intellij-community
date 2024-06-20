@@ -18,6 +18,7 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.impl.ui.*
 import com.intellij.xdebugger.ui.TextValueVisualizer
 import com.intellij.xdebugger.ui.VisualizedContentTab
+import org.jetbrains.annotations.ApiStatus
 import java.awt.CardLayout
 import java.awt.Dimension
 import java.awt.Font
@@ -31,7 +32,8 @@ import kotlin.math.max
 /**
  * Provides tools to show a text-like value that might be formatted for better readability (JSON, XML, HTML, etc.).
  */
-internal object VisualizedTextPopup {
+@ApiStatus.Internal
+object VisualizedTextPopup {
 
   private const val SELECTED_TAB_KEY_PREFIX = "DEBUGGER_VISUALIZED_TEXT_SELECTED_TAB#"
 
@@ -136,39 +138,28 @@ internal object VisualizedTextPopup {
     }
 
     private fun createComponent(fullValue: String): JComponent {
-      val tabs = collectVisualizedTabs(fullValue)
+      val tabs = collectVisualizedTabs(project, fullValue)
       assert(tabs.isNotEmpty()) { "at least one raw tab is expected to be provided by fallback visualizer" }
       if (tabs.size > 1) {
-        try {
-          return createTabbedPane(tabs, fullValue)
-        }
-        catch (e: Exception) {
-          LOG.error("failed to visualize value", e, Attachment("value.txt", fullValue))
-          // Fallback to the default visualizer, which provided the last tab.
-        }
+        return createTabbedPane(tabs, fullValue)
       }
 
-      return tabs.last()
-        .also { it.onShown(project, firstTime = true) }
-        .createComponent(project)
+      val (tab, component) = tabs.first()
+      tab.onShown(project, firstTime = true)
+      return component
     }
 
-    private fun createTabbedPane(tabs: List<VisualizedContentTab>, fullValue: String): JComponent {
-      assert(tabs.isNotEmpty())
+    private fun createTabbedPane(tabsAndComponents: List<Pair<VisualizedContentTab, JComponent>>, fullValue: String): JComponent {
+      assert(tabsAndComponents.isNotEmpty())
 
       val panel = JBTabbedPane()
       panel.tabComponentInsets = JBUI.emptyInsets()
 
-      for (tab in tabs) {
-        val component = try {
-          tab.createComponent(project)
-        }
-        catch (e: Throwable) {
-          // It's not easy to recover after missing a tab, so we throw and catch above.
-          throw Exception("failed to create visualized component (${tab.id})", e)
-        }
+      for ((tab, component) in tabsAndComponents) {
         panel.addTab(tab.name, component)
       }
+
+      val tabs = tabsAndComponents.map { it.first }
 
       // We try to make it content-specific by remembering separate value for every set of tabs.
       // E.g., it allows remembering that in the group HTML+XML+RAW user prefers HTML, and in the group HTML+MARKDOWN+RAW -- MARKDOWN.
@@ -197,19 +188,29 @@ internal object VisualizedTextPopup {
     }
   }
 
-  private fun collectVisualizedTabs(fullValue: String): List<VisualizedContentTab> {
-    return extensionPoint.extensionList
-             .flatMap { viz ->
-               try {
-                 viz.visualize(fullValue)
-               }
-               catch (t: Throwable) {
-                 LOG.error("failed to visualize value ($viz)", t, Attachment("value.txt", fullValue))
-                 emptyList()
-               }
-             } +
-           // Explicitly add the fallback raw visualizer to make it the last one.
-           FallbackTextVisualizer.visualize(fullValue)
+  fun collectVisualizedTabs(project: Project, fullValue: String): List<Pair<VisualizedContentTab, JComponent>> {
+    val tabs = extensionPoint.extensionList
+                 .flatMap { viz ->
+                   try {
+                     viz.visualize(fullValue)
+                   }
+                   catch (e: Throwable) {
+                     LOG.error("failed to visualize value ($viz)", e, Attachment("value.txt", fullValue))
+                     emptyList()
+                   }
+                 } +
+               // Explicitly add the fallback raw visualizer to make it the last one.
+               FallbackTextVisualizer.visualize(fullValue)
+
+    return tabs.map { tab ->
+      try {
+        tab to tab.createComponent(project)
+      }
+      catch (e: Throwable) {
+        LOG.error("failed to create visualized compnent (${tab.id})", e, Attachment("value.txt", fullValue))
+        null
+      }
+    }.filterNotNull()
   }
 
   fun isVisualizable(fullValue: String): Boolean {

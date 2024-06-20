@@ -25,7 +25,10 @@ interface TextValueVisualizer {
     return visualize(value).isNotEmpty()
   }
 
-  /** Visualizes the given value, possibly in several ways. */
+  /**
+   * Visualizes the given value, possibly in several ways.
+   * Returns an empty list, if [canVisualize] returns false.
+   */
   fun visualize(value: @NlsSafe String): List<VisualizedContentTab>
 }
 

@@ -3554,7 +3554,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl
 - renderSpecialSymbol(java.lang.String):V
 - renderStringValue(java.lang.String,java.lang.String,I):V
 - renderValue(java.lang.String):V
-a:com.intellij.xdebugger.impl.ui.visualizedtext.TextBasedContentTab
+*a:com.intellij.xdebugger.impl.ui.visualizedtext.TextBasedContentTab
 - com.intellij.xdebugger.ui.VisualizedContentTab
 - <init>():V
 - createComponent(com.intellij.openapi.project.Project):javax.swing.JComponent
