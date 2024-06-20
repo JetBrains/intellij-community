@@ -62,8 +62,11 @@ object PythonCommunityPluginModules {
       spec.directoryName = name
       spec.mainJarName = "$name.jar"
       spec.withModules(modules)
-      PYTHON_COMMON_MODULES.forEach { 
-        spec.withModule(it, "python-common.jar")
+      // we don't need to pack these modules to python pro
+      if (name == pythonCommunityName) {
+        PYTHON_COMMON_MODULES.forEach {
+          spec.withModule(it, "python-common.jar")
+        }
       }
       spec.withGeneratedResources { targetDir, context ->
         val output = targetDir.resolve("helpers")
