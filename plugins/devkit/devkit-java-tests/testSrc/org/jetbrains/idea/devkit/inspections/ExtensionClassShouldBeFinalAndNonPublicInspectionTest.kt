@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
@@ -22,6 +22,11 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspectionTest : Extension
 
   fun testMakeNotPublic() {
     doTest("Make 'MakeNotPublic' not public")
+  }
+
+  fun testMakeNotPublicService() {
+    addServiceDescriptorClass()
+    doTest("Make 'MakeNotPublicService' not public")
   }
 
   fun testFinalPackagePrivateExtensionClass() {
