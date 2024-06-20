@@ -2493,7 +2493,6 @@ f:com.intellij.xdebugger.impl.ui.XDebugSessionTab3
 - sf:debuggerContentId:java.lang.String
 - <init>(com.intellij.xdebugger.impl.XDebugSessionImpl,javax.swing.Icon,com.intellij.execution.runners.ExecutionEnvironment):V
 - f:getThreadFramesView():com.intellij.xdebugger.impl.frame.XDebugView
-- isSingleContent():Z
 f:com.intellij.xdebugger.impl.ui.XDebugSessionTab3$Companion
 *:com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
 - allowFramesViewCustomization():Z
