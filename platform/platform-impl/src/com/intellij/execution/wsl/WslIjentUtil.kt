@@ -137,15 +137,26 @@ fun runProcessBlocking(
     .workingDirectory(workingDirectory)
     .execute()
   ) {
-    is IjentExecApi.ExecuteProcessResult.Success -> processResult.process.toProcess(scope, ijentApi.id, pty != null)
+    is IjentExecApi.ExecuteProcessResult.Success ->
+      processResult.process.toProcess(
+        coroutineScope = scope,
+        ijentId = ijentApi.id,
+        isPty = pty != null,
+        redirectStderr = processBuilder.redirectErrorStream(),
+      )
     is IjentExecApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
   }
 }
 
-private fun IjentChildProcess.toProcess(coroutineScope: CoroutineScope, ijentId: IjentId, isPty: Boolean): Process =
+private fun IjentChildProcess.toProcess(
+  coroutineScope: CoroutineScope,
+  ijentId: IjentId,
+  isPty: Boolean,
+  redirectStderr: Boolean,
+): Process =
   if (isPty)
     IjentChildPtyProcessAdapter(coroutineScope, ijentId, this)
   else
-    IjentChildProcessAdapter(coroutineScope,ijentId, this)
+    IjentChildProcessAdapter(coroutineScope,ijentId, this, redirectStderr)
 
 private val LOG by lazy { Logger.getInstance("com.intellij.execution.wsl.WslIjentUtil") }
