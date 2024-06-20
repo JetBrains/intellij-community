@@ -3,9 +3,7 @@ package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
-import com.intellij.psi.JavaRecursiveElementVisitor
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import com.intellij.psi.util.startOffset
 
 class JavaCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
@@ -24,7 +22,29 @@ class JavaCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor
 
   override fun visitMethod(method: PsiMethod) {
     codeFragment?.addChild(
-      CodeTokenWithPsi(method.text, method.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {}, method)
+      CodeToken(method.text, method.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {})
     )
+    val body = method.body
+    if (body != null) {
+      val meaningfullBodyChildren = body.trim()
+      if (meaningfullBodyChildren.any()) {
+        val firstMeaningfulChildren = meaningfullBodyChildren.first()
+        val meaningfullBodyText = meaningfullBodyChildren.map { it.text }.joinToString("")
+
+        codeFragment?.addChild(
+          CodeToken(meaningfullBodyText, firstMeaningfulChildren.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD_BODY, SymbolLocation.PROJECT) {})
+        )
+      }
+    }
+  }
+
+  private fun PsiCodeBlock.trim(): List<PsiElement> {
+    val firstIndex = children.indexOfFirst { it is PsiStatement }
+    val lastIndex = children.indexOfLast { it is PsiStatement }
+    val indexRange = (firstIndex.. lastIndex)
+    return children.filterIndexed { index, it ->
+      it is PsiExpressionStatement
+      index in indexRange
+    }
   }
 }

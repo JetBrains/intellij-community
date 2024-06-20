@@ -165,6 +165,7 @@ enum class TypeProperty {
 
   TYPE_DECLARATION,
   METHOD,
+  METHOD_BODY,
   CLASS,
   FUNCTION,
   TOKEN,
