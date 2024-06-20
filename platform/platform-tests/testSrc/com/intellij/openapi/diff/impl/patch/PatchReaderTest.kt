@@ -5,7 +5,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.*
 import com.intellij.vcs.log.impl.VcsUserImpl
-import junit.framework.TestCase
 import java.io.File
 
 @TestDataPath("\$CONTENT_ROOT/testData/diff/patchReader/")
@@ -83,19 +82,39 @@ class PatchReaderTest : HeavyPlatformTestCase() {
 
   @Throws(Exception::class)
   fun testNotAPatch() {
-    UsefulTestCase.assertThrows(PatchSyntaxException::class.java) {
+    assertThrows(PatchSyntaxException::class.java) {
       read()
     }
   }
 
+  @Throws(Exception::class)
+  fun testIdeaPatchWithRevision() {
+    val actual = read()
+    val patch = actual.allPatches.single()
+
+    assertEquals("(revision $baseRevision)", patch.beforeVersionId)
+    assertEquals("(date 1718781070896)", patch.afterVersionId)
+    assertEquals(PatchFileHeaderInfo(subjectLine, null, null), actual.patchFileInfo)
+  }
+
+  @Throws(Exception::class)
+  fun testPatchFromGitDiff() {
+    val actual = read()
+    val patch = actual.allPatches.single()
+
+    assertEquals("2904247b52d1f", patch.beforeVersionId)
+    assertEquals("817709f1a6fb1", patch.afterVersionId)
+    assertEquals(PatchFileHeaderInfo("", null, null), actual.patchFileInfo)
+  }
+
   private fun doTestPatchCount(expected: Int) {
     val actual = read().allPatches.size
-    TestCase.assertEquals(expected, actual)
+    assertEquals(expected, actual)
   }
 
   private fun doTest(expected: PatchFileHeaderInfo) {
     val actual = read().patchFileInfo
-    TestCase.assertEquals(expected, actual)
+    assertEquals(expected, actual)
   }
 
   private fun read(): PatchReader {
