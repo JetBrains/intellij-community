@@ -290,6 +290,8 @@ class CodeFloatingToolbar(
     val isPopupButton = button.presentation.isPopupGroup
     button.addMouseListener(object : java.awt.event.MouseListener {
       override fun mouseEntered(e: MouseEvent?) {
+        val component = hintComponent ?: return
+        val modality = ModalityState.stateForComponent(component)
         coroutineScope.launch {
           mouseWasOutsideOfComponent = false
           val delayMs = if (isPopupButton && activeMenuPopup != null) 40L else 300L
@@ -297,8 +299,7 @@ class CodeFloatingToolbar(
           if (mouseWasOutsideOfComponent) {
             cancel()
           }
-          val component = hintComponent ?: return@launch
-          withContext(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
+          withContext(Dispatchers.EDT + modality.asContextElement()) {
             if (isPopupButton) button.click() else activeMenuPopup?.cancel()
           }
         }
