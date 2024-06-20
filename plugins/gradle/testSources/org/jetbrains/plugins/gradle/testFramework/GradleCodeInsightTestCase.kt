@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 
 @GradleProjectTestApplication
-abstract class GradleCodeInsightTestCase : AbstractGradleCodeInsightBaseTestCase(), ExpressionTest {
+abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), ExpressionTest {
 
   fun testBuildscript(context: String, expression: String, test: () -> Unit) {
     if (context.isEmpty()) {

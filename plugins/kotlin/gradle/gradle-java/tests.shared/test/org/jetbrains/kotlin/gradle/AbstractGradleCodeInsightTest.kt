@@ -18,14 +18,14 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.toSlashEndingDirPath
 import org.jetbrains.kotlin.idea.test.TestFiles
-import org.jetbrains.plugins.gradle.testFramework.AbstractGradleCodeInsightBaseTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import java.io.File
 import java.lang.reflect.Method
 
-abstract class AbstractGradleCodeInsightTest: AbstractGradleCodeInsightBaseTestCase() {
+abstract class AbstractGradleCodeInsightTest: GradleCodeInsightBaseTestCase() {
 
     protected open val filesBasedTest: Boolean = true
 
