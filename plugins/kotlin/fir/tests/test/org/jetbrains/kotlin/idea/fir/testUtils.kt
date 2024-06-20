@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProject
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
-import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirBuiltinsSessionFactory
+import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLFirBuiltinsSessionFactory
 import org.jetbrains.kotlin.psi.KtElement
 
 fun Project.invalidateCaches() {
