@@ -106,7 +106,10 @@ object GitStashOperations {
     h.addParameters("clear")
     try {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        ThrowableComputable<Unit, VcsException> { Git.getInstance().runCommand(h).throwOnError() },
+        ThrowableComputable<Unit, VcsException> {
+          Git.getInstance().runCommand(h).throwOnError()
+          refreshStash(project, root)
+        },
         GitBundle.message("unstash.clearing.stashes"),
         false,
         project
