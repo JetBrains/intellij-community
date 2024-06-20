@@ -16,9 +16,9 @@ import java.util.function.Consumer;
 public interface JBAccountInfoService {
   final class JBAData {
     public final @NotNull String id;
-    @NlsSafe public final @Nullable String loginName;
-    @NlsSafe public final @Nullable String email;
-    @NlsSafe public final @Nullable String presentableName;
+    public final @NlsSafe @Nullable String loginName;
+    public final @NlsSafe @Nullable String email;
+    public final @NlsSafe @Nullable String presentableName;
 
     public JBAData(@NotNull String userId, @Nullable String loginName, @Nullable String email, @Nullable String presentableName) {
       this.id = userId;
@@ -43,7 +43,6 @@ public interface JBAccountInfoService {
   /**
    * Starts the auth flow by opening the browser and waiting for the user to proceed with logging in.
    */
-  @ApiStatus.Internal
   @SuppressWarnings("unused")
   @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode);
 
@@ -51,7 +50,6 @@ public interface JBAccountInfoService {
     return JBAccountInfoServiceHolder.INSTANCE;
   }
 
-  @ApiStatus.Internal
   enum LoginMode {
     /**
      * Open the auth URL in the browser, start the built-in server, and await for the auth callback.
@@ -65,7 +63,6 @@ public interface JBAccountInfoService {
     MANUAL,
   }
 
-  @ApiStatus.Internal
   interface LoginSession extends AutoCloseable {
     /**
      * The returned CompletableFuture can be used to await the completion of the auth flow,
@@ -83,13 +80,11 @@ public interface JBAccountInfoService {
     void close();
   }
 
-  @ApiStatus.Internal
   sealed interface LoginResult permits LoginResult.LoginFailed, LoginResult.LoginSuccessful {
     record LoginSuccessful(@NotNull JBAData jbaUser) implements LoginResult { }
     record LoginFailed(@NotNull String errorMessage) implements LoginResult { }
   }
 
-  @ApiStatus.Internal
   interface AuthStateListener extends EventListener {
     @NotNull Topic<AuthStateListener> TOPIC = new Topic<>(AuthStateListener.class);
 
