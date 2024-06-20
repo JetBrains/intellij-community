@@ -107,7 +107,7 @@ object KotlinEvaluatorBuilder : EvaluatorBuilder {
     }
 }
 
-class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePosition: SourcePosition?) : Evaluator {
+class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePosition: SourcePosition?) : Evaluator, ExternalExpressionEvaluator {
 
     override fun evaluate(context: EvaluationContextImpl): Any? {
         if (codeFragment.text.isEmpty()) {

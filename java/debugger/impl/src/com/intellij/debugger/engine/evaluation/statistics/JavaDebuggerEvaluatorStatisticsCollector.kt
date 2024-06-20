@@ -35,12 +35,15 @@ object JavaDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 private enum class StatisticsEvaluator {
   COMPILING,
   INTERPRETING,
+  EXTERNAL,
   ANY;
 
   companion object {
     fun fromEvaluator(evaluator: ExpressionEvaluator?): StatisticsEvaluator = when (evaluator) {
       is CompilingEvaluator -> COMPILING
-      is ExpressionEvaluatorImpl -> INTERPRETING
+      is ExpressionEvaluatorImpl -> {
+        if (evaluator.isExternalEvaluator) EXTERNAL else INTERPRETING
+      }
       else -> ANY
     }
   }
