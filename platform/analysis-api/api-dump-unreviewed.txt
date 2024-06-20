@@ -3225,7 +3225,6 @@ c:com.intellij.openapi.fileEditor.OpenFileDescriptor
 - setScrollType(com.intellij.openapi.editor.ScrollType):V
 - setUseCurrentWindow(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
 - setUsePreviewTab(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
-- ps:unfoldCurrentLine(com.intellij.openapi.editor.Editor):V
 f:com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 - <init>(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.fileEditor.FileEditorProvider):V
 - f:component1():com.intellij.openapi.fileEditor.FileEditor

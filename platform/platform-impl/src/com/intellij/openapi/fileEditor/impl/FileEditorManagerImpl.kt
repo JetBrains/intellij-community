@@ -1338,7 +1338,7 @@ open class FileEditorManagerImpl(
     for (editor in fileEditors) {
       // try to navigate opened editor
       if (editor is NavigatableFileEditor && currentCompositeForFile?.selectedWithProvider?.fileEditor === editor &&
-          navigateAndSelectEditor(editor, effectiveDescriptor)) {
+          navigateAndSelectEditor(editor, effectiveDescriptor, currentCompositeForFile)) {
         return fileEditors to editor
       }
     }
@@ -1346,24 +1346,11 @@ open class FileEditorManagerImpl(
     for (editor in fileEditors) {
       // try other editors
       if (editor is NavigatableFileEditor && currentCompositeForFile?.selectedWithProvider?.fileEditor !== editor &&
-          navigateAndSelectEditor(editor, effectiveDescriptor)) {
+          navigateAndSelectEditor(editor, effectiveDescriptor, currentCompositeForFile)) {
         return fileEditors to editor
       }
     }
     return fileEditors to null
-  }
-
-  private fun navigateAndSelectEditor(editor: NavigatableFileEditor, descriptor: Navigatable): Boolean {
-    if (editor.canNavigateTo(descriptor)) {
-      setSelectedEditor(editor)
-      editor.navigateTo(descriptor)
-      return true
-    }
-    return false
-  }
-
-  private fun setSelectedEditor(editor: FileEditor) {
-    (getComposite(editor) ?: return).setSelectedEditor(editor)
   }
 
   override fun getProject(): Project = project
@@ -1394,7 +1381,8 @@ open class FileEditorManagerImpl(
         }
       }
     }
-    setSelectedEditor(target)
+
+    getComposite(target)?.setSelectedEditor(target)
     return target.editor
   }
 
@@ -2389,4 +2377,14 @@ fun getForegroundColorForFile(project: Project, file: VirtualFile): ColorKey? {
   return EditorTabColorProvider.EP_NAME.extensionList.firstNotNullOfOrNull {
     it.getEditorTabForegroundColor(project, file)
   }
+}
+
+@Internal
+fun navigateAndSelectEditor(editor: NavigatableFileEditor, descriptor: Navigatable, composite: EditorComposite?): Boolean {
+  if (editor.canNavigateTo(descriptor)) {
+    composite?.setSelectedEditor(editor)
+    editor.navigateTo(descriptor)
+    return true
+  }
+  return false
 }

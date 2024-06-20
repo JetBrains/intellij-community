@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -31,7 +32,7 @@ class FileNavigatorImpl : FileNavigator {
       return
     }
     else {
-      ProjectFileNavigatorImpl.getInstance(descriptor.project).navigateInProjectView(descriptor.file, requestFocus)
+      ProjectFileNavigatorImpl.getInstance(descriptor.project).scheduleNavigateInProjectView(descriptor.file, requestFocus)
     }
   }
 
@@ -50,16 +51,18 @@ class FileNavigatorImpl : FileNavigator {
   }
 
   override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
-    return navigateInRequestedEditor(descriptor) || navigateInAnyFileEditor(descriptor, requestFocus)
+    return navigateInRequestedEditor(descriptor, dataContextSupplier = {
+      @Suppress("DEPRECATION")
+      DataManager.getInstance().dataContext
+    }) || navigateInAnyFileEditor(descriptor, requestFocus)
   }
 
-  private fun navigateInRequestedEditor(descriptor: OpenFileDescriptor): Boolean {
+  fun navigateInRequestedEditor(descriptor: OpenFileDescriptor, dataContextSupplier: () -> DataContext): Boolean {
     if (ignoreContextEditor.get() == true) {
       return false
     }
 
-    @Suppress("DEPRECATION")
-    val dataContext = DataManager.getInstance().dataContext
+    val dataContext = dataContextSupplier()
     val e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(dataContext) ?: return false
     if (e.isDisposed) {
       logger<FileNavigatorImpl>().error("Disposed editor returned for NAVIGATE_IN_EDITOR from $dataContext")
