@@ -13385,12 +13385,6 @@ f:com.intellij.ide.actions.TestDialogBuilder
 f:com.intellij.ide.actions.TestDialogBuilder$TestAnswers
 - sf:KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(java.lang.String,java.lang.String):V
-f:com.intellij.ide.actions.ToggleEssentialHighlightingAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 f:com.intellij.ide.actions.ViewInplaceCommentsAction
 - com.intellij.openapi.project.DumbAwareToggleAction
 - <init>():V
