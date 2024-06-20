@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.actions.NonTrivialActionGroup
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SkipOperation
 import com.intellij.openapi.actionSystem.impl.Utils
@@ -72,6 +73,18 @@ class ActionUpdaterTest {
     val actionGroup: ActionGroup = DefaultCompactActionGroup(newPopupGroup(canBePerformedGroup))
     val actions = expandActionGroup(actionGroup)
     assertEmpty(actions)
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testNonTrivialActionGroupDisabled() {
+    val group = NonTrivialActionGroup()
+    group.add(DefaultActionGroup(DefaultActionGroup(
+      newAction(ActionUpdateThread.BGT) { it.presentation.isEnabledAndVisible = false })))
+    val presentations = PresentationFactory()
+    val actions = Utils.expandActionGroup(group, presentations, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN)
+    assertEmpty(actions)
+    assertFalse(presentations.getPresentation(group).isEnabled)
   }
 
   @Test

@@ -71,8 +71,9 @@ internal val SUPPRESS_SUBMENU_IMPL: Key<Boolean> = Key.create("SUPPRESS_SUBMENU_
 
 private const val OLD_EDT_MSG_SUFFIX = ". Revise AnAction.getActionUpdateThread property"
 
-private const val OP_expandActionGroup = "expandedChildren"
+private const val OP_expandActionGroup = "expandGroup"
 private const val OP_groupChildren = "children"
+private const val OP_groupExpandedChildren = "expandedChildren"
 private const val OP_actionPresentation = "presentation"
 private const val OP_groupPostProcess = "postProcessChildren"
 private const val OP_sessionData = "sessionData"
@@ -648,7 +649,7 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   private class UpdateSessionImpl(val updater: ActionUpdater) : SuspendingUpdateSession {
     override fun expandedChildren(actionGroup: ActionGroup): Iterable<AnAction> {
-      val sessionKey = SessionKey(OP_expandActionGroup, actionGroup)
+      val sessionKey = SessionKey(OP_groupExpandedChildren, actionGroup)
       return updater.computeSessionDataOrThrow(sessionKey) {
         updater.iterateGroupChildren(actionGroup).toCollection(ArrayList())
       }
@@ -716,7 +717,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       updater.updatedPresentations.forEach { action, presentation -> visitor(action, OP_actionPresentation, presentation) }
       updater.groupChildren.forEach { action, children -> visitor(action, OP_groupChildren, children) }
       updater.sessionData.forEach { pair, deferred ->
-        if (pair.opName == OP_expandActionGroup) visitor(pair.source as ActionGroup, pair.opName, deferred.getCompleted()!!) }
+        if (pair.opName == OP_groupExpandedChildren) visitor(pair.source as ActionGroup, pair.opName, deferred.getCompleted()!!) }
     }
 
     override fun dropCaches(predicate: (Any) -> Boolean) {
@@ -725,7 +726,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       // 1. valid presentation and children are already cached in other maps
       // 2. expanded children must not be cached in remote scenarios anyway
       updater.sessionData.keys.removeIf { (op, key) ->
-        op == OP_actionPresentation || op == OP_groupChildren || op == OP_expandActionGroup ||
+        op == OP_actionPresentation || op == OP_groupChildren || op == OP_groupExpandedChildren ||
         key is Key<*> && predicate(key)
       }
       // clear caches for selected actions
