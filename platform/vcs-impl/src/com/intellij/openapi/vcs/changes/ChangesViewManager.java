@@ -60,6 +60,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -509,11 +510,13 @@ public class ChangesViewManager implements ChangesViewEx,
       // Override the handlers registered by editorDiffPreview
       myView.setDoubleClickHandler(e -> {
         if (EditSourceOnDoubleClickHandler.isToggleEvent(myView, e)) return false;
+        if (performHoverAction()) return true;
         if (myEditorDiffPreview.handleDoubleClick(e)) return true;
         OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myView), true);
         return true;
       });
       myView.setEnterKeyHandler(e -> {
+        if (performHoverAction()) return true;
         if (myEditorDiffPreview.handleEnterKey()) return true;
         OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myView), false);
         return true;
@@ -550,6 +553,16 @@ public class ChangesViewManager implements ChangesViewEx,
       });
 
       scheduleRefresh();
+    }
+
+    private boolean performHoverAction() {
+      ChangesBrowserNode<?> selected = VcsTreeModelData.selected(myView).iterateNodes().single();
+      if (selected == null) return false;
+
+      for (ChangesViewNodeAction extension : ChangesViewNodeAction.EP_NAME.getExtensions(myProject)) {
+        if (extension.handleDoubleClick(selected)) return true;
+      }
+      return false;
     }
 
     @Override

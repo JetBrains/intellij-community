@@ -1744,6 +1744,7 @@ com.intellij.openapi.vcs.changes.ChangesViewModifier$ChangesViewModifierListener
 *:com.intellij.openapi.vcs.changes.ChangesViewNodeAction
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
 - a:createNodeHoverIcon(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.HoverIcon
+- handleDoubleClick(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
 f:com.intellij.openapi.vcs.changes.ChangesViewPanel
 - com.intellij.util.ui.components.BorderLayoutPanel
 - <init>(com.intellij.openapi.vcs.changes.ui.ChangesListView):V

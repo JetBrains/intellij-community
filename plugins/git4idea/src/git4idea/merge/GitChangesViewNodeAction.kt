@@ -9,10 +9,13 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ChangesViewNodeAction
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.HoverIcon
+import com.intellij.util.containers.JBIterable
+import git4idea.conflicts.GitConflictsUtil
 import git4idea.conflicts.GitConflictsUtil.showMergeWindow
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.createMergeHandler
 import git4idea.repo.GitRepositoryManager
+import org.jetbrains.annotations.NotNull
 
 class GitChangesViewNodeAction(val project: Project) : ChangesViewNodeAction {
   override fun createNodeHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
@@ -24,6 +27,21 @@ class GitChangesViewNodeAction(val project: Project) : ChangesViewNodeAction {
     if (stagingAreaHolder?.findConflict(path) == null) return null
 
     return GitMergeHoverIcon(project)
+  }
+
+  override fun handleDoubleClick(node: ChangesBrowserNode<*>): Boolean {
+    val change = node.userObject as? Change ?: return false
+    if (change.fileStatus != FileStatus.MERGED_WITH_CONFLICTS) return false
+
+    val path = ChangesUtil.getFilePath(change)
+    val stagingAreaHolder = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(path)?.stagingAreaHolder
+    val conflict = stagingAreaHolder?.findConflict(path) ?: return false
+
+    val handler = createMergeHandler(project)
+    if (!GitConflictsUtil.canShowMergeWindow(project, handler, conflict)) return false
+
+    showMergeWindow(project, handler, listOf(conflict))
+    return true
   }
 
   private data class GitMergeHoverIcon(val project: Project)
