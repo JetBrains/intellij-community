@@ -117,6 +117,8 @@ class PerProjectIndexingQueue(private val project: Project) {
 
     val size: Int get() = filesSoFar.value.size
 
+    val isEmpty: Boolean get() = filesSoFar.value.isEmpty()
+
     val files: Set<VirtualFile> get() = filesSoFar.value
 
     val scanningIds: LongSet get() = LongSets.unmodifiable(scanningIdsSoFar)
@@ -124,6 +126,23 @@ class PerProjectIndexingQueue(private val project: Project) {
     internal fun addFile(file: VirtualFile, scanningId: Long) {
       scanningIdsSoFar.add(scanningId)
       filesSoFar.update { it.add(file) }
+    }
+
+    @Deprecated("Indexing should always start with scanning. You don't need this method - do scanning instead")
+    internal fun addFiles(files: Collection<VirtualFile>, scanningId: Collection<Long>) {
+      scanningIdsSoFar.addAll(scanningId)
+      filesSoFar.update { it.addAll(files) }
+    }
+
+    companion object {
+      @Internal
+      @JvmStatic
+      @Deprecated("Indexing should always start with scanning. You don't need this method - do scanning instead")
+      fun fromCollection(files: Collection<VirtualFile>, scanningIds: Collection<Long>): QueuedFiles {
+        val res = QueuedFiles()
+        res.addFiles(files, scanningIds)
+        return res
+      }
     }
   }
 
@@ -141,7 +160,7 @@ class PerProjectIndexingQueue(private val project: Project) {
     val snapshot = getAndResetQueuedFiles()
     if (snapshot.size > 0) {
       // note that DumbModeWhileScanningTrigger will not finish dumb mode until scanning is finished
-      UnindexedFilesIndexer(project, snapshot.files, reason, snapshot.scanningIds).queue(project)
+      UnindexedFilesIndexer(project, snapshot, reason).queue(project)
     }
     else {
       LOG.info("Finished for " + project.name + ". No files to index with loading content.")

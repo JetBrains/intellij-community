@@ -7,10 +7,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import it.unimi.dsi.fastutil.longs.LongSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -45,8 +45,8 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     Set<VirtualFile> set2 = new HashSet<>(f2);
     set2.addAll(fShared.subList(1, 3));
 
-    task1 = new UnindexedFilesIndexer(getProject(), set1, "test task1", LongSet.of());
-    task2 = new UnindexedFilesIndexer(getProject(), set2, "test task2", LongSet.of());
+    task1 = new UnindexedFilesIndexer(getProject(), QueuedFiles.fromCollection(set1, Collections.emptyList()), "test task1");
+    task2 = new UnindexedFilesIndexer(getProject(), QueuedFiles.fromCollection(set2, Collections.emptyList()), "test task2");
   }
 
   public void testTryMergeIndexingTasks() {

@@ -22,13 +22,13 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.application
+import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.mocks.*
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-import it.unimi.dsi.fastutil.longs.LongSet
 import org.junit.*
 import org.junit.Assert.assertEquals
 import org.junit.runner.RunWith
@@ -335,7 +335,8 @@ class UnindexedFilesScannerTest {
   }
 
   private fun indexFiles(provider: SingleRootIndexableFilesIterator, dirtyFiles: Collection<VirtualFile>) {
-    val indexingTask = UnindexedFilesIndexer(project, HashSet(dirtyFiles), "Test", LongSet.of())
+    val files = QueuedFiles.fromCollection(dirtyFiles, emptyList())
+    val indexingTask = UnindexedFilesIndexer(project, files, "Test")
     val indicator = EmptyProgressIndicator()
     ProgressManager.getInstance().runProcess({ indexingTask.perform(indicator) }, indicator)
   }
