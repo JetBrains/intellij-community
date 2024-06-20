@@ -2,9 +2,13 @@
 package org.jetbrains.kotlin.gradle
 
 import com.intellij.testFramework.common.runAll
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 
 abstract class AbstractKotlinGradleCodeInsightBaseTest: GradleCodeInsightBaseTestCase() {
 
@@ -18,5 +22,18 @@ abstract class AbstractKotlinGradleCodeInsightBaseTest: GradleCodeInsightBaseTes
             { KotlinSdkType.removeKotlinSdkInTests() },
             { super.tearDown() }
         )
+    }
+
+    protected fun testKotlinDslEmptyProject(gradleVersion: GradleVersion, test: () -> Unit) {
+        test(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT, test)
+    }
+
+    companion object {
+        private val KOTLIN_DSL_EMPTY_PROJECT = GradleTestFixtureBuilder.create("kotlin-dsl-empty-project") {
+            withSettingsFile(useKotlinDsl = true) {
+                setProjectName("kotlin-dsl-empty-project")
+            }
+            withBuildFile(useKotlinDsl = true, content = "")
+        }
     }
 }
