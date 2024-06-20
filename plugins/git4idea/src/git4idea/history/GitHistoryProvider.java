@@ -12,12 +12,10 @@ import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Processor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcs.log.ui.actions.ShowCommitInLogAction;
@@ -103,30 +101,20 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
   }
 
   @Override
-  public boolean getBaseVersionContent(@NotNull FilePath filePath,
-                                       @NotNull Processor<? super @NotNull String> processor,
-                                       @NotNull String beforeVersionId) throws VcsException {
-    if (StringUtil.isEmptyOrSpaces(beforeVersionId) || filePath.getVirtualFile() == null) return false;
-    if (!GitUtil.isHashString(beforeVersionId, false)) return false;
+  public @Nullable String getBaseVersionContent(@NotNull FilePath filePath, @NotNull String beforeVersionId) throws VcsException {
+    if (StringUtil.isEmptyOrSpaces(beforeVersionId) || filePath.getVirtualFile() == null) return null;
+    if (!GitUtil.isHashString(beforeVersionId, false)) return null;
 
     // apply if base revision id matches revision
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(filePath);
-    if (repository == null) return false;
+    if (repository == null) return null;
 
     GitObjectType objectType = Git.getInstance().getObjectTypeEnum(repository, beforeVersionId);
-    if (GitObjectType.COMMIT.equals(objectType)) {
-      ContentRevision contentRevision = GitContentRevision.createRevision(filePath, new GitRevisionNumber(beforeVersionId), myProject);
-      String content = contentRevision.getContent();
-      return content != null && !processor.process(content);
-    }
-    else if (GitObjectType.BLOB.equals(objectType)) {
-      byte[] bytes = GitIndexUtil.read(repository, beforeVersionId);
-      String content = ContentRevisionCache.getAsString(bytes, filePath, null);
-      return !processor.process(content);
-    }
-    else {
-      return false;
-    }
+    return objectType == null ? null : switch (objectType) {
+      case COMMIT -> GitContentRevision.createRevision(filePath, new GitRevisionNumber(beforeVersionId), myProject).getContent();
+      case BLOB -> ContentRevisionCache.getAsString(GitIndexUtil.read(repository, beforeVersionId), filePath, null);
+      case TREE -> null;
+    };
   }
 
   @Override

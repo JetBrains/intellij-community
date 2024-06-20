@@ -4,15 +4,13 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface VcsBaseRevisionAdviser {
   /**
-   * @return true if base revision was found by this provider
+   * @return file content if base revision was found by this provider
    */
-  boolean getBaseVersionContent(@NotNull FilePath filePath,
-                                @NotNull Processor<? super @NlsSafe String> processor,
-                                @NotNull @NlsSafe String beforeVersionId)
-    throws VcsException;
+  @NlsSafe
+  @Nullable String getBaseVersionContent(@NotNull FilePath filePath, @NotNull @NlsSafe String beforeVersionId) throws VcsException;
 }

@@ -56,9 +56,9 @@ public final class DefaultPatchBaseVersionProvider {
       Date versionDate = parseVersionAsDate(versionId);
 
       if (historyProvider instanceof VcsBaseRevisionAdviser revisionAdviser) {
-        boolean success = revisionAdviser.getBaseVersionContent(pathBeforeRename, processor,
-                                                                vcsRevisionString != null ? vcsRevisionString : versionId);
-        if (success) return;
+        String content = revisionAdviser.getBaseVersionContent(pathBeforeRename, vcsRevisionString != null ? vcsRevisionString : versionId);
+        processor.process(content);
+        if (content != null) return;
       }
 
       VcsRevisionNumber revision = vcsRevisionString != null ? vcs.parseRevisionNumber(vcsRevisionString, pathBeforeRename) : null;

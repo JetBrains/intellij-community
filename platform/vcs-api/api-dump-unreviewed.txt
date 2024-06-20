@@ -1722,7 +1722,7 @@ com.intellij.openapi.vcs.history.VcsAppendableHistorySessionPartner
 - a:reportCreatedEmptySession(com.intellij.openapi.vcs.history.VcsAbstractHistorySession):V
 - a:reportException(com.intellij.openapi.vcs.VcsException):V
 com.intellij.openapi.vcs.history.VcsBaseRevisionAdviser
-- a:getBaseVersionContent(com.intellij.openapi.vcs.FilePath,com.intellij.util.Processor,java.lang.String):Z
+- a:getBaseVersionContent(com.intellij.openapi.vcs.FilePath,java.lang.String):java.lang.String
 com.intellij.openapi.vcs.history.VcsCacheableHistorySessionFactory
 - a:createFromCachedData(java.io.Serializable,java.util.List,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsRevisionNumber):com.intellij.openapi.vcs.history.VcsAbstractHistorySession
 - getAdditionallyCachedData(com.intellij.openapi.vcs.history.VcsAbstractHistorySession):java.io.Serializable
