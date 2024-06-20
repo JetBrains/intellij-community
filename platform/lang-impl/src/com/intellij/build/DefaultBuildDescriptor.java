@@ -88,6 +88,7 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
       myActivateToolWindowWhenAdded = defaultBuildDescriptor.myActivateToolWindowWhenAdded;
       myActivateToolWindowWhenFailed = defaultBuildDescriptor.myActivateToolWindowWhenFailed;
       myAutoFocusContent = defaultBuildDescriptor.myAutoFocusContent;
+      myNavigateToError = defaultBuildDescriptor.myNavigateToError;
 
       defaultBuildDescriptor.myRestartActions.forEach(this::withRestartAction);
       defaultBuildDescriptor.myActions.forEach(this::withAction);
