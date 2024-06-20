@@ -60,7 +60,7 @@ open class MessageBusImpl : MessageBus {
   @JvmField
   internal val owner: MessageBusOwner
 
-  private var disposeState = BusState.ALIVE
+  private var disposeState: BusState = BusState.Alive
 
   // separate disposable must be used, because container will dispose bus connections in a separate step
   private var connectionDisposable: Disposable? = Disposer.newDisposable()
@@ -156,7 +156,7 @@ open class MessageBusImpl : MessageBus {
 
   fun disposeConnectionChildren() {
     // avoid any work on notifyConnectionTerminated
-    disposeState = BusState.DISPOSE_IN_PROGRESS
+    disposeState = BusState.Disposing
     Disposer.disposeChildren(connectionDisposable!!) { true }
   }
 
@@ -167,8 +167,7 @@ open class MessageBusImpl : MessageBus {
 
   override fun dispose() {
     checkBusDisposed()
-
-    disposeState = BusState.DISPOSED_STATE
+    disposeState = BusState.Disposed(Throwable())
     disposeChildren()
     connectionDisposable?.let {
       Disposer.dispose(it)
@@ -181,7 +180,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   override val isDisposed: Boolean
-    get() = disposeState == BusState.DISPOSED_STATE || owner.isDisposed
+    get() = disposeState is BusState.Disposed || owner.isDisposed
 
   override fun hasUndeliveredEvents(topic: Topic<*>): Boolean {
     if (isDisposed) {
@@ -197,13 +196,19 @@ open class MessageBusImpl : MessageBus {
   }
 
   internal fun checkDisposed() {
-    if (isDisposed) {
-      LOG.error("Already disposed: $this")
-    }
+    checkBusDisposed()
+    checkOwnerDisposed()
   }
 
   private fun checkBusDisposed() {
-    if (disposeState == BusState.DISPOSED_STATE) {
+    val state = disposeState
+    if (state is BusState.Disposed) {
+      LOG.error("Already disposed: $this", state.where)
+    }
+  }
+
+  private fun checkOwnerDisposed() {
+    if (owner.isDisposed) {
       LOG.error("Already disposed: $this")
     }
   }
@@ -252,7 +257,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   internal open fun notifyConnectionTerminated(topicAndHandlerPairs: Array<Any>): Boolean {
-    if (disposeState != BusState.ALIVE) {
+    if (disposeState != BusState.Alive) {
       return false
     }
 
@@ -379,8 +384,10 @@ internal class MessageQueue {
 
 private val NA: Any = Any()
 
-private enum class BusState {
-  ALIVE, DISPOSE_IN_PROGRESS, DISPOSED_STATE
+private sealed class BusState {
+  data object Alive : BusState()
+  data object Disposing : BusState()
+  class Disposed(val where: Throwable) : BusState()
 }
 
 private fun pumpWaiting(jobQueue: MessageQueue) {
