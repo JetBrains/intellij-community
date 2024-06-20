@@ -272,52 +272,50 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  private boolean auxDelete(@NotNull VirtualFile file) throws IOException {
-    for (LocalFileOperationsHandler handler : myHandlers) {
+  private boolean auxDelete(VirtualFile file) throws IOException {
+    for (var handler : myHandlers) {
       if (handler.delete(file)) return true;
     }
-
     return false;
   }
 
-  private boolean auxMove(@NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
-    for (LocalFileOperationsHandler handler : myHandlers) {
+  private boolean auxMove(VirtualFile file, VirtualFile toDir) throws IOException {
+    for (var handler : myHandlers) {
       if (handler.move(file, toDir)) return true;
     }
     return false;
   }
 
-  private boolean auxCopy(@NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String copyName) throws IOException {
-    for (LocalFileOperationsHandler handler : myHandlers) {
-      File copy = handler.copy(file, toDir, copyName);
-      if (copy != null) return true;
+  private boolean auxCopy(VirtualFile file, VirtualFile toDir, String copyName) throws IOException {
+    for (var handler : myHandlers) {
+      if (handler.copy(file, toDir, copyName) != null) return true;
     }
     return false;
   }
 
-  private boolean auxRename(@NotNull VirtualFile file, @NotNull String newName) throws IOException {
-    for (LocalFileOperationsHandler handler : myHandlers) {
+  private boolean auxRename(VirtualFile file, String newName) throws IOException {
+    for (var handler : myHandlers) {
       if (handler.rename(file, newName)) return true;
     }
     return false;
   }
 
-  private boolean auxCreateFile(@NotNull VirtualFile dir, @NotNull String name) throws IOException {
-    for (LocalFileOperationsHandler handler : myHandlers) {
+  private boolean auxCreateFile(VirtualFile dir, String name) throws IOException {
+    for (var handler : myHandlers) {
       if (handler.createFile(dir, name)) return true;
     }
     return false;
   }
 
-  private boolean auxCreateDirectory(@NotNull VirtualFile dir, @NotNull String name) throws IOException {
-    for (LocalFileOperationsHandler handler : myHandlers) {
+  private boolean auxCreateDirectory(VirtualFile dir, String name) throws IOException {
+    for (var handler : myHandlers) {
       if (handler.createDirectory(dir, name)) return true;
     }
     return false;
   }
 
-  private void auxNotifyCompleted(@NotNull ThrowableConsumer<? super LocalFileOperationsHandler, ? extends IOException> consumer) {
-    for (LocalFileOperationsHandler handler : myHandlers) {
+  private void auxNotifyCompleted(ThrowableConsumer<LocalFileOperationsHandler, IOException> consumer) {
+    for (var handler : myHandlers) {
       handler.afterDone(consumer);
     }
   }
@@ -616,12 +614,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException {
-    NioFiles.setReadOnly(convertToNioFileAndCheck(file, false), !writableFlag);
+    var nioFile = convertToNioFileAndCheck(file, false);
+    NioFiles.setReadOnly(nioFile, !writableFlag);
   }
 
   @Override
   protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
-    String rootPath = FileUtil.extractRootPath(normalizedPath);
+    var rootPath = FileUtil.extractRootPath(normalizedPath);
     return StringUtil.notNullize(rootPath);
   }
 
@@ -718,8 +717,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   });
 
-  private record ContentRequest(Path path, int length) {
-  }
+  private record ContentRequest(Path path, int length) { }
 
   @Override
   public void refresh(boolean asynchronous) {
