@@ -38,16 +38,13 @@ public interface PythonSshInterpreterManager {
   );
 
   /**
-   * Creates form to browse remote box.
-   * You need to show it to user using dialog.
+   * Creates form to browse remote box. You need to show it to user using a dialog.
    *
-   * @return null if remote sdk can't be browsed.
-   * First argument is consumer to get path, chosen by user.
-   * Second is panel to display to user
+   * @return a pair of (user-chosen path supplier, panel to be displayed), or {@code null} if remote SDK can't be browsed.
    * @throws ExecutionException   credentials can't be obtained due to remote server error
    * @throws InterruptedException credentials can't be obtained due to remote server error
    */
-  @Nullable Pair<Supplier<String>, JPanel> createServerBrowserForm(final @NotNull Sdk remoteSdk) throws ExecutionException, InterruptedException;
+  @Nullable Pair<Supplier<String>, JPanel> createServerBrowserForm(@NotNull Sdk remoteSdk) throws ExecutionException, InterruptedException;
 
   @NotNull RemoteCredentials getRemoteCredentials(
     @NotNull RemoteConnectionCredentialsWrapper wrapper,
@@ -64,18 +61,18 @@ public interface PythonSshInterpreterManager {
 
   final class Factory {
     public static @Nullable PythonSshInterpreterManager getInstance() {
-      List<PythonSshInterpreterManager> extensions = EP_NAME.getExtensionList();
-      if (extensions.isEmpty()) {
-        LOG.debug(MessageFormat.format("Extension for ''{0}'' extension point is absent", EP_NAME.getName()));
-        return null;
-      }
-      else if (extensions.size() == 1) {
-        return extensions.get(0);
-      }
-      else {
-        LOG.error(MessageFormat.format("Several extensions registered for ''{0}'' extension point", EP_NAME.getName()));
-        return null;
-      }
+      var extensions = EP_NAME.getExtensionList();
+      return switch (extensions.size()) {
+        case 0 -> {
+          LOG.debug(MessageFormat.format("Extension for ''{0}'' extension point is absent", EP_NAME.getName()));
+          yield null;
+        }
+        case 1 -> extensions.get(0);
+        default -> {
+          LOG.error(MessageFormat.format("Several extensions registered for ''{0}'' extension point", EP_NAME.getName()));
+          yield  null;
+        }
+      };
     }
   }
 }

@@ -20,17 +20,13 @@ import java.util.*
 
 /**
  * Aims to replace [com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase].
- * For the transitional period of time the both of them are supposed to be
- * used.
+ * For the transitional period, both of them are supposed to be used.
  */
-class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPropertiesHolder,
-                                                      flavorAndData: PyFlavorAndData<*, *>?,
-                                                      targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : PythonSdkAdditionalData(
-  flavorAndData),
-                                                                                                                                TargetBasedSdkAdditionalData,
-                                                                                                                                RemoteSdkProperties by b,
-                                                                                                                                PyRemoteSdkAdditionalDataMarker {
-
+class PyTargetAwareAdditionalData private constructor(
+  private val b: RemoteSdkPropertiesHolder,
+  flavorAndData: PyFlavorAndData<*, *>?,
+  targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null
+) : PythonSdkAdditionalData(flavorAndData), TargetBasedSdkAdditionalData, RemoteSdkProperties by b, PyRemoteSdkAdditionalDataMarker {
   /**
    * The source of truth for the target configuration.
    */
@@ -40,7 +36,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
    * The target configuration.
    *
    * Note that [targetEnvironmentConfiguration] could be `null` even if [targetState] is not `null`, when there is no appropriate
-   * [TargetEnvironmentType] available for deserializing and handling [ContributedStateBase.innerState] of [targetState].
+   * [TargetEnvironmentType] available for deserializing and handling [ContributedConfigurationsList.ContributedStateBase.innerState] of [targetState].
    */
   override var targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = targetEnvironmentConfiguration
     set(value) {
@@ -56,7 +52,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     RemoteSdkPropertiesHolder(PyRemoteSdkAdditionalData.PYCHARM_HELPERS), flavorAndData, targetEnvironmentConfiguration)
 
   override fun save(rootElement: Element) {
-    // store "interpeter paths" (i.e. `PYTHONPATH` elements)
+    // store "interpreter paths" (i.e. `PYTHONPATH` elements)
     super.save(rootElement)
     // store `INTERPRETER_PATH`, `HELPERS_PATH`, etc
     b.save(rootElement)
@@ -76,7 +72,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     // load `INTERPRETER_PATH`, `HELPERS_PATH`, etc
     b.load(element)
     // the state that contains information of the target, as for now the target configuration is embedded into the additional data
-    val (loadedState, loadedConfiguration) = loadTargetBasedSdkAdditionalData(element)
+    val (_, loadedConfiguration) = loadTargetBasedSdkAdditionalData(element)
     // add Python language runtime for the loaded configuration
     if (loadedConfiguration != null) {
       val pythonLanguageRuntimeConfiguration = PythonLanguageRuntimeConfiguration()

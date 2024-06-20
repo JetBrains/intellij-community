@@ -30,12 +30,9 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   private static final String VERSION = "VERSION";
   private static final String RUN_AS_ROOT_VIA_SUDO = "RUN_AS_ROOT_VIA_SUDO";
 
-  private final RemoteConnectionCredentialsWrapper myRemoteConnectionCredentialsWrapper = new RemoteConnectionCredentialsWrapper();
-
+  private final RemoteConnectionCredentialsWrapper myWrapper = new RemoteConnectionCredentialsWrapper();
   private final RemoteSdkPropertiesHolder myRemoteSdkProperties = new RemoteSdkPropertiesHolder(PYCHARM_HELPERS);
-
   private String mySkeletonsPath;
-
   private String myVersionString;
 
   public PyRemoteSdkAdditionalData(String interpreterPath) {
@@ -50,23 +47,22 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
 
   @Override
   public @NotNull RemoteConnectionCredentialsWrapper connectionCredentials() {
-    return myRemoteConnectionCredentialsWrapper;
+    return myWrapper;
   }
 
-  private static @Nullable PythonSdkFlavor computeFlavor(@Nullable String sdkPath) {
-    if (sdkPath == null) {
-      return null;
-    }
-    for (PythonSdkFlavor flavor : getApplicableFlavors(sdkPath.contains("\\"))) {
-      if (flavor.isValidSdkPath(new File(sdkPath))) {
-        return flavor;
+  private static @Nullable PythonSdkFlavor<?> computeFlavor(@Nullable String sdkPath) {
+    if (sdkPath != null) {
+      for (var flavor : getApplicableFlavors(sdkPath.contains("\\"))) {
+        if (flavor.isValidSdkPath(new File(sdkPath))) {
+          return flavor;
+        }
       }
     }
     return null;
   }
 
-  private static List<PythonSdkFlavor> getApplicableFlavors(boolean isWindows) {
-    List<PythonSdkFlavor> result = new ArrayList<>();
+  private static List<PythonSdkFlavor<?>> getApplicableFlavors(boolean isWindows) {
+    var result = new ArrayList<PythonSdkFlavor<?>>();
     if (isWindows) {
       result.add(WinPythonSdkFlavor.getInstance());
     }
@@ -74,7 +70,6 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
       result.add(UnixPythonSdkFlavor.getInstance());
     }
     result.addAll(PythonSdkFlavor.getPlatformIndependentFlavors());
-
     return result;
   }
 
@@ -88,27 +83,17 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
 
   @Override
   public <C> void setCredentials(Key<C> key, C credentials) {
-    myRemoteConnectionCredentialsWrapper.setCredentials(key, credentials);
+    myWrapper.setCredentials(key, credentials);
   }
 
   @Override
-  public CredentialsType getRemoteConnectionType() {
-    return myRemoteConnectionCredentialsWrapper.getRemoteConnectionType();
+  public CredentialsType<?> getRemoteConnectionType() {
+    return myWrapper.getRemoteConnectionType();
   }
 
   @Override
   public void switchOnConnectionType(CredentialsCase... cases) {
-    myRemoteConnectionCredentialsWrapper.switchType(cases);
-  }
-
-  private PyRemoteSdkCredentials createPyRemoteSdkCredentials(@NotNull RemoteCredentials credentials) {
-    PyRemoteSdkCredentialsHolder res = new PyRemoteSdkCredentialsHolder();
-    RemoteCredentialsHolder.copyRemoteCredentials(credentials, res);
-    myRemoteSdkProperties.copyTo(res);
-    res.setSkeletonsPath(getSkeletonsPath());
-    res.setValid(isValid());
-    res.setSdkId(getSdkId());
-    return res;
+    myWrapper.switchType(cases);
   }
 
   @Override
@@ -173,16 +158,15 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
 
   @Override
   public String getSdkId() {
-    return constructSdkID(myRemoteConnectionCredentialsWrapper, myRemoteSdkProperties);
+    return constructSdkID(myWrapper, myRemoteSdkProperties);
   }
 
   public String getPresentableDetails() {
-    return myRemoteConnectionCredentialsWrapper.getPresentableDetails(myRemoteSdkProperties.getInterpreterPath());
+    return myWrapper.getPresentableDetails(myRemoteSdkProperties.getInterpreterPath());
   }
 
-  private static String constructSdkID(@NotNull RemoteConnectionCredentialsWrapper remoteConnectionCredentialsWrapper,
-                                       @NotNull RemoteSdkPropertiesHolder properties) {
-    return remoteConnectionCredentialsWrapper.getId() + properties.getInterpreterPath();
+  private static String constructSdkID(RemoteConnectionCredentialsWrapper wrapper, RemoteSdkPropertiesHolder properties) {
+    return wrapper.getId() + properties.getInterpreterPath();
   }
 
   @Override
@@ -208,40 +192,30 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   @Override
   public RemoteCredentials getRemoteCredentials(@Nullable Project project, boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException {
     var manager = PythonSshInterpreterManager.Factory.getInstance();
-    if (manager != null) {
-      return manager.getRemoteCredentials(myRemoteConnectionCredentialsWrapper, project, allowSynchronousInteraction);
-    }
-    else {
-      throw new IllegalStateException("No plugin");
-    }
+    if (manager == null) throw new IllegalStateException("No plugin");
+    return manager.getRemoteCredentials(myWrapper, project, allowSynchronousInteraction);
   }
 
   @Override
   public void produceRemoteCredentials(@Nullable Project project, boolean allowSynchronousInteraction, @NotNull Consumer<RemoteCredentials> consumer) {
     var manager = PythonSshInterpreterManager.Factory.getInstance();
-    if (manager != null) {
-      manager.produceRemoteCredentials(myRemoteConnectionCredentialsWrapper, project, allowSynchronousInteraction, consumer);
-    }
-    else {
-      throw new IllegalStateException("No plugin");
-    }
+    if (manager == null) throw new IllegalStateException("No plugin");
+    manager.produceRemoteCredentials(myWrapper, project, allowSynchronousInteraction, consumer);
   }
 
   public boolean connectionEquals(PyRemoteSdkAdditionalData data) {
-    return myRemoteConnectionCredentialsWrapper.equals(data.myRemoteConnectionCredentialsWrapper);
+    return myWrapper.equals(data.myWrapper);
   }
 
   @Override
   public Object getRemoteSdkDataKey() {
-    return myRemoteConnectionCredentialsWrapper.getConnectionKey();
+    return myWrapper.getConnectionKey();
   }
 
   @Override
   public @NotNull PyRemoteSdkAdditionalData copy() {
-    PyRemoteSdkAdditionalData copy = new PyRemoteSdkAdditionalData(myRemoteSdkProperties.getInterpreterPath(), isRunAsRootViaSudo());
-
+    var copy = new PyRemoteSdkAdditionalData(myRemoteSdkProperties.getInterpreterPath(), isRunAsRootViaSudo());
     copyTo(copy);
-
     return copy;
   }
 
@@ -249,40 +223,35 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     copy.setSkeletonsPath(mySkeletonsPath);
     copy.setVersionString(myVersionString);
     myRemoteSdkProperties.copyTo(copy.myRemoteSdkProperties);
-    myRemoteConnectionCredentialsWrapper.copyTo(copy.myRemoteConnectionCredentialsWrapper);
+    myWrapper.copyTo(copy.myWrapper);
   }
 
   @Override
   public void save(final @NotNull Element rootElement) {
     super.save(rootElement);
-
-
     myRemoteSdkProperties.save(rootElement);
-
     rootElement.setAttribute(SKELETONS_PATH, StringUtil.notNullize(getSkeletonsPath()));
     rootElement.setAttribute(VERSION, StringUtil.notNullize(getVersionString()));
     rootElement.setAttribute(RUN_AS_ROOT_VIA_SUDO, Boolean.toString(isRunAsRootViaSudo()));
-
     // this should be executed at the end because of the case with UnknownCredentialsHolder
-    myRemoteConnectionCredentialsWrapper.save(rootElement);
+    myWrapper.save(rootElement);
   }
 
-
   public static @NotNull PyRemoteSdkAdditionalData loadRemote(@NotNull Sdk sdk, @Nullable Element element) {
-    final String path = sdk.getHomePath();
+    var path = sdk.getHomePath();
     assert path != null;
-    final PyRemoteSdkAdditionalData data = new PyRemoteSdkAdditionalData(RemoteSdkProperties.getInterpreterPathFromFullPath(path), false);
+    var data = new PyRemoteSdkAdditionalData(RemoteSdkProperties.getInterpreterPathFromFullPath(path), false);
     data.load(element);
 
     if (element != null) {
       CredentialsManager.getInstance().loadCredentials(path, element, data);
-      if (data.myRemoteConnectionCredentialsWrapper.getRemoteConnectionType().hasPrefix(RemoteCredentialsHolder.SSH_PREFIX)) {
+      if (data.myWrapper.getRemoteConnectionType().hasPrefix(RemoteCredentialsHolder.SSH_PREFIX)) {
         CredentialsManager.updateOutdatedSdk(data, null);
       }
       data.myRemoteSdkProperties.load(element);
 
       data.setSkeletonsPath(StringUtil.nullize(element.getAttributeValue(SKELETONS_PATH)));
-      String helpersPath = StringUtil.nullize(element.getAttributeValue("PYCHARM_HELPERS_PATH"));
+      var helpersPath = StringUtil.nullize(element.getAttributeValue("PYCHARM_HELPERS_PATH"));
       if (helpersPath != null) {
         data.setHelpersPath(helpersPath);
       }
