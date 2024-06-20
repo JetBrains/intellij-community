@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.mac.MacFullScreenControlsManager
 
 /**
  * @author Konstantin Bulenkov
@@ -31,6 +30,7 @@ class ToggleCompactModeAction: DumbAwareToggleAction(), ActionRemoteBehaviorSpec
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = ExperimentalUI.isNewUI()
+    e.presentation.isMultiChoice = SystemInfo.isMac
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
