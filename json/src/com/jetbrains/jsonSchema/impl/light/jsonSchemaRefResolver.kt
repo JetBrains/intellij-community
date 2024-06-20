@@ -15,34 +15,41 @@ interface JsonSchemaReferenceResolver {
 }
 
 internal data object LocalSchemaReferenceResolver : JsonSchemaReferenceResolver {
-  override fun resolve(reference: String,
-                       referenceOwner: JsonSchemaObjectBackedByJacksonBase,
-                       service: JsonSchemaService): JsonSchemaObject? {
+  override fun resolve(
+    reference: String,
+    referenceOwner: JsonSchemaObjectBackedByJacksonBase,
+    service: JsonSchemaService,
+  ): JsonSchemaObject? {
     return resolveLocalSchemaNode(reference, referenceOwner)
   }
 }
 
 internal data object RemoteSchemaReferenceResolver : JsonSchemaReferenceResolver {
-  override fun resolve(reference: String,
-                       referenceOwner: JsonSchemaObjectBackedByJacksonBase,
-                       service: JsonSchemaService): JsonSchemaObject? {
+  override fun resolve(
+    reference: String,
+    referenceOwner: JsonSchemaObjectBackedByJacksonBase,
+    service: JsonSchemaService,
+  ): JsonSchemaObject? {
     val resolvedRemoteSchema = resolveRemoteSchemaByUrl(reference, referenceOwner, service) ?: return null
-    if (true) return referenceOwner.rootSchemaObject.schemaInterpretationStrategy.inheritBaseSchema(referenceOwner, resolvedRemoteSchema)
     return resolvedRemoteSchema
   }
 }
 
 internal abstract class VocabularySchemaReferenceResolver(private val bundledVocabularies: List<StandardJsonSchemaVocabulary.Bundled>) : JsonSchemaReferenceResolver {
-  override fun resolve(reference: String,
-                       referenceOwner: JsonSchemaObjectBackedByJacksonBase,
-                       service: JsonSchemaService): JsonSchemaObject? {
+  override fun resolve(
+    reference: String,
+    referenceOwner: JsonSchemaObjectBackedByJacksonBase,
+    service: JsonSchemaService,
+  ): JsonSchemaObject? {
     if (reference.startsWith("http") || reference.startsWith("#") || reference.startsWith("/")) return null
     return resolveVocabulary(reference, referenceOwner, service, bundledVocabularies)
   }
 }
 
-internal fun resolveLocalSchemaNode(maybeEmptyReference: String,
-                                    currentSchemaNode: JsonSchemaObjectBackedByJacksonBase): JsonSchemaObject? {
+internal fun resolveLocalSchemaNode(
+  maybeEmptyReference: String,
+  currentSchemaNode: JsonSchemaObjectBackedByJacksonBase,
+): JsonSchemaObject? {
   return when {
     maybeEmptyReference.startsWith("#/") -> resolveReference(maybeEmptyReference, currentSchemaNode)
     maybeEmptyReference.startsWith("/") -> resolveReference(maybeEmptyReference, currentSchemaNode)
