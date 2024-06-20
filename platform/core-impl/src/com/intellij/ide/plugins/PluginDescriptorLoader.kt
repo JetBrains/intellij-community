@@ -1119,6 +1119,27 @@ fun loadDescriptorsFromOtherIde(
   }
 }
 
+fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false) : PluginLoadingResult{
+  return DescriptorListLoadingContext(
+    isMissingIncludeIgnored = true,
+    isMissingSubDescriptorIgnored = true
+  ).use { context ->
+    val result = PluginLoadingResult()
+    result.addAll(
+      descriptors = toSequence(runBlocking {
+        loadDescriptorsFromDir(
+          dir = customPluginDir,
+          context = context,
+          isBundled = ignoreCompatibility,
+          pool = ZipFilePool.POOL ?: NonShareableJavaZipFilePool())
+      }, isMainProcess()),
+      overrideUseIfCompatible = false,
+      productBuildNumber = context.productBuildNumber(),
+    )
+    result
+  }
+}
+
 @TestOnly
 fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescriptor> {
   val urlToFilename = collectPluginFilesInClassPath(loader)
