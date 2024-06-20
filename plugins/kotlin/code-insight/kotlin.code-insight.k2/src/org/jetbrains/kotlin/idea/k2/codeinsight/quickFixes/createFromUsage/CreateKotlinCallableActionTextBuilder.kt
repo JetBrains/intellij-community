@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
@@ -51,6 +52,7 @@ object CreateKotlinCallableActionTextBuilder {
     }
 
     // text, receiverTypeText
+    @OptIn(KaExperimentalApi::class)
     fun renderReceiver(request: CreateMethodFromKotlinUsageRequest, container: KtElement): Pair<String,String> {
         analyze(request.call) {
             val receiverSymbol: KtSymbol?
@@ -80,6 +82,7 @@ object CreateKotlinCallableActionTextBuilder {
     }
 
     context (KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun KtSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KtType?): String? {
         return when (this) {
             is KaCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
@@ -97,6 +100,7 @@ object CreateKotlinCallableActionTextBuilder {
     }
 
     // We must use short names of types for create-from-usage quick-fix (or IntentionAction) text.
+    @KaExperimentalApi
     private val RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT: KtTypeRenderer = KtTypeRendererForSource.WITH_SHORT_NAMES.with {
         classIdRenderer = object : KtClassTypeQualifierRenderer {
             override fun renderClassTypeQualifier(

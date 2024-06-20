@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
@@ -54,6 +55,7 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
         return eagerlyComputedImportFixes.asSequence()
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun createImportFixesForExpressionLazy(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> = sequence {
         analyze(expression) {
             val file = expression.containingKtFile

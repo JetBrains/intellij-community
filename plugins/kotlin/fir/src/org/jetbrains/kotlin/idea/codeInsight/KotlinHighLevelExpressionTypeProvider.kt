@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
@@ -17,6 +18,7 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
     }
 
     // this method gets called from the non-blocking read action
+    @OptIn(KaExperimentalApi::class)
     override fun getInformationHint(element: KtExpression): String = analyze(element) {
         val ktType = if (element is KtDeclaration) {
             element.getReturnKtType()

@@ -147,7 +147,7 @@ class KotlinFieldBreakpoint(
     private fun computeBreakpointType(property: KtCallableDeclaration): BreakpointType {
         return runReadAction {
             analyze(property) {
-                val hasBackingField = when (val symbol = property.getSymbol()) {
+                val hasBackingField = when (val symbol = property.symbol) {
                     is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.hasBackingField ?: false
                     is KtKotlinPropertySymbol -> symbol.hasBackingField
                     else -> false

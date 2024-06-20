@@ -178,7 +178,7 @@ internal class FirSuperMemberCompletionContributor(
             .flatMap { containingFunction ->
                 containingFunction
                     .getFunctionLikeSymbol()
-                    .getAllOverriddenSymbols()
+                    .allOverriddenSymbols
                     .map { superFunctionSymbol ->
                         superFunctionSymbol to containingFunction
                     }

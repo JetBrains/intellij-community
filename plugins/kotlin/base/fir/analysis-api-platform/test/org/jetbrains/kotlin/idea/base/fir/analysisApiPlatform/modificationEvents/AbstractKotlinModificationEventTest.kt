@@ -5,7 +5,7 @@ import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
 import org.jetbrains.kotlin.analysis.api.platform.modification.isGlobalLevel
 import org.jetbrains.kotlin.analysis.api.platform.modification.isModuleLevel
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
@@ -28,7 +28,7 @@ protected abstract val expectedEventKind: KotlinModificationEventKind
 
     protected fun createNotUnderContentRootFile(name: String, text: String = ""): KtFile =
         // While the not-under-content-root module is named as it is, it is still decidedly under the project's content root, just not a
-        // part of any other kind of `KtModule`.
+        // part of any other kind of `KaModule`.
         createKtFileUnderNewContentRoot(FileWithText("$name.kt", text))
 
     /**
@@ -55,7 +55,7 @@ protected abstract val expectedEventKind: KotlinModificationEventKind
      * does not need to be disposed manually.
      */
     protected fun createModuleTracker(
-        module: KtModule,
+        module: KaModule,
         label: String,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker {

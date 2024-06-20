@@ -93,7 +93,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
 
     context(KaSession)
     private fun collectEnumBranches(klass: KaNamedClassOrObjectSymbol): List<CaseBranch> {
-        val enumEntries = klass.getStaticDeclaredMemberScope()
+        val enumEntries = klass.staticDeclaredMemberScope
             .getCallableSymbols()
             .filterIsInstance<KaEnumEntrySymbol>()
 
@@ -120,7 +120,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
         }
 
         if (klass.modality == Modality.SEALED) {
-            val inheritors = klass.getSealedClassInheritors()
+            val inheritors = klass.sealedClassInheritors
             if (inheritors.isNotEmpty()) {
                 for (inheritor in inheritors) {
                     if (!processSealedClassInheritor(inheritor, consumer)) {

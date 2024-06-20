@@ -52,7 +52,7 @@ object TypeMismatchFactories {
             //   if (nullableInt == null) {
             //     val x: Int = nullableInt  // No AddExclExclCallFix here
             //   }
-            if (psi.safeAs<KtExpression>()?.isDefinitelyNull() == true) {
+            if (psi.safeAs<KtExpression>()?.isDefinitelyNull == true) {
                 return emptyList()
             }
             val nullableExpectedType = expectedType.withNullability(KtTypeNullability.NULLABLE)

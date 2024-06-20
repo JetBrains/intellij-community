@@ -18,7 +18,7 @@ private object KtValueParameterSymbolDefaultValueProvider {
         if (!parameterSymbol.hasDefaultValue) return null
         return sequence {
             yield(parameterSymbol)
-            yieldAll(parameterSymbol.getAllOverriddenSymbols().filterIsInstance<KaValueParameterSymbol>())
+            yieldAll(parameterSymbol.allOverriddenSymbols.filterIsInstance<KaValueParameterSymbol>())
         }.firstNotNullOfOrNull { parameter ->
             val ktParameter = parameter.psi as? KtParameter ?: return@firstNotNullOfOrNull null
             (ktParameter.navigationElement as? KtParameter ?: ktParameter).defaultValue

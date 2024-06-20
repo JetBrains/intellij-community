@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.checkers
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -30,6 +31,7 @@ internal fun interface CompletionVisibilityChecker {
     }
 
     companion object {
+        @OptIn(KaExperimentalApi::class)
         fun create(
             basicContext: FirBasicCompletionContext,
             positionContext: KotlinRawPositionContext

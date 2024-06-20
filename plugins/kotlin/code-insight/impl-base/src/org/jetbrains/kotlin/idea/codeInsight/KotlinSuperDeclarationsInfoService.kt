@@ -43,11 +43,10 @@ object SuperDeclarationProvider {
     fun findSuperDeclarations(declaration: KtDeclaration): List<SuperDeclaration> {
         allowAnalysisOnEdt {
             analyze(declaration) {
-                val superSymbols = when (val symbol = declaration.getSymbol()) {
-                    is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.getDirectlyOverriddenSymbols()?.asSequence()
-                        ?: emptySequence()
+                val superSymbols = when (val symbol = declaration.symbol) {
+                    is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.directlyOverriddenSymbols ?: emptySequence()
 
-                    is KaCallableSymbol -> symbol.getDirectlyOverriddenSymbols().asSequence()
+                    is KaCallableSymbol -> symbol.directlyOverriddenSymbols
                     is KaClassOrObjectSymbol -> symbol.superTypes.asSequence().mapNotNull { (it as? KtNonErrorClassType)?.symbol }
                     else -> emptySequence()
                 }

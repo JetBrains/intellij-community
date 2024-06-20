@@ -392,7 +392,7 @@ fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
         is KtCallExpression -> target.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES)
         is KtCallableDeclaration -> {
             target.anyDescendantOfType<KtCallExpression> {
-                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES) && it.isUsedAsExpression()
+                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES) && it.isUsedAsExpression
             }
         }
 

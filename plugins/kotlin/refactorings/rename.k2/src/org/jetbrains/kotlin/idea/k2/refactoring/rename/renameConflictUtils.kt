@@ -275,8 +275,8 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
         }
 
         fun getExplicitQualifier(receiverValue: KaExplicitReceiverValue): String? {
-            val containingSymbol = appliedSymbol?.symbol?.getContainingSymbol()
-            val enumClassSymbol = containingSymbol?.getContainingSymbol()
+            val containingSymbol = appliedSymbol?.symbol?.containingSymbol
+            val enumClassSymbol = containingSymbol?.containingSymbol
             //add companion qualifier to avoid clashes with enum entries
             return if (containingSymbol is KaNamedClassOrObjectSymbol && containingSymbol.classKind == KaClassKind.COMPANION_OBJECT &&
                 enumClassSymbol is KaNamedClassOrObjectSymbol && enumClassSymbol.classKind == KaClassKind.ENUM_CLASS &&
@@ -305,7 +305,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
 
             null -> {
                 val symbol = appliedSymbol?.symbol
-                val containingSymbol = symbol?.getContainingSymbol()
+                val containingSymbol = symbol?.containingSymbol
                 val containerFQN =
                     if (containingSymbol is KaClassOrObjectSymbol) {
                         containingSymbol.classId?.asSingleFqName()?.parent()
@@ -339,6 +339,6 @@ private fun reportShadowing(
 
 context(KaSession)
 private fun retargetExternalDeclarations(declaration: KtNamedDeclaration, name: String, retargetJob: (KaDeclarationSymbol) -> Unit) {
-    val declarationSymbol = declaration.getSymbol()
+    val declarationSymbol = declaration.symbol
     registerRetargetJobOnPotentialCandidates(declaration, name, { filterCandidates(declarationSymbol, it) }, retargetJob)
 }

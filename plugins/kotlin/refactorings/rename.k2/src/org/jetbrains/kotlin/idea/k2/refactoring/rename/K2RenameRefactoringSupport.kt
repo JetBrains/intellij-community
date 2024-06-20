@@ -67,7 +67,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
 
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
         return analyze(function) {
-            val overridenFunctions = (function.getSymbol() as? KaCallableSymbol)?.getAllOverriddenSymbols().orEmpty()
+            val overridenFunctions = (function.symbol as? KaCallableSymbol)?.allOverriddenSymbols?.toList().orEmpty()
             overridenFunctions.mapNotNull { it.psi as? KtNamedFunction }
         }
     }
@@ -84,7 +84,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     override fun getJvmName(element: PsiElement): String? {
         val property = element.unwrapped as? KtDeclaration ?: return null
         analyseOnEdt(property) {
-            val propertySymbol = property.getSymbol() as? KaCallableSymbol
+            val propertySymbol = property.symbol as? KaCallableSymbol
             return propertySymbol?.let { getJvmName(it) }
         }
     }
@@ -110,13 +110,13 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(this) {
-                    val declarationSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return false
+                    val declarationSymbol = declaration.symbol as? KaCallableSymbol ?: return false
 
                     val callableSymbol = when (declarationSymbol) {
                         is KaValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
                         else -> declarationSymbol
                     }
-                    return callableSymbol.getDirectlyOverriddenSymbols().isEmpty()
+                    return callableSymbol.directlyOverriddenSymbols.none()
                 }
             }
         }
@@ -149,7 +149,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         val propertyOrParameter = element.unwrapped as? KtDeclaration ?: return null to null
 
         analyseOnEdt(propertyOrParameter) {
-            val propertySymbol = when (val symbol = propertyOrParameter.getSymbol()) {
+            val propertySymbol = when (val symbol = propertyOrParameter.symbol) {
                 is KtKotlinPropertySymbol -> symbol
                 is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty
                 else -> null

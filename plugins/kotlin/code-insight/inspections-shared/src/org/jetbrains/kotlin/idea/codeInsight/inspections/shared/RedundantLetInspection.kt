@@ -313,7 +313,7 @@ private fun KtFunctionLiteral.valueParameterReferences(callExpression: KtCallExp
         ?.destructuringDeclaration
         ?.entries
         ?.asSequence()
-        ?.map { it.getSymbol() }
+        ?.map { it.symbol }
         ?.filterIsInstance<KaNamedSymbol>()
         ?.associateBy { it.name }
         ?: mapOf(valueParameterSymbol.name to valueParameterSymbol)

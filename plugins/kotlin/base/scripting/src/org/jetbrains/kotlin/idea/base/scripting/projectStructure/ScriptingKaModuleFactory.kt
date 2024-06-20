@@ -5,7 +5,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.project.structure.*
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.*
@@ -14,8 +19,8 @@ import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDe
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Path
 
-internal class ScriptingKtModuleFactory : KtModuleFactory {
-    override fun createModule(moduleInfo: ModuleInfo): KtModule? {
+internal class ScriptingKaModuleFactory : KaModuleFactory {
+    override fun createModule(moduleInfo: ModuleInfo): KaModule? {
         return when (moduleInfo) {
             is ScriptModuleInfo -> KtScriptModuleByModuleInfo(moduleInfo)
             is ScriptDependenciesInfo -> KtScriptDependencyModuleByModuleInfo(moduleInfo)
@@ -25,9 +30,10 @@ internal class ScriptingKtModuleFactory : KtModuleFactory {
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 private class KtScriptModuleByModuleInfo(
     private val moduleInfo: ScriptModuleInfo
-) : KtModuleByModuleInfoBase(moduleInfo), KtScriptModule {
+) : KtModuleByModuleInfoBase(moduleInfo), KaScriptModule {
     private var hasDirectFriendDependencies: Boolean? = null
 
     override val project: Project
@@ -42,12 +48,12 @@ private class KtScriptModuleByModuleInfo(
     override val languageVersionSettings: LanguageVersionSettings
         get() = moduleInfo.languageVersionSettings
 
-    override val directFriendDependencies: List<KtModule>
+    override val directFriendDependencies: List<KaModule>
         get() = if (hasDirectFriendDependencies == false) {
             emptyList()
         } else {
             val ktModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(moduleInfo.scriptFile, moduleInfo.project)
-                .mapNotNull { it.productionSourceInfo?.toKtModule() }
+                .mapNotNull { it.productionSourceInfo?.toKaModule() }
             hasDirectFriendDependencies = ktModules.isNotEmpty()
             ktModules
         }
@@ -61,7 +67,7 @@ private class KtScriptModuleByModuleInfo(
 
 private class KtScriptDependencyModuleByModuleInfo(
     private val moduleInfo: ScriptDependenciesInfo
-) : KtModuleByModuleInfoBase(moduleInfo), KtLibraryModule, KtScriptDependencyModule {
+) : KtModuleByModuleInfoBase(moduleInfo), KaLibraryModule, KaScriptDependencyModule {
     override val project: Project
         get() = moduleInfo.project
 
@@ -71,15 +77,19 @@ private class KtScriptDependencyModuleByModuleInfo(
     override val libraryName: String
         get() = "Script dependencies"
 
-    override val librarySources: KtLibrarySourceModule?
-        get() = moduleInfo.sourcesModuleInfo?.toKtModuleOfType<KtLibrarySourceModule>()
+    override val librarySources: KaLibrarySourceModule?
+        get() = moduleInfo.sourcesModuleInfo?.toKaModuleOfType<KaLibrarySourceModule>()
 
-    override fun getBinaryRoots(): Collection<Path> = when (moduleInfo) {
-        is ScriptDependenciesInfo.ForProject -> ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles().map { it.toNioPath() }
+    override val isSdk: Boolean
+        get() = false
 
-        is ScriptDependenciesInfo.ForFile -> ScriptDependencyAware.getInstance(project)
-            .getScriptDependenciesClassFiles(moduleInfo.scriptFile).map { it.toNioPath() }
-    }
+    override val binaryRoots: Collection<Path>
+        get() = when (moduleInfo) {
+            is ScriptDependenciesInfo.ForProject -> ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles().map { it.toNioPath() }
+
+            is ScriptDependenciesInfo.ForFile -> ScriptDependencyAware.getInstance(project)
+                .getScriptDependenciesClassFiles(moduleInfo.scriptFile).map { it.toNioPath() }
+        }
 
     override val file: KtFile?
         get() = optScriptFile((moduleInfo as? ScriptDependenciesInfo.ForFile)?.scriptFile)
@@ -107,7 +117,7 @@ private class KtScriptDependencyModuleByModuleInfo(
 
 private class KtScriptDependencySourceModuleByModuleInfo(
     private val moduleInfo: ScriptDependenciesSourceInfo
-) : KtModuleByModuleInfoBase(moduleInfo), KtLibrarySourceModule, KtScriptDependencyModule {
+) : KtModuleByModuleInfoBase(moduleInfo), KaLibrarySourceModule, KaScriptDependencyModule {
     override val project: Project
         get() = moduleInfo.project
 
@@ -117,7 +127,7 @@ private class KtScriptDependencySourceModuleByModuleInfo(
     override val libraryName: String
         get() = "Script dependency sources"
 
-    override val binaryLibrary: KtLibraryModule
+    override val binaryLibrary: KaLibraryModule
         get() = KtScriptDependencyModuleByModuleInfo(moduleInfo.binariesModuleInfo)
 
     override val file: KtFile?

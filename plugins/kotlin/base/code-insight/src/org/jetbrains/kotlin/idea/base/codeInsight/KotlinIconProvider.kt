@@ -23,7 +23,7 @@ object KotlinIconProvider {
             }
         }
 
-        if (symbol is KaFunctionSymbol) {
+        if (symbol is KaNamedFunctionSymbol) {
             val isAbstract = symbol.modality == Modality.ABSTRACT
 
             return when {
@@ -57,7 +57,7 @@ object KotlinIconProvider {
             is KaTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Class)
             is KaTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
             is KaEnumEntrySymbol -> KotlinIcons.ENUM
-            is KaConstructorSymbol -> symbol.getContainingSymbol()?.let { getIconFor(it) }
+            is KaConstructorSymbol -> symbol.containingSymbol?.let { getIconFor(it) }
             else -> null
         }
 

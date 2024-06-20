@@ -15,6 +15,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.endOffset
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -137,12 +138,14 @@ object CallableReturnTypeUpdaterUtils {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     @ApiStatus.Internal
     fun <T> calculateAllTypes(declaration: KtCallableDeclaration, allTypesConsumer: (KtType, Sequence<KtType>, Boolean) -> T?): T? {
         val declarationType = declaration.getReturnKtType()
-        val overriddenTypes = (declaration.getSymbol() as? KaCallableSymbol)?.getDirectlyOverriddenSymbols()
+        val overriddenTypes = (declaration.symbol as? KaCallableSymbol)?.directlyOverriddenSymbols
             ?.map { it.returnType }
             ?.distinct()
+            ?.toList()
             ?: emptyList()
         val cannotBeNull = overriddenTypes.any { !it.canBeNull }
         val allTypes = (listOf(declarationType) + overriddenTypes)
@@ -167,6 +170,7 @@ object CallableReturnTypeUpdaterUtils {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun getTypeInfo(declaration: KtCallableDeclaration): TypeInfo {
         val calculateAllTypes = calculateAllTypes<TypeInfo>(declaration) { declarationType, allTypes, cannotBeNull ->
             if (isUnitTestMode()) {
@@ -228,6 +232,7 @@ object CallableReturnTypeUpdaterUtils {
             ): TypeInfo = TypeInfo(createTypeByKtType(ktType), otherTypes.map { createTypeByKtType(it) }.toList(), useTemplate)
 
             context(KaSession)
+            @OptIn(KaExperimentalApi::class)
             private fun createTypeByKtType(ktType: KtType): Type = Type(
                 isUnit = ktType.isUnit,
                 isError = ktType is KtErrorType,

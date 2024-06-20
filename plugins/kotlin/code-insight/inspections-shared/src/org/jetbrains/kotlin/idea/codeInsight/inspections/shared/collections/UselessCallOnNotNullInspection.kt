@@ -45,7 +45,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         val newName = (conversion as? Conversion.Replace)?.replacementName
 
         val safeExpression = expression as? KtSafeQualifiedExpression
-        val notNullType = expression.receiverExpression.isDefinitelyNotNull()
+        val notNullType = expression.receiverExpression.isDefinitelyNotNull
         val defaultRange =
             TextRange(expression.operationTokenNode.startOffset, calleeExpression.endOffset).shiftRight(-expression.startOffset)
         if (newName != null && (notNullType || safeExpression != null)) {

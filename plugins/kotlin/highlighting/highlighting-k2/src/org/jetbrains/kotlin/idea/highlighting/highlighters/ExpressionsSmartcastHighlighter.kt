@@ -17,7 +17,7 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
     }
 
     private fun highlightExpression(expression: KtExpression) {
-        expression.getImplicitReceiverSmartCast().forEach {
+        expression.implicitReceiverSmartCasts.forEach {
             val receiverName = when (it.kind) {
                 KtImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")
                 KtImplicitReceiverSmartCastKind.DISPATCH -> KotlinBaseHighlightingBundle.message("implicit.receiver")
@@ -36,7 +36,7 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
                 holder.add(builder.create())
             }
         }
-        expression.getSmartCastInfo()?.takeIf { it.isStable }?.let { info ->
+        expression.smartCastInfo?.takeIf { it.isStable }?.let { info ->
             val builder = HighlightingFactory.highlightName(
               getSmartCastTarget(expression),
               KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,

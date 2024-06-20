@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.util.application
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
@@ -87,6 +88,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             }
         }
 
+        @OptIn(KaExperimentalApi::class)
         private fun analyzeIfExplicitTypeOrArgumentsAreNeeded(property: KtProperty) {
             val initializer = property.initializer ?: return
 
@@ -133,7 +135,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     private fun KtExpression.shouldReplaceOccurrence(container: PsiElement?): Boolean {
         val effectiveParent = (parent as? KtScriptInitializer)?.parent ?: parent
         return container != effectiveParent || analyzeInModalWindow(this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            isUsedAsExpression()
+            isUsedAsExpression
         }
     }
 
@@ -185,6 +187,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun doRefactoringWithSelectedTargetContainer(
         project: Project,
         editor: Editor?,
@@ -368,6 +371,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 }
         }.ifEmpty { listOf(this) }
 
+    @OptIn(KaExperimentalApi::class)
     private fun areTypeArgumentsNeededForCorrectTypeInference(expression: KtExpression): Boolean {
         val call = expression.getPossiblyQualifiedCallExpression() ?: return false
         if (call.typeArgumentList != null) return false

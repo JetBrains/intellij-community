@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.renderer.render
 
 internal class VariableLookupElementFactory {
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun createLookup(
         signature: KtVariableLikeSignature<*>,
         options: CallableInsertionOptions,
@@ -85,6 +87,7 @@ internal class VariableLookupElementFactory {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun markIfSyntheticJavaProperty(
         lookupElementBuilder: LookupElementBuilder,
         symbol: KtVariableLikeSymbol

@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -94,5 +94,5 @@ private fun KtElement.resolveToClassSymbol(): KaNamedClassOrObjectSymbol? =
     mainReference?.resolveToSymbol() as? KaNamedClassOrObjectSymbol
 
 context(KaSession)
-private fun KtCallExpression.resolveToFunctionSymbol(): KaFunctionSymbol? =
-    calleeExpression?.mainReference?.resolveToSymbol() as? KaFunctionSymbol
+private fun KtCallExpression.resolveToFunctionSymbol(): KaNamedFunctionSymbol? =
+    calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol

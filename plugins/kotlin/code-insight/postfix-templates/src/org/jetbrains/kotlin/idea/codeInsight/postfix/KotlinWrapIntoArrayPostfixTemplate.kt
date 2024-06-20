@@ -64,7 +64,7 @@ private fun getArrayFunctionName(element: PsiElement): String {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(element) {
-                    val expectedType = element.getExpectedType()
+                    val expectedType = element.expectedType
                     if (expectedType != null && expectedType.isClassTypeWithClassId(ARRAY_CLASS_ID)) {
                         return "kotlin.arrayOf"
                     }

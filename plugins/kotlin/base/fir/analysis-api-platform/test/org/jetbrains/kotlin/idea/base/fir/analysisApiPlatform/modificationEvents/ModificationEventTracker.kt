@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOf
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener
 import org.jetbrains.kotlin.analysis.api.platform.modification.isModuleLevel
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.junit.Assert
 
 /**
@@ -36,13 +36,13 @@ open class ModificationEventTracker(
 ) : Disposable {
     protected class ReceivedEvent(
         val kind: KotlinModificationEventKind,
-        val ktModule: KtModule? = null,
+        val module: KaModule? = null,
         val isRemoval: Boolean = false,
     ) {
         override fun toString(): String = buildString {
             append(kind)
-            if (ktModule != null) {
-                append(" in $ktModule")
+            if (module != null) {
+                append(" in $module")
             }
             if (isRemoval) {
                 append(" (removal)")
@@ -106,8 +106,8 @@ open class ModificationEventTracker(
         handleReceivedEvent(ReceivedEvent(kind))
     }
 
-    private fun handleReceivedEvent(kind: KotlinModificationEventKind, ktModule: KtModule?) {
-        handleReceivedEvent(ReceivedEvent(kind, ktModule))
+    private fun handleReceivedEvent(kind: KotlinModificationEventKind, module: KaModule?) {
+        handleReceivedEvent(ReceivedEvent(kind, module))
     }
 
     protected open fun handleReceivedEvent(receivedEvent: ReceivedEvent) {
@@ -168,12 +168,12 @@ open class ModificationEventTracker(
 }
 
 class ModuleModificationEventTracker(
-    private val ktModule: KtModule,
+    private val module: KaModule,
     label: String,
     expectedEventKind: KotlinModificationEventKind,
     allowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     testRootDisposable: Disposable,
-) : ModificationEventTracker(ktModule.project, label, expectedEventKind, allowedEventKinds, testRootDisposable) {
+) : ModificationEventTracker(module.project, label, expectedEventKind, allowedEventKinds, testRootDisposable) {
     init {
         require(expectedEventKind.isModuleLevel)
     }
@@ -181,7 +181,7 @@ class ModuleModificationEventTracker(
     override fun handleReceivedEvent(receivedEvent: ReceivedEvent) {
         // Ignore all module-level events published for other modules. The modification event trackers for these other modules should track
         // their respective modification events.
-        if (receivedEvent.kind.isModuleLevel && receivedEvent.ktModule != ktModule) {
+        if (receivedEvent.kind.isModuleLevel && receivedEvent.module != module) {
             return
         }
 

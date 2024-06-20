@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -43,9 +44,10 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                 .mapToKtClassMemberInfo()
 
         context(KaSession)
+        @OptIn(KaExperimentalApi::class)
         private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassOrObjectSymbol): List<KaCallableSymbol> {
             return buildList {
-                classWithUnimplementedMembers.getMemberScope().getCallableSymbols().forEach { symbol ->
+                classWithUnimplementedMembers.memberScope.getCallableSymbols().forEach { symbol ->
                     if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach
                     when (symbol.getImplementationStatus(classWithUnimplementedMembers)) {
                         ImplementationStatus.NOT_IMPLEMENTED -> add(symbol)
@@ -60,7 +62,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                             //
                             // `Foo` does not need to implement `foo` since it inherits the implementation from `B`. But in the dialog, we should
                             // allow user to choose `foo` to implement.
-                            symbol.getIntersectionOverriddenSymbols()
+                            symbol.intersectionOverriddenSymbols
                                 .filter { (it as? KaSymbolWithModality)?.modality == Modality.ABSTRACT }
                                 .forEach { add(it) }
                         }
@@ -150,6 +152,7 @@ object MemberNotImplementedQuickfixFactories {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun List<KaCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberInfo> {
     return map { unimplementedMemberSymbol ->
         val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride

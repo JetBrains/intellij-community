@@ -116,7 +116,7 @@ internal class CanBeParameterInspection : AbstractKotlinInspection() {
 
         analyze(klass) {
             val constructorPropertySymbol =
-                (parameter.getSymbol() as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: return true
+                (parameter.symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: return true
 
             for (element in initializersAndDelegates) {
                 val nameReferenceExpressions = element.collectDescendantsOfType<KtNameReferenceExpression> {

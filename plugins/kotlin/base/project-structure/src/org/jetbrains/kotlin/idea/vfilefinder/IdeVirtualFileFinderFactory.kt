@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolut
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 
@@ -19,7 +19,7 @@ class IdeVirtualFileFinderFactory : VirtualFileFinderFactory {
         val ideaModuleInfo = module.getCapability(ModuleInfo.Capability) as? IdeaModuleInfo
 
         val scope = if (ideaModuleInfo != null) {
-            KotlinResolutionScopeProvider.getInstance(project).getResolutionScope(ideaModuleInfo.toKtModule())
+            KotlinResolutionScopeProvider.getInstance(project).getResolutionScope(ideaModuleInfo.toKaModule())
         } else {
             GlobalSearchScope.allScope(project)
         }

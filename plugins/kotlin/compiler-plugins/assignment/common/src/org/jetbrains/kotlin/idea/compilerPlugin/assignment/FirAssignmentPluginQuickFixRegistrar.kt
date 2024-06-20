@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.compilerPlugin.assignment
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
-import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider.CompilerPluginType
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider.CompilerPluginType
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
@@ -37,6 +37,7 @@ private val FACTORY = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDi
 }
 
 private fun isAssignmentPluginEnabled(project: Project, element: PsiElement): Boolean {
-    val module = ProjectStructureProvider.getModule(project, element, contextualModule = null) as? KtSourceModule ?: return false
-    return project.getService(KtCompilerPluginsProvider::class.java).isPluginOfTypeRegistered(module, CompilerPluginType.ASSIGNMENT)
+    val module = KaModuleProvider.getModule(project, element, useSiteModule = null) as? KaSourceModule ?: return false
+    val compilerPluginsProvider = KotlinCompilerPluginsProvider.getInstance(project) ?: return false
+    return compilerPluginsProvider.isPluginOfTypeRegistered(module, CompilerPluginType.ASSIGNMENT)
 }

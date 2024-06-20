@@ -6,7 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -73,7 +73,7 @@ internal class ConvertForEachToForLoopIntention
     context(KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         if (!element.isForEachByAnalyze()) return null
-        if (element.isUsedAsExpression()) return null
+        if (element.isUsedAsExpression) return null
 
         val returnsToReplace = computeReturnsToReplace(element) ?: return null
 
@@ -87,7 +87,7 @@ internal class ConvertForEachToForLoopIntention
 
     context(KaSession)
     private fun KtCallExpression.isForEachByAnalyze(): Boolean {
-        val symbol = calleeExpression?.mainReference?.resolveToSymbol() as? KaFunctionSymbol ?: return false
+        val symbol = calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol ?: return false
         val callableId = symbol.callableId
         return callableId in FOR_EACH_CALLABLE_IDS || callableId in FOR_EACH_INDEXED_CALLABLE_IDS
     }
@@ -96,7 +96,7 @@ internal class ConvertForEachToForLoopIntention
     private fun computeReturnsToReplace(element: KtCallExpression): ReturnsToReplace? {
         val lambda = element.getSingleLambdaArgument() ?: return null
         val lambdaBody = lambda.bodyExpression ?: return null
-        val functionLiteralSymbol = lambda.functionLiteral.getSymbol()
+        val functionLiteralSymbol = lambda.functionLiteral.symbol
         return buildList {
             lambdaBody.forEachDescendantOfType<KtReturnExpression> { returnExpression ->
                 if (returnExpression.getReturnTargetSymbol() == functionLiteralSymbol) {

@@ -8,19 +8,16 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KtAnalysisNonPublicApi
-import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
@@ -161,13 +158,14 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         abstract fun registerModifiedVar(e: KtProperty)
     }
 
+    @OptIn(KaNonPublicApi::class)
     override fun createOutputDescriptor(): OutputDescriptor<KtType> {
         analyze(extractionData.commonParent) {
             val exitSnapshot: KtDataFlowExitPointSnapshot = getExitPointSnapshot(extractionData.expressions)
             val defaultExpressionInfo = exitSnapshot.defaultExpressionInfo
             val typeOfDefaultFlow = defaultExpressionInfo?.type?.takeIf {
                 //extract as Unit function if the last expression is not used afterward
-                !extractionData.options.inferUnitTypeForUnusedValues || defaultExpressionInfo.expression.isUsedAsExpression()
+                !extractionData.options.inferUnitTypeForUnusedValues || defaultExpressionInfo.expression.isUsedAsExpression
             }
 
             val scope = extractionData.targetSibling
@@ -202,6 +200,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun createDescriptor(
         suggestedFunctionNames: List<String>,
         defaultVisibility: KtModifierKeywordToken?,
@@ -234,7 +233,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         )
 
         val generatedDeclaration = Generator.generateDeclaration(config, null).declaration
-        val illegalSuspendInside = analyzeCopy(generatedDeclaration, DanglingFileResolutionMode.PREFER_SELF) {
+        val illegalSuspendInside = analyzeCopy(generatedDeclaration, KaDanglingFileResolutionMode.PREFER_SELF) {
             generatedDeclaration.descendantsOfType<KtExpression>()
                 .flatMap {
                     it.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
@@ -276,7 +275,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
 
     val propagatingMarkerDescriptors = mutableListOf<KtAnnotationApplicationWithArgumentsInfo>()
     val optInMarkerNames = mutableListOf<FqName>()
-    for (annotationEntry in container.getSymbol().annotations) {
+    for (annotationEntry in container.symbol.annotations) {
         val fqName = annotationEntry.classId?.asSingleFqName() ?: continue
 
         if (fqName in FqNames.OptInFqNames.OPT_IN_FQ_NAMES) {
@@ -350,12 +349,13 @@ fun ExtractableCodeDescriptor.validate(target: ExtractionTarget = ExtractionTarg
     )
     val result = Generator.generateDeclaration(config, null)
 
-    return analyzeCopy(result.declaration, DanglingFileResolutionMode.PREFER_SELF) {
+    return analyzeCopy(result.declaration, KaDanglingFileResolutionMode.PREFER_SELF) {
         validateTempResult(result)
     }
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun ExtractableCodeDescriptor.validateTempResult(
     result: ExtractionResult,
 ): ExtractableCodeDescriptorWithConflicts {

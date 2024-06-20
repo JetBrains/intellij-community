@@ -12,11 +12,11 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
@@ -49,25 +49,25 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
     @OptIn(KaAllowAnalysisOnEdt::class)
     fun findDeclaration(element: PsiElement, context: PsiElement, project: Project, editor: Editor?): PsiElement? {
         if (element !is KtElement) return element
-        val ktModule = ProjectStructureProvider.getInstance(project).getModule(context, null)
+        val module = KaModuleProvider.getModule(project, context, useSiteModule = null)
         return allowAnalysisOnEdt {
-            analyze(ktModule) {
+            analyze(module) {
                 val ktSymbol = when (element) {
                     is KtParameter -> {
-                        if (element.hasValOrVar()) element.getSymbol() else null
+                        if (element.hasValOrVar()) element.symbol else null
                     }
                     is KtCallableDeclaration -> {
-                        element.getSymbol()
+                        element.symbol
                     }
                     is KtClass -> {
-                        element.primaryConstructor?.getSymbol()
-                            ?: if (element.allConstructors.isEmpty()) element.takeUnless { it.isInterface() }?.getSymbol() else null
+                        element.primaryConstructor?.symbol
+                            ?: if (element.allConstructors.isEmpty()) element.takeUnless { it.isInterface() }?.symbol else null
                     }
                     is KtReferenceExpression -> {
                         val symbol = element.mainReference.resolveToSymbol()
                         when {
                           symbol is KaValueParameterSymbol && symbol.generatedPrimaryConstructorProperty == null -> null
-                          symbol is KaConstructorSymbol && symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.getContainingSymbol()
+                          symbol is KaConstructorSymbol && symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.containingSymbol
                           else -> symbol
                         }
                     }
@@ -78,7 +78,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
 
                 val elementKind = when {
                     ktSymbol == null -> InapplicabilityKind.Null
-                    ktSymbol is KaFunctionSymbol && ktSymbol.valueParameters.any { it.isVararg } -> InapplicabilityKind.Varargs
+                    ktSymbol is KaNamedFunctionSymbol && ktSymbol.valueParameters.any { it.isVararg } -> InapplicabilityKind.Varargs
                     ktSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> InapplicabilityKind.Synthetic
                     ktSymbol.origin == KtSymbolOrigin.LIBRARY -> InapplicabilityKind.Library
                     else -> null

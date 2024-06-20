@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents
 
-import org.jetbrains.kotlin.analysis.project.structure.KotlinModuleDependentsProvider
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addDependency
@@ -59,7 +59,7 @@ class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest(
         moduleB.addDependency(libraryA)
         moduleC.addDependency(moduleB)
 
-        val ktModuleA = LibraryInfoCache.getInstance(project)[libraryA].first().toKtModule()
+        val ktModuleA = LibraryInfoCache.getInstance(project)[libraryA].first().toKaModule()
 
         Assert.assertEquals(
             setOf("b", "c"),
@@ -74,6 +74,6 @@ class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest(
         )
     }
 
-    private fun KtModule.getTransitiveDependentNames(): Set<String> =
-        moduleDependentsProvider.getTransitiveDependents(this).mapTo(mutableSetOf()) { (it as KtSourceModule).moduleName }
+    private fun KaModule.getTransitiveDependentNames(): Set<String> =
+        moduleDependentsProvider.getTransitiveDependents(this).mapTo(mutableSetOf()) { (it as KaSourceModule).name }
 }

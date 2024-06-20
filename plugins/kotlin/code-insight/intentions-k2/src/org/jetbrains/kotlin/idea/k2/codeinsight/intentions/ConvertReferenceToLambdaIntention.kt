@@ -23,7 +23,7 @@ internal class ConvertReferenceToLambdaIntention :
 
     context(KaSession)
     private fun skip(element: KtCallableReferenceExpression): Boolean {
-        val expectedType = element.getExpectedType() ?: return false
+        val expectedType = element.expectedType ?: return false
         val classId = (expectedType as? KtNonErrorClassType)?.classId ?: return false
         val packageFqName = classId.packageFqName
         return !packageFqName.isRoot && packageFqName == KOTLIN_REFLECT_FQ_NAME

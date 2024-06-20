@@ -111,7 +111,7 @@ internal class RedundantElseInIfInspection : KotlinApplicableInspectionBase.Simp
     context(KaSession)
     private fun KtIfExpression.hasRedundantElse(): Boolean {
         var ifExpression = this
-        if (ifExpression.isUsedAsExpression()) {
+        if (ifExpression.isUsedAsExpression) {
             return false
         }
 

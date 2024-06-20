@@ -8,11 +8,11 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirBuiltinsSessionFactory
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.psi.KtElement
 
 fun Project.invalidateCaches() {
@@ -24,7 +24,7 @@ fun Project.invalidateCaches() {
 
 inline fun <R> resolveWithClearCaches(context: KtElement, action: (LLFirResolveSession) -> R): R {
     val project = context.project
-    val module = ProjectStructureProvider.getModule(project, context, null)
+    val module = KotlinProjectStructureProvider.getModule(project, context, useSiteModule = null)
     val resolveSession = LLFirResolveSessionService.getInstance(project).getFirResolveSessionNoCaching(module)
     return action(resolveSession)
 }

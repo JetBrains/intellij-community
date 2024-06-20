@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -108,6 +109,7 @@ abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeAr
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun fetchTypeParameterInfo(parameter: KaTypeParameterSymbol): TypeParameterInfo {
         val upperBounds = parameter.upperBounds.map {
             val isNullableAnyOrFlexibleAny = if (it is KtFlexibleType) {

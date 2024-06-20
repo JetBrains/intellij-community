@@ -5,7 +5,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -79,7 +78,7 @@ internal class RemoveExplicitTypeIntention :
         if (declaration is KtFunction && declaration.isLocal) return false
         if (declaration is KtProperty && declaration.isLocal) return false
 
-        val symbolWithVisibility = declaration.getSymbol() as? KaSymbolWithVisibility ?: return false
+        val symbolWithVisibility = declaration.symbol as? KaSymbolWithVisibility ?: return false
         return isPublicApi(symbolWithVisibility)
     }
 

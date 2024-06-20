@@ -128,12 +128,12 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         val containingClass = element.containingClass()
         if (containingClass != null) {
             analyze(containingClass) {
-                val elementClassSymbol = containingClass.getSymbol() as KaClassOrObjectSymbol
+                val elementClassSymbol = containingClass.symbol as KaClassOrObjectSymbol
 
                 fun isMultipleInheritance(function: KtSymbol): Boolean {
-                    val superMethods = (function as? KaCallableSymbol)?.getDirectlyOverriddenSymbols() ?: return false
+                    val superMethods = (function as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return false
                     return superMethods.any {
-                        val superClassSymbol = it.getContainingSymbol() as? KaClassOrObjectSymbol ?: return@any false
+                        val superClassSymbol = it.containingSymbol as? KaClassOrObjectSymbol ?: return@any false
                         val superMethod = it.psi ?: return@any false
                         return@any !isInside(superMethod) && !superClassSymbol.isSubClassOf(elementClassSymbol)
                     }
@@ -144,8 +144,8 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                     val original = m.unwrapped
                     if (original != null && !allElementsToDelete.contains(original)) {
                         val oSymbol = when (original) {
-                            is KtDeclaration -> original.getSymbol()
-                            is PsiMember -> original.getCallableSymbol()
+                            is KtDeclaration -> original.symbol
+                            is PsiMember -> original.callableSymbol
                             else -> null
                         }
 
@@ -304,8 +304,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return null
 
             return analyzeInModalWindow(element as KtDeclaration, RefactoringBundle.message("detecting.possible.conflicts")) {
-                (element.getSymbol() as? KaCallableSymbol)?.getAllOverriddenSymbols()
-                    ?.asSequence()
+                (element.symbol as? KaCallableSymbol)?.allOverriddenSymbols
                     ?.filter { (it as? KaSymbolWithModality)?.modality == Modality.ABSTRACT }
                     ?.mapNotNull { it.psi }
                     ?.mapTo(ArrayList()) {

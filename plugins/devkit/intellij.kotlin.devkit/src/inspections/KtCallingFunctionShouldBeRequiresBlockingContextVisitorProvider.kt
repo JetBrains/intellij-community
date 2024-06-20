@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -46,7 +46,7 @@ internal class KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider :
         val hasAnnotation = calledSymbol.hasAnnotation(RequiresBlockingContextAnnotationId)
 
         if (!hasAnnotation) {
-          if (calledSymbol is KaFunctionSymbol && calledSymbol.isInline) {
+          if (calledSymbol is KaNamedFunctionSymbol && calledSymbol.isInline) {
             checkInlineLambdaArguments(functionCall)
           }
 

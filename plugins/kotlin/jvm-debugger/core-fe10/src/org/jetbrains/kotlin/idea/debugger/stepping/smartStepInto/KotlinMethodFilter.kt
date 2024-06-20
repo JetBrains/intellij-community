@@ -60,7 +60,7 @@ open class KotlinMethodFilter(
 
     context(KaSession)
     private fun declarationMatches(currentDeclaration: KtDeclaration): Boolean {
-        val currentSymbol = currentDeclaration.getSymbol()
+        val currentSymbol = currentDeclaration.symbol
         // callable or constructor
         if (currentSymbol !is KaCallableSymbol && currentSymbol !is KaClassOrObjectSymbol) return false
         if (methodInfo.isInvoke) {
@@ -78,7 +78,7 @@ open class KotlinMethodFilter(
         }
 
         if (currentSymbol !is KaCallableSymbol) return false
-        for (overriddenSymbol in currentSymbol.getAllOverriddenSymbols()) {
+        for (overriddenSymbol in currentSymbol.allOverriddenSymbols) {
             val overriddenDeclaration = overriddenSymbol.psi as? KtDeclaration ?: continue
             if (areElementsEquivalent(element, overriddenDeclaration)) return true
         }

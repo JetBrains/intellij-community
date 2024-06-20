@@ -35,7 +35,7 @@ abstract class KotlinExpressionSurrounder : ModCommandSurrounder() {
                 if (type == null || type is KtErrorType || type.isUnit && isApplicableToStatements) {
                     false
                 } else {
-                    isApplicableToStatements || expression.isUsedAsExpression()
+                    isApplicableToStatements || expression.isUsedAsExpression
                 }
             }
         }

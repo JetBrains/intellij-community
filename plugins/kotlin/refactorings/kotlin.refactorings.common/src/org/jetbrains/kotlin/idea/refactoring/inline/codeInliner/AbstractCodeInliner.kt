@@ -245,7 +245,7 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
             }
         }
 
-        if (codeToInline.statementsBefore.isEmpty() || allowAnalysisOnEdt { allowAnalysisFromWriteAction { analyze(expressionToBeReplaced) { expressionToBeReplaced.isUsedAsExpression() } } }) {
+        if (codeToInline.statementsBefore.isEmpty() || allowAnalysisOnEdt { allowAnalysisFromWriteAction { analyze(expressionToBeReplaced) { expressionToBeReplaced.isUsedAsExpression } } }) {
             val thisReplaced = codeToInline.collectDescendantsOfType<KtExpression> { it.getCopyableUserData(RECEIVER_VALUE_KEY) != null }
             introduceValue(receiver, receiverType, thisReplaced, expressionToBeReplaced, safeCall = true)
         } else {

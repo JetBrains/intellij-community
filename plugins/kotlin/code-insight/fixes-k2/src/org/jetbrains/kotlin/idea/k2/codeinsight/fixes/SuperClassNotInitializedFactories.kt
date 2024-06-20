@@ -32,7 +32,7 @@ internal object SuperClassNotInitializedFactories {
             return@ModCommandBased emptyList()
         }
 
-        val constructors = superClassSymbol.getDeclaredMemberScope().getConstructors()
+        val constructors = superClassSymbol.declaredMemberScope.constructors
         buildList {
             add(AddParenthesisFix(superTypeEntry, moveCaretIntoParenthesis = constructors.any { it.valueParameters.isNotEmpty() }))
         }
@@ -49,7 +49,7 @@ internal object SuperClassNotInitializedFactories {
                 val subClass = superTypeEntry.parentOfType<KtClassOrObject>()
                 subClass?.isLocal == false
                         && classId?.packageFqName == superTypeEntry.containingKtFile.packageFqName
-                        && getContainingModule() == useSiteModule
+                        && containingModule == useSiteModule
             }
         }
     }

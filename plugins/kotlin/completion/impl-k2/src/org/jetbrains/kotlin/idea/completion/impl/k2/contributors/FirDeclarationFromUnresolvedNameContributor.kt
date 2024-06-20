@@ -82,13 +82,13 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         } else {
             unresolvedRef.getReceiverForSelector()
         }
-        return when (val symbol = currentDeclaration.getSymbol()) {
+        return when (val symbol = currentDeclaration.symbol) {
             is KaCallableSymbol -> when {
                 refExprParent is KtUserType -> false
 
                 // If current declaration is a function, we only offer names of unresolved function calls. For property declarations, we
                 // always offer an unresolved usage because a property may be called if the object has an `invoke` method.
-                refExprParent !is KtCallableReferenceExpression && refExprParent !is KtCallExpression && symbol is KaFunctionLikeSymbol -> false
+                refExprParent !is KtCallableReferenceExpression && refExprParent !is KtCallExpression && symbol is KaFunctionSymbol -> false
 
                 receiver != null -> {
                     val actualReceiverType = receiver.getKtType() ?: return false
@@ -121,7 +121,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
 
     context(KaSession)
     private fun getReceiverType(symbol: KaCallableSymbol): KtType? {
-        return symbol.receiverType ?: (symbol as? KaCallableSymbol)?.getDispatchReceiverType()
+        return symbol.receiverType ?: (symbol as? KaCallableSymbol)?.dispatchReceiverType
     }
 
     private fun PsiElement.getCurrentDeclarationAtCaret(): KtNamedDeclaration? {

@@ -2,15 +2,17 @@
 package org.jetbrains.kotlin.idea.refactoring.util
 
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
+@OptIn(KaExperimentalApi::class)
 fun KaSession.getExplicitLambdaSignature(element: KtLambdaExpression): String? {
-    val lambdaSymbol = element.functionLiteral.getSymbol() as KaFunctionLikeSymbol
+    val lambdaSymbol = element.functionLiteral.symbol as KaFunctionSymbol
     val valueParameters = lambdaSymbol.valueParameters
     if (valueParameters.any { it.returnType is KtErrorType } ) return null
     return valueParameters.joinToString { param ->

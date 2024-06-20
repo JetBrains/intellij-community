@@ -9,11 +9,12 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -41,18 +42,19 @@ class AutomaticOverloadsRenamer(function: KtNamedFunction, newName: String) : Au
     override fun isSelectedByDefault(): Boolean = true
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
     val name = nameAsName ?: return emptyList()
     @OptIn(KaAllowAnalysisOnEdt::class)
     allowAnalysisOnEdt {
         analyze(this) {
-            val symbol = getSymbol() as? KaFunctionSymbol  ?: return emptyList()
+            val symbol = symbol as? KaNamedFunctionSymbol ?: return emptyList()
             if (symbol.isActual && symbol.getExpectsForActual().isNotEmpty()) return emptyList()
             val result = LinkedHashSet<KtNamedFunction>()
             listOfNotNull(
-                getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.getPackageScope(),
-                (symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.getDeclaredMemberScope(),
-                symbol.receiverParameter?.type?.expandedSymbol?.getDeclaredMemberScope()
+                getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.packageScope,
+                (symbol.containingSymbol as? KaClassOrObjectSymbol)?.declaredMemberScope,
+                symbol.receiverParameter?.type?.expandedSymbol?.declaredMemberScope
             ).flatMapTo(result) { scope ->
                 scope.getCallableSymbols(name).mapNotNull {
                     it.psi as? KtNamedFunction

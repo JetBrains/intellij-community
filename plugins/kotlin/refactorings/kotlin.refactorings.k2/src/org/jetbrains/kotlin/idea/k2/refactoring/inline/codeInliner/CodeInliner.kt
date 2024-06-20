@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -58,6 +59,7 @@ class CodeInliner(
         call.resolveCallOld()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
     }
 
+    @OptIn(KaExperimentalApi::class)
     fun doInline(): KtElement? {
         val qualifiedElement = if (call is KtExpression) {
             call.getQualifiedExpressionForSelector()
@@ -86,7 +88,7 @@ class CodeInliner(
             && !codeToInline.alwaysKeepMainExpression
             && assignment == null
             && elementToBeReplaced is KtExpression
-            && !analyze(elementToBeReplaced) { elementToBeReplaced.isUsedAsExpression() }
+            && !analyze(elementToBeReplaced) { elementToBeReplaced.isUsedAsExpression }
             && !codeToInline.mainExpression.shouldKeepValue(usageCount = 0)
             && elementToBeReplaced.getStrictParentOfType<KtAnnotationEntry>() == null
         ) {
@@ -163,7 +165,7 @@ class CodeInliner(
             namer = { it.nameAsSafeName },
             typeRetriever = {
                 analyze(callableForParameters) {
-                    call.resolveCallOld()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.getSymbol())
+                    call.resolveCallOld()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.symbol)
                 }
             },
             renderType = {
@@ -173,7 +175,7 @@ class CodeInliner(
             },
             isArrayType = {
                 analyze(call) {
-                    it.getArrayElementType() != null
+                    it.arrayElementType != null
                 }
             },
             renderClassifier = {
@@ -235,7 +237,7 @@ class CodeInliner(
             importDescriptors.firstOrNull { it.fqName?.shortName()?.asString() == nameExpression.text } as? KtNamedFunction ?: return
 
         analyze(function) {
-            if ((function.getSymbol() as? KaFunctionSymbol)?.isInfix != true) return
+            if ((function.symbol as? KaNamedFunctionSymbol)?.isInfix != true) return
         }
         val argument = call.valueArguments.singleOrNull() ?: return
         if (argument.isNamed()) return
@@ -277,6 +279,7 @@ class CodeInliner(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun arrayOfFunctionName(elementType: KtType): String {
         return when {
             elementType.isInt -> "kotlin.intArrayOf"
@@ -317,7 +320,7 @@ class CodeInliner(
                     return Argument(expression, expression.getKtType(), isNamed = single.isNamed())
                 }
                 val parameterType = parameter.getReturnKtType()
-                val elementType = parameterType.getArrayElementType() ?: return null
+                val elementType = parameterType.arrayElementType ?: return null
                 val expression = psiFactory.buildExpression {
                     appendFixedText(arrayOfFunctionName(elementType))
                     appendFixedText("(")

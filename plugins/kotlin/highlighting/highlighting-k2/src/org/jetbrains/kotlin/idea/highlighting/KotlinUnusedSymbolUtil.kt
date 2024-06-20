@@ -122,12 +122,12 @@ object KotlinUnusedSymbolUtil {
 
   context(KaSession)
   fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
-      val symbol = declaration.getSymbol()
+      val symbol = declaration.symbol
       if (declaration.languageVersionSettings.getFlag(
           AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && (symbol as? KaSymbolWithVisibility)?.visibility?.isPublicAPI == true) {
           return null
       }
-      if (symbol is KaFunctionSymbol && symbol.isOperator) return null
+      if (symbol is KaNamedFunctionSymbol && symbol.isOperator) return null
 
       val isCheapEnough = lazy(LazyThreadSafetyMode.NONE) {
           isCheapEnoughToSearchUsages(declaration)
@@ -430,7 +430,7 @@ object KotlinUnusedSymbolUtil {
           kotlinOptions = searchOptions
       )
       val originalDeclaration = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol?.psi as? KtNamedDeclaration
-      if (symbol !is KaFunctionSymbol || !symbol.annotationsList.hasAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
+      if (symbol !is KaNamedFunctionSymbol || !symbol.annotationsList.hasAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
           if (declaration is KtSecondaryConstructor &&
               declarationContainingClass != null &&
               // when too many occurrences of this class, consider it used
@@ -632,17 +632,17 @@ object KotlinUnusedSymbolUtil {
   private fun KtCallableDeclaration.canBeHandledByLightMethods(symbol: KaDeclarationSymbol?): Boolean {
       return when {
           symbol is KaConstructorSymbol -> {
-              val classSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol ?: return false
+              val classSymbol = symbol.containingSymbol as? KaNamedClassOrObjectSymbol ?: return false
               !classSymbol.isInline && !classSymbol.visibility.isPrivateOrPrivateToThis()
           }
           hasModifier(KtTokens.INTERNAL_KEYWORD) -> false
-          symbol !is KaFunctionSymbol -> true
+          symbol !is KaNamedFunctionSymbol -> true
           else -> !symbol.hasInlineClassParameters()
       }
   }
 
   context(KaSession)
-  private fun KaFunctionSymbol.hasInlineClassParameters(): Boolean {
+  private fun KaNamedFunctionSymbol.hasInlineClassParameters(): Boolean {
       val receiverParameterClassSymbol = receiverType?.expandedSymbol as? KaNamedClassOrObjectSymbol
       return receiverParameterClassSymbol?.isInline == true || valueParameters.any {
           val namedClassOrObjectSymbol = it.returnType.expandedSymbol as? KaNamedClassOrObjectSymbol ?: return@any false
@@ -662,11 +662,11 @@ object KotlinUnusedSymbolUtil {
       return ownerClass.findAllInheritors(useScope).any { element: PsiElement ->
           when (element) {
               is KtClassOrObject -> {
-                  val overridingCallableSymbol = element.getClassOrObjectSymbol()?.getMemberScope()
+                  val overridingCallableSymbol = element.getClassOrObjectSymbol()?.memberScope
                       ?.getCallableSymbols { name -> name == callableSymbol.callableId?.callableName }?.filter {
                           it.unwrapFakeOverrides == callableSymbol
                       }?.singleOrNull() ?: return@any false
-                  overridingCallableSymbol != callableSymbol && overridingCallableSymbol.getIntersectionOverriddenSymbols()
+                  overridingCallableSymbol != callableSymbol && overridingCallableSymbol.intersectionOverriddenSymbols
                       .any { it != callableSymbol }
               }
               is PsiClass ->

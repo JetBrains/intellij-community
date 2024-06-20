@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.contributors
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -35,7 +36,7 @@ internal open class FirKDocParameterNameContributor(
         val alreadyDocumentedParameters = section.findTagsByName(PARAMETER_TAG_NAME).map { it.getSubjectName() }.toSet()
 
         val ownerDeclaration = positionContext.nameExpression.getContainingDoc().owner ?: return
-        val ownerDeclarationSymbol = ownerDeclaration.getSymbol()
+        val ownerDeclarationSymbol = ownerDeclaration.symbol
 
         getParametersForKDoc(ownerDeclarationSymbol)
             .filter { (it.symbol as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
@@ -43,6 +44,7 @@ internal open class FirKDocParameterNameContributor(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun addSymbolToCompletion(weighingContext: WeighingContext, symbolWithOrigin: KtSymbolWithOrigin) {
         val symbol = symbolWithOrigin.symbol
         val origin = symbolWithOrigin.origin
@@ -64,10 +66,10 @@ internal open class FirKDocParameterNameContributor(
         yieldAll(ownerDeclarationSymbol.typeParameters)
 
         val valueParameters = when (ownerDeclarationSymbol) {
-            is KaFunctionLikeSymbol -> ownerDeclarationSymbol.valueParameters
+            is KaFunctionSymbol -> ownerDeclarationSymbol.valueParameters
 
             is KaNamedClassOrObjectSymbol -> {
-                val primaryConstructor = ownerDeclarationSymbol.getDeclaredMemberScope().getConstructors().firstOrNull { it.isPrimary }
+                val primaryConstructor = ownerDeclarationSymbol.declaredMemberScope.constructors.firstOrNull { it.isPrimary }
                 primaryConstructor?.valueParameters.orEmpty()
             }
 

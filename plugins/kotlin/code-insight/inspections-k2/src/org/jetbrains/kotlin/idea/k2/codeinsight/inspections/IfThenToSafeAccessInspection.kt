@@ -10,6 +10,7 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -64,7 +65,7 @@ internal class IfThenToSafeAccessInspection :
     override fun prepareContext(element: KtIfExpression): IfThenTransformationStrategy? {
         val data = IfThenTransformationUtils.buildTransformationData(element) as IfThenTransformationData
 
-        if (data.negatedClause == null && data.baseClause.isUsedAsExpression()) return null
+        if (data.negatedClause == null && data.baseClause.isUsedAsExpression) return null
 
         // every usage is expected to have smart cast info;
         // if smart cast is unstable, replacing usage with `it` can break code logic
@@ -109,11 +110,12 @@ internal class IfThenToSafeAccessInspection :
             is KtThisExpression -> instanceReference
             else -> this
         }
-        return expressionToCheck.getSmartCastInfo()?.isStable != true
+        return expressionToCheck.smartCastInfo?.isStable != true
     }
 
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun conditionIsSenseless(data: IfThenTransformationData): Boolean = data.condition
         .getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         .map { it.diagnosticClass }

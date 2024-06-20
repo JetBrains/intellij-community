@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
@@ -66,7 +66,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val arguments = valueArgumentList.arguments
 
         val functionCall = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return
-        val functionSymbol: KaFunctionLikeSymbol = functionCall.symbol
+        val functionSymbol: KaFunctionSymbol = functionCall.symbol
         val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
 
         val blackListed = functionSymbol.isBlackListed(valueParameters)
@@ -83,7 +83,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     }
 
     context(KaSession)
-    private fun KaFunctionLikeSymbol.isBlackListed(valueParameters: List<KaValueParameterSymbol>): Boolean {
+    private fun KaFunctionSymbol.isBlackListed(valueParameters: List<KaValueParameterSymbol>): Boolean {
         val blackListed = callableId?.let {
             val callableId = it.asSingleFqName().toString()
             val parameterNames = valueParameters.map { it.name.asString() }
@@ -93,7 +93,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     }
 
     context(KaSession)
-    private fun KaFunctionLikeSymbol.collectFromParameters(
+    private fun KaFunctionSymbol.collectFromParameters(
         valueParameters: List<KaValueParameterSymbol>,
         arguments: MutableList<KtValueArgument>,
         sink: InlayTreeSink

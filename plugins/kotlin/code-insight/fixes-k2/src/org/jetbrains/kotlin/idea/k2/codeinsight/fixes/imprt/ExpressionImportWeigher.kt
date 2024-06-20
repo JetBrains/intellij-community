@@ -134,7 +134,7 @@ internal class CallExpressionImportWeigher(
             symbol is KaCallableSymbol -> calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
             // TODO: some constructors could be not visible
             symbol is KaClassOrObjectSymbol && presentReceiverTypes.isEmpty() -> {
-                val constructors = symbol.getDeclaredMemberScope().getConstructors()
+                val constructors = symbol.declaredMemberScope.constructors
                 constructors.maxOfOrNull { calculateWeight(it, presentReceiverTypes = emptyList(), valueArgumentTypes) } ?: 0
             }
 
@@ -155,7 +155,7 @@ internal class CallExpressionImportWeigher(
             weight = presentReceiverTypes.mapNotNull { weighType(it, receiverTypeFromImport, weight) }.maxOrNull() ?: weight
         }
 
-        if (symbolToBeImported is KaFunctionLikeSymbol) {
+        if (symbolToBeImported is KaFunctionSymbol) {
             val symbolValueParameters = symbolToBeImported.valueParameters
             val symbolHasVarargParameter = symbolValueParameters.any { it.isVararg }
             weight += if (symbolValueParameters.size >= presentValueArgumentTypes.size || symbolHasVarargParameter) {
@@ -192,8 +192,8 @@ internal class CallExpressionImportWeigher(
 
                 var updatedWeight = weighType(valueArgumentType, valueParameterType, weight)
 
-                if (updatedWeight == null && valueParameterFromImport.isVararg && valueArgumentType.isArrayOrPrimitiveArray()) {
-                    val arrayElementType = valueArgumentType.getArrayElementType() ?: break
+                if (updatedWeight == null && valueParameterFromImport.isVararg && valueArgumentType.isArrayOrPrimitiveArray) {
+                    val arrayElementType = valueArgumentType.arrayElementType ?: break
                     updatedWeight = weighType(arrayElementType, valueParameterType, weight)
                 }
 
@@ -217,14 +217,14 @@ internal class OperatorExpressionImportWeigher(
 
     context(KaSession)
     override fun weigh(symbol: KaDeclarationSymbol): Int {
-        val functionSymbol = (symbol as? KaFunctionSymbol)?.takeIf { it.isOperator } ?: return 0
+        val functionSymbol = (symbol as? KaNamedFunctionSymbol)?.takeIf { it.isOperator } ?: return 0
 
         return super.weigh(functionSymbol)
     }
 
     context(KaSession)
     override fun ownWeigh(symbol: KaDeclarationSymbol): Int = withValidityAssertion {
-        symbol as KaFunctionSymbol
+        symbol as KaNamedFunctionSymbol
 
         val name = symbol.name
 

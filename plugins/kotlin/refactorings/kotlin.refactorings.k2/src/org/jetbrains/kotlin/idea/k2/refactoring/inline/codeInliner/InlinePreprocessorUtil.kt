@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -206,10 +207,10 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
 
         fun isImportable(t: KtNamedDeclaration): Boolean {
             analyze(t) {
-                val resolvedSymbol = t.getSymbol()
-                val containingSymbol = resolvedSymbol.getContainingSymbol() ?: return true
+                val resolvedSymbol = t.symbol
+                val containingSymbol = resolvedSymbol.containingSymbol ?: return true
                 if (containingSymbol is KaSymbolWithMembers) {
-                    val staticScope = containingSymbol.getStaticMemberScope()
+                    val staticScope = containingSymbol.staticMemberScope
                     return resolvedSymbol in staticScope.getAllSymbols()
                 }
                 return false
@@ -250,9 +251,9 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
 
                 val value =
                     (partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver) as? KaImplicitReceiverValue
-                val originalSymbol = originalDeclaration.getSymbol() as? KaCallableSymbol
+                val originalSymbol = originalDeclaration.symbol as? KaCallableSymbol
                 val originalSymbolReceiverType = originalSymbol?.receiverType
-                val originalSymbolDispatchType = originalSymbol?.getDispatchReceiverType()
+                val originalSymbolDispatchType = originalSymbol?.dispatchReceiverType
                 if (value != null) {
                     getThisQualifier(value) to (originalSymbolReceiverType != null && value.type.isEqualTo(originalSymbolReceiverType) ||
                                                  originalSymbolDispatchType != null && value.type.isEqualTo(originalSymbolDispatchType))
@@ -292,6 +293,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
 /**
  * If function consists of single `null`, insert cast to ensure the type
  */
+@OptIn(KaExperimentalApi::class)
 internal fun specifyNullTypeExplicitly(codeToInline: MutableCodeToInline, originalDeclaration: KtDeclaration) {
     val mainExpression = codeToInline.mainExpression
     if (mainExpression?.isNull() == true) {
@@ -310,7 +312,7 @@ context(KaSession)
 internal fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
     val symbol = receiverValue.symbol
     return if ((symbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
-        (symbol.getContainingSymbol() as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
+        (symbol.containingSymbol as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
     }
     else {
         "this" + ((((symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol ?: symbol) as? KaNamedSymbol)?.name?.let { "@$it" } ?: "")

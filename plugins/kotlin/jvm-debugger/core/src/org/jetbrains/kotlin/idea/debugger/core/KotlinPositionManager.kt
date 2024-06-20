@@ -56,7 +56,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
@@ -409,7 +409,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     context(KaSession)
     private fun KtCallExpression.getBytecodeMethodName(): String? {
         val resolvedCall = resolveCallOld()?.successfulFunctionCallOrNull() ?: return null
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return null
+        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return null
         return symbol.getByteCodeMethodName()
     }
 

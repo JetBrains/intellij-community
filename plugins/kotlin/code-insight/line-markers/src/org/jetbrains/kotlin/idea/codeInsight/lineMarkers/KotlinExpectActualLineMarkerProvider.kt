@@ -11,9 +11,10 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.*
@@ -174,9 +175,9 @@ internal fun getModulesStringForMarkerTooltip(navigatableDeclarations: Collectio
     }
 
     val project = navigatableDeclarations.first().project
-    val projectStructureProvider = ProjectStructureProvider.getInstance(project)
+    val moduleProvider = KaModuleProvider.getInstance(project)
     val moduleNames = navigatableDeclarations
-        .mapNotNull { navigatable -> navigatable.element?.let { projectStructureProvider.getModule(it, null).moduleName } }
+        .mapNotNull { navigatable -> navigatable.element?.let { moduleProvider.getModule(it, useSiteModule = null).moduleName } }
 
     return when (moduleNames.size) {
         0 -> null
@@ -185,8 +186,9 @@ internal fun getModulesStringForMarkerTooltip(navigatableDeclarations: Collectio
     }
 }
 
-private val KtModule.moduleName: String
-    get() = (this as? KtSourceModule)?.moduleName ?: moduleDescription
+@OptIn(KaExperimentalApi::class)
+private val KaModule.moduleName: String
+    get() = (this as? KaSourceModule)?.name ?: moduleDescription
 
 fun expectTooltip(navigatableDeclarations: Collection<SmartPsiElementPointer<KtDeclaration>>?): String? {
     val modulesString = getModulesStringForMarkerTooltip(navigatableDeclarations) ?: return null

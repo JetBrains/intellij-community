@@ -94,7 +94,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
 
         val symbolWithOverrides = sequence {
             yield(partiallyAppliedSymbol.symbol)
-            yieldAll(partiallyAppliedSymbol.symbol.getAllOverriddenSymbols())
+            yieldAll(partiallyAppliedSymbol.symbol.allOverriddenSymbols)
         }
         val replaceableCall = symbolWithOverrides.firstNotNullOfOrNull { symbol ->
             when (this) {

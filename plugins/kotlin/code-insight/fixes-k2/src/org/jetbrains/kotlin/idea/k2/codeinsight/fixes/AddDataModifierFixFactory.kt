@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -37,7 +38,7 @@ internal object AddDataModifierFixFactory {
 
         val modality = classSymbol.modality
         if (modality != Modality.FINAL || classSymbol.isInner) return@ModCommandBased emptyList()
-        val constructors = classSymbol.getDeclaredMemberScope().getConstructors()
+        val constructors = classSymbol.declaredMemberScope.constructors
         val ctorParams = constructors.firstOrNull { it.isPrimary }?.valueParameters ?: return@ModCommandBased emptyList()
         if (ctorParams.isEmpty()) return@ModCommandBased emptyList()
 
@@ -78,6 +79,7 @@ internal object AddDataModifierFixFactory {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun KaSymbolWithVisibility.isVisible(position: KtElement): Boolean {
     val file = position.containingKtFile.getFileSymbol()
     return isVisible(this, file, position = position)

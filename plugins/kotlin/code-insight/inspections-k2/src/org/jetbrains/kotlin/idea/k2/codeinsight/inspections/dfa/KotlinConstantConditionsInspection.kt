@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -32,7 +33,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -427,6 +428,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             FirErrors.USELESS_IS_CHECK
         ).map { it.name }
 
+        @OptIn(KaExperimentalApi::class)
         private fun isCompilationWarning(anchor: KtElement): Boolean {
             val hasWarning = analyze(anchor) {
                 anchor.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
@@ -440,7 +442,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         private fun isCallToBuiltInMethod(call: KtCallExpression, methodName: String): Boolean {
             return analyze(call) {
                 val functionCall: KaFunctionCall<*> = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return@analyze false
-                val target: KaFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return@analyze false
+                val target: KaNamedFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return@analyze false
                 if (target.name.asString() != methodName) return@analyze false
                 return StandardNames.BUILT_INS_PACKAGE_FQ_NAME == target.callableId?.packageName
             }
@@ -480,7 +482,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     val valueArgList = parent.parent as? KtValueArgumentList ?: return false
                     val call = valueArgList.parent as? KtCallExpression ?: return false
                     val functionCall: KaFunctionCall<*> = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
-                    val target: KaFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return false
+                    val target: KaNamedFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return false
                     val name = target.name.asString()
                     if (name != "assert" && name != "require" && name != "check") return false
                     StandardNames.BUILT_INS_PACKAGE_FQ_NAME == target.callableId?.packageName
@@ -622,7 +624,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         is KtIntersectionType -> kotlinType.conjuncts.find { it is KtTypeParameterType }
                         else -> null
                     }
-                    if (typeParameterType != null && expression.getExpectedType() == typeParameterType) {
+                    if (typeParameterType != null && expression.expectedType == typeParameterType) {
                         // Do not report always-null when an expected expression type is the same type parameter
                         // as it's not possible to replace it with a null literal without an unchecked cast 
                         return true
@@ -658,7 +660,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             if (isCompilationWarning(expression)) {
                 return true
             }
-            return !expression.isUsedAsExpression()
+            return !expression.isUsedAsExpression
         }
 
         context(KaSession)

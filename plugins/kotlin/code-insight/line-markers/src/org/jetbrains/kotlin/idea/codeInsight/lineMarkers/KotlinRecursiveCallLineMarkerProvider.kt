@@ -40,7 +40,7 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
             if (isRecursiveCall(target, targetDeclaration)) {
                 @NlsSafe val declarationName = when (symbol) {
                     is KtVariableLikeSymbol -> symbol.name.asString()
-                    is KaFunctionSymbol -> symbol.name.asString() + "()"
+                    is KaNamedFunctionSymbol -> symbol.name.asString() + "()"
                     is KaPropertyGetterSymbol -> "get()"
                     is KaPropertySetterSymbol -> "set()"
                     is KaConstructorSymbol -> "constructor()"
@@ -78,7 +78,7 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
             dispatchReceiver = dispatchReceiver.original
         }
 
-        val containingClass = target.symbol.getContainingSymbol() as? KaClassOrObjectSymbol ?: return true
+        val containingClass = target.symbol.containingSymbol as? KaClassOrObjectSymbol ?: return true
 
         if (dispatchReceiver is KaExplicitReceiverValue) {
             if (dispatchReceiver.isSafeNavigation) {
@@ -88,11 +88,11 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
             return when (val expression = KtPsiUtil.deparenthesize(dispatchReceiver.expression)) {
                 is KtThisExpression -> expression.instanceReference.mainReference.resolveToSymbol() == containingClass
                 is KtExpression -> when (val receiverSymbol = expression.mainReference?.resolveToSymbol()) {
-                    is KaFunctionSymbol -> {
+                    is KaNamedFunctionSymbol -> {
                         receiverSymbol.isOperator
                                 && receiverSymbol.name.asString() == "invoke"
                                 && containingClass.classKind.isObject
-                                && receiverSymbol.getContainingSymbol() == containingClass
+                                && receiverSymbol.containingSymbol == containingClass
                     }
                     is KaClassOrObjectSymbol -> {
                         receiverSymbol.classKind.isObject

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -69,14 +69,14 @@ internal class ReplaceGetOrSetInspection :
         // `resolveCallOld()` is needed to filter out `set` functions with varargs or default values. See the `setWithVararg.kt` test.
         val call = element.resolveCallOld()?.successfulCallOrNull<KaSimpleFunctionCall>() ?: return null
         val functionSymbol = call.symbol
-        if (functionSymbol !is KaFunctionSymbol || !functionSymbol.isOperator) {
+        if (functionSymbol !is KaNamedFunctionSymbol || !functionSymbol.isOperator) {
             return null
         }
 
         val receiverExpression = element.receiverExpression
         if (receiverExpression is KtSuperExpression || receiverExpression.getKtType()?.isUnit != false) return null
 
-        if (functionSymbol.name == OperatorNameConventions.SET && element.isUsedAsExpression()) return null
+        if (functionSymbol.name == OperatorNameConventions.SET && element.isUsedAsExpression) return null
 
         val problemHighlightType = if (functionSymbol.isExplicitOperator()) GENERIC_ERROR_OR_WARNING else INFORMATION
 
@@ -107,8 +107,8 @@ internal class ReplaceGetOrSetInspection :
     }
 
     context(KaSession)
-    private fun KaFunctionSymbol.isExplicitOperator(): Boolean {
+    private fun KaNamedFunctionSymbol.isExplicitOperator(): Boolean {
         fun KaCallableSymbol.hasOperatorKeyword() = psiSafe<KtNamedFunction>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
-        return hasOperatorKeyword() || getAllOverriddenSymbols().any { it.hasOperatorKeyword() }
+        return hasOperatorKeyword() || allOverriddenSymbols.any { it.hasOperatorKeyword() }
     }
 }

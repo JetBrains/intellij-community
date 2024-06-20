@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
@@ -50,6 +51,7 @@ data class ExtractableCodeDescriptor(
 
     override fun isUnitReturnType(): Boolean = isUnitReturn
 
+    @OptIn(KaExperimentalApi::class)
     override val annotationsText: String
         get() {
             if (annotationClassIds.isEmpty()) return ""
@@ -68,7 +70,7 @@ data class ExtractableCodeDescriptor(
 
                 }
                 val printer = PrettyPrinter()
-                filteredRenderer.renderAnnotations(analysisSession, container.getSymbol(), printer)
+                filteredRenderer.renderAnnotations(analysisSession, container.symbol, printer)
                 printer.toString() + "\n"
             }
         }

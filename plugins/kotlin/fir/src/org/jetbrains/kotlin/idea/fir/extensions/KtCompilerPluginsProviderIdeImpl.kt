@@ -24,8 +24,8 @@ import com.intellij.util.containers.orNull
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.plugins.processCompilerPluginsOptions
@@ -55,7 +55,10 @@ import java.util.*
 import java.util.concurrent.ConcurrentMap
 
 @OptIn(ExperimentalCompilerApi::class)
-internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs: CoroutineScope) : KtCompilerPluginsProvider(), Disposable {
+internal class KtCompilerPluginsProviderIdeImpl(
+    private val project: Project,
+    cs: CoroutineScope,
+) : KotlinCompilerPluginsProvider(), Disposable {
     private val pluginsCacheCachedValue: SynchronizedClearableLazy<PluginsCache?> = SynchronizedClearableLazy { createNewCache() }
     private val pluginsCache: PluginsCache?
         get() = pluginsCacheCachedValue.value
@@ -106,7 +109,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
     private fun createNewCache(): PluginsCache? {
         if (!project.isTrusted()) return null
         val pluginsClassLoader: UrlClassLoader = UrlClassLoader.build().apply {
-            parent(KtSourceModule::class.java.classLoader)
+            parent(KaSourceModule::class.java.classLoader)
 
             val allModules = ModuleManager.getInstance(project).modules
             val pluginClasspaths = collectSubstitutedPluginClasspaths(allModules.map { it.getCompilerArguments() })
@@ -115,16 +118,16 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
         }.get()
         return PluginsCache(
             pluginsClassLoader,
-            ContainerUtil.createConcurrentWeakMap<KtSourceModule, Optional<CompilerPluginRegistrar.ExtensionStorage>>()
+            ContainerUtil.createConcurrentWeakMap<KaSourceModule, Optional<CompilerPluginRegistrar.ExtensionStorage>>()
         )
     }
 
     private class PluginsCache(
         val pluginsClassLoader: UrlClassLoader,
-        val registrarForModule: ConcurrentMap<KtSourceModule, Optional<CompilerPluginRegistrar.ExtensionStorage>>
+        val registrarForModule: ConcurrentMap<KaSourceModule, Optional<CompilerPluginRegistrar.ExtensionStorage>>
     )
 
-    override fun <T : Any> getRegisteredExtensions(module: KtSourceModule, extensionType: ProjectExtensionDescriptor<T>): List<T> {
+    override fun <T : Any> getRegisteredExtensions(module: KaSourceModule, extensionType: ProjectExtensionDescriptor<T>): List<T> {
         val registrarForModule = pluginsCache?.registrarForModule ?: return emptyList()
         val extensionStorage = registrarForModule.computeIfAbsent(module) {
             Optional.ofNullable(computeExtensionStorage(module))
@@ -134,7 +137,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
         return registrars as List<T>
     }
 
-    override fun isPluginOfTypeRegistered(module: KtSourceModule, pluginType: CompilerPluginType): Boolean {
+    override fun isPluginOfTypeRegistered(module: KaSourceModule, pluginType: CompilerPluginType): Boolean {
         val extension = when (pluginType) {
             CompilerPluginType.ASSIGNMENT -> FirAssignExpressionAltererExtension::class
             else -> return false
@@ -146,7 +149,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
     }
 
     @OptIn(Frontend10ApiUsage::class)
-    private fun computeExtensionStorage(module: KtSourceModule): CompilerPluginRegistrar.ExtensionStorage? {
+    private fun computeExtensionStorage(module: KaSourceModule): CompilerPluginRegistrar.ExtensionStorage? {
         val classLoader = pluginsCache?.pluginsClassLoader ?: return null
         val compilerArguments = module.ideaModule.getCompilerArguments()
         val pluginClasspaths = collectSubstitutedPluginClasspaths(listOf(compilerArguments)).map { it.toFile() }
@@ -283,7 +286,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
 
     companion object {
         fun getInstance(project: Project): KtCompilerPluginsProviderIdeImpl {
-            return project.getService(KtCompilerPluginsProvider::class.java) as KtCompilerPluginsProviderIdeImpl
+            return KotlinCompilerPluginsProvider.getInstance(project) as KtCompilerPluginsProviderIdeImpl
         }
         private val LOG = logger<KtCompilerPluginsProviderIdeImpl>()
     }

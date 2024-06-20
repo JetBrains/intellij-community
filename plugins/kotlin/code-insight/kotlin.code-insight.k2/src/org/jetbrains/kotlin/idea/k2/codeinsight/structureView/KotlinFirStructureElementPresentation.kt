@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.structureView
 
@@ -11,6 +11,7 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.PsiIconUtil
 import com.intellij.util.ui.StartupUiUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -20,8 +21,8 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaTypeParametersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaFunctionSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassOrObjectSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaNamedFunctionSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -43,6 +44,7 @@ internal class KotlinFirStructureElementPresentation(
     pointer: KaSymbolPointer<*>?
 ) : ColoredItemPresentation, LocationPresentation {
     companion object {
+        @KaExperimentalApi
         private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
             annotationRenderer = annotationRenderer.with {
                 annotationFilter = KaRendererAnnotationsFilter.NONE
@@ -62,10 +64,10 @@ internal class KotlinFirStructureElementPresentation(
                 )
             }
             returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
-            classOrObjectRenderer = KaNamedClassOrObjectSymbolRenderer.AS_SOURCE_WITHOUT_PRIMARY_CONSTRUCTOR
+            namedClassRenderer = KaNamedClassSymbolRenderer.AS_SOURCE_WITHOUT_PRIMARY_CONSTRUCTOR
             parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.NO_DEFAULT_VALUE
             constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
-            functionSymbolRenderer = KaFunctionSymbolRenderer.AS_RAW_SIGNATURE
+            namedFunctionRenderer = KaNamedFunctionSymbolRenderer.AS_RAW_SIGNATURE
         }
     }
 
@@ -121,6 +123,7 @@ internal class KotlinFirStructureElementPresentation(
         return PsiIconUtil.getProvidersIcon(navigatablePsiElement, Iconable.ICON_FLAG_VISIBILITY)
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun getElementText(navigatablePsiElement: NavigatablePsiElement, ktElement : KtElement, pointer: KaSymbolPointer<*>?): String? {
         if (navigatablePsiElement is KtObjectDeclaration && navigatablePsiElement.isObjectLiteral()) {
             return KotlinCodeInsightBundle.message("object.0", (navigatablePsiElement.getSuperTypeList()?.text?.let { " : $it" } ?: ""))
@@ -173,9 +176,9 @@ internal class KotlinFirStructureElementPresentation(
                 }
             }
 
-            val containingSymbol = symbol?.getContainingSymbol()
+            val containingSymbol = symbol?.containingSymbol
             
-            if (ktElement is KtDeclaration && containingSymbol == ktElement.getSymbol()) {
+            if (ktElement is KtDeclaration && containingSymbol == ktElement.symbol) {
                 return null
             }
             

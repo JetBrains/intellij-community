@@ -43,7 +43,7 @@ internal class LambdaToAnonymousFunctionIntention :
 
     context(KaSession)
     override fun prepareContext(element: KtLambdaExpression): LambdaToFunctionContext? {
-        val declarationSymbol = element.functionLiteral.getSymbol() as? KaAnonymousFunctionSymbol ?: return null
+        val declarationSymbol = element.functionLiteral.symbol as? KaAnonymousFunctionSymbol ?: return null
         if (declarationSymbol.valueParameters.any { it.returnType is KtErrorType }) return null
 
         // anonymous suspend functions are forbidden in Kotlin

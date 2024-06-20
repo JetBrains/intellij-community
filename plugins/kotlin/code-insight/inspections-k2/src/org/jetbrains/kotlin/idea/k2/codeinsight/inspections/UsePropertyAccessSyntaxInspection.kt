@@ -23,10 +23,10 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.startOffset
 import org.jdom.Element
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
@@ -108,7 +108,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
         analyze(callableReferenceExpression) {
 
-            val expectedType = callableReferenceExpression.singleExpression()?.getExpectedType()
+            val expectedType = callableReferenceExpression.singleExpression()?.expectedType
             if (expectedType?.isFunctionType != true && expectedType?.isFunctionalInterfaceType != true) return
 
             val symbol = mainReferenceOfCallableReference.resolveToSymbol() ?: return
@@ -145,6 +145,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
      * dontReplaceSetterIfSameIdentifierExistsInScope
      * replaceGetterInBlockExpression
      */
+    @OptIn(KaExperimentalApi::class)
     private fun checkCallExpression(callExpression: KtCallExpression, holder: ProblemsHolder) {
 
         val expressionParent = callExpression.parent
@@ -214,7 +215,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
                         returnType.isMarkedNullable,
                         returnType.render(position = Variance.OUT_VARIANCE)
                     )
-                } else if (callExpression.isUsedAsExpression()) {
+                } else if (callExpression.isUsedAsExpression) {
                     return
                 }
             } else {
@@ -226,7 +227,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
                 // Check that synthetic property won't be an expression for a new property with the same name like `val x = x`
                 // Topical only for references
                 if (expressionParent !is KtDotQualifiedExpression &&
-                    callExpression.isUsedAsExpression() && (expressionParent as? KtProperty)?.name.equals(syntheticPropertyName)
+                    callExpression.isUsedAsExpression && (expressionParent as? KtProperty)?.name.equals(syntheticPropertyName)
                 ) {
                     // Can't offer synthetic properties as right part of property in case names are same: like `val x = x`
                     return
@@ -399,7 +400,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         receiverType: KtType,
         propertyName: String
     ): Boolean {
-        val allOverriddenSymbols = listOf(symbol) + symbol.getAllOverriddenSymbols()
+        val allOverriddenSymbols = listOf(symbol) + symbol.allOverriddenSymbols
         if (functionOriginateNotFromJava(allOverriddenSymbols)) return false
         if (functionNameIsInNotPropertiesList(symbol, callExpression)) return false
 
@@ -421,20 +422,22 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
      * Fixes the case from KTIJ-21051
      */
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KtType, propertyName: String): Boolean {
-        val fieldWithSameName = receiverType.getTypeScope()?.getDeclarationScope()?.getCallableSymbols()
+        val fieldWithSameName = receiverType.scope?.declarationScope?.getCallableSymbols()
             ?.filter { it is KtJavaFieldSymbol && it.name.toString() == propertyName && !it.visibility.isPrivateOrPrivateToThis() }
             ?.singleOrNull()
         return fieldWithSameName != null
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun getSyntheticProperty(
         propertyNames: List<String>,
         receiverType: KtType
     ): KtSyntheticJavaPropertySymbol? {
 
-        val syntheticJavaPropertiesScope = receiverType.getSyntheticJavaPropertiesScope() ?: return null
+        val syntheticJavaPropertiesScope = receiverType.syntheticJavaPropertiesScope ?: return null
 
         val syntheticProperties = syntheticJavaPropertiesScope.getCallableSignatures(SCOPE_NAME_FILTER)
 
@@ -466,7 +469,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         propertyAccessorKind: PropertyAccessorKind
     ): Boolean {
         val propertyExpectedType = if (propertyAccessorKind is PropertyAccessorKind.Setter) {
-            propertyAccessorKind.valueArgumentExpression.getExpectedType() ?: return false
+            propertyAccessorKind.valueArgumentExpression.expectedType ?: return false
         } else {
             callReturnType
         }
@@ -675,7 +678,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
 }
 
-internal val SCOPE_NAME_FILTER: KtScopeNameFilter = { name -> !name.isSpecial }
+internal val SCOPE_NAME_FILTER: (Name) -> Boolean = { name -> !name.isSpecial }
 
 class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesService {
     override fun getNotProperties(element: PsiElement): Set<FqNameUnsafe> {

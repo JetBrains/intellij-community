@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.lookups
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
@@ -17,7 +18,8 @@ internal object TypeTextProvider {
      * Creates lookup element's type text, based on provided classifier symbol.
      */
     context(KaSession)
-fun getTypeTextForClassifier(symbol: KaClassifierSymbol): String? = when (symbol) {
+    @OptIn(KaExperimentalApi::class)
+    fun getTypeTextForClassifier(symbol: KaClassifierSymbol): String? = when (symbol) {
         is KaTypeAliasSymbol -> symbol.expandedType.render(renderer, position = Variance.INVARIANT)
         else -> null
     }
@@ -34,7 +36,8 @@ fun getTypeTextForClassifier(symbol: KaClassifierSymbol): String? = when (symbol
      * a lookup element `foo()` is suggested and its type text should be `Unit`.
      */
     context(KaSession)
-fun getTypeTextForCallable(
+    @OptIn(KaExperimentalApi::class)
+    fun getTypeTextForCallable(
         signature: KtCallableSignature<*>,
         treatAsFunctionCall: Boolean
     ): String? = when (signature) {
@@ -51,5 +54,6 @@ fun getTypeTextForCallable(
         }
     }
 
+    @KaExperimentalApi
     private val renderer = CompletionShortNamesRenderer.rendererVerbose
 }

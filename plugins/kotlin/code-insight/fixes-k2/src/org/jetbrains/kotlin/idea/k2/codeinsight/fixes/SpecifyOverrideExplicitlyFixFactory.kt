@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 internal object SpecifyOverrideExplicitlyFixFactory {
+    @OptIn(KaExperimentalApi::class)
     val specifyOverrideExplicitlyFixFactory =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.DelegatedMemberHidesSupertypeOverride ->
             val ktClass = diagnostic.psi
@@ -46,10 +48,10 @@ internal object SpecifyOverrideExplicitlyFixFactory {
                     val delegateTargetSymbol = specifier.getSymbol() ?: return@ModCommandBased emptyList()
 
                     if (delegateTargetSymbol is KaValueParameterSymbol &&
-                        delegateTargetSymbol.getContainingSymbol().let {
+                        delegateTargetSymbol.containingSymbol.let {
                             it is KaConstructorSymbol &&
                                     it.isPrimary &&
-                                    it.getContainingSymbol() == delegatedDeclaration.getContainingSymbol()
+                                    it.containingSymbol == delegatedDeclaration.containingSymbol
                         }
                     ) {
                         val delegateParameter = delegateTargetSymbol.psi as? KtParameter
@@ -91,6 +93,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
         return nameReferenceExpression.mainReference.resolveToSymbol() as? KaNamedSymbol
     }
 
+    @KaExperimentalApi
     private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
         returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
         valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY

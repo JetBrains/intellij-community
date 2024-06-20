@@ -68,12 +68,12 @@ context(KaSession)
 private fun computeElementContext(element: KtNamedDeclaration): ElementContext? {
     val overriddenNonOverridableMembers = mutableListOf<DeclarationPointer>()
     val containingDeclarationNames = mutableListOf<String>()
-    val symbol = element.getSymbol() as? KaCallableSymbol ?: return null
+    val symbol = element.symbol as? KaCallableSymbol ?: return null
 
-    val allOverriddenSymbols = symbol.getAllOverriddenSymbols()
+    val allOverriddenSymbols = symbol.allOverriddenSymbols.toList()
     for (overriddenSymbol in retainNonOverridableMembers(allOverriddenSymbols)) {
         val overriddenMember = overriddenSymbol.psi
-        val containingSymbol = overriddenSymbol.getContainingSymbol()
+        val containingSymbol = overriddenSymbol.containingSymbol
         if (overriddenMember == null || overriddenMember !is KtCallableDeclaration || !overriddenMember.canRefactorElement() ||
             containingSymbol !is KaNamedSymbol || overriddenMember.modifierList?.hasModifier(KtTokens.OPEN_KEYWORD) == true
         ) {

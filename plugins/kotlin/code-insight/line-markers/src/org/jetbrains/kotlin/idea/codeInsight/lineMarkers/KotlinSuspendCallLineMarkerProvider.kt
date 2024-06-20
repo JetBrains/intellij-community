@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
@@ -25,7 +25,7 @@ internal class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
         KotlinCallProcessor.process(elements) { target ->
             val symbol = target.symbol
 
-            if (symbol is KaFunctionSymbol && symbol.isSuspend) {
+            if (symbol is KaNamedFunctionSymbol && symbol.isSuspend) {
                 val name = symbol.name.asString()
                 val isOperator = symbol.isOperator
 

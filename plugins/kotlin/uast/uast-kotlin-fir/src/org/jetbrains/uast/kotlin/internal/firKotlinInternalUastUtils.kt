@@ -1,23 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin.internal
 
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.annotations.*
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.api.platform.DecompiledPsiDeclarationProvider.findPsi
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -82,17 +79,18 @@ internal fun toPsiClass(
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 internal fun toPsiMethod(
-    functionSymbol: KaFunctionLikeSymbol,
+    functionSymbol: KaFunctionSymbol,
     context: KtElement,
 ): PsiMethod? {
     // `inline` w/ `reified` type param from binary dependency,
     // which we can't find source PSI, so fake it
     if (functionSymbol.origin == KtSymbolOrigin.LIBRARY &&
-        (functionSymbol as? KaFunctionSymbol)?.isInline == true &&
+        (functionSymbol as? KaNamedFunctionSymbol)?.isInline == true &&
         functionSymbol.typeParameters.any { it.isReified }
     ) {
-        functionSymbol.getContainingJvmClassName()?.let { fqName ->
+        functionSymbol.containingJvmClassName?.let { fqName ->
             JavaPsiFacade.getInstance(context.project)
                 .findClass(fqName, context.resolveScope)
                 ?.let { containingClass ->
@@ -105,7 +103,7 @@ internal fun toPsiMethod(
                 }
         }
     }
-    return when (val psi = psiForUast(functionSymbol, context.project)) {
+    return when (val psi = psiForUast(functionSymbol)) {
         null -> {
             // Lint/UAST CLI: try `fake` creation for a deserialized declaration
             toPsiMethodForDeserialized(functionSymbol, context, psi)
@@ -115,7 +113,7 @@ internal fun toPsiMethod(
             // For synthetic members in enum classes, `psi` points to their containing enum class.
             if (psi is KtClass && psi.isEnum()) {
                 val lc = psi.toLightClass() ?: return null
-                lc.methods.find { it.name == (functionSymbol as? KaFunctionSymbol)?.name?.identifier }?.let { return it }
+                lc.methods.find { it.name == (functionSymbol as? KaNamedFunctionSymbol)?.name?.identifier }?.let { return it }
             }
 
             // Default primary constructor
@@ -127,8 +125,8 @@ internal fun toPsiMethod(
         is KtFunction -> {
             // For JVM-invisible methods, such as @JvmSynthetic, LC conversion returns nothing, so fake it
             fun handleLocalOrSynthetic(source: KtFunction): PsiMethod? {
-                val ktModule = getModule(source)
-                if (ktModule !is KtSourceModule) return null
+                val module = getModule(source)
+                if (module !is KaSourceModule) return null
                 return getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }
             }
 
@@ -149,8 +147,9 @@ internal fun toPsiMethod(
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun toPsiMethodForDeserialized(
-    functionSymbol: KaFunctionLikeSymbol,
+    functionSymbol: KaFunctionSymbol,
     context: KtElement,
     psi: KtFunction?,
 ): PsiMethod? {
@@ -215,7 +214,7 @@ private fun toPsiMethodForDeserialized(
             0 -> {
                 if (psi != null) {
                     UastFakeDeserializedSourceLightMethod(psi, this@lookup)
-                } else if (functionSymbol is KaFunctionSymbol) {
+                } else if (functionSymbol is KaNamedFunctionSymbol) {
                     UastFakeDeserializedSymbolLightMethod(
                         functionSymbol.createPointer(),
                         functionSymbol.name.identifier,
@@ -248,10 +247,10 @@ private fun toPsiMethodForDeserialized(
     return if (psi != null) {
         // Lint/UAST IDE: with deserialized PSI
         psi.containingKtFile.findFacadeClass()?.lookup()
-    } else if (functionSymbol is KaFunctionSymbol) {
+    } else if (functionSymbol is KaNamedFunctionSymbol) {
         // Lint/UAST CLI: attempt to find the binary class
         //   with the facade fq name from the resolved symbol
-        functionSymbol.getContainingJvmClassName()?.let { fqName ->
+        functionSymbol.containingJvmClassName?.let { fqName ->
             JavaPsiFacade.getInstance(context.project)
                 .findClass(fqName, context.resolveScope)
                 ?.lookup()
@@ -293,6 +292,7 @@ internal fun toPsiType(
     )
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 internal fun toPsiType(
     ktType: KtType,
     containingLightDeclaration: PsiModifierListOwner?,
@@ -375,26 +375,24 @@ internal fun nullability(ktType: KtType?): KtTypeNullability? {
 
 context(KaSession)
 internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
-    return (ktCallableDeclaration.getSymbol() as? KaCallableSymbol)?.returnType
+    return (ktCallableDeclaration.symbol as? KaCallableSymbol)?.returnType
 }
 
 /**
- * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KtLibraryModule].
+ * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KaLibraryModule].
  */
 context(KaSession)
-internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement? {
+internal tailrec fun psiForUast(symbol: KtSymbol): PsiElement? {
     if (symbol.origin == KtSymbolOrigin.LIBRARY) {
-        // UAST/Lint CLI: use [DecompiledPsiDeclarationProvider] / [KotlinStaticPsiDeclarationFromBinaryModuleProvider]
-        return findPsi(symbol, project)
-            // UAST/Lint IDE: decompiled PSI
-            ?: symbol.psi
+        val psiProvider = FirKotlinUastLibraryPsiProviderService.getInstance()
+        return with(psiProvider) { provide(symbol) }
     }
 
     if (symbol is KaCallableSymbol) {
         if (symbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KtSymbolOrigin.SUBSTITUTION_OVERRIDE) {
             val originalSymbol = symbol.unwrapFakeOverrides
             if (originalSymbol !== symbol) {
-                return psiForUast(originalSymbol, project)
+                return psiForUast(originalSymbol)
             }
         }
     }

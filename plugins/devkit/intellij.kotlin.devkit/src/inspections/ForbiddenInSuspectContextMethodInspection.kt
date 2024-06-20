@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -113,10 +113,10 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
         val hasAnnotation = calledSymbol.hasAnnotation(RequiresBlockingContextAnnotationId)
 
         if (!hasAnnotation) {
-          if (calledSymbol is KaFunctionSymbol) {
+          if (calledSymbol is KaNamedFunctionSymbol) {
             checkCalledFunction(expression, calledSymbol)
           }
-          if (calledSymbol is KaFunctionSymbol && calledSymbol.isInline) {
+          if (calledSymbol is KaNamedFunctionSymbol && calledSymbol.isInline) {
             checkInlineLambdaArguments(functionCall)
           }
           return super.visitCallExpression(expression)
@@ -166,7 +166,7 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
       }
     }
 
-    private fun checkCalledFunction(call: KtCallExpression, calledSymbol: KaFunctionSymbol) {
+    private fun checkCalledFunction(call: KtCallExpression, calledSymbol: KaNamedFunctionSymbol) {
       // Visiting functions in current file. We don't visit it with our visitor in other cases, so it will be visited once
       if (
         calledSymbol.psi?.containingFile == holder.file &&

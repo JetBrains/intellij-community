@@ -19,9 +19,9 @@ class KotlinFirInheritedMembersNodeProvider : InheritedMembersNodeProvider<TreeE
         analyze(ktClassOrObject) {
             
             val children = mutableListOf<TreeElement>()
-            val descriptor = ktClassOrObject.getSymbol() as? KaClassOrObjectSymbol ?: return listOf()
+            val descriptor = ktClassOrObject.symbol as? KaClassOrObjectSymbol ?: return listOf()
 
-            for (memberSymbol in descriptor.getMemberScope().getAllSymbols()) {
+            for (memberSymbol in descriptor.memberScope.getAllSymbols()) {
                 if (memberSymbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE) continue
                 if (memberSymbol is KaClassOrObjectSymbol) continue
                 val psi = memberSymbol.psi
