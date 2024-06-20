@@ -2,15 +2,18 @@
 package org.jetbrains.plugins.terminal.classic.fixture
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.pty.PtyProcessTtyConnector
+import com.intellij.util.io.delete
+import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
-import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
-import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
-import org.jetbrains.plugins.terminal.ShellTerminalWidget
-import org.jetbrains.plugins.terminal.shellStartupOptions
+import org.jetbrains.plugins.terminal.*
 import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.util.function.BooleanSupplier
 
 class TestShellSession(project: Project, parentDisposable: Disposable) {
@@ -21,16 +24,7 @@ class TestShellSession(project: Project, parentDisposable: Disposable) {
     val settingsProvider = JBTerminalSystemSettingsProvider()
     widget = ShellTerminalWidget(project, settingsProvider, parentDisposable)
     watcher = TestTerminalBufferWatcher(widget.terminalTextBuffer, widget.terminal)
-    start(project)
-  }
-
-  private fun start(project: Project) {
-    val runner = LocalTerminalDirectRunner.createTerminalRunner(project)
-    val baseOptions = shellStartupOptions(project.basePath)
-    val configuredOptions = runner.configureStartupOptions(baseOptions)
-    val process = runner.createProcess(configuredOptions)
-    val connector: TtyConnector = PtyProcessTtyConnector(process, StandardCharsets.UTF_8)
-    widget.start(connector)
+    start(widget)
   }
 
   @Throws(IOException::class)
@@ -52,4 +46,31 @@ class TestShellSession(project: Project, parentDisposable: Disposable) {
 
   val screenLines: String
     get() = watcher.screenLines
+
+  companion object {
+    fun start(terminalWidget: JBTerminalWidget) {
+      val runner = LocalTerminalDirectRunner.createTerminalRunner(terminalWidget.project)
+      val baseOptions = shellStartupOptions(terminalWidget.project.basePath)
+      val initialTermSize = TermSize(80, 24)
+      val workingDirectory = Files.createTempDirectory("intellij-terminal-working-dir")
+      val configuredOptions = runner.configureStartupOptions(baseOptions).builder().modify {
+        it.initialTermSize = initialTermSize
+        it.workingDirectory = workingDirectory.toString()
+      }.build()
+      val process = runner.createProcess(configuredOptions)
+      val connector: TtyConnector = PtyProcessTtyConnector(process, StandardCharsets.UTF_8)
+      terminalWidget.asNewWidget().connectToTty(connector, initialTermSize)
+
+      Disposer.register(terminalWidget) {
+        try {
+          connector.close()
+        }
+        catch (t: Throwable) {
+          logger<TestShellSession>().error("Error closing TtyConnector", t)
+        }
+        workingDirectory.delete()
+      }
+    }
+  }
+
 }

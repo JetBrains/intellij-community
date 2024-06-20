@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -50,6 +52,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   private ShellStartupOptions myStartupOptions;
   private final Prompt myPrompt = new Prompt();
   private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
+  private final BlockingQueue<String> myCommandsToExecute = new LinkedBlockingQueue<>();
 
   private final Alarm myVfsRefreshAlarm;
   private final TerminalModelListener myVfsRefreshModelListener;
@@ -189,8 +192,13 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     if (!typedCommand.isEmpty()) {
       throw new IOException("Cannot execute command when another command is typed: " + typedCommand); //NON-NLS
     }
+    myCommandsToExecute.add(shellCommand);
     doWithTerminalStarter(terminalStarter -> {
-      TerminalUtil.sendCommandToExecute(shellCommand, terminalStarter);
+      List<String> commands = new ArrayList<>();
+      myCommandsToExecute.drainTo(commands);
+      for (String command : commands) {
+        TerminalUtil.sendCommandToExecute(command, terminalStarter);
+      }
     });
   }
 
