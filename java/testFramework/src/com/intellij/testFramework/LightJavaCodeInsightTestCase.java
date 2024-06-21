@@ -93,10 +93,18 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    LanguageLevel languageLevel = getLanguageLevel();
     return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK()) {
       @Override
       protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-        DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
+        if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+          //DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
+
+          DefaultLightProjectDescriptor.addJetBrainsAnnotationsJava8AndHigher(model);
+        }
+        else {
+          DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
+        }
       }
     };
   }

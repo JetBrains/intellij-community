@@ -616,7 +616,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
           '('
           LineBreak('', true)
           Group (added):
-            '@Nls @NotNull @NonStandard("X")'
+            '@NotNull @Nls @NonStandard("X")'
             ' '
             'String'
             ' '
@@ -642,7 +642,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         
         class C implements I {
             @Override
-            public void foo(@Nls @NotNull @NonStandard("X") String s) {
+            public void foo(@NotNull @Nls @NonStandard("X") String s) {
             }
         }
       """.trimIndent(),

@@ -62,7 +62,12 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
-      addJetBrainsAnnotations(model);
+      if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        addJetBrainsAnnotationsJava8AndHigher(model);
+      }
+      else {
+        addJetBrainsAnnotations(model);
+      }
     }
   }
 

@@ -22,7 +22,6 @@ import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.ui.ChooserInterceptor
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ui.UIUtil
@@ -588,10 +587,6 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     do {
       val isVariableSwitched = nextTemplateVariable()
     } while (isVariableSwitched)
-  }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return ExtractMethodNewTest.SimpleLightProjectDescriptorWithAnnotations(moduleTypeId, projectJDK)
   }
 
   override fun setUp() {

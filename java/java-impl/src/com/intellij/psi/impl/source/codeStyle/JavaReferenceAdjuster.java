@@ -153,6 +153,10 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
     if (modifierList != null) {
       for (PsiAnnotation annotation : modifierList.getAnnotations()) {
         if (AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE) != null) {
+          if (modifierList.getParent() instanceof PsiMethod &&
+              AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.METHOD) != null) {
+            continue;
+          }
           return true;
         }
       }
