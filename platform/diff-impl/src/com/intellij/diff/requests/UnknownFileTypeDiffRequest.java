@@ -16,7 +16,6 @@
 package com.intellij.diff.requests;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.diff.DiffBundle;
@@ -68,9 +67,5 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
   @Override
   public String getTitle() {
     return myTitle;
-  }
-
-  private static void tryReloadRequest(@NotNull DiffContext context) {
-    if (context instanceof DiffContextEx) ((DiffContextEx)context).reloadDiffRequest();
   }
 }
