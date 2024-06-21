@@ -154,10 +154,8 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     if (!areLanguageLevelsCompatible(oldLanguageLevel, level) || !ProjectFileIndex.getInstance(project).isInContent(fileOrDir)) {
       PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, PythonLanguageLevelPusher::isPythonFile);
     }
-    for (VirtualFile child : fileOrDir.getChildren()) {
-      if (!child.isDirectory() && isPythonFile(child)) {
-        clearSdkPathCache(child);
-      }
+    if (fileOrDir.isDirectory() || isPythonFile(fileOrDir)) {
+      clearSdkPathCache(fileOrDir);
     }
   }
 
