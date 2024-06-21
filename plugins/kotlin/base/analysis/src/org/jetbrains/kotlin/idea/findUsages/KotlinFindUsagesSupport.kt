@@ -9,6 +9,7 @@ import com.intellij.psi.PsiConstructorCall
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -25,10 +26,13 @@ interface KotlinFindUsagesSupport {
             return getInstance(element.project).searchOverriders(element, searchScope)
         }
 
+        /**
+         * NOTE: Java functional expressions would not be found, corresponding search should be started separately
+         */
         fun searchInheritors(element: PsiElement,
                              searchScope: SearchScope,
                              searchDeeply: Boolean = true): Sequence<PsiElement> {
-            return getInstance(element.project).searchInheritors(element, searchScope, searchDeeply)
+            return getInstance(PsiUtilCore.getProjectInReadAction(element)).searchInheritors(element, searchScope, searchDeeply)
         }
 
         fun processCompanionObjectInternalReferences(

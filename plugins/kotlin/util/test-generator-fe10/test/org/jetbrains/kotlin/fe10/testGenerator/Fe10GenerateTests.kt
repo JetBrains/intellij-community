@@ -493,6 +493,11 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("navigation/implementations", isRecursive = false)
         }
 
+        testClass< AbstractKotlinGotoImplementationMultifileTest> {
+            model("navigation/implementations/multifile/javaKotlin", testMethodName = "doJavaKotlinTest")
+            model("navigation/implementations/multifile/kotlinJava", testMethodName = "doKotlinJavaTest")
+        }
+
         testClass<AbstractGotoTestOrCodeActionTest> {
             model("navigation/gotoTestOrCode", pattern = Patterns.forRegex("^(.+)\\.main\\..+\$"))
         }

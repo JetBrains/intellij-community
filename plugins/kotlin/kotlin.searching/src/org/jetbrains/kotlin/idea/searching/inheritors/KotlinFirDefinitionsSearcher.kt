@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.searching.inheritors
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
@@ -13,8 +14,11 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.toFakeLightClass
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.psi.*
@@ -91,7 +95,15 @@ private fun processClassImplementations(klass: KtClass, consumer: Processor<PsiE
         return processLightClassLocalImplementations(klass, searchScope, consumer)
     }
 
-    return klass.findAllInheritors(searchScope).all { runReadAction { consumer.process(it)} }
+    if (!KotlinFindUsagesSupport.searchInheritors(klass, searchScope).all { runReadAction { consumer.process(it)} }) {
+        return false
+    }
+
+    val lightClass = klass.toLightClass() ?: klass.toFakeLightClass()
+    if (runReadAction { LambdaUtil.isFunctionalClass(lightClass) }) {
+        return FunctionalExpressionSearch.search(lightClass).all { runReadAction { consumer.process(it) } }
+    }
+    return true
 }
 
 private fun processLightClassLocalImplementations(
