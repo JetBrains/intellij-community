@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ClientProperty {
+  private ClientProperty() { }
   /**
    * Sets the value for the client property of the component.
    * This is a convenient way to specify a value as a lambda.

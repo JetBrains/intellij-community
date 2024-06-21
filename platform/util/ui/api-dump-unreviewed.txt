@@ -1660,7 +1660,6 @@ a:com.intellij.ui.ClickListener
 - a:onClick(java.awt.event.MouseEvent,I):Z
 - uninstall(java.awt.Component):V
 f:com.intellij.ui.ClientProperty
-- <init>():V
 - s:findInHierarchy(java.awt.Component,com.intellij.openapi.util.Key):java.lang.Object
 - s:findInHierarchy(java.awt.Component,java.lang.Object):java.lang.Object
 - s:get(java.awt.Component,com.intellij.openapi.util.Key):java.lang.Object
