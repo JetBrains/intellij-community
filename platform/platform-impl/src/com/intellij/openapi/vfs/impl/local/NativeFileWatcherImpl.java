@@ -22,6 +22,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.system.CpuArch;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -40,6 +41,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ApiStatus.Internal
 public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
 
@@ -446,7 +448,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   private boolean isRepetition(String path) {
-    // debouncing subsequent notifications (happens on copying of large files); this reduces path checks at least 20% on Windows
+    // debouncing sequential notifications (happens on copying of large files); this reduces path checks at least 20% on Windows
     synchronized (myLastChangedPaths) {
       for (int i = 0; i < myLastChangedPaths.length; ++i) {
         int last = myLastChangedPathIndex - i - 1;
