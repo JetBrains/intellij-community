@@ -376,6 +376,18 @@ data class IntListEventField @JvmOverloads constructor(@NonNls @EventFieldName o
   }
 }
 
+data class EnumListEventField<T : Enum<*>>(@NonNls @EventFieldName override val name: String,
+                                            @NonNls override val description: String? = null,
+                                            private val enumClass: Class<T>,
+                                            private val transform: (T) -> String) : ListEventField<T>() {
+  override val validationRule: List<String>
+    get() = listOf("{enum:${enumClass.enumConstants.joinToString("|", transform = transform)}}")
+
+  override fun addData(fuData: FeatureUsageData, value: List<T>) {
+    fuData.addData(name, value.map(transform))
+  }
+}
+
 abstract class StringListEventField(@NonNls @EventFieldName override val name: String) : ListEventField<String>() {
   override fun addData(fuData: FeatureUsageData, value: List<String>) {
     fuData.addData(name, value)

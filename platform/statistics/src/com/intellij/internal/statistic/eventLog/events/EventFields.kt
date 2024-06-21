@@ -365,6 +365,11 @@ object EventFields {
   @JvmOverloads
   fun IntList(@NonNls @EventFieldName name: String, @NonNls description: String? = null): IntListEventField = IntListEventField(name, description)
 
+  @JvmStatic
+  @JvmOverloads
+  inline fun <reified T : Enum<*>> EnumList(@NonNls @EventFieldName name: String, @NonNls description: String? = null, noinline transform: (T) -> String =
+    defaultEnumTransform): EnumListEventField<T> = EnumListEventField(name, description, T::class.java, transform)
+
   /**
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
