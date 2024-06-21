@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.spec.ShellCommandResult
@@ -11,10 +12,10 @@ import com.jediterm.core.input.InputEvent.CTRL_MASK
 import com.jediterm.core.input.KeyEvent
 import com.jediterm.core.input.KeyEvent.VK_HOME
 import com.jediterm.terminal.Terminal
+import com.jediterm.terminal.TerminalStarter
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import org.jetbrains.plugins.terminal.TerminalUtil
-import org.jetbrains.plugins.terminal.block.session.ShellCommandManager.Companion.LOG
 import org.jetbrains.plugins.terminal.block.session.ShellCommandManager.Companion.debug
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.nio.charset.StandardCharsets
@@ -50,8 +51,20 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   /** Access to this field is synchronized using `lock` */
   private var isInitialized: Boolean = false
 
-  /** Access to this field is synchronized using `lock` */
+  /**
+   * Marks if this executor knows about some running command in the shell session.
+   * The commands could be executed from outside the execution manager (e.g., shell-queued commands).
+   *
+   * Access to this field is synchronized using `lock`
+   */
   private var isCommandRunning: Boolean = false
+
+  /**
+   * Marks if this executor has sent the command for execution and expects it to finish.
+   *
+   * Access to this field is synchronized using `lock`
+   */
+  private var isCommandSent: Boolean = false
 
   init {
     commandManager.addListener(object : ShellCommandListener {
@@ -62,11 +75,22 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
         processQueueIfReady()
       }
 
+      override fun commandStarted(command: String) {
+        lock.withLock {
+          if (isCommandRunning) {
+            LOG.warn("Received command_started event, but previous command wasn't finished")
+          }
+          isCommandRunning = true
+        }
+        processQueueIfReady()
+      }
+
       override fun commandFinished(event: CommandFinishedEvent) {
         lock.withLock {
           if (!isCommandRunning) {
             LOG.warn("Received command_finished event, but command wasn't started")
           }
+          isCommandSent = false
           isCommandRunning = false
         }
         processQueueIfReady()
@@ -123,7 +147,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
    */
   fun sendCommandToExecute(shellCommand: String) {
     lock.withLock {
-      if (isCommandRunning) {
+      if (isCommandSent || isCommandRunning) {
         LOG.info("Command '$shellCommand' is postponed until currently running command is finished")
       }
       if (!isInitialized) {
@@ -175,7 +199,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
         cancelGenerators(registrar, "not initialized yet")
         return@withLock // `initialized` event will resume queue processing
       }
-      if (isCommandRunning) {
+      if (isCommandSent || isCommandRunning) {
         cancelGenerators(registrar, "command is running")
         return@withLock // `commandFinished` event will resume queue processing
       }
@@ -200,7 +224,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
       scheduledCommands.poll()?.let { command ->
         cancelGenerators(registrar, "user command is ready to execute")
-        isCommandRunning = true
+        isCommandSent = true
         doSendCommandToExecute(command, false)
         return@withLock // `commandFinished` event will resume queue processing
       }
@@ -231,23 +255,30 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   }
 
   private fun doSendCommandToExecute(shellCommand: String, isGenerator: Boolean) {
-    var adjustedCommand = shellCommand;
+    session.terminalStarterFuture.thenAccept { starter ->
+      starter ?: return@thenAccept
+      doSendCommandToExecute(starter, shellCommand, isGenerator)
+    }
+  }
+
+  private fun doSendCommandToExecute(starter: TerminalStarter, shellCommand: String, isGenerator: Boolean) {
+    var adjustedCommand = shellCommand
+    val enterCode = String(starter.terminal.getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8)
     if (session.model.isBracketedPasteMode && (adjustedCommand.contains("\n") || adjustedCommand.contains(System.lineSeparator()))) {
       adjustedCommand = bracketed(adjustedCommand)
     }
-    // in the IDE we use '\n' line separator, but Windows requires '\r\n'
-    adjustedCommand = adjustedCommand.replace("\n", System.lineSeparator())
-    session.terminalStarterFuture.thenAccept { starter ->
-      starter ?: return@thenAccept
-      val clearPrompt = createClearPromptShortcut(starter.terminal)
-      TerminalUtil.sendCommandToExecute(clearPrompt + adjustedCommand, starter)
+    else {
+      // in the IDE we use '\n' line separator, but Windows requires '\r\n'
+      adjustedCommand = adjustedCommand.replace("\n", enterCode)
+    }
+    val clearPrompt = createClearPromptShortcut(starter.terminal)
+    TerminalUtil.sendCommandToExecute(clearPrompt + adjustedCommand, starter)
 
-      if (isGenerator) {
-        fireGeneratorCommandSent(shellCommand)
-      }
-      else {
-        fireUserCommandSent(shellCommand)
-      }
+    if (isGenerator) {
+      fireGeneratorCommandSent(shellCommand)
+    }
+    else {
+      fireUserCommandSent(shellCommand)
     }
   }
 
@@ -342,6 +373,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   }
 
   companion object {
+    internal val LOG = logger<ShellCommandExecutionManager>()
     private val NEXT_REQUEST_ID = AtomicInteger(0)
     private const val GENERATOR_COMMAND = "__jetbrains_intellij_run_generator"
     private const val SHORTCUT_CTRL_U = "\u0015"

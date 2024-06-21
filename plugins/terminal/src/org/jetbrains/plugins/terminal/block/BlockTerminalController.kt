@@ -61,7 +61,16 @@ internal class BlockTerminalController(
         finishCommandBlock(event.exitCode)
         TerminalUsageTriggerCollector.triggerCommandFinished(project, event.command, event.exitCode, event.duration)
       }
+
+      override fun commandStarted(command: String) {
+        invokeLater(getDisposed(), ModalityState.any()) {
+          if (!outputController.isCommandRunning()) {
+            startCommandBlock(command, promptController.model.renderingInfo)
+          }
+        }
+      }
     })
+
     session.commandExecutionManager.addListener(object : ShellCommandSentListener {
       override fun userCommandSent(userCommand: String) {
         invokeLaterIfNeeded(getDisposed(), ModalityState.any()) {
@@ -101,7 +110,10 @@ internal class BlockTerminalController(
   }
 
   @RequiresEdt(generateAssertion = false)
-  private fun startCommandBlock(command: String?, prompt: TerminalPromptRenderingInfo?) {
+  private fun startCommandBlock(
+    command: String?,
+    prompt: TerminalPromptRenderingInfo?,
+  ) {
     outputController.startCommandBlock(command, prompt)
     // Hide the prompt only when the new block is created, so it will look like the prompt is replaced with a block atomically.
     // If the command is finished very fast, the prompt will be shown back before repainting.

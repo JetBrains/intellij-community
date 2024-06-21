@@ -46,6 +46,9 @@ internal class TerminalOutputController(
 
   private val blockCreationAlarm: Alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, session)
 
+  /**
+   * RequiresEdt: Should be accessed only from EDT
+   */
   private var runningCommandContext: RunningCommandContext? = null
 
   private var runningCommandInteractivity: RunningCommandInteractivity? = null
@@ -84,17 +87,20 @@ internal class TerminalOutputController(
   }
 
   @RequiresEdt
-  fun startCommandBlock(command: String?, prompt: TerminalPromptRenderingInfo?) {
+  fun startCommandBlock(
+    command: String?,
+    prompt: TerminalPromptRenderingInfo?,
+  ) {
     scrollToBottom()
     installRunningCommandInteractivity(command)
-    runningCommandContext = RunningCommandContext(command, prompt)
+    val newRunningCommandContext = RunningCommandContext(command, prompt)
+    runningCommandContext = newRunningCommandContext
 
     // Create a block forcefully in a timeout if there are no content updates. Command can output nothing for some time.
     val createBlockRequest: () -> Unit = {
       doWithScrollingAware {
-        val context = runningCommandContext ?: error("No running command context")
         val terminalWidth = session.model.withContentLock { session.model.width }
-        createNewBlock(context, terminalWidth)
+        createNewBlock(newRunningCommandContext, terminalWidth)
       }
     }
     blockCreationAlarm.addRequest(createBlockRequest, 200)
@@ -102,13 +108,16 @@ internal class TerminalOutputController(
 
   @RequiresEdt(generateAssertion = false)
   private fun installRunningCommandInteractivity(command: String?) {
-    check(runningCommandInteractivity == null)
+    if (runningCommandInteractivity != null) {
+      thisLogger().error("Running command interactivity is already installed")
+      disposeRunningCommandInteractivity()
+    }
     runningCommandInteractivity = RunningCommandInteractivity(command)
   }
 
   @RequiresEdt(generateAssertion = false)
   private fun disposeRunningCommandInteractivity() {
-    check(runningCommandInteractivity != null)
+    runningCommandInteractivity ?: error("No running command interactivity")
     Disposer.dispose(runningCommandInteractivity!!.disposable)
     runningCommandInteractivity = null
   }
@@ -192,7 +201,10 @@ internal class TerminalOutputController(
     val activeBlock = outputModel.getActiveBlock() ?: run {
       // If there is no active block, it means that it is the first content update. Create the new block here.
       blockCreationAlarm.cancelAllRequests()
-      val context = runningCommandContext ?: error("No running command context")
+      val context = runningCommandContext ?: run {
+        thisLogger().error("No running command context")
+        RunningCommandContext(null, null)
+      }
       createNewBlock(context, snapshot.width)
     }
     val output = if (finished) snapshot.output.dropLastBlankLine(session.shellIntegration.shellType) else snapshot.output
@@ -266,15 +278,21 @@ internal class TerminalOutputController(
     else editor.document.addDocumentListener(listener)
   }
 
+  /**
+   * Wait for all blocks to finish and then invoke the [callback].
+   */
   @RequiresEdt
   fun doWhenNextBlockCanBeStarted(callback: () -> Unit) {
-    if (runningCommandContext == null && outputModel.getActiveBlock() == null) {
+    if (!isCommandRunning()) {
       callback()
     }
     else {
       nextBlockCanBeStartedQueue.offer(callback)
     }
   }
+
+  @RequiresEdt(generateAssertion = true)
+  fun isCommandRunning(): Boolean = runningCommandContext != null || outputModel.getActiveBlock() != null
 
   private data class TerminalOutputSnapshot(val width: Int, val output: StyledCommandOutput)
 

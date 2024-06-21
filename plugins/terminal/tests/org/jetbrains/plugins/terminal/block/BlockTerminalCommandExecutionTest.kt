@@ -6,6 +6,7 @@ import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.Filter.ResultItem
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
+import com.intellij.idea.TestFor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -17,9 +18,9 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalCustomCommandListener
 import junit.framework.TestCase.failNotEquals
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
-import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
 import org.jetbrains.plugins.terminal.block.output.*
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
 import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil.toCommandLine
 import org.junit.Assert
@@ -29,7 +30,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.CountDownLatch
+import java.util.function.BiPredicate
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,12 +42,6 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
 
   private val projectRule: ProjectRule = ProjectRule()
   private val disposableRule = DisposableRule()
-
-  companion object {
-    @JvmStatic
-    @Parameterized.Parameters(name = "{0}")
-    fun shells(): List<Path> = TerminalSessionTestUtil.getShellPaths()
-  }
 
   @Rule
   @JvmField
@@ -66,6 +63,7 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
     Assert.assertEquals(expected, actual)
   }
 
+  @TestFor(issues = ["IJPL-156363"])
   @Test
   fun `multiline commands with bracketed mode`() {
     val (session, view) = startSessionAndCreateView()
@@ -79,6 +77,30 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
     awaitBlocksFinalized(view.outputView.controller.outputModel, expected.size)
     val actual = view.outputView.controller.outputModel.collectCommandResults()
     Assert.assertEquals(expected, actual)
+  }
+
+  @TestFor(issues = ["IJPL-156274"])
+  @Test
+  fun `multiline commands without bracketed mode`() {
+    val (session, view) = startSessionAndCreateView()
+    Assume.assumeFalse(session.model.isBracketedPasteMode)
+    session.commandExecutionManager.sendCommandToExecute("echo 1\necho 2")
+    val expected = listOf(
+      // The first block is created when the command is sent to execute.
+      CommandResult("echo 1\necho 2", "1"),
+      // The second block is created by command_started event.
+      CommandResult("echo 2", "2"),
+    )
+    awaitBlocksFinalized(view.outputView.controller.outputModel, expected.size)
+    val actual = view.outputView.controller.outputModel.collectCommandResults()
+    assertListEquals(expected, actual) { a, b ->
+      /*
+      It was a flaky test.
+      Sometimes for the last block, there is an unexpected newline in output.
+      So I trim the output to avoid this.
+      */
+      Objects.equals(a.command, b.command) && Objects.equals(a.output.trim(), b.output.trim())
+    }
   }
 
   @Test
@@ -180,6 +202,21 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
     disableSavingHistory,
     terminalCustomCommandListener
   )
+
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun shells(): List<Path> = TerminalSessionTestUtil.getShellPaths()
+
+    fun <T> assertListEquals(
+      expected: List<T>,
+      actual: List<T>,
+      equals: BiPredicate<T, T> = BiPredicate { a, b -> Objects.equals(a, b) },
+    ) {
+      if (expected.size != actual.size) failNotEquals("", expected, actual)
+      if (expected.zip(actual).any { !equals.test(it.first, it.second) }) failNotEquals("", expected, actual)
+    }
+  }
 
 }
 

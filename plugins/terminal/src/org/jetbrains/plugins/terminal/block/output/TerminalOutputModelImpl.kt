@@ -19,6 +19,13 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
+ * Stores all blocks content in a single [document], instead of [Document] per block.
+ * Blocks are just windows (i.e., substring) over the [document] (see [com.intellij.openapi.editor.RangeMarker]).
+ *
+ * This serves several reasons:
+ * - Performance efficiency - it is faster to render one editor instead of N.
+ * - Cross-block actions like selection, copy, focus, etc.
+ *
  * Designed as a part of MVC pattern.
  * @see TerminalOutputModel
  * @see TerminalOutputView
@@ -30,6 +37,10 @@ internal class TerminalOutputModelImpl(override val editor: EditorEx) : Terminal
   private val blockInfos: MutableMap<CommandBlock, CommandBlockInfo> = HashMap()
   private var highlightingsSnapshot: TerminalOutputHighlightingsSnapshot? = null
 
+  /**
+   * Stores whole Session output.
+   * Mostly is being only appended.
+   */
   private val document: Document = editor.document
   private val listeners: MutableList<TerminalOutputModelListener> = CopyOnWriteArrayList()
 
