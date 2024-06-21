@@ -24,6 +24,14 @@ interface Finder {
     return UiComponent(ComponentData(xpath, driver, searchService, robotProvider, searchContext, null))
   }
 
+  fun x(init: QueryBuilder.() -> String): UiComponent {
+    return x(xQuery { init() })
+  }
+
+  fun <T : UiComponent> x(type: Class<T>, init: QueryBuilder.() -> String): T {
+    return x(xQuery { init() }, type)
+  }
+
   fun <T : UiComponent> x(@Language("xpath") xpath: String, type: Class<T>): T {
     return type.getConstructor(
       ComponentData::class.java
@@ -32,6 +40,10 @@ interface Finder {
 
   fun xx(@Language("xpath") xpath: String): UIComponentsList<UiComponent> {
     return UIComponentsList(xpath, UiComponent::class.java, driver, searchService, robotProvider, searchContext)
+  }
+
+  fun xx(init: QueryBuilder.() -> String): UIComponentsList<UiComponent> {
+    return UIComponentsList(xQuery { init() }, UiComponent::class.java, driver, searchService, robotProvider, searchContext)
   }
 
   fun <T : UiComponent> xx(@Language("xpath") xpath: String, type: Class<T>): UIComponentsList<T> {

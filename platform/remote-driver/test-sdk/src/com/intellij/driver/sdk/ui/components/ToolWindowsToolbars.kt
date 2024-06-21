@@ -4,25 +4,25 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.Locators
+import com.intellij.driver.sdk.ui.QueryBuilder
 
 class ToolWindowLeftToolbarUi(data: ComponentData) : UiComponent(data) {
-  val projectButton = stripeButton(Locators.byAccessibleName("Project"))
-  val buildButton = stripeButton(Locators.byAccessibleName("Build"))
-  val gitButton = stripeButton(Locators.byAccessibleName("Git"))
-  val commitButton = stripeButton(Locators.byAccessibleName("Commit"))
-  val structureButton = stripeButton(Locators.byAccessibleName("Structure"))
-  val servicesButton = stripeButton(Locators.byAccessibleName("Services"))
-  val terminalButton = stripeButton(Locators.byAccessibleName("Terminal"))
-  val problemsButton = stripeButton(Locators.byAccessibleName("Problems"))
-  val moreButton = stripeButton(Locators.byAccessibleName("More"))
+  val projectButton = stripeButton { byAccessibleName("Project") }
+  val buildButton = stripeButton { byAccessibleName("Build") }
+  val gitButton = stripeButton { byAccessibleName("Git") }
+  val commitButton = stripeButton { byAccessibleName("Commit") }
+  val structureButton = stripeButton { byAccessibleName("Structure") }
+  val servicesButton = stripeButton { byAccessibleName("Services") }
+  val terminalButton = stripeButton { byAccessibleName("Terminal") }
+  val problemsButton = stripeButton { byAccessibleName("Problems") }
+  val moreButton = stripeButton { byAccessibleName("More") }
 }
 
 class ToolWindowRightToolbarUi(data: ComponentData) : UiComponent(data) {
-  val notificationsButton = stripeButton(Locators.byAccessibleName("Notifications"))
-  val gradleButton = stripeButton(Locators.byAccessibleName("Gradle"))
-  val mavenButton = stripeButton(Locators.byAccessibleName("Maven"))
-  val databaseButton = stripeButton(Locators.byAccessibleName("Database"))
+  val notificationsButton = stripeButton { byAccessibleName("Notifications") }
+  val gradleButton = stripeButton { byAccessibleName("Gradle") }
+  val mavenButton = stripeButton { byAccessibleName("Maven") }
+  val databaseButton = stripeButton { byAccessibleName("Database") }
 }
 
 class StripeButtonUi(data: ComponentData) : UiComponent(data) {
@@ -61,3 +61,4 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
 }
 
 private fun Finder.stripeButton(locator: String) = x(locator, StripeButtonUi::class.java)
+private fun Finder.stripeButton(locator: QueryBuilder.() -> String) = x(StripeButtonUi::class.java) { locator() }

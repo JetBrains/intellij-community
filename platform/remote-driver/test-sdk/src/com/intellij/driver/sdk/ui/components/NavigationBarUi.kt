@@ -1,21 +1,21 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
-import com.intellij.driver.sdk.ui.Locators
+import com.intellij.driver.sdk.ui.QueryBuilder
 
-val IdeaFrameUI.navigationBar get() = x(NavigationBarUi.locator, NavigationBarUi::class.java)
+val IdeaFrameUI.navigationBar get() = x(NavigationBarUi::class.java) { NavigationBarUi.locator }
 
 class NavigationBarUi(data: ComponentData): UiComponent(data) {
 
   companion object {
-    val locator = Locators.byClass("NewNavBarPanel")
+    val locator = QueryBuilder().byClass("NewNavBarPanel")
   }
 
   val currentPath: List<String>
     get() = findAllText().sortedBy { it.point.x }.map { it.text }
 
   fun navBarItem(item: String): NavBarItemUi =
-    x(Locators.byClassAndAccessibleName("NavBarItemComponent", item), NavBarItemUi::class.java)
+    x(NavBarItemUi::class.java) { and(byClass("NavBarItemComponent"), byAccessibleName(item)) }
 
   class NavBarItemUi(data: ComponentData): UiComponent(data) {
     val isSelected get() = driver.new(MethodInvocator::class, component.getClass(), "isSelected", null).invoke(component) as Boolean

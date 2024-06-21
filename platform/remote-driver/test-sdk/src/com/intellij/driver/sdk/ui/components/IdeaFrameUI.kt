@@ -5,7 +5,6 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.Locators
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.openapi.util.SystemInfo
@@ -35,9 +34,9 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
   val isMaximized: Boolean
     get() = ideaFrameComponent.getExtendedState().and(JFrame.MAXIMIZED_BOTH) != 0
 
-  val leftToolWindowToolbar: ToolWindowLeftToolbarUi = x(Locators.byClass("ToolWindowLeftToolbar"), ToolWindowLeftToolbarUi::class.java)
+  val leftToolWindowToolbar: ToolWindowLeftToolbarUi = x(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }
 
-  val rightToolWindowToolbar: ToolWindowRightToolbarUi = x(Locators.byClass("ToolWindowRightToolbar"), ToolWindowRightToolbarUi::class.java)
+  val rightToolWindowToolbar: ToolWindowRightToolbarUi = x(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }
 
   val settingsButton = x("//div[@myicon='settings.svg']")
 

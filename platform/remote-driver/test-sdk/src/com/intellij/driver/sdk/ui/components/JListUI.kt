@@ -3,16 +3,19 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.Locators
+import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.RectangleRef
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.driver.sdk.ui.xQuery
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import javax.swing.JList
 
 /** Locates JList element */
-fun Finder.list(@Language("xpath") xpath: String? = null) = x(xpath ?: Locators.byType(JList::class.java),
+fun Finder.list(@Language("xpath") xpath: String? = null) = x(xpath ?: xQuery { byType(JList::class.java.name) },
                                                               JListUiComponent::class.java)
+
+fun Finder.list(locator: QueryBuilder.() -> String) = x(JListUiComponent::class.java) {locator()}
 
 /** Locates JBList element */
 fun Finder.jBlist(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JBList']",

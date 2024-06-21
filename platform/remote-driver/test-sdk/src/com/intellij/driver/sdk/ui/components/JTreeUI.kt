@@ -7,9 +7,9 @@ import com.intellij.driver.model.TreePathToRowList
 import com.intellij.driver.sdk.remoteDev.BeControlAdapter
 import com.intellij.driver.sdk.remoteDev.JTreeFixtureAdapter
 import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.Locators
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 import javax.swing.JTree
@@ -17,7 +17,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 
-fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: Locators.byType(JTree::class.java),
+fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: xQuery { byType(JTree::class.java) },
                                                               JTreeUiComponent::class.java)
 
 open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
