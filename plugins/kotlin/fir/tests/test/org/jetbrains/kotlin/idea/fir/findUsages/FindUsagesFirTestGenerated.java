@@ -450,6 +450,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/javaInterfaceAllUsages.0.kt");
             }
 
+            @TestMetadata("javaLambdaUsages.0.kt")
+            public void testJavaLambdaUsages() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/javaLambdaUsages.0.kt");
+            }
+
             @TestMetadata("kotlinAliasedClassAllUsages.0.kt")
             public void testKotlinAliasedClassAllUsages() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinAliasedClassAllUsages.0.kt");
@@ -732,6 +737,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             @TestMetadata("javaAndKotlinOverrides.0.kt")
             public void testJavaAndKotlinOverrides() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/javaAndKotlinOverrides.0.kt");
+            }
+
+            @TestMetadata("javaLambdaUsages.0.kt")
+            public void testJavaLambdaUsages() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/javaLambdaUsages.0.kt");
             }
 
             @TestMetadata("javaMethodUsages.0.kt")

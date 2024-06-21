@@ -20,14 +20,17 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.*
+import com.siyeh.ig.psiutils.FunctionalExpressionUtils
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -47,6 +50,7 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
+import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
@@ -345,9 +349,23 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             if (kotlinOptions.searchOverrides) {
                 addTask {
                     val overriders = KotlinFindUsagesSupport.searchOverriders(element, options.searchScope)
-                    overriders.all {
+                    val processor: (PsiElement) -> Boolean = all@{
                         val element = runReadAction { it.takeIf { it.isValid }?.navigationElement } ?: return@all true
                         processUsage(uniqueProcessor, element)
+                    }
+                    if (!overriders.all(processor)) {
+                        false
+                    } else {
+                        val psiClass = when (element) {
+                            is KtNamedFunction -> element.toPossiblyFakeLightMethods().singleOrNull()
+                            else -> null
+                        }?.containingClass
+
+                        if (psiClass != null && LambdaUtil.isFunctionalClass(psiClass)) {
+                            FunctionalExpressionSearch.search(psiClass, options.searchScope).all(processor)
+                        } else {
+                            true
+                        }
                     }
                 }
             }

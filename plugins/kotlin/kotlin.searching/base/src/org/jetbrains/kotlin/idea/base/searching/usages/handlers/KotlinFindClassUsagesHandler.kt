@@ -4,23 +4,23 @@ package org.jetbrains.kotlin.idea.base.searching.usages.handlers
 
 import com.intellij.find.findUsages.AbstractFindUsagesDialog
 import com.intellij.find.findUsages.FindUsagesOptions
-import com.intellij.find.findUsages.JavaFindUsagesHelper
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.FilteredQuery
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindClassUsagesDialog
-import org.jetbrains.kotlin.idea.base.util.restrictByFileType
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isConstructorUsage
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.processCompanionObjectInternalReferences
@@ -29,11 +29,9 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOpt
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.search.usagesSearch.buildProcessDelegationCallKotlinConstructorUsagesTask
-import org.jetbrains.kotlin.load.kotlin.internalName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.effectiveDeclarations
-import java.util.*
 
 class KotlinFindClassUsagesHandler(
     ktClass: KtClassOrObject,
@@ -107,7 +105,7 @@ class KotlinFindClassUsagesHandler(
         private fun processInheritorsLater() {
             addTask {
                 val searchInheritors = KotlinFindUsagesSupport.searchInheritors(element, options.searchScope)
-                searchInheritors.all { e ->
+                val processor: (PsiElement) -> Boolean = { e ->
                     runReadAction {
                         if (!e.isValid) return@runReadAction false
                         val isInterface = (e as? KtClass)?.isInterface() ?: (e as? PsiClass)?.isInterface ?: false
@@ -117,6 +115,18 @@ class KotlinFindClassUsagesHandler(
 
                             else -> true
                         }
+                    }
+                }
+
+                if (!searchInheritors.all(processor)) {
+                    false
+                } else {
+                    val ktClass = element as? KtClass
+                    val psiClass = ktClass?.toLightClass() ?: ktClass?.toFakeLightClass()
+                    if (psiClass != null && LambdaUtil.isFunctionalClass(psiClass)) {
+                        FunctionalExpressionSearch.search(psiClass, options.searchScope).all(processor)
+                    } else {
+                        true
                     }
                 }
             }
