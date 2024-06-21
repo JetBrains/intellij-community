@@ -1822,17 +1822,6 @@ f:com.intellij.ui.EngravedLabel
 - <init>(java.lang.String):V
 - getShadowColor():java.awt.Color
 - setShadowColor(java.awt.Color):V
-f:com.intellij.ui.EngravedTextGraphics
-- com.intellij.ui.Graphics2DDelegate
-- sf:SHADOW_COLOR:java.awt.Color
-- <init>(java.awt.Graphics2D):V
-- <init>(java.awt.Graphics2D,I,I,java.awt.Color):V
-- create():java.awt.Graphics
-- drawChars(C[],I,I,I,I):V
-- drawString(java.lang.String,F,F):V
-- drawString(java.lang.String,I,I):V
-- drawString(java.text.AttributedCharacterIterator,F,F):V
-- drawString(java.text.AttributedCharacterIterator,I,I):V
 f:com.intellij.ui.Gradient
 - <init>(java.awt.Color,java.awt.Color):V
 - getEndColor():java.awt.Color
