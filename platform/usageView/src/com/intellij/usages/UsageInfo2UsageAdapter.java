@@ -66,12 +66,14 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     public final int lineNumber;
     public final VirtualFile virtualFile;
     public final @Nullable SmartPsiFileRange navigationRange;
+    public final long modificationStamp;
 
-    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, @Nullable SmartPsiFileRange navigationRange) {
+    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, @Nullable SmartPsiFileRange navigationRange, long stamp) {
       this.offset = offset;
       this.lineNumber = lineNumber;
       this.virtualFile = virtualFile;
       this.navigationRange = navigationRange;
+      this.modificationStamp = stamp;
     }
   }
 
@@ -120,14 +122,16 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
           lineNumber = getLineNumber(document, range.getStartOffset());
         }
       }
-      return new ComputedData(offset, lineNumber, virtualFile, possiblySmart(psiFile, navigationRange));
+
+      var modificationStamp = psiFile == null ? -1 : psiFile.getViewProvider().getModificationStamp();
+      return new ComputedData(offset, lineNumber, virtualFile, possiblySmart(psiFile, navigationRange), modificationStamp);
     });
     myOffset = data.offset;
     myLineNumber = data.lineNumber;
     myVirtualFile = data.virtualFile;
     myNavigationRange = data.navigationRange;
     myMergedNavigationRange = data.navigationRange;
-    myModificationStamp = getCurrentModificationStamp();
+    myModificationStamp = data.modificationStamp;
   }
 
   @Override
