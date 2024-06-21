@@ -32,14 +32,14 @@ fun User32Ex.findMainWindow(pid: Int): WinDef.HWND? {
     val winOwner = GetWindow(hWnd, /*GW_OWNER*/4)
     if (winOwner != null) {
       logger.trace { "There's owner ($winOwner) of current window ($hWnd). Continue enumeration" }
-      return@findProcessWindow true
+      return@findProcessWindow false
     }
 
     if (!IsWindowVisible(hWnd)) {
       logger.trace { "Window is not visible. Continue enumeration" }
-      return@findProcessWindow true
+      return@findProcessWindow false
     }
-    return@findProcessWindow false
+    return@findProcessWindow true
   }
 }
 
@@ -69,11 +69,11 @@ fun User32Ex.findProcessWindow(pid: Int, filter: ((WinDef.HWND) -> Boolean)): Wi
         return CONTINUE_ENUMERATION
       }
 
-      if (filter(hWnd)) {
-        winHandle = hWnd
-        return STOP_ENUMERATION
-      }
-      return CONTINUE_ENUMERATION
+      if (!filter(hWnd))
+        return CONTINUE_ENUMERATION
+
+      winHandle = hWnd
+      return STOP_ENUMERATION
     }
   }, null)
 
