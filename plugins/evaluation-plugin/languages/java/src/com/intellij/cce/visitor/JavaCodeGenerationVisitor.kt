@@ -39,12 +39,22 @@ class JavaCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor
   }
 
   private fun PsiCodeBlock.trim(): List<PsiElement> {
-    val firstIndex = children.indexOfFirst { it is PsiStatement }
-    val lastIndex = children.indexOfLast { it is PsiStatement }
+    val firstIndex = children.indexOfFirst { it.isMeaningful()}
+    val lastIndex = children.indexOfLast { it.isMeaningful() }
     val indexRange = (firstIndex.. lastIndex)
     return children.filterIndexed { index, it ->
       it is PsiExpressionStatement
       index in indexRange
     }
+  }
+
+  private fun PsiElement.isMeaningful(): Boolean {
+    if (this is PsiWhiteSpace) {
+      return false
+    }
+    if (this is PsiJavaToken) {
+      return tokenType != JavaTokenType.LBRACE && tokenType != JavaTokenType.RBRACE
+    }
+    return true
   }
 }

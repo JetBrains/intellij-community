@@ -25,7 +25,7 @@
     "sessionProbability": 1.0,
     "sessionSeed": null,
     "sessionsLimit": 10,
-    "filesLimit": 5,
+    "filesLimit": 1,
     "order": "LINEAR",
     "trainTestSplit": 70
   },
