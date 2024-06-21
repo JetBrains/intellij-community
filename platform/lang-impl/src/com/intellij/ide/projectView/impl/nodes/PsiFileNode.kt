@@ -1,207 +1,165 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.projectView.impl.nodes;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.projectView.impl.nodes
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.NavigatableWithText;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.projectView.ViewSettings
+import com.intellij.ide.projectView.impl.ProjectRootsUtil
+import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.libraries.LibraryUtil
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VFileProperty
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.NavigatableWithText
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 
-import java.util.Collection;
-import java.util.Locale;
-
-public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWithText {
-  public PsiFileNode(Project project, @NotNull PsiFile value, ViewSettings viewSettings) {
-    super(project, value, viewSettings);
-  }
-
-  @Override
-  public Collection<AbstractTreeNode<?>> getChildrenImpl() {
-    Project project = getProject();
-    VirtualFile jarRoot = getJarRoot();
+open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSettings?)
+  : BasePsiNode<PsiFile>(project, value, viewSettings), NavigatableWithText {
+  public override fun getChildrenImpl(): Collection<AbstractTreeNode<*>>? {
+    val project = project
+    val jarRoot = jarRoot
     if (project != null && jarRoot != null) {
-      PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(jarRoot);
+      val psiDirectory = PsiManager.getInstance(project).findDirectory(jarRoot)
       if (psiDirectory != null) {
-        return ProjectViewDirectoryHelper.getInstance(project).getDirectoryChildren(psiDirectory, getSettings(), true);
+        return ProjectViewDirectoryHelper.getInstance(project).getDirectoryChildren(psiDirectory, settings, true)
       }
     }
 
-    return ContainerUtil.emptyList();
+    return emptyList()
   }
 
-  private boolean isArchive() {
-    var file = getVirtualFile();
-    return file != null && file.isValid() && FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
-  }
+  private val isArchive: Boolean
+    get() {
+      val file = virtualFile
+      return file != null && file.isValid && FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE)
+    }
 
-  @Override
-  protected void updateImpl(@NotNull PresentationData data) {
-    PsiFile value = getValue();
-    if (value != null) {
-      data.setPresentableText(value.getName());
-      data.setIcon(value.getIcon(Iconable.ICON_FLAG_READ_STATUS));
+  override fun updateImpl(data: PresentationData) {
+    val value = value ?: return
+    data.presentableText = value.name
+    data.setIcon(value.getIcon(Iconable.ICON_FLAG_READ_STATUS))
 
-      VirtualFile file = getVirtualFile();
-      if (file != null && file.is(VFileProperty.SYMLINK)) {
-        @NlsSafe String target = file.getCanonicalPath();
-        if (target == null) {
-          data.setAttributesKey(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
-          data.setTooltip(IdeBundle.message("node.project.view.bad.link"));
-        }
-        else {
-          data.setTooltip(FileUtil.toSystemDependentName(target));
-        }
+    val file = virtualFile
+    if (file != null && file.`is`(VFileProperty.SYMLINK)) {
+      val target: @NlsSafe String? = file.canonicalPath
+      if (target == null) {
+        data.setAttributesKey(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES)
+        data.tooltip = IdeBundle.message("node.project.view.bad.link")
+      }
+      else {
+        data.tooltip = FileUtil.toSystemDependentName(target)
       }
     }
   }
 
-  @Override
-  public boolean canNavigate() {
-    return isNavigatableLibraryRoot() || super.canNavigate();
-  }
+  override fun canNavigate(): Boolean = isNavigatableLibraryRoot || super<BasePsiNode>.canNavigate()
 
-  private boolean isNavigatableLibraryRoot() {
-    VirtualFile jarRoot = getJarRoot();
-    final Project project = getProject();
-    if (jarRoot != null && project != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
-      final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(jarRoot, project);
-      return orderEntry != null && ProjectSettingsService.getInstance(project).canOpenLibraryOrSdkSettings(orderEntry);
+  private val isNavigatableLibraryRoot: Boolean
+    get() {
+      val jarRoot = jarRoot
+      val project = project
+      if (jarRoot != null && project != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
+        val orderEntry = LibraryUtil.findLibraryEntry(jarRoot, project)
+        return orderEntry != null && ProjectSettingsService.getInstance(project).canOpenLibraryOrSdkSettings(orderEntry)
+      }
+      return false
     }
-    return false;
-  }
 
-  @Nullable
-  private VirtualFile getJarRoot() {
-    final VirtualFile file = getVirtualFile();
-    if (file == null || !file.isValid() || !(file.getFileType() instanceof ArchiveFileType)) {
-      return null;
+  private val jarRoot: VirtualFile?
+    get() {
+      val file = virtualFile
+      if (file == null || !file.isValid || file.fileType !is ArchiveFileType) {
+        return null
+      }
+      return JarFileSystem.getInstance().getJarRootForLocalFile(file)
     }
-    return JarFileSystem.getInstance().getJarRootForLocalFile(file);
-  }
 
-  @Override
-  public void navigate(boolean requestFocus) {
-    final VirtualFile jarRoot = getJarRoot();
-    final Project project = getProject();
+  override fun navigate(requestFocus: Boolean) {
+    val jarRoot = jarRoot
+    val project = project
     if (requestFocus && jarRoot != null && project != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
-      final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(jarRoot, project);
+      val orderEntry = LibraryUtil.findLibraryEntry(jarRoot, project)
       if (orderEntry != null) {
-        ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(orderEntry);
-        return;
+        ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(orderEntry)
+        return
       }
     }
 
-    super.navigate(requestFocus);
+    super<BasePsiNode>.navigate(requestFocus)
   }
 
-  @Override
-  public String getNavigateActionText(boolean focusEditor) {
-    return isNavigatableLibraryRoot() ? ActionsBundle.message("action.LibrarySettings.navigate") : null;
+  override fun getNavigateActionText(focusEditor: Boolean): String? {
+    return if (isNavigatableLibraryRoot) ActionsBundle.message("action.LibrarySettings.navigate") else null
   }
 
-  @Override
-  public int getWeight() {
-    return 20;
+  override fun getWeight(): Int = 20
+
+  override fun getTitle(): String? {
+    val file = virtualFile
+    return if (file == null) super.getTitle() else FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
   }
 
-  @Override
-  public String getTitle() {
-    VirtualFile file = getVirtualFile();
-    return file != null ? FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl()) : super.getTitle();
+  final override fun isMarkReadOnly(): Boolean = true
+
+  override fun getTypeSortKey(): Comparable<ExtensionSortKey?>? {
+    return ExtensionSortKey(extension(value) ?: return null)
   }
 
-  @Override
-  protected boolean isMarkReadOnly() {
-    return true;
+  class ExtensionSortKey(private val ext: String) : Comparable<ExtensionSortKey?> {
+    override fun compareTo(other: ExtensionSortKey?): Int = if (other == null) 0 else ext.compareTo(other.ext)
   }
 
-  @Override
-  public Comparable<ExtensionSortKey> getTypeSortKey() {
-    String extension = extension(getValue());
-    return extension == null ? null : new ExtensionSortKey(extension);
+  override fun shouldDrillDownOnEmptyElement(): Boolean {
+    val file = value
+    @Suppress("DEPRECATION")
+    return file != null && file.fileType === com.intellij.openapi.fileTypes.StdFileTypes.JAVA
   }
 
-  @Nullable
-  public static String extension(@Nullable PsiFile file) {
-    if (file != null) {
-      VirtualFile vFile = file.getVirtualFile();
-      if (vFile != null) {
-        var type = vFile.getFileType();
-        var defaultExtension = type.getDefaultExtension();
-        if (!defaultExtension.isEmpty()) {
-          // If the type defines a default extension, use it to group files of the same type together,
-          // regardless of their actual extension (e.g. *.htm, *.html...).
-          return defaultExtension;
-        }
-        else if (type != FileTypes.UNKNOWN) {
-          // Otherwise, fall back to the type name, again, to group files of the same type together.
-          return type.getName();
-        }
-        else {
-          // If the type is unknown, fall back to the actual extension, convert it to lower case, again, to group things together.
-          var extension = vFile.getExtension();
-          return extension == null || extension.isEmpty() ? defaultExtension : extension.toLowerCase(Locale.ROOT);
-        }
-      }
+  override fun canRepresent(element: Any?): Boolean {
+    if (super.canRepresent(element)) {
+      return true
     }
 
-    return null;
+    val value = value
+    return value != null && element != null && element == value.virtualFile
   }
 
-  public static final class ExtensionSortKey implements Comparable<ExtensionSortKey> {
-    private final String myExtension;
+  override fun contains(file: VirtualFile): Boolean {
+    return super.contains(file) || isArchive && Comparing.equal(VfsUtil.getLocalFile(file), virtualFile)
+  }
+}
 
-    public ExtensionSortKey(@NotNull String extension) {
-      myExtension = extension;
+private fun extension(file: PsiFile?): String? {
+  val vFile = file?.virtualFile ?: return null
+  val type = vFile.fileType
+  val defaultExtension = type.defaultExtension
+  when {
+    !defaultExtension.isEmpty() -> {
+      // If the type defines a default extension, use it to group files of the same type together,
+      // regardless of their actual extension (e.g. *.htm, *.html...).
+      return defaultExtension
     }
-
-    @Override
-    public int compareTo(ExtensionSortKey o) {
-      return o == null ? 0 : myExtension.compareTo(o.myExtension);
+    type !== FileTypes.UNKNOWN -> {
+      // Otherwise, fall back to the type name, again, to group files of the same type together.
+      return type.name
     }
-  }
-
-  @Override
-  public boolean shouldDrillDownOnEmptyElement() {
-    final PsiFile file = getValue();
-    return file != null && file.getFileType() == StdFileTypes.JAVA;
-  }
-
-  @Override
-  public boolean canRepresent(final Object element) {
-    if (super.canRepresent(element)) return true;
-
-    PsiFile value = getValue();
-    return value != null && element != null && element.equals(value.getVirtualFile());
-  }
-
-  @Override
-  public boolean contains(@NotNull VirtualFile file) {
-    return super.contains(file) || isArchive() && Comparing.equal(VfsUtil.getLocalFile(file), getVirtualFile());
+    else -> {
+      // If the type is unknown, fall back to the actual extension, convert it to a lower case, again, to group things together.
+      val extension = vFile.extension
+      return if (extension.isNullOrEmpty()) defaultExtension else extension.lowercase()
+    }
   }
 }
