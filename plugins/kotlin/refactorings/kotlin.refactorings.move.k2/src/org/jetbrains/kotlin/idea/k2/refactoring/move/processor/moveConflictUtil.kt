@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -170,6 +171,7 @@ private fun MoveRenameUsageInfo.isVisibleBeforeMove(): Boolean {
         val declaration = upToDateReferencedElement as? PsiNamedElement ?: return false
         declaration.isVisibleTo(element ?: return false)
     } catch (e: Exception) {
+        if (e is ControlFlowException) throw e
         fileLogger().error(e)
         return true
     }
@@ -210,6 +212,7 @@ private fun tryFindConflict(findConflict: () -> Pair<PsiElement, String>?): Pair
     return try {
         findConflict()
     } catch (e: Exception) {
+        if (e is ControlFlowException) throw e
         fileLogger().error(e)
         null
     }
