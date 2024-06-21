@@ -89,25 +89,20 @@ val GitLabMergeRequestFullDetails.reviewState: ReviewRequestState
       else -> ReviewRequestState.OPENED // to avoid null state
     }
 
+fun GitLabProjectDTO.getRemoteDescriptor(server: GitLabServerPath): HostedGitRepositoryRemote =
+  HostedGitRepositoryRemote(
+    ownerPath,
+    server.toURI(),
+    fullPath,
+    httpUrlToRepo,
+    sshUrlToRepo
+  )
+
 fun GitLabMergeRequestFullDetails.getSourceRemoteDescriptor(server: GitLabServerPath): HostedGitRepositoryRemote? =
-  sourceProject?.let {
-    HostedGitRepositoryRemote(
-      it.ownerPath,
-      server.toURI(),
-      it.fullPath,
-      it.httpUrlToRepo,
-      it.sshUrlToRepo
-    )
-  }
+  sourceProject?.getRemoteDescriptor(server)
 
 fun GitLabMergeRequestFullDetails.getTargetRemoteDescriptor(server: GitLabServerPath): HostedGitRepositoryRemote =
-  HostedGitRepositoryRemote(
-    targetProject.ownerPath,
-    server.toURI(),
-    targetProject.fullPath,
-    targetProject.httpUrlToRepo,
-    targetProject.sshUrlToRepo
-  )
+  targetProject.getRemoteDescriptor(server)
 
 /**
  * Gets a special remote ref for the head of the merge request.
