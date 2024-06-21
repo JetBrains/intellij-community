@@ -8,7 +8,9 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.testFramework.replaceService
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runCurrent
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -16,6 +18,7 @@ import java.lang.reflect.Constructor
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   protected lateinit var componentStore: TestComponentStore
 
@@ -32,10 +35,11 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
 
   protected fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit) {
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, configDir, enabledCondition = { true })
-    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
+    val controls = SettingsSyncMain.init(testScope, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(initMode)
+    testScope.runCurrent()
   }
 
   protected fun waitForSettingsToBeApplied(vararg componentsToReinit: PersistentStateComponent<*>, execution: () -> Unit) {
@@ -43,6 +47,9 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
     componentStore.reinitLatch = cdl
 
     execution()
+    testScope.runCurrent()
+    bridge.waitForAllExecuted()
+    testScope.runCurrent()
 
     assertTrue(cdl.wait(), "Didn't await until new settings are applied")
 

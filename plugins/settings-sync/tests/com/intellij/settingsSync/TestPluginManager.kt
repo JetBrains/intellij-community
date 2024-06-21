@@ -8,11 +8,15 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.plugins.AbstractPluginManagerProxy
 import com.intellij.settingsSync.plugins.SettingsSyncPluginInstaller
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 import org.junit.Assert
 import java.util.concurrent.CopyOnWriteArrayList
 
-internal class TestPluginManager(val testScheduler: TestCoroutineScheduler) : AbstractPluginManagerProxy() {
+@OptIn(ExperimentalCoroutinesApi::class)
+internal class TestPluginManager(val testScope: TestScope) : AbstractPluginManagerProxy() {
   val installer = TestPluginInstaller {
     addPluginDescriptors(TestPluginDescriptor.ALL[it]!!)
   }
@@ -40,7 +44,7 @@ internal class TestPluginManager(val testScheduler: TestCoroutineScheduler) : Ab
         for (pluginListener in pluginEnabledStateListeners) {
           pluginListener.stateChanged(enabledList, true)
         }
-        testScheduler.runCurrent()
+        testScope.runCurrent()
         return enabledList.size == pluginIds.size
       }
 
@@ -58,7 +62,7 @@ internal class TestPluginManager(val testScheduler: TestCoroutineScheduler) : Ab
         for (pluginListener in pluginEnabledStateListeners) {
           pluginListener.stateChanged(disabledList, false)
         }
-        testScheduler.runCurrent()
+        testScope.runCurrent()
         return disabledList.size == pluginIds.size
       }
 

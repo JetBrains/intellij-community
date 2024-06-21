@@ -8,6 +8,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
+import kotlinx.coroutines.test.TestScope
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -65,7 +66,7 @@ class SettingsRepositoryToSettingsSyncMigrationTest {
   }
 
   private fun migrate(): SettingsSnapshot {
-    val migration = SettingsRepositoryToSettingsSyncMigration()
+    val migration = SettingsRepositoryToSettingsSyncMigration(TestScope())
     assertTrue(migration.isLocalDataAvailable(rootConfig))
     val snapshot = migration.getLocalDataIfAvailable(rootConfig)
     assertNotNull(snapshot)

@@ -27,8 +27,7 @@ abstract class BasePluginManagerTest {
 
   @TestDisposable
   internal lateinit var testRootDisposable: Disposable
-  protected lateinit var testDispatcher: TestDispatcher
-  protected lateinit var testScheduler: TestCoroutineScheduler
+  protected lateinit var testScope: TestScope
 
   //is used in TestPluginDescriptor.Companion.allDependenciesOnly
   internal val modulesPlatform = TestPluginDescriptor(
@@ -96,12 +95,11 @@ abstract class BasePluginManagerTest {
   fun setUp() {
     SettingsSyncSettings.getInstance().syncEnabled = true
     SettingsSyncSettings.getInstance().loadState(SettingsSyncSettings.State())
-    testScheduler = TestCoroutineScheduler()
-    testDispatcher = StandardTestDispatcher(testScheduler)
-    testPluginManager = TestPluginManager(testScheduler)
+    testScope = TestScope(StandardTestDispatcher(TestCoroutineScheduler()))
+    testPluginManager = TestPluginManager(testScope)
     testPluginManager.addPluginDescriptors(*TestPluginDescriptor.allDependenciesOnly().toTypedArray())
     ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
-    pluginManager = SettingsSyncPluginManager(CoroutineScope(testDispatcher))
+    pluginManager = SettingsSyncPluginManager(testScope)
     Disposer.register(testRootDisposable, pluginManager)
   }
 

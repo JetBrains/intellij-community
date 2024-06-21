@@ -142,7 +142,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
    * i.e. disables, enables and installs plugins according to the State.
    * It doesn't uninstall plugins - it only disable it.
    */
-  fun pushChangesToIde(newState: SettingsSyncPluginsState) {
+  suspend fun pushChangesToIde(newState: SettingsSyncPluginsState) {
     val pluginsToDisable = mutableSetOf<PluginId>()
     val pluginsToEnable = mutableSetOf<PluginId>()
     val pluginsToInstall = mutableListOf<PluginId>()

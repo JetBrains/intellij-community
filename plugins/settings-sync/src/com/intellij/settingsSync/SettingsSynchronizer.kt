@@ -68,7 +68,7 @@ private class SettingsSynchronizerApplicationInitializedListener : ApplicationIn
           SettingsSyncEventsStatistics.MIGRATED_FROM_OLD_PLUGIN.log()
         }
         else {
-          migrateIfNeeded(service<SettingsSynchronizerState>().executorService)
+          migrateIfNeeded(asyncScope, service<SettingsSynchronizerState>().executorService)
         }
       }
     }
@@ -117,7 +117,7 @@ private class SettingsSynchronizer : ApplicationActivationListener {
     }
 
     if (Registry.`is`("settingsSync.autoSync.on.focus", true)) {
-      fireSettingsChanged()
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
     }
   }
 
@@ -130,13 +130,9 @@ private class SettingsSynchronizer : ApplicationActivationListener {
     val delay = autoSyncDelay
     return service<SettingsSynchronizerState>().executorService.scheduleWithFixedDelay(Runnable {
       LOG.debug("Syncing settings by timer")
-      fireSettingsChanged()
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
     }, delay, delay, TimeUnit.SECONDS)
   }
-}
-
-internal fun fireSettingsChanged() {
-  SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
 }
 
 internal fun enabledOrDisabled(value: Boolean?): String {

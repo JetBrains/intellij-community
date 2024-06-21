@@ -11,6 +11,9 @@ import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.*
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -23,8 +26,16 @@ import kotlin.io.path.createFile
 import kotlin.io.path.div
 import kotlin.io.path.pathString
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class SettingsSyncIdeMediatorTest : BasePlatformTestCase() {
+
+  protected lateinit var testScope: TestScope
+
+  override fun setUp() {
+    super.setUp()
+    testScope = TestScope(StandardTestDispatcher(TestCoroutineScheduler()))
+  }
 
   @JvmField @Rule
   val memoryFs = InMemoryFsRule()
@@ -90,7 +101,10 @@ true
     syncState.syncEnabled = true
     syncState.setCategoryEnabled(SettingsCategory.CODE, false)
     syncState.setSubcategoryEnabled(SettingsCategory.PLUGINS, "IdeaVIM", false)
-    mediator.applyToIde(snapshot, syncState)
+    testScope.launch {
+      mediator.applyToIde(snapshot, syncState)
+    }
+    testScope.runCurrent()
     Assert.assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
     Assert.assertFalse(SettingsSyncSettings.getInstance().migrationFromOldStorageChecked)
     Assert.assertFalse(SettingsSyncSettings.getInstance().isCategoryEnabled(SettingsCategory.CODE))
@@ -144,7 +158,10 @@ true
     syncState.syncEnabled = true
     try {
       mediator.activateStreamProvider()
-      mediator.applyToIde(snapshot, syncState)
+      testScope.launch {
+        mediator.applyToIde(snapshot, syncState)
+      }
+      testScope.runCurrent()
       Assert.assertEquals(2, callbackCalls.size)
       Assert.assertEquals("First", callbackCalls[0])
       Assert.assertEquals("Second", callbackCalls[1])
@@ -163,7 +180,10 @@ true
   </component>
   </application>
     """.trimIndent().toByteArray())), null, emptyMap(), emptySet())
-      mediator.applyToIde(newSnapshot, syncState)
+      testScope.launch {
+        mediator.applyToIde(newSnapshot, syncState)
+      }
+      testScope.runCurrent()
       Assert.assertEquals(2, callbackCalls.size)
       Assert.assertEquals("Second", callbackCalls[0])
       Assert.assertEquals("First", callbackCalls[1])

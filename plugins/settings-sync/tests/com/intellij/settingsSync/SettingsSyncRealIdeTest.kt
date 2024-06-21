@@ -2,7 +2,9 @@ package com.intellij.settingsSync
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -13,6 +15,7 @@ import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runCurrent
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -76,7 +79,6 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   fun `quickly modified settings are pushed together`() {
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
-    bridge.suspendEventProcessing()
     GeneralSettings.getInstance().initModifyAndSave {
       autoSaveFiles = false
     }
@@ -84,9 +86,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
       SHOW_INTENTION_BULB = false
     }
 
-    val pushedSnapshot = executeAndWaitUntilPushed {
-      bridge.resumeEventProcessing()
-    }
+    val pushedSnapshot = executeAndWaitUntilPushed {}
 
     pushedSnapshot.assertSettingsSnapshot {
       fileState {
@@ -177,7 +177,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
                                                             setOf(fileState), null, emptyMap(), emptySet()))
 
     waitForSettingsToBeApplied(generalSettings) {
-      fireSettingsChanged()
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
     }
     Assertions.assertFalse(generalSettings.isSaveOnFrameDeactivation)
   }
@@ -258,12 +258,12 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @State(name = "SettingsSyncTestExportableNonRoamable",
          storages = [Storage("settings-sync-test.exportable-non-roamable.xml", roamingType = RoamingType.DISABLED, exportable = true)])
-  private class ExportableNonRoamable: BaseComponent()
+  private class ExportableNonRoamable : BaseComponent()
 
   @State(name = "SettingsSyncTestRoamable",
          storages = [Storage("settings-sync-test.roamable.xml", roamingType = RoamingType.DEFAULT)],
          category = SettingsCategory.UI)
-  private class Roamable: BaseComponent()
+  private class Roamable : BaseComponent()
 
   private open class BaseComponent : PersistentStateComponent<AState> {
     var aState = AState()
@@ -275,25 +275,14 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     }
   }
 
-  private fun performInOfflineMode(action: () -> Unit) {
-    //remoteCommunicator.offline = true
-    //val cdl = CountDownLatch(1)
-    //remoteCommunicator.startPushLatch = cdl
-    //action()
-    //assertTrue("Didn't await for the push request", cdl.await(5, TIMEOUT_UNIT))
-  }
-
   @Test
-  @Disabled // TODO investigate
   fun `local and remote changes in different files are both applied`() {
     val generalSettings = GeneralSettings.getInstance().init()
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     // prepare local commit but don't allow it to be pushed
-    performInOfflineMode {
-      EditorSettingsExternalizable.getInstance().initModifyAndSave {
-        SHOW_INTENTION_BULB = false
-      }
+    UISettings.getInstance().initModifyAndSave {
+      compactTreeIndents = true
     }
     // at this point there is an unpushed local commit
 
@@ -306,8 +295,9 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     //remoteCommunicator.offline = false
 
     executeAndWaitUntilPushed {
-      waitForSettingsToBeApplied(generalSettings, EditorSettingsExternalizable.getInstance()) {
-        fireSettingsChanged() // merge will happen here
+      waitForSettingsToBeApplied(generalSettings) {
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+        // merge will happen here
       }
     }
 
@@ -318,13 +308,13 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
         }
       }
       fileState {
-        EditorSettingsExternalizable().withState {
-          SHOW_INTENTION_BULB = false
+        UISettings().withState {
+          compactTreeIndents = true
         }
       }
     }
     Assertions.assertFalse(generalSettings.isSaveOnFrameDeactivation)
-    Assertions.assertFalse(EditorSettingsExternalizable.getInstance().isShowIntentionBulb)
+    Assertions.assertTrue(UISettings.getInstance().compactTreeIndents)
   }
 
 /*

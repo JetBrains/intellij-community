@@ -8,6 +8,11 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -33,6 +38,10 @@ internal abstract class SettingsSyncTestBase {
   protected lateinit var updateChecker: SettingsSyncUpdateChecker
   protected lateinit var bridge: SettingsSyncBridge
 
+  protected lateinit var testScheduler: TestCoroutineScheduler
+  protected lateinit var testScope: TestScope
+
+
   @TestDisposable
   protected lateinit var disposable: Disposable
   protected val settingsSyncStorage: Path get() = configDir.resolve("settingsSync")
@@ -51,6 +60,9 @@ internal abstract class SettingsSyncTestBase {
     else {
       MockRemoteCommunicator()
     }
+
+    testScheduler = TestCoroutineScheduler()
+    testScope = TestScope(testScheduler)
 
     val serverState = remoteCommunicator.checkServerState()
     if (serverState != ServerState.FileNotExists) {
@@ -83,6 +95,7 @@ internal abstract class SettingsSyncTestBase {
   }
 
   protected fun assertServerSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
+    testScope.runCurrent()
     val pushedSnapshot = remoteCommunicator.getVersionOnServer()
     assertNotNull(pushedSnapshot, "Nothing has been pushed")
     pushedSnapshot!!.assertSettingsSnapshot {
@@ -91,13 +104,16 @@ internal abstract class SettingsSyncTestBase {
   }
 
   protected fun executeAndWaitUntilPushed(testExecution: () -> Unit): SettingsSnapshot {
-    return remoteCommunicator.awaitForPush(testExecution)
+    val snapshot = remoteCommunicator.awaitForPush {
+      testExecution()
+      testScope.runCurrent()
+      bridge.waitForAllExecuted()
+      testScope.runCurrent()
+    }
+    return snapshot
   }
 }
 
-internal fun SettingsSyncBridge.waitForAllExecuted() {
-  this.waitForAllExecuted(getDefaultTimeoutInSeconds(), TIMEOUT_UNIT)
-}
 
 internal fun CountDownLatch.wait(): Boolean {
   return this.await(getDefaultTimeoutInSeconds(), TIMEOUT_UNIT)
@@ -105,4 +121,4 @@ internal fun CountDownLatch.wait(): Boolean {
 
 private fun isTestingAgainstRealCloudServer() = System.getenv("SETTINGS_SYNC_TEST_CLOUD") == "real"
 
-private fun getDefaultTimeoutInSeconds(): Long = 10
+private fun getDefaultTimeoutInSeconds(): Long = 2

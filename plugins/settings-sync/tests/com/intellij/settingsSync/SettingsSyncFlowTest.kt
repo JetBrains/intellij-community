@@ -7,6 +7,8 @@ import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
@@ -32,10 +34,11 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   private fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit) {
-    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
+    val controls = SettingsSyncMain.init(testScope, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(initMode)
+    testScope.runCurrent()
   }
 
   @Test
@@ -99,7 +102,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
   private fun deleteServerDataAndWait() {
     val cdl = CountDownLatch(1)
-    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData {
+    syncSettingsAndWait(SyncSettingsEvent.DeleteServerData {
       cdl.countDown()
     })
     cdl.wait()
@@ -200,7 +203,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `enable settings with migration`() {
+  fun `enable settings with migration`() = runTest {
     val migration = migrationFromLafXml()
 
     initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
@@ -238,6 +241,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
           fileState("options/keymap.xml", "Migration Data")
         }
       }
+
       override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {
         syncSettings.setCategoryEnabled(SettingsCategory.UI, false)
       }
@@ -262,10 +266,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     ideMediator.throwOnApply(exceptionToThrow)
 
     suppressFailureOnLogError(exceptionToThrow) {
-      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CloudChange(settingsSnapshot {
+      syncSettingsAndWait(SyncSettingsEvent.CloudChange(settingsSnapshot {
         fileState("options/editor.xml", "Editor change")
       }, null))
-      bridge.waitForAllExecuted()
     }
 
     Assertions.assertFalse((settingsSyncStorage / "options" / "editor.xml").exists(), "Partial apply was not rolled back")
@@ -303,10 +306,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
-    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
-    updateChecker = controls.updateChecker
-    bridge = controls.bridge
-    bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
+    initSettingsSync()
 
     remoteCommunicator.prepareFileOnServer(settingsSnapshot {
       fileState("options/editor.xml", "Editor from Server")
@@ -324,16 +324,14 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
-    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
-    updateChecker = controls.updateChecker
-    bridge = controls.bridge
+    initSettingsSync()
 
     SettingsSyncSettings.getInstance().syncEnabled = true
     val task1 = Callable {
       bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
     }
     val task2 = Callable {
-      fireSettingsChanged()
+      syncSettingsAndWait()
     }
 
     executeAndWaitUntilPushed {
@@ -435,9 +433,11 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
   }
 
-  private fun syncSettingsAndWait() {
-    fireSettingsChanged()
+  private fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {
+    SettingsSyncEvents.getInstance().fireSettingsChanged(event)
+    testScope.runCurrent()
     bridge.waitForAllExecuted()
+    testScope.runCurrent()
   }
 
   private fun suppressFailureOnLogError(expectedException: RuntimeException, activity: () -> Unit) {
