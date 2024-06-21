@@ -1,0 +1,12 @@
+<idea-plugin package="org.jetbrains.idea.devkit.stacktrace">
+  <dependencies>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.java.unscramble"/>
+    <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileEditorProvider id="java-stacktrace-editor"
+                        implementation="org.jetbrains.idea.devkit.stacktrace.editor.StackTraceEditorProvider"/>
+  </extensions>
+</idea-plugin>

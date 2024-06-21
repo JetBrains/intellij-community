@@ -59,7 +59,8 @@ public final class AnalyzeStacktraceUtil {
                                                 @Nullable ConsoleFactory consoleFactory,
                                                 final @NlsContexts.TabTitle String tabTitle,
                                                 String text,
-                                                @Nullable Icon icon) {
+                                                @Nullable Icon icon,
+                                                Boolean withExecutor) {
     final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     builder.filters(EP_NAME.getExtensions(project));
     final ConsoleView consoleView = builder.getConsole();
@@ -70,14 +71,13 @@ public final class AnalyzeStacktraceUtil {
                                   : new MyConsolePanel(consoleView, toolbarActions);
     final RunContentDescriptor descriptor =
       new RunContentDescriptor(consoleView, null, consoleComponent, tabTitle, icon) {
-      @Override
-      public boolean isContentReuseProhibited() {
-        return true;
-      }
-    };
+        @Override
+        public boolean isContentReuseProhibited() {
+          return true;
+        }
+      };
 
-    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    for (AnAction action: consoleView.createConsoleActions()) {
+    for (AnAction action : consoleView.createConsoleActions()) {
       toolbarActions.add(action);
     }
     final ConsoleViewImpl console = (ConsoleViewImpl)consoleView;
@@ -85,12 +85,23 @@ public final class AnalyzeStacktraceUtil {
     console.getEditor().getSettings().setCaretRowShown(true);
     toolbarActions.add(ActionManager.getInstance().getAction("AnalyzeStacktraceToolbar"));
 
-    RunContentManager.getInstance(project).showRunContent(executor, descriptor);
+    if (withExecutor) {
+      final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+      RunContentManager.getInstance(project).showRunContent(executor, descriptor);
+    }
     consoleView.allowHeavyFilters();
     if (consoleFactory == null) {
       printStacktrace(consoleView, text);
     }
     return descriptor;
+  }
+
+  public static RunContentDescriptor addConsole(Project project,
+                                                @Nullable ConsoleFactory consoleFactory,
+                                                final @NlsContexts.TabTitle String tabTitle,
+                                                String text,
+                                                @Nullable Icon icon) {
+    return addConsole(project, consoleFactory, tabTitle, text, icon, true);
   }
 
   private static final class MyConsolePanel extends JPanel {

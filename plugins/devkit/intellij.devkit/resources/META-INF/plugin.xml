@@ -28,6 +28,7 @@
     <module name="intellij.devkit.workspaceModel"/>
     <module name="intellij.kotlin.devkit"/>
     <module name="intellij.devkit.debugger"/>
+    <module name="intellij.devkit.stacktrace"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
