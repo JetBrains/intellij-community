@@ -7,8 +7,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingForElement
 import org.jetbrains.kotlin.nj2k.isInSingleLine
@@ -33,12 +33,12 @@ class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<
 
                 // https://kotlinlang.org/docs/coding-conventions.html#platform-types
                 // Any property initialized with an expression of a platform type must declare its Kotlin type explicitly
-                if (element.isMember && initializerType is KtFlexibleType) {
+                if (element.isMember && initializerType is KaFlexibleType) {
                     return false
                 }
 
-                val propertyType = element.getVariableSymbol().returnType
-                return propertyType.isEqualTo(initializerType)
+                val propertyType = element.symbol.returnType
+                return propertyType.semanticallyEquals(initializerType)
             }
         }
     }
@@ -46,11 +46,11 @@ class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<
     // copied from org.jetbrains.kotlin.idea.quickfix.fixes.ChangeTypeQuickFixFactories.getPropertyInitializerType
     // TODO remove this code after porting to a JK conversion or make it a common utility
     context(KaSession)
-    private fun KtProperty.getPropertyInitializerType(): KtType? {
+    private fun KtProperty.getPropertyInitializerType(): KaType? {
         val initializer = initializer
         return if (typeReference != null && initializer != null) {
             //copy property initializer to calculate initializer's type without property's declared type
-            KtPsiFactory(project).createExpressionCodeFragment(initializer.text, context = this).getContentElement()?.getKtType()
+            KtPsiFactory(project).createExpressionCodeFragment(initializer.text, context = this).getContentElement()?.expressionType
         } else null
     }
 

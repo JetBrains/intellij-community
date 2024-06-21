@@ -552,7 +552,7 @@ class Converter private constructor(
     private fun shouldSpecifyTypeForAnonymousType(variable: PsiVariable, initializerType: Type): Boolean {
         if (initializerType !is ClassType || !initializerType.isAnonymous()) return false
 
-        val scope: PsiElement? =
+        @Suppress("DEPRECATION") val scope: PsiElement? =
             when {
                 variable is PsiField && variable.hasModifierProperty(PsiModifier.PRIVATE) -> variable.containingClass
                 variable is PsiLocalVariable -> variable.getContainingMethod()

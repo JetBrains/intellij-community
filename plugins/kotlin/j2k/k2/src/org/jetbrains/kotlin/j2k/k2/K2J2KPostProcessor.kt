@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
@@ -89,16 +89,16 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
         listOf(
             @Suppress("UNCHECKED_CAST") // fighting with generics :(
             K2DiagnosticBasedPostProcessingGroup(
-                uselessCastProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
-                smartcastImpossibleProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
-                argumentTypeMismatchProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
-                returnTypeMismatchProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
-                assignmentTypeMismatchProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
-                initializerTypeMismatchProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
-                unsafeCallProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
-                unsafeInfixCallProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
-                unsafeOperatorCallProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
-                iteratorOnNullableProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
+                uselessCastProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
+                smartcastImpossibleProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
+                argumentTypeMismatchProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
+                returnTypeMismatchProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
+                assignmentTypeMismatchProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
+                initializerTypeMismatchProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
+                unsafeCallProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
+                unsafeInfixCallProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
+                unsafeOperatorCallProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
+                iteratorOnNullableProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
             ),
             InspectionLikeProcessingGroup(
                 VarToValProcessing(),

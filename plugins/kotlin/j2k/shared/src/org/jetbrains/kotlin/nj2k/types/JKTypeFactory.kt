@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.types
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.KaNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
@@ -155,7 +155,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                 JKTypeParameterType(symbol)
             }
 
-            is KaNonErrorClassType -> {
+            is KaClassType -> {
                 val fqName = type.classId.asSingleFqName()
                 val classReference = symbolProvider.provideClassSymbol(fqName)
                 val typeParameters = type.typeArguments.map { typeArgument ->

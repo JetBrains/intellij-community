@@ -133,6 +133,7 @@ private class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
     fun methodMutability(method: PsiMethod): Mutability
             = mutabilityFlavor.forMethodReturnType(method)
 
+    @Suppress("DEPRECATION")
     private fun searchScope(element: PsiElement): PsiElement? {
         return when(element) {
             is PsiParameter -> element.declarationScope
@@ -143,6 +144,7 @@ private class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun PsiVariable.isEffectivelyFinal(): Boolean {
         if (hasModifierProperty(PsiModifier.FINAL)) return true
         return when(this) {

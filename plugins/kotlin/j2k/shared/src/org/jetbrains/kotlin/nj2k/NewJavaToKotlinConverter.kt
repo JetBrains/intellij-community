@@ -80,15 +80,15 @@ class NewJavaToKotlinConverter(
         forInlining: Boolean = false
     ): Result = allowAnalysisOnEdt {
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
-        val targetKtModule = targetModule?.productionOrTestSourceModuleInfo?.toKaModule()
+        val targetKaModule = targetModule?.productionOrTestSourceModuleInfo?.toKaModule()
 
         // TODO
         // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
         // doesn't work for copy-pasted code, in this case the module is NotUnderContentRootModuleByModuleInfo, which can't be analyzed
 
         when {
-            targetKtModule != null -> {
-                analyze(targetKtModule) {
+            targetKaModule != null -> {
+                analyze(targetKaModule) {
                     doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
                 }
             }

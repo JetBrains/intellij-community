@@ -114,7 +114,7 @@ class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext) : Recur
             is JKMultiverseKtClassSymbol -> {
                 val function = reference.target.body?.functions?.singleOrNull()
                 function?.valueParameters?.map { param ->
-                    val kaType = param.getParameterSymbol().returnType
+                    val kaType = param.symbol.returnType
                     typeFactory.fromKaType(kaType).substituteTypeParameters(classType = this)
                 }
             }

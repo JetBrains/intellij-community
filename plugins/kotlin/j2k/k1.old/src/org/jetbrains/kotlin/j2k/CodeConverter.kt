@@ -72,6 +72,7 @@ class CodeConverter(
         ).assignPrototype(variable)
     }
 
+    @Suppress("DEPRECATION")
     fun canChangeType(variable: PsiLocalVariable) : Boolean {
         return variable.hasModifierProperty(PsiModifier.FINAL) ||
                     variable.initializer == null/* we do not know actually and prefer val until we have better analysis*/ ||

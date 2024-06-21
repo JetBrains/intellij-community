@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -25,7 +25,7 @@ internal val J2K_FULL_JDK_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjec
 internal fun getK2FileTextWithErrors(file: KtFile): String {
     val errors: List<String> = allowAnalysisOnEdt {
         analyze(file) {
-            val diagnostics = file.collectDiagnosticsForFile(filter = ONLY_COMMON_CHECKERS).asSequence()
+            val diagnostics = file.collectDiagnostics(filter = ONLY_COMMON_CHECKERS).asSequence()
             diagnostics
                 // TODO: For some reason, there is a "redeclaration" error on every declaration for K2 tests
                 .filter { it.factoryName != "CLASSIFIER_REDECLARATION" && it.factoryName != "PACKAGE_CONFLICTS_WITH_CLASSIFIER" }

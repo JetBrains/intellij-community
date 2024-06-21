@@ -9,7 +9,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
@@ -19,10 +19,10 @@ import org.jetbrains.kotlin.psi.KtFile
 import kotlin.reflect.KClass
 
 internal class K2DiagnosticBasedPostProcessingGroup(
-    vararg diagnosticBasedProcessings: K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>
+    vararg diagnosticBasedProcessings: K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>
 ) : FileBasedPostProcessing() {
 
-    private val diagnosticToProcessing: Map<KClass<out KtDiagnosticWithPsi<*>>, K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>> =
+    private val diagnosticToProcessing: Map<KClass<out KaDiagnosticWithPsi<*>>, K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>> =
         diagnosticBasedProcessings.associateBy({ it.diagnosticClass }, { it })
 
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
@@ -38,7 +38,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
     ): PostProcessingApplier {
         // TODO: for copy-paste conversion, try to restrict the analysis range, like in K1 J2K
         //  (see org.jetbrains.kotlin.idea.j2k.post.processing.DiagnosticBasedPostProcessingGroup.analyzeFileRange)
-        val diagnostics = file.collectDiagnosticsForFile(filter = ONLY_COMMON_CHECKERS)
+        val diagnostics = file.collectDiagnostics(filter = ONLY_COMMON_CHECKERS)
         val processingDataList = mutableListOf<ProcessingData>()
 
         for (diagnostic in diagnostics) {
@@ -52,7 +52,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
     }
 
     context(KaSession)
-    private fun processDiagnostic(diagnostic: KtDiagnosticWithPsi<*>, file: KtFile, rangeMarker: RangeMarker?): ProcessingData? {
+    private fun processDiagnostic(diagnostic: KaDiagnosticWithPsi<*>, file: KtFile, rangeMarker: RangeMarker?): ProcessingData? {
         val processing = diagnosticToProcessing[diagnostic.diagnosticClass] ?: return null
         val element = diagnostic.psi
         val range = rangeMarker?.asTextRange ?: file.textRange
@@ -78,7 +78,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
     )
 }
 
-internal interface K2DiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWithPsi<*>> {
+internal interface K2DiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticWithPsi<*>> {
     val diagnosticClass: KClass<DIAGNOSTIC>
 
     context(KaSession)
@@ -86,7 +86,7 @@ internal interface K2DiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWithPsi<
 }
 
 @Suppress("unused") // TODO will probably be used later for diagnostics that produce a single quickfix
-internal class K2QuickFixDiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWithPsi<*>>(
+internal class K2QuickFixDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticWithPsi<*>>(
     override val diagnosticClass: KClass<DIAGNOSTIC>,
     private val fixFactory: KotlinQuickFixFactory.IntentionBased<DIAGNOSTIC>
 ) : K2DiagnosticBasedProcessing<DIAGNOSTIC> {
@@ -102,7 +102,7 @@ internal class K2QuickFixDiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWith
     }
 }
 
-internal class K2AddExclExclDiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWithPsi<*>>(
+internal class K2AddExclExclDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticWithPsi<*>>(
     override val diagnosticClass: KClass<DIAGNOSTIC>,
     private val fixFactory: KotlinQuickFixFactory.IntentionBased<DIAGNOSTIC>
 ) : K2DiagnosticBasedProcessing<DIAGNOSTIC> {
@@ -118,7 +118,7 @@ internal class K2AddExclExclDiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticW
     }
 }
 
-internal class K2CustomDiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWithPsi<*>>(
+internal class K2CustomDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticWithPsi<*>>(
     override val diagnosticClass: KClass<DIAGNOSTIC>,
     private val customFixFactory: (diagnostic: DIAGNOSTIC) -> K2DiagnosticFix?
 ) : K2DiagnosticBasedProcessing<DIAGNOSTIC> {
