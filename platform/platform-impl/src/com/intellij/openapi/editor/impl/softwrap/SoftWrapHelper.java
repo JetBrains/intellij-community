@@ -6,10 +6,12 @@ import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.CaretImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Holds utility methods for soft wraps-related processing.
  */
+@ApiStatus.Internal
 public final class SoftWrapHelper {
 
   private SoftWrapHelper() {

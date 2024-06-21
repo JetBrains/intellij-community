@@ -41,6 +41,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, PrioritizedDocumentListener, Dumpable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(FoldingModelImpl.class);
 
+  @ApiStatus.Internal
   public static final Key<Boolean> SELECT_REGION_ON_CARET_NEARBY = Key.create("select.region.on.caret.nearby");
 
   private static final Key<SavedCaretPosition> SAVED_CARET_POSITION = Key.create("saved.position.before.folding");
@@ -49,7 +50,10 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   static final Key<Boolean> HIDE_GUTTER_RENDERER_FOR_COLLAPSED = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED");
 
+  @ApiStatus.Internal
   public static final Key<Boolean> ZOMBIE_REGION_KEY = Key.create("zombie fold region");
+
+  @ApiStatus.Internal
   public static final Key<Boolean> ZOMBIE_BITTEN_KEY = Key.create("zombie bitten region");
 
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -150,6 +154,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return region instanceof FoldRegionImpl && ((FoldRegionImpl)region).hasDocumentRegionChanged();
   }
 
+  @ApiStatus.Internal
   public int getEndOffset(@NotNull FoldingGroup group) {
     List<FoldRegion> regions = getGroupedRegions(group);
     int endOffset = 0;
@@ -220,6 +225,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
    * Do not show default gutter icon for a collapsed region.
    * E.g. if Editor provides another means of expanding the region.
    */
+  @ApiStatus.Internal
   public static void hideGutterRendererForCollapsedRegion(@NotNull FoldRegion region) {
     region.putUserData(HIDE_GUTTER_RENDERER_FOR_COLLAPSED, Boolean.TRUE);
   }

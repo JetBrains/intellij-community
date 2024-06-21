@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import kotlin.math.max
@@ -29,6 +30,7 @@ import kotlin.math.max
 private val LOG = logger<SettingsImpl>()
 internal const val EDITOR_SHOW_SPECIAL_CHARS: String = "editor.show.special.chars"
 
+@Internal
 class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: EditorKind?, project: Project?) : EditorSettings {
   private var languageSupplier: (() -> Language?)? = null
 

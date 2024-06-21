@@ -33,6 +33,7 @@ import java.util.List;
  * Iterator over editor's text contents. Each iteration step corresponds to a text fragment having common graphical attributes
  * (font style, foreground and background color, effect type and color).
  */
+//@ApiStatus.Internal
 public final class IterationState {
 
   private static final Logger LOG = Logger.getInstance(IterationState.class);

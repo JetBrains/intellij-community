@@ -21,7 +21,8 @@ public final class CaretData {
     CaretModel caretModel = editor.getCaretModel();
     int caretRowStart = caretModel.getVisualLineStart();
     int caretRowEnd = caretModel.getVisualLineEnd();
-    if (caretRowEnd == document.getTextLength() && document.getLineCount() > 0 &&
+    if (caretRowEnd == document.getTextLength() &&
+        document.getLineCount() > 0 &&
         caretRowEnd > document.getLineStartOffset(document.getLineCount() - 1)) {
       caretRowEnd++;
     }

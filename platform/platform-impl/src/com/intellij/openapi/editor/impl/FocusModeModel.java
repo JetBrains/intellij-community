@@ -28,6 +28,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ import static com.intellij.openapi.editor.markup.HighlighterTargetArea.EXACT_RAN
 
 public final class FocusModeModel implements Disposable {
   public static final Key<TextAttributes> FOCUS_MODE_ATTRIBUTES = Key.create("editor.focus.mode.attributes");
-  public static final int LAYER = 10_000;
+  private static final int LAYER = 10_000;
 
   private final List<RangeHighlighter> myFocusModeMarkup = new SmartList<>();
   private final @NotNull EditorImpl myEditor;
@@ -49,6 +50,7 @@ public final class FocusModeModel implements Disposable {
   private final List<FocusModeModelListener> mySegmentListeners = new SmartList<>();
   private final RangeMarkerTree<RangeMarkerEx> myFocusMarkerTree;
 
+  @ApiStatus.Internal
   public FocusModeModel(@NotNull EditorImpl editor) {
     myEditor = editor;
     myFocusMarkerTree = new RangeMarkerTree<>(editor.getDocument());
@@ -138,6 +140,7 @@ public final class FocusModeModel implements Disposable {
     return myFocusModeRange != null && !intersects(myFocusModeRange, region);
   }
 
+  @ApiStatus.Internal
   public @NotNull RangeMarker createFocusRegion(int start, int end) {
     RangeMarkerEx marker = new RangeMarkerImpl(myEditor.getDocument(), start, end, false, false);
     myFocusMarkerTree.addInterval(marker, start, end, false, false, true, 0);
@@ -145,6 +148,7 @@ public final class FocusModeModel implements Disposable {
     return marker;
   }
 
+  @ApiStatus.Internal
   public @Nullable RangeMarker findFocusRegion(int start, int end) {
     RangeMarker[] found = new RangeMarker[1];
     myFocusMarkerTree.processOverlappingWith(start, end, range -> {
@@ -157,11 +161,13 @@ public final class FocusModeModel implements Disposable {
     return found[0];
   }
 
+  @ApiStatus.Internal
   public void removeFocusRegion(@NotNull RangeMarker marker) {
     boolean removed = myFocusMarkerTree.removeInterval((RangeMarkerEx)marker);
     if (removed) mySegmentListeners.forEach(l -> l.focusRegionRemoved(marker));
   }
 
+  @ApiStatus.Internal
   public void addFocusSegmentListener(FocusModeModelListener newListener, Disposable disposable) {
     mySegmentListeners.add(newListener);
     Disposer.register(disposable, () -> mySegmentListeners.remove(newListener));
@@ -214,6 +220,7 @@ public final class FocusModeModel implements Disposable {
     return Math.max(a.getStartOffset(), b.getStartOffset()) < Math.min(a.getEndOffset(), b.getEndOffset());
   }
 
+  @ApiStatus.Internal
   public interface FocusModeModelListener {
     void focusRegionAdded(@NotNull Segment newRegion);
     void focusRegionRemoved(@NotNull Segment oldRegion);

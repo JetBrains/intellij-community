@@ -10,7 +10,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-public final class EmptyInlayModel implements InlayModel {
+final class EmptyInlayModel implements InlayModel {
   @Override
   public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
                                                                                      boolean relatesToPrecedingText,

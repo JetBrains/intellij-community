@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.WrapElementIterator;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 /**
  * {@link WrapElementIterator} extension that also calculates widths of elements.
  */
+@ApiStatus.Internal
 public final class WrapElementMeasuringIterator extends WrapElementIterator {
   private final EditorView myView;
   private final List<Inlay<?>> inlineInlays;

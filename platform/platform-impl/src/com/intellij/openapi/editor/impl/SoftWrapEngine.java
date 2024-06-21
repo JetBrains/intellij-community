@@ -16,11 +16,13 @@ import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.impl.view.WrapElementMeasuringIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Class that calculates soft wrap positions for a given text fragment and available visible width.
  */
+@ApiStatus.Internal
 public final class SoftWrapEngine {
   private static final int BASIC_LOOK_BACK_LENGTH = 10;
 

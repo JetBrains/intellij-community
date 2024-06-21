@@ -2,7 +2,9 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 object InlayKeys {
   @JvmField
   val ID_BEFORE_DISPOSAL = Key.create<Long>("inlay.id.before.disposal")

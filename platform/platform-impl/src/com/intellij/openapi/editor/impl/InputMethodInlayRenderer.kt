@@ -7,10 +7,12 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.view.EditorPainter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.LinePainter2D
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.geom.Rectangle2D
 import kotlin.math.roundToInt
 
+@Internal
 class InputMethodInlayRenderer(val text: String) : EditorCustomElementRenderer {
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
     val iterator = getFontIterator(inlay.editor, null)

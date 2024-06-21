@@ -50,6 +50,9 @@ public interface EditorMarkupModel extends MarkupModel {
 
   boolean isErrorStripeVisible();
 
+  @ApiStatus.Experimental
+  void setTrafficLightIconVisible(boolean value);
+
   @ApiStatus.Internal
   @RequiresEdt
   void addInspectionWidgetAction(@NotNull AnAction action, @Nullable Constraints constraints);

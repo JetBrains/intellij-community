@@ -5,6 +5,7 @@ import com.intellij.ide.actions.DistractionFreeModeController;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import static com.intellij.openapi.editor.impl.EditorGutterComponentImpl.getGapB
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class EditorGutterLayout {
   private static final String GAP_BETWEEN_AREAS = "Gap between areas";
   private static final String LINE_NUMBERS_AREA = "Line numbers";

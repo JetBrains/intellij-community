@@ -16,7 +16,7 @@ import java.awt.*;
 import java.awt.font.FontRenderContext;
 
 public final class FontInfo {
-  public static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
+  static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
 
   private static final Font DUMMY_FONT = new Font(null);
   private static final FontMetricsAccessor FONT_METRICS_ACCESSOR = JBR.getFontMetricsAccessor();

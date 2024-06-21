@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
+@ApiStatus.Internal
 public final class SoftWrapsStorage implements Dumpable {
   private final List<SoftWrapImpl> myWraps = new ArrayList<>();
   private final List<SoftWrapImpl> myWrapsView = Collections.unmodifiableList(myWraps);

@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Service
-public final class VisibleEditorsTracker {
+final class VisibleEditorsTracker {
   private final Set<Editor> myEditorsVisibleOnCommandStart = new HashSet<>();
   private long myCurrentCommandStart;
   private long myLastCommandFinish;

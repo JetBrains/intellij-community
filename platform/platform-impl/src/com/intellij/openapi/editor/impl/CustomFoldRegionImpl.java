@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class CustomFoldRegionImpl extends FoldRegionImpl implements CustomFoldRegion {
   private final CustomFoldRegionRenderer myRenderer;
 

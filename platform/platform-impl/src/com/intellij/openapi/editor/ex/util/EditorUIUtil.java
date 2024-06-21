@@ -54,4 +54,7 @@ public final class EditorUIUtil {
     }
     return 1f;
   }
+
+  private EditorUIUtil() {
+  }
 }

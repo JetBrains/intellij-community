@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,6 +19,7 @@ import java.util.Map;
  * <p/>
  * Not thread-safe.
  */
+@ApiStatus.Internal
 public final class TextBasedSoftWrapPainter implements SoftWrapPainter {
   private final Map<SoftWrapDrawingType, char[]> mySymbols = new EnumMap<>(SoftWrapDrawingType.class);
   private final Map<SoftWrapDrawingType, FontInfo> myFonts = new EnumMap<>(SoftWrapDrawingType.class);

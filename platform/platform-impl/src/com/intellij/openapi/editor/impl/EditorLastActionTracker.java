@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * It's supposed to be used from EDT only.
  */
+@ApiStatus.Internal
 @Service
 public final class EditorLastActionTracker {
   private String myLastActionId;

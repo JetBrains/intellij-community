@@ -11,11 +11,13 @@ import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class SelectionModelImpl implements SelectionModel {
   private static final Logger LOG = Logger.getInstance(SelectionModelImpl.class);
 

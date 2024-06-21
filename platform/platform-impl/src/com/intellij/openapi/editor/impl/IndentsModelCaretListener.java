@@ -8,11 +8,13 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.LightweightHint;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+@ApiStatus.Internal
 public class IndentsModelCaretListener implements CaretListener {
   private final @NotNull EditorImpl myEditor;
   private @Nullable IndentGuideDescriptor myCurrentCaretGuide;
