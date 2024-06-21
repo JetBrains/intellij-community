@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.psi.impl.PsiManagerEx
@@ -51,8 +52,6 @@ import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
@@ -234,14 +233,10 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       }
       try {
         coroutineScope {
-          task.getTasks().forEach { subtask ->
+          task.getTasks().forEachConcurrent(SCANNING_PARALLELISM) { subtask ->
             checkCanceled()
-            SCANNING_SEMAPHORE.withPermit {
-              async {
-                blockingContext {
-                  subtask.run()
-                }
-              }
+            blockingContext {
+              subtask.run()
             }
           }
         }
@@ -393,7 +388,6 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       PushedFilePropertiesUpdater::class.java)
 
     private val SCANNING_PARALLELISM: Int = UnindexedFilesUpdater.getNumberOfScanningThreads()
-    private val SCANNING_SEMAPHORE: Semaphore = Semaphore(SCANNING_PARALLELISM)
 
     private fun getFile(event: VFileEvent): VirtualFile? {
       var file = event.file
