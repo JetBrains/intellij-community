@@ -6,8 +6,6 @@ const LC_KEYS = {
   delimiter: prefix + "delimiter"
 };
 
-const lineDiff = new Diff();
-
 
 document.addEventListener("click", function (e) {
   if (e.target.closest(".multiline") != null) {
@@ -153,6 +151,8 @@ function updatePopup(sessionDiv) {
 
 // Add the `addDiffView` function
 function addDiffView(sessionDiv, popup, lookup, originalText) {
+  const lineDiff = new Diff();
+
   sessionDiv.classList.add("diffView")
   sessionDiv.classList.remove("features", "contexts","suggestions")
   const diffDiv = document.createElement("DIV");
