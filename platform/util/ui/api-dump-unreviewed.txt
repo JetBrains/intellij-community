@@ -2556,13 +2556,6 @@ com.intellij.ui.PanelWithAnchor
 com.intellij.ui.PopupBorder
 - javax.swing.border.Border
 - a:setActive(Z):V
-f:com.intellij.ui.PopupBorder$BaseBorder
-- com.intellij.ui.PopupBorder
-- getBorderInsets(java.awt.Component):java.awt.Insets
-- isBorderOpaque():Z
-- paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
-- setActive(Z):V
-- setPopupUsed():V
 f:com.intellij.ui.PopupBorder$Factory
 - s:create(Z,Z):com.intellij.ui.PopupBorder
 - s:createColored(java.awt.Color):com.intellij.ui.PopupBorder
