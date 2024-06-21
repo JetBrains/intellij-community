@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.GradleSourceSetModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 
+import java.util.Collection;
+
 @ApiStatus.Internal
 public class GradleSourceSetModelProvider implements ProjectImportModelProvider {
 
@@ -19,11 +21,11 @@ public class GradleSourceSetModelProvider implements ProjectImportModelProvider 
   }
 
   @Override
-  public void populateBuildModels(
+  public void populateModels(
     @NotNull BuildController controller,
-    @NotNull GradleBuild buildModel,
+    @NotNull Collection<? extends GradleBuild> buildModels,
     @NotNull GradleModelConsumer modelConsumer
   ) {
-    GradleModelProviderUtil.buildModels(controller, buildModel, GradleSourceSetModel.class, modelConsumer);
+    GradleModelProviderUtil.buildModels(controller, buildModels, GradleSourceSetModel.class, modelConsumer);
   }
 }
