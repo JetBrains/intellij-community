@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom;
 
 import com.intellij.platform.backend.navigation.NavigationRequest;
@@ -34,7 +34,7 @@ public interface Navigatable {
   }
 
   /**
-   * Open editor and select/navigate to the object there if possible.
+   * Open an editor and select/navigate to the object there if possible.
    * Just do nothing if navigation is not possible like in case of a package
    *
    * @param requestFocus {@code true} if focus requesting is necessary

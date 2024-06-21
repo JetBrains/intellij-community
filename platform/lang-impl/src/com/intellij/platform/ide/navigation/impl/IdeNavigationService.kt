@@ -151,10 +151,7 @@ private suspend fun navigateToSource(
     }
     is RawNavigationRequest -> {
       if (request.canNavigateToSource) {
-        val navigationServiceExecutor = project.serviceAsync<IdeNavigationServiceExecutor>()
-        withContext(Dispatchers.EDT) {
-          navigationServiceExecutor.navigate(request = request, requestFocus = options.requestFocus)
-        }
+        project.serviceAsync<IdeNavigationServiceExecutor>().navigate(request = request, requestFocus = options.requestFocus)
         return true
       }
       else {
