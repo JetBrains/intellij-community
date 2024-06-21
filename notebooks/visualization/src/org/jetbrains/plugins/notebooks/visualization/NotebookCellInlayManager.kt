@@ -202,9 +202,17 @@ class NotebookCellInlayManager private constructor(
       Disposer.dispose(it)
     }
     val pointerFactory = NotebookIntervalPointerFactory.get(editor)
-    _cells = notebookCellLines.intervals.map { interval ->
-      createCell(pointerFactory.create(interval))
-    }.toMutableList()
+
+    //Perform inlay init in batch mode
+    editor.inlayModel.execute(true) {
+      _cells = notebookCellLines.intervals.map { interval ->
+        createCell(pointerFactory.create(interval))
+      }.toMutableList()
+    }
+
+    _cells.forEach {
+      it.view?.postInitInlays()
+    }
 
     val foldingModel = editor.foldingModel
     foldingModel.runBatchFoldingOperation({

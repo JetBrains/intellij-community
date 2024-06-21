@@ -32,6 +32,7 @@ import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
+import javax.swing.JPanel
 import kotlin.reflect.KClass
 
 class EditorCellView(
@@ -93,8 +94,15 @@ class EditorCellView(
   private var mouseOver = false
 
   init {
-    update()
+    recreateControllers()
     updateSelection(false)
+  }
+
+  fun postInitInlays() {
+    _controllers.forEach {
+      (it.inlay.renderer as? JPanel)?.validate()
+    }
+    updateControllers()
   }
 
   override fun doDispose() {
@@ -113,17 +121,11 @@ class EditorCellView(
   }
 
   fun update(force: Boolean = false) {
-    val otherFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
-      .filter { it !is NotebookCellInlayController.InputFactory }
-    val controllersToDispose = _controllers.toMutableSet()
-    _controllers = if (!editor.isDisposed) {
-      otherFactories.mapNotNull { factory -> failSafeCompute(factory, editor, _controllers, intervals.intervals.listIterator(interval.ordinal)) }
-    }
-    else {
-      emptyList()
-    }
-    controllersToDispose.removeAll(_controllers.toSet())
-    controllersToDispose.forEach { disposeController(it) }
+    recreateControllers()
+    updateControllers(force)
+  }
+
+   private fun updateControllers(force: Boolean = false) {
     for (controller in controllers) {
       val inlay = controller.inlay
       inlay.renderer.asSafely<JComponent>()?.let { component ->
@@ -139,6 +141,20 @@ class EditorCellView(
     updateOutputs()
     updateCellHighlight()
     invalidate()
+  }
+
+  private fun recreateControllers() {
+    val otherFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
+      .filter { it !is NotebookCellInlayController.InputFactory }
+    val controllersToDispose = _controllers.toMutableSet()
+    _controllers = if (!editor.isDisposed) {
+      otherFactories.mapNotNull { factory -> failSafeCompute(factory, editor, _controllers, intervals.intervals.listIterator(interval.ordinal)) }
+    }
+    else {
+      emptyList()
+    }
+    controllersToDispose.removeAll(_controllers.toSet())
+    controllersToDispose.forEach { disposeController(it) }
   }
 
   fun updateInput() {
