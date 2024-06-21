@@ -57,7 +57,7 @@ open class KotlinConstructorUMethod(
     override val uastAnchor: UIdentifier?
         get() = uastAnchorPart.getOrBuild {
             KotlinUIdentifier(
-                javaPsi.nameIdentifier,
+                { javaPsi.nameIdentifier },
                 if (isPrimary) ktClass?.nameIdentifier else (sourcePsi as? KtSecondaryConstructor)?.getConstructorKeyword(),
                 this
             )

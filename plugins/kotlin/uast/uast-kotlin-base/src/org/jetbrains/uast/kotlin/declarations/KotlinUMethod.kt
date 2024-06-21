@@ -95,7 +95,7 @@ open class KotlinUMethod(
                 is KtPropertyAccessor -> sourcePsi.namePlaceholder
                 else -> sourcePsi?.navigationElement
             }
-            KotlinUIdentifier(nameIdentifier, identifierSourcePsi, this)
+            KotlinUIdentifier({ nameIdentifier }, identifierSourcePsi, this)
         }
 
     override val uastBody: UExpression?

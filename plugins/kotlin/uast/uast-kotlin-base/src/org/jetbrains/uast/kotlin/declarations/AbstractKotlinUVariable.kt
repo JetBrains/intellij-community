@@ -112,7 +112,7 @@ abstract class AbstractKotlinUVariable(
                 is KtLambdaExpression -> sourcePsi.functionLiteral.lBrace
                 else -> sourcePsi
             } ?: return null
-            return KotlinUIdentifier(nameIdentifier, identifierSourcePsi, this)
+            return KotlinUIdentifier({ nameIdentifier }, identifierSourcePsi, this)
         }
 
     override fun equals(other: Any?) = other is AbstractKotlinUVariable && psi == other.psi

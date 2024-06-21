@@ -27,7 +27,7 @@ class KotlinScriptUClass(
     override val uastAnchor: UIdentifier
         get() = uastAnchorPart.getOrBuild {
             KotlinUIdentifier(
-                nameIdentifier,
+                { nameIdentifier },
                 sourcePsi?.nameIdentifier,
                 this
             )
