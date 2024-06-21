@@ -770,6 +770,13 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     isFocusCycleRoot = true
   }
 
+  override fun updateUI() {
+    super.updateUI()
+
+    // IJPL-157100 Avoid using a light background for editor with a dark scheme in light IDE
+    background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+  }
+
   fun setComponent(newComponent: JComponent, focusComponent: () -> JComponent?) {
     removeAll()
 
