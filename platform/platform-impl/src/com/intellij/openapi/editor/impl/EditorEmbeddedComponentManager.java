@@ -323,7 +323,9 @@ public final class EditorEmbeddedComponentManager {
       });
 
       // If validation is postponed, visual artifacts can appear while typing text.
-      renderer.validate();
+      if (!myEditor.getInlayModel().isInBatchMode()) {
+        renderer.validate();
+      }
 
       return inlay;
     }
