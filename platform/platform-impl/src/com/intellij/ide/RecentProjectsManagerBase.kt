@@ -440,7 +440,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
     check(nameResolveRequests.tryEmit(Unit))
 
-    return getProjectNameOnlyByPath(path).nameOnlyByProjectName
+    return getProjectNameOnlyByPath(path).nameOnlyByProjectPath
   }
 
   fun forceReopenProjects() {
@@ -908,4 +908,4 @@ internal fun getProjectNameOnlyByPath(path: String): ProjectNameOnlyByPath {
 
 @JvmInline
 @Internal
-value class ProjectNameOnlyByPath(val nameOnlyByProjectName: String)
+value class ProjectNameOnlyByPath(val nameOnlyByProjectPath: String)
