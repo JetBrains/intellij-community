@@ -479,9 +479,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
       }
 
-      ExternalProject externalProject = resolverContext.getExtraProject(ideaModule, ExternalProject.class);
-      if (externalProject != null) {
-        externalProject.getSourceSetModel().getAdditionalArtifacts().forEach((artifactFile) -> {
+      GradleSourceSetModel sourceSetModel = resolverContext.getProjectModel(ideaModule, GradleSourceSetModel.class);
+      if (sourceSetModel != null) {
+        sourceSetModel.getAdditionalArtifacts().forEach((artifactFile) -> {
           String path = toCanonicalPath(artifactFile.getPath());
           ModuleMappingInfo mapping = artifactsMap.getModuleMapping(path);
           if (mapping != null && OWNER_BASE_GRADLE.equals(mapping.getOwnerId())) {

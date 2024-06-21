@@ -52,6 +52,11 @@ public final class GradleExternalProjectSerializationService implements Serializ
   private final ReadContext myReadContext = new ReadContext();
 
   @Override
+  public Class<? extends ExternalProject> getModelClass() {
+    return ExternalProject.class;
+  }
+
+  @Override
   public byte[] write(ExternalProject project, Class<? extends ExternalProject> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     try (IonWriter writer = createIonWriter().build(out)) {
@@ -65,11 +70,6 @@ public final class GradleExternalProjectSerializationService implements Serializ
     try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return readProject(reader, myReadContext);
     }
-  }
-
-  @Override
-  public Class<? extends ExternalProject> getModelClass() {
-    return ExternalProject.class;
   }
 
   private static void writeProject(IonWriter writer, WriteContext context, ExternalProject project) throws IOException {
@@ -94,17 +94,6 @@ public final class GradleExternalProjectSerializationService implements Serializ
       }
       writer.stepOut();
     });
-  }
-
-  private static void writeChildProjects(IonWriter writer, WriteContext context, ExternalProject project) throws IOException {
-    writeCollection(writer, PROJECT_CHILD_PROJECTS_FIELD, project.getChildProjects().values(), it ->
-      writeProject(writer, context, it)
-    );
-  }
-
-  private static void writeSourceSetModel(IonWriter writer, WriteContext context, ExternalProject project) {
-    writer.setFieldName(PROJECT_SOURCE_SET_MODEL_FIELD);
-    GradleSourceSetSerialisationService.writeSourceSetModel(writer, context.sourceSetModel, project.getSourceSetModel());
   }
 
   @Nullable
@@ -142,12 +131,37 @@ public final class GradleExternalProjectSerializationService implements Serializ
     return project;
   }
 
-  private static Map<String, DefaultExternalProject> readChildProjects(@NotNull IonReader reader, @NotNull ReadContext context) {
+  private static void writeChildProjects(
+    @NotNull IonWriter writer,
+    @NotNull WriteContext context,
+    @NotNull ExternalProject project
+  ) throws IOException {
+    writeCollection(writer, PROJECT_CHILD_PROJECTS_FIELD, project.getChildProjects().values(), it ->
+      writeProject(writer, context, it)
+    );
+  }
+
+  private static @NotNull Map<String, DefaultExternalProject> readChildProjects(
+    @NotNull IonReader reader,
+    @NotNull ReadContext context
+  ) {
     return readList(reader, PROJECT_CHILD_PROJECTS_FIELD, () -> readProject(reader, context))
       .stream().collect(Collectors.toMap(it -> it.getName(), it -> it));
   }
 
-  private static DefaultGradleSourceSetModel readSourceSetModel(@NotNull IonReader reader, @NotNull ReadContext context) {
+  private static void writeSourceSetModel(
+    @NotNull IonWriter writer,
+    @NotNull WriteContext context,
+    @NotNull ExternalProject project
+  ) {
+    writer.setFieldName(PROJECT_SOURCE_SET_MODEL_FIELD);
+    GradleSourceSetSerialisationService.writeSourceSetModel(writer, context.sourceSetModel, project.getSourceSetModel());
+  }
+
+  private static @NotNull DefaultGradleSourceSetModel readSourceSetModel(
+    @NotNull IonReader reader,
+    @NotNull ReadContext context
+  ) {
     assertNotNull(reader.next());
     assertFieldName(reader, PROJECT_SOURCE_SET_MODEL_FIELD);
     return GradleSourceSetSerialisationService.readSourceSetModel(reader, context.sourceSetModel);
