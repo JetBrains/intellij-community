@@ -581,6 +581,12 @@
       "selectedPressedBackground": "Blue10"
     },
 
+    "Slider": {
+      "buttonBorderColor": "Gray7",
+      "tickColor": "Gray7",
+      "trackColor": "Gray9"
+    },
+
     "SpeedSearch": {
       "background": "Gray14",
       "borderColor": "Gray12"

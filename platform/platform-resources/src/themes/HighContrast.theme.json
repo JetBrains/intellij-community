@@ -119,6 +119,7 @@
     },
 
     "Component": {
+      "focusedBorderColor": "#000000",
       "errorFocusColor": "#E6194B",
       "inactiveErrorFocusColor": "#800002",
       "warningFocusColor": "#F58231",
@@ -412,6 +413,13 @@
     "SearchMatch": {
       "startBackground": "#FFD333FF",
       "endBackground": "#FFD333FF"
+    },
+
+    "Slider": {
+      "buttonColor": "#FFFFFF",
+      "buttonBorderColor": "#000000",
+      "tickColor": "#FFFFFF",
+      "trackColor": "#8c8c8c"
     },
 
     "StatusBar.borderColor": "#b3b3b3",
