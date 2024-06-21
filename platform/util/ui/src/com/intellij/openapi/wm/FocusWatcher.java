@@ -4,6 +4,7 @@ package com.intellij.openapi.wm;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.SwingUndoUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -55,6 +56,7 @@ public class FocusWatcher extends BaseFocusWatcher {
     return SoftReference.dereference(focusedComponent);
   }
 
+  @ApiStatus.Internal
   public void setFocusedComponentImpl(Component component) {
     setFocusedComponentImpl(component, null);
   }
@@ -89,6 +91,7 @@ public class FocusWatcher extends BaseFocusWatcher {
    */
   protected void focusedComponentChanged(@Nullable Component component, @Nullable AWTEvent cause) {}
 
+  @ApiStatus.Internal
   protected void focusLostImpl(FocusEvent e) {
   }
 }

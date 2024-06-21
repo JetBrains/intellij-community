@@ -1595,11 +1595,9 @@ c:com.intellij.openapi.wm.FocusWatcher
 - p:componentUnregistered(java.awt.Component,java.awt.AWTEvent):V
 - f:focusGained(java.awt.event.FocusEvent):V
 - f:focusLost(java.awt.event.FocusEvent):V
-- p:focusLostImpl(java.awt.event.FocusEvent):V
 - p:focusedComponentChanged(java.awt.Component,java.awt.AWTEvent):V
 - f:getFocusedComponent():java.awt.Component
 - p:isFocusedComponentChangeValid(java.awt.Component,java.awt.AWTEvent):Z
-- setFocusedComponentImpl(java.awt.Component):V
 com.intellij.ui.ActiveComponent
 - a:getComponent():javax.swing.JComponent
 - a:setActive(Z):V
