@@ -11798,6 +11798,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("importList.kt")
+        public void testImportList() throws Exception {
+            runTest("testData/quickfix/moveTypeAliasToTopLevel/importList.kt");
+        }
+
         @TestMetadata("inClass.kt")
         public void testInClass() throws Exception {
             runTest("testData/quickfix/moveTypeAliasToTopLevel/inClass.kt");
@@ -11816,6 +11821,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("inFunction2.kt")
         public void testInFunction2() throws Exception {
             runTest("testData/quickfix/moveTypeAliasToTopLevel/inFunction2.kt");
+        }
+
+        @TestMetadata("package.kt")
+        public void testPackage() throws Exception {
+            runTest("testData/quickfix/moveTypeAliasToTopLevel/package.kt");
         }
     }
 

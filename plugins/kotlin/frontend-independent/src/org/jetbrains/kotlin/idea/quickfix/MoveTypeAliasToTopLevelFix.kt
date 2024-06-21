@@ -5,10 +5,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeAlias
-import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class MoveTypeAliasToTopLevelFix(
     element: KtTypeAlias,
@@ -22,9 +20,8 @@ class MoveTypeAliasToTopLevelFix(
         elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
-        val parents = element.parents.toList().reversed()
-        val containingFile = parents.firstOrNull() as? KtFile ?: return
-        val target = parents.getOrNull(1) ?: return
+        val containingFile = element.containingKtFile
+        val target = containingFile.importList ?: containingFile.packageDirective
         containingFile.addAfter(element, target)
         containingFile.addAfter(KtPsiFactory(actionContext.project).createNewLine(2), target)
         element.delete()

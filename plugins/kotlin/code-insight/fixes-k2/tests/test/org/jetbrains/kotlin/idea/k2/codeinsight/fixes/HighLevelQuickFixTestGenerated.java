@@ -7652,6 +7652,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("importList.kt")
+        public void testImportList() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/moveTypeAliasToTopLevel/importList.kt");
+        }
+
         @TestMetadata("inClass.kt")
         public void testInClass() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/moveTypeAliasToTopLevel/inClass.kt");
@@ -7670,6 +7675,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("inFunction2.kt")
         public void testInFunction2() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/moveTypeAliasToTopLevel/inFunction2.kt");
+        }
+
+        @TestMetadata("package.kt")
+        public void testPackage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/moveTypeAliasToTopLevel/package.kt");
         }
     }
 

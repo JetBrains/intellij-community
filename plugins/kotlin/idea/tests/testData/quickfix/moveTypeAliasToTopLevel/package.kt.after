@@ -1,12 +1,14 @@
+// "Move typealias to top level" "true"
+package bar
+
 typealias Foo = String
 
-// "Move typealias to top level" "true"
-fun bar() {
+class C {
 
-    fun baz(foo: Foo) {
+    fun bar(foo: Foo) {
     }
 }
 
-fun qux() {}
+fun baz() {}
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeAliasToTopLevelFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeAliasToTopLevelFix
