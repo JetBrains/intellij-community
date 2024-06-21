@@ -186,7 +186,7 @@ private class DockerBuilderImpl : DockerBuilder {
 
 private open class IdeBackendBuilderImpl(val product: Product, val launchInDocker: Boolean) : IdeBuilderImpl(), IdeBackendBuilder {
   var jbrPath: String? = null
-  lateinit var projectPath: String
+  var projectPath: String? = null
 
   override fun jbr(path: String) {
     jbrPath = path
@@ -203,7 +203,7 @@ internal data class IdeBackendDescription(
   val product: Product,
   val launchInDocker: Boolean,
   val jbrPath: String?,
-  val projectPath: String,
+  val projectPath: String?,
   val attachDebuggerCallback: (suspend (Int) -> Unit)?,
 )
 

@@ -118,8 +118,8 @@ private class BackendStatusFromStdout(private val processOutputFlows: ProcessOut
     }
 }
 
-private fun cwmHostNoLobby(bindToHost: String, projectPath: PathInLaunchEnvironment) =
-  listOf("cwmHostNoLobby", "-l", bindToHost, projectPath)
+private fun cwmHostNoLobby(bindToHost: String, projectPath: PathInLaunchEnvironment?) =
+  listOfNotNull("cwmHostNoLobby", "-l", bindToHost, projectPath)
 
 private class IdeaPathsProvider : PathsProvider {
   override val productId: String
