@@ -227,6 +227,9 @@ function Global:Clear-Host() {
   $OSC = Global:__JetBrainsIntellijOSC "clear_invoked"
   [Console]::Write($OSC)
 }
+function Global:clear() {
+  Global:Clear-Host
+}
 
 $Global:__JetBrainsIntellijOriginalPSConsoleHostReadLine = $function:PSConsoleHostReadLine
 
