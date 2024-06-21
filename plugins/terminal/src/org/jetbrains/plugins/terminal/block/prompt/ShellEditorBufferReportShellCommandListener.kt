@@ -40,18 +40,13 @@ internal class ShellEditorBufferReportShellCommandListener(
   private fun sendCodeToReportBuffer(
     blockTerminalSession: BlockTerminalSession
   ) {
-    // Bash is disabled because PREEXEC and PRECMD is not working correctly for keybindings.
     if (blockTerminalSession.shellIntegration.shellType !in setOf(ShellType.ZSH, ShellType.BASH)) {
       // Other shell types are not supported yet.
       return
     }
 
-    blockTerminalSession.terminalStarterFuture.thenAccept { terminalStarter ->
-      terminalStarter?.let {
-        val escapeSymbol = byteArrayOf(Ascii.ESC)
-        val iSymbol = "o".toByteArray(StandardCharsets.UTF_8)
-        blockTerminalSession.commandExecutionManager.sendKeyBinding(KeyBinding(escapeSymbol + iSymbol))
-      }
-    }
+    val escapeSymbol = byteArrayOf(Ascii.ESC)
+    val iSymbol = "o".toByteArray(StandardCharsets.UTF_8)
+    blockTerminalSession.commandExecutionManager.sendKeyBinding(KeyBinding(escapeSymbol + iSymbol))
   }
 }
