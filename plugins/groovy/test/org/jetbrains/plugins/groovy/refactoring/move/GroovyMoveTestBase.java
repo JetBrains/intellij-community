@@ -3,8 +3,15 @@
 package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 
 abstract class GroovyMoveTestBase extends LightMultiFileTestCase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_2_5;
+  }
 
   protected void doTest(String newPackageName, String... names) {
     doTest(() -> perform(newPackageName, names));
