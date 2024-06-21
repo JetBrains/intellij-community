@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,7 +35,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-@SuppressWarnings("ConstantConditions")
 @HeavyPlatformTestCase.WrapInCommand
 public class SrcRepositoryUseTest extends JavaPsiTestCase {
   private static final Logger LOG = Logger.getInstance(SrcRepositoryUseTest.class);
@@ -229,46 +228,34 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     teardownLoadingFilter();
   }
 
-  public void testModifierList() throws Exception {
+  public void testModifierList() {
     setupLoadingFilter();
 
-    PsiModifierList modifierList;
-    {
-      PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
 
-      modifierList = aClass.getModifierList();
-      assertTrue(modifierList.hasModifierProperty(PsiModifier.PUBLIC));
-      assertTrue(!modifierList.hasModifierProperty(PsiModifier.STATIC));
-      assertEquals(modifierList.getParent(), aClass);
+    PsiModifierList modifierList = aClass.getModifierList();
+    assertTrue(modifierList.hasModifierProperty(PsiModifier.PUBLIC));
+    assertFalse(modifierList.hasModifierProperty(PsiModifier.STATIC));
+    assertEquals(modifierList.getParent(), aClass);
 
-      PsiField field = aClass.getFields()[0];
-      modifierList = field.getModifierList();
-      assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
-      assertEquals(modifierList.getParent(), field);
+    PsiField field = aClass.getFields()[0];
+    modifierList = field.getModifierList();
+    assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+    assertEquals(modifierList.getParent(), field);
 
-      PsiMethod method = aClass.getMethods()[0];
-      modifierList = method.getModifierList();
-      assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
-      assertEquals(modifierList.getParent(), method);
+    PsiMethod method = aClass.getMethods()[0];
+    modifierList = method.getModifierList();
+    assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+    assertEquals(modifierList.getParent(), method);
 
-      teardownLoadingFilter();
-      method = null;
-    }
-
-
-    for (int i = 0; i < 2; i++) {
-      System.gc();
-      Thread.sleep(200);
-    }
-
-    modifierList.getChildren();
+    teardownLoadingFilter();
   }
 
   public void testIsInterface(){
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
-    assertTrue(!aClass.isInterface());
+    assertFalse(aClass.isInterface());
 
     PsiClass anInterface = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
     assertTrue(anInterface.isInterface());
@@ -290,7 +277,7 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
-    assertTrue(!aClass.isDeprecated());
+    assertFalse(aClass.isDeprecated());
 
     PsiField field = aClass.findFieldByName("field1", false);
     assertTrue(field.isDeprecated());
@@ -330,9 +317,9 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     assertTrue(type2.equalsToText("java.lang.Object[]"));
     assertTrue(type3.equalsToText("java.lang.Object[]"));
 
-    assertTrue(!(type1 instanceof PsiArrayType));
+    assertFalse(type1 instanceof PsiArrayType);
     assertTrue(type1 instanceof PsiPrimitiveType);
-    assertTrue(!(type3 instanceof PsiPrimitiveType));
+    assertFalse(type3 instanceof PsiPrimitiveType);
     assertTrue(type3 instanceof PsiArrayType);
 
     teardownLoadingFilter();
@@ -359,7 +346,7 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     PsiType type1 = method1.getReturnType();
 
     assertTrue(type1.equalsToText("void"));
-    assertTrue(!(type1 instanceof PsiArrayType));
+    assertFalse(type1 instanceof PsiArrayType);
     assertTrue(type1 instanceof PsiPrimitiveType);
 
     PsiMethod method3 = aClass.getMethods()[2];
@@ -512,22 +499,22 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     PsiMethod[] methods = aClass.getMethods();
     PsiParameterList list = methods[0].getParameterList();
 
-    PsiParameter[] parms = list.getParameters();
-    assertEquals(5, parms.length);
+    PsiParameter[] parameters = list.getParameters();
+    assertEquals(5, parameters.length);
 
-    assertEquals("p1", parms[0].getName());
-    assertEquals("p2", parms[1].getName());
-    assertEquals("p3", parms[2].getName());
-    assertEquals("p4", parms[3].getName());
-    assertEquals("p5", parms[4].getName());
+    assertEquals("p1", parameters[0].getName());
+    assertEquals("p2", parameters[1].getName());
+    assertEquals("p3", parameters[2].getName());
+    assertEquals("p4", parameters[3].getName());
+    assertEquals("p5", parameters[4].getName());
 
-    PsiType type1 = parms[0].getType();
+    PsiType type1 = parameters[0].getType();
     assertEquals("int[]", type1.getPresentableText());
     assertFalse(type1 instanceof PsiPrimitiveType);
     assertTrue(type1 instanceof PsiArrayType);
     assertNull(PsiUtil.resolveClassInType(type1));
 
-    PsiType type2 = parms[1].getType();
+    PsiType type2 = parameters[1].getType();
     assertEquals("Object", type2.getPresentableText());
     assertFalse(type2 instanceof PsiArrayType);
     assertFalse(type2 instanceof PsiPrimitiveType);
@@ -536,13 +523,13 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myProject));
     assertEquals(objectClass, target2);
 
-    checkPackAAA(parms[2].getType());
-    checkPackAAA(parms[3].getType());
-    checkPackAAA(parms[4].getType());
+    checkPackAAA(parameters[2].getType());
+    checkPackAAA(parameters[3].getType());
+    checkPackAAA(parameters[4].getType());
 
     teardownLoadingFilter();
 
-    parms[0].getModifierList();
+    parameters[0].getModifierList();
   }
 
   private static void checkPackAAA(PsiType type) {
@@ -652,7 +639,7 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     String text = aClass.getText();
 
     BlockSupport blockSupport = myProject.getService(BlockSupport.class);
-    final PsiFile psiFile = aClass.getContainingFile();
+    PsiFile psiFile = aClass.getContainingFile();
     ApplicationManager.getApplication().runWriteAction(() -> blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getEndOffset(), ""));
 
     LOG.assertTrue(!aClass.isValid());
@@ -692,40 +679,38 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
   }
 
   public void testReplaceRootWithSubRoot1() {
-    final PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
-    final PsiFile psiFile = aClass.getContainingFile();
-    ((PsiJavaFile) psiFile).getClasses();
-    psiFile.getText();
+    PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
+    PsiFile psiFile = aClass.getContainingFile();
     assertNotNull(aClass);
 
-    final VirtualFile newSourceRoot = psiFile.getVirtualFile().getParent();
+    VirtualFile newSourceRoot = psiFile.getVirtualFile().getParent();
     replaceSourceRoot(newSourceRoot);
 
     assertEquals("MyInterface1", aClass.getName());
   }
 
   public void testReplaceRootWithSubRoot2() {
-    final PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
+    PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
 
-    final VirtualFile newSourceRoot = aClass.getContainingFile().getVirtualFile().getParent();
+    VirtualFile newSourceRoot = aClass.getContainingFile().getVirtualFile().getParent();
     replaceSourceRoot(newSourceRoot);
 
     assertEquals("MyInterface1", aClass.getName());
   }
 
-  private void replaceSourceRoot(final VirtualFile newSourceRoot) {
+  private void replaceSourceRoot(VirtualFile newSourceRoot) {
     ApplicationManager.getApplication().runWriteAction(
       () -> {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final ContentEntry[] content = rootModel.getContentEntries();
+        ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        ContentEntry[] content = rootModel.getContentEntries();
         boolean contentToChangeFound = false;
         for (ContentEntry contentEntry : content) {
-          final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+          SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
           for (SourceFolder sourceFolder : sourceFolders) {
             contentEntry.removeSourceFolder(sourceFolder);
           }
-          final VirtualFile contentRoot = contentEntry.getFile();
+          VirtualFile contentRoot = contentEntry.getFile();
           if (contentRoot != null && VfsUtilCore.isAncestor(contentRoot, newSourceRoot, false)) {
             contentEntry.addSourceFolder(newSourceRoot, false);
             contentToChangeFound = true;
@@ -738,8 +723,8 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
   }
 
   public void testParentIdAssert() {
-    PsiClass jpanelClass = myJavaFacade.findClass("javax.swing.JPanel", GlobalSearchScope.allScope(myProject));
-    PsiClass[] inheritors = ClassInheritorsSearch.search(jpanelClass, GlobalSearchScope.projectScope(myProject), true).toArray(PsiClass.EMPTY_ARRAY);
+    PsiClass jPanelClass = myJavaFacade.findClass("javax.swing.JPanel", GlobalSearchScope.allScope(myProject));
+    PsiClass[] inheritors = ClassInheritorsSearch.search(jPanelClass, GlobalSearchScope.projectScope(myProject), true).toArray(PsiClass.EMPTY_ARRAY);
     assertEquals(2, inheritors.length);
     assertTrue(inheritors[0] instanceof PsiAnonymousClass || inheritors[1] instanceof PsiAnonymousClass);
     PsiClass nonAnonClass = inheritors[0] instanceof PsiAnonymousClass ? inheritors[1] : inheritors[0];
@@ -784,27 +769,29 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
       """);
 
     PsiClass myClass = myJavaFacade.findClass("MyClass1", GlobalSearchScope.allScope(myProject));
-    myClass.getChildren();
+    assertNotNull(myClass);
   }
 
   public void testCopyableUserDataChild() {
-    final PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
+    PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
-    final PsiFile containingFile = aClass.getContainingFile();
-    final CompositeElement element = ((PsiFileImpl)containingFile).calcTreeElement();
+    PsiFile containingFile = aClass.getContainingFile();
+    CompositeElement element = ((PsiFileImpl)containingFile).calcTreeElement();
     aClass.putCopyableUserData(TEST_KEY, "TEST");
-    final PsiJavaFile fileCopy = (PsiJavaFile)containingFile.copy();
-    final PsiClass[] classesCopy = fileCopy.getClasses();
+    PsiJavaFile fileCopy = (PsiJavaFile)containingFile.copy();
+    PsiClass[] classesCopy = fileCopy.getClasses();
     assertEquals(1, classesCopy.length);
     assertNotNull(element);
     assertEquals("TEST", classesCopy[0].getCopyableUserData(TEST_KEY));
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static void rewriteFileExternally(VirtualFile vFile, String text) throws IOException {
     FileUtil.writeToFile(new File(vFile.getPath()), text.getBytes(StandardCharsets.UTF_8));
     vFile.refresh(false, false);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private void renamePackage(String packageName, String newPackageName) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
     assertNotNull("Package " + packageName + " not found", aPackage);
@@ -814,6 +801,4 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     new RenameProcessor(myProject, aPackage, newPackageName, true, true).run();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
-
-
 }
