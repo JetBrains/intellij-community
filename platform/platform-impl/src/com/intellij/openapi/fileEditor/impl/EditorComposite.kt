@@ -82,7 +82,9 @@ class PrecomputedFlow(@JvmField val model: EditorCompositeModel) : Flow<EditorCo
   }
 }
 
-private val INITIAL_EMPTY = ArrayList<FileEditorWithProvider>()
+private val INITIAL_EMPTY = object : ArrayList<FileEditorWithProvider>() {
+  override fun equals(other: Any?) = other === this
+}
 
 /**
  * An abstraction over one or several file editors opened in the same tab (e.g., designer and code-behind).
@@ -177,6 +179,7 @@ open class EditorComposite internal constructor(
     if (fileEditorWithProviders.isEmpty()) {
       withContext(Dispatchers.EDT) {
         compositePanel.removeAll()
+        this@EditorComposite.fileEditorWithProviders.value = emptyList()
         _selectedEditorWithProvider.value = null
       }
       return
