@@ -31,6 +31,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.PerProjectIndexingQueue
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
+import com.intellij.util.indexing.contentQueue.IndexingProgressReporter2
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.ui.UIUtil
@@ -298,7 +299,8 @@ class DumbServiceImplTest {
             IndexUpdateRunner(index, project.service<ProjectIndexingDependenciesService>().getLatestIndexingRequestToken())
               .indexFiles(project, IndexUpdateRunner.FileSet(project, "child",
                                                              PerProjectIndexingQueue.QueuedFiles.fromFilesCollection(listOf(child), emptyList())),
-                          ProjectDumbIndexingHistoryImpl(project))
+                          ProjectDumbIndexingHistoryImpl(project),
+                          IndexingProgressReporter2.createEmpty(), { false })
           }
         }
         catch (e: ProcessCanceledException) {
