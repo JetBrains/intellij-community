@@ -161,7 +161,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
 
   private fun registerIssuedToken(token: Any) {
     synchronized(issuedScanningTokens) {
-      if (issuedScanningTokens.isEmpty()) {
+      if (issuedScanningTokens.isEmpty() && storage.isOpen) {
         storage.writeIncompleteScanningMark(true)
       }
       issuedScanningTokens.add(token)
@@ -189,12 +189,11 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       if (removed && issuedScanningTokens.isEmpty() && storage.isOpen) {
         storage.writeIncompleteScanningMark(false)
       }
-    }
-
-    if (lastAppIndexingRequestId != null) {
-      // Write each time, not only after the last token has completed, because the last completed token
-      // might be an IncompleteTaskToken. Then lastAppIndexingRequestId will be null.
-      storage.writeAppIndexingRequestIdOfLastScanning(lastAppIndexingRequestId.toInt())
+      if (lastAppIndexingRequestId != null && storage.isOpen) {
+        // Write each time, not only after the last token has completed, because the last completed token
+        // might be an IncompleteTaskToken. Then lastAppIndexingRequestId will be null.
+        storage.writeAppIndexingRequestIdOfLastScanning(lastAppIndexingRequestId.toInt())
+      }
     }
   }
 
@@ -204,7 +203,11 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   }
 
   override fun dispose() {
-    storage.close()
+    synchronized(issuedScanningTokens) {
+      // inside synchronized(issuedScanningTokens) storage.isOpen check should always return the same value
+      // to avoid ClosedChannelException from storage.writeIncompleteScanningMark(...)
+      storage.close()
+    }
   }
 
   /**

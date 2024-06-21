@@ -4,7 +4,6 @@ package com.intellij.util.indexing;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -205,13 +204,10 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
     finally {
       IndexDiagnosticDumper.getInstance().onDumbIndexingFinished(projectDumbIndexingHistory);
-      ReadAction.run(() -> {
-        // read action ensures that service won't be disposed and storage inside won't be closed
-        ProjectIndexingDependenciesService service = myProject.getServiceIfCreated(ProjectIndexingDependenciesService.class);
-        if (service != null) {
-          service.completeToken(token, false);
-        }
-      });
+      ProjectIndexingDependenciesService service = myProject.getServiceIfCreated(ProjectIndexingDependenciesService.class);
+      if (service != null) {
+        service.completeToken(token, false);
+      }
     }
   }
 
