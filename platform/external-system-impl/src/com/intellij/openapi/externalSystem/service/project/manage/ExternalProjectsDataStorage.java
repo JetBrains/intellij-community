@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -37,6 +37,7 @@ import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +60,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
  */
 @Service(Service.Level.PROJECT)
 @State(name = "ExternalProjectsData", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@ApiStatus.Internal
 public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   implements SettingsSavingComponentJavaAdapter, PersistentStateComponent<ExternalProjectsDataStorage.State> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
