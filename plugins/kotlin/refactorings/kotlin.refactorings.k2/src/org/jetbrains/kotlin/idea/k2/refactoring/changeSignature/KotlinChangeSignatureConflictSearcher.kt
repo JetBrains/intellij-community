@@ -11,6 +11,7 @@ import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -144,6 +145,7 @@ class KotlinChangeSignatureConflictSearcher(
         return createTypeCodeFragment(text, context).getContentElement()?.getKtType()
     }
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun filterCandidates(function: KtCallableDeclaration, candidateSymbol: KaDeclarationSymbol): Boolean {
         val factory = KtPsiFactory(function.project)
         val newReceiverType = originalInfo.receiverParameterInfo?.currentType?.text?.let {
