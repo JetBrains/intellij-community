@@ -79,7 +79,10 @@ internal class GHPRDetailsViewModelImpl(
   private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)
   override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider)
 
-  override val statusVm = GHPRStatusViewModelImpl(cs, project, dataProvider.detailsData, detailsState)
+  private val serverPath = dataContext.repositoryDataService.repositoryMapping.repository.serverPath
+  override val statusVm = GHPRStatusViewModelImpl(cs, project, serverPath,
+                                                  dataContext.repositoryDataService.repositoryMapping.gitRepository,
+                                                  dataProvider.detailsData, detailsState)
 
   override val reviewFlowVm =
     GHPRReviewFlowViewModelImpl(cs,
