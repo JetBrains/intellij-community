@@ -8,11 +8,13 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 @State(name = "EventLogWhitelist", storages = @Storage(StoragePathMacros.CACHE_FILE))
 public final class EventLogMetadataSettingsPersistence implements PersistentStateComponent<Element> {
   private static final String MODIFY = "update";

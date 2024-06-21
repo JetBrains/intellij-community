@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -63,7 +64,8 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
     }
     return Collections.emptySet();
   }
-  
+
+  @ApiStatus.Internal
   public static boolean isJBTeam(@NotNull LicensingFacade licensingFacade) {
     String licensedToMessage = licensingFacade.getLicensedToMessage();
     return licensedToMessage != null && licensedToMessage.contains("JetBrains Team");

@@ -13,7 +13,7 @@ import com.intellij.ui.LicensingFacade
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class InternalFlagDetection : ProjectActivity {
+private class InternalFlagDetection : ProjectActivity {
 
   private val internalPluginIds = setOf(
     "com.jetbrains.intellij.api.watcher",

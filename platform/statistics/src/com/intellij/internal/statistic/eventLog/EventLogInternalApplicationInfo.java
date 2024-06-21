@@ -68,6 +68,9 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
 
   @Override
   public boolean isInternal() {
+    // There is a small chance that this will be called before InternalFlagDetection is executed,
+    // and the result will be false while actually it should be true.
+    // But it seems to be only when the user hasn't been detected as internal yet and stays on Welcome Screen before the IDE is closed.
     return EventLogMetadataSettingsPersistence.getInstance().isInternal();
   }
 
