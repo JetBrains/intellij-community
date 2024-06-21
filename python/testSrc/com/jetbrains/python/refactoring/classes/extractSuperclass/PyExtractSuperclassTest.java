@@ -167,18 +167,18 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
     doTestNotCreateInitCommon(baseName, pathToSuperclass, pathToOriginClass);
   }
 
-  private void doTestNotCreateInitCommon(String baseName, String pathToSuperclass, String pathToOriginClass){
+  private void doTestNotCreateInitCommon(@NotNull String baseName, @NotNull String pathToSuperclass, @NotNull String pathToOriginClass){
     VirtualFile pkg_dir = myFixture.copyDirectoryToProject(baseName, "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    final String className = "Foo";
-    final String superclassName = "Suppa";
-    final PyClass clazz = findClass(className);
-    final List<PyMemberInfo<PyElement>> members = new ArrayList<>();
-    final PyElement member = findMember(className, ".foo");
+    String className = "Foo";
+    String superclassName = "Suppa";
+    PyClass clazz = findClass(className);
+    List<PyMemberInfo<PyElement>> members = new ArrayList<>();
+    PyElement member = findMember(className, ".foo");
     members.add(MembersManager.findMember(clazz, member));
 
     WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
-      final String path = pkg_dir.getPath() + "/mypkg/" + pathToSuperclass;
+      String path = pkg_dir.getPath() + "/mypkg/" + pathToSuperclass;
       PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path);
     });
 

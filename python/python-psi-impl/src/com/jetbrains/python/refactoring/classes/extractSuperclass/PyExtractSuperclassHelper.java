@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
-import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isNamespacePackage;
 import static com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil.placeFile;
 
 /**
@@ -121,7 +120,7 @@ public final class PyExtractSuperclassHelper {
            Comparing.equal(((BackedVirtualFile)file).getOriginFile(), targetFile);
   }
   
-  private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile, boolean isNamespace) {
+  private static PyClass placeNewClass(@NotNull final Project project, @NotNull PyClass newClass, @NotNull final PyClass clazz, @NotNull final String targetFile, boolean isNamespace) {
     VirtualFile file = VirtualFileManager.getInstance()
       .findFileByUrl(ApplicationManager.getApplication().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
     // file is the same as the source
@@ -166,79 +165,9 @@ public final class PyExtractSuperclassHelper {
     return newClass;
   }
 
-  /**
-   * Places a file at the end of given path, creating intermediate dirs and inits.
-   *
-   * @return the placed file
-   */
 
 
-  /**
-   * Create all intermediate dirs with inits from one of roots up to target dir.
-   *
-   * @param target  a full path to target dir
-   * @return deepest child directory, or null if target is not in roots or process fails at some point.
-   */
-  @Nullable
-  public static PsiDirectory createDirectories(Project project, String target, boolean isNamespace) throws IOException {
-    String relativePath = null;
-    VirtualFile closestRoot = null;
 
-    // NOTE: we don't canonicalize target; must be ok in reasonable cases, and is far easier in unit test mode
-    target = FileUtil.toSystemIndependentName(target);
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-    final List<VirtualFile> allRoots = new ArrayList<>();
-    ContainerUtil.addAll(allRoots, projectRootManager.getContentRoots());
-    ContainerUtil.addAll(allRoots, projectRootManager.getContentSourceRoots());
-    // Check deepest roots first
-    allRoots.sort(Comparator.comparingInt((VirtualFile vf) -> vf.getPath().length()).reversed());
-    for (VirtualFile file : allRoots) {
-      final String rootPath = file.getPath();
-      if (target.startsWith(rootPath)) {
-        relativePath = target.substring(rootPath.length());
-        closestRoot = file;
-        break;
-      }
-    }
-    if (closestRoot == null) {
-      throw new IOException("Can't find '" + target + "' among roots");
-    }
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    final String[] dirs = relativePath.split("/");
-    int i = 0;
-    if (dirs[0].isEmpty()) i = 1;
-    VirtualFile resultDir = closestRoot; 
-    while (i < dirs.length) {
-      VirtualFile subdir = resultDir.findChild(dirs[i]);
-      if (subdir != null) {
-        if (!subdir.isDirectory()) {
-          throw new IOException("Expected resultDir, but got non-resultDir: " + subdir.getPath());
-        }
-      }
-      else {
-        subdir = resultDir.createChildDirectory(lfs, dirs[i]);
-      }
-      if (subdir.findChild(PyNames.INIT_DOT_PY) == null && !isNamespace) {
-        subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
-      }
-      /*
-      // here we could add an __all__ clause to the __init__.py.
-      // * there's no point to do so; we import the class directly;
-      // * we can't do this consistently since __init__.py may already exist and be nontrivial.
-      if (i == dirs.length - 1) {
-        PsiFile init_file = psiManager.findFile(initVFile);
-        LOG.assertTrue(init_file != null);
-        final PyElementGenerator gen = PyElementGenerator.getInstance(project);
-        final PyStatement statement = gen.createFromText(LanguageLevel.getDefault(), PyStatement.class, PyNames.ALL + " = [\"" + lastName + "\"]");
-        init_file.add(statement);
-      }
-      */
-      resultDir = subdir;
-      i += 1;
-    }
-    return psiManager.findDirectory(resultDir);
-  }
 
   public static String getRefactoringId() {
     return "refactoring.python.extract.superclass";
