@@ -387,6 +387,7 @@ public final class JBCefApp {
     if (myDelegate != null) {
       return myDelegate.createMessageRouter(config);
     }
+    //noinspection SSBasedInspection
     return CefMessageRouter.create(config);
   }
 
