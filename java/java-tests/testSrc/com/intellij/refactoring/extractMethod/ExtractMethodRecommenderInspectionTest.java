@@ -33,6 +33,14 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
     myFixture.checkHighlighting();
   }
 
+  public void testExtractMethodRecommenderComment() {
+    ExtractMethodRecommenderInspection inspection = new ExtractMethodRecommenderInspection();
+    inspection.minLength = 100;
+    myFixture.enableInspections(inspection);
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
   public void testImplicitClass() {
     ExtractMethodRecommenderInspection inspection = new ExtractMethodRecommenderInspection();
     myFixture.enableInspections(inspection);
