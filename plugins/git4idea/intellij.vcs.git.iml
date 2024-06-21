@@ -92,5 +92,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="module" module-name="intellij.terminal.completion" />
+    <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>
