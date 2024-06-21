@@ -121,7 +121,7 @@ public final class CommonProxy extends ProxySelector {
 
 
   /**
-   * @deprecated use {@link com.intellij.util.net.JdkProxyProvider#ensureDefault())}
+   * @deprecated use {@link com.intellij.util.net.JdkProxyProvider#ensureDefault()}
    */
   @Deprecated
   public void ensureAuthenticator() {
