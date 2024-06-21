@@ -237,7 +237,7 @@
     },
     {
       "id": "go",
-      "experimentBucketsCount": 4,
+      "experimentBucketsCount": 2,
       "includeGroups": [28, 22],
       "shouldLogElementFeatures": true
     },
