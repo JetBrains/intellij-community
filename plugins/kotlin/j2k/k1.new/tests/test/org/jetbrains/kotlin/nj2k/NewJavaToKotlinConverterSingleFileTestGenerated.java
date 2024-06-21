@@ -5181,6 +5181,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("argumentForNotNullRecordParameter.java")
+        public void testArgumentForNotNullRecordParameter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/argumentForNotNullRecordParameter.java");
+        }
+
         @TestMetadata("arrayAccess.java")
         public void testArrayAccess() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/arrayAccess.java");
@@ -5455,14 +5460,139 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("argumentForNotNullRecordParameter.java")
+        public void testArgumentForNotNullRecordParameter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/argumentForNotNullRecordParameter.java");
+        }
+
+        @TestMetadata("array.java")
+        public void testArray() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/array.java");
+        }
+
+        @TestMetadata("arrayNewNoInitializerTodo.java")
+        public void testArrayNewNoInitializerTodo() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/arrayNewNoInitializerTodo.java");
+        }
+
+        @TestMetadata("assignment.java")
+        public void testAssignment() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/assignment.java");
+        }
+
+        @TestMetadata("complex.java")
+        public void testComplex() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/complex.java");
+        }
+
+        @TestMetadata("javaInteropTodo.java")
+        public void testJavaInteropTodo() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/javaInteropTodo.java");
+        }
+
+        @TestMetadata("kotlinInteropTodo.java")
+        public void testKotlinInteropTodo() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/kotlinInteropTodo.java");
+        }
+
+        @TestMetadata("libraryMethodsTodo.java")
+        public void testLibraryMethodsTodo() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/libraryMethodsTodo.java");
+        }
+
+        @TestMetadata("methodCallArgument.java")
+        public void testMethodCallArgument() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/methodCallArgument.java");
+        }
+
+        @TestMetadata("notNullIterationParameterArray.java")
+        public void testNotNullIterationParameterArray() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullIterationParameterArray.java");
+        }
+
+        @TestMetadata("notNullIterationParameterCollections.java")
+        public void testNotNullIterationParameterCollections() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullIterationParameterCollections.java");
+        }
+
+        @TestMetadata("notNullIterationParameterMethodCall.java")
+        public void testNotNullIterationParameterMethodCall() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullIterationParameterMethodCall.java");
+        }
+
+        @TestMetadata("notNullParameterAsArgument.java")
+        public void testNotNullParameterAsArgument() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullParameterAsArgument.java");
+        }
+
+        @TestMetadata("notNullTypeArgumentFromKotlinTypeParameterInCall.java")
+        public void testNotNullTypeArgumentFromKotlinTypeParameterInCall() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullTypeArgumentFromKotlinTypeParameterInCall.java");
+        }
+
+        @TestMetadata("notNullTypeArgumentFromKotlinTypeParameterInDeclaration.java")
+        public void testNotNullTypeArgumentFromKotlinTypeParameterInDeclaration() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullTypeArgumentFromKotlinTypeParameterInDeclaration.java");
+        }
+
         @TestMetadata("nullabilityAnnotations.java")
         public void testNullabilityAnnotations() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/nullabilityAnnotations.java");
         }
 
+        @TestMetadata("propagateFromArrayParameter.java")
+        public void testPropagateFromArrayParameter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/propagateFromArrayParameter.java");
+        }
+
+        @TestMetadata("propagateFromConstructorParameter.java")
+        public void testPropagateFromConstructorParameter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/propagateFromConstructorParameter.java");
+        }
+
+        @TestMetadata("propagateFromField.java")
+        public void testPropagateFromField() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/propagateFromField.java");
+        }
+
+        @TestMetadata("propagateFromMethodReturnType.java")
+        public void testPropagateFromMethodReturnType() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/propagateFromMethodReturnType.java");
+        }
+
+        @TestMetadata("propagateFromParameterToField.java")
+        public void testPropagateFromParameterToField() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/propagateFromParameterToField.java");
+        }
+
+        @TestMetadata("propagateFromVariableRecursive.java")
+        public void testPropagateFromVariableRecursive() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/propagateFromVariableRecursive.java");
+        }
+
+        @TestMetadata("returnMethodCallExprTodo.java")
+        public void testReturnMethodCallExprTodo() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/returnMethodCallExprTodo.java");
+        }
+
+        @TestMetadata("simple.java")
+        public void testSimple() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/simple.java");
+        }
+
+        @TestMetadata("typeArgumentTodo.java")
+        public void testTypeArgumentTodo() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/typeArgumentTodo.java");
+        }
+
         @TestMetadata("typeParameterNotNullUpperBound.java")
         public void testTypeParameterNotNullUpperBound() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/typeParameterNotNullUpperBound.java");
+        }
+
+        @TestMetadata("wildcard.java")
+        public void testWildcard() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/wildcard.java");
         }
     }
 
