@@ -3,12 +3,13 @@
     <plugin id="org.jetbrains.plugins.gradle"/>
     <module name="kotlin.onboarding"/>
   </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurveyStore"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurvey"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionExternalSystemListener"/>
   </extensions>
-  <actions resource-bundle="messages.FeedbackBundle">
+  <actions resource-bundle="messages.GradleFeedbackBundle">
     <group id="BuildProcessSatisfaction" internal="true">
       <action id="org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction"
               class="org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction" internal="true"/>

@@ -8,7 +8,6 @@ import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
-import org.jetbrains.kotlin.onboarding.FeedbackBundle
 
 class BuildProcessSatisfactionSurveyConfig : InIdeFeedbackSurveyConfig {
 
@@ -36,8 +35,8 @@ class BuildProcessSatisfactionSurveyConfig : InIdeFeedbackSurveyConfig {
     override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
         return RequestFeedbackNotification(
             "Feedback In IDE",
-            FeedbackBundle.message("build.process.gradle.satisfaction.request.title"),
-            FeedbackBundle.message("build.process.gradle.satisfaction.request.content")
+            GradleFeedbackBundle.message("build.process.gradle.satisfaction.request.title"),
+            GradleFeedbackBundle.message("build.process.gradle.satisfaction.request.content")
         )
     }
 

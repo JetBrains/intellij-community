@@ -45,7 +45,7 @@ private const val DISPLAY_NAME = "Kotlin plugin K2 mode"
 
 private class FirStatusBarWidgetListener : RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {
-        if (value.key != REGISTRY_KEY) return
+        if (!KotlinPluginModeProvider.isK2Mode() || value.key != REGISTRY_KEY) return
         ApplicationManager.getApplication().invokeLater {
             for (project in ProjectManager.getInstance().openProjects) {
                 if (project.isDisposed || project.isDefault) continue

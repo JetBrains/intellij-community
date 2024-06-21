@@ -19,7 +19,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.configuration.getGradleKotlinVersion
-import org.jetbrains.kotlin.onboarding.FeedbackBundle
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleUtil
@@ -98,31 +97,31 @@ internal class BuildProcessSatisfactionDialog(
 
     override val myShowFeedbackSystemInfoDialog: () -> Unit = {
         showFeedbackSystemInfoDialog(myProject, mySystemInfoData.commonData) {
-            row(FeedbackBundle.message("build.process.info.gradle.version")) {
+            row(GradleFeedbackBundle.message("build.process.info.gradle.version")) {
                 label(mySystemInfoData.gradleVersion)
             }
-            row(FeedbackBundle.message("build.process.info.kotlin.version")) {
+            row(GradleFeedbackBundle.message("build.process.info.kotlin.version")) {
                 label(mySystemInfoData.kotlinVersion)
             }
-            row(FeedbackBundle.message("build.process.info.groovy.build.file.count")) {
+            row(GradleFeedbackBundle.message("build.process.info.groovy.build.file.count")) {
                 label(mySystemInfoData.groovyBuildFileCount.toString())
             }
-            row(FeedbackBundle.message("build.process.info.kts.build.file.count")) {
+            row(GradleFeedbackBundle.message("build.process.info.kts.build.file.count")) {
                 label(mySystemInfoData.ktsBuildFileCount.toString())
             }
         }
     }
-    override val myTitle: String = FeedbackBundle.message("dialog.build.process.gradle.satisfaction.top.title")
+    override val myTitle: String = GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.top.title")
 
     override val myBlocks: List<FeedbackBlock> = listOf(
-        TopLabelBlock(FeedbackBundle.message("dialog.build.process.gradle.satisfaction.title")),
-        DescriptionBlock(FeedbackBundle.message("dialog.build.process.gradle.satisfaction.description")),
+        TopLabelBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.title")),
+        DescriptionBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.description")),
         RatingBlock(
-            FeedbackBundle.message("dialog.build.process.gradle.satisfaction.rating.label"),
+            GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.rating.label"),
             "rating"
         ),
         TextAreaBlock(
-            FeedbackBundle.message("dialog.build.process.gradle.satisfaction.improve.label"),
+            GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.improve.label"),
             "improvements"
         )
     )
@@ -133,7 +132,7 @@ internal class BuildProcessSatisfactionDialog(
 
     override fun showThanksNotification() {
         ThanksForFeedbackNotification(
-            description = FeedbackBundle.message(
+            description = GradleFeedbackBundle.message(
                 "dialog.build.process.gradle.satisfaction.feedback.content"
             )
         ).notify(myProject)
