@@ -385,6 +385,11 @@ public abstract class LineMarkersK2TestGenerated extends AbstractLineMarkersK2Te
             runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/PropertyOverride.kt");
         }
 
+        @TestMetadata("SamInterface.kt")
+        public void testSamInterface() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/SamInterface.kt");
+        }
+
         @TestMetadata("SealedClass.kt")
         public void testSealedClass() throws Exception {
             runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/SealedClass.kt");

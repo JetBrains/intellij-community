@@ -20,6 +20,7 @@ import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerCodeMetaInfo
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerConfiguration
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.junit.Assert
 import java.io.File
+import kotlin.io.path.Path
 
 abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase() {
 
@@ -39,7 +41,15 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    protected open fun doTest(path: String) = doTest(path) {}
+    protected open fun doTest(path: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.IGNORE_K1) {
+            doTestInternal(path)
+        }
+    }
+
+    protected fun doTestInternal(path: String) {
+        doTest(path) {}
+    }
 
     protected fun doAndCheckHighlighting(
         psiFile: PsiFile,

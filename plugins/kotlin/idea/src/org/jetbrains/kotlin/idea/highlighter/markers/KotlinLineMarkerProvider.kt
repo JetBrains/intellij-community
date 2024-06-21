@@ -12,11 +12,13 @@ import com.intellij.java.JavaBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
@@ -198,7 +200,9 @@ private fun collectInheritedClassMarker(element: KtClass, result: LineMarkerInfo
 
     val lightClass = element.toLightClass() ?: element.toFakeLightClass()
 
-    if (ClassInheritorsSearch.search(lightClass, false).findFirst() == null) return
+    if (ClassInheritorsSearch.search(lightClass, false).findFirst() == null && !(LambdaUtil.isFunctionalClass(lightClass) && ReferencesSearch.search(lightClass).findFirst() != null)) {
+        return
+    }
 
     val anchor = element.nameIdentifier ?: element
     val icon = gutter.icon ?: return
