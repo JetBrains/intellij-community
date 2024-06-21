@@ -23,7 +23,7 @@ internal fun isGradleConfiguration(configuration: GradleRunConfiguration) =
     GradleConstants.SYSTEM_ID == configuration.settings.externalSystemId
 
 internal fun isInGradleKotlinScript(psiElement: PsiElement): Boolean {
-    val file = psiElement.containingFile.virtualFile ?: return false
+    val file = psiElement.containingFile?.virtualFile ?: return false
     return file.name.endsWith(".$KOTLIN_DSL_SCRIPT_EXTENSION")
 }
 
