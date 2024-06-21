@@ -182,6 +182,17 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   if (context.project.libraryCollection.findLibrary("org.apache.ivy") != null) {
     layout.withProjectLibrary("org.apache.ivy", "groovy.jar", reason = "ivy workaround")
   }
+  // TODO(Shumaf.Lovpache): IJPL-1014 convert lsp4j to product modules after merge into master
+  if (context.project.libraryCollection.findLibrary("eclipse.lsp4j") != null) {
+    layout.withProjectLibraries(
+      listOf(
+        "eclipse.lsp4j",
+        "eclipse.lsp4j.jsonrpc",
+        "eclipse.lsp4j.debug",
+        "eclipse.lsp4j.jsonrpc.debug",
+      )
+    )
+  }
 
   // used by intellij.database.jdbcConsole - put to a small util module
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
