@@ -1563,7 +1563,6 @@ c:com.intellij.openapi.util.IconLoader$CachedImageIcon
 - com.intellij.ui.icons.IconWithToolTip
 f:com.intellij.openapi.util.text.TextWithMnemonic
 - sf:EMPTY:com.intellij.openapi.util.text.TextWithMnemonic
-- sf:MNEMONIC:java.util.regex.Pattern
 - append(java.lang.String):com.intellij.openapi.util.text.TextWithMnemonic
 - dropMnemonic(Z):com.intellij.openapi.util.text.TextWithMnemonic
 - equals(java.lang.Object):Z

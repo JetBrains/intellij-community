@@ -16,7 +16,7 @@ public final class TextWithMnemonic {
   private static final Logger LOG = Logger.getInstance(TextWithMnemonic.class);
 
   public static final TextWithMnemonic EMPTY = new TextWithMnemonic("", -1, "");
-  public static final Pattern MNEMONIC = Pattern.compile(" ?\\(_?[A-Z]\\)");
+  private static final Pattern MNEMONIC = Pattern.compile(" ?\\(_?[A-Z]\\)");
 
   private final @NotNull @Nls String text;
   /**
