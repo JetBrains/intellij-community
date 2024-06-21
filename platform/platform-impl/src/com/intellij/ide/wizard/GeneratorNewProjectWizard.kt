@@ -2,6 +2,7 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.Nls
@@ -16,6 +17,11 @@ import javax.swing.Icon
  * project generators in PyCharm.
  */
 interface GeneratorNewProjectWizard {
+
+  companion object {
+    @JvmField
+    val EP_NAME = ExtensionPointName<GeneratorNewProjectWizard>("com.intellij.newProjectWizard.generator")
+  }
 
   /**
    * The unique identifier to distinguish this generator from others in the new project wizard.

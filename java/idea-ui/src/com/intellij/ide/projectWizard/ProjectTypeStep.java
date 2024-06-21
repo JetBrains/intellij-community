@@ -376,7 +376,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     generators.removeIf(it -> !it.isEnabled());
     generators.sort(Comparator.comparing(it -> it.getOrdinal()));
     if (context.isCreatingNewProject()) {
-      generators.add(new EmptyProjectGeneratorNewProjectWizard());
+      GeneratorNewProjectWizard.EP_NAME.forEachExtensionSafe(wizard -> {
+        generators.add(wizard);
+      });
     }
     var generatorItems = ContainerUtil.map(generators, it -> new LanguageGeneratorItem(it));
     for (var generatorItem : generatorItems) {

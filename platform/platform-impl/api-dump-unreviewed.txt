@@ -10429,6 +10429,8 @@ com.intellij.ide.wizard.BuildSystemNewProjectWizardData
 - a:getBuildSystemProperty():com.intellij.openapi.observable.properties.GraphProperty
 - a:setBuildSystem(java.lang.String):V
 com.intellij.ide.wizard.GeneratorNewProjectWizard
+- sf:Companion:com.intellij.ide.wizard.GeneratorNewProjectWizard$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createStep(com.intellij.ide.util.projectWizard.WizardContext):com.intellij.ide.wizard.NewProjectWizardStep
 - getDescription():java.lang.String
 - getGroupName():java.lang.String
@@ -10437,6 +10439,7 @@ com.intellij.ide.wizard.GeneratorNewProjectWizard
 - a:getName():java.lang.String
 - getOrdinal():I
 - isEnabled():Z
+f:com.intellij.ide.wizard.GeneratorNewProjectWizard$Companion
 a:com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter
 - com.intellij.ide.wizard.AbstractNewProjectWizardBuilder
 - sf:Companion:com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter$Companion
