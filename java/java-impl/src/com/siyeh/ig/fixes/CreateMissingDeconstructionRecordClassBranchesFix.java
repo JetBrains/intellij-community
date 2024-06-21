@@ -3,12 +3,14 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,8 +120,10 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
       PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(recordType));
       if (recordClass == null || !recordClass.isRecord()) return null;
       for (PsiRecordComponent recordComponent : recordClass.getRecordComponents()) {
-        String nextName = codeStyleManager.suggestUniqueVariableName(recordComponent.getName(), block, false, v -> false,
-                                                                     name -> !variableNames.contains(name));
+        String nextName = new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE)
+          .byName(recordComponent.getName())
+          .skipNames(variableNames)
+          .generate(false);
         variableNames.add(nextName);
       }
       for (List<PsiType> branch : branches.getValue()) {

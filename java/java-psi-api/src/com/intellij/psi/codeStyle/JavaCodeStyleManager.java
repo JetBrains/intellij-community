@@ -200,24 +200,6 @@ public abstract class JavaCodeStyleManager {
   public abstract String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<? super PsiVariable> canBeReused);
 
   /**
-   * Suggests a unique name for the variable used at the specified location looking forward with possible filtering.
-   *
-   * @param baseName            the base name info for the variable.
-   * @param place               the location where the variable will be used.
-   * @param lookForward  if true, the existing variables are searched in both directions; if false - only backward
-   * @param canBeReused         a predicate which returns true for variables which names still could be reused (e.g. a variable will be deleted
-   *                            during the ongoing refactoring)
-   * @param additionalValidator additional validator, which the generated name should pass
-   * @return the generated unique name
-   */
-  @NotNull
-  public abstract String suggestUniqueVariableName(@NotNull String baseName,
-                                                   PsiElement place,
-                                                   boolean lookForward,
-                                                   Predicate<? super PsiVariable> canBeReused,
-                                                   @Nullable Predicate<String> additionalValidator);
-
-  /**
    * Suggests a unique name for the variable used at the specified location.
    *
    * @param baseNameInfo    the base name info for the variable.

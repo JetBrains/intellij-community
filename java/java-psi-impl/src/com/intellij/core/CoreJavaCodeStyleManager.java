@@ -86,15 +86,14 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
   }
 
   @Override
-  public @NotNull String suggestUniqueVariableName(@NotNull @NonNls String baseName, PsiElement place,  boolean lookForward) {
-    return suggestUniqueVariableName(baseName, place, lookForward, v -> false, null);
+  public @NotNull String suggestUniqueVariableName(@NotNull @NonNls String baseName, PsiElement place, boolean lookForward) {
+    return suggestUniqueVariableName(baseName, place, lookForward, v -> false);
   }
 
-  private static @NotNull String suggestUniqueVariableNameInner(@NotNull @NonNls String baseName,
+  private static @NotNull String suggestUniqueVariableName(@NotNull @NonNls String baseName,
                                                            PsiElement place,
                                                            boolean lookForward,
-                                                           Predicate<? super PsiVariable> canBeReused,
-                                                           @Nullable Predicate<String> additionalValidator) {
+                                                           Predicate<? super PsiVariable> canBeReused) {
     int index = 0;
     PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
     NextName:
@@ -104,9 +103,6 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
         name += index;
       }
       index++;
-      if (additionalValidator != null && !additionalValidator.test(name)) {
-        continue;
-      }
       if (PsiUtil.isVariableNameUnique(name, place)) {
         if (lookForward) {
           final String name1 = name;
@@ -144,16 +140,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
 
   @Override
   public @NotNull String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<? super PsiVariable> canBeReused) {
-    return suggestUniqueVariableName(baseName, place, true, canBeReused, null);
-  }
-
-  @Override
-  public @NotNull String suggestUniqueVariableName(@NotNull String baseName,
-                                                   PsiElement place,
-                                                   boolean lookForward,
-                                                   Predicate<? super PsiVariable> canBeReused,
-                                                   @Nullable Predicate<String> additionalValidator) {
-    return suggestUniqueVariableNameInner(baseName, place, lookForward, canBeReused, additionalValidator);
+    return suggestUniqueVariableName(baseName, place, true, canBeReused);
   }
 
   @Override
