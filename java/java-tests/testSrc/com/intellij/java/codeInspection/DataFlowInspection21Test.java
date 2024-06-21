@@ -130,4 +130,6 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
 
   public void testArrayElementWrappedInPureMethod() { doTest(); }
   public void testArrayAddedIntoCollection() { doTest(); }
+  
+  public void testInstanceOfPatternAffectNullity() { doTest(); }
 }
