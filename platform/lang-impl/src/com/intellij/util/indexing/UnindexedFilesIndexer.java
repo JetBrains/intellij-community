@@ -18,7 +18,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles;
@@ -36,6 +35,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
@@ -67,7 +67,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
                                @NotNull Set<VirtualFile> files,
                                @NonNls @NotNull String indexingReason,
                                @NotNull LongSet scanningIds) {
-    this(project, QueuedFiles.fromCollection(files, scanningIds), indexingReason);
+    this(project, QueuedFiles.fromFilesCollection(files, scanningIds), indexingReason);
   }
 
   /**
@@ -129,14 +129,12 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     String filesetName = "Refreshed files";
     Collection<FileIndexingRequest> files =
       new ProjectChangedFilesScanner(myProject).scan(projectDumbIndexingHistory);
-    return new IndexUpdateRunner.FileSet(myProject, filesetName, files);
+    return new IndexUpdateRunner.FileSet(myProject, filesetName, QueuedFiles.fromRequestsCollection(files, Collections.emptyList()));
   }
 
   @NotNull
   private IndexUpdateRunner.FileSet getExplicitlyRequestedFilesSets() {
-    return new IndexUpdateRunner.FileSet(myProject, "<indexing queue>",
-                                         // TODO: don't copy. Map iterators instead
-                                         ContainerUtil.map(files.getFiles(), FileIndexingRequest::updateRequest));
+    return new IndexUpdateRunner.FileSet(myProject, "<indexing queue>", files);
   }
 
   private void doIndexFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
@@ -235,8 +233,8 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     QueuedFiles otherQueue = otherIndexingTask.files;
 
     QueuedFiles mergedQueue = new QueuedFiles();
-    mergedQueue.addFiles$intellij_platform_lang_impl(files.getFiles(), files.getScanningIds());
-    mergedQueue.addFiles$intellij_platform_lang_impl(otherQueue.getFiles(), otherQueue.getScanningIds());
+    mergedQueue.addRequests$intellij_platform_lang_impl(files.getRequests(), files.getScanningIds());
+    mergedQueue.addRequests$intellij_platform_lang_impl(otherQueue.getRequests(), otherQueue.getScanningIds());
 
     String mergedReason = mergeReasons(otherIndexingTask);
     return new UnindexedFilesIndexer(myProject, mergedQueue, mergedReason);
@@ -269,8 +267,8 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
 
   @TestOnly
   @NotNull
-  Set<VirtualFile> getFiles() {
-    return files.getFiles();
+  QueuedFiles getFiles() {
+    return files;
   }
 
   public @NotNull String getIndexingReason() {

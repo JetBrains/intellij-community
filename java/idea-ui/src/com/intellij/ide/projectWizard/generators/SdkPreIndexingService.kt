@@ -69,7 +69,7 @@ internal class SdkPreIndexingService: Disposable {
 
     val task = object : Task.Backgroundable(null, JavaUiBundle.message("project.wizard.sdk.preindexing.progress.title")) {
       override fun run(indicator: ProgressIndicator) {
-        UnindexedFilesIndexer(defaultProject, QueuedFiles.fromCollection(providers, emptyList()), "SDK pre-indexing").perform(indicator)
+        UnindexedFilesIndexer(defaultProject, QueuedFiles.fromFilesCollection(providers, emptyList()), "SDK pre-indexing").perform(indicator)
       }
     }
 

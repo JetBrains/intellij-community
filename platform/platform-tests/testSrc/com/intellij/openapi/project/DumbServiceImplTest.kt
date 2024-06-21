@@ -29,10 +29,10 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.PerProjectIndexingQueue
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
-import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.junit.*
@@ -296,7 +296,8 @@ class DumbServiceImplTest {
           ProgressIndicatorUtils.withTimeout(20_000) {
             val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
             IndexUpdateRunner(index, project.service<ProjectIndexingDependenciesService>().getLatestIndexingRequestToken())
-              .indexFiles(project, IndexUpdateRunner.FileSet(project, "child", listOf(FileIndexingRequest.updateRequest(child))),
+              .indexFiles(project, IndexUpdateRunner.FileSet(project, "child",
+                                                             PerProjectIndexingQueue.QueuedFiles.fromFilesCollection(listOf(child), emptyList())),
                           ProjectDumbIndexingHistoryImpl(project))
           }
         }

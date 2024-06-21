@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.impl.CachedFileType
 import com.intellij.util.PathUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.IndexingFlag.unlockFile
+import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.IndexingRequestToken
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
@@ -56,26 +57,13 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
    */
   class IndexingInterruptedException(cause: Throwable) : Exception(cause)
 
-  class FileSet(project: Project, val debugName: String, internal val filesOriginal: Collection<FileIndexingRequest>) {
+  class FileSet(project: Project, val debugName: String, internal val filesOriginal: QueuedFiles) {
     val statistics: IndexingFileSetStatistics = IndexingFileSetStatistics(project, debugName)
 
-    fun isEmpty(): Boolean = filesOriginal.isEmpty()
+    fun isEmpty(): Boolean = filesOriginal.isEmpty
     fun size(): Int = filesOriginal.size
 
-    fun asChannel(cs: CoroutineScope): Channel<FileIndexingRequest> {
-      val channel = Channel<FileIndexingRequest>(INDEXING_THREADS_NUMBER * 2)
-      cs.async {
-        try {
-          filesOriginal.forEach {
-            channel.send(it)
-          }
-        }
-        finally {
-          channel.close()
-        }
-      }
-      return channel
-    }
+    fun asChannel(cs: CoroutineScope): Channel<FileIndexingRequest> = filesOriginal.asChannel(cs, INDEXING_THREADS_NUMBER * 2)
   }
 
   @Throws(IndexingInterruptedException::class)

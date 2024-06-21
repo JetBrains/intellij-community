@@ -26,6 +26,7 @@ import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
+import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.indexing.mocks.*
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
@@ -335,7 +336,7 @@ class UnindexedFilesScannerTest {
   }
 
   private fun indexFiles(provider: SingleRootIndexableFilesIterator, dirtyFiles: Collection<VirtualFile>) {
-    val files = QueuedFiles.fromCollection(dirtyFiles, emptyList())
+    val files = QueuedFiles.fromFilesCollection(dirtyFiles, emptyList())
     val indexingTask = UnindexedFilesIndexer(project, files, "Test")
     val indicator = EmptyProgressIndicator()
     ProgressManager.getInstance().runProcess({ indexingTask.perform(indicator) }, indicator)
@@ -353,10 +354,10 @@ class UnindexedFilesScannerTest {
     assertEquals(1, history.scanningStatistics.size)
     val scanningStat = history.scanningStatistics[0]
 
-    return Pair(scanningStat, dirtyFiles)
+    return Pair(scanningStat, dirtyFiles.map(FileIndexingRequest::file))
   }
 
-  private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Collection<VirtualFile>> {
+  private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Collection<FileIndexingRequest>> {
     return project.service<PerProjectIndexingQueue>().getFilesSubmittedDuring {
       val scanningTask = UnindexedFilesScanner(project, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL, null)
       return@getFilesSubmittedDuring scanningTask.queue().get()

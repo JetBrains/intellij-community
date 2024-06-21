@@ -9,13 +9,17 @@ import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import it.unimi.dsi.fastutil.longs.LongArraySet
 import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.longs.LongSets
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -24,7 +28,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.LockSupport
@@ -108,39 +111,61 @@ class PerProjectIndexingQueue(private val project: Project) {
   @Internal
   class QueuedFiles {
     // Files that will be re-indexed
-    private val filesSoFar: MutableStateFlow<PersistentSet<VirtualFile>> = MutableStateFlow(persistentSetOf())
+    private val requestsSoFar: MutableStateFlow<PersistentSet<FileIndexingRequest>> = MutableStateFlow(persistentSetOf())
 
-    internal val estimatedFilesCount: Flow<Int> = filesSoFar.map { it.size }
+    internal val estimatedFilesCount: Flow<Int> = requestsSoFar.map { it.size }
 
     // Ids of scannings from which [filesSoFar] came
     internal val scanningIdsSoFar: LongSet = createSetForScanningIds()
 
-    val size: Int get() = filesSoFar.value.size
+    val size: Int get() = requestsSoFar.value.size
 
-    val isEmpty: Boolean get() = filesSoFar.value.isEmpty()
+    val isEmpty: Boolean get() = requestsSoFar.value.isEmpty()
 
-    val files: Set<VirtualFile> get() = filesSoFar.value
+    val requests: Set<FileIndexingRequest> get() = requestsSoFar.value
 
     val scanningIds: LongSet get() = LongSets.unmodifiable(scanningIdsSoFar)
 
     internal fun addFile(file: VirtualFile, scanningId: Long) {
       scanningIdsSoFar.add(scanningId)
-      filesSoFar.update { it.add(file) }
+      requestsSoFar.update { it.add(FileIndexingRequest.updateRequest(file)) }
     }
 
     @Deprecated("Indexing should always start with scanning. You don't need this method - do scanning instead")
-    internal fun addFiles(files: Collection<VirtualFile>, scanningId: Collection<Long>) {
+    internal fun addRequests(files: Collection<FileIndexingRequest>, scanningId: Collection<Long>) {
       scanningIdsSoFar.addAll(scanningId)
-      filesSoFar.update { it.addAll(files) }
+      requestsSoFar.update { it.addAll(files) }
+    }
+
+    fun asChannel(cs: CoroutineScope, bufferSize: Int): Channel<FileIndexingRequest> {
+      val channel = Channel<FileIndexingRequest>(bufferSize)
+      cs.async {
+        try {
+          requestsSoFar.value.forEach {
+            channel.send(it)
+          }
+        }
+        finally {
+          channel.close()
+        }
+      }
+      return channel
     }
 
     companion object {
       @Internal
       @JvmStatic
       @Deprecated("Indexing should always start with scanning. You don't need this method - do scanning instead")
-      fun fromCollection(files: Collection<VirtualFile>, scanningIds: Collection<Long>): QueuedFiles {
+      fun fromFilesCollection(files: Collection<VirtualFile>, scanningIds: Collection<Long>): QueuedFiles {
+        return fromRequestsCollection(files.map(FileIndexingRequest::updateRequest), scanningIds)
+      }
+
+      @Internal
+      @JvmStatic
+      @Deprecated("Indexing should always start with scanning. You don't need this method - do scanning instead")
+      fun fromRequestsCollection(files: Collection<FileIndexingRequest>, scanningIds: Collection<Long>): QueuedFiles {
         val res = QueuedFiles()
-        res.addFiles(files, scanningIds)
+        res.addRequests(files, scanningIds)
         return res
       }
     }
@@ -170,24 +195,19 @@ class PerProjectIndexingQueue(private val project: Project) {
   }
 
   fun clear() {
-    getFilesAndClear()
+    getAndResetQueuedFiles()
   }
 
-  @VisibleForTesting
-  fun <T> getFilesSubmittedDuring(block: () -> T): Pair<T, Collection<VirtualFile>> {
+  @TestOnly
+  fun <T> getFilesSubmittedDuring(block: () -> T): Pair<T, Collection<FileIndexingRequest>> {
     allowFlushing = false
     try {
       val result: T = block()
-      return Pair(result, getFilesAndClear())
+      return Pair(result, getAndResetQueuedFiles().requests)
     }
     finally {
       allowFlushing = true
     }
-  }
-
-  private fun getFilesAndClear(): Collection<VirtualFile> {
-    val snapshot = getAndResetQueuedFiles()
-    return snapshot.files
   }
 
   private fun getAndResetQueuedFiles(): QueuedFiles {

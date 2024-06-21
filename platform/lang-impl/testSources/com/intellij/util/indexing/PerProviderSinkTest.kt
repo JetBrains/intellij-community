@@ -6,8 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import junit.framework.TestCase
@@ -22,11 +24,20 @@ class PerProviderSinkTest : LightPlatformTestCase() {
 
   private lateinit var queue: PerProjectIndexingQueue
   private lateinit var provider: FakeIterator
+  private val idCounter = AtomicInteger(0)
 
   override fun setUp() {
     super.setUp()
     queue = PerProjectIndexingQueue(project)
     provider = FakeIterator()
+  }
+
+  private class LightVirtualFileWithId(name: String, private val id: Int) : LightVirtualFile(name), VirtualFileWithId {
+    override fun getId(): Int = id
+  }
+
+  private fun createFile(name: String): VirtualFile {
+    return LightVirtualFileWithId(name, idCounter.incrementAndGet())
   }
 
   fun testNoAddClose() {
@@ -37,7 +48,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
 
   fun testAddClose() {
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
+      sink.addFile(createFile("f1"))
     }
     val (filesInQueue) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(1, filesInQueue.size)
@@ -45,7 +56,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
 
   fun testAddCloseClose() {
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
+      sink.addFile(createFile("f1"))
       sink.close()
       sink.close()
     }
@@ -57,11 +68,11 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     val provider2 = FakeIterator()
 
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
+      sink.addFile(createFile("f1"))
     }
 
     queue.getSink(provider2, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f2"))
+      sink.addFile(createFile("f2"))
     }
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(2, filesInQueue.size)
@@ -79,7 +90,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
           sinkRunning.set(true)
           phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) // p2
           Thread.sleep(500) // give a chance for cancelAllTasksAndWait to take effect
-          sink.addFile(LightVirtualFile("f1"))
+          sink.addFile(createFile("f1"))
         }
         finally {
           sinkRunning.set(false)
@@ -112,7 +123,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
             try {
               TestCase.assertFalse(indicator.isCanceled)
               queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-                sink.addFile(LightVirtualFile("f1"))
+                sink.addFile(createFile("f1"))
               }
             }
             catch (pce: ProcessCanceledException) {
@@ -158,7 +169,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
           val provider = providers.random()
           queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
             for (f in 1..batchSize) {
-              sink.addFile(LightVirtualFile("$producerName batch $batch file $f"))
+              sink.addFile(createFile("$producerName batch $batch file $f"))
               filesSubmitted.incrementAndGet()
             }
           }
@@ -201,9 +212,9 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     TestCase.assertEquals(filesSubmitted.get(), totalFilesSum)
   }
 
-  private fun getAndResetQueuedFiles(queue: PerProjectIndexingQueue): Pair<Set<VirtualFile>, Int> {
+  private fun getAndResetQueuedFiles(queue: PerProjectIndexingQueue): Pair<Set<FileIndexingRequest>, Int> {
     val queuedFiles = PerProjectIndexingQueue.TestCompanion(queue).getAndResetQueuedFiles()
-    return Pair(queuedFiles.files, queuedFiles.size)
+    return Pair(queuedFiles.requests, queuedFiles.size)
   }
 
   private class FakeIterator : IndexableFilesIterator {

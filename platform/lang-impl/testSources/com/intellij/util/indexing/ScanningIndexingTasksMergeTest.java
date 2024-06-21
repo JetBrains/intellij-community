@@ -5,15 +5,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles;
 import com.intellij.util.indexing.diagnostic.ScanningType;
+import com.intellij.util.indexing.events.FileIndexingRequest;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
   private List<VirtualFile> f1;
@@ -45,8 +49,8 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     Set<VirtualFile> set2 = new HashSet<>(f2);
     set2.addAll(fShared.subList(1, 3));
 
-    task1 = new UnindexedFilesIndexer(getProject(), QueuedFiles.fromCollection(set1, Collections.emptyList()), "test task1");
-    task2 = new UnindexedFilesIndexer(getProject(), QueuedFiles.fromCollection(set2, Collections.emptyList()), "test task2");
+    task1 = new UnindexedFilesIndexer(getProject(), QueuedFiles.fromFilesCollection(set1, Collections.emptyList()), "test task1");
+    task2 = new UnindexedFilesIndexer(getProject(), QueuedFiles.fromFilesCollection(set2, Collections.emptyList()), "test task2");
   }
 
   public void testTryMergeIndexingTasks() {
@@ -114,7 +118,7 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
   }
 
   private void assertMergedStateInvariants(UnindexedFilesIndexer mergedTask) {
-    Set<VirtualFile> merged = mergedTask.getFiles();
+    Set<VirtualFile> merged = mergedTask.getFiles().getRequests().stream().map(FileIndexingRequest::getFile).collect(Collectors.toSet());
 
     assertEquals(merged.toString(), f1.size() + f2.size() + fShared.size(), merged.size());
     assertTrue(merged.containsAll(f1));
@@ -122,10 +126,26 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     assertTrue(merged.containsAll(fShared));
   }
 
+  private static final AtomicInteger idCounter = new AtomicInteger(0);
+
+  private static class FakeVirtualFileWithId extends FakeVirtualFile implements VirtualFileWithId {
+    private final int id;
+
+    FakeVirtualFileWithId(@NotNull VirtualFile parent, @NotNull String name, int id) {
+      super(parent, name);
+      this.id = id;
+    }
+
+    @Override
+    public int getId() {
+      return id;
+    }
+  }
+
   private static List<VirtualFile> createFiles(VirtualFile root, String... names) {
     List<VirtualFile> files = new ArrayList<>();
     for (String name : names) {
-      files.add(new FakeVirtualFile(root, name));
+      files.add(new FakeVirtualFileWithId(root, name, idCounter.incrementAndGet()));
     }
     return files;
   }
