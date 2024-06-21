@@ -460,31 +460,27 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       throw new IOException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
-    boolean sameName = !file.isCaseSensitive() && newName.equalsIgnoreCase(file.getName());
+    var sameName = !file.isCaseSensitive() && newName.equalsIgnoreCase(file.getName());
 
     if (!file.exists()) {
       throw new IOException(IdeCoreBundle.message("vfs.file.not.exist.error", file.getPath()));
     }
-    VirtualFile parent = file.getParent();
+    var parent = file.getParent();
     if (parent == null) {
       throw new IOException(CoreBundle.message("cannot.rename.root.directory", file.getPath()));
     }
     if (!sameName && parent.findChild(newName) != null) {
-      throw new IOException(IdeCoreBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + newName));
-    }
-
-    File ioFile = convertToIOFile(file);
-    if (!ioFile.exists()) {
-      throw new FileNotFoundException(IdeCoreBundle.message("file.not.exist.error", ioFile.getPath()));
-    }
-    File ioTarget = new File(convertToIOFile(parent), newName);
-    if (!sameName && ioTarget.exists()) {
-      throw new IOException(IdeCoreBundle.message("target.already.exists.error", ioTarget.getPath()));
+      throw new IOException(IdeCoreBundle.message("vfs.target.already.exists.error", parent.getPath() + '/' + newName));
     }
 
     if (!auxRename(file, newName)) {
-      if (!FileUtil.rename(ioFile, newName)) {
-        throw new IOException(IdeCoreBundle.message("rename.failed.error", ioFile.getPath(), newName));
+      var nioFile = convertToNioFileAndCheck(file, false);
+      var nioTarget = nioFile.resolveSibling(newName);
+      try {
+        Files.move(nioFile, nioTarget, StandardCopyOption.ATOMIC_MOVE);
+      }
+      catch (AtomicMoveNotSupportedException e) {
+        Files.move(nioFile, nioTarget);
       }
     }
 
