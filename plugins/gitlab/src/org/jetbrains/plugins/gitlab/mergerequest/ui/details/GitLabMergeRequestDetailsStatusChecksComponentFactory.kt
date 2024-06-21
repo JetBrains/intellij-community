@@ -1,19 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
-import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.ScrollPaneFactory
+import git4idea.remote.hosting.ui.ResolveConflictsLocallyDialogComponentFactory.showBranchUpdateDialog
+import git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRemoveReviewerAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestStatusViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.*
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import java.awt.event.ActionListener
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -22,13 +32,13 @@ import javax.swing.JScrollPane
 internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
   fun create(
     scope: CoroutineScope,
-    statusVm: CodeReviewStatusViewModel,
+    statusVm: GitLabMergeRequestStatusViewModel,
     reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
-    avatarIconsProvider: IconsProvider<GitLabUserDTO>
+    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   ): JComponent {
     val statuses = VerticalListPanel().apply {
       add(CodeReviewDetailsStatusComponentFactory.createCiComponent(scope, statusVm))
-      add(CodeReviewDetailsStatusComponentFactory.createConflictsComponent(scope, statusVm.hasConflicts))
+      add(createConflictsStatusComponentIn(scope, statusVm.resolveConflictsVm))
       add(CodeReviewDetailsStatusComponentFactory.createRequiredResolveConversationsComponent(
         scope, statusVm.requiredConversationsResolved
       ))
@@ -65,4 +75,32 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       })
     }
   }
+
+  private fun createConflictsStatusComponentIn(
+    scope: CoroutineScope,
+    resolveConflictsVm: ResolveConflictsLocallyViewModel<GitLabResolveConflictsLocallyError>,
+  ) = CodeReviewDetailsStatusComponentFactory.createConflictsComponent(
+    scope, resolveConflictsVm.hasConflicts,
+    resolveConflictsVm.requestOrError.map { requestOrError ->
+      requestOrError.bimap(
+        ifLeft = {
+          when (it) {
+            is MergeInProgress -> CollaborationToolsBundle.message("review.details.resolve-conflicts.error.merge-in-progress")
+            is DetailsNotLoaded -> CollaborationToolsBundle.message("review.details.resolve-conflicts.error.details-not-loaded")
+            is SourceRepositoryNotFound -> GitLabBundle.message("merge.request.resolve-conflicts.error.source-project-not-found")
+          }
+        },
+        ifRight = { request ->
+          ActionListener {
+            resolveConflictsVm.performResolveConflicts {
+              withContext(Dispatchers.Main) {
+                showBranchUpdateDialog(request.headRefName, request.baseRefName)
+              }
+            }
+          }
+        }
+      )
+    },
+    resolveConflictsVm.isBusy
+  )
 }
