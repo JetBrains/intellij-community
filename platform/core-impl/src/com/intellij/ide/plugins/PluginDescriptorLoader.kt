@@ -1129,14 +1129,14 @@ fun loadDescriptorsFromOtherIde(
   }
 }
 
-fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false) : PluginLoadingResult{
+suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false) : PluginLoadingResult{
   return DescriptorListLoadingContext(
     isMissingIncludeIgnored = true,
     isMissingSubDescriptorIgnored = true
   ).use { context ->
     val result = PluginLoadingResult()
     result.addAll(
-      descriptors = toSequence(runBlocking {
+      descriptors = toSequence( coroutineScope {
         loadDescriptorsFromDir(
           dir = customPluginDir,
           context = context,
