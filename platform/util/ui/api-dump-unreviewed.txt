@@ -3398,6 +3398,15 @@ f:com.intellij.ui.scale.JBUIScale
 - sf:sysScale(java.awt.Component):F
 - sf:sysScale(java.awt.Graphics2D):F
 - sf:sysScale(java.awt.GraphicsConfiguration):F
+f:com.intellij.ui.scale.Scale
+- f:type:com.intellij.ui.scale.ScaleType
+- f:value:D
+- f:component1():D
+- f:component2():com.intellij.ui.scale.ScaleType
+- f:copy(D,com.intellij.ui.scale.ScaleType):com.intellij.ui.scale.Scale
+- bs:copy$default(com.intellij.ui.scale.Scale,D,com.intellij.ui.scale.ScaleType,I,java.lang.Object):com.intellij.ui.scale.Scale
+- equals(java.lang.Object):Z
+- hashCode():I
 f:com.intellij.ui.scale.ScaleContext
 - com.intellij.ui.scale.UserScaleContext
 - sf:Companion:com.intellij.ui.scale.ScaleContext$Companion
