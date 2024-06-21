@@ -165,8 +165,9 @@ internal class TerminalOutputController(
       }
     }
     else {
-      runningCommandContext.takeIf { runningCommandInteractivity == null }?.let {
-        installRunningCommandInteractivity(it.command)
+      val rcc = runningCommandContext
+      if (rcc != null && runningCommandInteractivity == null) {
+        installRunningCommandInteractivity(rcc.command)
       }
     }
   }
