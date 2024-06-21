@@ -1028,18 +1028,18 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
     if (startOfRecoveredRegion < 0 && endOfRecoveredRegion < 0) {
       return "(There was no recovery, it can't be related to it" +
-             (wasClosedProperly ? " but storage wasn't closed properly" : "") +
+             (wasClosedProperly ? "" : " -- but storage wasn't closed properly") +
              ")";
     }
     if (recordOffsetInFile >= startOfRecoveredRegion && recordOffsetInFile < endOfRecoveredRegion) {
       return "(Record is in the recovered region [" + startOfRecoveredRegion + ".." + endOfRecoveredRegion + ") " +
-             (wasClosedProperly ? " and storage wasn't closed properly " : "") +
+             (wasClosedProperly ? "" : " and storage wasn't closed properly, ") +
              "so it may be due to some un-recovered records" +
              ")";
     }
 
     return "(There was a recovery " +
-           (wasClosedProperly ? "and storage wasn't closed properly, " : "") +
+           (wasClosedProperly ? "" : "and storage wasn't closed properly, ") +
            "so it may be due to some un-recovered records, " +
            "but the record is outside the region [" + startOfRecoveredRegion + ".." + endOfRecoveredRegion + ") recovered)";
   }
