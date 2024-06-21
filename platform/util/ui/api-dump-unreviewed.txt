@@ -1659,9 +1659,6 @@ a:com.intellij.ui.ClickListener
 - installOn(java.awt.Component,Z):V
 - a:onClick(java.awt.event.MouseEvent,I):Z
 - uninstall(java.awt.Component):V
-f:com.intellij.ui.ClickListener$SyntheticClickEvent
-- java.awt.event.MouseEvent
-- <init>(java.awt.Component,J,I,I,I,I,Z,I):V
 f:com.intellij.ui.ClientProperty
 - <init>():V
 - s:findInHierarchy(java.awt.Component,com.intellij.openapi.util.Key):java.lang.Object
