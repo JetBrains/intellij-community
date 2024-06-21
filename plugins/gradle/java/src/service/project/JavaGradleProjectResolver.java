@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.externalSystem.JavaModuleData;
 import com.intellij.externalSystem.JavaProjectData;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -515,18 +515,20 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   }
 
   private static @NotNull Sdk lookupJdkByPath(@NotNull String sdkHome) {
-    var sdkType = ExternalSystemJdkProvider.getInstance().getJavaSdkType();
+    var sdkProvider = ExternalSystemJdkProvider.getInstance();
+    var sdkType = sdkProvider.getJavaSdkType();
     var sdkName = sdkType.suggestSdkName(null, sdkHome);
     var sdk = findSdkInSdkTable(sdkName, sdkHome);
     if (sdk != null) {
       return sdk;
     }
-    var effectiveSdkName = SdkConfigurationUtil.createUniqueSdkName(sdkName, ProjectJdkTable.getInstance().getSdksOfType(sdkType));
-    var effectiveSdk = ExternalSystemJdkProvider.getInstance().createJdk(effectiveSdkName, sdkHome);
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      SdkConfigurationUtil.addSdk(effectiveSdk);
+    return WriteAction.computeAndWait(() -> {
+      var projectJdkTable = ProjectJdkTable.getInstance();
+      var effectiveSdkName = SdkConfigurationUtil.createUniqueSdkName(sdkName, projectJdkTable.getSdksOfType(sdkType));
+      var effectiveSdk = sdkProvider.createJdk(effectiveSdkName, sdkHome);
+      projectJdkTable.addJdk(effectiveSdk);
+      return effectiveSdk;
     });
-    return effectiveSdk;
   }
 
   private @Nullable GradleProjectSettings getProjectSettings() {
