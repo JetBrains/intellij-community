@@ -103,7 +103,10 @@ public class IdeaGateway {
 
   public static @NotNull String getNameOrUrlPart(@NotNull VirtualFile file) {
     String name = file.getName();
-    if (file.isInLocalFileSystem() || file.getParent() != null) return name;
+    if (file.getParent() != null) return name;
+    if (file.isInLocalFileSystem()) {
+      return "/".equals(name) ? "" : name; // on Unix FS root name is "/"
+    }
     return VirtualFileManager.constructUrl(file.getFileSystem().getProtocol(), StringUtil.trimStart(name, "/"));
   }
 
@@ -399,7 +402,7 @@ public class IdeaGateway {
         return true;
       }
 
-      String childName = StringUtil.trimStart(getNameOrUrlPart(child), "/"); // on Mac FS root name is "/"
+      String childName = getNameOrUrlPart(child);
       if (!targetPath.startsWith(childName)) return false;
       String targetPathRest = targetPath.substring(childName.length());
       if (!targetPathRest.isEmpty() && targetPathRest.charAt(0) != '/') return false;
