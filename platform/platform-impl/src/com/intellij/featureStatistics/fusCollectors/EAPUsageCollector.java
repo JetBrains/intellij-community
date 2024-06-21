@@ -66,7 +66,9 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
   }
 
   @ApiStatus.Internal
-  public static boolean isJBTeam(@NotNull LicensingFacade licensingFacade) {
+  public static boolean isJBTeam() {
+    LicensingFacade licensingFacade = LicensingFacade.getInstance();
+    if (licensingFacade == null) return false;
     String licensedToMessage = licensingFacade.getLicensedToMessage();
     return licensedToMessage != null && licensedToMessage.contains("JetBrains Team");
   }
@@ -74,7 +76,7 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
   private static @NotNull MetricEvent newLicencingMetric(@NotNull LicenceType value, @NotNull LicensingFacade licensingFacade) {
     List<EventPair<?>> data = new ArrayList<>();
 
-    if (isJBTeam(licensingFacade)) {
+    if (isJBTeam()) {
       data.add(IS_JB_TEAM.with(true));
     }
     String metadata = licensingFacade.metadata;

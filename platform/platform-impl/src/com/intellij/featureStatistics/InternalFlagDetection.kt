@@ -27,7 +27,7 @@ private class InternalFlagDetection : ProjectActivity {
 
     val isMonorepo = isIdeaProject(project)
 
-    val isLicensedToJetBrains = LicensingFacade.getInstance()?.let { EAPUsageCollector.isJBTeam(it) } ?: false
+    val isLicensedToJetBrains = EAPUsageCollector.isJBTeam()
 
     // detect plugins
     val internalPluginsDetected = internalPluginIds.any { pluginId ->
