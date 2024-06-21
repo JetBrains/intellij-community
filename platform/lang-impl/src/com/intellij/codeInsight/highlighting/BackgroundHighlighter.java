@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -203,6 +204,7 @@ final class BackgroundHighlighter {
     findModel.copyFrom(findManager.getFindInFileModel());
     findModel.setRegularExpressions(false);
     findModel.setStringToFind(toFind);
+    int threshold = Registry.intValue("editor.highlight.selected.text.max.occurrences.threshold", 50);
     ReadAction.nonBlocking(() -> {
         int offset = 0;
         FindResult result = findManager.findString(sequence, offset, findModel, null);
@@ -210,6 +212,10 @@ final class BackgroundHighlighter {
         int count = 0;
         while (result.isStringFound() && count < LivePreviewController.MATCHES_LIMIT) {
           count++;
+          if (count > threshold) {
+            results.clear();
+            return results;
+          }
           results.add(result);
           offset = result.getEndOffset();
           result = findManager.findString(sequence, offset, findModel);
