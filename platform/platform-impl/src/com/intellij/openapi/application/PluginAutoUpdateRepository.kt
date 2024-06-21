@@ -261,7 +261,6 @@ object PluginAutoUpdateRepository {
 /**
  * Internal action for debugging purposes
  */
-@Suppress("unused")
 private class PluginsAutoUpdateRepositoryViewAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     ApplicationManager.getApplication().invokeLater({ Viewer(e.project).showAndGet() }, ModalityState.nonModal())
