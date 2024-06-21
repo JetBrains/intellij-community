@@ -13,35 +13,21 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public final class DefaultExternalProject implements ExternalProject {
-  @NotNull
+
   private String id;
-
-  @NotNull
   private String path;
-
-  @NotNull
   private String identityPath;
-
-  @NotNull
   private String name;
-  @NotNull
   private String qName;
-  @Nullable
   private String description;
-  @NotNull
   private String group;
-  @NotNull
   private String version;
-  @NotNull
-  private TreeMap<String, DefaultExternalProject> childProjects;
-  @NotNull
   private File projectDir;
-  @NotNull
   private File buildDir;
-  @Nullable
   private File buildFile;
-  @NotNull
   private String externalSystemId;
+
+  private @NotNull TreeMap<String, DefaultExternalProject> childProjects;
 
   private @NotNull DefaultGradleSourceSetModel sourceSetModel;
   private @NotNull DefaultGradleTaskModel taskModel;
@@ -52,15 +38,14 @@ public final class DefaultExternalProject implements ExternalProject {
     sourceSetModel = new DefaultGradleSourceSetModel();
   }
 
-  @NotNull
   @Override
-  public String getExternalSystemId() {
+  public @NotNull String getExternalSystemId() {
     return externalSystemId;
   }
 
-  @NotNull
+
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return id;
   }
 
@@ -68,9 +53,8 @@ public final class DefaultExternalProject implements ExternalProject {
     this.id = id;
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     return path;
   }
 
@@ -78,9 +62,8 @@ public final class DefaultExternalProject implements ExternalProject {
     this.path = path;
   }
 
-  @NotNull
   @Override
-  public String getIdentityPath() {
+  public @NotNull String getIdentityPath() {
     return identityPath;
   }
 
@@ -92,9 +75,8 @@ public final class DefaultExternalProject implements ExternalProject {
     this.externalSystemId = externalSystemId;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
@@ -102,9 +84,8 @@ public final class DefaultExternalProject implements ExternalProject {
     this.name = name;
   }
 
-  @NotNull
   @Override
-  public String getQName() {
+  public @NotNull String getQName() {
     return qName;
   }
 
@@ -112,9 +93,9 @@ public final class DefaultExternalProject implements ExternalProject {
     qName = QName;
   }
 
-  @Nullable
+
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return description;
   }
 
@@ -122,9 +103,8 @@ public final class DefaultExternalProject implements ExternalProject {
     this.description = description;
   }
 
-  @NotNull
   @Override
-  public String getGroup() {
+  public @NotNull String getGroup() {
     return group;
   }
 
@@ -132,9 +112,8 @@ public final class DefaultExternalProject implements ExternalProject {
     this.group = group;
   }
 
-  @NotNull
   @Override
-  public String getVersion() {
+  public @NotNull String getVersion() {
     return version;
   }
 
@@ -143,20 +122,17 @@ public final class DefaultExternalProject implements ExternalProject {
   }
 
   @Override
-  @Nullable
-  public String getSourceCompatibility() {
+  public @Nullable String getSourceCompatibility() {
     return sourceSetModel.getSourceCompatibility();
   }
 
   @Override
-  @Nullable
-  public String getTargetCompatibility() {
+  public @Nullable String getTargetCompatibility() {
     return sourceSetModel.getTargetCompatibility();
   }
 
-  @NotNull
   @Override
-  public Map<String, DefaultExternalProject> getChildProjects() {
+  public @NotNull Map<String, DefaultExternalProject> getChildProjects() {
     return childProjects;
   }
 
@@ -173,9 +149,8 @@ public final class DefaultExternalProject implements ExternalProject {
     }
   }
 
-  @NotNull
   @Override
-  public File getProjectDir() {
+  public @NotNull File getProjectDir() {
     return projectDir;
   }
 
@@ -183,9 +158,8 @@ public final class DefaultExternalProject implements ExternalProject {
     this.projectDir = projectDir;
   }
 
-  @NotNull
   @Override
-  public File getBuildDir() {
+  public @NotNull File getBuildDir() {
     return buildDir;
   }
 
@@ -193,9 +167,8 @@ public final class DefaultExternalProject implements ExternalProject {
     this.buildDir = buildDir;
   }
 
-  @Nullable
   @Override
-  public File getBuildFile() {
+  public @Nullable File getBuildFile() {
     return buildFile;
   }
 
@@ -203,31 +176,23 @@ public final class DefaultExternalProject implements ExternalProject {
     this.buildFile = buildFile;
   }
 
-  @NotNull
   @Override
-  public Map<String, ? extends ExternalTask> getTasks() {
+  public @NotNull Map<String, ? extends ExternalTask> getTasks() {
     return taskModel.getTasks();
   }
 
-  @NotNull
   @Override
-  public Map<String, DefaultExternalSourceSet> getSourceSets() {
+  public @NotNull Map<String, DefaultExternalSourceSet> getSourceSets() {
     return sourceSetModel.getSourceSets();
   }
 
-  public void setSourceSets(@NotNull Map<String, DefaultExternalSourceSet> sourceSets) {
-    sourceSetModel.setSourceSets(sourceSets);
-  }
-
-  @NotNull
   @Override
-  public List<File> getArtifacts() {
+  public @NotNull List<File> getArtifacts() {
     return sourceSetModel.getTaskArtifacts();
   }
 
-  @NotNull
   @Override
-  public Map<String, Set<File>> getArtifactsByConfiguration() {
+  public @NotNull Map<String, Set<File>> getArtifactsByConfiguration() {
     return sourceSetModel.getConfigurationArtifacts();
   }
 
