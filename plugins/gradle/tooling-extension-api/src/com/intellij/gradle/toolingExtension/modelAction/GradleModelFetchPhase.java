@@ -16,7 +16,7 @@ public enum GradleModelFetchPhase {
 
   /**
    * Model provider, in this phase, fetches and caches a Gradle task model into
-   * {@link com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache}.
+   * {@link com.intellij.gradle.toolingExtension.impl.model.taskIndex.GradleTaskIndex}.
    * This cache is available by {@link org.jetbrains.plugins.gradle.tooling.ModelBuilderContext}.
    * <p>
    * This phase should be first, because this phase evaluates all lazy Task configurations.

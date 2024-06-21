@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.toolingExtension.impl.model.taskModel;
+package com.intellij.gradle.toolingExtension.impl.model.taskIndex;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
@@ -22,12 +22,12 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Provides fast access to the {@link Project}'s tasks.
  */
-public final class GradleTaskCache {
+public final class GradleTaskIndex {
 
   private final ModelBuilderContext context;
   private final ConcurrentMap<ProjectIdentifier, Set<Task>> allTasks;
 
-  private GradleTaskCache(@NotNull ModelBuilderContext context) {
+  private GradleTaskIndex(@NotNull ModelBuilderContext context) {
     this.context = context;
     this.allTasks = new ConcurrentHashMap<>();
   }
@@ -45,7 +45,7 @@ public final class GradleTaskCache {
     Set<Task> projectTasks = allTasks.get(projectIdentifier);
     if (projectTasks == null) {
       context.getMessageReporter().createMessage()
-        .withGroup(Messages.TASK_CACHE_GET_GROUP)
+        .withGroup(Messages.TASK_INDEX_CACHE_GET_GROUP)
         .withTitle("Task model aren't found")
         .withText(
           "Tasks for " + project.getDisplayName() + " wasn't collected. " +
@@ -64,7 +64,7 @@ public final class GradleTaskCache {
     Set<Task> previousTasks = allTasks.put(projectIdentifier, tasks);
     if (previousTasks != null) {
       context.getMessageReporter().createMessage()
-        .withGroup(Messages.TASK_CACHE_SET_GROUP)
+        .withGroup(Messages.TASK_INDEX_CACHE_SET_GROUP)
         .withTitle("Task model redefinition")
         .withText("Tasks for " + project.getDisplayName() + " was already collected.")
         .withInternal().withStackTrace()
@@ -82,9 +82,9 @@ public final class GradleTaskCache {
     allTasks.put(projectIdentifier, Collections.emptySet());
   }
 
-  private static final @NotNull DataProvider<GradleTaskCache> INSTANCE_PROVIDER = GradleTaskCache::new;
+  private static final @NotNull DataProvider<GradleTaskIndex> INSTANCE_PROVIDER = GradleTaskIndex::new;
 
-  public static @NotNull GradleTaskCache getInstance(@NotNull ModelBuilderContext context) {
+  public static @NotNull GradleTaskIndex getInstance(@NotNull ModelBuilderContext context) {
     return context.getData(INSTANCE_PROVIDER);
   }
 }

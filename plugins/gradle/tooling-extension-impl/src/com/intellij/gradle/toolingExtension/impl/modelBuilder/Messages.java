@@ -12,10 +12,10 @@ public final class Messages {
 
   public final static @NotNull String SCALA_PROJECT_MODEL_GROUP = "gradle.scalaProjectModel.group";
 
-  public final static @NotNull String TASK_MODEL_GROUP = "gradle.taskModel.group";
-  public final static @NotNull String TASK_MODEL_COLLECTING_GROUP = "gradle.taskModel.collecting.group";
-  public final static @NotNull String TASK_CACHE_GET_GROUP = "gradle.taskModel.cacheGet.group";
-  public final static @NotNull String TASK_CACHE_SET_GROUP = "gradle.taskModel.cacheSet.group";
+  public final static @NotNull String TASK_INDEX_GROUP = "gradle.taskIndex.group";
+  public final static @NotNull String TASK_INDEX_COLLECTING_GROUP = "gradle.taskIndex.collecting.group";
+  public final static @NotNull String TASK_INDEX_CACHE_GET_GROUP = "gradle.taskIndex.cacheGet.group";
+  public final static @NotNull String TASK_INDEX_CACHE_SET_GROUP = "gradle.taskIndex.cacheSet.group";
 
   public final static @NotNull String SOURCE_SET_MODEL_GROUP = "gradle.sourceSetModel.group";
   public final static @NotNull String SOURCE_SET_MODEL_PROJECT_TASK_ARTIFACT_GROUP = "gradle.sourceSetModel.projectArtifact.group";

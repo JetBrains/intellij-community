@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache;
+import com.intellij.gradle.toolingExtension.impl.model.taskIndex.GradleTaskIndex;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -15,6 +15,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.jar.JarTaskManifestConfigur
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class JarTaskManifestModelBuilder extends AbstractModelBuilderService {
   public static final String JAR_TASK = "jar";
@@ -25,12 +26,12 @@ public class JarTaskManifestModelBuilder extends AbstractModelBuilderService {
   }
 
   @Override
-  public JarTaskManifestConfigurationImpl buildAll(@NotNull String modelName,
-                                                   @NotNull Project project,
-                                                   @NotNull ModelBuilderContext context) {
-    GradleTaskCache taskCache = GradleTaskCache.getInstance(context);
+  public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
+    Set<Task> tasks = GradleTaskIndex.getInstance(context)
+      .getAllTasks(project);
+
     Map<String, Map<String, String>> projectIdentityPathToManifestAttributes = new HashMap<>();
-    for (Task task : taskCache.getAllTasks(project)) {
+    for (Task task : tasks) {
       if (task instanceof Jar && JAR_TASK.equals(task.getName())) {
         Jar jar = (Jar)task;
         Attributes attributes = jar.getManifest().getAttributes();

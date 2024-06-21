@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.projectModel;
 
-import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache;
+import com.intellij.gradle.toolingExtension.impl.model.taskIndex.GradleTaskIndex;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
@@ -68,10 +68,11 @@ public class GradleExternalProjectModelBuilder extends AbstractModelBuilderServi
     @NotNull Project project,
     @NotNull ModelBuilderContext context
   ) {
-    Map<String, DefaultExternalTask> result = new HashMap<>();
+    Set<Task> tasks = GradleTaskIndex.getInstance(context)
+      .getAllTasks(project);
 
-    GradleTaskCache taskCache = GradleTaskCache.getInstance(context);
-    for (Task task : taskCache.getAllTasks(project)) {
+    Map<String, DefaultExternalTask> result = new HashMap<>();
+    for (Task task : tasks) {
       String taskName = task.getName();
       DefaultExternalTask externalTask = result.get(taskName);
       if (externalTask == null) {

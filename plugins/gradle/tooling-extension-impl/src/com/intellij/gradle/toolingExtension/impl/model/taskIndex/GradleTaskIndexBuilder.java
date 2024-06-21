@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.toolingExtension.impl.model.taskModel;
+package com.intellij.gradle.toolingExtension.impl.model.taskIndex;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleResultUtil;
@@ -20,24 +20,24 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 @ApiStatus.Internal
-public class GradleTaskModelBuilder extends AbstractModelBuilderService {
+public class GradleTaskIndexBuilder extends AbstractModelBuilderService {
 
   private static final boolean TASKS_REFRESH_REQUIRED = GradleVersionUtil.isCurrentGradleOlderThan("5.0");
 
 
   @Override
   public boolean canBuild(String modelName) {
-    return GradleTaskModel.class.getName().equals(modelName);
+    return GradleTaskRequest.class.getName().equals(modelName);
   }
 
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
-    GradleTaskCache taskCache = GradleTaskCache.getInstance(context);
     Set<Task> projectTasks = collectProjectTasks(project, context);
-    taskCache.setProjectTasks(project, projectTasks);
 
-    return new GradleTaskModel() {
-    };
+    GradleTaskIndex.getInstance(context)
+      .setProjectTasks(project, projectTasks);
+
+    return null;
   }
 
   private static Set<Task> collectProjectTasks(@NotNull Project project, @NotNull ModelBuilderContext context) {
@@ -53,7 +53,7 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
     }
     catch (Exception exception) {
       context.getMessageReporter().createMessage()
-        .withGroup(Messages.TASK_MODEL_COLLECTING_GROUP)
+        .withGroup(Messages.TASK_INDEX_COLLECTING_GROUP)
         .withTitle("Tasks collecting failure")
         .withText("Tasks for " + project + " cannot be collected due to plugin exception.")
         .withException(exception)
@@ -81,11 +81,11 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
     @NotNull ModelBuilderContext context,
     @NotNull Exception exception
   ) {
-    GradleTaskCache.getInstance(context)
+    GradleTaskIndex.getInstance(context)
         .markTaskModelAsError(project);
 
     context.getMessageReporter().createMessage()
-      .withGroup(Messages.TASK_MODEL_GROUP)
+      .withGroup(Messages.TASK_INDEX_GROUP)
       .withKind(Message.Kind.WARNING)
       .withTitle("Task model building failure")
       .withText("Unable to warm-up Gradle task model")

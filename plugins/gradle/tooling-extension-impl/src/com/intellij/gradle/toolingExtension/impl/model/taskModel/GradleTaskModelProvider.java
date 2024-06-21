@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.taskModel;
 
+import com.intellij.gradle.toolingExtension.impl.model.taskIndex.GradleTaskRequest;
 import com.intellij.gradle.toolingExtension.impl.util.GradleModelProviderUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.BuildController;
@@ -23,6 +24,6 @@ public class GradleTaskModelProvider implements ProjectImportModelProvider {
     @NotNull GradleBuild buildModel,
     @NotNull GradleModelConsumer modelConsumer
   ) {
-    GradleModelProviderUtil.buildModels(controller, buildModel, GradleTaskModel.class, GradleModelConsumer.NOOP);
+    GradleModelProviderUtil.buildModels(controller, buildModel, GradleTaskRequest.class, GradleModelConsumer.NOOP);
   }
 }
