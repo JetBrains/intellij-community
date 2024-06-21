@@ -9,13 +9,15 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.childrenOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIELD
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics.findAnnotation
-import org.jetbrains.kotlin.idea.core.setVisibility
-import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
-import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.j2k.resolve
@@ -25,15 +27,14 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.descendantsOfType
 import org.jetbrains.kotlin.nj2k.escaped
+import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.asAssignment
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
-import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
-import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcessing() {
+// TODO convert everything to element pointers
+// TODO document
+class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcessing() {
     override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
         for (klass in runReadAction { elements.descendantsOfType<KtClass>() }) {
             klass.convert()
@@ -45,8 +46,17 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         error("Not supported in K1 J2K")
     }
 
+    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun KtClass.convert() {
-        val initializations = runReadAction { collectPropertyInitializations(this) }
+        val klass = this
+        val initializations = runReadAction {
+            allowAnalysisOnEdt {
+                analyze(klass) {
+                    collectPropertyInitializations(klass)
+                }
+            }
+        }
+
         runUndoTransparentActionInEdt(inWriteAction = true) {
             initializations.forEach(::convertInitialization)
             removeEmptyInitBlocks()
@@ -56,6 +66,7 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         }
     }
 
+    context(KaSession)
     private fun collectPropertyInitializations(klass: KtClass): List<Initialization<*>> {
         val usedParameters = mutableSetOf<KtParameter>()
         val usedProperties = mutableSetOf<KtProperty>()
@@ -70,9 +81,9 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         }
 
         fun KtProperty.isSameTypeAs(parameter: KtParameter): Boolean {
-            val propertyType = type() ?: return false
-            val parameterType = parameter.type() ?: return false
-            return KotlinTypeChecker.DEFAULT.equalTypes(propertyType, parameterType)
+            val propertyType = this.symbol.returnType
+            val parameterType = parameter.returnType // this is taking varargs into account (KT-64340)
+            return propertyType.semanticallyEquals(parameterType)
         }
 
         fun collectInitialization(expression: KtExpression): Boolean {
@@ -131,15 +142,20 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         parameter.addBefore(property.valOrVarKeyword, parameter.nameIdentifier!!)
         parameter.addAfter(KtPsiFactory(property.project).createWhiteSpace(), parameter.valOrVarKeyword!!)
         parameter.rename(property.name!!)
-        parameter.setVisibility(property.visibilityModifierTypeOrDefault())
+
+        val visibilityModifier = property.visibilityModifierType()
+        if (visibilityModifier != null) {
+            parameter.addModifier(visibilityModifier)
+        }
+
         val commentSaver = CommentSaver(property)
 
         parameter.annotationEntries.forEach {
-            if (it.useSiteTarget == null) it.addUseSiteTarget(CONSTRUCTOR_PARAMETER, property.project)
+            if (it.useSiteTarget == null) it.addUseSiteTarget(CONSTRUCTOR_PARAMETER)
         }
         property.annotationEntries.forEach {
             parameter.addAnnotationEntry(it).also { entry ->
-                if (entry.useSiteTarget == null) entry.addUseSiteTarget(FIELD, property.project)
+                if (entry.useSiteTarget == null) entry.addUseSiteTarget(FIELD)
             }
         }
         property.typeReference?.annotationEntries?.forEach { entry ->
@@ -150,6 +166,12 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
 
         property.delete()
         commentSaver.restore(parameter, forceAdjustIndent = false)
+    }
+
+    private fun KtAnnotationEntry.addUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget) {
+        project.executeWriteCommand("") {
+            replace(KtPsiFactory(this.project).createAnnotationEntry("@${useSiteTarget.renderName}:${text.drop(1)}"))
+        }
     }
 
     private fun KtCallableDeclaration.rename(newName: String) {
