@@ -143,6 +143,12 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KaFirDiagnostic.ReifiedTypeParameterNoInline::class, AddModifierFix.addInlineToFunctionWithReified)
     }
 
+    private val addValVarToConstructorParameter = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerFactory(AddValVarToConstructorParameterFixFactory.dataClassNotPropertyParameterFactory)
+        registerFactory(AddValVarToConstructorParameterFixFactory.missingValOnAnnotationParameterFactory)
+        registerFactory(AddValVarToConstructorParameterFixFactory.valueClassConstructorNotFinalReadOnlyParameterFactory)
+    }
+
     private val changeToLabeledReturn = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(ChangeToLabeledReturnFixFactory.nullForNonnullType)
         registerFactory(ChangeToLabeledReturnFixFactory.returnNotAllowed)
@@ -423,6 +429,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         addAbstract,
         addFinal,
         addInline,
+        addValVarToConstructorParameter,
         changeToLabeledReturn,
         convertStringToCharLiteral,
         insertDelegationCall,
