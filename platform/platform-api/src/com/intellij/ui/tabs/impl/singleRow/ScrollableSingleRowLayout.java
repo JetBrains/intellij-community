@@ -164,7 +164,7 @@ public final class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   private int getMoreRectAxisSize() {
-    if (ExperimentalUI.isNewUI() && tabs.getPosition().isSide()) {
+    if (ExperimentalUI.isNewUI() && tabs.getTabsPosition().isSide()) {
       return 0;
     }
     return getStrategy().getMoreRectAxisSize();

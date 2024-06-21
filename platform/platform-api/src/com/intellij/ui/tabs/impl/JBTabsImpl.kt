@@ -263,8 +263,10 @@ open class JBTabsImpl internal constructor(
     private set
 
   private var removeDeferredRequest: Long = 0
-  var position: JBTabsPosition = JBTabsPosition.top
+
+  final override var tabsPosition: JBTabsPosition = JBTabsPosition.top
     private set
+
   private val tabBorder = createTabBorder()
   private val nextAction: BaseNavigationAction?
   private val prevAction: BaseNavigationAction?
@@ -345,6 +347,7 @@ open class JBTabsImpl internal constructor(
     splitter.divider.isOpaque = false
     popupListener = object : PopupMenuListener {
       override fun popupMenuWillBecomeVisible(e: PopupMenuEvent) {}
+
       override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent) {
         disposePopupListener()
       }
@@ -355,16 +358,18 @@ open class JBTabsImpl internal constructor(
     }
 
     val actionManager = ActionManager.getInstance()
-    moreToolbar = createToolbar(group = DefaultActionGroup(actionManager.getAction("TabList")),
-                                targetComponent = this,
-                                actionManager = actionManager)
+    moreToolbar = createToolbar(
+      group = DefaultActionGroup(actionManager.getAction("TabList")),
+      targetComponent = this,
+      actionManager = actionManager,
+    )
     add(moreToolbar.component)
     val entryPointActionGroup = entryPointActionGroup
     if (entryPointActionGroup == null) {
       entryPointToolbar = null
     }
     else {
-      entryPointToolbar = createToolbar(entryPointActionGroup, targetComponent = this, actionManager = actionManager)
+      entryPointToolbar = createToolbar(group = entryPointActionGroup, targetComponent = this, actionManager = actionManager)
       add(entryPointToolbar!!.component)
     }
     add(titleWrapper)
@@ -470,7 +475,7 @@ open class JBTabsImpl internal constructor(
     if (!relayoutAlarm.isDisposed) {
       relayoutAlarm.addRequest(ContextAwareRunnable {
         isRecentlyActive = false
-        relayout(false, false)
+        relayout(forced = false, layoutNow = false)
       }, RELAYOUT_DELAY)
     }
   }
@@ -931,7 +936,7 @@ open class JBTabsImpl internal constructor(
   private fun showListPopup(rect: Rectangle, hiddenInfos: List<TabInfo>): JBPopup {
     val separatorIndex = hiddenInfos.indexOfFirst { info ->
       val label = info.tabLabel!!
-      if (position.isSide) {
+      if (tabsPosition.isSide) {
         label.y >= 0
       }
       else {
@@ -2120,7 +2125,7 @@ open class JBTabsImpl internal constructor(
 
   private fun computeHeaderFitSize(): Dimension {
     val max = computeMaxSize()
-    if (position == JBTabsPosition.top || position == JBTabsPosition.bottom) {
+    if (tabsPosition == JBTabsPosition.top || tabsPosition == JBTabsPosition.bottom) {
       return Dimension(size.width, if (horizontalSide) max(max.label.height, max.toolbar.height) else max.label.height)
     }
     else {
@@ -2129,10 +2134,12 @@ open class JBTabsImpl internal constructor(
   }
 
   fun layoutComp(componentX: Int, componentY: Int, component: JComponent, deltaWidth: Int, deltaHeight: Int): Rectangle {
-    return layoutComp(bounds = Rectangle(componentX, componentY, width, height),
-                      component = component,
-                      deltaWidth = deltaWidth,
-                      deltaHeight = deltaHeight)
+    return layoutComp(
+      bounds = Rectangle(componentX, componentY, width, height),
+      component = component,
+      deltaWidth = deltaWidth,
+      deltaHeight = deltaHeight,
+    )
   }
 
   fun layoutComp(bounds: Rectangle, component: JComponent, deltaWidth: Int, deltaHeight: Int): Rectangle {
@@ -2625,7 +2632,7 @@ open class JBTabsImpl internal constructor(
    */
   fun getActionsInsets(): Insets {
     if (ExperimentalUI.isNewUI()) {
-      return if (position.isSide) JBInsets.create(Insets(4, 8, 4, 3)) else JBInsets.create(Insets(0, 5, 0, 8))
+      return if (tabsPosition.isSide) JBInsets.create(Insets(4, 8, 4, 3)) else JBInsets.create(Insets(0, 5, 0, 8))
     }
     else {
       return JBInsets.create(Insets(0, 1, 0, 1))
@@ -3124,7 +3131,7 @@ open class JBTabsImpl internal constructor(
   }
 
   final override fun setTabsPosition(position: JBTabsPosition): JBTabsPresentation {
-    this.position = position
+    this.tabsPosition = position
     val divider = splitter.divider
     if (position.isSide && divider.parent == null) {
       add(divider)
@@ -3136,9 +3143,6 @@ open class JBTabsImpl internal constructor(
     relayout(forced = true, layoutNow = false)
     return this
   }
-
-  override val tabsPosition: JBTabsPosition
-    get() = position
 
   final override fun setTabDraggingEnabled(enabled: Boolean): JBTabsPresentation {
     isTabDraggingEnabled = enabled

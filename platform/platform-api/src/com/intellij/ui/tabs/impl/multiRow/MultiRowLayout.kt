@@ -36,7 +36,7 @@ sealed class MultiRowLayout(
       data.rows.addAll(rows)
       layoutRows(data)
 
-      val topRowInd = if (tabs.position == JBTabsPosition.top) 0 else rows.size - 1
+      val topRowInd = if (tabs.tabsPosition == JBTabsPosition.top) 0 else rows.size - 1
       data.tabsRectangle = Rectangle(toFitRec.x, getRowY(data, topRowInd), toFitRec.width, data.rowCount * data.rowHeight)
     }
 
@@ -58,7 +58,7 @@ sealed class MultiRowLayout(
   }
 
   private fun getRowY(data: MultiRowPassInfo, row: Int): Int {
-    return when (tabs.position) {
+    return when (tabs.tabsPosition) {
       JBTabsPosition.top -> {
         data.toFitRec.y + row * data.rowHeight
       }
@@ -72,12 +72,12 @@ sealed class MultiRowLayout(
   private fun layoutTabComponent(data: MultiRowPassInfo, info: TabInfo) {
     val toolbar = tabs.infoToToolbar.get(info)
 
-    val componentY = when (tabs.position) {
+    val componentY = when (tabs.tabsPosition) {
       JBTabsPosition.top -> data.rowCount * data.rowHeight
       JBTabsPosition.bottom -> 0
       else -> error("MultiRowLayout is not supported for vertical placements")
     }
-    val componentHeight = when (tabs.position) {
+    val componentHeight = when (tabs.tabsPosition) {
       JBTabsPosition.top -> tabs.height  // it will be adjusted inside JBTabsImpl.layoutComp
       JBTabsPosition.bottom -> tabs.height - data.rowCount * data.rowHeight
       else -> error("MultiRowLayout is not supported for vertical placements")

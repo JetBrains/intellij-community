@@ -15,7 +15,7 @@ class DefaultTabPainterAdapter(override val tabPainter: JBTabPainter) : TabPaint
     val g2d = g as Graphics2D
     if (info == tabs.selectedInfo && tabs.getVisibleInfos().size > 1) {
       tabPainter.paintSelectedTab(
-        position = tabs.position,
+        position = tabs.tabsPosition,
         g = g2d,
         rect = rect,
         borderThickness = tabs.borderThickness,
@@ -26,7 +26,7 @@ class DefaultTabPainterAdapter(override val tabPainter: JBTabPainter) : TabPaint
     }
     else {
       tabPainter.paintTab(
-        position = tabs.position,
+        position = tabs.tabsPosition,
         g = g2d,
         rect = rect,
         borderThickness = tabs.borderThickness,
