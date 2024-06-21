@@ -49,7 +49,7 @@ public final class KotlinBaseResourcesIcons {
 
   public static final class Wizard {
     /** 16x16 */ public static final @NotNull Icon Android = load("org/jetbrains/kotlin/idea/icons/wizard/android.svg", "org/jetbrains/kotlin/idea/icons/expui/wizard/android.svg", -874848589, 0);
-    /** 16x16 */ public static final @NotNull Icon Compose = load("org/jetbrains/kotlin/idea/icons/wizard/compose.svg", 1503909269, 0);
+    /** 16x16 */ public static final @NotNull Icon Compose = load("org/jetbrains/kotlin/idea/icons/wizard/compose.svg", -90811128, 0);
     /** 16x16 */ public static final @NotNull Icon Console = load("org/jetbrains/kotlin/idea/icons/wizard/console.svg", "org/jetbrains/kotlin/idea/icons/expui/wizard/console.svg", -1956068639, 0);
     /** 16x16 */ public static final @NotNull Icon Ios = load("org/jetbrains/kotlin/idea/icons/wizard/ios.svg", 10617527, 0);
     /** 16x16 */ public static final @NotNull Icon JS = load("org/jetbrains/kotlin/idea/icons/wizard/js.svg", "org/jetbrains/kotlin/idea/icons/expui/wizard/js.svg", -1870738420, 0);
