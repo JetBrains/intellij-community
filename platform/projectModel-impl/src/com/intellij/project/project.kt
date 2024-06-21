@@ -11,8 +11,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+/**
+ * The project store of this project. Applicable only to projects that have such store; the Default project doesn't have one.
+ * @exception IllegalStateException when this project doesn't have a project store.
+ */
 val Project.stateStore: IProjectStore
-  get() = (this as ProjectStoreOwner).componentStore
+  @Throws(IllegalStateException::class)
+  get() = if (this is ProjectStoreOwner) this.componentStore
+          else throw IllegalStateException("This property is applicable only for projects that are owners of an IProjectStore")
 
 @ApiStatus.Internal
 interface ProjectStoreOwner : ComponentStoreOwner {
