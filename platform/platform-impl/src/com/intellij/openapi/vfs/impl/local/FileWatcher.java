@@ -105,7 +105,7 @@ public final class FileWatcher implements AppLifecycleListener {
 
   public boolean isOperational() {
     for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
-      if (watcher.isOperational()) return true;
+      if (watcher != null && watcher.isOperational()) return true;
     }
     return false;
   }
@@ -116,7 +116,7 @@ public final class FileWatcher implements AppLifecycleListener {
       return true;
     }
     for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
-      if (watcher.isSettingRoots()) return true;
+      if (watcher != null && watcher.isSettingRoots()) return true;
     }
     return false;
   }
@@ -318,7 +318,9 @@ public final class FileWatcher implements AppLifecycleListener {
     myTestNotifier = notifier;
     myFileWatcherExecutor.submit(() -> {
       for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
-        watcher.startup();
+        if (watcher != null) {
+          watcher.startup();
+        }
       }
       return null;
     }).get();
@@ -328,7 +330,9 @@ public final class FileWatcher implements AppLifecycleListener {
   public void shutdown() throws Exception {
     myFileWatcherExecutor.submit(() -> {
       for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
-        watcher.shutdown();
+        if (watcher != null) {
+          watcher.shutdown();
+        }
       }
       myTestNotifier = null;
       return null;
