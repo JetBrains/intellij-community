@@ -43,6 +43,9 @@ fun User32Ex.findMainWindow(pid: Int): WinDef.HWND? {
   }
 }
 
+private const val STOP_ENUMERATION = false
+private const val CONTINUE_ENUMERATION = true
+
 @ApiStatus.Internal
 fun User32Ex.findProcessWindow(pid: Int, filter: ((WinDef.HWND) -> Boolean)): WinDef.HWND? {
   logger.trace { "Start looking for a window of process \"$pid\"" }
@@ -52,25 +55,25 @@ fun User32Ex.findProcessWindow(pid: Int, filter: ((WinDef.HWND) -> Boolean)): Wi
     override fun callback(hWnd: WinDef.HWND?, lParam: IntByReference?): Boolean {
       if (hWnd == null) {
         logger.trace { "Window handle is null. Continue enumeration" }
-        return true
+        return CONTINUE_ENUMERATION
       }
 
       val processIdReference = IntByReference()
       if (!GetWindowThreadProcessId(hWnd, processIdReference)) {
         logger.error { "kernel32:GetWindowThreadProcessId wasn't successful. Continue enumeration" }
-        return true
+        return CONTINUE_ENUMERATION
       }
 
       if (processIdReference.value != pid) {
         logger.trace { "Window : $hWnd, pid : ${processIdReference.value}. Continue enumeration" }
-        return true
+        return CONTINUE_ENUMERATION
       }
 
       if (filter(hWnd)) {
         winHandle = hWnd
-        return false
+        return STOP_ENUMERATION
       }
-      return true
+      return CONTINUE_ENUMERATION
     }
   }, null)
 
