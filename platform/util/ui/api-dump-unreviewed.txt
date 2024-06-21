@@ -1417,14 +1417,6 @@ f:com.intellij.openapi.ui.NullableComponent$Check
 - <init>():V
 - s:isNull(java.awt.Component):Z
 - s:isNullOrHidden(java.awt.Component):Z
-c:com.intellij.openapi.ui.PseudoSplitter
-- com.intellij.openapi.ui.Splitter
-- <init>(Z):V
-- doLayout():V
-- fixFirst():V
-- fixFirst(F):V
-- freeAll():V
-- setProportion(F):V
 com.intellij.openapi.ui.Splittable
 - a:asComponent():java.awt.Component
 - a:getMinProportion(Z):F
