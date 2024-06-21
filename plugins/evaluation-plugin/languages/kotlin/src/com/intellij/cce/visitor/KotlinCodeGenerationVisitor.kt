@@ -3,10 +3,7 @@ package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
@@ -18,24 +15,31 @@ class KotlinCodeGenerationVisitor : EvaluationVisitor, KtTreeVisitorVoid() {
   override fun getFile(): CodeFragment = codeFragment
                                          ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
 
-  override fun visitKtFile(file: KtFile) {
-    codeFragment = CodeFragment(file.textOffset, file.textLength).apply { text = file.text }
-    super.visitKtFile(file)
-  }
-
   override fun visitNamedFunction(function: KtNamedFunction) {
-    val body = function.bodyExpression ?: return
-    codeFragment?.let { file ->
-      if (body is KtBlockExpression && body.children.isNotEmpty()) {
-        val startOffset = body.children.first().startOffset
-        val endOffset = body.children.last().endOffset
-        val text = file.text.substring(startOffset, endOffset)
-        file.addChild(CodeTokenWithPsi(text, startOffset, BODY, element = body))
-      } else {
-        file.addChild(CodeTokenWithPsi(body.text, body.textOffset, BODY, element = body))
+    codeFragment?.addChild(
+      CodeToken(function.text, function.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {})
+    )
+    val body = function.bodyExpression
+    if (body != null) {
+      val meaningfulBodyChildren = (body as? KtBlockExpression)?.trim() ?: listOf(body)
+      if (meaningfulBodyChildren.isNotEmpty()) {
+        val firstMeaningfulChild = meaningfulBodyChildren.first()
+        val meaningfulBodyText = meaningfulBodyChildren.joinToString("") { it.text }
+
+        codeFragment?.addChild(
+          CodeToken(meaningfulBodyText, firstMeaningfulChild.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD_BODY, SymbolLocation.PROJECT) {})
+        )
       }
     }
-  }}
+  }
+
+  private fun KtBlockExpression.trim(): List<KtElement> {
+    val firstIndex = children.indexOfFirst { it is KtExpression }
+    val lastIndex = children.indexOfLast { it is KtExpression }
+    val indexRange = firstIndex..lastIndex
+    return children.filterIndexed { index, _ -> index in indexRange }.filterIsInstance<KtElement>()
+  }
+}
 
 
 private val BODY = SimpleTokenProperties.create(TypeProperty.UNKNOWN, SymbolLocation.UNKNOWN) {}
