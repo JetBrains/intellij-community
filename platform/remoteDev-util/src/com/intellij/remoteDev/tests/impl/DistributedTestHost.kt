@@ -2,6 +2,8 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
+import com.intellij.codeWithMe.asContextElement
+import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.DebugLogLevel
@@ -177,15 +179,19 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             val action = queue.remove()
             val timeout = action.timeout
             try {
-              assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local when test method starts" }
-
+              assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
               LOG.info("'$actionTitle': received action execution request")
 
-              return@setSuspendPreserveClientId withContext(action.coroutineContextGetter.invoke()) {
+              val providedContext = action.coroutineContextGetter.invoke()
+              val clientId = providedContext.clientId() ?: ClientId.current
+
+              return@setSuspendPreserveClientId withContext(providedContext + clientId.asContextElement()) {
+                assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
                 if (!app.isHeadlessEnvironment && isNotRdHost && (action.requestFocusBeforeStart ?: isCurrentThreadEdt())) {
                   requestFocus(actionTitle)
                 }
 
+                assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
                 val agentContext = when (session.agentInfo.agentType) {
                   RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol)
                   RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, protocol)
