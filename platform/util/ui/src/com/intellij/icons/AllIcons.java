@@ -1422,7 +1422,7 @@ public class AllIcons {
     /** 24x24 */ public static final @NotNull Icon FromVCSTabSelected = load("welcome/fromVCSTabSelected.svg", 821127730, 0);
 
     public static final class LearnTab {
-      /** 16x16 */ public static final @NotNull Icon JetBrainsAcademy = load("welcome/learnTab/jetBrainsAcademy.svg", -189145337, 0);
+      /** 16x16 */ public static final @NotNull Icon JetBrainsAcademy = load("welcome/learnTab/jetBrainsAcademy.svg", 1579449473, 0);
     }
 
     /** 24x24 */ public static final @NotNull Icon Open = load("welcome/open.svg", "expui/", -1032470701, 2);
