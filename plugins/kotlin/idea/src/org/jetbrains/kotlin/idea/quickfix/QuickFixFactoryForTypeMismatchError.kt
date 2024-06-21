@@ -168,10 +168,9 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             }
         }
 
-        actions.addAll(WrapWithCollectionLiteralCallFix.create(expectedType, expressionType, diagnosticElement))
-
-        ConvertCollectionFix.getConversionTypeOrNull(expressionType, expectedType)?.let {
-            actions.add(ConvertCollectionFix(diagnosticElement, it))
+        actions.addAll(WrapWithCollectionLiteralCallFixFactory.create(expectedType, expressionType, diagnosticElement))
+        ConvertCollectionFixFactory.createIfAvailable(diagnosticElement, expressionType, expectedType)?.let {
+            actions.add(it)
         }
 
         fun KtExpression.getTopMostQualifiedForSelectorIfAny(): KtExpression {

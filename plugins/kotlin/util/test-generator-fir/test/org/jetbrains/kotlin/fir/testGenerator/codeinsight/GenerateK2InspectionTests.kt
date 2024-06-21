@@ -6,12 +6,7 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractShare
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2LocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2MultiFileQuickFixTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc.AbstractSharedK2KDocHighlightingTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2ActualExpectTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2InspectionTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionAndGeneralHighlightingTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2MultiFileInspectionTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2MultiFileLocalInspectionTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.*
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2MultiFileQuickFixTest
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -118,6 +113,8 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/removeUseSiteTarget", pattern = pattern)
             model("${idea}/quickfix/protectedInFinal", pattern = pattern)
             model("${idea}/quickfix/createFromUsage/createFunction/call/abstract", pattern = pattern)
+            model("${idea}/quickfix/typeMismatch/convertCollection", pattern = pattern)
+            model("${idea}/quickfix/typeMismatch/wrapWithCollectionLiteral", pattern = pattern)
         }
 
         testClass<AbstractK2MultiFileQuickFixTest> {
