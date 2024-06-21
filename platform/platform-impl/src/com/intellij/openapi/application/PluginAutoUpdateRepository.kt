@@ -63,8 +63,11 @@ import kotlin.io.path.isRegularFile
 
 @ApiStatus.Internal
 object PluginAutoUpdateRepository {
+  const val SKIP_PLUGIN_AUTO_UPDATE_PROPERTY: String = "ide.skip.plugin.auto.update"
   const val PLUGIN_AUTO_UPDATE_DIRECTORY_NAME: String = "plugins-auto-update"
   private const val STATE_FILE_NAME: String = ".autoupdate.data"
+
+  fun shouldSkipAutoUpdate(): Boolean = System.getProperty(SKIP_PLUGIN_AUTO_UPDATE_PROPERTY) == "true"
 
   fun getAutoUpdateDirPath(): Path = PathManager.getStartupScriptDir().resolve(PLUGIN_AUTO_UPDATE_DIRECTORY_NAME)
 
