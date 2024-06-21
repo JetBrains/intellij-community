@@ -1,4 +1,4 @@
-package com.intellij.tools.launch.rd.components
+package com.intellij.tools.launch.ide.splitMode
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.tools.launch.PathsProvider
@@ -16,9 +16,6 @@ import com.intellij.tools.launch.ide.environments.local.localLaunchOptions
 import com.intellij.tools.launch.os.ProcessOutputFlows
 import com.intellij.tools.launch.os.ProcessOutputInfo
 import com.intellij.tools.launch.os.ProcessOutputStrategy
-import com.intellij.tools.launch.rd.BackendInDockerContainer
-import com.intellij.tools.launch.rd.BackendInEnvDescription
-import com.intellij.tools.launch.rd.BackendOnLocalMachine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -36,24 +33,24 @@ internal sealed interface BackendLaunchResult {
   data class Docker(val localDockerRunResult: LocalDockerRunResult, override val backendStatus: BackendStatus) : BackendLaunchResult
 }
 
-internal fun runCodeWithMeHostNoLobby(backendDescription: BackendInEnvDescription, coroutineScope: CoroutineScope): BackendLaunchResult {
-  val projectPath = backendDescription.backendDescription.projectPath
-  val mainModule = backendDescription.backendDescription.product.mainModule
+internal fun runIdeBackend(backendDescription: IdeBackendInEnvDescription, coroutineScope: CoroutineScope): BackendLaunchResult {
+  val projectPath = backendDescription.ideBackendDescription.projectPath
+  val mainModule = backendDescription.ideBackendDescription.product.mainModule
   val paths = IdeaPathsProvider()
   val classpathCollector = classpathCollector(
     localPaths = paths,
     mainModule = mainModule,
-    additionalRuntimeModules = listOf(RemoteDevConstants.GATEWAY_PLUGIN_MODULE)
+    additionalRuntimeModules = listOf(IdeConstants.GATEWAY_PLUGIN_MODULE)
   )
   val debugPort = 5006
   val environment = mapOf(
-    "CWM_HOST_PASSWORD" to RemoteDevConstants.DEFAULT_CWM_PASSWORD,
+    "CWM_HOST_PASSWORD" to IdeConstants.DEFAULT_CWM_PASSWORD,
     "CWM_NO_TIMEOUTS" to "1",
     "ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE" to "false",
     "DISPLAY" to ":0",
   )
   return when (backendDescription) {
-    is BackendOnLocalMachine -> {
+    is IdeBackendOnLocalMachine -> {
       val localProcessLaunchResult = IdeLauncher.launchCommand(
         LocalIdeCommandLauncherFactory(localLaunchOptions(
           processOutputStrategy = ProcessOutputStrategy.RedirectToFiles(paths.logFolder),
@@ -64,7 +61,7 @@ internal fun runCodeWithMeHostNoLobby(backendDescription: BackendInEnvDescriptio
           classpathCollector = classpathCollector,
           localPaths = paths,
           ideDebugOptions = IdeDebugOptions(debugPort, debugSuspendOnStart = true, bindToHost = ""),
-          platformPrefix = RemoteDevConstants.IDEA_PREFIX,
+          platformPrefix = IdeConstants.IDEA_PREFIX,
           ideaArguments = cwmHostNoLobby(bindToHost = "127.0.0.1", projectPath),
           environment = environment,
           specifyUserHomeExplicitly = false,
@@ -72,13 +69,13 @@ internal fun runCodeWithMeHostNoLobby(backendDescription: BackendInEnvDescriptio
       )
       BackendLaunchResult.Local(localProcessLaunchResult, localProcessLaunchResult.processWrapper.processOutputInfo.toBackendStatus())
     }
-    is BackendInDockerContainer -> {
+    is IdeBackendInDockerContainer -> {
       val localDockerRunResult = IdeLauncher.launchCommand(
         dockerRunCliCommandLauncherFactory(
           DockerContainerOptions(
             image = backendDescription.image,
             containerName = DEFAULT_CONTAINER_NAME,
-            javaExecutable = backendDescription.backendDescription.jbrPath ?: DEFAULT_JAVA_EXECUTABLE_PATH,
+            javaExecutable = backendDescription.ideBackendDescription.jbrPath ?: DEFAULT_JAVA_EXECUTABLE_PATH,
             ultimateRepositoryPathInContainer = "/intellij",
             bindMounts = backendDescription.bindMounts
           )
@@ -87,7 +84,7 @@ internal fun runCodeWithMeHostNoLobby(backendDescription: BackendInEnvDescriptio
           classpathCollector = classpathCollector,
           localPaths = paths,
           ideDebugOptions = IdeDebugOptions(debugPort, debugSuspendOnStart = true, bindToHost = "*:"),
-          platformPrefix = RemoteDevConstants.IDEA_PREFIX,
+          platformPrefix = IdeConstants.IDEA_PREFIX,
           ideaArguments = cwmHostNoLobby(bindToHost = "0.0.0.0", projectPath),
           environment = environment,
           specifyUserHomeExplicitly = false,
@@ -126,7 +123,7 @@ private fun cwmHostNoLobby(bindToHost: String, projectPath: PathInLaunchEnvironm
 
 private class IdeaPathsProvider : PathsProvider {
   override val productId: String
-    get() = RemoteDevConstants.IDEA_PREFIX
+    get() = IdeConstants.IDEA_PREFIX
   override val sourcesRootFolder: File
     get() = File(PathManager.getHomePath())
   override val communityRootFolder: File

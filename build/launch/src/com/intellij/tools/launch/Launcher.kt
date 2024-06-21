@@ -14,7 +14,7 @@ import java.net.ServerSocket
 
 object Launcher {
   @Suppress("SSBasedInspection")
-  private val launcherLifespanScope = CoroutineScope(CoroutineName("RemoteDev Launcher"))
+  private val launcherLifespanScope = CoroutineScope(CoroutineName("IDE Launcher"))
 
   fun launch(
     paths: PathsProvider,
@@ -45,7 +45,7 @@ object Launcher {
       specifyUserHomeExplicitly = options is DockerLauncherOptions && currentUserIsNotRoot
     )
     if (options is DockerLauncherOptions) {
-      assert(SystemInfo.isLinux) { "Launching Remote Dev backend from tests is now only supported on Linux" }
+      assert(SystemInfo.isLinux) { "Launching IDE backend from tests is now only supported on Linux" }
       val dockerLauncherFactory = legacyDockerRunCliCommandLauncherFactory(options, paths)
       val launchCommand = IdeLauncher.launchCommand(dockerLauncherFactory, ideLaunchContext)
       return launchCommand.process to launchCommand.containerId

@@ -1,10 +1,14 @@
-package com.intellij.tools.launch.rd.components
+package com.intellij.tools.launch.ide.splitMode
 
-internal object RemoteDevConstants {
+internal object IdeConstants {
   /**
    * See `com.intellij.util.PlatformUtils.IDEA_PREFIX` (unavailable from this module).
    */
   const val IDEA_PREFIX = "idea"
+
+  /**
+   * See `com.intellij.util.PlatformUtils.JETBRAINS_CLIENT_PREFIX` (unavailable from this module).
+   */
   const val JETBRAINS_CLIENT_PREFIX = "JetBrainsClient"
 
   /**
