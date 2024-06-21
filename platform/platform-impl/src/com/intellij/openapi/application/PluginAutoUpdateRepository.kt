@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginLoadingResult
@@ -235,11 +236,34 @@ object PluginAutoUpdateRepository {
         rejectedUpdates[id] = "plugin $id has same or newer version installed (${existingDesc.version} vs update version ${updateDesc.version})"
         continue
       }
-      // TODO check plugin dependencies are satisfied ? such functionality must be extracted into a single place
+      val unmetDependencies = findUnmetDependencies(updateDesc, currentDescriptors)
+      if (unmetDependencies.isNotEmpty()) {
+        rejectedUpdates[id] = "plugin $id of version ${updateDesc.version} has unmet dependencies " +
+                              "(plugin ids): ${unmetDependencies.joinToString(", ") { it.pluginId.idString }}"
+        continue
+      }
       // TODO check signature ? com.intellij.ide.plugins.marketplace.PluginSignatureChecker; probably also should be done after download
       updatesToApply.add(id)
     }
     return UpdateCheckResult(updatesToApply, rejectedUpdates)
+  }
+
+  // TODO such functionality must be extracted into a single place com.intellij.ide.plugins.PluginInstaller.findNotInstalledPluginDependencies
+  /**
+   * returns a list of unmet dependencies
+   */
+  private fun findUnmetDependencies(
+    updateDescriptor: IdeaPluginDescriptorImpl,
+    currentDescriptors: PluginLoadingResult,
+  ): List<IdeaPluginDependency> {
+    return updateDescriptor.pluginDependencies.filter { dep ->
+      if (dep.isOptional) return@filter false
+      // TODO should we check module dependencies too?
+      // TODO revise if incomplete is fine
+      val suchPluginExists = currentDescriptors.getIdMap().containsKey(dep.pluginId) ||
+                             currentDescriptors.getIncompleteIdMap().containsKey(dep.pluginId)
+      !suchPluginExists
+    }
   }
 
   /**
