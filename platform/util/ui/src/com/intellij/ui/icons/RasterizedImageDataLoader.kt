@@ -113,8 +113,11 @@ private class RasterizedImageDataLoader(override val path: String,
       return null
     }
     val classLoader = classLoaderRef.get() ?: return null
-    val patched = if (expUIPath == null) transform.patchPath(path = path, classLoader = classLoader) else Pair(expUIPath, classLoader)
+    val patched = transform.patchPath(path = expUIPath ?: path, classLoader = classLoader)
     if (patched == null) {
+      if (expUIPath != null) {
+        return PatchedRasterizedImageDataLoader(path = expUIPath, classLoaderRef = classLoaderRef, flags = flags)
+      }
       return null
     }
 
