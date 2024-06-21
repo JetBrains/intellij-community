@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 
 /**
  * Region codes used for external settings, must never be changed.
@@ -9,21 +10,33 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Experimental
 public enum Region {
-  NOT_SET("not_set"),
-  AFRICA("africa"),
-  AMERICAS("americas"),
-  APAC("apac"),
-  CHINA("china"),
-  EUROPE("europe");
+  NOT_SET("not_set", "title.region.not_set", 1000),
+  AFRICA("africa", "title.region.africa", 0),
+  AMERICAS("americas", "title.region.america", 1),
+  APAC("apac", "title.region.asia", 2),
+  CHINA("china", "title.region.china", 3),
+  EUROPE("europe", "title.region.europe", 4);
 
   private final String extName;
+  private final String displayKey;
+  private final int displayOrdinal;
 
-  Region(String extName) {
+  Region(String extName, String displayKey, int displayOrdinal) {
     this.extName = extName;
+    this.displayKey = displayKey;
+    this.displayOrdinal = displayOrdinal;
   }
 
   public String externalName() {
     return extName;
+  }
+
+  public @Nls String getDisplayName() {
+    return IdeBundle.message(displayKey);
+  }
+
+  public int getDisplayOrdinal() {
+    return displayOrdinal;
   }
 
   public static Region fromExternalName(String extName) {

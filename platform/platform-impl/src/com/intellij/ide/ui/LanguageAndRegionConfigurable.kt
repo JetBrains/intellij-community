@@ -85,7 +85,7 @@ class LanguageAndRegionUi {
       panel.row(IdeBundle.message("combobox.region")) {
         val helpUrl = (HelpManager.getInstance() as HelpManagerImpl).getHelpUrl("region-settings")
 
-        val model = CollectionComboBoxModel(Region.entries, RegionSettings.getRegion())
+        val model = CollectionComboBoxModel(Region.entries.sortedBy { it.displayOrdinal }, RegionSettings.getRegion())
         val regionBox = comboBox(model).accessibleName(IdeBundle.message("combobox.region")).widthGroup(comboGroup)
 
         if (propertyGraph != null && parentDisposable != null && connection != null) {
@@ -166,7 +166,7 @@ private class LanguageComboBoxRenderer(private val locales: Pair<kotlin.collecti
 
 private class RegionComboBoxRenderer : GroupedComboBoxRenderer<Region>() {
   override fun getText(item: Region): String {
-    return IdeBundle.message("title.region.${item.name.lowercase(Locale.getDefault())}")
+    return item.displayName
   }
 
   override fun separatorFor(value: Region): ListSeparator? {
