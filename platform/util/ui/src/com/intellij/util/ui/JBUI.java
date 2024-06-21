@@ -2454,10 +2454,6 @@ public final class JBUI {
       public static @NotNull Color getSeparatorColor() {
         return SEPARATOR_COLOR;
       }
-
-      public static int getLicenseInfoProductNameFontSizeOffset() {
-        return getInt("licenseInfoProductNameFontOffset", 7);
-      }
     }
   }
 

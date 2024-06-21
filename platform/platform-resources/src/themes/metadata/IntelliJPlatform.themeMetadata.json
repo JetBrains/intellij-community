@@ -2518,10 +2518,6 @@
     {
       "key": "LicenseDialog.separatorColor",
       "since": "2024.2"
-    },
-    {
-      "key": "LicenseDialog.licenseInfoProductNameFontOffset",
-      "since": "2024.2"
     }
   ]
 }
