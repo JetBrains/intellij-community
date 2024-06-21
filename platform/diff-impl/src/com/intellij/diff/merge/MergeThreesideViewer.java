@@ -17,6 +17,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.statistics.MergeResultSource;
 import com.intellij.diff.statistics.MergeStatisticsCollector;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.holders.TextEditorHolder;
@@ -300,17 +301,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   protected void doFinishMerge(@NotNull final MergeResult result, @NotNull MergeResultSource source) {
-    if (result == MergeResult.RESOLVED) {
-      logMergeFinished(source);
-    }
+    logMergeResult(result, source);
     destroyChangedBlocks();
     myMergeContext.finishMerge(result);
   }
 
-  public enum MergeResultSource {
-    DIALOG_BUTTON,
-    NOTIFICATION
-  }
   //
   // Diff
   //
@@ -1309,9 +1304,20 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     protected abstract boolean isEnabled(@NotNull TextMergeChange change);
   }
 
-  private void logMergeFinished(MergeResultSource source) {
+  @ApiStatus.Internal
+  void logMergeCancelled() {
+    logMergeResult(MergeResult.CANCEL, MergeResultSource.DIALOG_CLOSING);
+  }
+
+  private void logMergeResult(MergeResult mergeResult, MergeResultSource source) {
+    MergeStatisticsCollector.MergeResult statsResult = switch (mergeResult) {
+      case CANCEL -> MergeStatisticsCollector.MergeResult.CANCELED;
+      case RESOLVED -> MergeStatisticsCollector.MergeResult.SUCCESS;
+      case LEFT, RIGHT -> null;
+    };
+    if (statsResult == null) return;
     myAggregator.setUnresolved(getChanges().size());
-    MergeStatisticsCollector.INSTANCE.logMergeFinished(myProject, source, myAggregator);
+    MergeStatisticsCollector.INSTANCE.logMergeFinished(myProject, statsResult, source, myAggregator);
   }
 
   private class IgnoreSelectedChangesSideAction extends ApplySelectedChangesActionBase {
