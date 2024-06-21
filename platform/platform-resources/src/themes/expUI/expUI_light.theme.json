@@ -918,8 +918,11 @@
 
     "LicenseDialog": {
       "termsAndConditionsForeground": "Gray8",
-      "licenseDetailsForeground": "Gray6",
-      "separatorColor": "Gray9"
+      "separatorColor": "Gray12",
+      "LicenseList": {
+        "licenseDetailsForeground": "Gray6",
+        "separatorColor": "Gray9"
+      }
     },
 
     "UnattendedHostStatus": {

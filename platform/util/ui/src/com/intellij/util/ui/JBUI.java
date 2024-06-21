@@ -2437,22 +2437,31 @@ public final class JBUI {
       private static final @NotNull Color TERMS_AND_CONDITIONS_COLOR =
         JBColor.namedColor("LicenseDialog.termsAndConditionsForeground", 0x818594, 0x6F737A);
 
-      private static final @NotNull Color LICENSE_DETAILS_COLOR =
-        JBColor.namedColor("LicenseDialog.licenseDetailsForeground", 0xC9CCD6, 0x9DA0A8);
-
       private static final @NotNull Color SEPARATOR_COLOR =
-        JBColor.namedColor("LicenseDialog.separatorColor", 0x818594, 0x6F737A);
+        JBColor.namedColor("LicenseDialog.separatorColor", 0xEBECF0, 0x393B40);
 
       public static @NotNull Color getTermsAndConditionsForeground() {
         return TERMS_AND_CONDITIONS_COLOR;
       }
 
-      public static @NotNull Color getLicenseDetailsColor() {
-        return LICENSE_DETAILS_COLOR;
-      }
-
       public static @NotNull Color getSeparatorColor() {
         return SEPARATOR_COLOR;
+      }
+
+      public static final class LicenseList {
+        private static final @NotNull Color LICENSE_DETAILS_COLOR =
+          JBColor.namedColor("LicenseDialog.LicenseList.licenseDetailsForeground", 0xC9CCD6, 0x9DA0A8);
+
+        private static final @NotNull Color SEPARATOR_COLOR =
+          JBColor.namedColor("LicenseDialog.LicenseList.separatorColor", 0x818594, 0x6F737A);
+
+        public static @NotNull Color getLicenseDetailsColor() {
+          return LICENSE_DETAILS_COLOR;
+        }
+
+        public static @NotNull Color getSeparatorColor() {
+          return SEPARATOR_COLOR;
+        }
       }
     }
   }

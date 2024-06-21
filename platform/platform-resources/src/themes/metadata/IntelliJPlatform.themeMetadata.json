@@ -2512,11 +2512,15 @@
       "since": "2024.2"
     },
     {
-      "key": "LicenseDialog.licenseDetailsForeground",
+      "key": "LicenseDialog.separatorColor",
       "since": "2024.2"
     },
     {
-      "key": "LicenseDialog.separatorColor",
+      "key": "LicenseDialog.LicenseList.licenseDetailsForeground",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.LicenseList.separatorColor",
       "since": "2024.2"
     }
   ]

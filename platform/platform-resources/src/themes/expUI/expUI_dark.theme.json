@@ -867,8 +867,11 @@
 
     "LicenseDialog": {
       "termsAndConditionsForeground": "Gray7",
-      "licenseDetailsForeground": "Gray9",
-      "separatorColor": "Gray6"
+      "separatorColor": "Gray3",
+      "LicenseList": {
+        "licenseDetailsForeground": "Gray9",
+        "separatorColor": "Gray6"
+      }
     },
 
     "UnattendedHostStatus": {
