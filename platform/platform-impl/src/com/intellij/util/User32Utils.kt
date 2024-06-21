@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 
 private val logger = getLogger<User32Ex>()
 
-// Implemented according to System.Diagnostics.MainWindowFinder.IsMainWindow implementation from .NET 8
 @ApiStatus.Internal
 fun User32Ex.findWindowsWithText(pid: Int, windowName: String): List<WinDef.HWND> {
   val result = mutableListOf<WinDef.HWND>()
@@ -27,6 +26,7 @@ fun User32Ex.findWindowsWithText(pid: Int, windowName: String): List<WinDef.HWND
 }
 
 @ApiStatus.Internal
+// Implemented according to System.Diagnostics.MainWindowFinder.IsMainWindow implementation from .NET 8
 fun User32Ex.findMainWindow(pid: Int): WinDef.HWND? {
   return findProcessWindow(pid) { hWnd ->
     val winOwner = GetWindow(hWnd, /*GW_OWNER*/4)
