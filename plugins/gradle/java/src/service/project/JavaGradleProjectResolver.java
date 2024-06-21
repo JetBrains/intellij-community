@@ -523,7 +523,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     if (sdk != null) {
       return sdk;
     }
-    var effectiveSdk = ExternalSystemJdkProvider.getInstance().createJdk(sdkName, sdkHome);
+    var effectiveSdkName = SdkConfigurationUtil.createUniqueSdkName(sdkName, ProjectJdkTable.getInstance().getSdksOfType(sdkType));
+    var effectiveSdk = ExternalSystemJdkProvider.getInstance().createJdk(effectiveSdkName, sdkHome);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       SdkConfigurationUtil.addSdk(effectiveSdk);
     });
