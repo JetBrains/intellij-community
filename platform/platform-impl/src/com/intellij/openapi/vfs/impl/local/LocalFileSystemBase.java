@@ -264,33 +264,25 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
-    if (!isValidName(dir)) {
-      throw new IOException(CoreBundle.message("directory.invalid.name.error", dir));
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException {
+    if (!isValidName(name)) {
+      throw new IOException(CoreBundle.message("directory.invalid.name.error", name));
     }
-
     if (!parent.exists() || !parent.isDirectory()) {
       throw new IOException(IdeCoreBundle.message("vfs.target.not.directory.error", parent.getPath()));
     }
-    if (parent.findChild(dir) != null) {
-      throw new IOException(IdeCoreBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + dir));
+    if (parent.findChild(name) != null) {
+      throw new IOException(IdeCoreBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + name));
     }
 
-    File ioParent = convertToIOFile(parent);
-    if (!ioParent.isDirectory()) {
-      throw new IOException(IdeCoreBundle.message("target.not.directory.error", ioParent.getPath()));
+    if (!auxCreateDirectory(parent, name)) {
+      var nioFile = convertToNioFileAndCheck(parent, false).resolve(name);
+      NioFiles.createDirectories(nioFile);
     }
 
-    if (!auxCreateDirectory(parent, dir)) {
-      File ioDir = new File(ioParent, dir);
-      if (!(ioDir.mkdirs() || ioDir.isDirectory())) {
-        throw new IOException(IdeCoreBundle.message("new.directory.failed.error", ioDir.getPath()));
-      }
-    }
+    auxNotifyCompleted(handler -> handler.createDirectory(parent, name));
 
-    auxNotifyCompleted(handler -> handler.createDirectory(parent, dir));
-
-    return new FakeVirtualFile(parent, dir);
+    return new FakeVirtualFile(parent, name);
   }
 
   @Override
