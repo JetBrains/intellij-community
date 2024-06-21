@@ -194,8 +194,6 @@ class EditorWindow internal constructor(
   internal val currentCompositeFlow: StateFlow<EditorComposite?> = _currentCompositeFlow.asStateFlow()
 
   init {
-    // tab layout policy
-    tabbedPane.tabs.presentation.setSingleRow(UISettings.getInstance().scrollTabLayoutInEditor)
     updateTabsVisibility()
 
     tabbedPane.tabs.addListener(object : TabsListener {
@@ -599,9 +597,9 @@ class EditorWindow internal constructor(
   }
 
   internal fun updateTabsVisibility(uiSettings: UISettings = UISettings.getInstance()) {
-    tabbedPane.tabs.presentation.isHideTabs = (owner.isFloating && tabCount == 1 && shouldHideTabs(selectedComposite)) ||
-                                              uiSettings.editorTabPlacement == UISettings.TABS_NONE ||
-                                              (uiSettings.presentationMode && !Registry.`is`("ide.editor.tabs.visible.in.presentation.mode"))
+    tabbedPane.editorTabs.isHideTabs = (owner.isFloating && tabCount == 1 && shouldHideTabs(selectedComposite)) ||
+                                       uiSettings.editorTabPlacement == UISettings.TABS_NONE ||
+                                       (uiSettings.presentationMode && !Registry.`is`("ide.editor.tabs.visible.in.presentation.mode"))
   }
 
   fun closeAllExcept(selectedFile: VirtualFile?) {

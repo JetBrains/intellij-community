@@ -109,6 +109,7 @@ class EditorTabbedContainer internal constructor(
     })
     editorTabs.component.isFocusable = false
     editorTabs.component.transferHandler = EditorTabbedContainerTransferHandler(window)
+    @Suppress("UsagesOfObsoleteApi")
     editorTabs.setDataProvider(object : EdtCompatibleDataProvider {
       override fun uiDataSnapshot(sink: DataSink) {
         sink[CommonDataKeys.PROJECT] = window.manager.project
@@ -530,13 +531,16 @@ private class EditorTabs(
   project = window.manager.project,
   parentDisposable = parentDisposable,
   coroutineScope = window.coroutineScope,
+  tabListOptions = TabListOptions(
+    supportCompression = true,
+    singleRow = UISettings.getInstance().scrollTabLayoutInEditor,
+    requestFocusOnLastFocusedComponent = true,
+  ),
 ), ComponentWithMnemonics, EditorWindowHolder, DataProvider {
   private val _entryPointActionGroup: DefaultActionGroup
   private var isActive = false
 
   init {
-    isRequestFocusOnLastFocusedComponent = true
-
     val listener = AWTEventListener { updateActive() }
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
     coroutineScope.coroutineContext.job.invokeOnCompletion {

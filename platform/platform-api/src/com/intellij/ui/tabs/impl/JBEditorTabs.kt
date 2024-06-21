@@ -11,6 +11,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.tabs.JBEditorTabsBase
 import com.intellij.ui.tabs.JBTabsPresentation
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus.Internal
 
 open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
   companion object {
@@ -22,21 +23,32 @@ open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
 
   @Suppress("UNUSED_PARAMETER")
   constructor(project: Project?, focusManager: IdeFocusManager?, parentDisposable: Disposable)
-    : super(project = project, parentDisposable = parentDisposable) {
-    setSupportsCompression(true)
-  }
+    : super(
+    project = project,
+    parentDisposable = parentDisposable,
+    coroutineScope = null,
+    tabListOptions = TabListOptions(supportCompression = true),
+  )
 
-  constructor(project: Project?, parentDisposable: Disposable) : super(project, parentDisposable) {
-    setSupportsCompression(supportsCompression = true)
-  }
+  constructor(project: Project?, parentDisposable: Disposable) : super(
+    project = project,
+    parentDisposable = parentDisposable,
+    coroutineScope = null,
+    tabListOptions = TabListOptions(supportCompression = true),
+  )
 
+  @Internal
   constructor(
     project: Project?,
     parentDisposable: Disposable,
-    coroutineScope: CoroutineScope?,
-  ) : super(project = project, parentDisposable = parentDisposable, coroutineScope = coroutineScope) {
-    setSupportsCompression(supportsCompression = true)
-  }
+    coroutineScope: CoroutineScope,
+    tabListOptions: TabListOptions,
+  ) : super(
+    project = project,
+    parentDisposable = parentDisposable,
+    coroutineScope = coroutineScope,
+    tabListOptions = tabListOptions,
+  )
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     resetTabsCache()

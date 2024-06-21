@@ -94,12 +94,20 @@ private const val SCROLL_BAR_THICKNESS = 5
 private const val ADJUST_BORDERS = true
 private const val LAYOUT_DONE: @NonNls String = "Layout.done"
 
+@Internal
+data class TabListOptions(
+  @JvmField val supportCompression: Boolean = false,
+  @JvmField val singleRow: Boolean = true,
+  @JvmField val requestFocusOnLastFocusedComponent: Boolean = false,
+)
+
 @DirtyUI
 @Internal
 open class JBTabsImpl internal constructor(
   private var project: Project?,
   private val parentDisposable: Disposable,
   coroutineScope: CoroutineScope? = null,
+  private var tabListOptions: TabListOptions,
 ) : JComponent(), JBTabsEx, PropertyChangeListener, EdtCompatibleDataProvider,
     PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
     QuickActionProvider, MorePopupAware, Accessible {
@@ -221,9 +229,6 @@ open class JBTabsImpl internal constructor(
 
   private var paintFocus = false
 
-  @Internal
-  var isRequestFocusOnLastFocusedComponent: Boolean = false
-
   private var listener: Job? = null
 
   var isRecentlyActive: Boolean = false
@@ -260,7 +265,7 @@ open class JBTabsImpl internal constructor(
   private var removeDeferredRequest: Long = 0
   var position: JBTabsPosition = JBTabsPosition.top
     private set
-  private val myBorder = createTabBorder()
+  private val tabBorder = createTabBorder()
   private val nextAction: BaseNavigationAction?
   private val prevAction: BaseNavigationAction?
   var isTabDraggingEnabled: Boolean = false
@@ -289,15 +294,12 @@ open class JBTabsImpl internal constructor(
 
   open fun isAlphabeticalMode(): Boolean = alphabeticalMode
 
-  private var supportCompression = false
   private var emptyText: String? = null
 
   var isMouseInsideTabsArea: Boolean = false
     private set
 
   private var removeNotifyInProgress = false
-
-  private var _singleRow = true
 
   protected open fun createTabBorder(): JBTabsBorder = JBDefaultTabsBorder(this)
 
@@ -314,6 +316,7 @@ open class JBTabsImpl internal constructor(
     project = project,
     parentDisposable = parentDisposable,
     coroutineScope = null,
+    tabListOptions = TabListOptions(),
   )
 
   // we expect that every production usage of JBTabsImpl passes scope
@@ -332,7 +335,7 @@ open class JBTabsImpl internal constructor(
   init {
     isOpaque = true
     background = tabPainter.getBackgroundColor()
-    border = myBorder
+    border = tabBorder
     myNavigationActions = DefaultActionGroup()
     nextAction = SelectNextAction(this, parentDisposable)
     prevAction = SelectPreviousAction(this, parentDisposable)
@@ -518,6 +521,10 @@ open class JBTabsImpl internal constructor(
     }
   }
 
+  fun setRequestFocusOnLastFocusedComponent(value: Boolean) {
+    tabListOptions = tabListOptions.copy(requestFocusOnLastFocusedComponent = value)
+  }
+
   private fun toggleScrollBar(isOn: Boolean) {
     if (isOn == scrollBarOn) {
       return
@@ -574,7 +581,7 @@ open class JBTabsImpl internal constructor(
 
   private fun updateRowLayout() {
     if (!isHorizontalTabs) {
-      _singleRow = true
+      tabListOptions = tabListOptions.copy(singleRow = true)
     }
 
     val layout = createRowLayout()
@@ -634,7 +641,7 @@ open class JBTabsImpl internal constructor(
   override val isEditorTabs: Boolean
     get() = false
 
-  fun supportCompression(): Boolean = supportCompression
+  fun supportCompression(): Boolean = tabListOptions.supportCompression
 
   fun addNestedTabs(tabs: JBTabsImpl, parentDisposable: Disposable) {
     nestedTabs.add(tabs)
@@ -1229,7 +1236,7 @@ open class JBTabsImpl internal constructor(
     LOG.debug { "selected info: $info" }
     if (info == null) return null
 
-    if (isRequestFocusOnLastFocusedComponent) {
+    if (tabListOptions.requestFocusOnLastFocusedComponent) {
       val lastFocusOwner = info.lastFocusOwner
       if (lastFocusOwner != null && lastFocusOwner.isShowing && !isMyChildIsFocusedNow) {
         LOG.debug { "last focus owner: $lastFocusOwner" }
@@ -1435,7 +1442,7 @@ open class JBTabsImpl internal constructor(
       }
     }
 
-    if (isRequestFocusOnLastFocusedComponent && selectedInfo != null && isMyChildIsFocusedNow) {
+    if (tabListOptions.requestFocusOnLastFocusedComponent && selectedInfo != null && isMyChildIsFocusedNow) {
       selectedInfo!!.lastFocusOwner = focusOwnerToStore
     }
 
@@ -2148,7 +2155,7 @@ open class JBTabsImpl internal constructor(
   }
 
   val layoutInsets: Insets
-    get() = myBorder.effectiveBorder
+    get() = tabBorder.effectiveBorder
   open val toolbarInset: Int
     get() = ARC_SIZE + 1
 
@@ -2261,7 +2268,7 @@ open class JBTabsImpl internal constructor(
 
   protected fun drawBorder(g: Graphics?) {
     if (!isHideTabs) {
-      myBorder.paintBorder(this, g, 0, 0, width, height)
+      tabBorder.paintBorder(this, g, 0, 0, width, height)
     }
   }
 
@@ -2356,10 +2363,10 @@ open class JBTabsImpl internal constructor(
       currentTab++
     }
     if (horizontal) {
-      size.height += myBorder.thickness
+      size.height += tabBorder.thickness
     }
     else {
-      size.width += myBorder.thickness
+      size.width += tabBorder.thickness
     }
     return size
   }
@@ -2663,7 +2670,7 @@ open class JBTabsImpl internal constructor(
   }
 
   val borderThickness: Int
-    get() = myBorder.thickness
+    get() = tabBorder.thickness
 
   override fun addTabMouseListener(listener: MouseListener): JBTabs {
     removeListeners()
@@ -2983,7 +2990,7 @@ open class JBTabsImpl internal constructor(
   }
 
   override fun setSingleRow(singleRow: Boolean): JBTabsPresentation {
-    _singleRow = singleRow
+    tabListOptions = tabListOptions.copy(singleRow = singleRow)
     updateRowLayout()
     return this
   }
@@ -2991,7 +2998,7 @@ open class JBTabsImpl internal constructor(
   open fun useSmallLabels(): Boolean = false
 
   override val isSingleRow: Boolean
-    get() = _singleRow
+    get() = tabListOptions.singleRow
 
   val isSideComponentVertical: Boolean
     get() = !horizontalSide
@@ -3144,7 +3151,7 @@ open class JBTabsImpl internal constructor(
   }
 
   final override fun setSupportsCompression(supportsCompression: Boolean): JBTabsPresentation {
-    supportCompression = supportsCompression
+    tabListOptions = tabListOptions.copy(supportCompression = supportsCompression)
     updateRowLayout()
     return this
   }
@@ -3226,7 +3233,7 @@ open class JBTabsImpl internal constructor(
     get() = visibleInfos.isEmpty()
 
   val tabHGap: Int
-    get() = -myBorder.thickness
+    get() = -tabBorder.thickness
 
   fun getDecoration(): UiDecoration = uiDecorator?.getDecoration() ?: defaultDecorator.getDecoration()
 
