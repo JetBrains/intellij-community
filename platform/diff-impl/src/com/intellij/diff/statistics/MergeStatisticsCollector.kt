@@ -2,7 +2,6 @@
 package com.intellij.diff.statistics
 
 import com.intellij.diff.merge.MergeStatisticsAggregator
-import com.intellij.diff.merge.MergeThreesideViewer.MergeResultSource
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -11,11 +10,13 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
 @ApiStatus.Internal
 internal object MergeStatisticsCollector : CounterUsagesCollector() {
   private val GROUP: EventLogGroup = EventLogGroup("vcs.merge", 2)
 
+  private val MERGE_RESULT: EnumEventField<MergeResult> = EventFields.Enum("result", MergeResult::class.java)
   private val SOURCE: EnumEventField<MergeResultSource> = EventFields.Enum("source", MergeResultSource::class.java)
   private val CHANGES: IntEventField = EventFields.Int("changes")
   private val AUTO_RESOLVABLE = EventFields.Int("autoResolvable")
@@ -26,12 +27,18 @@ internal object MergeStatisticsCollector : CounterUsagesCollector() {
   private val AI_UNDONE = EventFields.Int("undoneAfterAi")
   private val AI_EDITED = EventFields.Int("editedAfterAi")
 
-  private val FILE_MERGED_EVENT: VarargEventId = GROUP.registerVarargEvent("file.merged", SOURCE, CHANGES, EventFields.DurationMs, AUTO_RESOLVABLE, CONFLICTS, UNRESOLVED, AI_RESOLVED, AI_ROLLED_BACK, AI_UNDONE, AI_EDITED)
+  private val FILE_MERGED_EVENT: VarargEventId = GROUP.registerVarargEvent("file.merged", MERGE_RESULT, SOURCE, CHANGES, EventFields.DurationMs, AUTO_RESOLVABLE, CONFLICTS, UNRESOLVED, AI_RESOLVED, AI_ROLLED_BACK, AI_UNDONE, AI_EDITED)
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  fun logMergeFinished(project: Project?, source: MergeResultSource, aggregator: MergeStatisticsAggregator) {
+  enum class MergeResult {
+    SUCCESS,
+    CANCELED
+  }
+
+  fun logMergeFinished(project: Project?, result: MergeResult, source: MergeResultSource, aggregator: MergeStatisticsAggregator) {
     FILE_MERGED_EVENT.log(project) {
+      add(MERGE_RESULT.with(result))
       add(SOURCE.with(source))
       add(CHANGES.with(aggregator.changes))
       add(EventFields.DurationMs.with(System.currentTimeMillis() - aggregator.initialTimestamp))
@@ -44,4 +51,11 @@ internal object MergeStatisticsCollector : CounterUsagesCollector() {
       add(AI_EDITED.with(aggregator.editedAfterAI()))
     }
   }
+}
+
+@Internal
+enum class MergeResultSource {
+  DIALOG_BUTTON,
+  NOTIFICATION,
+  DIALOG_CLOSING // for cancellation
 }

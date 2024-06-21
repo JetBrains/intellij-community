@@ -93,8 +93,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     components.statusPanel = init.statusPanel;
     components.toolbarActions = init.toolbarActions;
 
-    components.closeHandler =
-      () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext, myViewer.isContentModified());
+    components.closeHandler = () -> {
+      boolean exit = MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext, myViewer.isContentModified());
+      if (exit) {
+        myViewer.logMergeCancelled();
+      }
+      return exit;
+    };
 
     return components;
   }
@@ -135,5 +140,4 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
                                                      @NotNull TextMergeViewer mergeViewer) {
     return new MergeThreesideViewer(context, request, mergeContext, mergeRequest, mergeViewer);
   }
-
 }
