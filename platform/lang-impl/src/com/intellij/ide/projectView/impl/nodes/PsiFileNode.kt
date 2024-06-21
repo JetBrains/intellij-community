@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes
 
+import com.intellij.codeInsight.navigation.openFileWithPsiElementAsync
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.ide.projectView.PresentationData
@@ -8,9 +9,13 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
@@ -25,6 +30,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.NavigatableWithText
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSettings?)
   : BasePsiNode<PsiFile>(project, value, viewSettings), NavigatableWithText {
@@ -87,7 +94,7 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
       return JarFileSystem.getInstance().getJarRootForLocalFile(file)
     }
 
-  override fun navigate(requestFocus: Boolean) {
+  final override fun navigate(requestFocus: Boolean) {
     val jarRoot = jarRoot
     val project = project
     if (requestFocus && jarRoot != null && project != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
@@ -99,6 +106,48 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
     }
 
     super<BasePsiNode>.navigate(requestFocus)
+  }
+
+  internal suspend fun navigateAsync(requestFocus: Boolean) {
+    val jarRoot = jarRoot
+    val project = project
+    if (requestFocus && jarRoot != null && project != null) {
+      val orderEntry = readAction {
+        if (ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
+          LibraryUtil.findLibraryEntry(jarRoot, project)
+        }
+        else {
+          null
+        }
+      }
+      if (orderEntry != null) {
+        val projectSettingsService = project.serviceAsync<ProjectSettingsService>()
+        withContext(Dispatchers.EDT) {
+          blockingContext {
+            projectSettingsService.openLibraryOrSdkSettings(orderEntry)
+          }
+        }
+        return
+      }
+    }
+
+    if (this::class.java === PsiFileNode::class.java) {
+      if (readAction { canNavigate() }) {
+        if (requestFocus) {
+          openFileWithPsiElementAsync(element = extractPsiFromValue()!!, searchForOpen = true, requestFocus = true)
+        }
+        else {
+          navigationItem?.navigate(/* requestFocus = */ false)
+        }
+      }
+    }
+    else {
+      withContext(Dispatchers.EDT) {
+        blockingContext {
+          navigate(requestFocus, false)
+        }
+      }
+    }
   }
 
   override fun getNavigateActionText(focusEditor: Boolean): String? {

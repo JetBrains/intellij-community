@@ -13,7 +13,11 @@ import com.intellij.navigation.GotoRelatedItem
 import com.intellij.navigation.GotoRelatedProvider
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.CommandProcessorEx
+import com.intellij.openapi.command.UndoConfirmationPolicy
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -27,6 +31,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.fileTypes.UnknownFileType
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
@@ -41,7 +46,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.JBColor
-import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -49,6 +53,8 @@ import com.intellij.util.Processor
 import com.intellij.util.SlowOperations
 import com.intellij.util.TextWithIcon
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.ActionEvent
@@ -164,6 +170,38 @@ fun openFileWithPsiElement(element: PsiElement, searchForOpen: Boolean, requestF
   }
   element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
   return false
+}
+
+internal suspend fun openFileWithPsiElementAsync(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
+  val openAsNative = shouldOpenAsNative(element)
+  if (searchForOpen) {
+    element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
+  }
+  else {
+    element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true)
+  }
+
+  val commandProcessor = (serviceAsync<CommandProcessor>() as CommandProcessorEx)
+  return withContext(Dispatchers.EDT) {
+    blockingContext {
+      // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
+      val commandHandle = commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT) ?: return@blockingContext false
+      try {
+        if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
+          val navigationItem = element as NavigationItem
+          if (navigationItem.canNavigate()) {
+            navigationItem.navigate(requestFocus)
+            return@blockingContext true
+          }
+        }
+      }
+      finally {
+        commandProcessor.finishCommand(commandHandle, null)
+        element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
+      }
+      false
+    }
+  }
 }
 
 private fun shouldOpenAsNative(element: PsiElement): Boolean {
@@ -406,7 +444,8 @@ private fun getPsiElementPopup(elements: List<Any?>,
         @Suppress("MissingAccessibleContext")
         val panel = JPanel(BorderLayout())
         panel.add(component, BorderLayout.CENTER)
-        val sep = object : SeparatorWithText() {
+        @Suppress("DEPRECATION")
+        val sep = object : com.intellij.ui.SeparatorWithText() {
           override fun paintComponent(g: Graphics) {
             g.color = JBColor(Color.WHITE, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
             g.fillRect(0, 0, width, height)

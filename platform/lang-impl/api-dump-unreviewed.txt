@@ -17057,14 +17057,13 @@ c:com.intellij.ide.projectView.impl.nodes.PsiFileNode
 - canNavigate():Z
 - canRepresent(java.lang.Object):Z
 - contains(com.intellij.openapi.vfs.VirtualFile):Z
-- s:extension(com.intellij.psi.PsiFile):java.lang.String
 - getChildrenImpl():java.util.Collection
 - getNavigateActionText(Z):java.lang.String
 - getTitle():java.lang.String
 - getTypeSortKey():java.lang.Comparable
 - getWeight():I
-- p:isMarkReadOnly():Z
-- navigate(Z):V
+- pf:isMarkReadOnly():Z
+- f:navigate(Z):V
 - shouldDrillDownOnEmptyElement():Z
 - p:updateImpl(com.intellij.ide.projectView.PresentationData):V
 f:com.intellij.ide.projectView.impl.nodes.PsiFileNode$ExtensionSortKey
