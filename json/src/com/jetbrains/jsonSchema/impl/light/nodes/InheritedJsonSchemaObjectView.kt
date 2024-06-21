@@ -122,7 +122,7 @@ internal class InheritedJsonSchemaObjectView(
   }
 
   override fun hasPatternProperties(): Boolean {
-    return booleanOr(JsonSchemaObject::hasPatternProperties)
+    return other.hasPatternProperties()
   }
 
   override fun getType(): JsonSchemaType? {
