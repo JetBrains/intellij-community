@@ -69,6 +69,7 @@ public final class HierarchyViewTestFixture {
       }
       throw new RuntimeException(e);
     }
+    //System.out.println(dump(treeStructure, null, comparator, 0));
     checkHierarchyTreeStructure(treeStructure, element, comparator);
   }
 

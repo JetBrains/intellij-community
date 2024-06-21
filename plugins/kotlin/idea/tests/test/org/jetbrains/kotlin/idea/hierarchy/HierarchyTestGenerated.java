@@ -265,6 +265,11 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
             runTest("testData/hierarchy/class/sub/InterfaceFromInterface/");
         }
 
+        @TestMetadata("JavaFunctionalExpressionsFromInterface")
+        public void testJavaFunctionalExpressionsFromInterface() throws Exception {
+            runTest("testData/hierarchy/class/sub/JavaFunctionalExpressionsFromInterface/");
+        }
+
         @TestMetadata("MultiTypeAlias")
         public void testMultiTypeAlias() throws Exception {
             runTest("testData/hierarchy/class/sub/MultiTypeAlias/");

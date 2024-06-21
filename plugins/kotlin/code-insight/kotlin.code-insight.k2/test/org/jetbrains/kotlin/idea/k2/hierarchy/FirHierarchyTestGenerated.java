@@ -507,6 +507,11 @@ public abstract class FirHierarchyTestGenerated extends AbstractFirHierarchyTest
             runTest("../../idea/tests/testData/hierarchy/class/sub/InterfaceFromInterface/");
         }
 
+        @TestMetadata("JavaFunctionalExpressionsFromInterface")
+        public void testJavaFunctionalExpressionsFromInterface() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/JavaFunctionalExpressionsFromInterface/");
+        }
+
         @TestMetadata("MultiTypeAlias")
         public void testMultiTypeAlias() throws Exception {
             runTest("../../idea/tests/testData/hierarchy/class/sub/MultiTypeAlias/");

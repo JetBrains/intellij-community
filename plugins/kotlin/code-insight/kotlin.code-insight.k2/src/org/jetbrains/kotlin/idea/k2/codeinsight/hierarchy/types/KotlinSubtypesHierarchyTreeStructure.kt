@@ -6,11 +6,15 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.util.ArrayUtilRt
+import org.jetbrains.kotlin.asJava.toFakeLightClass
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
@@ -54,8 +58,18 @@ open class KotlinSubtypesHierarchyTreeStructure : HierarchyTreeStructure {
     companion object {
         private fun searchInheritors(klass: PsiElement, searchScope: SearchScope): Sequence<PsiElement> {
             //todo annotations
-            //todo functional interfaces
-            return KotlinFindUsagesSupport.searchInheritors(klass, searchScope, searchDeeply = false)
+            val inheritors = KotlinFindUsagesSupport.searchInheritors(klass, searchScope, searchDeeply = false)
+            val psiClass = when (klass) {
+                is KtClass -> klass.toLightClass() ?: klass.toFakeLightClass()
+                is PsiClass -> klass
+                else -> null
+            }
+
+            if (psiClass == null || !LambdaUtil.isFunctionalClass(psiClass)) {
+                return inheritors
+            }
+
+            return inheritors + FunctionalExpressionSearch.search(psiClass, searchScope)
         }
     }
 }
