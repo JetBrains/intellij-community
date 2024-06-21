@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.gradle.tooling.model.kotlin.dsl.EditorReportSeverity
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.LOG
@@ -19,7 +20,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 
 
-fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
+fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext, storage: MutableEntityStorage) {
     val task = resolverCtx.externalSystemTaskId
     val tasks = KotlinDslSyncListener.instance?.tasks ?: return
     synchronized(tasks) { tasks[task] }?.let { sync ->
@@ -28,6 +29,7 @@ fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
 
         synchronized(sync) {
             sync.gradleVersion = resolverCtx.projectGradleVersion
+            sync.storage = storage
 
             sync.javaHome = resolverCtx.buildEnvironment
                 ?.java?.javaHome?.path
@@ -135,6 +137,7 @@ class KotlinDslGradleBuildSync(val workingDir: String, val taskId: ExternalSyste
     var gradleVersion: String? = null
     var gradleHome: String? = null
     var javaHome: String? = null
+    var storage: MutableEntityStorage? = null
     val projectRoots = mutableSetOf<String>()
     val models = mutableListOf<KotlinDslScriptModel>()
     var failed = false

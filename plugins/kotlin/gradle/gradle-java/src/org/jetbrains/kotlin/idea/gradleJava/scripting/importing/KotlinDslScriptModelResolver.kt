@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImpor
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptModelProvider
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 
 class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
 
@@ -51,7 +51,7 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
                             }
                         }
 
-                        saveGradleBuildEnvironment(context)
+                        saveGradleBuildEnvironment(context, storage)
                     }
                 }
             }

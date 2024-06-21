@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
@@ -79,14 +80,15 @@ fun getAllDefinitions(project: Project): List<ScriptDefinition> =
     }
 
 suspend fun configureGradleScriptsK2(
-    javaHome: String?,
     project: Project,
     scripts: Set<ScriptModel>,
+    javaHome: String?,
+    storage: MutableEntityStorage? = null,
 ) {
     project.waitForSmartMode()
 
     K2ScriptDependenciesProvider.getInstance(project).reloadConfigurations(scripts, javaHome)
-    project.createScriptModules(scripts)
+    project.createScriptModules(scripts, storage)
 
     writeAction {
         project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()

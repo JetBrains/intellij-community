@@ -21,7 +21,7 @@ import java.nio.file.Paths
 
 class ProjectGradleSettingsListener(val project: Project, private val cs: CoroutineScope) : GradleSettingsListener {
 
-    private val buildRootsManager = GradleBuildRootsManager.getInstanceSafe(project)
+    private val buildRootsManager: GradleBuildRootsManager = GradleBuildRootsManager.getInstanceSafe(project)
 
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
@@ -72,6 +72,6 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
             }
         }.toSet()
 
-        configureGradleScriptsK2(root.data.javaHome, project, scripts)
+        configureGradleScriptsK2(project, scripts, root.data.javaHome)
     }
 }

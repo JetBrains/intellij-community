@@ -136,16 +136,7 @@ class LibraryInfoCache(project: Project) : Disposable {
             value: List<LibraryInfo>,
         ) {
             cache[key] = value
-            val libraries = deduplicationCache.getOrPut(root) { mutableListOf() }
-
-            with(libraries.iterator()) {
-                while (hasNext()) {
-                    val next = next()
-                    if (next.isDisposed) remove()
-                }
-            }
-
-            libraries += key
+            deduplicationCache.getOrPut<String, MutableList<LibraryEx>>(root) { mutableListOf<LibraryEx>() } += key
         }
 
         private fun cachedDeduplicatedValue(
@@ -337,7 +328,7 @@ class LibraryInfoCache(project: Project) : Disposable {
             if (libraryChanges.none() && moduleChanges.none()) return
 
             val outdatedLibraries: MutableList<Library> = libraryChanges
-                .mapNotNull {
+                .mapNotNullTo(LinkedHashSet()) {
                     val oldEntity = it.oldEntity.takeIf { it?.entitySource !is JpsGlobalFileEntitySource }
                     oldEntity?.findLibraryBridge(storageBefore)
                 }
@@ -347,7 +338,7 @@ class LibraryInfoCache(project: Project) : Disposable {
                 it.oldEntity?.dependencies?.filterIsInstance<LibraryDependency>()
             }.flatten().associateBy { it.library }
 
-            val newLibDependencies = moduleChanges.mapNotNull {
+            val newLibDependencies = moduleChanges.mapNotNullTo(LinkedHashSet()) {
                 it.newEntity?.dependencies?.filterIsInstance<LibraryDependency>()
             }.flatten().associateBy { it.library }
 

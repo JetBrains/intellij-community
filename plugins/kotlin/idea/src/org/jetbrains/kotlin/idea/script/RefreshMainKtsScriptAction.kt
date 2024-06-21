@@ -42,7 +42,7 @@ internal class RefreshMainKtsScriptAction : AnAction() {
             ScriptModel(file, configuration?.dependenciesClassPath?.map { it.absolutePath } ?: emptyList())
 
         GlobalScope.launch {
-            project.createScriptModules(setOf(model))
+            project.createScriptModules(setOf(model), null)
 
             writeAction {
                 project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()

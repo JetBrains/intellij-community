@@ -89,7 +89,7 @@ class KotlinDslSyncListener(val coroutineScope: CoroutineScope) : ExternalSystem
                     ScriptModel(virtualFile, it.classPath, it.sourcePath, it.imports)
                 }
             }.toSet()
-            coroutineScope.launch { configureGradleScriptsK2(sync.javaHome, project, scripts) }
+            coroutineScope.launch { configureGradleScriptsK2(project, scripts, sync.javaHome, sync.storage) }
         } else {
             @Suppress("DEPRECATION")
             ScriptDefinitionContributor.find<GradleScriptDefinitionsContributor>(project)?.reloadIfNeeded(
