@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.tooling.serialization;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.toolingExtension.impl.model.projectModel;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap.ObjectFactory;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
@@ -28,7 +29,7 @@ import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamAp
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-public final class ExternalProjectSerializationService implements SerializationService<ExternalProject> {
+public final class GradleExternalProjectSerializationService implements SerializationService<ExternalProject> {
 
   private static final String PROJECT_ID_FIELD = "id";
   private static final String PROJECT_PATH_FIELD = "path";
