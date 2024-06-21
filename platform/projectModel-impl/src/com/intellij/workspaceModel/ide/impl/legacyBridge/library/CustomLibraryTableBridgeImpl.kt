@@ -21,6 +21,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.CustomLibraryTableBridge
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 
@@ -183,4 +184,5 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
   override fun removeListener(listener: LibraryTable.Listener) = libraryTableDelegate.removeListener(listener)
 }
 
+@ApiStatus.Internal
 data class LegacyCustomLibraryEntitySource(private val levelId: String): EntitySource

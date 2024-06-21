@@ -21,7 +21,7 @@ import com.intellij.openapi.module.ModulePointer
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 
-class ModulePointerImpl : ModulePointer {
+internal class ModulePointerImpl : ModulePointer {
   private var module: Module? = null
   private var moduleName: String? = null
   private val lock: ReentrantReadWriteLock

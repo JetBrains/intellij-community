@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   private final ProjectFileIndex myFileIndex;
   private final WorkspaceFileIndexEx myWorkspaceFileIndex;
 
+  @ApiStatus.Internal
   protected ProjectFileIndexFacade(@NotNull Project project) {
     super(project);
 

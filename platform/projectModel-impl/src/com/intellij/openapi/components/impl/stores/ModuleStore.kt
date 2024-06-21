@@ -2,8 +2,10 @@
 package com.intellij.openapi.components.impl.stores
 
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 interface ModuleStore : IComponentStore {
   fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean)
 }

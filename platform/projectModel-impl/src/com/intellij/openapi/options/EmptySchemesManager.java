@@ -5,6 +5,7 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import kotlin.jvm.functions.Function1;
 import kotlin.sequences.Sequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class EmptySchemesManager extends SchemeManager<Object> {
   @Override
   public @NotNull Collection<Object> loadSchemes() {

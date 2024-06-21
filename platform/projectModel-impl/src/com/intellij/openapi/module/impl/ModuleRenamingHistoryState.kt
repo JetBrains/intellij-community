@@ -4,7 +4,9 @@ package com.intellij.openapi.module.impl
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Tag("module-renaming")
 class ModuleRenamingHistoryState {
   @Property(surroundWithTag = false)

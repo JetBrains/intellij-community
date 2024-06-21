@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ModuleOrderEnumerator extends OrderEnumeratorBase {
   private final ModuleRootModel myRootModel;
 

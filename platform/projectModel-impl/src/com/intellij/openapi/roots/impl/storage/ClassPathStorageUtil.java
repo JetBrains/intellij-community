@@ -2,10 +2,12 @@
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
+@ApiStatus.Internal
 public final class ClassPathStorageUtil {
   @NonNls public static final String DEFAULT_STORAGE = "default";
 

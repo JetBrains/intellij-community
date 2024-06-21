@@ -111,4 +111,4 @@ internal class FileContainerDescription(val urls: List<VirtualFileUrl>, private 
   }
 }
 
-data class JarDirectoryDescription(val directoryUrl: VirtualFileUrl, val recursive: Boolean)
+internal data class JarDirectoryDescription(val directoryUrl: VirtualFileUrl, val recursive: Boolean)

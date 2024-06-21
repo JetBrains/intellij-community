@@ -11,11 +11,13 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader.PathVariablesSerializer
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
+@ApiStatus.Internal
 @State(
   name = "PathMacrosImpl",
   category = SettingsCategory.SYSTEM,

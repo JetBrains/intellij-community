@@ -20798,7 +20798,7 @@ c:com.intellij.openapi.module.impl.ModuleConfigurationStateImpl
 c:com.intellij.openapi.module.impl.ModuleImpl
 - com.intellij.openapi.Disposable$Parent
 - com.intellij.openapi.components.ComponentManager
-- com.intellij.openapi.module.impl.ModuleEx
+- com.intellij.openapi.module.Module
 - com.intellij.openapi.ui.Queryable
 - com.intellij.openapi.util.UserDataHolderBase
 - canStoreSettings():Z
@@ -20846,17 +20846,6 @@ c:com.intellij.openapi.module.impl.ModuleTypeManagerImpl
 - registerModuleType(com.intellij.openapi.module.ModuleType):V
 - registerModuleType(com.intellij.openapi.module.ModuleType,Z):V
 - unregisterModuleType(com.intellij.openapi.module.ModuleType):V
-f:com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
-- com.intellij.openapi.module.ProjectLoadingErrorsNotifier
-- <init>():V
-- registerError(com.intellij.openapi.module.ConfigurationErrorDescription):V
-- registerErrors(java.util.Collection):V
-- s:setErrorHandler(com.intellij.openapi.Disposable,java.util.function.Consumer):V
-f:com.intellij.openapi.module.impl.ProjectLoadingErrorsNotifierImpl
-- com.intellij.openapi.module.ProjectLoadingErrorsNotifier
-- <init>(com.intellij.openapi.project.Project):V
-- registerError(com.intellij.openapi.module.ConfigurationErrorDescription):V
-- registerErrors(java.util.Collection):V
 f:com.intellij.openapi.module.impl.RemoveInvalidElementsDialog
 - com.intellij.openapi.ui.DialogWrapper
 - b:$$$getRootComponent$$$():javax.swing.JComponent

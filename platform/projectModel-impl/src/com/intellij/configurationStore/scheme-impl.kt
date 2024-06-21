@@ -23,6 +23,7 @@ import java.util.function.Function
 
 typealias SchemeNameToFileName = (name: String) -> String
 
+@ApiStatus.Internal
 val OLD_NAME_CONVERTER: SchemeNameToFileName = { FileUtil.sanitizeFileName(it, true) }
 val CURRENT_NAME_CONVERTER: SchemeNameToFileName = { FileUtil.sanitizeFileName(it, false) }
 val MODERN_NAME_CONVERTER: SchemeNameToFileName = { sanitizeFileName(it) }
@@ -106,6 +107,7 @@ class InitializedSchemeWrapper<out T : Scheme>(scheme: T, private val writer: (s
   override fun writeScheme() = writer(scheme)
 }
 
+@ApiStatus.Internal
 fun unwrapState(element: Element, project: Project, iprAdapter: SchemeManagerIprProvider?, schemeManager: SchemeManager<*>): Element? {
   val data = if (project.isDirectoryBased) element.getChild("settings") else element
   iprAdapter?.let {

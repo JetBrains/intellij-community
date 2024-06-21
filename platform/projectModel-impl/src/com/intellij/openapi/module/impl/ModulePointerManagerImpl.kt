@@ -17,10 +17,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.Function
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
+@ApiStatus.Internal
 @State(name = "ModuleRenamingHistory", storages = [(Storage("modules.xml"))])
 class ModulePointerManagerImpl(private val project: Project) : ModulePointerManager(), PersistentStateComponent<ModuleRenamingHistoryState> {
   private val unresolved = MultiMap<String, ModulePointerImpl>()

@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.CustomLibraryTableBridgeImpl
 import org.jdom.Element
 
-class CustomLibraryTableImpl(level: String, presentation: LibraryTablePresentation) : CustomLibraryTable, Disposable {
+internal class CustomLibraryTableImpl(level: String, presentation: LibraryTablePresentation) : CustomLibraryTable, Disposable {
   private val delegate: CustomLibraryTable = CustomLibraryTableBridgeImpl(level, presentation)
 
   override fun getLibraries(): Array<Library> = delegate.libraries

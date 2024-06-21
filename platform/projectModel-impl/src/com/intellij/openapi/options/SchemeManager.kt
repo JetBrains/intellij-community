@@ -57,8 +57,10 @@ abstract class SchemeManager<T> {
    *
    * Scheme manager processor must be LazySchemeProcessor
    */
+  @ApiStatus.Internal
   abstract fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?): T?
 
+  @ApiStatus.Internal
   interface LoadBundleSchemeRequest<T> {
     val pluginId: PluginId
 
@@ -69,6 +71,7 @@ abstract class SchemeManager<T> {
     fun createScheme(): T
   }
 
+  @ApiStatus.Internal
   abstract fun loadBundledSchemes(providers: Sequence<LoadBundleSchemeRequest<T>>)
 
   @JvmOverloads

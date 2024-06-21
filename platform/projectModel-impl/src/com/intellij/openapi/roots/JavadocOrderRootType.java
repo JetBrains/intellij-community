@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.List;
 
 
 public class JavadocOrderRootType extends PersistentOrderRootType {
+  @ApiStatus.Internal
   public JavadocOrderRootType() {
     super("JAVADOC", "javadocPath", "javadoc-paths", "javadocPathEntry");
   }

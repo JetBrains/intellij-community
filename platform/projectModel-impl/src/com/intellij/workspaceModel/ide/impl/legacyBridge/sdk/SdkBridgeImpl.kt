@@ -204,6 +204,7 @@ internal fun SdkEntity.Builder.getSdkType(): SdkTypeId {
 
 // At serialization, we have access only to `sdkRootName` so our roots contains only this names
 // that's why we need to associate such names with the actual root type
+@get:ApiStatus.Internal
 val OrderRootType.customName: String
   get() {
     if (this is PersistentOrderRootType) {

@@ -3,6 +3,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
     return getOrderRootType(AnnotationOrderRootType.class);
   }
 
+  @ApiStatus.Internal
   public AnnotationOrderRootType() {
     super(ANNOTATIONS_ID, "annotationsPath", "annotation-paths", null);
   }

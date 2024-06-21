@@ -34,10 +34,13 @@ public interface IProjectStore extends IComponentStore {
 
   @NotNull Path getWorkspacePath();
 
+  @ApiStatus.Internal
   void clearStorages();
 
+  @ApiStatus.Internal
   boolean isOptimiseTestLoadSpeed();
 
+  @ApiStatus.Internal
   void setOptimiseTestLoadSpeed(boolean optimiseTestLoadSpeed);
 
   boolean isProjectFile(@NotNull VirtualFile file);
@@ -47,6 +50,7 @@ public interface IProjectStore extends IComponentStore {
    */
   @Nullable Path getDirectoryStorePath();
 
+  @ApiStatus.Internal
   void setPath(@NotNull Path path, boolean isRefreshVfsNeeded, @Nullable Project template);
 
   @Nullable String getProjectWorkspaceId();

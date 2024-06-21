@@ -13,10 +13,7 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PathUtilRt;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.Map;
@@ -45,6 +42,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
     return createFilter();
   }
 
+  @ApiStatus.Internal
   public static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String macroName, @SystemIndependent @Nullable String path) {
     if (path != null) {
       doAddFileHierarchyReplacements(result, Strings.trimEnd(path, "/"), '$' + macroName + '$');
@@ -59,6 +57,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
     result.put(macro, path);
   }
 
+  @ApiStatus.Internal
   protected static void addFileHierarchyReplacements(ReplacePathToMacroMap result, String macroName, @Nullable String path, @Nullable String stopAt) {
     if (path == null) return;
 
@@ -103,6 +102,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
     return result;
   }
 
+  @ApiStatus.Internal
   protected void resetCachedReplacePathMap() {
     replacePathToMacroMap = null;
   }

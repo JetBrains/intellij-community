@@ -1,5 +1,0 @@
-com/intellij/ide/plugins/IdeaPluginDescriptorImpl
-com/intellij/openapi/roots/impl/ProjectRootManagerImpl$BatchSession
-com/intellij/openapi/roots/impl/RootConfigurationAccessor
-com/intellij/platform/workspace/jps/serialization/impl/ModulePath
-com/intellij/workspaceModel/ide/legacyBridge/ModuleBridge

@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.RootModelBase;
 import com.intellij.project.model.impl.module.content.JpsContentEntry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.Internal
 public class JpsRootModel extends RootModelBase implements ModuleRootModel {
   private final Module myModule;
   private final List<ContentEntry> myContentEntries;
