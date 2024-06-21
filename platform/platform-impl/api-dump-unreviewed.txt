@@ -18407,7 +18407,7 @@ f:com.intellij.openapi.updateSettings.impl.UpdateOptions
 - f:setUpdateChannelType(java.lang.String):V
 - f:setWhatsNewShownFor(I):V
 c:com.intellij.openapi.updateSettings.impl.UpdateSettings
-- com.intellij.openapi.components.PersistentStateComponent
+- com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 - <init>():V
 - forceCheckForUpdateAfterRestart():V
 - getActiveChannels():java.util.List
@@ -18419,6 +18419,7 @@ c:com.intellij.openapi.updateSettings.impl.UpdateSettings
 - getSelectedActiveChannel():com.intellij.openapi.updateSettings.impl.ChannelStatus
 - getSelectedChannelStatus():com.intellij.openapi.updateSettings.impl.ChannelStatus
 - getState():com.intellij.openapi.updateSettings.impl.UpdateOptions
+- getStateModificationCount():J
 - getStoredPluginHosts():java.util.List
 - getWhatsNewShownFor():I
 - isCheckNeeded():Z
