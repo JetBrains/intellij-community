@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
@@ -138,18 +139,18 @@ class KotlinFirStructureViewElement(
     }
 
     class Visibility(symbol: KtSymbol?) {
-        private val visibility: org.jetbrains.kotlin.descriptors.Visibility? = (symbol as? KaSymbolWithVisibility)?.visibility
+        private val visibility: KaSymbolVisibility? = (symbol as? KaSymbolWithVisibility)?.visibility
 
         val isPublic: Boolean
-            get() = visibility == Visibilities.Public
+            get() = visibility == KaSymbolVisibility.PUBLIC
 
         val accessLevel: Int?
-            get() = when {
-                visibility == Visibilities.Public -> 1
-                visibility == Visibilities.Internal -> 2
-                visibility == Visibilities.Protected -> 3
-                visibility?.let { Visibilities.isPrivate(it) } == true -> 4
-                else -> null
+            get() = when (visibility) {
+              KaSymbolVisibility.PUBLIC -> 1
+              KaSymbolVisibility.INTERNAL -> 2
+              KaSymbolVisibility.PROTECTED -> 3
+              KaSymbolVisibility.PRIVATE -> 4
+              else -> null
             }
     }
 }

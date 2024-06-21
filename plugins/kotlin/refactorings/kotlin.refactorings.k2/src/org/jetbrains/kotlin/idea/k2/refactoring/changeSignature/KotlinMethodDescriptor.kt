@@ -95,10 +95,10 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
         return (callable as? KtCallableDeclaration)?.valueParameters?.size ?: 0
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     private val _visibility = allowAnalysisOnEdt {
         analyze(callable) {
-            (callable.symbol as? KaSymbolWithVisibility)?.visibility ?: Visibilities.Public
+            (callable.symbol as? KaSymbolWithVisibility)?.compilerVisibility ?: Visibilities.Public
         }
     }
 

@@ -57,7 +57,7 @@ fun KtScope.findSiblingsByName(
     }
     val callables = getCallableSymbols(newName).filter { callable ->
         symbol != callable &&
-                ((callable as? KaSymbolWithVisibility)?.visibility != Visibilities.Private || callable.containingSymbol == containingSymbol)
+                ((callable as? KaSymbolWithVisibility)?.visibility != KaSymbolVisibility.PRIVATE || callable.containingSymbol == containingSymbol)
     }
 
     val classifierSymbols = getClassifierSymbols(newName)
@@ -141,7 +141,7 @@ fun checkDeclarationNewNameConflicts(
             }
 
             is KtPackageSymbol -> {
-                fun KaDeclarationSymbol.isTopLevelPrivate(): Boolean = (this as? KaSymbolWithVisibility)?.visibility == Visibilities.Private && (this as? KaSymbolWithKind)?.symbolKind == KaSymbolKind.TOP_LEVEL
+                fun KaDeclarationSymbol.isTopLevelPrivate(): Boolean = (this as? KaSymbolWithVisibility)?.visibility == KaSymbolVisibility.PRIVATE && (this as? KaSymbolWithKind)?.symbolKind == KaSymbolKind.TOP_LEVEL
 
                 fun isInSameFile(s1: KaDeclarationSymbol, s2: KaDeclarationSymbol): Boolean = s1.psi?.containingFile == s2.psi?.containingFile
 

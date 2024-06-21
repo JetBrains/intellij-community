@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -31,7 +32,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
     private fun isTestDeclaration(symbol: KaAnnotatedSymbol): Boolean {
         return when {
             isIgnored(symbol) -> false
-            (symbol as? KaSymbolWithVisibility)?.visibility != Visibilities.Public -> false
+            (symbol as? KaSymbolWithVisibility)?.visibility != KaSymbolVisibility.PUBLIC -> false
             symbol.hasAnnotation(KotlinTestAvailabilityChecker.TEST_FQ_NAME) -> true
             symbol is KaClassOrObjectSymbol -> symbol.declaredMemberScope.getCallableSymbols().any { isTestDeclaration(it) }
             else -> false

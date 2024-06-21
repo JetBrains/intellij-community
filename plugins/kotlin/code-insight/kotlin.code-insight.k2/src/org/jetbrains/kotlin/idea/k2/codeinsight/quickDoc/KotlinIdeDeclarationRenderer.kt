@@ -62,6 +62,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -489,7 +490,7 @@ internal class KotlinIdeDeclarationRenderer(
                             }
                         },
                         {
-                            if (callableSymbol is KaSymbolWithVisibility && callableSymbol.visibility == Visibilities.Local) {
+                            if (callableSymbol is KaSymbolWithVisibility && callableSymbol.visibility == KaSymbolVisibility.LOCAL) {
                                 printer.append(highlight("local") { asKeyword })
                             }
                         },
