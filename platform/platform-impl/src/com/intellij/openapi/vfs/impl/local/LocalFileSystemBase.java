@@ -440,22 +440,14 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       throw new IOException(IdeCoreBundle.message("vfs.target.already.exists.error", newParent.getPath() + "/" + name));
     }
 
-    File ioFile = convertToIOFile(file);
-    if (FileSystemUtil.getAttributes(ioFile) == null) {
-      throw new FileNotFoundException(IdeCoreBundle.message("file.not.exist.error", ioFile.getPath()));
-    }
-    File ioParent = convertToIOFile(newParent);
-    if (!ioParent.isDirectory()) {
-      throw new IOException(IdeCoreBundle.message("target.not.directory.error", ioParent.getPath()));
-    }
-    File ioTarget = new File(ioParent, name);
-    if (ioTarget.exists()) {
-      throw new IOException(IdeCoreBundle.message("target.already.exists.error", ioTarget.getPath()));
-    }
-
     if (!auxMove(file, newParent)) {
-      if (!ioFile.renameTo(ioTarget)) {
-        throw new IOException(IdeCoreBundle.message("move.failed.error", ioFile.getPath(), ioParent.getPath()));
+      var nioFile = convertToNioFileAndCheck(file, false);
+      var nioTarget = convertToNioFileAndCheck(newParent, false).resolve(nioFile.getFileName());
+      try {
+        Files.move(nioFile, nioTarget, StandardCopyOption.ATOMIC_MOVE);
+      }
+      catch (AtomicMoveNotSupportedException e) {
+        Files.move(nioFile, nioTarget);
       }
     }
 
