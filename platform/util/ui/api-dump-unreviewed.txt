@@ -3255,7 +3255,6 @@ f:com.intellij.ui.scale.JBUIScale
 - sf:INSTANCE:com.intellij.ui.scale.JBUIScale
 - sf:addUserScaleChangeListener(java.beans.PropertyChangeListener):V
 - f:computeSystemScaleFactor(java.util.function.Supplier):F
-- f:drop():V
 - sf:getFontScale(F):F
 - f:getSystemFontDataIfInitialized():kotlin.Pair
 - sf:isHiDPI(D):Z

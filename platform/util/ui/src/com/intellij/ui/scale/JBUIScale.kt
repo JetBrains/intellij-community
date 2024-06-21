@@ -81,6 +81,7 @@ object JBUIScale {
     systemFontData.value = computeSystemFontDataForMacOs()
   }
 
+  @Internal
   fun drop() {
     systemScaleFactor.drop()
   }
