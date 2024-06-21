@@ -942,7 +942,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                                 PsiParameter parameter) {
     if (!REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER || !holder.isOnTheFly()) return;
 
-    PsiVariable owner = Objects.requireNonNullElse(JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter), parameter);
+    PsiVariable owner = parameter.isPhysical() ? parameter : JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter);
+    if (owner == null) return;
+
     PsiElement elementToHighlight = null;
     NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(owner);
     if (info != null && !info.isInferred()) {

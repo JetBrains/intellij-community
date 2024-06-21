@@ -2,6 +2,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightCompactConstructorParameter;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -74,6 +75,9 @@ public final class JavaPsiRecordUtil {
    * @return record component that corresponds to the parameter
    */
   public static @Nullable PsiRecordComponent getComponentForCanonicalConstructorParameter(@NotNull PsiParameter parameter) {
+    if (parameter instanceof LightCompactConstructorParameter) {
+      return ((LightCompactConstructorParameter)parameter).getRecordComponent();
+    }
     PsiClass aClass = PsiTreeUtil.getParentOfType(parameter, PsiClass.class);
     if (aClass == null) return null;
     String parameterName = parameter.getName();
