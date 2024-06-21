@@ -238,7 +238,7 @@ internal class InheritedJsonSchemaObjectView(
   }
 
   override fun getRequired(): Set<String>? {
-    return mergeSets(base.required, other.required)
+    return other.required
   }
 
   override fun getPropertyDependencies(): Map<String, List<String>>? {
