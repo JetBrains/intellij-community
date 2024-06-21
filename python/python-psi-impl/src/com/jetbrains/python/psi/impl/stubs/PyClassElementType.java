@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
@@ -54,6 +53,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
                                PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
                                PyPsiUtils.strValue(psi.getDocStringExpression()),
+                               psi.getDeprecationMessage(),
                                getStubElementType(),
                                createCustomStub(psi));
   }
@@ -133,6 +133,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
 
     final String docString = pyClassStub.getDocString();
     dataStream.writeUTFFast(docString != null ? docString : "");
+    dataStream.writeName(pyClassStub.getDeprecationMessage());
 
     serializeCustomStub(pyClassStub.getCustomStub(PyCustomClassStub.class), dataStream);
   }
@@ -162,9 +163,11 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     final String docStringInStub = dataStream.readUTFFast();
     final String docString = docStringInStub.length() > 0 ? docStringInStub : null;
 
+    final String deprecationMessage = dataStream.readNameString();
+
     final PyCustomClassStub customStub = deserializeCustomStub(dataStream);
 
-    return new PyClassStubImpl(name, parentStub, superClasses, baseClassesText, metaClass, slots, docString,
+    return new PyClassStubImpl(name, parentStub, superClasses, baseClassesText, metaClass, slots, docString, deprecationMessage,
                                getStubElementType(), customStub);
   }
 

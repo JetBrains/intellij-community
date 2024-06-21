@@ -35,6 +35,9 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   private final List<String> mySuperClassesText;
 
   @Nullable
+  private final String myDeprecationMessage;
+
+  @Nullable
   private final PyCustomClassStub myCustomStub;
 
   public PyClassStubImpl(@Nullable String name,
@@ -44,6 +47,7 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
                          @Nullable QualifiedName metaClass,
                          @Nullable List<String> slots,
                          @Nullable String docString,
+                         @Nullable String deprecationMessage,
                          @NotNull IStubElementType stubElementType,
                          @Nullable PyCustomClassStub customStub) {
     super(parentStub, stubElementType);
@@ -53,6 +57,7 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
     myMetaClass = metaClass;
     mySlots = slots;
     myDocString = docString;
+    myDeprecationMessage = deprecationMessage;
     myCustomStub = customStub;
   }
 
@@ -84,6 +89,12 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   @Override
   public String getDocString() {
     return myDocString;
+  }
+
+  @Nullable
+  @Override
+  public String getDeprecationMessage() {
+    return myDeprecationMessage;
   }
 
   @NotNull

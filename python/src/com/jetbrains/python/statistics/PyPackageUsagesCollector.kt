@@ -74,7 +74,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
         .forEach { pythonPackage ->
           val version = pythonPackage.version
           val data = buildList {
-            add(PACKAGE_FIELD.with(pythonPackage.name))
+            add(PACKAGE_FIELD.with(pythonPackage.name.lowercase()))
             add(PACKAGE_VERSION_FIELD.with(version))
             add(EXECUTION_TYPE.with(executionType.value))
             add(INTERPRETER_TYPE.with(interpreterType.value))

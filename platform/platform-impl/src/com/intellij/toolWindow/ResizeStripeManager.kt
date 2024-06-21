@@ -168,6 +168,9 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
       myCustomWidth = (myCustomWidth * currentScale / myCurrentScale).toInt()
       setSideCustomWidth(myComponent, myCustomWidth)
     }
+    else {
+      return
+    }
     myCurrentScale = currentScale
     updateView()
   }

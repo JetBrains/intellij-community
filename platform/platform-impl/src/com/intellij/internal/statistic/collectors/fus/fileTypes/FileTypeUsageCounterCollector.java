@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,12 +50,14 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     new ExtensionPointName<>("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 70);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 73);
 
   private static final ClassEventField FILE_EDITOR = EventFields.Class("file_editor");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
   private static final EventField<Boolean> IS_PREVIEW_TAB = EventFields.Boolean("is_preview_tab");
+  private static final EventField<Boolean> IS_DUMB = EventFields.Boolean("dumb");
+
   private static final String FILE_NAME_PATTERN = "file_name_pattern";
   private static final EventField<String> FILE_NAME_PATTERN_FIELD =
     EventFields.StringValidatedByCustomRule(FILE_NAME_PATTERN, FileNamePatternCustomValidationRule.class);
@@ -71,9 +74,9 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
 
   private static final VarargEventId SELECT = registerFileTypeEvent("select");
   private static final VarargEventId CREATE_BY_NEW_FILE = registerFileTypeEvent("create_by_new_file");
-  private static final VarargEventId EDIT = registerFileTypeEvent("edit", FILE_NAME_PATTERN_FIELD);
+  private static final VarargEventId EDIT = registerFileTypeEvent("edit", FILE_NAME_PATTERN_FIELD, IS_DUMB);
   private static final VarargEventId OPEN = registerFileTypeEvent(
-    "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_PREVIEW_TAB, FILE_NAME_PATTERN_FIELD
+    "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_PREVIEW_TAB, FILE_NAME_PATTERN_FIELD, IS_DUMB
   );
   private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE);
 
@@ -99,6 +102,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     EDIT.log(project, pairs -> {
       pairs.addAll(buildCommonEventPairs(project, file, false));
       addFileNamePattern(pairs, file);
+      pairs.add(IS_DUMB.with(DumbService.isDumb(project)));
     });
   }
 
@@ -119,6 +123,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
         pairs.add(EventFields.DurationMs.with(durationMs));
       }
       addFileNamePattern(pairs, file);
+      pairs.add(IS_DUMB.with(DumbService.isDumb(project)));
     });
   }
 

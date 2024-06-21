@@ -7,16 +7,16 @@ import com.intellij.jarFinder.InternetAttachSourceProvider
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.java.library.getMavenCoordinates
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.findFile
 import com.intellij.psi.PsiFile
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
 import java.io.File
-import kotlin.io.path.Path
+import java.nio.file.Path
 
 /**
  * Attaches sources to the IntelliJ Platform dependencies in projects using IntelliJ Platform Gradle Plugin 2.x.
@@ -30,6 +30,7 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     val (product, libraryCoordinates) = orderEntries.firstNotNullOfOrNull {
       val coordinates = it.library?.getMavenCoordinates() ?: return@firstNotNullOfOrNull null
       val product = IntelliJPlatformProduct.fromMavenCoordinates(coordinates.groupId, coordinates.artifactId)
+                    ?: IntelliJPlatformProduct.fromCdnCoordinates(coordinates.groupId, coordinates.artifactId)
       if (product == null) {
         return@firstNotNullOfOrNull null
       }
@@ -73,15 +74,14 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       override fun getBusyText() = DevKitGradleBundle.message("attachSources.action.busyText")
 
       override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
-        val externalProjectPath = orderEntries.first().ownerModule.let {
-          ExternalSystemApiUtil.getExternalRootProjectPath(it)
-        } ?: return ActionCallback.REJECTED
+        val externalProjectPath = CachedModuleDataFinder.getGradleModuleData(orderEntries.first().ownerModule)?.directoryToRunTask
+                                  ?: return ActionCallback.REJECTED
 
         val executionResult = ActionCallback()
         val project = psiFile.project
         val sourceArtifactNotation = "$productCoordinates:${libraryCoordinates.version}:sources"
 
-        GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, Path(externalProjectPath)).whenComplete { path, error ->
+        GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, Path.of(externalProjectPath)).whenComplete { path, error ->
           if (error != null) {
             executionResult.reject(error.message)
           }

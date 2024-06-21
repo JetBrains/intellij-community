@@ -8,6 +8,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
@@ -156,7 +157,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
             }
             final SdkModificator sdkToSetUp = usedIdeaJdk.getSdkModificator();
             sdkToSetUp.setHomePath(alternativeIdePath);
-            sdkToSetUp.commitChanges();
+            ApplicationManager.getApplication().runWriteAction(sdkToSetUp::commitChanges);
           }
         }
         String ideaJdkHome = usedIdeaJdk.getHomePath();

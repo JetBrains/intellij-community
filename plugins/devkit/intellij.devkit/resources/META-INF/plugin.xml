@@ -42,6 +42,25 @@
     <dependencySupport coordinate="com.google.android.studio:android-studio" kind="java" displayName="Android Studio"/>
     <dependencySupport coordinate="com.jetbrains.intellij.fleetBackend:fleetBackend" kind="java" displayName="Fleet Backend"/>
 
+    <!-- Dependencies created with IntelliJ Platform Gradle Plugin 2.x that point to CDN artifacts -->
+    <dependencySupport coordinate="idea:ideaIC" kind="java" displayName="IntelliJ IDEA Community"/>
+    <dependencySupport coordinate="idea:ideaIU" kind="java" displayName="IntelliJ IDEA Ultimate"/>
+    <dependencySupport coordinate="cpp:CLion" kind="java" displayName="CLion"/>
+    <dependencySupport coordinate="python:pycharm-community" kind="java" displayName="PyCharm Community"/>
+    <dependencySupport coordinate="python:pycharm-professional" kind="java" displayName="PyCharm Professional"/>
+    <dependencySupport coordinate="go:goland" kind="java" displayName="GoLand"/>
+    <dependencySupport coordinate="webide:PhpStorm" kind="java" displayName="PhpStorm"/>
+    <dependencySupport coordinate="rider:JetBrains.Rider" kind="java" displayName="Rider"/>
+    <dependencySupport coordinate="idea/gateway:JetBrainsGateway" kind="java" displayName="JetBrains Gateway"/>
+    <dependencySupport coordinate="rustrover:RustRover" kind="java" displayName="RustRover"/>
+    <dependencySupport coordinate="webstorm:WebStorm" kind="java" displayName="WebStorm"/>
+    <dependencySupport coordinate="writerside:writerside" kind="java" displayName="Writerside"/>
+    <dependencySupport coordinate="aqua:aqua" kind="java" displayName="Aqua"/>
+    <dependencySupport coordinate="datagrip:datagrip" kind="java" displayName="DataGrip"/>
+    <dependencySupport coordinate="python:dataspell" kind="java" displayName="DataSpell"/>
+    <dependencySupport coordinate="mps:MPS" kind="java" displayName="MPS"/>
+    <dependencySupport coordinate="ruby:RubyMine" kind="java" displayName="RubyMine"/>
+
     <!-- Dependencies created with Gradle IntelliJ Plugin 1.x as intermediate Ivy repository artifacts -->
     <dependencySupport coordinate="com.jetbrains:ideaIC" kind="java" displayName="IntelliJ IDEA Community"/>
     <dependencySupport coordinate="com.jetbrains:ideaIU" kind="java" displayName="IntelliJ IDEA Ultimate"/>

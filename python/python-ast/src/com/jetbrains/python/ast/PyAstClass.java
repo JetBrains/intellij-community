@@ -41,8 +41,7 @@ import java.util.List;
 @ApiStatus.Experimental
 public interface PyAstClass extends PsiNameIdentifierOwner, PyAstCompoundStatement, PyAstDocStringOwner, AstScopeOwner,
                                     PyAstDecoratable, PyAstTypedElement, PyAstQualifiedNameOwner, PyAstStatementListContainer,
-                                    PyAstWithAncestors,
-                                    PyAstTypeParameterListOwner {
+                                    PyAstWithAncestors, PyAstTypeParameterListOwner {
   PyAstClass[] EMPTY_ARRAY = new PyAstClass[0];
   ArrayFactory<PyAstClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyAstClass[count];
 

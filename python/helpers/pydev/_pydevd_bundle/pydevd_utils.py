@@ -665,7 +665,6 @@ def kill_thread(thread):
         pydev_log.debug("Thread with ID '%s' not found" % thread_id)
     elif res > 1:
         pydev_log.debug("More then one thread with ID '%s' found" % thread_id)
-        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
     else:
         pydev_log.debug("Successfully raised an exception in thread with ID '%s'"
                         % thread_id)

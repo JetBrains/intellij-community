@@ -75,6 +75,10 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
 
   private class MyPopupModel : DefaultToolbarComboButtonModel() {
     var isPopupShown: Boolean = false
+      set(value) {
+        field = value
+        fireChangeListeners()
+      }
 
     override fun isSelected(): Boolean {
       return super.isSelected() || isPopupShown

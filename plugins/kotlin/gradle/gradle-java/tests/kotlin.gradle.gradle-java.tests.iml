@@ -66,5 +66,6 @@
     <orderEntry type="library" name="assertJ" level="project" />
     <orderEntry type="module" module-name="kotlin.highlighting.shared" />
     <orderEntry type="module" module-name="kotlin.base.psi" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="TEST" />
   </component>
 </module>

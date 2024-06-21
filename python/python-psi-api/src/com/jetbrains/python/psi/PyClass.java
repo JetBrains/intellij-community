@@ -36,12 +36,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
+import static com.jetbrains.python.ast.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
+
 /**
  * Represents a class declaration in source.
  */
 public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
                                  ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors,
-                                 PyTypeParameterListOwner {
+                                 PyTypeParameterListOwner, PyDeprecatable {
   PyClass[] EMPTY_ARRAY = new PyClass[0];
   ArrayFactory<PyClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyClass[count];
 
@@ -366,6 +368,12 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
    */
   @Nullable
   PyClassLikeType getType(@NotNull TypeEvalContext context);
+
+  @Nullable
+  @Override
+  default String getDeprecationMessage() {
+    return extractDeprecationMessageFromDecorator(this);
+  }
 
   @Override
   @Nullable

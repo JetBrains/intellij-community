@@ -114,20 +114,36 @@ fun doPatchPluginXml(document: Document,
       Span.current().addEvent("patch $pluginModuleName <product-descriptor/>")
 
       setProductDescriptorEapAttribute(productDescriptor, isEap)
-      productDescriptor.setAttribute("release-date", releaseDate)
+      val overriddenReleaseDate = productDescriptor.getAttribute("release-date")
+        ?.value?.takeUnless { it.startsWith("__") }
+      if (overriddenReleaseDate == null) {
+        productDescriptor.setAttribute("release-date", releaseDate)
+      }
       productDescriptor.setAttribute("release-version", releaseVersion)
     }
   }
 
   // patch Database plugin for WebStorm, see WEB-48278
-  if (toPublish && productDescriptor != null && productDescriptor.getAttributeValue("code") == "PDB" && productName == "WebStorm") {
+  if (toPublish && productDescriptor != null && productDescriptor.getAttributeValue("code") == "PDB") {
     Span.current().addEvent("patch $pluginModuleName for WebStorm")
     val pluginName = rootElement.getChild("name")
     check(pluginName.text == "Database Tools and SQL") { "Plugin name for \'$pluginModuleName\' should be \'Database Tools and SQL\'" }
     pluginName.text = "Database Tools and SQL for WebStorm & RustRover"
     val description = rootElement.getChild("description")
-    val replaced = replaceInElementText(description, "IntelliJ-based IDEs", "WebStorm and RustRover")
-    check(replaced) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
+    val replaced1 = replaceInElementText(description, "IntelliJ-based IDEs", "WebStorm and RustRover")
+    check(replaced1) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
+
+    val oldText = "The plugin provides all the same features as <a href=\"https://www.jetbrains.com/datagrip/\">DataGrip</a>, the standalone JetBrains IDE for databases."
+    val replaced2 = replaceInElementText(
+      element = description,
+      oldText = oldText,
+      newText = """
+        The plugin provides all the same features as <a href="https://www.jetbrains.com/datagrip/">DataGrip</a>, the standalone JetBrains IDE for databases.
+        Owners of an active DataGrip subscription can download the plugin for free.
+        The plugin is also included in <a href="https://www.jetbrains.com/all/">All Products Pack</a> and <a href="https://www.jetbrains.com/community/education/">Student Pack</a>.
+      """.trimIndent()
+    )
+    check(replaced2) { "Could not find \'$oldText\' in plugin description of $pluginModuleName" }
   }
   return document.toXML()
 }

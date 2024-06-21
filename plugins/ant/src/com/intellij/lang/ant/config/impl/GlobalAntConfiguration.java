@@ -92,7 +92,7 @@ public final class GlobalAntConfiguration implements PersistentStateComponent<El
     return bundledAnt;
   }
 
-  private static @NotNull File getBundledAntHome() {
+  public static @NotNull File getBundledAntHome() {
     File distDir = PluginPathManager.getPluginResource(AntInstallation.class, "dist");
     if (distDir != null && distDir.exists()) {
       return distDir;

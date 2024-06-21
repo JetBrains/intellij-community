@@ -4,7 +4,9 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.util.ArrayFactory;
-import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.types.PyType;
@@ -12,14 +14,18 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
+
+import static com.jetbrains.python.ast.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
 
 /**
  * Function declaration in source (the {@code def} and everything within).
  */
 public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyCompoundStatement,
                                     PyDecoratable, PyCallable, PyStatementListContainer, PyPossibleClassMember,
-                                    ScopeOwner, PyDocStringOwner, PyTypeCommentOwner, PyAnnotationOwner, PyTypeParameterListOwner {
+                                    ScopeOwner, PyDocStringOwner, PyTypeCommentOwner, PyAnnotationOwner, PyTypeParameterListOwner,
+                                    PyDeprecatable {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyFunction[count];
@@ -64,6 +70,44 @@ public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctio
   @Nullable
   default PyStringLiteralExpression getDocStringExpression() {
     return (PyStringLiteralExpression)PyAstFunction.super.getDocStringExpression();
+  }
+
+  /**
+   * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning..
+   *
+   * @return the deprecation message or null if the function is not deprecated.
+   */
+  @Nullable
+  @Override
+  default String getDeprecationMessage() {
+    return extractDeprecationMessage();
+  }
+
+  @Nullable
+  default String extractDeprecationMessage() {
+    String deprecationMessageFromDecorator = extractDeprecationMessageFromDecorator(this);
+    if (deprecationMessageFromDecorator != null) {
+      return deprecationMessageFromDecorator;
+    }
+    PyAstStatementList statementList = getStatementList();
+    return extractDeprecationMessage(Arrays.asList(statementList.getStatements()));
+  }
+
+  static @Nullable String extractDeprecationMessage(List<? extends PyAstStatement> statements) {
+    for (PyAstStatement statement : statements) {
+      if (statement instanceof PyAstExpressionStatement expressionStatement) {
+        if (expressionStatement.getExpression() instanceof PyAstCallExpression callExpression) {
+          if (callExpression.isCalleeText(PyNames.WARN)) {
+            PyAstReferenceExpression warningClass = callExpression.getArgument(1, PyAstReferenceExpression.class);
+            if (warningClass != null && (PyNames.DEPRECATION_WARNING.equals(warningClass.getReferencedName()) ||
+                                         PyNames.PENDING_DEPRECATION_WARNING.equals(warningClass.getReferencedName()))) {
+              return PyPsiUtilsCore.strValue(callExpression.getArguments()[0]);
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Override
