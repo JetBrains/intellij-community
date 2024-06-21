@@ -1,67 +1,52 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.tabs;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.tabs
 
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.ui.TimedDeadzone;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.ui.TimedDeadzone
+import java.awt.Color
+import java.awt.Insets
 
-import java.awt.*;
+interface JBTabsPresentation {
+  var isHideTabs: Boolean
+  val isSingleRow: Boolean
 
-public interface JBTabsPresentation {
-  boolean isHideTabs();
+  fun setPaintFocus(paintFocus: Boolean): JBTabsPresentation
 
-  void setHideTabs(boolean hideTabs);
+  fun setSideComponentVertical(vertical: Boolean): JBTabsPresentation
 
-  JBTabsPresentation setPaintFocus(boolean paintFocus);
+  fun setSideComponentOnTabs(onTabs: Boolean): JBTabsPresentation
 
-  JBTabsPresentation setSideComponentVertical(boolean vertical);
+  fun setSideComponentBefore(before: Boolean): JBTabsPresentation
 
-  JBTabsPresentation setSideComponentOnTabs(boolean onTabs);
+  fun setSingleRow(singleRow: Boolean): JBTabsPresentation
 
-  JBTabsPresentation setSideComponentBefore(boolean before);
+  fun setUiDecorator(decorator: UiDecorator?): JBTabsPresentation
 
-  JBTabsPresentation setSingleRow(boolean singleRow);
+  fun setPaintBlocked(blocked: Boolean, takeSnapshot: Boolean)
 
-  boolean isSingleRow();
+  fun setInnerInsets(innerInsets: Insets): JBTabsPresentation
 
-  JBTabsPresentation setUiDecorator(@Nullable UiDecorator decorator);
+  fun setFocusCycle(root: Boolean): JBTabsPresentation?
 
-  JBTabsPresentation setRequestFocusOnLastFocusedComponent(boolean request);
+  fun setToDrawBorderIfTabsHidden(draw: Boolean): JBTabsPresentation
 
-  void setPaintBlocked(boolean blocked, final boolean takeSnapshot);
+  fun setActiveTabFillIn(color: Color?): JBTabsPresentation
 
-  JBTabsPresentation setInnerInsets(Insets innerInsets);
+  fun setTabLabelActionsAutoHide(autoHide: Boolean): JBTabsPresentation
 
-  JBTabsPresentation setFocusCycle(final boolean root);
+  fun setTabLabelActionsMouseDeadzone(length: TimedDeadzone.Length): JBTabsPresentation
 
-  @NotNull
-  JBTabsPresentation setToDrawBorderIfTabsHidden(boolean draw);
+  fun setTabsPosition(position: JBTabsPosition): JBTabsPresentation
 
-  @NotNull
-  JBTabs getJBTabs();
+  val tabsPosition: JBTabsPosition
 
-  @NotNull
-  JBTabsPresentation setActiveTabFillIn(@Nullable Color color);
+  fun setTabDraggingEnabled(enabled: Boolean): JBTabsPresentation
 
-  @NotNull
-  JBTabsPresentation setTabLabelActionsAutoHide(boolean autoHide);
+  fun setAlphabeticalMode(alphabeticalMode: Boolean): JBTabsPresentation
 
-  @NotNull
-  JBTabsPresentation setTabLabelActionsMouseDeadzone(TimedDeadzone.Length length);
+  fun setSupportsCompression(supportsCompression: Boolean): JBTabsPresentation
 
-  @NotNull
-  JBTabsPresentation setTabsPosition(JBTabsPosition position);
+  fun setFirstTabOffset(offset: Int)
 
-  JBTabsPosition getTabsPosition();
-
-  JBTabsPresentation setTabDraggingEnabled(boolean enabled);
-
-  JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode);
-
-  JBTabsPresentation setSupportsCompression(boolean supportsCompression);
-
-  void setFirstTabOffset(int offset);
-
-  JBTabsPresentation setEmptyText(@Nullable @NlsContexts.StatusText String text);
+  fun setEmptyText(text: @NlsContexts.StatusText String?): JBTabsPresentation
 }

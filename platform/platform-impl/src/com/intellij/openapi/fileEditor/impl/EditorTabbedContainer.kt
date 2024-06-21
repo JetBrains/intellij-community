@@ -91,6 +91,8 @@ class EditorTabbedContainer internal constructor(
     }
 
     editorTabs = EditorTabs(coroutineScope = coroutineScope, parentDisposable = disposable, window = window)
+    setTabPlacement(UISettings.getInstance().editorTabPlacement)
+
     dragOutDelegate = EditorTabbedContainerDragOutDelegate(window = window, editorTabs = editorTabs)
 
     val project = window.manager.project
@@ -127,20 +129,20 @@ class EditorTabbedContainer internal constructor(
       .addTabMouseListener(TabMouseListener(window = window, editorTabs = editorTabs)).presentation
       .setTabDraggingEnabled(true)
       .setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setTabLabelActionsAutoHide(false)
-      .setActiveTabFillIn(EditorColorsManager.getInstance().globalScheme.defaultBackground).setPaintFocus(false).jbTabs
-      .setSelectionChangeHandler { _, _, doChangeSelection ->
-        if (window.isDisposed) {
-          return@setSelectionChangeHandler ActionCallback.DONE
-        }
-        val result = ActionCallback()
-        val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
-        CommandProcessor.getInstance().executeCommand(project, {
-          ideDocumentHistory.onSelectionChanged()
-          result.notify(doChangeSelection.run())
-        }, "EditorChange", null)
-        result
+      .setActiveTabFillIn(EditorColorsManager.getInstance().globalScheme.defaultBackground).setPaintFocus(false)
+
+    editorTabs.setSelectionChangeHandler { _, _, doChangeSelection ->
+      if (window.isDisposed) {
+        return@setSelectionChangeHandler ActionCallback.DONE
       }
-    editorTabs.presentation.setRequestFocusOnLastFocusedComponent(true)
+      val result = ActionCallback()
+      val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
+      CommandProcessor.getInstance().executeCommand(project, {
+        ideDocumentHistory.onSelectionChanged()
+        result.notify(doChangeSelection.run())
+      }, "EditorChange", null)
+      result
+    }
     editorTabs.component.addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
         if (editorTabs.findInfo(e) != null || window.owner.isFloating) {
@@ -151,7 +153,6 @@ class EditorTabbedContainer internal constructor(
         }
       }
     })
-    setTabPlacement(UISettings.getInstance().editorTabPlacement)
   }
 
   val tabCount: Int
@@ -194,19 +195,19 @@ class EditorTabbedContainer internal constructor(
 
   internal fun setTabLayoutPolicy(policy: Int) {
     when (policy) {
-      JTabbedPane.SCROLL_TAB_LAYOUT -> editorTabs.presentation.setSingleRow(true)
-      JTabbedPane.WRAP_TAB_LAYOUT -> editorTabs.presentation.setSingleRow(false)
+      JTabbedPane.SCROLL_TAB_LAYOUT -> editorTabs.setSingleRow(true)
+      JTabbedPane.WRAP_TAB_LAYOUT -> editorTabs.setSingleRow(false)
       else -> throw IllegalArgumentException("Unsupported tab layout policy: $policy")
     }
   }
 
   internal fun setTabPlacement(tabPlacement: Int) {
     when (tabPlacement) {
-      SwingConstants.TOP -> editorTabs.presentation.setTabsPosition(JBTabsPosition.top)
-      SwingConstants.BOTTOM -> editorTabs.presentation.setTabsPosition(JBTabsPosition.bottom)
-      SwingConstants.LEFT -> editorTabs.presentation.setTabsPosition(JBTabsPosition.left)
-      SwingConstants.RIGHT -> editorTabs.presentation.setTabsPosition(JBTabsPosition.right)
-      UISettings.TABS_NONE -> editorTabs.presentation.isHideTabs = true
+      SwingConstants.TOP -> editorTabs.setTabsPosition(JBTabsPosition.top)
+      SwingConstants.BOTTOM -> editorTabs.setTabsPosition(JBTabsPosition.bottom)
+      SwingConstants.LEFT -> editorTabs.setTabsPosition(JBTabsPosition.left)
+      SwingConstants.RIGHT -> editorTabs.setTabsPosition(JBTabsPosition.right)
+      UISettings.TABS_NONE -> editorTabs.isHideTabs = true
       else -> throw IllegalArgumentException("Unknown tab placement code=$tabPlacement")
     }
   }
@@ -307,8 +308,7 @@ internal class DockableEditor @JvmOverloads constructor(
 }
 
 private fun doProcessDoubleClick(e: MouseEvent, editorTabs: JBTabsImpl, window: EditorWindow) {
-  val info = editorTabs.findInfo(e)
-  if (info != null) {
+  editorTabs.findInfo(e)?.let { info ->
     val composite = info.composite
     if (composite.isPreview) {
       composite.isPreview = false
@@ -537,6 +537,8 @@ private class EditorTabs(
   private var isActive = false
 
   init {
+    isRequestFocusOnLastFocusedComponent = true
+
     val listener = AWTEventListener { updateActive() }
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
     coroutineScope.coroutineContext.job.invokeOnCompletion {

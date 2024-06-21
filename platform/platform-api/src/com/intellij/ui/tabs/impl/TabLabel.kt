@@ -57,7 +57,10 @@ open class TabLabel @Internal constructor(
   @Internal
   protected var actionPanel: ActionPanel? = null
   private var isCentered = false
-  private var isCompressionEnabled = false
+
+  @JvmField
+  internal var isCompressionEnabled: Boolean = false
+
   var isForcePaintBorders: Boolean = false
 
   private val labelPlaceholder = Wrapper(/* isDoubleBuffered = */ false)
@@ -540,10 +543,6 @@ open class TabLabel @Internal constructor(
         else -> ActionsPosition.NONE
       }
     }
-
-  fun enableCompressionMode(enabled: Boolean) {
-    isCompressionEnabled = enabled
-  }
 
   private fun removeOldActionPanel() {
     actionPanel?.let {

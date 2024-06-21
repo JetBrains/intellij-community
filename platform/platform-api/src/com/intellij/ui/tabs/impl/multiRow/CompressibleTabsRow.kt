@@ -88,7 +88,7 @@ internal class CompressibleTabsRow(infos: List<TabInfo>, withTitle: Boolean, wit
         label.apply(decoration)
         decreasedLengths.add(prefLengths[ind] - decreasedLen)
       }
-      label.enableCompressionMode(true)
+      label.isCompressionEnabled = true
     }
     return decreasedLengths
   }

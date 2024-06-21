@@ -220,8 +220,9 @@ open class JBTabsImpl internal constructor(
     private set
 
   private var paintFocus = false
-  private var hideTabs = false
-  private var isRequestFocusOnLastFocusedComponent = false
+
+  @Internal
+  var isRequestFocusOnLastFocusedComponent: Boolean = false
 
   private var listener: Job? = null
 
@@ -295,7 +296,9 @@ open class JBTabsImpl internal constructor(
     private set
 
   private var removeNotifyInProgress = false
-  private var singleRow = true
+
+  private var _singleRow = true
+
   protected open fun createTabBorder(): JBTabsBorder = JBDefaultTabsBorder(this)
 
   protected open fun createTabPainterAdapter(): TabPainterAdapter = DefaultTabPainterAdapter(DEFAULT)
@@ -572,10 +575,10 @@ open class JBTabsImpl internal constructor(
 
   private fun updateRowLayout() {
     if (!isHorizontalTabs) {
-      singleRow = true
+      _singleRow = true
     }
 
-    val layout = if (isSingleRow) createSingleRowLayout() else createMultiRowLayout()
+    val layout = if (useMultiRowLayout()) createMultiRowLayout() else createSingleRowLayout()
     // set the current scroll value to new layout
     layout.scroll(scrollBarModel.value)
     setLayout(layout)
@@ -583,7 +586,7 @@ open class JBTabsImpl internal constructor(
     applyDecoration()
     for (tab in visibleInfos) {
       val label = tab.tabLabel ?: continue
-      label.enableCompressionMode(false)
+      label.isCompressionEnabled = false
       label.isForcePaintBorders = false
     }
 
@@ -814,8 +817,8 @@ open class JBTabsImpl internal constructor(
 
   fun getFirstTabOffset(): Int = firstTabOffset
 
-  override fun setFirstTabOffset(firstTabOffset: Int) {
-    this.firstTabOffset = firstTabOffset
+  override fun setFirstTabOffset(offset: Int) {
+    this.firstTabOffset = offset
   }
 
   override fun setEmptyText(text: String?): JBTabsPresentation {
@@ -1891,15 +1894,14 @@ open class JBTabsImpl internal constructor(
   }
 
   override fun setPaintBlocked(blocked: Boolean, takeSnapshot: Boolean) {}
+
   private fun addToDeferredRemove(c: Component) {
     if (!deferredToRemove.containsKey(c)) {
       deferredToRemove.put(c, c)
     }
   }
 
-  override fun setToDrawBorderIfTabsHidden(toDrawBorderIfTabsHidden: Boolean): JBTabsPresentation = this
-
-  override fun getJBTabs(): JBTabs = this
+  override fun setToDrawBorderIfTabsHidden(draw: Boolean): JBTabsPresentation = this
 
   class Toolbar(private val tabs: JBTabsImpl, private val info: TabInfo, side: Component?, group: ActionGroup?) : JPanel(BorderLayout()) {
     init {
@@ -2360,13 +2362,11 @@ open class JBTabsImpl internal constructor(
     return size
   }
 
-  override fun getTabCount(): Int = tabs.size
+  final override fun getTabCount(): Int = tabs.size
 
-  override fun getPresentation(): JBTabsPresentation = this
+  final override fun getPresentation(): JBTabsPresentation = this
 
-  override fun removeTab(info: TabInfo?): ActionCallback {
-    return removeTab(info = info, forcedSelectionTransfer = null)
-  }
+  override fun removeTab(info: TabInfo?): ActionCallback = removeTab(info = info, forcedSelectionTransfer = null)
 
   @RequiresEdt
   @Internal
@@ -2732,16 +2732,16 @@ open class JBTabsImpl internal constructor(
 
   final override fun getIndexOf(tabInfo: TabInfo): Int = getVisibleInfos().indexOf(tabInfo)
 
-  final override fun isHideTabs(): Boolean = hideTabs || isHideTopPanel
+  final override var isHideTabs: Boolean = false
+    get() = field || isHideTopPanel
+    set(value) {
+      if (field == value) {
+        return
+      }
 
-  final override fun setHideTabs(hideTabs: Boolean) {
-    if (isHideTabs == hideTabs) {
-      return
+      field = value
+      relayout(forced = true, layoutNow = false)
     }
-
-    this.hideTabs = hideTabs
-    relayout(forced = true, layoutNow = false)
-  }
 
   final override var isHideTopPanel: Boolean = false
     set(value) {
@@ -2981,7 +2981,7 @@ open class JBTabsImpl internal constructor(
   }
 
   override fun setSingleRow(singleRow: Boolean): JBTabsPresentation {
-    this.singleRow = singleRow
+    _singleRow = singleRow
     updateRowLayout()
     return this
   }
@@ -2998,7 +2998,8 @@ open class JBTabsImpl internal constructor(
     return false
   }
 
-  override fun isSingleRow(): Boolean = singleRow
+  override val isSingleRow: Boolean
+    get() = _singleRow
 
   val isSideComponentVertical: Boolean
     get() = !horizontalSide
@@ -3057,11 +3058,6 @@ open class JBTabsImpl internal constructor(
       resetTabsCache()
       relayout(forced = true, layoutNow = false)
     }
-  }
-
-  override fun setRequestFocusOnLastFocusedComponent(requestFocusOnLastFocusedComponent: Boolean): JBTabsPresentation {
-    isRequestFocusOnLastFocusedComponent = requestFocusOnLastFocusedComponent
-    return this
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
@@ -3142,20 +3138,21 @@ open class JBTabsImpl internal constructor(
     return this
   }
 
-  final override fun getTabsPosition(): JBTabsPosition = position
+  override val tabsPosition: JBTabsPosition
+    get() = position
 
   final override fun setTabDraggingEnabled(enabled: Boolean): JBTabsPresentation {
     isTabDraggingEnabled = enabled
     return this
   }
 
-  override fun setAlphabeticalMode(value: Boolean): JBTabsPresentation {
-    alphabeticalMode = value
+  override fun setAlphabeticalMode(alphabeticalMode: Boolean): JBTabsPresentation {
+    this.alphabeticalMode = alphabeticalMode
     return this
   }
 
-  final override fun setSupportsCompression(value: Boolean): JBTabsPresentation {
-    supportCompression = value
+  final override fun setSupportsCompression(supportsCompression: Boolean): JBTabsPresentation {
+    supportCompression = supportsCompression
     updateRowLayout()
     return this
   }

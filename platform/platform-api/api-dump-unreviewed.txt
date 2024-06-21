@@ -10702,7 +10702,6 @@ e:com.intellij.ui.tabs.JBTabsPosition
 - s:valueOf(java.lang.String):com.intellij.ui.tabs.JBTabsPosition
 - s:values():com.intellij.ui.tabs.JBTabsPosition[]
 com.intellij.ui.tabs.JBTabsPresentation
-- a:getJBTabs():com.intellij.ui.tabs.JBTabs
 - a:getTabsPosition():com.intellij.ui.tabs.JBTabsPosition
 - a:isHideTabs():Z
 - a:isSingleRow():Z
@@ -10715,7 +10714,6 @@ com.intellij.ui.tabs.JBTabsPresentation
 - a:setInnerInsets(java.awt.Insets):com.intellij.ui.tabs.JBTabsPresentation
 - a:setPaintBlocked(Z,Z):V
 - a:setPaintFocus(Z):com.intellij.ui.tabs.JBTabsPresentation
-- a:setRequestFocusOnLastFocusedComponent(Z):com.intellij.ui.tabs.JBTabsPresentation
 - a:setSideComponentBefore(Z):com.intellij.ui.tabs.JBTabsPresentation
 - a:setSideComponentOnTabs(Z):com.intellij.ui.tabs.JBTabsPresentation
 - a:setSideComponentVertical(Z):com.intellij.ui.tabs.JBTabsPresentation
@@ -11016,7 +11014,6 @@ c:com.intellij.ui.tabs.impl.TabLabel
 - f:apply(com.intellij.ui.tabs.UiDecorator$UiDecoration):V
 - pf:createLayeredIcon():com.intellij.ui.LayeredIcon
 - editLabelForeground(java.awt.Color):java.awt.Color
-- f:enableCompressionMode(Z):V
 - f:getAccessibleContext():javax.accessibility.AccessibleContext
 - f:getActionsPosition():com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
 - f:getData(java.lang.String):java.lang.Object

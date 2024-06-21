@@ -27,7 +27,7 @@ open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
   }
 
   constructor(project: Project?, parentDisposable: Disposable) : super(project, parentDisposable) {
-    setSupportsCompression(value = true)
+    setSupportsCompression(supportsCompression = true)
   }
 
   constructor(
@@ -35,7 +35,7 @@ open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
     parentDisposable: Disposable,
     coroutineScope: CoroutineScope?,
   ) : super(project = project, parentDisposable = parentDisposable, coroutineScope = coroutineScope) {
-    setSupportsCompression(value = true)
+    setSupportsCompression(supportsCompression = true)
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
@@ -58,9 +58,9 @@ open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
     return if (isAlphabeticalModeChanged) super.isAlphabeticalMode() else UISettings.getInstance().sortTabsAlphabetically
   }
 
-  override fun setAlphabeticalMode(value: Boolean): JBTabsPresentation {
+  override fun setAlphabeticalMode(alphabeticalMode: Boolean): JBTabsPresentation {
     isAlphabeticalModeChanged = true
-    return super.setAlphabeticalMode(value)
+    return super.setAlphabeticalMode(alphabeticalMode)
   }
 
   open fun shouldPaintBottomBorder(): Boolean = true

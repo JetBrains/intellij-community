@@ -448,7 +448,7 @@ public final class GridCellImpl implements GridCell {
       super(context.getProject(), context.getFocusManager(), container);
 
       myContext = context;
-      JBRunnerTabsBase tabs = ((RunnerContentUi)myContext).myTabs;
+      JBRunnerTabsBase tabs = ((RunnerContentUi)myContext).tabs;
       ((JBTabsImpl)tabs).addNestedTabs(this, container);
     }
 
@@ -470,17 +470,17 @@ public final class GridCellImpl implements GridCell {
 
     @Override
     public void processDropOver(@NotNull TabInfo over, @NotNull RelativePoint point) {
-      ((RunnerContentUi)myContext).myTabs.processDropOver(over, point);
+      ((RunnerContentUi)myContext).tabs.processDropOver(over, point);
     }
 
     @Override
     public @NotNull Image startDropOver(@NotNull TabInfo tabInfo, @NotNull RelativePoint point) {
-      return ((RunnerContentUi)myContext).myTabs.startDropOver(tabInfo, point);
+      return ((RunnerContentUi)myContext).tabs.startDropOver(tabInfo, point);
     }
 
     @Override
     public void resetDropOver(@NotNull TabInfo tabInfo) {
-      ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
+      ((RunnerContentUi)myContext).tabs.resetDropOver(tabInfo);
     }
 
     @Override
