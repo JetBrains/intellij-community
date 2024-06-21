@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
+import org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.returnIfNoDescriptorForDeclarationException
@@ -114,7 +115,12 @@ fun KtElement.safeAnalyze(
 ): BindingContext = try {
     analyze(resolutionFacade, bodyResolveMode)
 } catch (e: Exception) {
-    e.returnIfNoDescriptorForDeclarationException { BindingContext.EMPTY }
+    try {
+      e.returnIfNoDescriptorForDeclarationException { BindingContext.EMPTY }
+    } catch (e: Exception) {
+        KotlinFailureCollector.recordGeneralFrontEndFailureEvent(this.containingKtFile)
+        throw e
+    }
 }
 
 @JvmOverloads
