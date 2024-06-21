@@ -423,6 +423,10 @@ com.intellij.injected.editor.VirtualFileWindow
 - a:getDelegate():com.intellij.openapi.vfs.VirtualFile
 - a:getDocumentWindow():com.intellij.injected.editor.DocumentWindow
 - a:isValid():Z
+f:com.intellij.l10n.LocalizationUtil
+- sf:INSTANCE:com.intellij.l10n.LocalizationUtil
+- f:getLocale():java.util.Locale
+- f:getLocaleOrNullForDefault():java.util.Locale
 com.intellij.lang.ASTNode
 - com.intellij.openapi.util.UserDataHolder
 - sf:EMPTY_ARRAY:com.intellij.lang.ASTNode[]
