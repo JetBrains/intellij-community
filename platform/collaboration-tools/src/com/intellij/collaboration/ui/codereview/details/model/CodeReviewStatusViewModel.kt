@@ -5,7 +5,13 @@ import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import kotlinx.coroutines.flow.SharedFlow
 
 interface CodeReviewStatusViewModel {
-  val hasConflicts: SharedFlow<Boolean>
+  /**
+   * Whether there are conflicts that need to be resolved before merging.
+   *
+   * If the value is `null`, there is a check currently in progress or there is something
+   * else preventing us from knowing whether there are conflicts.
+   */
+  val hasConflicts: SharedFlow<Boolean?>
 
   /**
    * A flow or conversation resolution check
