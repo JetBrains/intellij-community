@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PluginAutoUpdateRepository
 import com.intellij.openapi.components.Service
@@ -39,7 +40,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
   private val pendingDownloads: Channel<List<PluginDownloader>> = Channel(capacity = Channel.UNLIMITED)
   private var downloadManagerScope: CoroutineScope? = null
 
-  fun isAutoUpdateEnabled(): Boolean = UpdateSettings.getInstance().isPluginsAutoUpdateEnabled
+  fun isAutoUpdateEnabled(): Boolean = Companion.isAutoUpdateEnabled()
 
   private fun setupDownloadManager() {
     synchronized(this) {
@@ -123,7 +124,24 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
     setupDownloadManager()
   }
 
+  internal class PluginAutoUpdateAppLifecycleListener : AppLifecycleListener {
+    override fun appWillBeClosed(isRestart: Boolean) {
+      if (!isAutoUpdateEnabled() && PluginAutoUpdateRepository.getAutoUpdateDirPath().exists()) {
+        LOG.info("plugin auto-update repository is deleted because auto-update is disabled")
+        try {
+          PluginAutoUpdateRepository.clearUpdates()
+        } catch (e: Exception) {
+          LOG.error(e)
+        }
+      }
+    }
+  }
+
   private data class DownloadedUpdate(val pluginId: PluginId, val version: String, val updatePath: Path)
+
+  private companion object {
+    fun isAutoUpdateEnabled(): Boolean = UpdateSettings.getInstance().isPluginsAutoUpdateEnabled
+  }
 }
 
 private val LOG get() = logger<PluginAutoUpdateService>()
