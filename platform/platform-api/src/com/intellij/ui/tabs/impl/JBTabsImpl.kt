@@ -203,13 +203,13 @@ open class JBTabsImpl internal constructor(
   internal val separatorWidth: Int = JBUI.scale(1)
   private var dataProvider: DataProvider? = null
   private val deferredToRemove = WeakHashMap<Component, Component>()
-  private var tableLayout = createMultiRowLayout()
+
+  @JvmField
+  internal var effectiveLayout: TabLayout = createRowLayout()
 
   // it's an invisible splitter intended for changing the size of tab zone
   private val splitter = TabSideSplitter(this)
 
-  @JvmField
-  internal var effectiveLayout: TabLayout? = null
   var lastLayoutPass: LayoutPassInfo? = null
     private set
 
@@ -339,7 +339,6 @@ open class JBTabsImpl internal constructor(
     myNavigationActions.add(nextAction)
     myNavigationActions.add(prevAction)
     setUiDecorator(null)
-    setLayout(createSingleRowLayout())
     splitter.divider.isOpaque = false
     popupListener = object : PopupMenuListener {
       override fun popupMenuWillBecomeVisible(e: PopupMenuEvent) {}
@@ -561,7 +560,7 @@ open class JBTabsImpl internal constructor(
     get() = scrollBar.model
 
   private val isWithScrollBar: Boolean
-    get() = effectiveLayout!!.isWithScrollBar
+    get() = effectiveLayout.isWithScrollBar
 
   protected open fun createDragHelper(tabs: JBTabsImpl, parentDisposable: Disposable): DragHelper = DragHelper(tabs, parentDisposable)
 
@@ -578,10 +577,10 @@ open class JBTabsImpl internal constructor(
       _singleRow = true
     }
 
-    val layout = if (useMultiRowLayout()) createMultiRowLayout() else createSingleRowLayout()
+    val layout = createRowLayout()
     // set the current scroll value to new layout
     layout.scroll(scrollBarModel.value)
-    setLayout(layout)
+    effectiveLayout = layout
 
     applyDecoration()
     for (tab in visibleInfos) {
@@ -593,11 +592,14 @@ open class JBTabsImpl internal constructor(
     relayout(forced = true, layoutNow = true)
   }
 
-  protected open fun useMultiRowLayout(): Boolean = !isSingleRow
-
-  protected open fun createMultiRowLayout(): MultiRowLayout = WrapMultiRowLayout(tabs = this, showPinnedTabsSeparately = false)
-
-  protected open fun createSingleRowLayout(): SingleRowLayout = ScrollableSingleRowLayout(this)
+  protected open fun createRowLayout(): TabLayout {
+    if (isSingleRow) {
+      return ScrollableSingleRowLayout(this)
+    }
+    else {
+      return WrapMultiRowLayout(tabs = this, showPinnedTabsSeparately = false)
+    }
+  }
 
   override fun setNavigationActionBinding(prevActionId: String, nextActionId: String) {
     nextAction?.reconnect(nextActionId)
@@ -640,10 +642,10 @@ open class JBTabsImpl internal constructor(
   }
 
   fun isDragOut(label: TabLabel?, deltaX: Int, deltaY: Int): Boolean {
-    return effectiveLayout!!.isDragOut(label!!, deltaX, deltaY)
+    return effectiveLayout.isDragOut(label!!, deltaX, deltaY)
   }
 
-  fun ignoreTabLabelLimitedWidthWhenPaint(): Boolean = effectiveLayout!!.isScrollable
+  fun ignoreTabLabelLimitedWidthWhenPaint(): Boolean = effectiveLayout.isScrollable
 
   @RequiresEdt
   fun resetTabsCache() {
@@ -910,7 +912,7 @@ open class JBTabsImpl internal constructor(
 
   override fun showMorePopup(): JBPopup? {
     val rect = lastLayoutPass?.moreRect ?: return null
-    val hiddenInfos = getVisibleInfos().filter { effectiveLayout!!.isTabHidden(it) }.takeIf { it.isNotEmpty() } ?: return null
+    val hiddenInfos = getVisibleInfos().filter { effectiveLayout.isTabHidden(it) }.takeIf { it.isNotEmpty() } ?: return null
     if (ExperimentalUI.isNewUI()) {
       return showListPopup(rect = rect, hiddenInfos = hiddenInfos)
     }
@@ -1884,7 +1886,7 @@ open class JBTabsImpl internal constructor(
   }
 
   private fun resetPopup() {
-    //todo [kirillk] dirty hack, should rely on ActionManager to understand that menu item was either chosen on or cancelled
+    //todo should rely on ActionManager to understand that menu item was either chosen on or cancelled
     SwingUtilities.invokeLater {
       // No need to reset popup info if a new popup has been already opened and myPopupInfo refers to the corresponding info.
       if (activePopup == null) {
@@ -1952,7 +1954,7 @@ open class JBTabsImpl internal constructor(
     }
 
     val maximum = lastLayoutPass!!.requiredLength
-    val value = effectiveLayout!!.scrollOffset
+    val value = effectiveLayout.scrollOffset
     val extent = lastLayoutPass!!.scrollExtent
 
     scrollBarModel.maximum = maximum
@@ -1967,9 +1969,9 @@ open class JBTabsImpl internal constructor(
       setRecentlyActive()
       toggleScrollBar(isMouseInsideTabsArea)
     }
-    val currentUnitsOffset = effectiveLayout!!.scrollOffset
+    val currentUnitsOffset = effectiveLayout.scrollOffset
     val updatedOffset = scrollBarModel.value
-    effectiveLayout!!.scroll(updatedOffset - currentUnitsOffset)
+    effectiveLayout.scroll(updatedOffset - currentUnitsOffset)
     relayout(forced = false, layoutNow = false)
   }
 
@@ -2265,7 +2267,7 @@ open class JBTabsImpl internal constructor(
 
   private fun computeMaxSize(): Max {
     val max = Max()
-    val isSideComponentOnTabs = effectiveLayout!!.isSideComponentOnTabs
+    val isSideComponentOnTabs = effectiveLayout.isSideComponentOnTabs
     for (tab in visibleInfos) {
       val label = tab.tabLabel ?: continue
       max.label.height = max.label.height.coerceAtLeast(label.preferredSize.height)
@@ -2652,7 +2654,7 @@ open class JBTabsImpl internal constructor(
       forcedRelayout = forced
     }
     if (moreToolbar != null) {
-      moreToolbar.component.isVisible = !isHideTabs && visibleInfos.isNotEmpty() && effectiveLayout!!.isScrollable
+      moreToolbar.component.isVisible = !isHideTabs && visibleInfos.isNotEmpty() && effectiveLayout.isScrollable
     }
     if (entryPointToolbar != null) {
       entryPointToolbar!!.component.isVisible = !isHideTabs && visibleInfos.isNotEmpty()
@@ -2986,17 +2988,7 @@ open class JBTabsImpl internal constructor(
     return this
   }
 
-  private fun setLayout(layout: TabLayout): Boolean {
-    if (effectiveLayout === layout) {
-      return false
-    }
-    effectiveLayout = layout
-    return true
-  }
-
-  open fun useSmallLabels(): Boolean {
-    return false
-  }
+  open fun useSmallLabels(): Boolean = false
 
   override val isSingleRow: Boolean
     get() = _singleRow
@@ -3196,10 +3188,10 @@ open class JBTabsImpl internal constructor(
   override fun startDropOver(tabInfo: TabInfo, point: RelativePoint): Image {
     dropInfo = tabInfo
     val pointInMySpace = point.getPoint(this)
-    val index = effectiveLayout!!.getDropIndexFor(pointInMySpace)
+    val index = effectiveLayout.getDropIndexFor(pointInMySpace)
     dropInfoIndex = index
-    addTab(info = dropInfo!!, index = index, isDropTarget = true, fireEvents = true)
-    val label = dropInfo!!.tabLabel!!
+    addTab(info = tabInfo, index = index, isDropTarget = true, fireEvents = true)
+    val label = tabInfo.tabLabel!!
     val size = label.preferredSize
     label.setBounds(0, 0, size.width, size.height)
     val img = ImageUtil.createImage(/* gc = */ graphicsConfiguration, /* width = */ size.width, /* height = */ size.height, /* type = */
@@ -3213,12 +3205,12 @@ open class JBTabsImpl internal constructor(
 
   override fun processDropOver(over: TabInfo, point: RelativePoint) {
     val pointInMySpace = point.getPoint(this)
-    val index = effectiveLayout!!.getDropIndexFor(pointInMySpace)
+    val index = effectiveLayout.getDropIndexFor(pointInMySpace)
     val side: Int = if (visibleInfos.isEmpty()) {
       SwingConstants.CENTER
     }
     else {
-      if (index != -1) -1 else effectiveLayout!!.getDropSideFor(pointInMySpace)
+      if (index != -1) -1 else effectiveLayout.getDropSideFor(pointInMySpace)
     }
     if (index != dropInfoIndex) {
       dropInfoIndex = index

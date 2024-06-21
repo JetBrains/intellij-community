@@ -36,7 +36,6 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.*;
-import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.WindowTabsLayout;
 import com.intellij.ui.tabs.impl.themes.DefaultTabTheme;
 import com.intellij.util.ui.GraphicsUtil;
@@ -44,6 +43,7 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,9 +56,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
-/**
- * @author Alexander Lobas
- */
+@ApiStatus.Internal
 public final class WindowTabsComponent extends JBTabsImpl {
   private static final String TITLE_LISTENER_KEY = "TitleListener";
 
@@ -100,8 +98,13 @@ public final class WindowTabsComponent extends JBTabsImpl {
   }
 
   @Override
-  protected @NotNull SingleRowLayout createSingleRowLayout() {
-    return new WindowTabsLayout(this);
+  protected @NotNull TabLayout createRowLayout() {
+    if (isSingleRow()) {
+      return new WindowTabsLayout(this);
+    }
+    else {
+      return super.createRowLayout();
+    }
   }
 
   @Override

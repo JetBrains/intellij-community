@@ -321,7 +321,7 @@ open class TabLabel @Internal constructor(
         val rightRect = Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, rect.height - 2 * borderThickness)
         paintGradientRect(g2d, rightRect, transparent, tabBg)
       }
-      else if (tabs.effectiveLayout!!.isScrollable && rect.width < preferredSize.width + tabs.tabHGap
+      else if (tabs.effectiveLayout.isScrollable && rect.width < preferredSize.width + tabs.tabHGap
       ) {
         val rightRect = Rectangle(rect.width - width, borderThickness, width, rect.height - 2 * borderThickness)
         paintGradientRect(g2d, rightRect, transparent, tabBg)
@@ -739,7 +739,7 @@ open class TabLabel @Internal constructor(
       synchronized(parent.treeLock) {
         when {
           !info.isPinned &&
-          tabs.effectiveLayout!!.isScrollable &&
+          tabs.effectiveLayout.isScrollable &&
           (isNewUI() && !isHovered || tabs.isHorizontalTabs) &&
           isShowTabActions && isTabActionsOnTheRight && parent.width < prefWidth -> {
             layoutScrollable(parent)

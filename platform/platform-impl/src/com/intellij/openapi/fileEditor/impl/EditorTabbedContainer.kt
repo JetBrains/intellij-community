@@ -55,11 +55,9 @@ import com.intellij.ui.tabs.impl.*
 import com.intellij.ui.tabs.impl.SingleHeightTabs.Companion.UNSCALED_PREF_HEIGHT
 import com.intellij.ui.tabs.impl.TabLabel.ActionsPosition
 import com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout
-import com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
 import com.intellij.ui.tabs.impl.multiRow.ScrollableMultiRowLayout
 import com.intellij.ui.tabs.impl.multiRow.WrapMultiRowLayout
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
-import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -576,23 +574,20 @@ private class EditorTabs(
 
   override fun getEditorWindow(): EditorWindow = window
 
-  override fun useMultiRowLayout(): Boolean {
-    return !isSingleRow || (isHorizontalTabs && (TabLayout.showPinnedTabsSeparately() || !UISettings.getInstance().hideTabsIfNeeded))
-  }
-
-  override fun createSingleRowLayout(): SingleRowLayout {
-    return ScrollableSingleRowLayout(this, ExperimentalUI.isEditorTabsWithScrollBar)
-  }
-
-  override fun createMultiRowLayout(): MultiRowLayout {
-    return when {
-      !isSingleRow -> WrapMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
-      UISettings.getInstance().hideTabsIfNeeded -> ScrollableMultiRowLayout(
-        tabs = this,
-        showPinnedTabsSeparately = true,
-        isWithScrollBar = ExperimentalUI.isEditorTabsWithScrollBar,
-      )
-      else -> CompressibleMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
+  override fun createRowLayout(): TabLayout {
+    if (!isSingleRow || (isHorizontalTabs && (TabLayout.showPinnedTabsSeparately() || !UISettings.getInstance().hideTabsIfNeeded))) {
+      return when {
+        !isSingleRow -> WrapMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
+        UISettings.getInstance().hideTabsIfNeeded -> ScrollableMultiRowLayout(
+          tabs = this,
+          showPinnedTabsSeparately = true,
+          isWithScrollBar = ExperimentalUI.isEditorTabsWithScrollBar,
+        )
+        else -> CompressibleMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
+      }
+    }
+    else {
+      return ScrollableSingleRowLayout(this, ExperimentalUI.isEditorTabsWithScrollBar)
     }
   }
 
