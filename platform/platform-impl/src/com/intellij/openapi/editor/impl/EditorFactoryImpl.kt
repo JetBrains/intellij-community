@@ -156,19 +156,19 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     return createEditor(document = document, isViewer = true, project = project, kind = kind)
   }
 
-  override fun createEditor(document: Document, project: Project, fileType: FileType, isViewer: Boolean): Editor {
+  override fun createEditor(document: Document, project: Project?, fileType: FileType, isViewer: Boolean): Editor {
     val editor = createEditor(document = document, isViewer = isViewer, project = project, kind = EditorKind.UNTYPED)
     editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType)
     return editor
   }
 
-  override fun createEditor(document: Document, project: Project, file: VirtualFile, isViewer: Boolean): Editor {
+  override fun createEditor(document: Document, project: Project?, file: VirtualFile, isViewer: Boolean): Editor {
     val editor = createEditor(document = document, isViewer = isViewer, project = project, kind = EditorKind.UNTYPED)
     editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file)
     return editor
   }
 
-  override fun createEditor(document: Document, project: Project, file: VirtualFile, isViewer: Boolean, kind: EditorKind): Editor {
+  override fun createEditor(document: Document, project: Project?, file: VirtualFile, isViewer: Boolean, kind: EditorKind): Editor {
     val editor = createEditor(document = document, isViewer = isViewer, project = project, kind = kind)
     editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file)
     return editor
