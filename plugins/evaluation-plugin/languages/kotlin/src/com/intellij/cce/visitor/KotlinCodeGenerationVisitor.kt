@@ -37,7 +37,10 @@ class KotlinCodeGenerationVisitor : EvaluationVisitor, KtTreeVisitorVoid() {
     val firstIndex = children.indexOfFirst { it is KtExpression }
     val lastIndex = children.indexOfLast { it is KtExpression }
     val indexRange = firstIndex..lastIndex
-    return children.filterIndexed { index, _ -> index in indexRange }.filterIsInstance<KtElement>()
+    return children.filterIndexed { index, element ->
+      element is KtExpression
+      index in indexRange
+    }.filterIsInstance<KtElement>()
   }
 }
 
