@@ -1094,6 +1094,10 @@ open class FileEditorManagerImpl(
       val composite = open()
       if (composite is EditorComposite) {
         blockingWaitForCompositeFileOpen(composite)
+        if (composite.providerSequence.none()) {
+          closeFile(window = window, composite = composite, runChecks = false)
+          return FileEditorComposite.EMPTY
+        }
       }
       return composite
     }
@@ -1104,6 +1108,12 @@ open class FileEditorManagerImpl(
         }
         if (composite is EditorComposite) {
           composite.waitForAvailable()
+          if (composite.providerSequence.none()) {
+            withContext(Dispatchers.EDT) {
+              closeFile(window = window, composite = composite, runChecks = false)
+            }
+            return@runBlockingCancellable FileEditorComposite.EMPTY
+          }
         }
         composite
       }
