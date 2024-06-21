@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.MoveToPackageFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.ITNReporter;
@@ -41,9 +42,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.IncludedXmlTag;
 import org.jetbrains.annotations.*;
@@ -65,6 +63,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.psi.search.GlobalSearchScope.projectScope;
+
 @VisibleForTesting
 @ApiStatus.Internal
 public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase {
@@ -83,10 +83,20 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   private static final int FIRST_BRANCH_SUPPORTING_STAR = 131;
 
+  public boolean myIgnoreUnstableApiDeclaredInThisProject = false;
+
   @Override
   @NotNull
   public String getShortName() {
     return "PluginXmlValidity";
+  }
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.checkbox("myIgnoreUnstableApiDeclaredInThisProject",
+                       DevKitBundle.message("devkit.unstable.api.usage.ignore.declared.inside.this.project"))
+    );
   }
 
   @Override
@@ -710,8 +720,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     return false;
   }
 
-  private static void annotateExtension(Extension extension,
-                                        DomElementAnnotationHolder holder) {
+  private void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null) return;
     final Module module = extension.getModule();
@@ -735,11 +744,11 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
   }
 
-  private static void annotateExtensionPointStatus(DomElementAnnotationHolder holder,
-                                                   Extension extension,
-                                                   ExtensionPoint extensionPoint,
-                                                   String effectiveQualifiedName,
-                                                   @Nullable Module module) {
+  private void annotateExtensionPointStatus(DomElementAnnotationHolder holder,
+                                            Extension extension,
+                                            ExtensionPoint extensionPoint,
+                                            String effectiveQualifiedName,
+                                            @Nullable Module module) {
     final ExtensionPoint.Status status = extensionPoint.getExtensionPointStatus();
     ExtensionPoint.Status.Kind kind = status.getKind();
     if (kind == ExtensionPoint.Status.Kind.SCHEDULED_FOR_REMOVAL_API) {
@@ -774,7 +783,21 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       highlightObsolete(extension, holder);
     }
     else if (kind == ExtensionPoint.Status.Kind.EXPERIMENTAL_API) {
-      highlightExperimental(extension, holder);
+      if (module != null) {
+        boolean fromSameProject = Optional.ofNullable(extension.getExtensionPoint())
+          .map(ExtensionPoint::getEffectiveClass)
+          .map(PsiElement::getContainingFile)
+          .map(PsiFile::getVirtualFile)
+          .map(file -> projectScope(module.getProject()).contains(file))
+          .orElse(false);
+
+        if (!myIgnoreUnstableApiDeclaredInThisProject || !fromSameProject) {
+          highlightExperimental(extension, holder);
+        }
+      }
+      else {
+        highlightExperimental(extension, holder);
+      }
     }
     else if (kind == ExtensionPoint.Status.Kind.INTERNAL_API &&
              module != null && !PsiUtil.isIdeaProject(module.getProject())) {
