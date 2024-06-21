@@ -10,13 +10,11 @@ import org.cef.CefClient;
 import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
-import org.cef.browser.CefMessageRouter;
 import org.cef.callback.*;
 import org.cef.handler.*;
 import org.cef.misc.BoolRef;
 import org.cef.network.CefRequest;
 import org.cef.security.CefSSLInfo;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/jcef.html">Embedded Browser (JCEF) (IntelliJ Platform Docs)</a>
  */
 @SuppressWarnings({"unused", "UnusedReturnValue"}) // [tav] todo: remove it ( or add*Handler methods not yet used)
-@ApiStatus.NonExtendable
-public class JBCefClient implements JBCefDisposable {
+public final class JBCefClient implements JBCefDisposable {
   private static final Logger LOG = Logger.getInstance(JBCefClient.class);
 
   /**
@@ -70,7 +67,7 @@ public class JBCefClient implements JBCefDisposable {
   private static final int JS_QUERY_POOL_DEFAULT_SIZE = RegistryManager.getInstance().intValue("ide.browser.jcef.jsQueryPoolSize");
   private static final int JS_QUERY_POOL_MAX_SIZE = 10000;
 
-  private final @Nullable CefClient myCefClient;
+  private final @NotNull CefClient myCefClient;
   private final @NotNull DisposeHelper myDisposeHelper = new DisposeHelper();
   private volatile @Nullable JSQueryPool myJSQueryPool;
   private final @NotNull AtomicInteger myJSQueryCounter = new AtomicInteger(0);
@@ -88,7 +85,7 @@ public class JBCefClient implements JBCefDisposable {
   private final HandlerSupport<CefLoadHandler> myLoadHandler = new HandlerSupport<>();
   private final HandlerSupport<CefRequestHandler> myRequestHandler = new HandlerSupport<>();
 
-  protected JBCefClient(@Nullable CefClient client) {
+  JBCefClient(@NotNull CefClient client) {
     myCefClient = client;
     Disposer.register(JBCefApp.getInstance().getDisposable(), this);
 
@@ -110,9 +107,6 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public @NotNull CefClient getCefClient() {
-    if (myCefClient == null) {
-      throw new UnsupportedOperationException("Not supported for this JBCefClient instance");
-    }
     return myCefClient;
   }
 
@@ -120,9 +114,7 @@ public class JBCefClient implements JBCefDisposable {
   public void dispose() {
     myDisposeHelper.dispose(() -> {
       try {
-        if (myCefClient != null) {
-          myCefClient.dispose();
-        }
+        myCefClient.dispose();
       }
       catch (Exception e) {
         LOG.warn(e);
@@ -211,7 +203,6 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public JBCefClient addContextMenuHandler(@NotNull CefContextMenuHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myContextMenuHandler.add(handler, browser, () -> {
       myCefClient.addContextMenuHandler(new CefContextMenuHandler() {
         @Override
@@ -243,12 +234,10 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public void removeContextMenuHandler(@NotNull CefContextMenuHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return;
     myContextMenuHandler.remove(handler, browser, () -> myCefClient.removeContextMenuHandler());
   }
 
   public JBCefClient addDialogHandler(@NotNull CefDialogHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myDialogHandler.add(handler, browser, () -> {
       myCefClient.addDialogHandler(new CefDialogHandler() {
         @Override
@@ -267,12 +256,10 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public void removeDialogHandler(@NotNull CefDialogHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return;
     myDialogHandler.remove(handler, browser, () -> myCefClient.removeDialogHandler());
   }
 
   public JBCefClient addDisplayHandler(@NotNull CefDisplayHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myDisplayHandler.add(handler, browser, () -> {
       myCefClient.addDisplayHandler(new CefDisplayHandler() {
         @Override
@@ -326,12 +313,10 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public void removeDisplayHandler(@NotNull CefDisplayHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return;
     myDisplayHandler.remove(handler, browser, () -> myCefClient.removeDisplayHandler());
   }
 
   public JBCefClient addDownloadHandler(@NotNull CefDownloadHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myDownloadHandler.add(handler, browser, () -> {
       myCefClient.addDownloadHandler(new CefDownloadHandler() {
         @Override
@@ -355,12 +340,10 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public void removeDownloadHandle(@NotNull CefDownloadHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return;
     myDownloadHandler.remove(handler, browser, () -> myCefClient.removeDownloadHandler());
   }
 
   public JBCefClient addDragHandler(@NotNull CefDragHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myDragHandler.add(handler, browser, () -> {
       myCefClient.addDragHandler(new CefDragHandler() {
         @Override
@@ -374,12 +357,10 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public void removeDragHandler(@NotNull CefDragHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return;
     myDragHandler.remove(handler, browser, () -> myCefClient.removeDragHandler());
   }
 
   public JBCefClient addPermissionHandler(@NotNull CefPermissionHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myPermissionHandler.add(handler, browser, () -> {
       myCefClient.addPermissionHandler(new CefPermissionHandler() {
 
@@ -399,7 +380,6 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public JBCefClient addFocusHandler(@NotNull CefFocusHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myFocusHandler.add(handler, browser, () -> {
       myCefClient.addFocusHandler(new CefFocusHandler() {
         @Override
@@ -427,12 +407,10 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public void removeFocusHandler(@NotNull CefFocusHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return;
     myFocusHandler.remove(handler, browser, () -> myCefClient.removeFocusHandler());
   }
 
   public JBCefClient addJSDialogHandler(@NotNull CefJSDialogHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myJSDialogHandler.add(handler, browser, () -> {
       myCefClient.addJSDialogHandler(new CefJSDialogHandler() {
         @Override
@@ -473,12 +451,10 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public void removeJSDialogHandler(@NotNull CefJSDialogHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return;
     myJSDialogHandler.remove(handler, browser, () -> myCefClient.removeJSDialogHandler());
   }
 
   public JBCefClient addKeyboardHandler(@NotNull CefKeyboardHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myKeyboardHandler.add(handler, browser, () -> {
       myCefClient.addKeyboardHandler(new CefKeyboardHandler() {
         @Override
@@ -499,12 +475,10 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public void removeKeyboardHandler(@NotNull CefKeyboardHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return;
     myKeyboardHandler.remove(handler, browser, () -> myCefClient.removeKeyboardHandler());
   }
 
   public JBCefClient addLifeSpanHandler(@NotNull CefLifeSpanHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myLifeSpanHandler.add(handler, browser, () -> {
       myCefClient.addLifeSpanHandler(new CefLifeSpanHandler() {
         @Override
@@ -546,12 +520,10 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public void removeLifeSpanHandler(@NotNull CefLifeSpanHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return;
     myLifeSpanHandler.remove(handler, browser, () -> myCefClient.removeLifeSpanHandler());
   }
 
   public JBCefClient addLoadHandler(@NotNull CefLoadHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myLoadHandler.add(handler, browser, () -> {
       myCefClient.addLoadHandler(new CefLoadHandler() {
         @Override
@@ -586,12 +558,10 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public void removeLoadHandler(@NotNull CefLoadHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return;
     myLoadHandler.remove(handler, browser, () -> myCefClient.removeLoadHandler());
   }
 
   public JBCefClient addRequestHandler(@NotNull CefRequestHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return this;
     return myRequestHandler.add(handler, browser, () -> {
       myCefClient.addRequestHandler(new CefRequestHandler() {
         @Override
@@ -667,7 +637,6 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   public void removeRequestHandler(@NotNull CefRequestHandler handler, @NotNull CefBrowser browser) {
-    if (myCefClient == null) return;
     myRequestHandler.remove(handler, browser, () -> myCefClient.removeRequestHandler());
   }
 
@@ -684,20 +653,6 @@ public class JBCefClient implements JBCefDisposable {
     myLifeSpanHandler.removeAll(browser);
     myLoadHandler.removeAll(browser);
     myRequestHandler.removeAll(browser);
-  }
-
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  public void addMessageRouter(@NotNull CefMessageRouter messageRouter) {
-    if (myCefClient == null) return;
-    myCefClient.addMessageRouter(messageRouter);
-  }
-
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  public void removeMessageRouter(@NotNull CefMessageRouter messageRouter) {
-    if (myCefClient == null) return;
-    myCefClient.removeMessageRouter(messageRouter);
   }
 
   private class HandlerSupport<T> {

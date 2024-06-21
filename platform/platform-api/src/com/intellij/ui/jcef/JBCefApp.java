@@ -19,6 +19,7 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefApp;
+import org.cef.CefClient;
 import org.cef.CefSettings;
 import org.cef.browser.CefMessageRouter;
 import org.cef.callback.CefSchemeHandlerFactory;
@@ -378,11 +379,8 @@ public final class JBCefApp {
   }
 
   public @NotNull JBCefClient createClient() {
-    if (myDelegate != null) {
-      return myDelegate.createClient();
-    }
-    assert myCefApp != null;
-    return new JBCefClient(myCefApp.createClient());
+    CefClient cefClient = myDelegate == null ? Objects.requireNonNull(myCefApp).createClient() : myDelegate.createClient();
+    return new JBCefClient(cefClient);
   }
 
   public @NotNull CefMessageRouter createMessageRouter(@Nullable CefMessageRouter.CefMessageRouterConfig config) {
@@ -499,7 +497,7 @@ public final class JBCefApp {
     @Override
     public void onContextInitialized() {
       for (JBCefCustomSchemeHandlerFactory f : ourCustomSchemeHandlerFactoryList) {
-        getInstance().myCefApp.registerSchemeHandlerFactory(f.getSchemeName(), f.getDomainName(), f);
+        Objects.requireNonNull(getInstance().myCefApp).registerSchemeHandlerFactory(f.getSchemeName(), f.getDomainName(), f);
       }
     }
 
