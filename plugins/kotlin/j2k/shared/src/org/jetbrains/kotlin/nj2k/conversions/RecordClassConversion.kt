@@ -70,6 +70,7 @@ class RecordClassConversion(context: NewJ2kConverterContext) : RecursiveConversi
                 JKModalityModifierElement(FINAL),
                 JKMutabilityModifierElement(MUTABLE)
             ).also { field ->
+                field.lineBreaksAfter = 1
                 symbolProvider.provideUniverseSymbol(field)
             }
         }
@@ -99,7 +100,9 @@ class RecordClassConversion(context: NewJ2kConverterContext) : RecursiveConversi
             otherModifierElements = emptyList(),
             JKVisibilityModifierElement(PUBLIC),
             JKModalityModifierElement(FINAL)
-        )
+        ).also {
+           it.lineBreaksAfter = 1
+        }
     }
 
     private fun JKRecordClass.generateFieldInitializations(fields: List<JKField>): List<JKStatement> =
@@ -113,7 +116,9 @@ class RecordClassConversion(context: NewJ2kConverterContext) : RecursiveConversi
             ),
             JKFieldAccessExpression(symbolProvider.provideUniverseSymbol(rhs)),
             JKOperatorToken.fromElementType(JavaTokenType.EQ)
-        )
+        ).also {
+            it.lineBreaksAfter = 1
+        }
 
     context(KaSession)
     private fun JKConstructor.generateFieldInitializations(fields: List<JKField>) {
