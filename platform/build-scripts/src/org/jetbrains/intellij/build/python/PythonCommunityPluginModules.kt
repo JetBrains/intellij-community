@@ -10,27 +10,29 @@ import java.nio.file.Files
 object PythonCommunityPluginModules {
   @JvmField
   val COMMUNITY_MODULES: PersistentList<String> = persistentListOf(
+    "intellij.commandInterface",
+    "intellij.jupyter.core",
     "intellij.python.community",
-    "intellij.python.community.plugin.impl",
-    "intellij.python.community.plugin.java",
-    "intellij.python.psi",
-    "intellij.python.psi.impl",
+    "intellij.python.community.communityOnly",
     "intellij.python.community.core.impl",
-    "intellij.python.pydev",
+    "intellij.python.community.deprecated.extensions",
     "intellij.python.community.impl",
     "intellij.python.community.impl.huggingFace",
-    "intellij.python.community.communityOnly",
-    "intellij.python.langInjection",
+    "intellij.python.community.plugin.impl",
+    "intellij.python.community.plugin.java",
+    "intellij.python.community.plugin.minor",
+    "intellij.python.community.plugin.minorRider",
     "intellij.python.copyright",
-    "intellij.python.terminal",
-    "intellij.python.grazie",
-    "intellij.python.markdown",
-    "intellij.python.reStructuredText",
-    "intellij.commandInterface",
-    "intellij.python.sdk",
     "intellij.python.featuresTrainer",
-    "intellij.jupyter.core",
-    "intellij.python.community.deprecated.extensions"
+    "intellij.python.grazie",
+    "intellij.python.langInjection",
+    "intellij.python.markdown",
+    "intellij.python.psi",
+    "intellij.python.psi.impl",
+    "intellij.python.pydev",
+    "intellij.python.reStructuredText",
+    "intellij.python.sdk",
+    "intellij.python.terminal",
   )
 
   /**
@@ -47,11 +49,11 @@ object PythonCommunityPluginModules {
   const val pythonCommunityName: String = "python-ce"
 
   fun pythonCommunityPluginLayout(body: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    val communityOnlyModules = persistentListOf(
-      "intellij.python.community.plugin.minor",
-      "intellij.python.community.plugin.minorRider",
-    )
-    return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) { spec ->
+    return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES) { spec ->
+      PYTHON_COMMON_MODULES.forEach {
+        spec.withModule(it, "python-common.jar")
+      }
+
       body?.invoke(spec)
       spec.withProjectLibrary("XmlRPC")
     }
@@ -62,12 +64,7 @@ object PythonCommunityPluginModules {
       spec.directoryName = name
       spec.mainJarName = "$name.jar"
       spec.withModules(modules)
-      // we don't need to pack these modules to python pro
-      if (name == pythonCommunityName) {
-        PYTHON_COMMON_MODULES.forEach {
-          spec.withModule(it, "python-common.jar")
-        }
-      }
+
       spec.withGeneratedResources { targetDir, context ->
         val output = targetDir.resolve("helpers")
         Files.createDirectories(output)
@@ -83,6 +80,7 @@ object PythonCommunityPluginModules {
           fileFilter = { path -> !path.endsWith("setup.py") && !path.endsWith("conftest.py") }
         )
       }
+
       // required for "Python Console" in PythonCore plugin
       @Suppress("SpellCheckingInspection")
       spec.withProjectLibrary("libthrift")
