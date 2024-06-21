@@ -29,7 +29,7 @@ import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
 
 public final class GitRefUtil {
   private static final Logger LOG = Logger.getInstance(GitRefUtil.class);
-  private static final Pattern BRANCH_PATTERN = Pattern.compile(" *(?:ref:)? */?((?:refs/heads/|refs/remotes/)?\\S+)");
+  private static final Pattern BRANCH_PATTERN = Pattern.compile(" *(?:ref:)? */?((?:refs/heads/|refs/remotes/)?\\S+)\\s*");
 
   @Contract("null -> null;!null -> !null")
   public static @Nullable String addRefsHeadsPrefixIfNeeded(@Nullable String branchName) {
