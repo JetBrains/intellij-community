@@ -234,6 +234,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
             ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY
         )
         registerPsiQuickFixes(KaFirDiagnostic.VolatileOnValue::class, ChangeVariableMutabilityFix.VOLATILE_ON_VALUE_FACTORY)
+        registerPsiQuickFixes(
+            KaFirDiagnostic.ValueClassConstructorNotFinalReadOnlyParameter::class,
+            ChangeVariableMutabilityFix.VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER_FACTORY
+        )
     }
 
     private val expressions = KtQuickFixesListBuilder.registerPsiQuickFix {

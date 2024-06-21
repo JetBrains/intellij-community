@@ -111,5 +111,11 @@ class ChangeVariableMutabilityFix(
                 if (!property.isWritable || property.isLocal) return@quickFixesPsiBasedFactory emptyList()
                 listOf(ChangeVariableMutabilityFix(property, makeVar = true))
             }
+
+        val VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER_FACTORY: QuickFixesPsiBasedFactory<KtParameter> =
+            quickFixesPsiBasedFactory { parameter: KtParameter ->
+                if (!parameter.isMutable) return@quickFixesPsiBasedFactory emptyList()
+                listOf(ChangeVariableMutabilityFix(parameter, makeVar = false))
+            }
     }
 }
