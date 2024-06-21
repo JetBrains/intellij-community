@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal object MergeStatisticsCollector : CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("vcs.merge", 1)
+  private val GROUP: EventLogGroup = EventLogGroup("vcs.merge", 2)
 
   private val SOURCE: EnumEventField<MergeResultSource> = EventFields.Enum("source", MergeResultSource::class.java)
   private val CHANGES: IntEventField = EventFields.Int("changes")
@@ -26,7 +26,7 @@ internal object MergeStatisticsCollector : CounterUsagesCollector() {
   private val AI_UNDONE = EventFields.Int("undoneAfterAi")
   private val AI_EDITED = EventFields.Int("editedAfterAi")
 
-  private val FILE_MERGED_EVENT: VarargEventId = GROUP.registerVarargEvent("file.merged", CHANGES, EventFields.DurationMs, AUTO_RESOLVABLE, CONFLICTS, UNRESOLVED, AI_RESOLVED, AI_ROLLED_BACK, AI_UNDONE)
+  private val FILE_MERGED_EVENT: VarargEventId = GROUP.registerVarargEvent("file.merged", SOURCE, CHANGES, EventFields.DurationMs, AUTO_RESOLVABLE, CONFLICTS, UNRESOLVED, AI_RESOLVED, AI_ROLLED_BACK, AI_UNDONE, AI_EDITED)
 
   override fun getGroup(): EventLogGroup = GROUP
 
