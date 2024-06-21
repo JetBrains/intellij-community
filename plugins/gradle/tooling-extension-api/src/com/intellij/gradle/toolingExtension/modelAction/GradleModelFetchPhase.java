@@ -28,6 +28,14 @@ public enum GradleModelFetchPhase {
   WARM_UP_PHASE("Configuration warm-up phase"),
 
   /**
+   * Model providers, in this phase, fetch a Gradle project identification models.
+   *
+   * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
+   */
+  PROJECT_MODEL_PHASE("Project model phase"),
+
+  /**
    * Model providers, in this phase, fetch a Gradle project source set models and resolve dependencies.
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
@@ -46,16 +54,6 @@ public enum GradleModelFetchPhase {
    * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
   PROJECT_SOURCE_SET_DEPENDENCY_PHASE("Project source set dependency phase"),
-
-  /**
-   * Model providers, in this phase, fetch an initial set of Gradle models for IDEA project structure.
-   * These models form a minimal set to start working with a project: basic code insight of source code.
-   * It is module names, source sets and content roots, project and module SDKs, language level, etc.
-   *
-   * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
-   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
-   */
-  PROJECT_MODEL_PHASE("Project model phase"),
 
   /**
    * Model provides, in this phase, fetches rest of Gradle models, which needed for rich experience in IntelliJ IDEA.
