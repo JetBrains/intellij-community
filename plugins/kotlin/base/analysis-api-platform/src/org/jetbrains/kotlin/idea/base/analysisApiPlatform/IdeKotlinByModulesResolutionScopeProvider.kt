@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
-import org.jetbrains.kotlin.analysis.project.structure.utils.BuiltInsVirtualFileProvider
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
 import org.jetbrains.kotlin.idea.base.projectStructure.collectDependencies
@@ -20,6 +20,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSour
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.base.util.minus
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.platform.wasm.isWasm
 
 internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScopeProvider() {
     override fun getResolutionScope(module: KaModule): GlobalSearchScope {
@@ -56,14 +61,33 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
         }
     }
 
-    private fun adjustScope(baseScope: GlobalSearchScope, module: KtSourceModule): GlobalSearchScope {
+    private fun adjustScope(baseScope: GlobalSearchScope, module: KaSourceModule): GlobalSearchScope {
         var scope = baseScope
+
         if (module is KtSourceModuleByModuleInfoForOutsider) {
             scope = module.adjustContentScope(scope)
         }
-        // every module depends on a builtin module, so builtins are always visible
-        scope = scope.withBuiltInsScope(module.project)
+
+        if (module.targetPlatform.hasCommonKotlinStdlib()) {
+            // we do not have builtins in common stdlib
+            scope = scope.withBuiltInsScope(module.project)
+        }
+
         return scope
+    }
+
+    /**
+     * Checks if a source module with the [this] target will depend on a common stdlib artifact.
+     *
+     * This also means that the module is `common` in HMPP terms
+     */
+    private fun TargetPlatform.hasCommonKotlinStdlib(): Boolean {
+        if (componentPlatforms.size <= 1) return false
+        if (isJvm()) return false
+        if (isJs()) return false
+        if (isWasm()) return false
+        if (isNative()) return false
+        return true
     }
 
     private fun GlobalSearchScope.withBuiltInsScope(project: Project): GlobalSearchScope {
