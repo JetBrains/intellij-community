@@ -285,7 +285,7 @@
     },
     {
       "id": "css",
-      "experimentBucketsCount": 4,
+      "experimentBucketsCount": 2,
       "includeGroups": [31, 24],
       "shouldLogElementFeatures": true
     },
