@@ -3,7 +3,6 @@ package com.intellij.platform.backend.navigation.impl
 
 import com.intellij.codeInsight.navigation.shouldOpenAsNative
 import com.intellij.ide.util.EditSourceUtil
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.LazyRangeMarkerFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -17,12 +16,12 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.concurrency.ThreadingAssertions
 
-internal class NavigationRequestsImpl : NavigationRequests {
-
+private class NavigationRequestsImpl : NavigationRequests {
   override fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int, elementRange: TextRange?): NavigationRequest? {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    ThreadingAssertions.assertReadAccess()
+    ThreadingAssertions.assertBackgroundThread()
     if (!file.isValid) {
       return null
     }
@@ -43,8 +42,8 @@ internal class NavigationRequestsImpl : NavigationRequests {
   }
 
   override fun directoryNavigationRequest(directory: PsiDirectory): NavigationRequest? {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    ThreadingAssertions.assertReadAccess()
+    ThreadingAssertions.assertBackgroundThread()
     if (!directory.isValid) {
       return null
     }
@@ -53,25 +52,24 @@ internal class NavigationRequestsImpl : NavigationRequests {
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun psiNavigationRequest(element: PsiElement): NavigationRequest? {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    ThreadingAssertions.assertReadAccess()
+    ThreadingAssertions.assertBackgroundThread()
 
-    val originalElement = EditSourceUtil.getNavigatableOriginalElement(element)
-                          ?: element
+    val originalElement = EditSourceUtil.getNavigatableOriginalElement(element) ?: element
     if (!EditSourceUtil.canNavigate(originalElement)) {
       return null
     }
+
     if (originalElement is PomTargetPsiElement) {
       return originalElement.target.navigationRequest()
     }
+
     val navigationElement = originalElement.navigationElement
     if (navigationElement is PomTargetPsiElement) {
       return navigationElement.target.navigationRequest()
     }
-    val virtualFile = PsiUtilCore.getVirtualFile(navigationElement)
-    if (virtualFile == null || !virtualFile.isValid) {
-      return null
-    }
+
+    val virtualFile = PsiUtilCore.getVirtualFile(navigationElement)?.takeIf { it.isValid } ?: return null
     if (navigationElement is PsiFile && shouldOpenAsNative(virtualFile)) {
       @Suppress("DEPRECATION")
       return rawNavigationRequest(navigationElement)
@@ -93,11 +91,8 @@ internal class NavigationRequestsImpl : NavigationRequests {
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun rawNavigationRequest(navigatable: Navigatable): NavigationRequest? {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-    if (!navigatable.canNavigate()) {
-      return null
-    }
-    return RawNavigationRequest(navigatable, navigatable.canNavigateToSource())
+    ThreadingAssertions.assertReadAccess()
+    ThreadingAssertions.assertBackgroundThread()
+    return if (navigatable.canNavigate()) RawNavigationRequest(navigatable, navigatable.canNavigateToSource()) else null
   }
 }

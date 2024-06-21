@@ -94,7 +94,7 @@ private class IdeNavigationService(private val project: Project) : NavigationSer
   }
 }
 
-internal val LOG: Logger = Logger.getInstance("#com.intellij.platform.ide.navigation.impl")
+private val LOG: Logger = Logger.getInstance("#com.intellij.platform.ide.navigation.impl")
 
 /**
  * Navigates to all sources from [requests], or navigates to first non-source request.
@@ -151,8 +151,9 @@ private suspend fun navigateToSource(
     }
     is RawNavigationRequest -> {
       if (request.canNavigateToSource) {
+        val navigationServiceExecutor = project.serviceAsync<IdeNavigationServiceExecutor>()
         withContext(Dispatchers.EDT) {
-          IdeNavigationServiceExecutor.getInstance(project).navigate(request, options.requestFocus)
+          navigationServiceExecutor.navigate(request = request, requestFocus = options.requestFocus)
         }
         return true
       }
@@ -177,7 +178,7 @@ private suspend fun navigateNonSource(project: Project, request: NavigationReque
     }
     is RawNavigationRequest -> {
       check(!request.canNavigateToSource)
-      IdeNavigationServiceExecutor.getInstance(project).navigate(request, options.requestFocus)
+      project.serviceAsync<IdeNavigationServiceExecutor>().navigate(request, options.requestFocus)
     }
     else -> {
       error("Non-source request expected here, got: $request")
@@ -193,7 +194,6 @@ private suspend fun navigateToSource(
   dataContext: DataContext?,
 ) {
   val file = request.file
-
   val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
 
   val type = if (file.isDirectory) null else FileTypeManager.getInstance().getKnownFileTypeOrAssociate(file, project)
