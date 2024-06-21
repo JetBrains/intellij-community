@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -52,60 +54,91 @@ public final class DefaultPatchBaseVersionProvider {
       final VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
       if (historyProvider == null) return;
 
-      String vcsRevisionString = parseVersionAsRevision(versionId, vcs);
-      Date versionDate = parseVersionAsDate(versionId);
-
-      if (historyProvider instanceof VcsBaseRevisionAdviser revisionAdviser) {
-        String content = revisionAdviser.getBaseVersionContent(pathBeforeRename, vcsRevisionString != null ? vcsRevisionString : versionId);
+      String content = loadContentByRevisionId(versionId, file, pathBeforeRename, vcs);
+      if (content != null) {
         processor.process(content);
-        if (content != null) return;
+        return; // do not try to look for other revisions if we have found it, but it did not pass
       }
 
-      VcsRevisionNumber revision = vcsRevisionString != null ? vcs.parseRevisionNumber(vcsRevisionString, pathBeforeRename) : null;
-      if (revision == null && versionDate == null) return;
-
-      if (revision != null && !(historyProvider instanceof VcsBaseRevisionAdviser)) {
-        boolean loadedExactRevision = false;
-        DiffProvider diffProvider = vcs.getDiffProvider();
-        if (diffProvider != null) {
-          ContentRevision fileContent = diffProvider.createFileContent(revision, file);
-          loadedExactRevision = fileContent != null && !processor.process(fileContent.getContent());
-        }
-        if (loadedExactRevision) return;
-      }
-
-      ProgressManager.progress2(message("loading.text2.file.history.progress"));
-      VcsHistorySession historySession = historyProvider.createSessionFor(pathBeforeRename);
-      if (historySession == null) return; // not found or cancelled
-
-      List<VcsFileRevision> list = historySession.getRevisionList();
-      if (list == null) return;
-
-      // TODO: try to download more than one version
-      VcsFileRevision foundRevision = ContainerUtil.find(list, fileRevision -> {
-        if (revision != null) {
-          return fileRevision.getRevisionNumber().compareTo(revision) <= 0;
-        }
-        else {
-          Date date = fileRevision instanceof VcsFileRevisionEx ?
-                      ((VcsFileRevisionEx)fileRevision).getAuthorDate() : fileRevision.getRevisionDate();
-          return date != null && (date.before(versionDate) || date.equals(versionDate));
-        }
-      });
-
-      if (foundRevision != null) {
-        try {
-          byte[] byteContent = foundRevision.loadContent();
-          if (byteContent == null) return;
-
-          CharSequence content = LoadTextUtil.getTextByBinaryPresentation(byteContent, file, false, false);
-          processor.process(content.toString());
-        }
-        catch (IOException e) {
-          LOG.warn(e);
-        }
-      }
+      content = findContentInFileHistory(versionId, file, pathBeforeRename, vcs);
+      processor.process(content);
     });
+  }
+
+  @Nullable
+  private static String loadContentByRevisionId(@NotNull String versionId,
+                                                @NotNull VirtualFile file,
+                                                @NotNull FilePath pathBeforeRename,
+                                                @NotNull AbstractVcs vcs) throws VcsException {
+    String vcsRevisionString = parseVersionAsRevision(versionId, vcs);
+
+    VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
+    if (historyProvider instanceof VcsBaseRevisionAdviser revisionAdviser) {
+      return revisionAdviser.getBaseVersionContent(pathBeforeRename, vcsRevisionString != null ? vcsRevisionString : versionId);
+    }
+
+    if (vcsRevisionString == null) return null;
+
+    DiffProvider diffProvider = vcs.getDiffProvider();
+    if (diffProvider == null) return null;
+
+    VcsRevisionNumber revision = vcs.parseRevisionNumber(vcsRevisionString, pathBeforeRename);
+    if (revision == null) return null;
+
+    ContentRevision contentRevision = diffProvider.createFileContent(revision, file);
+    if (contentRevision == null) return null;
+
+    return contentRevision.getContent();
+  }
+
+  @Nullable
+  private static String findContentInFileHistory(@NotNull String versionId,
+                                                 @NotNull VirtualFile file,
+                                                 @NotNull FilePath pathBeforeRename,
+                                                 @NotNull AbstractVcs vcs) throws VcsException {
+    Date versionDate = parseVersionAsDate(versionId);
+    String vcsRevisionString = parseVersionAsRevision(versionId, vcs);
+    VcsRevisionNumber revision = vcsRevisionString != null ? vcs.parseRevisionNumber(vcsRevisionString, pathBeforeRename) : null;
+
+    Condition<VcsFileRevision> condition;
+    if (revision != null) {
+      condition = fileRevision -> fileRevision.getRevisionNumber().compareTo(revision) <= 0;
+    }
+    else if (versionDate != null) {
+      condition = fileRevision -> {
+        Date date = fileRevision instanceof VcsFileRevisionEx fileRevisionEx ? fileRevisionEx.getAuthorDate()
+                                                                             : fileRevision.getRevisionDate();
+        return date != null && date.compareTo(versionDate) <= 0;
+      };
+    }
+    else {
+      return null;
+    }
+
+    ProgressManager.progress2(message("loading.text2.file.history.progress"));
+
+    List<VcsFileRevision> list = getRevisions(pathBeforeRename, vcs);
+    // TODO: try to download more than one version?
+    VcsFileRevision foundRevision = ContainerUtil.find(list, condition);
+    if (foundRevision == null) return null;
+
+    try {
+      byte[] byteContent = foundRevision.loadContent();
+      if (byteContent == null) return null;
+
+      return LoadTextUtil.getTextByBinaryPresentation(byteContent, file, false, false).toString();
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+      return null;
+    }
+  }
+
+  @NotNull
+  private static List<VcsFileRevision> getRevisions(@NotNull FilePath pathBeforeRename, @NotNull AbstractVcs vcs) throws VcsException {
+    VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
+    VcsHistorySession historySession = historyProvider != null ? historyProvider.createSessionFor(pathBeforeRename) : null;
+    return historySession == null ? Collections.emptyList() : historySession.getRevisionList();
   }
 
   @Nullable
