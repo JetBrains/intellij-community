@@ -23,6 +23,10 @@ import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
+import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Shell session agnostic prompt model that is managing the prompt and input command positions in the Prompt editor.
@@ -55,6 +59,8 @@ internal class TerminalPromptModelImpl(
         document.replaceString(commandStartOffset, document.textLength, value)
       }
     }
+
+  private val errorStateListeners: MutableList<TerminalPromptErrorStateListener> = CopyOnWriteArrayList()
 
   init {
     editor.caretModel.addCaretListener(PreventMoveToPromptListener(), this)
@@ -121,6 +127,16 @@ internal class TerminalPromptModelImpl(
 
   private fun createPromptRenderer(): TerminalPromptRenderer {
     return if (TerminalOptionsProvider.instance.useShellPrompt) ShellPromptRenderer(sessionInfo) else BuiltInPromptRenderer(sessionInfo)
+  }
+
+  override fun setErrorDescription(errorDescription: TerminalPromptErrorDescription?) {
+    for (listener in errorStateListeners) {
+      listener.errorStateChanged(errorDescription)
+    }
+  }
+
+  override fun addErrorStateListener(listener: TerminalPromptErrorStateListener, parentDisposable: Disposable) {
+    TerminalUtil.addItem(errorStateListeners, listener, parentDisposable)
   }
 
   override fun dispose() {}

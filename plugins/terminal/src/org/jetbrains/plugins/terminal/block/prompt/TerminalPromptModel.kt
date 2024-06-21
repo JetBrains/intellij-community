@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
+import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
 
 /**
  * Model that is managing the prompt and command positions in the Prompt editor.
@@ -47,6 +49,11 @@ interface TerminalPromptModel : Disposable {
    * Updates the prompt string, leaving the command untouched.
    */
   fun updatePrompt(state: TerminalPromptState)
+
+  @RequiresEdt
+  fun setErrorDescription(errorDescription: TerminalPromptErrorDescription?)
+
+  fun addErrorStateListener(listener: TerminalPromptErrorStateListener, parentDisposable: Disposable)
 
   companion object {
     val KEY: Key<TerminalPromptModel> = Key.create("TerminalPromptModel")

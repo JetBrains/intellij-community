@@ -25,6 +25,9 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletion
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter
 import org.jetbrains.plugins.terminal.block.history.CommandSearchPresenter
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController.PromptStateListener
+import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
+import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
+import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorUtil
 import org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptLanguage
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
@@ -63,7 +66,8 @@ internal class TerminalPromptView(
     commandSearchPresenter = CommandSearchPresenter(project, editor, controller.model)
 
     val toolbarComponent = createToolbarComponent(targetComponent = editor.contentComponent)
-    component = TerminalPromptPanel(editorTextField, toolbarComponent)
+    val promptPanel = TerminalPromptPanel(editorTextField, toolbarComponent)
+    component = promptPanel
 
     val innerBorder = JBUI.Borders.empty(TerminalUi.promptTopInset,
                                          TerminalUi.blockLeftInset + TerminalUi.cornerToBlockInset,
@@ -86,6 +90,16 @@ internal class TerminalPromptView(
         IdeFocusManager.getInstance(project).requestFocus(editor.contentComponent, true)
       }
     })
+
+    controller.model.addErrorStateListener(object : TerminalPromptErrorStateListener {
+      override fun errorStateChanged(description: TerminalPromptErrorDescription?) {
+        val errorComponent = if (description != null) {
+          TerminalPromptErrorUtil.createErrorComponent(description, editor.colorsScheme)
+        }
+        else null
+        promptPanel.setBottomComponent(errorComponent)
+      }
+    }, parentDisposable = this)
   }
 
   override fun commandHistoryStateChanged(showing: Boolean) {
@@ -169,6 +183,8 @@ internal class TerminalPromptView(
     private val mainComponent: JComponent,
     private val sideComponent: JComponent
   ) : JBLayeredPane() {
+    private var bottomComponent: JComponent? = null
+
     init {
       isOpaque = false
       // cast to Any needed to call right method overload
@@ -176,27 +192,41 @@ internal class TerminalPromptView(
       add(sideComponent, JLayeredPane.POPUP_LAYER as Any)
     }
 
-    override fun getPreferredSize(): Dimension {
-      return mainComponent.preferredSize.also {
-        JBInsets.addTo(it, insets)
+    fun setBottomComponent(component: JComponent?) {
+      bottomComponent?.let { remove(it) }
+      if (component != null) {
+        add(component, JLayeredPane.DEFAULT_LAYER as Any)
       }
+      bottomComponent = component
+      revalidate()
+      repaint()
+    }
+
+    override fun getPreferredSize(): Dimension {
+      val mainComponentSize = mainComponent.preferredSize
+      val bottomComponentSize = bottomComponent?.preferredSize ?: Dimension(0, 0)
+      val size = Dimension(mainComponentSize.width, mainComponentSize.height + bottomComponentSize.height)
+      JBInsets.addTo(size, insets)
+      return size
     }
 
     override fun doLayout() {
       val rect = Rectangle(0, 0, width, height)
       JBInsets.removeFrom(rect, insets)
-      for (component in components) {
-        when (component) {
-          mainComponent -> layoutMainComponent(component, rect)
-          sideComponent -> layoutSideComponent(component, rect)
-        }
-      }
+      layoutMainAndBottomComponents(mainComponent, bottomComponent, rect)
+      layoutSideComponent(sideComponent, rect)
     }
 
-    private fun layoutMainComponent(component: Component, rect: Rectangle) {
-      val prefHeight = component.preferredSize.height
-      val compHeight = min(rect.height, prefHeight)
-      component.setBounds(rect.x, rect.y, rect.width, compHeight)
+    private fun layoutMainAndBottomComponents(main: Component, bottom: Component?, rect: Rectangle) {
+      val mainPrefHeight = main.preferredSize.height
+      val mainHeight = min(rect.height, mainPrefHeight)
+      main.setBounds(rect.x, rect.y, rect.width, mainHeight)
+
+      if (bottom != null) {
+        val bottomPrefHeight = bottom.preferredSize.height
+        val bottomHeight = min(rect.height - mainHeight, bottomPrefHeight)
+        bottom.setBounds(rect.x, rect.y + mainHeight, rect.width, bottomHeight)
+      }
     }
 
     private fun layoutSideComponent(component: Component, rect: Rectangle) {
