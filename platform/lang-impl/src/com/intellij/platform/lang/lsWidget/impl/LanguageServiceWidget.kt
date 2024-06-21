@@ -68,7 +68,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     val tooltip = when {
       fileSpecificItems.isEmpty() -> LangBundle.message("language.services.widget")
       else -> LangBundle.message("language.services.widget.tooltip.running.on.current.file.list",
-                                 fileSpecificItems.joinToString(separator = "") { "<li>${it.statusBarTooltip}</li>" })
+                                 fileSpecificItems.joinToString(separator = "<br>") { "- ${it.statusBarTooltip}" })
     }
 
     return WidgetState(tooltip, widgetText, true).apply {
