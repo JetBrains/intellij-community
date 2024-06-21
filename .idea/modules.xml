@@ -305,6 +305,7 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-projectModel/intellij.cidr.projectModel.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-projectModel/intellij.cidr.projectModel.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-psi-base/intellij.cidr.psi.base.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-psi-base/intellij.cidr.psi.base.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-runner/intellij.cidr.runner.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-runner/intellij.cidr.runner.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-translateCode/intellij.cidr.translateCode.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-translateCode/intellij.cidr.translateCode.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/execution/intellij.cidr.util.execution.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/execution/intellij.cidr.util.execution.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/serializer/intellij.cidr.util.serializer.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/serializer/intellij.cidr.util.serializer.iml" />
