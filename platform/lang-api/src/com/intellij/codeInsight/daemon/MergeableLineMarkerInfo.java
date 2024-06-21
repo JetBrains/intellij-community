@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -92,6 +91,16 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   public abstract boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info);
+
+  /**
+   * Retrieves the weight of the mergeable line marker.
+   * The line marker's icon with the greatest weight is used for merged icon, otherwise the first one is used.
+   *
+   * @return the weight of the line marker.
+   */
+  public int getWeight() {
+    return 0;
+  }
 
   public abstract Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos);
 
@@ -241,11 +250,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
 
     private static MergeableLineMarkerInfo<?> getTemplate(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
-      List<WeighedItem> items = ContainerUtil.filterIsInstance(markers, WeighedItem.class);
-      if (items.isEmpty()) {
-        return markers.get(0);
-      }
-      return (MergeableLineMarkerInfo<?>)Collections.max(items, Comparator.comparingInt(item -> item.getWeight()));
+      return Collections.max(markers, Comparator.comparingInt(MergeableLineMarkerInfo::getWeight));
     }
   }
 
