@@ -570,10 +570,10 @@
     },
 
     "Slider": {
-      "buttonColor": "Gray8",
+      "buttonColor": "Gray9",
       "buttonBorderColor": "Gray2",
-      "tickColor": "Gray7",
-      "trackColor": "Gray5"
+      "tickColor": "Gray8",
+      "trackColor": "Gray6"
     },
 
     "SpeedSearch": {
