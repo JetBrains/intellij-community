@@ -1539,7 +1539,6 @@ f:com.intellij.openapi.util.IconLoader
 - sf:activate():V
 - sf:clearCache():V
 - f:clearCacheInTests():V
-- f:colorPatchedIcon(javax.swing.Icon,com.intellij.util.SVGLoader$SvgElementColorPatcherProvider):javax.swing.Icon
 - sf:createLazy(java.util.function.Supplier):javax.swing.Icon
 - sf:deactivate():V
 - f:detachClassLoader(java.lang.ClassLoader):V
@@ -3508,7 +3507,6 @@ f:com.intellij.ui.svg.SvgKt
 - sf:ATTR_ID:java.lang.String
 - sf:ATTR_STROKE:java.lang.String
 - sf:ATTR_STROKE_OPACITY:java.lang.String
-- sf:setSelectionColorPatcherProvider(com.intellij.util.SVGLoader$SvgElementColorPatcherProvider):V
 a:com.intellij.ui.util.Axis
 - s:X:com.intellij.ui.util.Axis
 - s:Y:com.intellij.ui.util.Axis

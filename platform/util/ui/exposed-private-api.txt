@@ -1,2 +1,1 @@
 com/intellij/ui/icons/RgbImageFilterSupplier
-com/intellij/util/SVGLoader$SvgElementColorPatcherProvider

@@ -345,6 +345,7 @@ fun loadCustomImage(size: Dimension, data: ByteArray, scale: Float = JBUIScale.s
 
 private var selectionColorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null
 
+@Internal
 fun setSelectionColorPatcherProvider(colorPatcher: SVGLoader.SvgElementColorPatcherProvider?) {
   selectionColorPatcher = colorPatcher
   IconLoader.clearCache()
