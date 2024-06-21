@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.launchNowIn
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesContainer
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
@@ -62,7 +63,7 @@ internal class GHPRChangesViewModelImpl(
       }
     }.stateIn(cs, SharingStarted.Eagerly, listOf())
 
-  private val changesContainer: Flow<Result<CodeReviewChangesContainer>> =
+  private val changesContainer: StateFlow<Result<CodeReviewChangesContainer>?> =
     dataProvider.changesData.changesNeedReloadSignal.withInitial(Unit).map {
     isLoadingChanges.value = true
     try {
@@ -75,9 +76,9 @@ internal class GHPRChangesViewModelImpl(
     finally {
       isLoadingChanges.value = false
     }
-  }.shareIn(cs, SharingStarted.Lazily, 1)
+    }.stateInNow(cs, null)
 
-  private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) { changes, changeList ->
+  private val delegate = CodeReviewChangesViewModelDelegate.create(cs, changesContainer.filterNotNull()) { changes, changeList ->
     GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, changes, changeList).also { vm ->
       changesContainer.combine(isLoadingChanges) { _, loading ->
         vm.setUpdating(loading)
@@ -97,23 +98,26 @@ internal class GHPRChangesViewModelImpl(
   override val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModelImpl>> = delegate.changeListVm
 
   override fun selectCommit(index: Int) {
-    delegate.selectCommit(index)
+    delegate.selectCommit(index)?.selectChange(null)
   }
 
   override fun selectNextCommit() {
-    delegate.selectNextCommit()
+    delegate.selectNextCommit()?.selectChange(null)
   }
 
   override fun selectPreviousCommit() {
-    delegate.selectPreviousCommit()
+    delegate.selectPreviousCommit()?.selectChange(null)
   }
 
   override fun selectCommit(sha: String) {
-    delegate.selectCommit(sha)
+    delegate.selectCommit(sha)?.selectChange(null)
   }
 
   override fun selectChange(change: RefComparisonChange) {
-    delegate.selectChange(change)
+    val commit = changesContainer.value?.getOrNull()?.let {
+      it.commitsByChange[change]
+    }
+    delegate.selectCommit(commit)?.selectChange(change)
   }
 
   override fun commitHash(commit: GHCommit): String = commit.abbreviatedOid

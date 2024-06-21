@@ -9,10 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 interface CodeReviewChangeListViewModel {
   val project: Project
@@ -91,34 +90,35 @@ abstract class CodeReviewChangeListViewModelBase(
 
   final override val changes: List<RefComparisonChange> = changeList.changes
 
-  private val stateGuard = Mutex()
+  private val stateGuard = ReentrantLock()
 
-  suspend fun selectChange(change: RefComparisonChange?) {
+  fun selectChange(change: RefComparisonChange?) {
     stateGuard.withLock {
       if (change == null) {
         _changesSelection.value = ChangesSelection.Fuzzy(changeList.changes)
-        _selectionRequests.emit(SelectionRequest.All)
+        _selectionRequests.tryEmit(SelectionRequest.All)
       }
       else {
         val currentSelection = _changesSelection.value
         if (currentSelection == null || currentSelection !is ChangesSelection.Fuzzy || !currentSelection.changes.contains(change)) {
           _changesSelection.value = ChangesSelection.Precise(changeList.changes, change)
-          _selectionRequests.emit(SelectionRequest.OneChange(change))
+          _selectionRequests.tryEmit(SelectionRequest.OneChange(change))
+        }
+        else {
+          // for some reason this if is considered an expression, so we need this to avoid compiler complaints
         }
       }
     }
   }
 
   override fun updateSelectedChanges(selection: ChangesSelection?) {
-    cs.launch {
-      // do not update selection when change update is in progress
-      if (!stateGuard.tryLock()) return@launch
-      try {
-        _changesSelection.value = selection
-      }
-      finally {
-        stateGuard.unlock()
-      }
+    // do not update selection when change update is in progress
+    if (!stateGuard.tryLock()) return
+    try {
+      _changesSelection.value = selection
+    }
+    finally {
+      stateGuard.unlock()
     }
   }
 }

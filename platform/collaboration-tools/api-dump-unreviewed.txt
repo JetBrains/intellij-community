@@ -1152,15 +1152,16 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - a:selectCommit(I):V
 - a:selectNextCommit():V
 - a:selectPreviousCommit():V
-*f:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
-- <init>(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function3):V
-- f:getChangeListVm():kotlinx.coroutines.flow.StateFlow
-- f:getSelectedCommit():kotlinx.coroutines.flow.StateFlow
-- f:selectChange(com.intellij.collaboration.util.RefComparisonChange):V
-- f:selectCommit(I):V
-- f:selectCommit(java.lang.String):V
-- f:selectNextCommit():V
-- f:selectPreviousCommit():V
+*:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
+- *sf:Companion:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate$Companion
+- a:getChangeListVm():kotlinx.coroutines.flow.StateFlow
+- a:getSelectedCommit():kotlinx.coroutines.flow.StateFlow
+- a:selectCommit(I):java.lang.Object
+- a:selectCommit(java.lang.String):java.lang.Object
+- a:selectNextCommit():java.lang.Object
+- a:selectPreviousCommit():java.lang.Object
+*f:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate$Companion
+- f:create(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function3):com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
 *:com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 - a:getDescription():kotlinx.coroutines.flow.Flow
 - a:getNumber():java.lang.String

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesContainer
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
@@ -34,16 +35,16 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestChangesViewModel,
     CodeReviewChangesViewModel<GitLabCommitViewModel> {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(javaClass.name)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val changesContainer: Flow<Result<GitLabChangesContainer>> = mergeRequest.changes.mapLatest {
+  private val changesContainer: StateFlow<Result<GitLabChangesContainer>?> = mergeRequest.changes.mapLatest {
     runCatchingUser {
       GitLabChangesContainer(it.getParsedChanges())
     }
-  }
+  }.stateInNow(cs, null)
 
-  private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) { changesContainer, changeList ->
+  private val delegate = CodeReviewChangesViewModelDelegate.create(cs, changesContainer.filterNotNull()) { changesContainer, changeList ->
     changesContainer as GitLabChangesContainer
 
     GitLabMergeRequestChangeListViewModelImpl(project, this, mergeRequest, changesContainer.changes, changeList)
@@ -66,19 +67,22 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   override val changeListVm: StateFlow<ComputedResult<GitLabMergeRequestChangeListViewModelImpl>> = delegate.changeListVm
 
   override fun selectCommit(index: Int) {
-    delegate.selectCommit(index)
+    delegate.selectCommit(index)?.selectChange(null)
   }
 
   override fun selectNextCommit() {
-    delegate.selectNextCommit()
+    delegate.selectNextCommit()?.selectChange(null)
   }
 
   override fun selectPreviousCommit() {
-    delegate.selectPreviousCommit()
+    delegate.selectPreviousCommit()?.selectChange(null)
   }
 
   override fun selectChange(change: RefComparisonChange) {
-    delegate.selectChange(change)
+    val commit = changesContainer.value?.getOrNull()?.let {
+      it.commitsByChange[change]
+    }
+    delegate.selectCommit(commit)?.selectChange(change)
   }
 
   override fun commitHash(commit: GitLabCommitViewModel): String = commit.shortId
