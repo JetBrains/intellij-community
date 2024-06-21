@@ -60,6 +60,16 @@ class KotlinGradleVersionCatalogFindUsagesTest : AbstractGradleCodeInsightTest()
         }
     }
 
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("tomlPluginLibraryUsageBuildGradleKts.test")
+    fun testTomlPluginLibraryUsageBuildGradleKts(gradleVersion: GradleVersion) {
+        testVersionCatalogFindUsages(gradleVersion) { usages ->
+            assertEquals(1, usages.size)
+            assertContainsUsage(usages, "build.gradle.kts", "libs.plugins.kotlin")
+        }
+    }
+
     private fun testVersionCatalogFindUsages(gradleVersion: GradleVersion, checker: (Collection<PsiReference>) -> Unit) {
         test(gradleVersion, GRADLE_KOTLIN_FIXTURE) {
             codeInsightFixture.configureFromExistingVirtualFile(mainTestDataPsiFile.virtualFile)

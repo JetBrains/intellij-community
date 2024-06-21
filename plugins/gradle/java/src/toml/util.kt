@@ -33,7 +33,8 @@ internal fun getLibraries(context: PsiElement): List<TomlKeySegment> = getTableE
 internal fun String.getVersionCatalogParts() : List<String> = split("_", "-")
 
 internal fun findTomlFile(context: PsiElement, name: String) : TomlFile? {
-  val file = getVersionCatalogFiles(context.project)[name] ?: return null
+  val versionCatalogFiles = getVersionCatalogFiles(context.project)
+  val file = versionCatalogFiles[name] ?: versionCatalogFiles.firstNotNullOfOrNull { e -> e.value.takeIf { name.startsWith(e.key) } } ?: return null
   return PsiManager.getInstance(context.project).findFile(file)?.asSafely<TomlFile>()
 }
 

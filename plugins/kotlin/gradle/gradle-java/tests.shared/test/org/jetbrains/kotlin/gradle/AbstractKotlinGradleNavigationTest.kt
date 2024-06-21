@@ -147,8 +147,11 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
                 """
                 [libraries]
                 some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
+                [plugins]
+                kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
                 [versions]
                 test_library-version = "1.0"
+                kotlin = "1.9.24"
                 """.trimIndent()
             )
             withDirectory("src/main/kotlin")
