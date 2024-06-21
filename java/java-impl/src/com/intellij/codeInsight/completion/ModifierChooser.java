@@ -37,6 +37,19 @@ public final class ModifierChooser {
     {PsiKeyword.TRANSIENT}
   };
 
+  private static final String[][] FILE_MEMBER_MODIFIERS = {
+    {PsiKeyword.PUBLIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.STRICTFP},
+  };
+
+  private static final String[][] FILE_MEMBER_MODIFIERS_WITH_SEALED = {
+    {PsiKeyword.PUBLIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.SEALED, PsiKeyword.NON_SEALED},
+    {PsiKeyword.STRICTFP},
+  };
+
   private static final String[][] CLASS_MEMBER_MODIFIERS_WITH_SEALED = {
     {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
     {PsiKeyword.STATIC},
@@ -82,7 +95,7 @@ public final class ModifierChooser {
     PsiElement scope = position.getParent();
     while (scope != null) {
       if (scope instanceof PsiJavaFile) {
-        return addMemberModifiers(list, false, position);
+        return addJavaFileMemberModifiers(list, position);
       }
       if (scope instanceof PsiClass) {
         return addMemberModifiers(list, ((PsiClass)scope).isInterface(), scope);
@@ -129,6 +142,16 @@ public final class ModifierChooser {
     if (!list.hasModifierProperty(modifier)) {
       ret.add(modifier);
     }
+  }
+
+  public static String[] addJavaFileMemberModifiers(@Nullable PsiModifierList list, @NotNull PsiElement position) {
+    if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, position) &&
+        (position.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null)) {
+      return addMemberModifiers(list, false, position);
+    }
+    return addKeywords(list,
+                       PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, position) ?
+                       FILE_MEMBER_MODIFIERS_WITH_SEALED : FILE_MEMBER_MODIFIERS);
   }
 
   public static String[] addMemberModifiers(PsiModifierList list, final boolean inInterface, @NotNull PsiElement position) {
