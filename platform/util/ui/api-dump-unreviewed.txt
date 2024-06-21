@@ -1784,8 +1784,6 @@ com.intellij.ui.Colors
 - sf:DARK_RED:java.awt.Color
 - sf:DISABLED_COLOR:java.awt.Color
 f:com.intellij.ui.ComponentUtil
-- sf:NOT_IN_HIERARCHY_COMPONENTS:com.intellij.openapi.util.Key
-- <init>():V
 - s:decorateWindowHeader(javax.swing.JRootPane):V
 - s:findComponentsOfType(javax.swing.JComponent,java.lang.Class):java.util.List
 - s:findParentByCondition(java.awt.Component,java.util.function.Predicate):java.awt.Component
