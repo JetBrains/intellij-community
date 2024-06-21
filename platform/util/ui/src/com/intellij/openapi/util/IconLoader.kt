@@ -266,6 +266,7 @@ object IconLoader {
   /**
    * Creates a new icon with the filter applied.
    */
+  @Internal
   fun filterIcon(icon: Icon, filterSupplier: RgbImageFilterSupplier): Icon {
     val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
     if (!checkIconSize(effectiveIcon)) {

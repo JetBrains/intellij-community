@@ -1542,7 +1542,6 @@ f:com.intellij.openapi.util.IconLoader
 - sf:createLazy(java.util.function.Supplier):javax.swing.Icon
 - sf:deactivate():V
 - f:detachClassLoader(java.lang.ClassLoader):V
-- f:filterIcon(javax.swing.Icon,com.intellij.ui.icons.RgbImageFilterSupplier):javax.swing.Icon
 - sf:findIcon(java.lang.String):javax.swing.Icon
 - sf:findIcon(java.lang.String,java.lang.Class):javax.swing.Icon
 - sf:findIcon(java.lang.String,java.lang.Class,Z,Z):javax.swing.Icon
