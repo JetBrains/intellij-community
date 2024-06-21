@@ -7,7 +7,9 @@ import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -34,6 +36,8 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.source.resolve.ResolveCache
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -43,12 +47,16 @@ import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInsVirtualFileProvider
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirBuiltinsSessionFactory
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.caching.SdkEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
 import org.jetbrains.kotlin.idea.util.toKaModulesForModificationEvents
@@ -57,8 +65,32 @@ import java.util.regex.Pattern
 
 private val STDLIB_PATTERN = Pattern.compile("kotlin-stdlib-(\\d*)\\.(\\d*)\\.(\\d*)\\.jar")
 
+@OptIn(LLFirInternals::class)
 @Service(Service.Level.PROJECT)
 class FirIdeModuleStateModificationService(val project: Project) : Disposable {
+
+    init {
+        project.messageBus.connect(this).subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
+            override fun fileWithNoDocumentChanged(file: VirtualFile) {
+                // Builtins sessions are created based on `BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles()`
+                // Those files are located inside IDE distribution and are outside the project.
+                // So if those files are changed on the disk e.g., after update from sources, VFS watcher detects this:
+                // `onContentReloaded` event is emitted.
+                // Stub index for those files is rebuild (see `BuiltInsIndexableSetContributor`).
+                // To ensure that no cached psi with stale stubs/virtual files,
+                // it's required to clear caches manually,
+                // otherwise opening file which referred the old builtins would let to PIEAE exceptions
+                if (file in BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles()) {
+                    runWriteAction {
+                        PsiManager.getInstance(project).dropPsiCaches()
+                        //todo clear builtins on global module state modification KT-69247
+                        project.service<LLFirBuiltinsSessionFactory>().clearForTheNextTest()
+                        project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
+                    }
+                }
+            }
+        })
+    }
 
     /**
      * Publishes a module state modification event for a script or not-under-content-root [KaModule] whose file is being moved or deleted.
