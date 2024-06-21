@@ -10893,7 +10893,6 @@ c:com.intellij.ui.tabs.impl.JBEditorTabs
 - sf:Companion:com.intellij.ui.tabs.impl.JBEditorTabs$Companion
 - sf:MARK_MODIFIED_KEY:com.intellij.openapi.util.Key
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.ActionManager,com.intellij.openapi.wm.IdeFocusManager,com.intellij.openapi.Disposable):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.wm.IdeFocusManager,com.intellij.openapi.Disposable):V
 - isAlphabeticalMode():Z

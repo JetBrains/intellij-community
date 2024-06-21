@@ -212,6 +212,10 @@ open class JBTabsImpl internal constructor(
   private var dataProvider: DataProvider? = null
   private val deferredToRemove = WeakHashMap<Component, Component>()
 
+  // must be defined _before_ effectiveLayout
+  final override var tabsPosition: JBTabsPosition = JBTabsPosition.top
+    private set
+
   @JvmField
   internal var effectiveLayout: TabLayout = createRowLayout()
 
@@ -263,9 +267,6 @@ open class JBTabsImpl internal constructor(
     private set
 
   private var removeDeferredRequest: Long = 0
-
-  final override var tabsPosition: JBTabsPosition = JBTabsPosition.top
-    private set
 
   private val tabBorder = createTabBorder()
   private val nextAction: BaseNavigationAction?
@@ -605,7 +606,7 @@ open class JBTabsImpl internal constructor(
   }
 
   protected open fun createRowLayout(): TabLayout {
-    if (isSingleRow) {
+    if (tabListOptions.singleRow) {
       return ScrollableSingleRowLayout(this)
     }
     else {
@@ -1168,7 +1169,7 @@ open class JBTabsImpl internal constructor(
 
   private inner class HiddenInfosListPopupStep(values: List<TabInfo>, private val separatorInfo: TabInfo?)
     : BaseListPopupStep<TabInfo>(null, values) {
-     var selectTab = true
+    var selectTab = true
 
     override fun onChosen(selectedValue: TabInfo, finalChoice: Boolean): PopupStep<*>? {
       if (selectTab) {
@@ -2800,9 +2801,11 @@ open class JBTabsImpl internal constructor(
     return this
   }
 
-  private abstract class BaseNavigationAction(copyFromId: @NlsSafe String,
-                                              private val tabs: JBTabsImpl,
-                                              parentDisposable: Disposable) : DumbAwareAction() {
+  private abstract class BaseNavigationAction(
+    copyFromId: @NlsSafe String,
+    private val tabs: JBTabsImpl,
+    parentDisposable: Disposable
+  ) : DumbAwareAction() {
     private val shadowAction: ShadowAction
 
     init {
@@ -3069,7 +3072,7 @@ open class JBTabsImpl internal constructor(
   override fun uiDataSnapshot(sink: DataSink) {
     DataSink.uiDataSnapshot(sink, dataProvider)
     sink[QuickActionProvider.KEY] = this@JBTabsImpl
-    sink[MorePopupAware.KEY] =this@JBTabsImpl
+    sink[MorePopupAware.KEY] = this@JBTabsImpl
     sink[JBTabsEx.NAVIGATION_ACTIONS_KEY] = this@JBTabsImpl
   }
 
