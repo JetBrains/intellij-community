@@ -17,7 +17,6 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.Objects;
 
 /**
  * @author Dmitry Batkovich
@@ -38,19 +37,20 @@ public class PropertiesInheritorsSearcher extends QueryExecutorBase<PsiElement, 
       final PropertiesFile currentFile = PropertiesImplUtil.getPropertiesFile(prop.getContainingFile());
       LOG.assertTrue(currentFile != null);
       final GlobalSearchScope scope = (GlobalSearchScope)queryParameters.getScope();
-      currentFile.getResourceBundle()
-        .getPropertiesFiles()
-        .stream()
-        .filter(f -> f.equals(currentFile))
-        .filter(f -> scope.contains(f.getVirtualFile()))
-        .filter(f -> PropertiesUtil.getParent(f, Collections.singleton(currentFile)) == currentFile)
-        .map(f -> f.findPropertyByKey(key))
-        .filter(Objects::nonNull)
-        .map(IProperty::getPsiElement)
-        .anyMatch(psiElement -> {
-          ProgressManager.checkCanceled();
-          return !consumer.process(psiElement);
-        });
+      for (PropertiesFile f : currentFile.getResourceBundle().getPropertiesFiles()) {
+        if (f.equals(currentFile) &&
+            scope.contains(f.getVirtualFile()) &&
+            PropertiesUtil.getParent(f, Collections.singleton(currentFile)) == currentFile) {
+          IProperty byKey = f.findPropertyByKey(key);
+          if (byKey != null) {
+            PsiElement psiElement = byKey.getPsiElement();
+            ProgressManager.checkCanceled();
+            if (!consumer.process(psiElement)) {
+              break;
+            }
+          }
+        }
+      }
     });
   }
 
