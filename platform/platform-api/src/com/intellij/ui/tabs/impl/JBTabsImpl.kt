@@ -170,6 +170,7 @@ open class JBTabsImpl internal constructor(
     }
   }
 
+  @Suppress("MemberVisibilityCanBePrivate")
   internal var tabListOptions: TabListOptions = tabListOptions
     private set
 
@@ -259,7 +260,6 @@ open class JBTabsImpl internal constructor(
   private var focusManager = IdeFocusManager.getGlobalInstance()
   private val nestedTabs = HashSet<JBTabsImpl>()
   var addNavigationGroup: Boolean = true
-  private var activeTabFillIn: Color? = null
   private var tabLabelActionsAutoHide = false
 
   @Suppress("DEPRECATION")
@@ -2776,15 +2776,6 @@ open class JBTabsImpl internal constructor(
       }
       relayout(forced = true, layoutNow = true)
     }
-
-  final override fun setActiveTabFillIn(color: Color?): JBTabsPresentation {
-    if (!isChanged(activeTabFillIn, color)) {
-      return this
-    }
-    activeTabFillIn = color
-    revalidateAndRepaint(layoutNow = false)
-    return this
-  }
 
   override fun setTabLabelActionsAutoHide(autoHide: Boolean): JBTabsPresentation {
     if (tabLabelActionsAutoHide != autoHide) {

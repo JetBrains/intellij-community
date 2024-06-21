@@ -3,7 +3,6 @@ package com.intellij.ui.tabs
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.TimedDeadzone
-import java.awt.Color
 import java.awt.Insets
 
 interface JBTabsPresentation {
@@ -29,8 +28,6 @@ interface JBTabsPresentation {
   fun setFocusCycle(root: Boolean): JBTabsPresentation?
 
   fun setToDrawBorderIfTabsHidden(draw: Boolean): JBTabsPresentation
-
-  fun setActiveTabFillIn(color: Color?): JBTabsPresentation
 
   fun setTabLabelActionsAutoHide(autoHide: Boolean): JBTabsPresentation
 

@@ -20,7 +20,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.FileDropManager
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.containsFileDropTargets
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditor
@@ -127,8 +126,6 @@ class EditorTabbedContainer internal constructor(
       )
       .addTabMouseListener(TabMouseListener(window = window, editorTabs = editorTabs)).presentation
       .setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setTabLabelActionsAutoHide(false)
-
-    editorTabs.setActiveTabFillIn(EditorColorsManager.getInstance().globalScheme.defaultBackground)
 
     editorTabs.setSelectionChangeHandler { _, _, doChangeSelection ->
       if (window.isDisposed) {
