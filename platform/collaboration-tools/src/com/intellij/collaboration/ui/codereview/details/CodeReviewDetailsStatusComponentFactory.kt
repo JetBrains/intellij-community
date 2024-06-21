@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.details
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.Either
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
@@ -15,10 +16,7 @@ import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.ui.icon.CIBuildStatusIcons
-import com.intellij.collaboration.ui.util.DimensionRestrictions
-import com.intellij.collaboration.ui.util.bindIconIn
-import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.*
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -28,13 +26,11 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JLabelUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.Point
+import java.awt.event.ActionListener
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -55,12 +51,58 @@ object CodeReviewDetailsStatusComponentFactory {
       JLabelUtil.setTrimOverflow(this, trim = true)
     }
 
-  fun createConflictsComponent(scope: CoroutineScope, hasConflicts: Flow<Boolean>): JComponent {
-    return ReviewDetailsStatusLabel("Code review status: review has conflicts").apply {
+  /**
+   * @param resolveActionFlow If an ActionListener is emitted, there's some action to execute on click.
+   *                          If a String is emitted, it's the tooltip text to tell why no action is available.
+   */
+  @JvmOverloads
+  fun createConflictsComponent(
+    scope: CoroutineScope, hasConflicts: Flow<Boolean?>,
+    resolveActionFlow: Flow<Either<@Nls String?, ActionListener>> = flowOf(Either.left(null)),
+    isBusyFlow: Flow<Boolean> = flowOf(false),
+  ): JComponent {
+    val title = JLabel().apply {
+      bindIconIn(scope, hasConflicts.map {
+        if (it == null) CIBuildStatusIcons.pending
+        else CIBuildStatusIcons.failed
+      })
+      bindTextIn(scope, hasConflicts.map {
+        if (it == null) CollaborationToolsBundle.message("review.details.status.conflicts-pending")
+        else CollaborationToolsBundle.message("review.details.status.conflicts")
+      })
+    }
+
+    val resolveLink = ActionLink(CollaborationToolsBundle.message("review.details.status.conflicts.resolve")).apply {
+      bindVisibilityIn(scope,
+                       hasConflicts.combine(resolveActionFlow) { hasConflicts, resolveActionOrText ->
+                         hasConflicts == true && resolveActionOrText != Either.left(null)
+                       })
+      bindEnabledIn(scope, resolveActionFlow.combine(isBusyFlow) { actionOrText, isBusy ->
+        !isBusy && actionOrText.isRight()
+      })
+
+      autoHideOnDisable = false
+
+      scope.launchNow {
+        resolveActionFlow.collect { resolveActionOrText ->
+          toolTipText = null
+          actionListeners.forEach { removeActionListener(it) }
+
+          resolveActionOrText.fold(
+            ifLeft = { toolTipText = it },
+            ifRight = { addActionListener(it) }
+          )
+        }
+      }
+    }
+
+    return HorizontalListPanel(CI_COMPONENTS_GAP).apply {
+      name = "Code review status: review has conflicts"
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      icon = CIBuildStatusIcons.failed
-      text = CollaborationToolsBundle.message("review.details.status.conflicts")
-      bindVisibilityIn(scope, hasConflicts)
+      bindVisibilityIn(scope, hasConflicts.map { it ?: false })
+
+      add(title)
+      add(resolveLink)
     }
   }
 
@@ -168,7 +210,7 @@ object CodeReviewDetailsStatusComponentFactory {
     reviewerNameProvider: (Reviewer) -> String,
     avatarKeyProvider: (Reviewer) -> IconKey,
     iconProvider: (reviewState: ReviewState, iconKey: IconKey, iconSize: Int) -> Icon,
-    statusIconsEnabled: Boolean = true
+    statusIconsEnabled: Boolean = true,
   ): JComponent {
     val panel = VerticalListPanel().apply {
       name = "Code review status: reviewers"
@@ -197,13 +239,13 @@ object CodeReviewDetailsStatusComponentFactory {
     reviewerNameProvider: (Reviewer) -> String,
     avatarKeyProvider: (Reviewer) -> IconKey,
     iconProvider: (reviewState: ReviewState, iconKey: IconKey, iconSize: Int) -> Icon,
-    statusIconsEnabled: Boolean
+    statusIconsEnabled: Boolean,
   ): JComponent {
     return HorizontalListPanel(STATUS_REVIEWER_COMPONENT_GAP).apply {
       border = JBUI.Borders.empty(STATUS_REVIEWER_BORDER, 0)
       val reviewerLabel = ReviewDetailsStatusLabel("Code review status: reviewer").apply {
         iconTextGap = STATUS_REVIEWER_COMPONENT_GAP
-        icon =  iconProvider(reviewState, avatarKeyProvider(reviewer), Avatar.Sizes.OUTLINED)
+        icon = iconProvider(reviewState, avatarKeyProvider(reviewer), Avatar.Sizes.OUTLINED)
         text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewerNameProvider(reviewer))
       }
 
