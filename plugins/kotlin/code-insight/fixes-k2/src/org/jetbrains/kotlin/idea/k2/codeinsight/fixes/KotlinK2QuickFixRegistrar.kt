@@ -118,6 +118,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ReplacePrimitiveCastWithNumberConversionFixFactory.replacePrimitiveCastWithNumberConversionFixFactory)
         registerFactory(ChangeAccessorTypeFixFactory.wrongGetterReturnTypeFactory)
         registerFactory(ChangeAccessorTypeFixFactory.wrongSetterParameterTypeFactory)
+        registerFactory(LiftAssignmentOutOfTryFixFactory.liftAssignmentOutOfTryFix)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

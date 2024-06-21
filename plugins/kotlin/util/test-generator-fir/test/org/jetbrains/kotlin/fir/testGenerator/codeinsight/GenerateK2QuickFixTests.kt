@@ -117,7 +117,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/deprecatedSymbolUsage", pattern = pattern, isIgnored = false, excludedDirectories = listOf("classUsages", "typeAliases", "publishedApi", "wholeProject"))
             model("$idea/quickfix/equalityNotApplicable", pattern = pattern)
             model("$idea/quickfix/final", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/foldTryCatch", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/foldTryCatch", pattern = pattern)
             model("$idea/quickfix/functionWithLambdaExpressionBody", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/implement", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/importAlias", pattern = pattern, isIgnored = true)

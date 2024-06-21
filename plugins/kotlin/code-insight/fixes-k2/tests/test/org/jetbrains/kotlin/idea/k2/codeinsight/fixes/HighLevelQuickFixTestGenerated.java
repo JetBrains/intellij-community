@@ -7505,7 +7505,44 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/foldTryCatch")
+    public static class FoldTryCatch extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("conditional.kt")
+        public void testConditional() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/foldTryCatch/conditional.kt");
+        }
+
+        @TestMetadata("emptyFinally.kt")
+        public void testEmptyFinally() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/foldTryCatch/emptyFinally.kt");
+        }
+
+        @TestMetadata("multipleExceptions.kt")
+        public void testMultipleExceptions() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/foldTryCatch/multipleExceptions.kt");
+        }
+
+        @TestMetadata("shadow.kt")
+        public void testShadow() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/foldTryCatch/shadow.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/foldTryCatch/simple.kt");
+        }
+    }
 
 
 
