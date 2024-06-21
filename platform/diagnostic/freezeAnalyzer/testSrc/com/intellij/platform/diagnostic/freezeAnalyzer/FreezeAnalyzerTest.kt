@@ -82,7 +82,7 @@ class FreezeAnalyzerTest {
   fun testGeneralLockFreeze() {
     val threadDump = File(this::class.java.classLoader.getResource("freezes/generalLock/generalLock.txt")!!.path).toPath().readText()
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("EDT is blocked on com.intellij.codeInsight.completion.CompletionProgressIndicator.blockingWaitForFinish")
-    FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.joinToString { it -> it.stackTrace }.shouldStartWith("Possibly locked by com.intellij.codeInsight.completion.JavaMethodCallElement.<init> in DefaultDispatcher-worker-55")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.additionalMessage?.shouldBe("Possibly locked by com.intellij.codeInsight.completion.JavaMethodCallElement.<init> in DefaultDispatcher-worker-55")
   }
 
   @Test

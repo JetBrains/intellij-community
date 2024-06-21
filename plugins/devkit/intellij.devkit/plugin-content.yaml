@@ -24,3 +24,4 @@
   - name: intellij.devkit.workspaceModel
   - name: intellij.kotlin.devkit
   - name: intellij.devkit.debugger
+  - name: intellij.devkit.stacktrace
