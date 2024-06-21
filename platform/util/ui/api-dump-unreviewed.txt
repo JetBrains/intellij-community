@@ -1430,7 +1430,6 @@ c:com.intellij.openapi.ui.Splitter
 - sf:PROP_ORIENTATION:java.lang.String
 - sf:PROP_PROPORTION:java.lang.String
 - pf:myDivider:com.intellij.openapi.ui.Divider
-- p:myProportion:F
 - <init>():V
 - <init>(Z):V
 - <init>(Z,F):V

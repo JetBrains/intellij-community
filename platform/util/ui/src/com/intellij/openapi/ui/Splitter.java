@@ -39,6 +39,7 @@ public class Splitter extends JPanel implements Splittable {
   private final float myMaxProp;
 
 
+  @ApiStatus.Internal
   protected float myProportion;// first size divided by (first + second)
   private Float myLagProportion;
 
