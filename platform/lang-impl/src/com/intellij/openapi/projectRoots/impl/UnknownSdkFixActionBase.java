@@ -7,8 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class UnknownSdkFixActionBase implements UnknownSdkFixAction {
+public abstract class UnknownSdkFixActionBase implements UnknownSdkFixAction, FixWithConsent {
   private final EventDispatcher<Listener> myListeners = EventDispatcher.create(Listener.class);
+  private boolean hasUserConsent = false;
 
   @Override
   public final void addSuggestionListener(@NotNull Listener listener) {
@@ -39,4 +40,10 @@ public abstract class UnknownSdkFixActionBase implements UnknownSdkFixAction {
       }
     };
   }
+
+  @Override
+  public void giveConsent() { hasUserConsent = true; }
+
+  @Override
+  public boolean hasConsent() { return hasUserConsent; }
 }
