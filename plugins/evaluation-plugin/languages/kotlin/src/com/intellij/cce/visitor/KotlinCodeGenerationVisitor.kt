@@ -19,12 +19,12 @@ class KotlinCodeGenerationVisitor : EvaluationVisitor, KtTreeVisitorVoid() {
     codeFragment?.addChild(
       CodeToken(function.text, function.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {})
     )
-    val body = function.bodyExpression
+    val body = function.bodyBlockExpression
     if (body != null) {
-      val meaningfulBodyChildren = (body as? KtBlockExpression)?.trim() ?: listOf(body)
-      if (meaningfulBodyChildren.isNotEmpty()) {
+      val meaningfulBodyChildren = body.trim()
+      if (meaningfulBodyChildren.any()) {
         val firstMeaningfulChild = meaningfulBodyChildren.first()
-        val meaningfulBodyText = meaningfulBodyChildren.joinToString("") { it.text }
+        val meaningfulBodyText = meaningfulBodyChildren.map { it.text }.joinToString("")
 
         codeFragment?.addChild(
           CodeToken(meaningfulBodyText, firstMeaningfulChild.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD_BODY, SymbolLocation.PROJECT) {})
