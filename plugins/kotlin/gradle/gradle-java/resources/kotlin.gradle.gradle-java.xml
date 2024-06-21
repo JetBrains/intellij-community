@@ -53,7 +53,7 @@
     <syncContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptSyncContributor"/>
 
     <executionEnvironmentProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleAppEnvProvider"/>
-    <initScriptGenerator implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMPGradleInitScriptGenerator"/>
+    <initScriptGenerator implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMppGradleInitScriptGenerator"/>
     <buildTasksProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMPPBuildTasksProvider"/>
   </extensions>
 

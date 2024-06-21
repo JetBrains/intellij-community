@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmRunTaskData
 import org.jetbrains.plugins.gradle.execution.build.GradleInitScriptGenerator
 import org.jetbrains.plugins.gradle.execution.build.GradleInitScriptParameters
 
-internal class KotlinMPGradleInitScriptGenerator : GradleInitScriptGenerator {
+internal class KotlinMppGradleInitScriptGenerator : GradleInitScriptGenerator {
     override fun isApplicable(module: Module): Boolean {
         return KotlinJvmRunTaskData.findSuitableKotlinJvmRunTask(module) != null
     }
