@@ -3,7 +3,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @State(name = "UpdatesConfigurable", storages = @Storage(value = "updates.xml", roamingType = RoamingType.DISABLED, exportable = true))
-public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
+public class UpdateSettings implements PersistentStateComponentWithModificationTracker<UpdateOptions> {
   public static UpdateSettings getInstance() {
     return ApplicationManager.getApplication().getService(UpdateSettings.class);
   }
@@ -131,5 +131,10 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
 
   public void setObsoleteCustomRepositoriesCleanNeeded(boolean value) {
     myState.setObsoleteCustomRepositoriesCleanNeeded(value);
+  }
+
+  @Override
+  public long getStateModificationCount() {
+    return myState.getModificationCount();
   }
 }
