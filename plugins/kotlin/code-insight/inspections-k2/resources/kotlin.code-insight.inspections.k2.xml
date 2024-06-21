@@ -283,7 +283,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinNoActualForExpectInspection"
                      groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
                      enabledByDefault="true"
                      level="ERROR"
                      language="kotlin" key="inspection.no.actual.for.expect.display.name" bundle="messages.KotlinBundle"/>
