@@ -50,6 +50,8 @@ object CoroutineBreakpointFacility {
 
         val breakpoint = object : StepIntoMethodBreakpoint(method.declaringType().name(), method.name(), method.signature(), project),
                                   CustomProcessingLocatableEventRequestor {
+            override fun stopOnlyInBaseClass() = true
+
             override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent): Boolean {
                 val result = super.processLocatableEvent(action, event)
                 if (result) {

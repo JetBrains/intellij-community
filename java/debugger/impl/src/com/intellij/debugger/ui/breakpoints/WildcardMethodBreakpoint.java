@@ -168,10 +168,14 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     }
   }
 
+  protected boolean stopOnlyInBaseClass() {
+    return false;
+  }
+
   @Override
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType refType) {
     if (isEmulated()) {
-      MethodBreakpoint.createRequestForPreparedClassEmulated(this, (DebugProcessImpl)debugProcess, refType, true);
+      MethodBreakpoint.createRequestForPreparedClassEmulated(this, (DebugProcessImpl)debugProcess, refType, !stopOnlyInBaseClass());
     }
     else {
       // should be empty - does not make sense for this breakpoint
