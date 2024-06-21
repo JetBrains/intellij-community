@@ -1,4 +1,4 @@
-package pack2;
+package pack2
 
-public class A {
+class A {
 }

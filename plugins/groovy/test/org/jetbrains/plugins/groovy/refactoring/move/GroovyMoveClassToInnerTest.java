@@ -92,23 +92,23 @@ public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
     doTest("pack2.A", "pack1.Class1");
   }
 
-  void _testPackageLocalClass() throws Exception {
-    doTestConflicts("pack1.Class1", "pack2.A", "Field <b><code>Class1.c2</code></b> uses a package-private class <b><code>pack1.Class2</code></b>.");
+  public void testPackageLocalClass() {
+    doTest("pack2.A", "pack1.Class1");
   }
 
-  void _testMoveIntoPackageLocalClass() throws Exception {
-    doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
+  public void testMoveIntoPackageLocalClass() {
+    doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>pack1.Class1</code></b> will no longer be accessible from class <b><code>pack1.Class2</code></b>");
   }
 
-  void _testMoveOfPackageLocalClass() throws Exception {
-    doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
+  public void testMoveOfPackageLocalClass() {
+    doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>pack1.Class1</code></b> will no longer be accessible from class <b><code>pack1.Class2</code></b>");
   }
 
-  public void testMoveIntoPrivateInnerClass() throws Exception {
+  public void testMoveIntoPrivateInnerClass() {
     doTestConflicts("pack1.Class1", "pack1.A.PrivateInner", "Class <b><code>pack1.Class1</code></b> will no longer be accessible from class <b><code>pack1.Class2</code></b>");
   }
 
-  void _testMoveWithPackageLocalMember() throws Exception {
+  public void testMoveWithPackageLocalMember() {
     doTestConflicts("pack1.Class1", "pack2.A", "Method <b><code>Class1.doStuff()</code></b> will no longer be accessible from method <b><code>Class2.test()</code></b>");
   }
 
