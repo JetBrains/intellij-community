@@ -22,6 +22,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,6 +194,11 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
 
   public static void doNotCheckFileSizeLimit(@NotNull VirtualFile vFile) {
     vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
+  }
+
+  @ApiStatus.Internal
+  public static void clearFileSizeLimitCheck(@NotNull VirtualFile vFile) {
+    vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, null);
   }
 
   public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, long maxBytes) {
