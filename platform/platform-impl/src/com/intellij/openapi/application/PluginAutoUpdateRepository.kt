@@ -51,6 +51,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Collections
 import javax.swing.JComponent
 import kotlin.Result
 import kotlin.io.path.absolutePathString
@@ -86,7 +87,7 @@ object PluginAutoUpdateRepository {
   fun readUpdates(): Map<PluginId, PluginUpdateInfo> {
     val stateFile = getAutoUpdateStatePath()
     if (!stateFile.isReadable()) {
-      return emptyMap()
+      return Collections.emptyMap<PluginId, PluginUpdateInfo>()
     }
     val updatesRaw = Files.readString(stateFile)
     return json.decodeFromString<PluginUpdatesData>(updatesRaw).updates.mapKeys { PluginId.getId(it.key) }
