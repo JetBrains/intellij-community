@@ -3,10 +3,7 @@
 package org.jetbrains.kotlin.idea.editor.quickDoc
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
-import com.intellij.lang.documentation.psi.PsiDocumentationLinkHandler
-import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
-import com.intellij.lang.documentation.psi.psiDocumentationTargets
-import com.intellij.platform.backend.documentation.ResolvedTarget
+import com.intellij.lang.documentation.psi.resolveLink
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
@@ -16,9 +13,7 @@ import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinDocumentationTarget
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFunction
 
 
 class JavadocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
@@ -41,11 +36,8 @@ class JavadocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
             | """.trimMargin()
         ) as KtFile
         val psiPackage = JavaPsiFacade.getInstance(myFixture.project).findPackage(file.packageFqName.asString())!!
-        val documentationTarget = psiDocumentationTargets(psiPackage, null).first()
-        assertInstanceOf(documentationTarget, PsiElementDocumentationTarget::class.java)
-        val linkResolvedTarget =
-            PsiDocumentationLinkHandler().resolveLink(documentationTarget, DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + "foo.bar.A")
-        assertInstanceOf(linkResolvedTarget, ResolvedTarget::class.java)
-        assertInstanceOf((linkResolvedTarget as ResolvedTarget).target, KotlinDocumentationTarget::class.java)
+        val documentationTarget =
+            resolveLink(psiPackage, DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + "foo.bar.A")
+        assertInstanceOf(documentationTarget, KotlinDocumentationTarget::class.java)
     }
 }

@@ -38,9 +38,8 @@ class AsyncDocumentation(
   val supplier: AsyncSupplier<DocumentationResult.Documentation?>
 ) : DocumentationResult
 
-@VisibleForTesting
 @Internal
-class ResolvedTarget(
+internal class ResolvedTarget(
   val target: DocumentationTarget,
 ) : LinkResolveResult
 
