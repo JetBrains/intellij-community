@@ -61,7 +61,7 @@ public class JBEmptyBorder extends EmptyBorder {
     return super.getBorderInsets(c, insets);
   }
 
-  protected void refreshInsets() {
+  private void refreshInsets() {
     insets.update();
     top = insets.top;
     left = insets.left;

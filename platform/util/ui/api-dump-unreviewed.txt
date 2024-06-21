@@ -3865,7 +3865,6 @@ c:com.intellij.util.ui.JBEmptyBorder
 - getBorderInsets():java.awt.Insets
 - getBorderInsets(java.awt.Component):java.awt.Insets
 - getBorderInsets(java.awt.Component,java.awt.Insets):java.awt.Insets
-- p:refreshInsets():V
 - wrap(javax.swing.JComponent):javax.swing.JComponent
 f:com.intellij.util.ui.JBEmptyBorder$JBEmptyBorderUIResource
 - com.intellij.util.ui.JBEmptyBorder
