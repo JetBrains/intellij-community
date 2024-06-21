@@ -139,6 +139,7 @@
     "Git4Idea:app:Git-Application-Settings.*",
     "JavaScript:app:JSEditorOptions.*",
     "JavaScript:app:JsxEmmetOptions.*",
+    "com.jetbrains.php:app:PhpAutoImport.*",
     "com.jetbrains.php:app:PhpCodeFoldingSettings.*",
     "com.jetbrains.php:app:PhpSmartKeysConfiguration.autoInsertFullPhpOpenTag",
     "com.jetbrains.php:app:PhpSmartKeysConfiguration.autoInsertSemicolonAfterFunctionCall",
