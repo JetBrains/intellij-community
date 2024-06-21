@@ -126,9 +126,9 @@ class EditorTabbedContainer internal constructor(
         /* addNavigationGroup = */ false
       )
       .addTabMouseListener(TabMouseListener(window = window, editorTabs = editorTabs)).presentation
-      .setTabDraggingEnabled(true)
       .setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setTabLabelActionsAutoHide(false)
-      .setActiveTabFillIn(EditorColorsManager.getInstance().globalScheme.defaultBackground).setPaintFocus(false)
+
+    editorTabs.setActiveTabFillIn(EditorColorsManager.getInstance().globalScheme.defaultBackground)
 
     editorTabs.setSelectionChangeHandler { _, _, doChangeSelection ->
       if (window.isDisposed) {
@@ -535,6 +535,7 @@ private class EditorTabs(
     supportCompression = true,
     singleRow = UISettings.getInstance().scrollTabLayoutInEditor,
     requestFocusOnLastFocusedComponent = true,
+    isTabDraggingEnabled = true,
   ),
 ), ComponentWithMnemonics, EditorWindowHolder, DataProvider {
   private val _entryPointActionGroup: DefaultActionGroup

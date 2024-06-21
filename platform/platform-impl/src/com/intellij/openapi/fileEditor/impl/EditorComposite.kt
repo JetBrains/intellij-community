@@ -559,10 +559,10 @@ open class EditorComposite internal constructor(
     tabbedPaneWrapper!!.selectedIndex = index
   }
 
+  /**
+   * @return component which represents a set of file editors in the UI
+   */
   open val component: JComponent
-    /**
-     * @return component which represents a set of file editors in the UI
-     */
     get() = compositePanel
 
   open val focusComponent: JComponent?

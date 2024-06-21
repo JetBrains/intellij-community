@@ -99,6 +99,9 @@ data class TabListOptions(
   @JvmField val supportCompression: Boolean = false,
   @JvmField val singleRow: Boolean = true,
   @JvmField val requestFocusOnLastFocusedComponent: Boolean = false,
+
+  @JvmField val paintFocus: Boolean = false,
+  @JvmField val isTabDraggingEnabled: Boolean = false,
 )
 
 @DirtyUI
@@ -107,7 +110,7 @@ open class JBTabsImpl internal constructor(
   private var project: Project?,
   private val parentDisposable: Disposable,
   coroutineScope: CoroutineScope? = null,
-  private var tabListOptions: TabListOptions,
+  tabListOptions: TabListOptions,
 ) : JComponent(), JBTabsEx, PropertyChangeListener, EdtCompatibleDataProvider,
     PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
     QuickActionProvider, MorePopupAware, Accessible {
@@ -166,6 +169,9 @@ open class JBTabsImpl internal constructor(
       c.putClientProperty(LAYOUT_DONE, null)
     }
   }
+
+  internal var tabListOptions: TabListOptions = tabListOptions
+    private set
 
   private val RELAYOUT_DELAY = 2000
   private val relayoutAlarm = Alarm(parentDisposable)
@@ -231,8 +237,6 @@ open class JBTabsImpl internal constructor(
   internal var uiDecorator: UiDecorator? = null
     private set
 
-  private var paintFocus = false
-
   private var listener: Job? = null
 
   var isRecentlyActive: Boolean = false
@@ -271,8 +275,7 @@ open class JBTabsImpl internal constructor(
   private val tabBorder = createTabBorder()
   private val nextAction: BaseNavigationAction?
   private val prevAction: BaseNavigationAction?
-  var isTabDraggingEnabled: Boolean = false
-    private set
+
   protected var dragHelper: DragHelper? = null
   private var navigationActionsEnabled = true
   protected var dropInfo: TabInfo? = null
@@ -2742,7 +2745,7 @@ open class JBTabsImpl internal constructor(
     }
 
     isFocused = focused
-    if (paintFocus) {
+    if (tabListOptions.paintFocus) {
       repaint()
     }
   }
@@ -2797,7 +2800,7 @@ open class JBTabsImpl internal constructor(
   }
 
   override fun setPaintFocus(paintFocus: Boolean): JBTabsPresentation {
-    this.paintFocus = paintFocus
+    tabListOptions = tabListOptions.copy(paintFocus = paintFocus)
     return this
   }
 
@@ -3148,7 +3151,7 @@ open class JBTabsImpl internal constructor(
   }
 
   final override fun setTabDraggingEnabled(enabled: Boolean): JBTabsPresentation {
-    isTabDraggingEnabled = enabled
+    tabListOptions = tabListOptions.copy(isTabDraggingEnabled = enabled)
     return this
   }
 

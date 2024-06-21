@@ -151,7 +151,9 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
   @Override
   protected void processDrag(@NotNull MouseEvent event, @NotNull Point targetScreenPoint, @NotNull Point startPointScreen) {
-    if (!tabs.isTabDraggingEnabled() || !isDragSource(event) || !MouseDragHelper.checkModifiers(event)) return;
+    if (!tabs.getTabListOptions$intellij_platform_ide().isTabDraggingEnabled || !isDragSource(event) || !MouseDragHelper.checkModifiers(event)) {
+      return;
+    }
 
     SwingUtilities.convertPointFromScreen(startPointScreen, tabs);
 
