@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.liveTemplates.k2.macro
 
 import com.intellij.psi.PsiNamedElement
@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
@@ -28,7 +29,7 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
                         .filter { shouldSuggest(it) }
                         .filter { symbol ->
                             when (symbol.classKind) {
-                                KaClassKind.CLASS -> symbol.modality in listOf(Modality.OPEN, Modality.ABSTRACT)
+                                KaClassKind.CLASS -> symbol.modality in listOf(KaSymbolModality.OPEN, KaSymbolModality.ABSTRACT)
                                 KaClassKind.INTERFACE -> true
                                 KaClassKind.ANNOTATION_CLASS -> !symbol.origin.isJavaSourceOrLibrary()
                                 else -> false

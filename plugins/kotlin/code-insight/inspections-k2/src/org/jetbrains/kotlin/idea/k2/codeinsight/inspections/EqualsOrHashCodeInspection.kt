@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -50,7 +51,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
 
     context(KaSession)
     private fun matchesEqualsMethodSignature(function: KaNamedFunctionSymbol): Boolean {
-        if (function.modality == Modality.ABSTRACT) return false
+        if (function.modality == KaSymbolModality.ABSTRACT) return false
         if (function.name != EQUALS) return false
         if (function.typeParameters.isNotEmpty()) return false
         val param = function.valueParameters.singleOrNull() ?: return false
@@ -63,7 +64,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
 
     context(KaSession)
     private fun matchesHashCodeMethodSignature(function: KaNamedFunctionSymbol): Boolean {
-        if (function.modality == Modality.ABSTRACT) return false
+        if (function.modality == KaSymbolModality.ABSTRACT) return false
         if (function.name != HASH_CODE) return false
         if (function.typeParameters.isNotEmpty()) return false
         if (function.valueParameters.isNotEmpty()) return false

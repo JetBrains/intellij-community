@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
@@ -42,8 +42,8 @@ internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnal
             is KaAnonymousObjectSymbol -> KotlinHighlightInfoTypeSemanticNames.CLASS
             is KaNamedClassOrObjectSymbol -> when (symbol.classKind) {
                 KaClassKind.CLASS -> when (symbol.modality) {
-                    Modality.FINAL, Modality.SEALED , Modality.OPEN -> KotlinHighlightInfoTypeSemanticNames.CLASS
-                    Modality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
+                    KaSymbolModality.FINAL, KaSymbolModality.SEALED , KaSymbolModality.OPEN -> KotlinHighlightInfoTypeSemanticNames.CLASS
+                    KaSymbolModality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
                 }
                 KaClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
                 KaClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION

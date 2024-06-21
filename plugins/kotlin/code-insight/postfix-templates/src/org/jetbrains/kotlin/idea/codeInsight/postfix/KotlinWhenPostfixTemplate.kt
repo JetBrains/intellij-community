@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.Modality
@@ -119,7 +120,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
             return true
         }
 
-        if (klass.modality == Modality.SEALED) {
+        if (klass.modality == KaSymbolModality.SEALED) {
             val inheritors = klass.sealedClassInheritors
             if (inheritors.isNotEmpty()) {
                 for (inheritor in inheritors) {
@@ -148,7 +149,7 @@ private fun isSealedType(type: KtType): Boolean {
     if (type is KtNonErrorClassType) {
         val symbol = type.symbol
         if (symbol is KaNamedClassOrObjectSymbol) {
-            return symbol.classKind == KaClassKind.ENUM_CLASS || symbol.modality == Modality.SEALED
+            return symbol.classKind == KaClassKind.ENUM_CLASS || symbol.modality == KaSymbolModality.SEALED
         }
     }
 

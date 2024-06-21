@@ -733,9 +733,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun modality(ktDeclaration: KtDeclaration): Modality? {
-        analyzeForUast(ktDeclaration) {
-            return (ktDeclaration.symbol as? KaSymbolWithModality)?.modality
+    override fun modality(ktDeclaration: KtDeclaration): Modality? = analyzeForUast(ktDeclaration) {
+        when (ktDeclaration.symbol.modality) {
+            KaSymbolModality.FINAL -> Modality.FINAL
+            KaSymbolModality.SEALED -> Modality.SEALED
+            KaSymbolModality.OPEN -> Modality.OPEN
+            KaSymbolModality.ABSTRACT -> Modality.ABSTRACT
         }
     }
 

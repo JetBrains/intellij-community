@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.targetApiImpl
 
 import com.intellij.find.usages.api.PsiUsage
@@ -18,6 +18,7 @@ import com.intellij.util.Query
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -87,7 +88,7 @@ class KotlinSafeDeleteUsageSearcher : SafeDeleteUsageSearcher {
                                 (ktElement.symbol as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return@analyze
                             val abstractExternalSuper = superMethods.find {
                                 val superClassSymbol = it.containingSymbol as? KaClassOrObjectSymbol ?: return@find false
-                                if ((it as? KaSymbolWithModality)?.modality != Modality.ABSTRACT) return@find false
+                                if ((it as? KaSymbolWithModality)?.modality != KaSymbolModality.ABSTRACT) return@find false
                                 return@find !superClassSymbol.isSubClassOf(elementClassSymbol)
                             }
 

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -42,10 +43,10 @@ internal object SuperClassNotInitializedFactories {
     private fun KaNamedClassOrObjectSymbol.isInheritableWithSuperConstructorCall(superTypeEntry: KtSuperTypeEntry): Boolean {
         if (classKind != KaClassKind.CLASS) return false
         return when (modality) {
-            Modality.FINAL -> false
-            Modality.OPEN -> true
-            Modality.ABSTRACT -> true
-            Modality.SEALED -> {
+            KaSymbolModality.FINAL -> false
+            KaSymbolModality.OPEN -> true
+            KaSymbolModality.ABSTRACT -> true
+            KaSymbolModality.SEALED -> {
                 val subClass = superTypeEntry.parentOfType<KtClassOrObject>()
                 subClass?.isLocal == false
                         && classId?.packageFqName == superTypeEntry.containingKtFile.packageFqName

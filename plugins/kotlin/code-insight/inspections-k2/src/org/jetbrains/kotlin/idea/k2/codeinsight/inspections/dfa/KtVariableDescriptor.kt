@@ -175,7 +175,7 @@ class KtVariableDescriptor(
 
         private fun isTrackableProperty(target: KtVariableLikeSymbol?) =
             target is KtPropertySymbol && target.getter?.isDefault != false && target.setter?.isDefault != false
-                    && !target.isDelegatedProperty && target.modality == Modality.FINAL
+                    && !target.isDelegatedProperty && target.modality == KaSymbolModality.FINAL
                     && !target.isExtension && target.backingFieldSymbol?.hasAnnotation(JvmStandardClassIds.VOLATILE_ANNOTATION_CLASS_ID) == false
     }
 }

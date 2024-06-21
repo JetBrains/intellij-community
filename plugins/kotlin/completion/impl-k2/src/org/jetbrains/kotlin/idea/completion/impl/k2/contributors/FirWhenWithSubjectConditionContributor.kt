@@ -68,7 +68,7 @@ internal class FirWhenWithSubjectConditionContributor(
             classSymbol?.classKind == KaClassKind.ENUM_CLASS -> {
                 completeEnumEntries(weighingContext, classSymbol, allConditionsExceptCurrent, visibilityChecker, isSingleCondition)
             }
-            classSymbol?.modality == Modality.SEALED -> {
+            classSymbol?.modality == KaSymbolModality.SEALED -> {
                 completeSubClassesOfSealedClass(
                     weighingContext,
                     classSymbol,
@@ -165,7 +165,7 @@ internal class FirWhenWithSubjectConditionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
     ) {
-        require(classSymbol.modality == Modality.SEALED)
+        require(classSymbol.modality == KaSymbolModality.SEALED)
         val handledCasesClassIds = getHandledClassIds(conditions)
         val allInheritors = getAllSealedInheritors(classSymbol)
 
@@ -185,7 +185,7 @@ internal class FirWhenWithSubjectConditionContributor(
                 )
             }
 
-        if (allInheritors.any { it.modality == Modality.ABSTRACT }) {
+        if (allInheritors.any { it.modality == KaSymbolModality.ABSTRACT }) {
             completeAllTypes(context, whenCondition, visibilityChecker, isSingleCondition)
         }
     }
@@ -211,7 +211,7 @@ internal class FirWhenWithSubjectConditionContributor(
         ) {
             classSymbol.sealedClassInheritors.forEach { inheritor ->
                 destination += inheritor
-                if (inheritor.modality == Modality.SEALED) {
+                if (inheritor.modality == KaSymbolModality.SEALED) {
                     getAllSealedInheritorsTo(inheritor, destination)
                 }
             }

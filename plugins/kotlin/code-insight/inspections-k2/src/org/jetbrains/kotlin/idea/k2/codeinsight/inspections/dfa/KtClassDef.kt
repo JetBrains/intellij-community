@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -31,7 +32,7 @@ class KtClassDef(
     private val hash: Int,
     private val cls: KaSymbolPointer<KaClassOrObjectSymbol>,
     private val kind: KaClassKind,
-    private val modality: Modality?
+    private val modality: KaSymbolModality?
 ) : TypeConstraints.ClassDef {
     override fun isInheritor(superClassQualifiedName: String): Boolean =
         analyze(module) {
@@ -61,9 +62,9 @@ class KtClassDef(
 
     override fun isEnum(): Boolean = kind == KaClassKind.ENUM_CLASS
 
-    override fun isFinal(): Boolean = kind != KaClassKind.ANNOTATION_CLASS && modality == Modality.FINAL
+    override fun isFinal(): Boolean = kind != KaClassKind.ANNOTATION_CLASS && modality == KaSymbolModality.FINAL
 
-    override fun isAbstract(): Boolean = modality == Modality.ABSTRACT
+    override fun isAbstract(): Boolean = modality == KaSymbolModality.ABSTRACT
 
     override fun getEnumConstant(ordinal: Int): PsiEnumConstant? = analyze(module) {
         val classLikeSymbol = cls.restoreSymbol() ?: return@analyze null
