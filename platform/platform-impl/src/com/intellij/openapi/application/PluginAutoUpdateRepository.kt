@@ -306,7 +306,7 @@ private class PluginsAutoUpdateRepositoryViewAction : AnAction() {
       updateState()
     }
 
-    private fun updateState() {
+    fun updateState() {
       cs.launch(Dispatchers.IO) {
         _state.value = runCatching { PluginAutoUpdateRepository.readUpdates() }
       }
@@ -334,6 +334,7 @@ private class PluginsAutoUpdateRepositoryViewAction : AnAction() {
   private class Viewer(val project: Project?) : DialogWrapper(project) {
     init {
       init()
+      service<ViewModel>().updateState()
     }
 
     override fun createCenterPanel(): JComponent? = panel {
