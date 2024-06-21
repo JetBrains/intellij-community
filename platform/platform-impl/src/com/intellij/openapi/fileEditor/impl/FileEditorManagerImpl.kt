@@ -1965,7 +1965,7 @@ open class FileEditorManagerImpl(
       mainSplitters.revalidate()
       val allSplitters = getAllSplitters()
       for (splitters in allSplitters) {
-        splitters.setTabsPlacement(uiSettings.editorTabPlacement)
+        splitters.setTabPlacement(uiSettings.editorTabPlacement)
         splitters.trimToSize()
 
         // Tab layout policy

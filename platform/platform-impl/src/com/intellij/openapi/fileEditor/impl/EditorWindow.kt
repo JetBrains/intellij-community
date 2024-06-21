@@ -128,14 +128,6 @@ class EditorWindow internal constructor(
     tabbedPane.tabs.getTabAt(index).setDefaultAttributes(attributes)
   }
 
-  fun setTabLayoutPolicy(policy: Int) {
-    tabbedPane.setTabLayoutPolicy(policy)
-  }
-
-  fun setTabsPlacement(tabPlacement: Int) {
-    tabbedPane.setTabPlacement(tabPlacement)
-  }
-
   fun setAsCurrentWindow(requestFocus: Boolean) {
     owner.setCurrentWindow(window = this, requestFocus = requestFocus)
   }

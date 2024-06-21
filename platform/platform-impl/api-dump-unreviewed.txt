@@ -15743,15 +15743,12 @@ f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer
 - com.intellij.ide.actions.CloseAction$CloseTarget
 - close():V
 - f:getComponent():javax.swing.JComponent
-- f:getSelectedComponent(Z):java.lang.Object
 - f:getSelectedIndex():I
 - f:getTabCount():I
 - f:getTabs():com.intellij.ui.tabs.JBTabs
 - f:removeTabAt(I,I):V
 - f:setForegroundAt(I,java.awt.Color):V
 - f:setSelectedIndex(I):com.intellij.openapi.util.ActionCallback
-- f:setTabLayoutPolicy(I):V
-- f:setTabPlacement(I):V
 - f:setTextAttributes(I,com.intellij.openapi.editor.markup.TextAttributes):V
 f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - sf:Companion:com.intellij.openapi.fileEditor.impl.EditorWindow$Companion
@@ -15800,8 +15797,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:setSelectedComposite(com.intellij.openapi.fileEditor.impl.EditorComposite,Z):V
 - f:setSelectedComposite(com.intellij.openapi.vfs.VirtualFile,Z):V
 - f:setSelectedEditor(com.intellij.openapi.fileEditor.impl.EditorComposite,Z):V
-- f:setTabLayoutPolicy(I):V
-- f:setTabsPlacement(I):V
 - f:setTextAttributes(I,com.intellij.openapi.editor.markup.TextAttributes):V
 - f:split(I,Z,com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:split(I,Z,com.intellij.openapi.vfs.VirtualFile,Z,Z):com.intellij.openapi.fileEditor.impl.EditorWindow
@@ -15842,8 +15837,6 @@ c:com.intellij.openapi.fileEditor.impl.EditorsSplitters
 - f:openInRightSplit(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.impl.EditorWindow
 - bs:openInRightSplit$default(com.intellij.openapi.fileEditor.impl.EditorsSplitters,com.intellij.openapi.vfs.VirtualFile,Z,I,java.lang.Object):com.intellij.openapi.fileEditor.impl.EditorWindow
 - p:paintComponent(java.awt.Graphics):V
-- f:setTabLayoutPolicy(I):V
-- f:setTabsPlacement(I):V
 - f:trimToSize():V
 - uiSettingsChanged(com.intellij.ide.ui.UISettings):V
 - f:writeExternal(org.jdom.Element):V

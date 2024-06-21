@@ -2998,9 +2998,7 @@ open class JBTabsImpl internal constructor(
     return false
   }
 
-  override fun isSingleRow(): Boolean {
-    return singleRow
-  }
+  override fun isSingleRow(): Boolean = singleRow
 
   val isSideComponentVertical: Boolean
     get() = !horizontalSide

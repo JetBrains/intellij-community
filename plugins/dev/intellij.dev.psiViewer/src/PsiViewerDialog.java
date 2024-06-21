@@ -58,7 +58,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
@@ -129,17 +128,13 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   private TitledSeparator myTextSeparator;
   private final TitledSeparator myPsiTreeSeparator;
 
-  @NotNull
-  private final StubViewerPsiBasedTree myStubTree;
+  private final @NotNull StubViewerPsiBasedTree myStubTree;
 
-  @NotNull
-  private final CoroutineScope myCoroutineScope;
+  private final @NotNull CoroutineScope myCoroutineScope;
 
-  @NotNull
-  final PsiViewerPropertiesTabViewModel myPsiViewerPropertiesTabViewModel;
+  final @NotNull PsiViewerPropertiesTabViewModel myPsiViewerPropertiesTabViewModel;
 
-  @NotNull
-  private final BlockViewerPsiBasedTree myBlockTree;
+  private final @NotNull BlockViewerPsiBasedTree myBlockTree;
   private RangeHighlighter myHighlighter;
 
 
@@ -156,11 +151,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   private final PsiFile myOriginalPsiFile;
 
-  @NotNull
-  private final JBTabs myTabs;
+  private final @NotNull JBTabs myTabs;
 
-  @NotNull
-  private final SingleAlarm myPsiUpdateAlarm;
+  private final @NotNull SingleAlarm myPsiUpdateAlarm;
 
   private static class ExtensionComparator implements Comparator<String> {
     private final String myOnTop;
@@ -274,9 +267,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     return selectedEditor != null ? PsiDocumentManager.getInstance(project).getPsiFile(selectedEditor.getDocument()) : null;
   }
 
-  @NotNull
-  private JBTabs createTabPanel(@NotNull Project project) {
-    JBEditorTabsBase tabs = JBTabsFactory.createEditorTabs(project, getDisposable());
+  private @NotNull JBTabs createTabPanel(@NotNull Project project) {
+    JBTabs tabs = JBTabsFactory.createEditorTabs(project, getDisposable());
     tabs.getPresentation().setAlphabeticalMode(false);
     return tabs;
   }
@@ -481,8 +473,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     super.init();
   }
 
-  @NotNull
-  private static @NlsSafe String getElementDescription(Object element) {
+  private static @NotNull @NlsSafe String getElementDescription(Object element) {
     return element.getClass().getName();
   }
 
@@ -496,8 +487,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   }
 
   @Override
-  @NotNull
-  protected String getDimensionServiceKey() {
+  protected @NotNull String getDimensionServiceKey() {
     return "#com.intellij.internal.psiView.PsiViewerDialog";
   }
 
@@ -561,14 +551,12 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     myPsiTreeSeparator.setLabelFor(myPsiTree);
   }
 
-  @Nullable
-  private PsiElement getPsiElement() {
+  private @Nullable PsiElement getPsiElement() {
     TreePath path = myPsiTree.getSelectionPath();
     return path == null ? null : getPsiElement((DefaultMutableTreeNode)path.getLastPathComponent());
   }
 
-  @Nullable
-  private static PsiElement getPsiElement(DefaultMutableTreeNode node) {
+  private static @Nullable PsiElement getPsiElement(DefaultMutableTreeNode node) {
     if (node.getUserObject() instanceof ViewerNodeDescriptor descriptor) {
       Object elementObject = descriptor.getElement();
       return elementObject instanceof PsiElement
@@ -650,8 +638,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     return myPanel;
   }
 
-  @Nullable
-  private Object getSource() {
+  private @Nullable Object getSource() {
     PsiViewerSourceWrapper wrapper = (PsiViewerSourceWrapper)myFileTypeComboBox.getSelectedItem();
     if (wrapper != null) {
       return wrapper.myFileType != null ? wrapper.myFileType : wrapper.myExtension;
@@ -769,8 +756,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     return null;
   }
 
-  @Nullable
-  private PsiFile getSlowData(@NonNls String dataId, @NotNull Object selection) {
+  private @Nullable PsiFile getSlowData(@NonNls String dataId, @NotNull Object selection) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       String fqn;
       if (selection instanceof ViewerNodeDescriptor descriptor) {
@@ -917,8 +903,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     super.dispose();
   }
 
-  @Nullable
-  private PsiFile getContainingFileForClass(@NotNull String fqn) {
+  private @Nullable PsiFile getContainingFileForClass(@NotNull String fqn) {
     String filename = fqn;
     if (fqn.contains(".")) {
       filename = fqn.substring(fqn.lastIndexOf('.') + 1);
@@ -1121,8 +1106,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       }
     }
 
-    @Nullable
-    private static PsiElement findCommonParent(PsiElement start, PsiElement end) {
+    private static @Nullable PsiElement findCommonParent(PsiElement start, PsiElement end) {
       if (end == null || start == end) {
         return start;
       }

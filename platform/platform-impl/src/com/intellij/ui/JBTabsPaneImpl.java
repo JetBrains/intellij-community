@@ -17,7 +17,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 // used externally - cannot be final
 public class JBTabsPaneImpl implements TabbedPane {
-  private final JBEditorTabsBase tabs;
+  private final JBTabs tabs;
   private final CopyOnWriteArraySet<ChangeListener> listeners = new CopyOnWriteArraySet<>();
 
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {

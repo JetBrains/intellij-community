@@ -429,15 +429,15 @@ open class EditorsSplitters internal constructor(
     }
   }
 
-  fun setTabsPlacement(tabPlacement: Int) {
+  internal fun setTabPlacement(tabPlacement: Int) {
     for (window in windows) {
-      window.setTabsPlacement(tabPlacement)
+      window.tabbedPane.setTabPlacement(tabPlacement)
     }
   }
 
-  fun setTabLayoutPolicy(scrollTabLayout: Int) {
+  internal fun setTabLayoutPolicy(scrollTabLayout: Int) {
     for (window in windows) {
-      window.setTabLayoutPolicy(scrollTabLayout)
+      window.tabbedPane.setTabLayoutPolicy(scrollTabLayout)
     }
   }
 

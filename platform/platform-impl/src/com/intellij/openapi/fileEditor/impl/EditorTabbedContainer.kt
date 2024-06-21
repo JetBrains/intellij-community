@@ -192,7 +192,7 @@ class EditorTabbedContainer internal constructor(
     editorTabs.getTabAt(index).setDefaultAttributes(attributes)
   }
 
-  fun setTabLayoutPolicy(policy: Int) {
+  internal fun setTabLayoutPolicy(policy: Int) {
     when (policy) {
       JTabbedPane.SCROLL_TAB_LAYOUT -> editorTabs.presentation.setSingleRow(true)
       JTabbedPane.WRAP_TAB_LAYOUT -> editorTabs.presentation.setSingleRow(false)
@@ -200,7 +200,7 @@ class EditorTabbedContainer internal constructor(
     }
   }
 
-  fun setTabPlacement(tabPlacement: Int) {
+  internal fun setTabPlacement(tabPlacement: Int) {
     when (tabPlacement) {
       SwingConstants.TOP -> editorTabs.presentation.setTabsPosition(JBTabsPosition.top)
       SwingConstants.BOTTOM -> editorTabs.presentation.setTabsPosition(JBTabsPosition.bottom)
@@ -214,7 +214,7 @@ class EditorTabbedContainer internal constructor(
   /**
    * @param ignorePopup if `false` and a context menu is shown currently for some tab, component for which a menu is invoked will be returned
    */
-  fun getSelectedComponent(ignorePopup: Boolean): Any? {
+  internal fun getSelectedComponent(ignorePopup: Boolean): Any? {
     return (if (ignorePopup) editorTabs.selectedInfo else editorTabs.targetInfo)?.component
   }
 
