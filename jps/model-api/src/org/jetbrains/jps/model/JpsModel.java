@@ -31,6 +31,9 @@ public interface JpsModel {
    * @deprecated external references aren't supported anymore. If you need to refer to a {@link JpsElement} outside the model,
    * use its name instead.
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
-  void registerExternalReference(@NotNull JpsElementReference<?> reference);
+  default void registerExternalReference(@NotNull JpsElementReference<?> reference) {
+    throw new UnsupportedOperationException();
+  }
 }

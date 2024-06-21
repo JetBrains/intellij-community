@@ -30,5 +30,7 @@ public interface JpsModuleReference extends JpsElementReference<JpsModule> {
    */
   @Deprecated(forRemoval = true)
   @Override
-  JpsModuleReference asExternal(@NotNull JpsModel model);
+  default JpsModuleReference asExternal(@NotNull JpsModel model) {
+    throw new UnsupportedOperationException();
+  }
 }

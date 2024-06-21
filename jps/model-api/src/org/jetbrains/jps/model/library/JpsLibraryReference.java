@@ -32,7 +32,9 @@ public interface JpsLibraryReference extends JpsElementReference<JpsLibrary> {
    */
   @Deprecated(forRemoval = true)
   @Override
-  JpsLibraryReference asExternal(@NotNull JpsModel model);
+  default JpsLibraryReference asExternal(@NotNull JpsModel model) {
+    throw new UnsupportedOperationException();
+  }
 
   @ApiStatus.Internal
   JpsElementReference<? extends JpsCompositeElement> getParentReference();

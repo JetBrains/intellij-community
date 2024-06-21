@@ -30,5 +30,7 @@ public interface JpsArtifactReference extends JpsElementReference<JpsArtifact> {
    */
   @Deprecated(forRemoval = true)
   @Override
-  JpsArtifactReference asExternal(@NotNull JpsModel model);
+  default JpsArtifactReference asExternal(@NotNull JpsModel model) {
+    throw new UnsupportedOperationException();
+  }
 }

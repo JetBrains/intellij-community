@@ -27,5 +27,7 @@ public interface JpsElementReference<T extends JpsElement> extends JpsElement {
    * use its name instead.
    */
   @Deprecated(forRemoval = true)
-  JpsElementReference<T> asExternal(@NotNull JpsModel model);
+  default JpsElementReference<T> asExternal(@NotNull JpsModel model) {
+    throw new UnsupportedOperationException();
+  }
 }
