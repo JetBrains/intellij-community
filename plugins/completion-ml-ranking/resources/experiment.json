@@ -238,7 +238,7 @@
     {
       "id": "go",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 36, 24, 33],
+      "includeGroups": [28, 22],
       "shouldLogElementFeatures": true
     },
     {
