@@ -6,10 +6,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.ClientProperty;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,10 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -31,8 +27,6 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends LineMarkerInfo<T> {
-
-  public static final Key<Component> PARENT_COMPONENT = Key.create("parentComponent");
 
   private static final Logger LOG = Logger.getInstance(MergeableLineMarkerInfo.class);
 
@@ -260,13 +254,6 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         MouseEvent mouseEvent = getMouseEvent(e);
-        Component eventComponent = mouseEvent.getComponent();
-        if (eventComponent instanceof JComponent component) {
-          ClientProperty.put(component, PARENT_COMPONENT, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
-        }
-        else if (eventComponent instanceof Window window) {
-          ClientProperty.put(window, PARENT_COMPONENT, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
-        }
         getNavigationHandler().navigate(mouseEvent, getElement());
       }
 
