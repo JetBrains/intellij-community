@@ -123,10 +123,12 @@ open class ExportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
 }
 
 @Internal
-fun exportSettings(exportableItems: Set<ExportableItem>,
-                   out: OutputStream,
-                   exportableThirdPartyFiles: Map<FileSpec, Path> = mapOf(),
-                   storageManager: StateStorageManagerImpl = getAppStorageManager()) {
+fun exportSettings(
+  exportableItems: Set<ExportableItem>,
+  out: OutputStream,
+  exportableThirdPartyFiles: Map<FileSpec, Path> = mapOf(),
+  storageManager: StateStorageManagerImpl = getAppStorageManager(),
+) {
   val filter = HashSet<String>()
   Compressor.Zip(out)
     .filter { entryName, _ -> filter.add(entryName) }
@@ -232,10 +234,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
 
     var thereIsExportableStorage = false
     for (storage in storages) {
-      val isRoamable = getEffectiveRoamingType(storage.roamingType, storage.path).isRoamable
-      val exportable = isStorageExportable(storage, isRoamable, withExportable)
-                       || (stateAnnotation.exportable && !isSpecialOrNonRoamableStorage(storage.path))
-      LOG.debug("Storage for class ${aClass.simpleName} is ${stringify(isRoamable, "roamable")}, ${stringify(exportable, "exportable")}: $storage")
+      val exportable = isStorageExportable(aClass.simpleName, stateAnnotation, storage, withExportable)
       if (exportable) {
         thereIsExportableStorage = true
         val paths = getRelativePaths(storage, storageManager, withDeprecated)
@@ -306,9 +305,22 @@ private fun getAdditionalExportFile(stateAnnotation: State) = stateAnnotation.ad
 
 private fun getAppStorageManager() = ApplicationManager.getApplication().stateStore.storageManager as StateStorageManagerImpl
 
-private fun isStorageExportable(storage: Storage, isRoamable: Boolean, withExportable: Boolean): Boolean =
-  storage.exportable && withExportable ||
-  isRoamable && storage.storageClass == StateStorage::class && storage.path.isNotEmpty()
+internal fun isStorageExportable(
+  simpleName: String,
+  stateAnnotation: State,
+  storage: Storage,
+  withExportable: Boolean,
+): Boolean {
+  if (isSpecialOrNonRoamableStorage(storage.path)) {
+    LOG.debug("Storage for class $simpleName is special (non-roamable, not exportable): $storage")
+    return false
+  }
+  val isRoamable = (getEffectiveRoamingType(storage.roamingType, storage.path).isRoamable
+                    && storage.storageClass == StateStorage::class && storage.path.isNotEmpty())
+  val isExportable = storage.exportable || stateAnnotation.exportable
+  LOG.debug("Storage for class $simpleName is ${stringify(isRoamable, "roamable")}, ${stringify(isExportable, "exportable")}: $storage")
+  return isRoamable || (withExportable && isExportable)
+}
 
 private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDescriptor: PluginDescriptor?): String {
   val presentableName = state.presentableName.java

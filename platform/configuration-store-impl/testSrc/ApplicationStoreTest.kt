@@ -69,7 +69,8 @@ class ApplicationStoreTest {
       .isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
 
-  @Test fun `load from stream provider`() {
+  @Test
+  fun `load from stream provider`() {
     val component = SeveralStoragesConfigured()
 
     val streamProvider = MyStreamProvider()
@@ -119,7 +120,8 @@ class ApplicationStoreTest {
     assertThat(oldFile).doesNotExist()
   }
 
-  @Test fun `export settings`() {
+  @Test
+  fun `export settings`() {
     testAppConfig.refreshVfs()
 
     val storageManager = ApplicationManager.getApplication().stateStore.storageManager
@@ -552,6 +554,51 @@ class ApplicationStoreTest {
     component.state = TestState(bar = "42")
     componentStore.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEqualTo("42")
+  }
+
+  @Test
+  fun `check if storage is exportable`() {
+
+    clearCacheStore()
+    @State(name = "RegularComponent", storages = [Storage(value = "somefile.xml")])
+    class RegularComponent : SerializablePersistentStateComponent<TestState>(TestState())
+
+    @State(name = "NonRoamableStorage", storages = [Storage(value = "someNR.xml", roamingType = RoamingType.DISABLED)])
+    class NonRoamableStorageComponent : SerializablePersistentStateComponent<TestState>(TestState())
+
+    @State(name = "NonRoamableExportableStorage", storages = [Storage(value = "someNR.xml", exportable = true, roamingType = RoamingType.DISABLED)])
+    class NonRoamableExportableStorageComponent : SerializablePersistentStateComponent<TestState>(TestState())
+
+    @State(name = "NonRoamableState", exportable = true, storages = [Storage(value = "someNR.xml", roamingType = RoamingType.DISABLED)])
+    class NonRoamableStateComponent : SerializablePersistentStateComponent<TestState>(TestState())
+
+    @State(name = "SpecialStorage", exportable = true, storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, exportable = true)])
+    class SpecialStorage : SerializablePersistentStateComponent<TestState>(TestState())
+
+
+    with(RegularComponent::class.java.getAnnotation(State::class.java)!!) {
+      assertTrue(isStorageExportable("Component", this, this.storages[0], false))
+      assertTrue(isStorageExportable("Component", this, this.storages[0], true))
+    }
+    with(NonRoamableStorageComponent::class.java.getAnnotation(State::class.java)!!) {
+      assertFalse(isStorageExportable("Component", this, this.storages[0], false))
+      assertFalse(isStorageExportable("Component", this, this.storages[0], false))
+    }
+    with(NonRoamableExportableStorageComponent::class.java.getAnnotation(State::class.java)!!) {
+      assertFalse(isStorageExportable("Component", this, this.storages[0], false))
+      assertTrue(isStorageExportable("Component", this, this.storages[0], true))
+    }
+
+    with(NonRoamableStateComponent::class.java.getAnnotation(State::class.java)!!) {
+      assertFalse(isStorageExportable("Component", this, this.storages[0], false))
+      assertTrue(isStorageExportable("Component", this, this.storages[0], true))
+    }
+    with(SpecialStorage::class.java.getAnnotation(State::class.java)!!) {
+      assertFalse(isStorageExportable("Component", this, this.storages[0], false))
+      assertFalse(isStorageExportable("Component", this, this.storages[0], false))
+    }
+
+
   }
 
   private fun createComponentFileContent(fooValue: String, componentName: String = "A"): String {
