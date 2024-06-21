@@ -10,6 +10,7 @@ import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.ide.vcs.RecentProjectsBranchesProvider
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
@@ -442,9 +443,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   fun getCurrentBranchName(path: String): String? {
-    synchronized(stateLock) {
-      return state.additionalInfo.get(path)?.currentBranch
-    }
+    return RecentProjectsBranchesProvider.getCurrentBranch(path)
   }
 
   fun getProjectName(path: String): String {
