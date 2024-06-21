@@ -17,6 +17,8 @@ public final class Messages {
   public final static @NotNull String TASK_INDEX_CACHE_GET_GROUP = "gradle.taskIndex.cacheGet.group";
   public final static @NotNull String TASK_INDEX_CACHE_SET_GROUP = "gradle.taskIndex.cacheSet.group";
 
+  public final static @NotNull String TASK_MODEL_GROUP = "gradle.taskModel.group";
+
   public final static @NotNull String SOURCE_SET_MODEL_GROUP = "gradle.sourceSetModel.group";
   public final static @NotNull String SOURCE_SET_MODEL_PROJECT_TASK_ARTIFACT_GROUP = "gradle.sourceSetModel.projectArtifact.group";
   public final static @NotNull String SOURCE_SET_MODEL_SKIPPED_PROJECT_TASK_ARTIFACT_GROUP = "gradle.sourceSetModel.projectArtifact.skipped.group";

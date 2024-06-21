@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
+import com.intellij.gradle.toolingExtension.impl.model.taskModel.DefaultGradleTaskModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,15 +41,14 @@ public final class DefaultExternalProject implements ExternalProject {
   @Nullable
   private File buildFile;
   @NotNull
-  private Map<String, DefaultExternalTask> tasks;
-  @NotNull
   private String externalSystemId;
-  @NotNull
-  private DefaultGradleSourceSetModel sourceSetModel;
+
+  private @NotNull DefaultGradleSourceSetModel sourceSetModel;
+  private @NotNull DefaultGradleTaskModel taskModel;
 
   public DefaultExternalProject() {
     childProjects = new TreeMap<>();
-    tasks = new HashMap<>(0);
+    taskModel = new DefaultGradleTaskModel();
     sourceSetModel = new DefaultGradleSourceSetModel();
   }
 
@@ -206,20 +206,7 @@ public final class DefaultExternalProject implements ExternalProject {
   @NotNull
   @Override
   public Map<String, ? extends ExternalTask> getTasks() {
-    return tasks;
-  }
-
-  public void setTasks(@NotNull Map<String, DefaultExternalTask> tasks) {
-    this.tasks = tasks;
-  }
-
-  @Override
-  public @NotNull DefaultGradleSourceSetModel getSourceSetModel() {
-    return sourceSetModel;
-  }
-
-  public void setSourceSetModel(@NotNull DefaultGradleSourceSetModel sourceSetModel) {
-    this.sourceSetModel = sourceSetModel;
+    return taskModel.getTasks();
   }
 
   @NotNull
@@ -247,5 +234,23 @@ public final class DefaultExternalProject implements ExternalProject {
   @Override
   public String toString() {
     return "project '" + id + "'";
+  }
+
+  @Override
+  public @NotNull DefaultGradleSourceSetModel getSourceSetModel() {
+    return sourceSetModel;
+  }
+
+  public void setSourceSetModel(@NotNull DefaultGradleSourceSetModel sourceSetModel) {
+    this.sourceSetModel = sourceSetModel;
+  }
+
+  @Override
+  public @NotNull GradleTaskModel getTaskModel() {
+    return taskModel;
+  }
+
+  public void setTaskModel(@NotNull DefaultGradleTaskModel taskModel) {
+    this.taskModel = taskModel;
   }
 }

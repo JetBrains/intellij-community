@@ -5,6 +5,7 @@ import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.DefaultGradleSourceSetDependencyModel;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
+import com.intellij.gradle.toolingExtension.impl.model.taskModel.DefaultGradleTaskModel;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -709,6 +710,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     replicateProjectModelHierarchyInExternalProjectHierarchy(models);
     associateSourceSetModelsWithExternalProjects(models);
     associateSourceSetDependencyModelsWithSourceSetModels(models);
+    associateTaskModelsWithExternalProjects(models);
   }
 
   private static void replicateBuildModelHierarchyInExternalProjectHierarchy(@NotNull GradleIdeaModelHolder models) {
@@ -763,6 +765,18 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           var sourceSetDependencies = dependencies.get(sourceSetName);
           sourceSet.setDependencies(sourceSetDependencies);
         }
+      }
+    }
+  }
+
+  private static void associateTaskModelsWithExternalProjects(@NotNull GradleIdeaModelHolder models) {
+    for (var buildModel : models.getAllBuilds()) {
+      for (var projectModel : buildModel.getProjects()) {
+        var externalProject = (DefaultExternalProject)models.getProjectModel(projectModel, ExternalProject.class);
+        var taskModel = (DefaultGradleTaskModel)models.getProjectModel(projectModel, GradleTaskModel.class);
+        if (externalProject == null || taskModel == null) continue;
+
+        externalProject.setTaskModel(taskModel);
       }
     }
   }

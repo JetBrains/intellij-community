@@ -9,6 +9,8 @@ import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGra
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetSerialisationService;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetSerialisationService.SourceSetModelReadContext;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetSerialisationService.SourceSetModelWriteContext;
+import com.intellij.gradle.toolingExtension.impl.model.taskModel.DefaultGradleTaskModel;
+import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskSerialisationService;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,17 +44,9 @@ public final class GradleExternalProjectSerializationService implements Serializ
   private static final String PROJECT_DIR_FIELD = "projectDir";
   private static final String PROJECT_BUILD_DIR_FIELD = "buildDir";
   private static final String PROJECT_BUILD_FILE_FIELD = "buildFile";
-  private static final String PROJECT_TASKS_FIELD = "tasks";
   private static final String PROJECT_SOURCE_SET_MODEL_FIELD = "sourceSetModel";
+  private static final String PROJECT_TASK_MODEL_FIELD = "taskModel";
   private static final String PROJECT_CHILD_PROJECTS_FIELD = "childProjects";
-
-  private static final String TASK_NAME_FIELD = "name";
-  private static final String TASK_Q_NAME_FIELD = "qName";
-  private static final String TASK_DESCRIPTION_FIELD = "description";
-  private static final String TASK_GROUP_FIELD = "group";
-  private static final String TASK_TYPE_FIELD = "type";
-  private static final String TASK_IS_TEST_FIELD = "isTest";
-  private static final String TASK_IS_JVM_TEST_FIELD = "isJvmTest";
 
   private final WriteContext myWriteContext = new WriteContext();
   private final ReadContext myReadContext = new ReadContext();
@@ -94,8 +88,8 @@ public final class GradleExternalProjectSerializationService implements Serializ
         writeString(writer, PROJECT_DIR_FIELD, project.getProjectDir().getPath());
         writeString(writer, PROJECT_BUILD_DIR_FIELD, project.getBuildDir().getPath());
         writeFile(writer, PROJECT_BUILD_FILE_FIELD, project.getBuildFile());
-        writeTasks(writer, project);
         writeSourceSetModel(writer, context, project);
+        writeTaskModel(writer, project);
         writeChildProjects(writer, context, project);
       }
       writer.stepOut();
@@ -111,24 +105,6 @@ public final class GradleExternalProjectSerializationService implements Serializ
   private static void writeSourceSetModel(IonWriter writer, WriteContext context, ExternalProject project) {
     writer.setFieldName(PROJECT_SOURCE_SET_MODEL_FIELD);
     GradleSourceSetSerialisationService.writeSourceSetModel(writer, context.sourceSetModel, project.getSourceSetModel());
-  }
-
-  private static void writeTasks(IonWriter writer, ExternalProject project) throws IOException {
-    writeCollection(writer, PROJECT_TASKS_FIELD, project.getTasks().values(), it ->
-      writeTask(writer, it)
-    );
-  }
-
-  private static void writeTask(IonWriter writer, ExternalTask task) throws IOException {
-    writer.stepIn(IonType.STRUCT);
-    writeString(writer, TASK_NAME_FIELD, task.getName());
-    writeString(writer, TASK_Q_NAME_FIELD, task.getQName());
-    writeString(writer, TASK_DESCRIPTION_FIELD, task.getDescription());
-    writeString(writer, TASK_GROUP_FIELD, task.getGroup());
-    writeString(writer, TASK_TYPE_FIELD, task.getType());
-    writeBoolean(writer, TASK_IS_TEST_FIELD, task.isTest());
-    writeBoolean(writer, TASK_IS_JVM_TEST_FIELD, task.isJvmTest());
-    writer.stepOut();
   }
 
   @Nullable
@@ -157,8 +133,8 @@ public final class GradleExternalProjectSerializationService implements Serializ
           externalProject.setProjectDir(assertNotNull(readFile(reader, PROJECT_DIR_FIELD)));
           externalProject.setBuildDir(assertNotNull(readFile(reader, PROJECT_BUILD_DIR_FIELD)));
           externalProject.setBuildFile(assertNotNull(readFile(reader, PROJECT_BUILD_FILE_FIELD)));
-          externalProject.setTasks(readTasks(reader));
           externalProject.setSourceSetModel(readSourceSetModel(reader, context));
+          externalProject.setTaskModel(readTaskModel(reader));
           externalProject.setChildProjects(readChildProjects(reader, context));
         }
       });
@@ -171,31 +147,26 @@ public final class GradleExternalProjectSerializationService implements Serializ
       .stream().collect(Collectors.toMap(it -> it.getName(), it -> it));
   }
 
-  private static Map<String, DefaultExternalTask> readTasks(IonReader reader) {
-    return readList(reader, PROJECT_TASKS_FIELD, () -> readTask(reader))
-      .stream().collect(Collectors.toMap(it -> it.getName(), it -> it));
-  }
-
-  @Nullable
-  private static DefaultExternalTask readTask(IonReader reader) {
-    if (reader.next() == null) return null;
-    reader.stepIn();
-    DefaultExternalTask task = new DefaultExternalTask();
-    task.setName(assertNotNull(readString(reader, TASK_NAME_FIELD)));
-    task.setQName(assertNotNull(readString(reader, TASK_Q_NAME_FIELD)));
-    task.setDescription(readString(reader, TASK_DESCRIPTION_FIELD));
-    task.setGroup(readString(reader, TASK_GROUP_FIELD));
-    task.setType(readString(reader, TASK_TYPE_FIELD));
-    task.setTest(readBoolean(reader, TASK_IS_TEST_FIELD));
-    task.setJvmTest(readBoolean(reader, TASK_IS_JVM_TEST_FIELD));
-    reader.stepOut();
-    return task;
-  }
-
   private static DefaultGradleSourceSetModel readSourceSetModel(@NotNull IonReader reader, @NotNull ReadContext context) {
     assertNotNull(reader.next());
     assertFieldName(reader, PROJECT_SOURCE_SET_MODEL_FIELD);
     return GradleSourceSetSerialisationService.readSourceSetModel(reader, context.sourceSetModel);
+  }
+
+  private static void writeTaskModel(
+    @NotNull IonWriter writer,
+    @NotNull ExternalProject project
+  ) {
+    writer.setFieldName(PROJECT_TASK_MODEL_FIELD);
+    GradleTaskSerialisationService.writeTaskModel(writer, project.getTaskModel());
+  }
+
+  private static @NotNull DefaultGradleTaskModel readTaskModel(
+    @NotNull IonReader reader
+  ) {
+    assertNotNull(reader.next());
+    assertFieldName(reader, PROJECT_TASK_MODEL_FIELD);
+    return GradleTaskSerialisationService.readTaskModel(reader);
   }
 
   private static class ReadContext {

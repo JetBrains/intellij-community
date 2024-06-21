@@ -7,6 +7,7 @@ import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.model.GradleTaskModel
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer
 
@@ -23,5 +24,6 @@ class GradleTaskModelProvider : ProjectImportModelProvider {
     modelConsumer: GradleModelConsumer,
   ) {
     GradleModelProviderUtil.buildModels(controller, buildModel, GradleTaskRequest::class.java, GradleModelConsumer.NOOP)
+    GradleModelProviderUtil.buildModels(controller, buildModel, GradleTaskModel::class.java, modelConsumer)
   }
 }
