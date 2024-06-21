@@ -206,6 +206,13 @@ class NotebookCellInlayManager private constructor(
       createCell(pointerFactory.create(interval))
     }.toMutableList()
 
+    val foldingModel = editor.foldingModel
+    foldingModel.runBatchFoldingOperation({
+                                            _cells.forEach { cell ->
+                                              cell.view?.configureFoldings()
+                                            }
+                                          }, true, false)
+
     cellEventListeners.multicaster.onEditorCellEvents(_cells.map { CellCreated(it) })
     inlaysChanged()
   }

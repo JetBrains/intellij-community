@@ -27,7 +27,10 @@ import org.jetbrains.plugins.notebooks.ui.visualization.NotebookLineMarkerRender
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookTextCellBackgroundLineMarkerRenderer
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.*
-import java.awt.*
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
 import javax.swing.JComponent
 import kotlin.reflect.KClass
 
@@ -70,7 +73,8 @@ class EditorCellView(
       else {
         if (currentComponent is TextEditorCellViewComponent) {
           currentComponent
-        } else {
+        }
+        else {
           TextEditorCellViewComponent(editor, cell)
         }
       }
@@ -382,6 +386,11 @@ class EditorCellView(
     )
   }
 
+  fun configureFoldings() {
+    for (controller: NotebookCellInlayController in controllers) {
+      controller.configureFolding()
+    }
+  }
 
   inner class NotebookGutterLineMarkerRenderer(private val interval: NotebookCellLines.Interval) : NotebookLineMarkerRenderer() {
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {

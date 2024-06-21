@@ -28,8 +28,10 @@ interface NotebookCellInlayController {
     fun compute(
       editor: EditorImpl,
       currentControllers: Collection<NotebookCellInlayController>,
-      intervalIterator: ListIterator<NotebookCellLines.Interval>
+      intervalIterator: ListIterator<NotebookCellLines.Interval>,
     ): NotebookCellInlayController?
+
+    fun foldingUpdate() {}
 
     companion object {
       @JvmField
@@ -37,7 +39,7 @@ interface NotebookCellInlayController {
     }
   }
 
-  abstract class LazyFactory: Factory {
+  abstract class LazyFactory : Factory {
     internal val cellOrdinalsInCreationBlock = hashSetOf<Int>()
 
     abstract fun isAvailable(editor: EditorImpl): Boolean
@@ -80,9 +82,14 @@ interface NotebookCellInlayController {
   /**
    * The method may traverse iterator without returning to the initial position, the iterator is disposable.
    */
-  fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, interval: NotebookCellLines.Interval) { }
+  fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, interval: NotebookCellLines.Interval) {}
 
   fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval, cellView: EditorCellView) {}
+
+  /**
+   * This method will be called in folding batch operation
+   */
+  fun configureFolding() {}
 
   companion object {
     val gutterActionKey = Key<AnAction>("jupyter.editor.cell.gutter.action")
