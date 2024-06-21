@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public final class DefaultExternalProject implements ExternalProject, ExternalProjectPreview {
+public final class DefaultExternalProject implements ExternalProject {
   @NotNull
   private String id;
 

@@ -32,8 +32,7 @@ public class GradleExternalProjectModelBuilder extends AbstractModelBuilderServi
 
   @Override
   public boolean canBuild(@NotNull String modelName) {
-    return ExternalProject.class.getName().equals(modelName) ||
-           ExternalProjectPreview.class.getName().equals(modelName);
+    return ExternalProject.class.getName().equals(modelName);
   }
 
   @Override
