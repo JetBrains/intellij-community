@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.config.AnalysisFlags
@@ -49,7 +49,7 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
     context(KaSession)
     private fun isDeclarationAnnotatedWith(element: PsiElement, annotationClassId: ClassId): Boolean {
         if (element !is KtDeclaration) return false
-        return true == (element.symbol as? KtAnnotated)?.hasAnnotation(annotationClassId)
+        return true == (element.symbol as? KaAnnotated)?.hasAnnotation(annotationClassId)
     }
 
     /**

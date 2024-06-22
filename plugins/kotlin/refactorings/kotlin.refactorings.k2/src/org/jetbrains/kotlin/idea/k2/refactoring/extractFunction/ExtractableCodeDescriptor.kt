@@ -6,8 +6,8 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -62,7 +62,7 @@ data class ExtractableCodeDescriptor(
                         override fun filter(
                             analysisSession: KaSession,
                             annotation: KaAnnotation,
-                            owner: KtAnnotated
+                            owner: KaAnnotated
                         ): Boolean {
                             return annotation.classId in annotationClassIds
                         }

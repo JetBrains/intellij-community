@@ -154,7 +154,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderKeyword(
                 analysisSession: KaSession,
                 keyword: KtKeywordToken,
-                owner: KtAnnotated,
+                owner: KaAnnotated,
                 keywordsRenderer: KtKeywordsRenderer,
                 printer: PrettyPrinter
             ) {
@@ -170,7 +170,7 @@ internal class KotlinIdeDeclarationRenderer(
         annotationListRenderer = object : KtAnnotationListRenderer {
             override fun renderAnnotations(
                 analysisSession: KaSession,
-                owner: KtAnnotated,
+                owner: KaAnnotated,
                 annotationRenderer: KtAnnotationRenderer,
                 printer: PrettyPrinter
             ) {
@@ -200,7 +200,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderAnnotationArguments(
                 analysisSession: KaSession,
                 annotation: KaAnnotation,
-                owner: KtAnnotated,
+                owner: KaAnnotated,
                 annotationRenderer: KtAnnotationRenderer,
                 printer: PrettyPrinter
             ) {
@@ -219,7 +219,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderQualifier(
                 analysisSession: KaSession,
                 annotation: KaAnnotation,
-                owner: KtAnnotated,
+                owner: KaAnnotated,
                 annotationRenderer: KtAnnotationRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
