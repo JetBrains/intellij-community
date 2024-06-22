@@ -155,7 +155,8 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   private fun AdvancedSettingBean.isApplicable(): Boolean =
     when (id) {
       "project.view.do.not.autoscroll.to.libraries" -> !ProjectJdkTable.getInstance().allJdks.isEmpty()
-      "search.everywhere.send.search.history.statistics" -> ApplicationManager.getApplication().isEAP && ApplicationManager.getApplication().isInternal
+      "federated.learning",
+      "federated.learning.search.everywhere" -> ApplicationManager.getApplication().isEAP && ApplicationManager.getApplication().isInternal
       else -> true
     }
 
