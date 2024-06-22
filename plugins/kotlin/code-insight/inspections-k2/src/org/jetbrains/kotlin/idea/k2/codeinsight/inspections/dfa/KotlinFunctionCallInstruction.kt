@@ -118,7 +118,7 @@ class KotlinFunctionCallInstruction(
         arguments: DfaCallArguments
     ): DfaCondition? {
         return when (this) {
-            is KtContractBooleanConstantExpression -> if (booleanConstant) DfaCondition.getTrue() else DfaCondition.getFalse()
+            is KaContractBooleanConstantExpression -> if (booleanConstant) DfaCondition.getTrue() else DfaCondition.getFalse()
             is KtContractBooleanValueParameterExpression -> {
                 parameterSymbol.findDfaValue(callDescriptor, arguments)?.cond(RelationType.EQ, factory.fromDfType(DfTypes.TRUE))
             }
