@@ -112,7 +112,7 @@ class KotlinFunctionCallInstruction(
     }
 
     context(KaSession)
-    private fun KtContractBooleanExpression.toCondition(
+    private fun KaContractBooleanExpression.toCondition(
         factory: DfaValueFactory,
         callDescriptor: KaFunctionCall<*>,
         arguments: DfaCallArguments
