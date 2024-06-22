@@ -741,7 +741,7 @@ internal class KotlinIdeDeclarationRenderer(
                 renderEnumEntryConstantValue(value)
             }
 
-            is KtConstantAnnotationValue -> {
+            is KaAnnotationValue.ConstantValue -> {
                 renderConstantAnnotationValue(value)
             }
 
@@ -796,7 +796,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
-    private fun PrettyPrinter.renderConstantAnnotationValue(value: KtConstantAnnotationValue) {
+    private fun PrettyPrinter.renderConstantAnnotationValue(value: KaAnnotationValue.ConstantValue) {
         with(highlightingManager) {
             val builder = StringBuilder()
             builder.appendCodeSnippetHighlightedByLexer(value.constantValue.renderAsKotlinConstant())

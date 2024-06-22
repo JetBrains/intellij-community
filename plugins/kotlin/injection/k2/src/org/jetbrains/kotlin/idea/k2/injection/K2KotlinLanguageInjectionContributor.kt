@@ -7,7 +7,7 @@ import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
-import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
@@ -87,7 +87,7 @@ private inline fun <reified T : Annotation> KaAnnotatedSymbol.findAnnotation(): 
 context(KaSession)
 private fun KaAnnotation.getStringValueOfArgument(argumentName: String): String? {
     val argumentValueExpression =
-        arguments.firstOrNull { it.name.asString() == argumentName }?.expression as? KtConstantAnnotationValue ?: return null
+        arguments.firstOrNull { it.name.asString() == argumentName }?.expression as? KaAnnotationValue.ConstantValue ?: return null
     return when (val argumentAsConstant = argumentValueExpression.constantValue) {
         is KaConstantValue.KaStringConstantValue -> argumentAsConstant.value
         is KaConstantValue.KaErrorConstantValue -> error("We cannot render this argument as a constant")

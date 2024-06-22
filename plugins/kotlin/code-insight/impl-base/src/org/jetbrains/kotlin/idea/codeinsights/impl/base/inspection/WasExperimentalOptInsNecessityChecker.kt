@@ -31,7 +31,7 @@ internal object WasExperimentalOptInsNecessityChecker {
     private fun getSinceKotlinAnnotationApiVersionArgumentIfPresent(annotations: KtAnnotationsList): ApiVersion? {
         val sinceKotlin = annotations.findAnnotation(StandardClassIds.Annotations.SinceKotlin) ?: return null
         return sinceKotlin.argumentByName(VERSION_ARGUMENT)
-            ?.asSafely<KtConstantAnnotationValue>()
+            ?.asSafely<KaAnnotationValue.ConstantValue>()
             ?.constantValue
             ?.asSafely<KaConstantValue.KaStringConstantValue>()
             ?.let { ApiVersion.parse(it.value) }

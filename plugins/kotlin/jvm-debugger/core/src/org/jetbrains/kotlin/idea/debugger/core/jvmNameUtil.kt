@@ -6,7 +6,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -23,7 +23,7 @@ fun KaNamedFunctionSymbol.getByteCodeMethodName(): String {
         .filter { it.classId?.asFqNameString() == "kotlin.jvm.JvmName" }
         .firstNotNullOfOrNull {
             it.arguments.singleOrNull { a -> a.name.asString() == "name" }
-                ?.expression?.asSafely<KtConstantAnnotationValue>()
+                ?.expression?.asSafely<KaAnnotationValue.ConstantValue>()
                 ?.constantValue?.asSafely<KaConstantValue.KaStringConstantValue>()?.value
         }
     if (jvmName != null) return jvmName
