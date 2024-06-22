@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import kotlin.reflect.KMutableProperty0
 
 /**
  * @see org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
@@ -60,24 +59,45 @@ sealed class K2MoveModel {
         return files.size != 1 || !(files.single() as KtFile).isTargetFile()
     }
 
-    enum class Setting(private val text: @NlsContexts.Checkbox String, val setting: KMutableProperty0<Boolean>) {
+    enum class Setting(private val text: @NlsContexts.Checkbox String) {
         SEARCH_FOR_TEXT(
-            KotlinBundle.message("search.for.text.occurrences"),
-            KotlinCommonRefactoringSettings.getInstance()::MOVE_SEARCH_FOR_TEXT
-        ),
+            KotlinBundle.message("search.for.text.occurrences")
+        ) {
+            override var state: Boolean
+                get() {
+                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT
+                }
+                set(value) {
+                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT = value
+                }
+        },
 
         SEARCH_IN_COMMENTS(
             KotlinBundle.message("search.in.comments.and.strings"),
-            KotlinCommonRefactoringSettings.getInstance()::MOVE_SEARCH_IN_COMMENTS
-        ),
+        ) {
+            override var state: Boolean
+                get() {
+                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS
+                }
+                set(value) {
+                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS = value
+                }
+        },
+
 
         SEARCH_REFERENCES(
-            KotlinBundle.message("checkbox.text.search.references"),
-            KotlinCommonRefactoringSettings.getInstance()::MOVE_SEARCH_REFERENCES
-        );
+            KotlinBundle.message("checkbox.text.search.references")
+        ) {
+            override var state: Boolean
+                get() {
+                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
+                }
+                set(value) {
+                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES = value
+                }
+        };
 
-        var state: Boolean = setting.get()
-            private set
+        abstract var state: Boolean
 
         context(Panel)
         fun createComboBox() {
