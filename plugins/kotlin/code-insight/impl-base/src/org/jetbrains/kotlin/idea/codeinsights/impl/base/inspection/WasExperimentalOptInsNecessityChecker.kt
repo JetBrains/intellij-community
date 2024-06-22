@@ -37,7 +37,7 @@ internal object WasExperimentalOptInsNecessityChecker {
             ?.let { ApiVersion.parse(it.value) }
     }
 
-    private fun getWasExperimentalAnnotationMarkerClassArgument(annotation: KtAnnotationApplicationWithArgumentsInfo): Collection<ClassId> {
+    private fun getWasExperimentalAnnotationMarkerClassArgument(annotation: KaAnnotation): Collection<ClassId> {
         return annotation.argumentByName(OptInNames.WAS_EXPERIMENTAL_ANNOTATION_CLASS)
             ?.asSafely<KtArrayAnnotationValue>()
             ?.values
@@ -50,9 +50,9 @@ internal object WasExperimentalOptInsNecessityChecker {
         return type.classId.takeIf { !it.isLocal }
     }
 
-    private fun KtAnnotationsList.findAnnotation(classId: ClassId): KtAnnotationApplicationWithArgumentsInfo? =
+    private fun KtAnnotationsList.findAnnotation(classId: ClassId): KaAnnotation? =
         annotationsByClassId(classId).firstOrNull()
 
-    private fun KtAnnotationApplicationWithArgumentsInfo.argumentByName(name: Name): KtAnnotationValue? =
+    private fun KaAnnotation.argumentByName(name: Name): KtAnnotationValue? =
         arguments.firstOrNull { it.name == name }?.expression
 }

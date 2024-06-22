@@ -264,7 +264,7 @@ private data class ExperimentalMarkers(
 
 context(KaSession)
 private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
-    fun KtAnnotationApplicationWithArgumentsInfo.isExperimentalMarker(): Boolean {
+    fun KaAnnotation.isExperimentalMarker(): Boolean {
         val id = classId
         if (id == null) return false
         val annotations = getClassOrObjectSymbolByClassId(id)?.annotations ?: return false
@@ -273,7 +273,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
 
     val container = commonParent.getStrictParentOfType<KtNamedFunction>() ?: return ExperimentalMarkers.empty
 
-    val propagatingMarkerDescriptors = mutableListOf<KtAnnotationApplicationWithArgumentsInfo>()
+    val propagatingMarkerDescriptors = mutableListOf<KaAnnotation>()
     val optInMarkerNames = mutableListOf<FqName>()
     for (annotationEntry in container.symbol.annotations) {
         val fqName = annotationEntry.classId?.asSingleFqName() ?: continue

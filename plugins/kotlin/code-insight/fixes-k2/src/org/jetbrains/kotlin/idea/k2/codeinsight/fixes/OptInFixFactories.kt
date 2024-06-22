@@ -7,7 +7,7 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -107,7 +107,7 @@ private object OptInGeneralUtils : OptInGeneralUtilsBase() {
         }
     }
 
-    private fun findMarkerClassId(annotation: KtAnnotationApplicationWithArgumentsInfo): ClassId? {
+    private fun findMarkerClassId(annotation: KaAnnotation): ClassId? {
         val argument = annotation.arguments.find { arg -> arg.name == OptInNames.OPT_IN_ANNOTATION_CLASS } ?: return null
         val value = argument.expression as? KtKClassAnnotationValue ?: return null
         val type = value.type as? KtNonErrorClassType ?: return null

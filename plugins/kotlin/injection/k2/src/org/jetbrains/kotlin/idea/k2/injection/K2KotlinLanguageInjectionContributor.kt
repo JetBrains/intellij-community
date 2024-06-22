@@ -6,7 +6,7 @@ import com.intellij.psi.PsiReference
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
@@ -72,7 +72,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
     }
 
     context(KaSession)
-    private fun injectionInfoByAnnotation(injectAnnotation: KtAnnotationApplicationWithArgumentsInfo): InjectionInfo? {
+    private fun injectionInfoByAnnotation(injectAnnotation: KaAnnotation): InjectionInfo? {
         val languageId = injectAnnotation.getStringValueOfArgument(LanguageAnnotation::value.name) ?: return null
         val prefix = injectAnnotation.getStringValueOfArgument(LanguageAnnotation::prefix.name)
         val suffix = injectAnnotation.getStringValueOfArgument(LanguageAnnotation::suffix.name)
@@ -81,11 +81,11 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
 }
 
 context(KaSession)
-private inline fun <reified T : Annotation> KaAnnotatedSymbol.findAnnotation(): KtAnnotationApplicationWithArgumentsInfo? =
+private inline fun <reified T : Annotation> KaAnnotatedSymbol.findAnnotation(): KaAnnotation? =
     annotations.find { it.classId?.asFqNameString() == T::class.java.name }
 
 context(KaSession)
-private fun KtAnnotationApplicationWithArgumentsInfo.getStringValueOfArgument(argumentName: String): String? {
+private fun KaAnnotation.getStringValueOfArgument(argumentName: String): String? {
     val argumentValueExpression =
         arguments.firstOrNull { it.name.asString() == argumentName }?.expression as? KtConstantAnnotationValue ?: return null
     return when (val argumentAsConstant = argumentValueExpression.constantValue) {

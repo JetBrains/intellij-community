@@ -204,7 +204,7 @@ internal class KotlinIdeDeclarationRenderer(
                 annotationRenderer: KtAnnotationRenderer,
                 printer: PrettyPrinter
             ) {
-                if (annotation !is KtAnnotationApplicationWithArgumentsInfo) return
+                if (annotation !is KaAnnotation) return
 
                 if (annotation.arguments.isEmpty()) return
                 printer.printCollection(annotation.arguments, prefix = "(", postfix = ")") { argument ->
@@ -817,7 +817,7 @@ internal class KotlinIdeDeclarationRenderer(
         renderAnnotationApplication(application.annotationValue)
     }
 
-    private fun PrettyPrinter.renderAnnotationApplication(value: KtAnnotationApplicationWithArgumentsInfo) {
+    private fun PrettyPrinter.renderAnnotationApplication(value: KaAnnotation) {
         val shortClassName = value.classId?.shortClassName
         if (shortClassName != null) {
             append(highlight("@$shortClassName") {
