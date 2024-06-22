@@ -53,7 +53,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   val presentableName: String? = null,
   private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
   private val fileChangeSubscriber: FileChangeSubscriber? = null,
-  private val settingsCategory: SettingsCategory = SettingsCategory.OTHER
+  private val settingsCategory: SettingsCategory = SettingsCategory.OTHER,
 ) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
   internal val isUseVfs: Boolean
     get() = fileChangeSubscriber != null
@@ -133,12 +133,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
           }
           schemes.add(scheme)
         }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
+        catch (e: CancellationException) { throw e }
+        catch (e: ProcessCanceledException) { throw e }
         catch (e: Throwable) {
           LOG.error(PluginException(e, provider.pluginId))
         }
@@ -178,12 +174,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
         return scheme
       }
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
+    catch (e: CancellationException) { throw e }
+    catch (e: ProcessCanceledException) { throw e }
     catch (e: Throwable) {
       LOG.error("Cannot read scheme from $resourceName", e)
     }
@@ -231,9 +223,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     val filesToDelete = HashSet(filesToDelete)
     // the caller must call SchemeLoader.apply to bring back scheduled for deleting files
     this.filesToDelete.removeAll(filesToDelete)
-    // SchemeLoader can use a retained list to bring back previously scheduled for deleting file,
-    // but what if someone calls save() during a load and file will be deleted, although you should be loaded by a new load session
-    // (because modified on disk)
+    // `SchemeLoader` can use a retained list to bring back previously scheduled for deleting file;
+    // but what if someone calls `save()` during a load and file will be deleted, although it should be loaded by a new load session
+    // (because modified on disk)?
     return SchemeLoader(schemeManager = this, oldList = schemeListManager.data, filesToDelete, isDuringLoad)
   }
 
@@ -375,12 +367,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       try {
         saveScheme(scheme, nameGenerator, filesToDelete)
       }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
+      catch (e: CancellationException) { throw e }
+      catch (e: ProcessCanceledException) { throw e }
       catch (e: Throwable) {
         errorCollector.addError(RuntimeException("Cannot save scheme $fileSpec/$scheme", e))
       }
@@ -522,7 +510,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
         if (file == null) {
           file = SlowOperations.knownIssue("IDEA-338219, EA-867032").use {
-            dir.getOrCreateChild(fileName, this)
+            dir.getOrCreateChild(requestor = this, fileName, directory = false)
           }
         }
 

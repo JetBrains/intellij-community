@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosCollector
@@ -34,7 +32,7 @@ open class DirectoryBasedStorage(
   override val controller: SettingsController? = null,
 ) : StateStorageBase<StateMap>() {
   private var componentName: String? = null
-  @Volatile private var nameToLineSeparatorMap: Map<String, LineSeparator?> = java.util.Map.of()
+  @Volatile private var nameToLineSeparatorMap: Map<String, LineSeparator?> = @Suppress("RemoveRedundantQualifierName") java.util.Map.of()
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   override val roamingType: RoamingType?
@@ -103,14 +101,16 @@ open class DirectoryBasedStorage(
       throw e.cause!!
     }
     catch (_: NoSuchFileException) {
+      @Suppress("RemoveRedundantQualifierName")
       return Pair(java.util.Map.of(), java.util.Map.of())
     }
     catch (_: NotDirectoryException) {
+      @Suppress("RemoveRedundantQualifierName")
       return Pair(java.util.Map.of(), java.util.Map.of())
     }
   }
 
-  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap.get(name) ?: LineSeparator.getSystemLineSeparator()
+  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap[name] ?: LineSeparator.getSystemLineSeparator()
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
@@ -308,7 +308,7 @@ open class DirectoryBasedStorage(
 
         try {
           if (useVfs) {
-            val file = dir!!.getOrCreateChild(fileName, this)
+            val file = dir!!.getOrCreateChild(requestor = this, fileName, directory = false)
             writeFile(cachedFile = null, requestor = this, file, dataWriter, getOrDetectLineSeparator(file), prependXmlProlog = false)
           }
           else {
