@@ -37,7 +37,7 @@ private fun getAssociatedClass(symbol: KaSymbol): KaClassSymbol? {
     // both variables and functions are callable, and only they can be referenced by "this"
     if (symbol !is KaCallableSymbol) return null
     return when (symbol) {
-        is KaNamedFunctionSymbol, is KtPropertySymbol ->
+        is KaNamedFunctionSymbol, is KaPropertySymbol ->
             if (symbol.isExtension) symbol.receiverType?.expandedSymbol else symbol.containingSymbol as? KaClassSymbol
         is KtVariableLikeSymbol -> {
             val variableType = symbol.returnType as? KtFunctionalType
