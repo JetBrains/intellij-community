@@ -33,7 +33,7 @@ internal object WasExperimentalOptInsNecessityChecker {
         return sinceKotlin.argumentByName(VERSION_ARGUMENT)
             ?.asSafely<KaAnnotationValue.ConstantValue>()
             ?.value
-            ?.asSafely<KaConstantValue.KaStringConstantValue>()
+            ?.asSafely<KaConstantValue.StringValue>()
             ?.let { ApiVersion.parse(it.value) }
     }
 

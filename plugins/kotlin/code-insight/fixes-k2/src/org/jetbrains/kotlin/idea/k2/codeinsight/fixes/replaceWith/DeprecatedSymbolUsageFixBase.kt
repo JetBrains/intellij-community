@@ -150,10 +150,10 @@ fun fetchReplaceWithPattern(
       (annotation.arguments.find { it.name.asString() == "replaceWith" }?.expression as? KaAnnotationValue.NestedAnnotationValue)?.annotationValue
             ?: return null
     val pattern =
-        ((replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaConstantAnnotationValue)?.value as? KaConstantValue.KaStringConstantValue)?.value
+        ((replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaConstantAnnotationValue)?.value as? KaConstantValue.StringValue)?.value
             ?: return null
     val imports =
-        (replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaArrayAnnotationValue)?.values?.mapNotNull { ((it as? KaConstantAnnotationValue)?.value as? KaConstantValue.KaStringConstantValue)?.value }
+        (replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaArrayAnnotationValue)?.values?.mapNotNull { ((it as? KaConstantAnnotationValue)?.value as? KaConstantValue.StringValue)?.value }
             ?: emptyList()
 
     return ReplaceWithData(pattern, imports, true)
