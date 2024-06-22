@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 object VariableOrFunctionWeigher {
@@ -25,7 +25,7 @@ object VariableOrFunctionWeigher {
     context(KaSession)
 fun addWeight(lookupElement: LookupElement, symbol: KaSymbol) {
         when (symbol) {
-            is KtVariableLikeSymbol -> {
+            is KaVariableSymbol -> {
                 lookupElement.variableOrFunction = Weight.VARIABLE
             }
             is KaFunctionSymbol -> {

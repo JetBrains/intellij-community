@@ -48,9 +48,9 @@ sealed interface TypedCallTarget<out S : KaCallableSymbol, out C : KtCallableSig
 class VariableCallTarget(
     override val caller: KtElement,
     override val call: KaCall,
-    override val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KtVariableLikeSymbol>
-) : TypedCallTarget<KtVariableLikeSymbol, KtVariableLikeSignature<KtVariableLikeSymbol>> {
-    override val symbol: KtVariableLikeSymbol
+    override val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>
+) : TypedCallTarget<KaVariableSymbol, KtVariableLikeSignature<KaVariableSymbol>> {
+    override val symbol: KaVariableSymbol
         get() = partiallyAppliedSymbol.symbol
 }
 
@@ -175,7 +175,7 @@ object KotlinCallProcessor {
                                 processCallTarget(FunctionCallTarget(element, call, partiallyAppliedSymbol))
                             }
 
-                            is KtVariableLikeSymbol -> {
+                            is KaVariableSymbol -> {
                                 val signature = symbol.asSignature()
                                 val partiallyAppliedSymbol = KaPartiallyAppliedVariableSymbol(signature, null, null)
                                 val call = KaSimpleVariableAccessCall(partiallyAppliedSymbol, linkedMapOf(), KaSimpleVariableAccess.Read)

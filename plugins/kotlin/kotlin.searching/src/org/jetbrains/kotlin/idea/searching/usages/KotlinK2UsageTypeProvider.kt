@@ -60,7 +60,7 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
                 is KaPackageSymbol ->
                     if (targetElement.psi is PsiPackage) getPackageUsageType(refExpr) else getClassUsageType(refExpr)
 
-                is KtVariableLikeSymbol -> getVariableUsageType(refExpr)
+                is KaVariableSymbol -> getVariableUsageType(refExpr)
                 is KaFunctionSymbol -> getFunctionUsageType(targetElement)
                 else -> null
             }

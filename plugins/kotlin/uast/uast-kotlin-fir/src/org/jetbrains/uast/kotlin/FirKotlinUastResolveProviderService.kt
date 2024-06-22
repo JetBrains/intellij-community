@@ -224,7 +224,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 analyzeForUast(ktExpression) {
                     val candidate = candidatePointer.restoreSymbol() ?: return@forEach
                     val psi = when (candidate) {
-                        is KtVariableLikeSymbol -> psiForUast(candidate)
+                        is KaVariableSymbol -> psiForUast(candidate)
                         is KaFunctionSymbol -> toPsiMethod(candidate, ktExpression)
                     }?: return@forEach
                     yield(psi)

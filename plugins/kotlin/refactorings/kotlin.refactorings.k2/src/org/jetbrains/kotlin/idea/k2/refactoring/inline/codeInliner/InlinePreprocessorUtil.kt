@@ -258,7 +258,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                     getThisQualifier(value) to (originalSymbolReceiverType != null && value.type.isEqualTo(originalSymbolReceiverType) ||
                                                  originalSymbolDispatchType != null && value.type.isEqualTo(originalSymbolDispatchType))
                 } else {
-                    val functionalType = (partiallyAppliedSymbol?.symbol as? KtVariableLikeSymbol)?.returnType as? KtFunctionalType
+                    val functionalType = (partiallyAppliedSymbol?.symbol as? KaVariableSymbol)?.returnType as? KtFunctionalType
                     val receiverType = functionalType?.receiverType
                     if (receiverType == null) {
                         null to true

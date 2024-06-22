@@ -53,7 +53,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
     @OptIn(KaAllowAnalysisOnEdt::class)
     private fun <T : Any> resolveCandidates(
         context: ExpressionContext,
-        mapper: context(KaSession) (KtFile, Sequence<KtVariableLikeSymbol>) -> T?
+        mapper: context(KaSession) (KtFile, Sequence<KaVariableSymbol>) -> T?
     ): T? {
         val project = context.project
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
@@ -75,7 +75,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
 
                     val scope = file.getScopeContextForPosition(contextElement).getCompositeScope { it !is KaScopeKind.ImportingScope }
                     val variables = scope.getCallableSymbols()
-                      .filterIsInstance<KtVariableLikeSymbol>()
+                      .filterIsInstance<KaVariableSymbol>()
                       .filter { !it.name.isSpecial && shouldDisplayVariable(it, file) }
                       .filter { matcher == null || matcher. match(it.returnType) }
 
@@ -86,7 +86,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
     }
 
     context(KaSession)
-    private fun shouldDisplayVariable(variable: KtVariableLikeSymbol, file: KtFile): Boolean {
+    private fun shouldDisplayVariable(variable: KaVariableSymbol, file: KtFile): Boolean {
         return when (variable) {
             is KaValueParameterSymbol, is KaLocalVariableSymbol -> true
             is KaKotlinPropertySymbol -> variable.psi?.containingFile == file

@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -56,7 +56,7 @@ class KotlinDeclarationNameValidator(
                 val scope =
                     visibleDeclarationsContext.containingKtFile.getScopeContextForPosition(visibleDeclarationsContext).getCompositeScope()
                 val containingClassSymbol = lazy(LazyThreadSafetyMode.NONE) { visibleDeclarationsContext.containingClass()?.getClassOrObjectSymbol() }
-                scope.getCallableSymbols(identifier).filterIsInstance<KtVariableLikeSymbol>().any {
+                scope.getCallableSymbols(identifier).filterIsInstance<KaVariableSymbol>().any {
                     !it.isExtension && (containingClassSymbol.value?.let { cl -> it.isVisibleInClass(cl) } != false)
                 }
             }

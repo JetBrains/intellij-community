@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -94,7 +94,7 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
 
     context(KaSession)
     private fun KtExpression.receiver(
-        callSymbol: KtVariableLikeSymbol,
+      callSymbol: KaVariableSymbol,
     ): KaSymbol? {
         when (val receiverExpression = (this as? KtDotQualifiedExpression)?.receiverExpression) {
             is KtThisExpression -> return receiverExpression.instanceReference.mainReference.resolveToSymbol()

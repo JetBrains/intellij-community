@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
@@ -90,7 +90,7 @@ internal class VariableLookupElementFactory {
     @OptIn(KaExperimentalApi::class)
     private fun markIfSyntheticJavaProperty(
         lookupElementBuilder: LookupElementBuilder,
-        symbol: KtVariableLikeSymbol
+        symbol: KaVariableSymbol
     ): LookupElementBuilder = when (symbol) {
         is KaSyntheticJavaPropertySymbol -> {
             val getterName = symbol.javaGetterName.asString()

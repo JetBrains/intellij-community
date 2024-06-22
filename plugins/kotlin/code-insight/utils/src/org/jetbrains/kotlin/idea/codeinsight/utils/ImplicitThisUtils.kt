@@ -39,7 +39,7 @@ private fun getAssociatedClass(symbol: KaSymbol): KaClassSymbol? {
     return when (symbol) {
         is KaNamedFunctionSymbol, is KaPropertySymbol ->
             if (symbol.isExtension) symbol.receiverType?.expandedSymbol else symbol.containingSymbol as? KaClassSymbol
-        is KtVariableLikeSymbol -> {
+        is KaVariableSymbol -> {
             val variableType = symbol.returnType as? KtFunctionalType
             variableType?.receiverType?.expandedSymbol
         }

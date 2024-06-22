@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.*
 
 class KtVariableDescriptor(
     val module: KaModule,
-    val pointer: KaSymbolPointer<KtVariableLikeSymbol>,
+    val pointer: KaSymbolPointer<KaVariableSymbol>,
     val type: DfType,
     val hash: Int
 ) : JvmVariableDescriptor() {
@@ -94,7 +94,7 @@ class KtVariableDescriptor(
         }
 
         context(KaSession)
-        internal fun KtVariableLikeSymbol.variableDescriptor(): KtVariableDescriptor {
+        internal fun KaVariableSymbol.variableDescriptor(): KtVariableDescriptor {
             return KtVariableDescriptor(useSiteModule, this.createPointer(), this.returnType.toDfType(), this.name.hashCode())
         }
 
@@ -133,7 +133,7 @@ class KtVariableDescriptor(
         fun createFromSimpleName(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
             val varFactory = factory.varFactory
             if (expr !is KtSimpleNameExpression) return null
-            val symbol: KtVariableLikeSymbol = expr.mainReference.resolveToSymbol() as? KtVariableLikeSymbol ?: return null
+            val symbol: KaVariableSymbol = expr.mainReference.resolveToSymbol() as? KaVariableSymbol ?: return null
             if (symbol is KaValueParameterSymbol || symbol is KaLocalVariableSymbol) {
                 return varFactory.createVariableValue(symbol.variableDescriptor())
             }
@@ -173,7 +173,7 @@ class KtVariableDescriptor(
             return null
         }
 
-        private fun isTrackableProperty(target: KtVariableLikeSymbol?) =
+        private fun isTrackableProperty(target: KaVariableSymbol?) =
             target is KaPropertySymbol && target.getter?.isDefault != false && target.setter?.isDefault != false
                     && !target.isDelegatedProperty && target.modality == Modality.FINAL
                     && !target.isExtension && target.backingFieldSymbol?.hasAnnotation(JvmStandardClassIds.VOLATILE_ANNOTATION_CLASS_ID) == false
