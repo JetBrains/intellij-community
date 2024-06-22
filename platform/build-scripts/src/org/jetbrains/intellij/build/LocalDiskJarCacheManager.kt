@@ -9,7 +9,6 @@ import org.jetbrains.intellij.build.impl.computeHashForModuleOutput
 import java.nio.file.*
 import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.name
 
 // `CREATE_NEW`: Ensure that we don't create a new file in a location if one already exists.
 // This is important for the computation of distribution checksums,
@@ -40,7 +39,7 @@ internal fun createSourceAndCacheStrategyList(sources: List<Source>, productionC
             ModuleOutputSourceAndCacheStrategy(source = source, path = productionClassOutDir.relativize(dir).toString())
           }
           else {
-            ModuleOutputSourceAndCacheStrategy(source = source, path = dir.name)
+            throw UnsupportedOperationException("$source is not supported")
           }
         }
         is InMemoryContentSource -> InMemorySourceAndCacheStrategy(source)

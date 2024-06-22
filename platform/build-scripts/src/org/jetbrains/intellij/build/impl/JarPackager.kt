@@ -256,7 +256,7 @@ class JarPackager private constructor(
 
   internal suspend fun computeSourcesForModule(item: ModuleItem, layout: BaseLayout?, searchableOptionSet: SearchableOptionSetDescriptor?) {
     val moduleName = item.moduleName
-    val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
+    val extraContent = moduleOutputPatcher.getPatchedExtraContent(moduleName)
     val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
 
     val module = context.findRequiredModule(moduleName)
@@ -266,7 +266,7 @@ class JarPackager private constructor(
     val packToDir = context.options.isUnpackedDist &&
                     !item.relativeOutputFile.contains('/') &&
                     (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
-                    patchedDirs.isEmpty() &&
+                    extraContent.isEmpty() &&
                     extraExcludes.isEmpty()
 
     val outFile = outDir.resolve(item.relativeOutputFile)
@@ -288,9 +288,7 @@ class JarPackager private constructor(
     }
 
     // must be before module output to override
-    for (dir in patchedDirs) {
-      moduleSources.add(DirSource(dir = dir))
-    }
+    moduleSources.addAll(extraContent)
 
     if (searchableOptionSet != null) {
       addSearchableOptionSources(layout = layout, moduleName = moduleName, module = module, moduleSources = moduleSources, searchableOptionSet = searchableOptionSet)

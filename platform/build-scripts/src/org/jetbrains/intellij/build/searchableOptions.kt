@@ -7,9 +7,11 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
@@ -17,11 +19,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
-internal data class FileSource(
+@Internal
+@Serializable
+data class FileSource(
   @JvmField val relativePath: String,
   override var size: Int,
   override var hash: Long,
-  @JvmField val file: Path,
+  @JvmField  @Contextual val file: Path,
 ) : Source
 
 @Serializable
