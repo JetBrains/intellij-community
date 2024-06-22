@@ -10706,7 +10706,6 @@ com.intellij.ui.tabs.JBTabsPresentation
 - a:getTabsPosition():com.intellij.ui.tabs.JBTabsPosition
 - a:isHideTabs():Z
 - a:isSingleRow():Z
-- a:setActiveTabFillIn(java.awt.Color):com.intellij.ui.tabs.JBTabsPresentation
 - a:setAlphabeticalMode(Z):com.intellij.ui.tabs.JBTabsPresentation
 - a:setEmptyText(java.lang.String):com.intellij.ui.tabs.JBTabsPresentation
 - a:setFirstTabOffset(I):V
