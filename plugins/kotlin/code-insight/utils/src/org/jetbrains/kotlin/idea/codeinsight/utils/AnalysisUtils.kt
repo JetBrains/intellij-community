@@ -109,4 +109,4 @@ fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): K
  */
 context(KaSession)
 fun KaCallableSymbol.canBeUsedAsExtension(): Boolean =
-    isExtension || this is KaVariableLikeSymbol && (returnType as? KaFunctionalType)?.hasReceiver == true
+    isExtension || this is KaVariableSymbol && (returnType as? KaFunctionalType)?.hasReceiver == true
