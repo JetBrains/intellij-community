@@ -26,16 +26,14 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
 
     fun toDescriptor(): K2MoveSourceDescriptor<T>?
 
-    context(Panel)
-    fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
+    fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
     class FileSource(fsItems: Set<PsiFileSystemItem>) : K2MoveSourceModel<PsiFileSystemItem> {
         override var elements: Set<PsiFileSystemItem> = fsItems
 
         override fun toDescriptor(): K2MoveSourceDescriptor.FileSource = K2MoveSourceDescriptor.FileSource(elements)
 
-        context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+        override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = elements.firstOrNull()?.project ?: return
 
             val presentableFiles = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
@@ -46,7 +44,7 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
                 }
             }
 
-            group(RefactoringBundle.message("move.files.group")) {
+            panel.group(RefactoringBundle.message("move.files.group")) {
                 lateinit var list: JBList<TargetPresentation>
                 row {
                     list = cell(JBList(CollectionListModel(presentableFiles)).apply {
@@ -65,8 +63,7 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
 
         override fun toDescriptor(): K2MoveSourceDescriptor.ElementSource = K2MoveSourceDescriptor.ElementSource(elements)
 
-        context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+        override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             fun getDeclarationsContainers(elementsToMove: Collection<KtNamedDeclaration>): Set<KtDeclarationContainer> = elementsToMove
                 .mapNotNull { it.parent as? KtDeclarationContainer }
                 .toSet()
@@ -93,7 +90,7 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
                 return@underModalProgress memberInfos(elements, allDeclarations.toList())
             }
 
-            group(RefactoringBundle.message("move.declarations.group"), indent = false) {
+            panel.group(RefactoringBundle.message("move.declarations.group"), indent = false) {
                 row {
                     memberSelectionPanel = cell(KotlinMemberSelectionPanel(memberInfo = memberInfos)).align(Align.FILL).component
                     val table = memberSelectionPanel.table

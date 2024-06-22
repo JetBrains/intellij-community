@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.openapi.project.Project
@@ -22,15 +22,15 @@ internal class K2MoveDialog(project: Project, private val model: K2MoveModel) : 
 
     override fun createCenterPanel(): JComponent {
         mainPanel = panel {
-            model.target.buildPanel(::setErrorText, ::validateRefactorButton)
-            model.source.buildPanel(::setErrorText, ::validateRefactorButton)
+            model.target.buildPanel(this, ::setErrorText, ::validateRefactorButton)
+            model.source.buildPanel(this, ::setErrorText, ::validateRefactorButton)
             row {
                 panel {
-                    model.searchForText.createComboBox()
-                    if (model.inSourceRoot) model.searchReferences.createComboBox()
+                    model.searchForText.createComboBox(this)
+                    if (model.inSourceRoot) model.searchReferences.createComboBox(this)
                 }.align(AlignY.TOP + AlignX.LEFT)
                 panel {
-                    model.searchInComments.createComboBox()
+                    model.searchInComments.createComboBox(this)
                 }.align(AlignY.TOP + AlignX.RIGHT)
             }
         }

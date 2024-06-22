@@ -34,8 +34,7 @@ sealed interface K2MoveTargetModel {
 
     fun toDescriptor(): K2MoveTargetDescriptor
 
-    context(Panel)
-    fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
+    fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
     open class SourceDirectory(
         override var pkgName: FqName,
@@ -49,10 +48,9 @@ sealed interface K2MoveTargetModel {
 
         protected lateinit var destinationChooser: KotlinDestinationFolderComboBox
 
-        context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+        override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = directory.project
-            row(KotlinBundle.message("label.text.package")) {
+            panel.row(KotlinBundle.message("label.text.package")) {
                 pkgChooser = cell(
                     PackageNameReferenceEditorCombo(
                         "",
@@ -65,7 +63,7 @@ sealed interface K2MoveTargetModel {
                 }
                 pkgChooser.prependItem(pkgName.asString())
             }
-            row(KotlinBundle.message("label.text.destination")) {
+            panel.row(KotlinBundle.message("label.text.destination")) {
                 destinationChooser = cell(object : KotlinDestinationFolderComboBox() {
                     override fun getTargetPackage(): String {
                         return pkgChooser.text
@@ -117,11 +115,10 @@ sealed interface K2MoveTargetModel {
 
         private lateinit var fileChooser: TextFieldWithBrowseButton
 
-        context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
-            super.buildPanel(onError, revalidateButtons)
+        override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+            super.buildPanel(panel, onError, revalidateButtons)
             val project = directory.project
-            row(KotlinBundle.message("label.text.file")) {
+            panel.row(KotlinBundle.message("label.text.file")) {
                 fileChooser = cell(TextFieldWithBrowseButton()).align(AlignX.FILL).component
                 fileChooser.text = fileName
                 fileChooser.addActionListener {

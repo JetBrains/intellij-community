@@ -99,9 +99,8 @@ sealed class K2MoveModel {
 
         abstract var state: Boolean
 
-        context(Panel)
-        fun createComboBox() {
-            row {
+        fun createComboBox(panel: Panel) {
+            panel.row {
                 checkBox(text).bindSelected(::state)
             }.layout(RowLayout.PARENT_GRID)
         }
