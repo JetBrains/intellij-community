@@ -98,7 +98,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
 
         context(KaSession)
         override fun KtExpression.evaluateAsConstantInt(): Int? =
-            (evaluate() as? KaConstantValue.KaIntConstantValue)?.value
+            (evaluate() as? KaConstantValue.IntValue)?.value
     }
 
     companion object {
