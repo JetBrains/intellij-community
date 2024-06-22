@@ -56,7 +56,7 @@ context(KaSession)
 private fun filterCandidate(
     candidateInfo: KtCallCandidateInfo,
     callElement: KtElement,
-    fileSymbol: KtFileSymbol,
+    fileSymbol: KaFileSymbol,
     explicitReceiver: KtExpression?
 ): Boolean {
     val candidateCall = candidateInfo.candidate
@@ -70,7 +70,7 @@ context(KaSession)
 fun filterCandidateByReceiverTypeAndVisibility(
     signature: KtFunctionLikeSignature<KaFunctionSymbol>,
     callElement: KtElement,
-    fileSymbol: KtFileSymbol,
+    fileSymbol: KaFileSymbol,
     explicitReceiver: KtExpression?,
     subtypingErrorTypePolicy: KaSubtypingErrorTypePolicy = KaSubtypingErrorTypePolicy.STRICT,
 ): Boolean {
