@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -290,34 +289,21 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (!isValidName(name)) {
       throw new IOException(CoreBundle.message("file.invalid.name.error", name));
     }
-
     if (!parent.exists() || !parent.isDirectory()) {
       throw new IOException(IdeCoreBundle.message("vfs.target.not.directory.error", parent.getPath()));
     }
 
-    File ioParent = convertToIOFile(parent);
-    if (!ioParent.isDirectory()) {
-      throw new IOException(IdeCoreBundle.message("target.not.directory.error", ioParent.getPath()));
-    }
-
     if (!auxCreateFile(parent, name)) {
-      File ioFile = new File(ioParent, name);
-      VirtualFile existing = parent.findChild(name);
-      boolean created = FileUtilRt.createIfNotExists(ioFile);
-      if (!created) {
-        if (existing != null) {
-          throw new IOException(IdeCoreBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + name));
-        }
-
-        throw new IOException(IdeCoreBundle.message("new.file.failed.error", ioFile.getPath()));
-      }
-      else if (existing != null) {
-        // wow, IO created file successfully even though it already existed in VFS. Maybe we got dir case sensitivity wrong?
-        boolean oldCaseSensitive = parent.isCaseSensitive();
-        FileAttributes.CaseSensitivity actualSensitivity = FileSystemUtil.readParentCaseSensitivity(new File(existing.getPath()));
-        if ((actualSensitivity == FileAttributes.CaseSensitivity.SENSITIVE) != oldCaseSensitive) {
+      var nioFile = convertToNioFileAndCheck(parent, false).resolve(name);
+      var existing = parent.findChild(name);
+      NioFiles.createIfNotExists(nioFile);
+      if (existing != null) {
+        // Wow, I/O created the file successfully even though it already existed in VFS. Maybe we got dir case sensitivity wrong?
+        var knownCS = parent.isCaseSensitive();
+        var actualCS = FileSystemUtil.readParentCaseSensitivity(new File(existing.getPath()));
+        if ((actualCS == FileAttributes.CaseSensitivity.SENSITIVE) != knownCS) {
           // we need to update case sensitivity
-          VFilePropertyChangeEvent event = VirtualDirectoryImpl.generateCaseSensitivityChangedEvent(parent, actualSensitivity);
+          var event = VirtualDirectoryImpl.generateCaseSensitivityChangedEvent(parent, actualCS);
           if (event != null) {
             RefreshQueue.getInstance().processEvents(false, List.of(event));
           }

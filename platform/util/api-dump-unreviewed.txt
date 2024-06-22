@@ -1584,6 +1584,7 @@ f:com.intellij.openapi.util.io.JarUtil
 f:com.intellij.openapi.util.io.NioFiles
 - sf:BROKEN_SYMLINK:java.nio.file.attribute.BasicFileAttributes
 - s:createDirectories(java.nio.file.Path):java.nio.file.Path
+- s:createIfNotExists(java.nio.file.Path):java.nio.file.Path
 - s:createParentDirectories(java.nio.file.Path):java.nio.file.Path
 - s:deleteRecursively(java.nio.file.Path):V
 - s:deleteRecursively(java.nio.file.Path,java.util.function.Consumer):V

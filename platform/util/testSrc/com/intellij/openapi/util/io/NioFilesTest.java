@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -137,6 +138,25 @@ public class NioFilesTest {
     assertThrows(NoSuchFileException.class, () -> Files.writeString(nonExisting, "..."));
     Files.writeString(NioFiles.createParentDirectories(nonExisting), "...");
     assertThat(nonExisting).isRegularFile();
+  }
+
+  @Test
+  public void createIfNotExists() throws IOException {
+    var existingFile = Files.createFile(memoryFs.getFs().getPath("/existing"));
+    NioFiles.createIfNotExists(existingFile);
+    assertThat(existingFile).isRegularFile();
+
+    var nonExisting = memoryFs.getFs().getPath("/d1/d2/d3/non-existing");
+    NioFiles.createIfNotExists(nonExisting);
+    assertThat(nonExisting).isRegularFile();
+
+    var existingDir = Files.createDirectories(memoryFs.getFs().getPath("/dir"));
+    assertThatThrownBy(() -> NioFiles.createIfNotExists(existingDir))
+      .isInstanceOf(FileAlreadyExistsException.class);
+
+    var endLink = Files.createSymbolicLink(memoryFs.getFs().getPath("/end-link"), existingFile);
+    NioFiles.createIfNotExists(endLink);
+    assertThat(endLink).isRegularFile().isSymbolicLink();
   }
 
   @Test

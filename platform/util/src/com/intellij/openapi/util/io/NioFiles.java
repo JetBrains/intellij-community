@@ -112,6 +112,23 @@ public final class NioFiles {
   }
 
   /**
+   * An accompaniment for {@link Files#createFile} that doesn't fret upon existing files (and symlinks to),
+   * and also creates missing directories.
+   */
+  public static @NotNull Path createIfNotExists(@NotNull Path path) throws IOException {
+    createParentDirectories(path);
+    try {
+      Files.createFile(path);
+    }
+    catch (FileAlreadyExistsException e) {
+      if (!Files.isRegularFile(path)) {
+        throw e;
+      }
+    }
+    return path;
+  }
+
+  /**
    * Like {@link Files#isWritable}, but interprets {@link SecurityException} as a negative result.
    */
   public static boolean isWritable(@NotNull Path path) {
