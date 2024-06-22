@@ -1572,7 +1572,7 @@
                     order="last"/>
     <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionNewLineEditorListener"/>
     <inline.completion.partial.accept.handler
-      implementation="com.intellij.codeInsight.inline.completion.InlineCompletionPartialAcceptHandlerImpl"
+      implementation="com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionPartialAcceptHandlerImpl"
       order="first"/>
     <inline.completion.element.manipulator
       implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElementManipulator"

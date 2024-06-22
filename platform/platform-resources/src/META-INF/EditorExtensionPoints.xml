@@ -86,5 +86,10 @@
       name="inline.completion.usage.data"
       interface="com.intellij.codeInsight.inline.completion.logs.InlineCompletionProviderSpecificUsageData"
       dynamic="true"/>
+    <extensionPoint name="inline.completion.quoteHandlerEx"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionQuoteHandlerEx"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
