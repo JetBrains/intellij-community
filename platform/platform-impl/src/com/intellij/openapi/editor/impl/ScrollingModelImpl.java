@@ -37,7 +37,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
+//@ApiStatus.Internal
 public final class ScrollingModelImpl implements ScrollingModelEx {
   private static final Logger LOG = Logger.getInstance(ScrollingModelImpl.class);
 
@@ -64,10 +64,12 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   private final ChangeListener viewportChangeListener = new MyChangeListener();
 
+  @ApiStatus.Internal
   public ScrollingModelImpl(EditorImpl editor) {
     this(new DefaultEditorSupplier(editor));
   }
 
+  @ApiStatus.Internal
   public ScrollingModelImpl(@NotNull ScrollingModel.Supplier supplier) {
     this.supplier = supplier;
   }
@@ -185,6 +187,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     action.run();
   }
 
+  @ApiStatus.Internal
   public boolean isAnimationEnabled() {
     return !animationDisabled;
   }
@@ -210,6 +213,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     return scrollPane.getVerticalScrollBar();
   }
 
+  @ApiStatus.Internal
   @RequiresEdt
   public @Nullable JScrollBar getHorizontalScrollBar() {
     return supplier.getScrollPane().getHorizontalScrollBar();
@@ -316,6 +320,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     LOG.assertTrue(success);
   }
 
+  @ApiStatus.Internal
   public void finishAnimation() {
     cancelAnimatedScrolling(true);
   }
@@ -329,15 +334,18 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     return request;
   }
 
+  @ApiStatus.Internal
   public void dispose() {
     supplier.getEditor().getDocument().removeDocumentListener(documentListener);
     supplier.getScrollPane().getViewport().removeChangeListener(viewportChangeListener);
   }
 
+  @ApiStatus.Internal
   public void beforeModalityStateChanged() {
     cancelAnimatedScrolling(true);
   }
 
+  @ApiStatus.Internal
   public boolean isScrollingNow() {
     return currentAnimationRequest != null;
   }
@@ -361,6 +369,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     cancelAnimatedScrolling(true);
   }
 
+  @ApiStatus.Internal
   public void addScrollRequestListener(ScrollRequestListener scrollRequestListener, Disposable parentDisposable) {
     scrollRequestListeners.add(scrollRequestListener);
     Disposer.register(parentDisposable, () -> scrollRequestListeners.remove(scrollRequestListener));

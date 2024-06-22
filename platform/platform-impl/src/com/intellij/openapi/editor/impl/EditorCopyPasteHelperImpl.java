@@ -57,6 +57,7 @@ public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     return getSelectedTextForClipboard(editor, CopyPasteOptions.DEFAULT, extraDataCollector);
   }
 
+  @ApiStatus.Internal
   public static String getSelectedTextForClipboard(@NotNull Editor editor, @NotNull CopyPasteOptions options,
                                                    @NotNull Collection<? super TextBlockTransferableData> extraDataCollector) {
     final StringBuilder buf = new StringBuilder();
@@ -241,6 +242,7 @@ public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     return TextRange.from(lineStartOffset, text.length());
   }
 
+  @ApiStatus.Internal
   public static @NotNull TextRange insertStringAtCaret(@NotNull Editor editor, @NotNull String text) {
     return insertStringAtCaret(editor, text, false);
   }

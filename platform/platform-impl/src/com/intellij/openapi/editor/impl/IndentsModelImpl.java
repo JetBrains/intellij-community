@@ -13,12 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@ApiStatus.Internal
+//@ApiStatus.Internal
 public final class IndentsModelImpl implements IndentsModel {
   private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = CollectionFactory.createSmallMemoryFootprintMap();
   private List<IndentGuideDescriptor> myIndents = new ArrayList<>();
   private final @NotNull EditorImpl myEditor;
 
+  @ApiStatus.Internal
   public IndentsModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
   }

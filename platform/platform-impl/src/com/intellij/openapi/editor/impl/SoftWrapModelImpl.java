@@ -46,7 +46,7 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
-@ApiStatus.Internal
+//@ApiStatus.Internal
 public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
              PropertyChangeListener, Dumpable, Disposable
@@ -155,6 +155,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     ApplicationManager.getApplication().invokeLater(() -> ActivityTracker.getInstance().inc());
   }
 
+  @ApiStatus.Internal
   public boolean shouldSoftWrapsBeForced() {
     return shouldSoftWrapsBeForced(null);
   }
@@ -187,6 +188,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   /**
    * Called on editor settings change. Current model is expected to drop all cached information about the settings if any.
    */
+  @ApiStatus.Internal
   public void reinitSettings() {
     boolean softWrapsUsedBefore = myUseSoftWraps;
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
@@ -337,6 +339,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     return doPaint(g, drawingType, x, y, lineHeight);
   }
 
+  @ApiStatus.Internal
   public int doPaint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
     if (!editor.getSettings().isPaintSoftWraps()) {
       return 0;
@@ -354,6 +357,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
    * if soft wraps-aware processing should be used (e.g., there is no need to consider soft wraps if user configured them
    * not to be used).
    */
+  @ApiStatus.Internal
   public void prepareToMapping() {
     if (myUpdateInProgress || myBulkUpdateInProgress || !isSoftWrappingEnabled()) {
       return;
