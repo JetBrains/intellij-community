@@ -6,7 +6,6 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -81,7 +80,7 @@ internal object KotlinReferenceRestoringHelper {
     /**
      * Note that the contents of [sourceFile] are expected to be the same as they were at the moment of [sourceReferenceInfos]' collection.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getResolvedSourceReferencesThatMightRequireRestoring(
         sourceFile: KtFile,
         sourceReferenceInfos: List<KotlinSourceReferenceInfo>,
