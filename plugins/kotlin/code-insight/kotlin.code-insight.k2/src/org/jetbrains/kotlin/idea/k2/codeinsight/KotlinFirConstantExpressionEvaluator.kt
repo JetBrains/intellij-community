@@ -31,7 +31,7 @@ class KotlinFirConstantExpressionEvaluator : ConstantExpressionEvaluator {
         val analyze = {
             analyze(ktExpression) {
                 ktExpression.evaluate()
-                    ?.takeUnless { it is KaConstantValue.KaErrorConstantValue }?.value
+                    ?.takeUnless { it is KaConstantValue.ErrorValue }?.value
             }
         }
 

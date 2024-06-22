@@ -50,7 +50,7 @@ class MayBeConstantInspection : MayBeConstantInspectionBase() {
                     val constant = initializer.getConstantValue() ?: return Status.NONE
                     val erroneousConstant = initializer.usesNonConstValAsConstant()
 
-                    if (constant is KaConstantValue.KaNullConstantValue || constant is KaConstantValue.KaErrorConstantValue) return Status.NONE
+                    if (constant is KaConstantValue.KaNullConstantValue || constant is KaConstantValue.ErrorValue) return Status.NONE
                     matchStatus(withJvmField, erroneousConstant)
                 }
             }

@@ -784,7 +784,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyzeForUast(ktExpression) {
             val expressionToEvaluate = ktExpression.unwrapKotlinValPropertyReference()
             return expressionToEvaluate?.evaluate()
-                ?.takeUnless { it is KaConstantValue.KaErrorConstantValue }?.value
+                ?.takeUnless { it is KaConstantValue.ErrorValue }?.value
         }
     }
 

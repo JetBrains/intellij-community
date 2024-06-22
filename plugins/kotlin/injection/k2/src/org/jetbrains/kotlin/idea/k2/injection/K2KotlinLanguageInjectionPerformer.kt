@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 internal class K2KotlinLanguageInjectionPerformer : KotlinLanguageInjectionPerformerBase() {
     override fun tryEvaluateConstant(expression: KtExpression?): String? = expression?.let { exp ->
         analyze(exp) {
-            exp.evaluate()?.takeUnless { it is KaConstantValue.KaErrorConstantValue }
+            exp.evaluate()?.takeUnless { it is KaConstantValue.ErrorValue }
                 ?.render()
         }
     }

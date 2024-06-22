@@ -156,7 +156,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(KaSession)
     private fun processConstant(expr: KtExpression?): Boolean {
         val constantValue = expr?.evaluate() ?: return false
-        if (constantValue is KaConstantValue.KaErrorConstantValue) return false
+        if (constantValue is KaConstantValue.ErrorValue) return false
         val value = constantValue.value
         val ktType = when(value) {
             is Boolean -> builtinTypes.BOOLEAN
