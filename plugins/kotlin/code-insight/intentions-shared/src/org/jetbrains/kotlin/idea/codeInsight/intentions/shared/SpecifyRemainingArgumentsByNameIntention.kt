@@ -120,7 +120,7 @@ internal sealed class SpecifyRemainingArgumentsByNameIntention(
     context(KaSession)
     override fun prepareContext(element: KtValueArgumentList): List<RemainingNamedArgumentData>? {
         val functionCall = element.parent as? KtCallExpression ?: return null
-        val resolvedCall = functionCall.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = functionCall.resolveToCall()?.singleFunctionCallOrNull() ?: return null
         val functionSymbol = resolvedCall.partiallyAppliedSymbol.symbol
         // Do not show the intention for Java/JS/etc. sources that do not support named arguments
         if (!functionSymbol.hasStableParameterNames) return null

@@ -227,7 +227,7 @@ class KotlinParameterInfo(
                     return 0
                 }
 
-                val symbol = expression.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                val symbol = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 (symbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
                     ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.containingSymbol }
                     ?.let { return Int.MAX_VALUE }

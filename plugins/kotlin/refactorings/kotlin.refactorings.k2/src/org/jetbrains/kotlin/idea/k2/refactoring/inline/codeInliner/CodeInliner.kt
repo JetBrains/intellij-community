@@ -52,7 +52,7 @@ class CodeInliner(
     codeToInline: CodeToInline
 ) : AbstractCodeInliner<KtElement, KtParameter, KtType, KtDeclaration>(call, codeToInline) {
     private val mapping: Map<KtExpression, Name>? = analyze(call) {
-        call.resolveCallOld()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
+        call.resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
     }
 
     @OptIn(KaExperimentalApi::class)
@@ -70,7 +70,7 @@ class CodeInliner(
             (call.parent as? KtCallableReferenceExpression
                 ?: PsiTreeUtil.getParentOfType(call, KtSuperTypeCallEntry::class.java)
                 ?: call)
-                .resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi as? KtDeclaration
+                .resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi as? KtDeclaration
         } ?: return null
         val callableForParameters = (if (assignment != null && originalDeclaration is KtProperty)
             originalDeclaration.setter?.takeIf { inlineSetter && it.hasBody() } ?: originalDeclaration
@@ -124,7 +124,7 @@ class CodeInliner(
         if (receiver == null) {
             analyze(call) {
                 val partiallyAppliedSymbol =
-                    call.resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                    call.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 val receiverValue = partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver
                 if (receiverValue is KaImplicitReceiverValue) {
                     val symbol = receiverValue.symbol
@@ -161,7 +161,7 @@ class CodeInliner(
             namer = { it.nameAsSafeName },
             typeRetriever = {
                 analyze(callableForParameters) {
-                    call.resolveCallOld()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.symbol)
+                    call.resolveToCall()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.symbol)
                 }
             },
             renderType = {

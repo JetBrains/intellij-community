@@ -108,7 +108,7 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(element) {
-                    processCall(element.resolveCallOld())
+                    processCall(element.resolveToCall())
                 }
             }
         }

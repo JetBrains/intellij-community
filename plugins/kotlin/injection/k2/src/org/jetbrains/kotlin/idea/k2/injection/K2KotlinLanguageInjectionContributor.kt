@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -32,7 +31,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
     }
 
     override fun KtCallExpression.hasCallableId(packageName: FqName, callableName: Name): Boolean = analyze(this) {
-        val symbol = resolveCallOld()?.singleFunctionCallOrNull()?.symbol
+        val symbol = resolveToCall()?.singleFunctionCallOrNull()?.symbol
         symbol?.callableId == CallableId(packageName, callableName)
     }
 

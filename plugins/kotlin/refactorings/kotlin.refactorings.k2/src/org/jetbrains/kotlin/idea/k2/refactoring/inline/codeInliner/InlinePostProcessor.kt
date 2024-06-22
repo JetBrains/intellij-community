@@ -142,7 +142,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
 
         result.forEachDescendantOfType<KtCallElement> { callExpression ->
             analyze(callExpression) {
-                val functionCall = callExpression.resolveCallOld()?.singleFunctionCallOrNull() ?: return@forEachDescendantOfType
+                val functionCall = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return@forEachDescendantOfType
 
                 val arguments = functionCall.argumentMapping.entries.toList()
                 val callableSymbol = functionCall.partiallyAppliedSymbol.symbol
@@ -233,7 +233,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
 
         analyze(element) {
             for (callExpression in callsToProcess) {
-                val resolvedCall = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
+                val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
 
                 val argumentsToMakeNamed = callExpression.valueArguments.dropWhile { it.getCopyableUserData(MAKE_ARGUMENT_NAMED_KEY) == null }
                 for (argument in argumentsToMakeNamed) {

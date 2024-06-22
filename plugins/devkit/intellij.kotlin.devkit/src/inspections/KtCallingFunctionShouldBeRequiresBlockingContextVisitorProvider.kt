@@ -39,7 +39,7 @@ internal class KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider :
   ) : BlockingContextFunctionBodyVisitor() {
     override fun visitCallExpression(expression: KtCallExpression) {
       analyze(expression) {
-        val functionCall = expression.resolveCallOld()?.singleFunctionCallOrNull()
+        val functionCall = expression.resolveToCall()?.singleFunctionCallOrNull()
         val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
 
         if (calledSymbol !is KaNamedSymbol) return

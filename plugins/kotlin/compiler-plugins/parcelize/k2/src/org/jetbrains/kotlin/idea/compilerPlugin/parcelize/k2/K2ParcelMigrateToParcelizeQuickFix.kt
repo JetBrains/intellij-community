@@ -89,7 +89,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
 
         context(KaSession)
         override fun KtCallExpression.resolveToConstructedClass(): KtClassOrObject? =
-            resolveCallOld()
+            resolveToCall()
                 ?.successfulConstructorCallOrNull()
                 ?.symbol
                 ?.containingClassId

@@ -13,7 +13,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -321,7 +320,7 @@ class SmartStepTargetVisitor(
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         if (checkLineRangeFits(expression.getLineRange())) {
             analyze(expression) {
-                val resolvedCall = expression.resolveCallOld() as? KaSuccessCallInfo ?: return
+                val resolvedCall = expression.resolveToCall() as? KaSuccessCallInfo ?: return
                 val variableAccessCall = resolvedCall.call as? KaVariableAccessCall ?: return
                 val symbol = variableAccessCall.partiallyAppliedSymbol.symbol as? KaPropertySymbol ?: return
                 recordProperty(expression, symbol)
@@ -332,7 +331,7 @@ class SmartStepTargetVisitor(
 
     private fun recordFunctionCall(expression: KtExpression, highlightExpression: KtExpression) {
         analyze(expression) {
-            val resolvedCall = expression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
+            val resolvedCall = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
             val symbol = resolvedCall.partiallyAppliedSymbol.symbol
             if (symbol.annotations.any { it.classId?.internalName == "kotlin/internal/IntrinsicConstEvaluation" }) {
                 return

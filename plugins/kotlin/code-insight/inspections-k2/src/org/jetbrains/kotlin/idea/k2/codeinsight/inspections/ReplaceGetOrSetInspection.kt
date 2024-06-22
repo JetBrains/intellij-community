@@ -67,7 +67,7 @@ internal class ReplaceGetOrSetInspection :
     context(KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         // `resolveCallOld()` is needed to filter out `set` functions with varargs or default values. See the `setWithVararg.kt` test.
-        val call = element.resolveCallOld()?.successfulCallOrNull<KaSimpleFunctionCall>() ?: return null
+        val call = element.resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>() ?: return null
         val functionSymbol = call.symbol
         if (functionSymbol !is KaNamedFunctionSymbol || !functionSymbol.isOperator) {
             return null

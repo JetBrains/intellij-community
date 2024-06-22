@@ -115,7 +115,7 @@ fun checkCallableShadowing(
             //meaning that you can't change it without WA which is here not allowed, because conflict checking is under RA in progress
             val copyCallExpression =
                 PsiTreeUtil.getParentOfType(codeFragment.findElementAt(offsetInCopy.startOffset), false, callExpression.javaClass)
-            val resolveCall = copyCallExpression?.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
+            val resolveCall = copyCallExpression?.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
             val resolvedSymbol = resolveCall?.partiallyAppliedSymbol?.symbol
             if (resolvedSymbol is KaSyntheticJavaPropertySymbol) {
                 val getter = resolvedSymbol.javaGetterSymbol.psi
@@ -257,7 +257,7 @@ private data class QualifiedState(val expression: KtExpression?, val explicitlyQ
 private fun createQualifiedExpression(callExpression: KtExpression, newName: String): QualifiedState? {
     val psiFactory = KtPsiFactory(callExpression.project)
     analyze(callExpression) {
-        val appliedSymbol = callExpression.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+        val appliedSymbol = callExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
         val receiver = appliedSymbol?.extensionReceiver ?: appliedSymbol?.dispatchReceiver
 
         fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {

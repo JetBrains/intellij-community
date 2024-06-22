@@ -153,7 +153,7 @@ context(KaSession)
 private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression): Boolean {
     val selectorExpression: KtExpression? = qualifiedAccess.getQualifiedExpressionForReceiver()?.selectorExpression
     val referencedSymbol = when (selectorExpression) {
-        is KtCallExpression -> selectorExpression.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
+        is KtCallExpression -> selectorExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
         is KtNameReferenceExpression -> selectorExpression.mainReference.resolveToSymbol()
         else -> return false
     } as? KaSymbolWithKind ?: return true
@@ -179,7 +179,7 @@ private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = importDirecti
         if (getQualifiedExpressionForSelector() != null) return false
         if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
         val referencedSymbol = when (this) {
-            is KtCallExpression -> resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
+            is KtCallExpression -> resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
             is KtNameReferenceExpression -> mainReference.resolveToSymbol()
             else -> return false
         } ?: return false

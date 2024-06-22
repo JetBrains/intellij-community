@@ -58,9 +58,9 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         val left = element.left
         val right = element.right
 
-        val leftResolvedCall = left?.resolveCallOld()?.singleVariableAccessCall()
+        val leftResolvedCall = left?.resolveToCall()?.singleVariableAccessCall()
         val leftCallee = leftResolvedCall?.symbol ?: return null
-        val rightResolvedCall = right?.resolveCallOld()?.singleVariableAccessCall()
+        val rightResolvedCall = right?.resolveToCall()?.singleVariableAccessCall()
         val rightCallee = rightResolvedCall?.symbol ?: return null
 
         if (leftCallee != rightCallee) return null

@@ -55,7 +55,7 @@ internal class KotlinFunctionCallUsage(
     private val indexToExpMap: Map<Int, SmartPsiElementPointer<KtExpression>>? = allowAnalysisFromWriteAction {
         allowAnalysisOnEdt {
             analyze(element) {
-                val ktCall = element.resolveCallOld()
+                val ktCall = element.resolveToCall()
                 val functionCall = ktCall?.singleFunctionCallOrNull()
                     ?: return@allowAnalysisOnEdt null
                 val partiallyAppliedSymbol = functionCall.partiallyAppliedSymbol
@@ -105,7 +105,7 @@ internal class KotlinFunctionCallUsage(
         allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze(element) {
-                    val partiallyAppliedSymbol = element.resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol
+                    val partiallyAppliedSymbol = element.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol
                     when (val receiver = partiallyAppliedSymbol?.extensionReceiver) {
                         is KaExplicitReceiverValue -> receiver.expression.text
                         is KaImplicitReceiverValue -> {

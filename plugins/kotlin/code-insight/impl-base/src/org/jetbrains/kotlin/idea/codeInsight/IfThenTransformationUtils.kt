@@ -213,7 +213,7 @@ sealed class IfThenTransformationStrategy {
         }
 
         context(KaSession)
-        private fun KtExpression.resolveCallableMemberCall(): KaCallableMemberCall<*, *>? = this.resolveCallOld()?.successfulCallOrNull()
+        private fun KtExpression.resolveCallableMemberCall(): KaCallableMemberCall<*, *>? = this.resolveToCall()?.successfulCallOrNull()
 
         context(KaSession)
         private fun KtExpression.collectVariableCalls(): Set<KtCallExpression> = this

@@ -168,7 +168,7 @@ internal fun insertExplicitTypeArguments(codeToInline: MutableCodeToInline) {
 internal fun removeContracts(codeToInline: MutableCodeToInline) {
     for (statement in codeToInline.statementsBefore) {
         analyze(statement) {
-            if (statement.resolveCallOld()?.singleFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()?.asString() == "kotlin.contracts.contract"
+            if (statement.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()?.asString() == "kotlin.contracts.contract"
             ) {
                 codeToInline.addPreCommitAction(statement) {
                     codeToInline.statementsBefore.remove(it)
@@ -245,7 +245,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         val receiverExpression = expression.getReceiverExpression()
         if (receiverExpression == null) {
             val (receiverValue, isSameReceiverType) = analyze(expression) {
-                val resolveCall = expression.resolveCallOld()
+                val resolveCall = expression.resolveToCall()
                 val partiallyAppliedSymbol =
                     (resolveCall?.singleFunctionCallOrNull() ?: resolveCall?.singleVariableAccessCall())?.partiallyAppliedSymbol
 
@@ -256,7 +256,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                 val originalSymbolDispatchType = originalSymbol?.dispatchReceiverType
                 if (value != null) {
                     getThisQualifier(value) to (originalSymbolReceiverType != null && value.type.isEqualTo(originalSymbolReceiverType) ||
-                                                 originalSymbolDispatchType != null && value.type.isEqualTo(originalSymbolDispatchType))
+                                                originalSymbolDispatchType != null && value.type.isEqualTo(originalSymbolDispatchType))
                 } else {
                     val functionalType = (partiallyAppliedSymbol?.symbol as? KaVariableSymbol)?.returnType as? KtFunctionalType
                     val receiverType = functionalType?.receiverType

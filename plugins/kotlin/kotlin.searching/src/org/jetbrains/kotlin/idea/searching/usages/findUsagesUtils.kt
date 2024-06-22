@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.resolve.ImportPath
 
 internal inline fun <R> withResolvedCall(element: KtElement, crossinline block: KaSession.(KaCall) -> R): R? {
     return analyze(element) {
-        element.resolveCallOld()?.calls?.singleOrNull()?.let { block(it) }
+        element.resolveToCall()?.calls?.singleOrNull()?.let { block(it) }
     }
 }
 

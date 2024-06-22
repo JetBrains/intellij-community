@@ -58,10 +58,10 @@ class KotlinGradleProjectReferenceProvider: AbstractKotlinGradleReferenceProvide
         val (variableCallableId, functionCallableId) =
             allowAnalysisOnEdt {
                 analyze(dotQualifiedExpression) {
-                    val elementCallableId = (element as? KtElement)?.resolveCallOld()?.singleVariableAccessCall()?.symbol?.callableId
+                    val elementCallableId = (element as? KtElement)?.resolveToCall()?.singleVariableAccessCall()?.symbol?.callableId
                     if (elementCallableId?.packageName == GRADLE_DSL_PACKAGE && elementCallableId.callableName == GRADLE_DSL_PROJECTS) return emptyList()
 
-                    val resolveCallOld = dotQualifiedExpression.resolveCallOld()
+                    val resolveCallOld = dotQualifiedExpression.resolveToCall()
                     val variableAccessCall = resolveCallOld?.singleVariableAccessCall()
                     val functionCall = resolveCallOld?.singleFunctionCallOrNull()
                     variableAccessCall?.symbol?.callableId to functionCall?.symbol?.callableId

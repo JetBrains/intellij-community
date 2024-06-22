@@ -24,7 +24,7 @@ internal object ChangeToUseSpreadOperatorFixFactory {
         val element = diagnostic.psi as? KtReferenceExpression ?: return@ModCommandBased emptyList()
         val callExpression = element.getStrictParentOfType<KtCallExpression>() ?: return@ModCommandBased emptyList()
         val arrayElementType = diagnostic.actualType.arrayElementType?.unwrap() ?: return@ModCommandBased emptyList()
-        val functionCall = (callExpression.resolveCallOld() as? KaErrorCallInfo)?.candidateCalls?.singleOrNull() as? KaFunctionCall<*>
+        val functionCall = (callExpression.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.singleOrNull() as? KaFunctionCall<*>
             ?: return@ModCommandBased emptyList()
 
         if (functionCall.argumentMapping[element]?.symbol?.isVararg != true &&

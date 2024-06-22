@@ -148,7 +148,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
             reference is KtOperationReferenceExpression && reference.operationSignTokenType == KtTokens.ELVIS -> return true
             reference is KtCollectionLiteralExpression -> return false
             reference is KtCallExpression -> {
-                val callInfo = reference.resolveCallOld() as? KaSuccessCallInfo ?: return false
+                val callInfo = reference.resolveToCall() as? KaSuccessCallInfo ?: return false
 
                 return when (val call = callInfo.call) {
                     is KaAnnotationCall -> {

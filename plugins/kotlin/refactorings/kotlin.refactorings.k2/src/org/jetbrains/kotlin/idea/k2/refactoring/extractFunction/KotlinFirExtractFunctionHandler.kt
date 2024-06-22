@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ui.KotlinFirExtractFunctionDialog
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.KotlinFirExtractFunctionHandler.InteractiveExtractionHelper
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionDataAnalyzer
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionEngineHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler
@@ -92,7 +91,7 @@ class KotlinFirExtractFunctionHandler(
             val name = file.viewProvider.document.getText(variableRange)
             return if (!name.isIdentifier()) {
                 JavaRefactoringBundle.message("template.error.invalid.identifier.name")
-            } else if (analyzeInModalWindow(file, KotlinBundle.message("fix.change.signature.prepare")) { call.resolveCallOld() is KaErrorCallInfo }) {
+            } else if (analyzeInModalWindow(file, KotlinBundle.message("fix.change.signature.prepare")) { call.resolveToCall() is KaErrorCallInfo }) {
                 JavaRefactoringBundle.message("extract.method.error.method.conflict")
             } else {
                 null

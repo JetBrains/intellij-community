@@ -69,7 +69,7 @@ object K2CreateFunctionFromUsageUtil {
     context (KaSession)
     internal fun KtExpression.resolveExpression(): KaSymbol? {
         mainReference?.resolveToSymbol()?.let { return it }
-        val call = resolveCallOld()?.calls?.singleOrNull() ?: return null
+        val call = resolveToCall()?.calls?.singleOrNull() ?: return null
         return if (call is KaCallableMemberCall<*, *>) call.symbol else null
     }
 

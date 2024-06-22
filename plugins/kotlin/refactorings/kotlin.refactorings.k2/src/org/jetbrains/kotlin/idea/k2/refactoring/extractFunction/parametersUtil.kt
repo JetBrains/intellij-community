@@ -204,7 +204,7 @@ private fun ExtractionData.registerParameter(
     val (originalRef, _, originalDeclaration, resolvedCall) = refInfo.resolveResult
 
     val partiallyAppliedSymbol =
-        resolvedCall?.resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+        resolvedCall?.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
     val dispatchReceiver = partiallyAppliedSymbol?.dispatchReceiver
     val extensionReceiver = partiallyAppliedSymbol?.extensionReceiver
     //Context receivers are not supported.
@@ -479,7 +479,7 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
             smartCast = calculateSmartCastType(smartCastTarget)
             possibleTypes = analyze(smartCastTarget) { smartCastTarget.expectedType?.let { setOf(it) } ?: emptySet() }
             val (isCompanionObject, bothReceivers) = analyze(smartCastTarget) {
-                val symbol = originalRefExpr.resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                val symbol = originalRefExpr.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 val receiverSymbol = (symbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
                 ((receiverSymbol?.containingSymbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) to
                         (symbol?.dispatchReceiver != null && symbol.extensionReceiver != null)

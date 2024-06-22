@@ -50,7 +50,7 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
 
     context(KaSession)
     private fun isApplicable(binaryExpression: KtBinaryExpression, leftExp: KtExpression, rightExp: KtExpression): Boolean {
-        val functionCallOrNull = binaryExpression.resolveCallOld()?.singleFunctionCallOrNull()
+        val functionCallOrNull = binaryExpression.resolveToCall()?.singleFunctionCallOrNull()
         functionCallOrNull?.symbol?.takeIf {
             val packageName = it.callableId?.packageName
             packageName == StandardNames.RANGES_PACKAGE_FQ_NAME || packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME
@@ -65,7 +65,7 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
             is KtConstantExpression -> true
             is KtBinaryExpression -> left?.isComparable() == true && right?.isComparable() == true
             else -> {
-                val type = resolveCallOld()?.singleFunctionCallOrNull()?.symbol?.returnType
+                val type = resolveToCall()?.singleFunctionCallOrNull()?.symbol?.returnType
                     ?: ((this as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KaCallableSymbol)?.returnType
                 (type is KtNonErrorClassType) && (
                         type.classId in DefaultTypeClassIds.PRIMITIVES ||

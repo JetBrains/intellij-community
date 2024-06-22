@@ -386,7 +386,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     private fun KtCallElement.resolveParameters(): List<KtParameter> {
         return analyze(this) {
-            val callInfo = resolveCallOld()?.successfulFunctionCallOrNull() ?: return emptyList()
+            val callInfo = resolveToCall()?.successfulFunctionCallOrNull() ?: return emptyList()
             return callInfo.partiallyAppliedSymbol.signature.valueParameters.mapNotNull { it.symbol.psi as? KtParameter? }
         }
     }

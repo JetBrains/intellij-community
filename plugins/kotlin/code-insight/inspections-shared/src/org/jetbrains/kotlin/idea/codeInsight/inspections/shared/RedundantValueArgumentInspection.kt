@@ -33,7 +33,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
 
         analyze(argument) {
             val argumentConstantValue = argumentExpression.evaluate() ?: return
-            val call = callElement.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
+            val call = callElement.resolveToCall()?.successfulFunctionCallOrNull() ?: return
             val parameterSymbol = findTargetParameter(argumentExpression, call) ?: return
 
             if (parameterSymbol.hasDefaultValue) {

@@ -152,7 +152,7 @@ class KtVariableDescriptor(
                     // top-level declaration
                     return varFactory.createVariableValue(symbol.variableDescriptor(), null)
                 }
-                val receiverParameter = (expr.resolveCallOld()?.singleVariableAccessCall()
+                val receiverParameter = (expr.resolveToCall()?.singleVariableAccessCall()
                     ?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
                         as? KaReceiverParameterSymbol
                 val functionLiteral = receiverParameter?.psi as? KtFunctionLiteral

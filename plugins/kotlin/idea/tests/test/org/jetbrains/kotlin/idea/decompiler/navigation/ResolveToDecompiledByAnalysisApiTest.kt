@@ -25,7 +25,7 @@ class ResolveToDecompiledByAnalysisApiTest : KotlinLightCodeInsightFixtureTestCa
     val reference = myFixture.getReferenceAtCaretPosition()!!
     allowAnalysisOnEdt {
       analyze(reference.element as KtElement) {
-        (reference.element as KtElement).resolveCallOld()
+        (reference.element as KtElement).resolveToCall()
       }
     }
   }

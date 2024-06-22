@@ -12,7 +12,7 @@ object EmptinessCheckFunctionUtils {
     context(KaSession)
     fun invertFunctionCall(expression: KtExpression): KtExpression? {
         return invertFunctionCall(expression) {
-            val symbol = it.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
+            val symbol = it.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
             symbol?.callableId?.asSingleFqName()
         }
     }

@@ -256,7 +256,7 @@ object WrapWithSafeLetCallFixFactories {
     private fun getDeclaredParameterNameForArgument(argumentExpression: KtExpression): String? {
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return null
         val callExpression = argumentExpression.parentOfType<KtCallExpression>()
-        val successCallTarget = callExpression?.resolveCallOld()?.singleFunctionCallOrNull()?.symbol ?: return null
+        val successCallTarget = callExpression?.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
 
         return successCallTarget.valueParameters.getOrNull(valueArgument.argumentIndex)?.name?.identifierOrNullIfSpecial
     }
@@ -284,7 +284,7 @@ object WrapWithSafeLetCallFixFactories {
                 // In the following logic, if call is missing, unresolved, or contains error, we just stop here so the wrapped call would be
                 // inserted here.
                 val functionCall = parent.getParentOfType<KtCallExpression>(strict = true) ?: return true
-                val resolvedCall = functionCall.resolveCallOld()?.singleFunctionCallOrNull() ?: return true
+                val resolvedCall = functionCall.resolveToCall()?.singleFunctionCallOrNull() ?: return true
                 return doesFunctionAcceptNull(resolvedCall, parent.argumentIndex) ?: true
             }
             parent is KtBinaryExpression -> {
@@ -292,7 +292,7 @@ object WrapWithSafeLetCallFixFactories {
                     // If current expression is an l-value in an assignment, just keep going up because one cannot assign to a let call.
                     return false
                 }
-                val resolvedCall = parent.resolveCallOld()?.singleFunctionCallOrNull()
+                val resolvedCall = parent.resolveToCall()?.singleFunctionCallOrNull()
                 when {
                     resolvedCall != null -> {
                         // The binary expression is a call to some function

@@ -89,7 +89,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
                     override fun visitKtElement(element: KtElement) {
                         super.visitKtElement(element)
 
-                        val symbol = element.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                        val symbol = element.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                         val callableSymbol = targetParent.symbol as? KaCallableSymbol
                         if (callableSymbol != null) {
                             if ((symbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol == callableSymbol.receiverParameter || (symbol?.extensionReceiver as? KaImplicitReceiverValue)?.symbol == callableSymbol.receiverParameter) {

@@ -72,7 +72,7 @@ class CyclicDependenciesSymbolResolutionTest : AbstractMultiModuleTest() {
         val ktCallee = ktCall.calleeExpression as KtSimpleNameExpression
         Assert.assertEquals(expectedName, ktCallee.getReferencedName())
 
-        val callableSymbol = ktCall.resolveCallOld()!!.successfulFunctionCallOrNull()!!.symbol
+        val callableSymbol = ktCall.resolveToCall()!!.successfulFunctionCallOrNull()!!.symbol
         Assert.assertEquals(expectedType, callableSymbol.returnType)
     }
 }

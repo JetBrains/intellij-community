@@ -73,7 +73,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
 
     context(KaSession)
     private fun getReplacementIfApplicable(target: KtExpression): ReplacementInfo? {
-        val resolvedCall = target.resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
+        val resolvedCall = target.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
         val replaceableCall = resolvedCall.findReplaceableOverride() ?: return null
 
         val replaceWithNegatedIsEmpty = methodToReplaceWith == EmptinessCheckMethod.IS_NOT_EMPTY && !replaceableCall.hasIsNotEmpty

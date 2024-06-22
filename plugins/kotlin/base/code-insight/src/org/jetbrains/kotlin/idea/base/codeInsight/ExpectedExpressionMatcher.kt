@@ -96,7 +96,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
         val containerNode = target.parent as? KtContainerNode ?: return null
         val arrayAccessExpression = (containerNode.parent as? KtArrayAccessExpression) ?: return null
 
-        for (call in arrayAccessExpression.resolveCallOld()?.calls.orEmpty()) {
+        for (call in arrayAccessExpression.resolveToCall()?.calls.orEmpty()) {
             if (call is KaFunctionCall<*>) {
                 for ((argumentExpression, sig) in call.argumentMapping) {
                     if (argumentExpression == target) {
@@ -119,7 +119,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
 
     context(KaSession)
     private fun getForArgument(callElement: KtCallElement, argument: ValueArgument): ExpectedExpressionMatcher? {
-        for (call in callElement.resolveCallOld()?.calls.orEmpty()) {
+        for (call in callElement.resolveToCall()?.calls.orEmpty()) {
             if (call is KaFunctionCall<*>) {
                 for ((argumentExpression, sig) in call.argumentMapping) {
                     if (argumentExpression == argument) {

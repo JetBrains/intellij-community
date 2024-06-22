@@ -61,7 +61,7 @@ context(KaSession)
 fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionSymbol, KaValueParameterSymbol>? {
     if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
-    val parentCall = parentCallExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return null
+    val parentCall = parentCallExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
     val symbol = parentCall.partiallyAppliedSymbol.symbol
     val valueArgument = parentCallExpression.getContainingValueArgument(argument) ?: return null
     val argumentSymbol = parentCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return null

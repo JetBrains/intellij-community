@@ -200,7 +200,7 @@ object KotlinCallProcessor {
                 return handleSpecial(element) { !(it is KaLocalVariableSymbol && it.psi == element) }
             }
 
-            val callInfo = element.resolveCallOld()
+            val callInfo = element.resolveToCall()
             val call = callInfo?.successfulCallOrNull<KaCall>()
 
             return with(processor) {

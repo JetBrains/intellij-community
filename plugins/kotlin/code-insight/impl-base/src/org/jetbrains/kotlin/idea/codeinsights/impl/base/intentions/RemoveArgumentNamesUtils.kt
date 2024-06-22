@@ -21,7 +21,7 @@ object RemoveArgumentNamesUtils {
      */
     context(KaSession)
     fun collectSortedArgumentsThatCanBeUnnamed(callElement: KtCallElement): ArgumentsData? {
-        val resolvedCall = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return null
         val valueArguments = callElement.valueArgumentList?.arguments ?: return null
 
         val argumentToParameterIndex = CallParameterInfoProvider.mapArgumentsToParameterIndices(

@@ -42,7 +42,7 @@ object ChangeParameterTypeFixFactory {
         val valueArgument = psi.parent as? KtValueArgument ?: return emptyList()
 
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
-        val memberCall = (callElement.resolveCallOld() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
+        val memberCall = (callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
         val functionLikeSymbol = memberCall?.symbol ?: return emptyList()
 
         val paramSymbol = memberCall.argumentMapping[valueArgument.getArgumentExpression()]

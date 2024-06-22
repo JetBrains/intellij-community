@@ -65,7 +65,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         val arguments = valueArgumentList.arguments
 
-        val functionCall = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return
+        val functionCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return
         val functionSymbol: KaFunctionSymbol = functionCall.symbol
         val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
 

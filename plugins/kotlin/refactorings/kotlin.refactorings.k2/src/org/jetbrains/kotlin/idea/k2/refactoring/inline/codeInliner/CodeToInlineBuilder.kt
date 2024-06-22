@@ -24,7 +24,7 @@ class CodeToInlineBuilder(
         allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 val alwaysKeepMainExpression = mainExpression != null && analyze(mainExpression) {
-                    val targetSymbol = mainExpression.resolveCallOld()?.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol
+                    val targetSymbol = mainExpression.resolveToCall()?.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol
                     when (targetSymbol) {
                         is KaPropertySymbol -> targetSymbol.getter?.isDefault == false
                         else -> false

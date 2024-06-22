@@ -75,7 +75,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                     super.visitSimpleNameExpression(expression)
 
-                    val call = expression.resolveCallOld()
+                    val call = expression.resolveToCall()
 
                     if (call == null && originalReceiverType != null) {
                         //deleted or changed receiver, must be preserved as simple parameter

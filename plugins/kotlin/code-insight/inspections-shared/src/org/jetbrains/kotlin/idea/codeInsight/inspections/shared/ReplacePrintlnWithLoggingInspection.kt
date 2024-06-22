@@ -35,7 +35,7 @@ internal class ReplacePrintlnWithLoggingInspection : AbstractKotlinInspection() 
         val identifier = call.calleeExpression?.text ?: return
 
         val callableId = analyze(call) {
-            call.resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId
+            call.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId
         } ?: return
 
         if (!callableId.isPrintFunction()) return

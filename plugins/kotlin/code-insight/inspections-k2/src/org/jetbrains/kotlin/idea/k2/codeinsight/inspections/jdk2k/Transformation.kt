@@ -41,7 +41,7 @@ object ToKotlinPrint : Transformation {
     }
 
     context(KaSession) override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
-        (callExpression.calleeExpression as? KtSimpleNameExpression)?.getReceiverExpression()?.resolveCallOld()
+        (callExpression.calleeExpression as? KtSimpleNameExpression)?.getReceiverExpression()?.resolveToCall()
             ?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.callableId?.asSingleFqName() == FqName("java.lang.System.out")
 }
 

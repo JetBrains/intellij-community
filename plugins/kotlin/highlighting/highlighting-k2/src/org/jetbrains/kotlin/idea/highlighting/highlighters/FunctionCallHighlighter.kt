@@ -32,7 +32,7 @@ internal class FunctionCallHighlighter(holder: HighlightInfoHolder) : KotlinSema
     private fun highlightBinaryExpression(expression: KtBinaryExpression) {
         val operationReference = expression.operationReference as? KtReferenceExpression ?: return
         if (operationReference.isAssignment()) return
-        val call = expression.resolveCallOld()?.successfulCallOrNull<KaCall>() ?: return
+        val call = expression.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return
         if (call is KaSimpleFunctionCall && (call.symbol as? KaNamedFunctionSymbol)?.isOperator == true) return
         val highlightInfoType = getDefaultHighlightInfoTypeForCall(call)
         if (highlightInfoType != null) {
@@ -46,7 +46,7 @@ internal class FunctionCallHighlighter(holder: HighlightInfoHolder) : KotlinSema
 
     private fun highlightCallExpression(expression: KtCallExpression) {
         val callee = expression.calleeExpression ?: return
-        val call = expression.resolveCallOld()?.singleCallOrNull<KaCall>() ?: return
+        val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return
         if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
         val highlightInfoType = getHighlightInfoTypeForCallFromExtension(callee, call)
             ?: getDefaultHighlightInfoTypeForCall(call)

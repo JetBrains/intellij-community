@@ -349,7 +349,7 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
     val functionLiteral = lambdaExpression.getStrictParentOfType<KtFunctionLiteral>() ?: return
 
     analyze(lambdaExpression) {
-        val functionCall = functionLiteral.resolveCallOld()?.singleFunctionCallOrNull() ?: return
+        val functionCall = functionLiteral.resolveToCall()?.singleFunctionCallOrNull() ?: return
         sink.addPresentation(InlineInlayPosition(lambdaExpression.endOffset, true), hasBackground = true) {
             text(": ")
             printKtType(functionCall.symbol.returnType)

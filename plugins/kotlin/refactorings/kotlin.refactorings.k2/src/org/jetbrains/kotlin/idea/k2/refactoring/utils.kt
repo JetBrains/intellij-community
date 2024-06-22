@@ -5,9 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.showYesNoCancelDialog
 import com.intellij.psi.ElementDescriptionUtil
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.annotations.Nls
@@ -20,17 +18,13 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
-import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
-import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -139,10 +133,10 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean =
     if (callee !is KtNameReferenceExpression) return true
 
     analyze(callee) {
-        val resolveCall = callee.resolveCallOld() ?: return false
+        val resolveCall = callee.resolveToCall() ?: return false
         val call = resolveCall.successfulFunctionCallOrNull()
 
-        fun KtType.isFunctionalType(): Boolean = this is KtTypeParameterType || isSuspendFunctionType || isFunctionType ||  isFunctionalInterfaceType
+        fun KtType.isFunctionalType(): Boolean = this is KtTypeParameterType || isSuspendFunctionType || isFunctionType || isFunctionalInterfaceType
 
         if (call == null) {
             val paramType = resolveCall.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.returnType

@@ -70,7 +70,7 @@ private fun findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump
 
 private fun doesCauseAmbiguityForUnlabeledNonLocalBreakOrContinue(callExpr: KtCallExpression, functionLiteral: PsiElement): Boolean =
     true == analyze(callExpr) {
-        callExpr.resolveCallOld()?.successfulCallOrNull<KaFunctionCall<*>>()?.argumentMapping?.get(functionLiteral)
+        callExpr.resolveToCall()?.successfulCallOrNull<KaFunctionCall<*>>()?.argumentMapping?.get(functionLiteral)
             ?.takeIf(::isInlinedParameter)
             ?.name
             ?.let { lambdaParameterName ->

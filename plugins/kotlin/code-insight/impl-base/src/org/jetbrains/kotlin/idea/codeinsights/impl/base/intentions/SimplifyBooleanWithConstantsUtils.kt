@@ -118,7 +118,7 @@ object SimplifyBooleanWithConstantsUtils {
     fun removeRedundantAssertion(expression: KtExpression) {
         val callExpression = expression.getNonStrictParentOfType<KtCallExpression>() ?: return
         val fqName = analyze(callExpression) {
-            val resolvedCall = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
+            val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
             resolvedCall.symbol.callableId?.let {
                 it.packageName.asString() + "." + it.callableName.asString()
             }

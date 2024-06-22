@@ -87,7 +87,7 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
             if (calleeExpression is KtNameReferenceExpression) {
                 allowAnalysisOnEdt {
                     analyze(element) {
-                        val call = element.resolveCallOld()?.singleCallOrNull<KaCall>()
+                        val call = element.resolveToCall()?.singleCallOrNull<KaCall>()
                         if (call is KaSimpleFunctionCall) {
                             val functionSymbol = call.partiallyAppliedSymbol.symbol
                             val callableId = functionSymbol.callableId

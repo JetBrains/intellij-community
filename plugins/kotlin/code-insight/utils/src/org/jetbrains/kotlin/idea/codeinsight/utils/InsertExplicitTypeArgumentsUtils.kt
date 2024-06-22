@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.types.Variance
@@ -20,7 +19,7 @@ import org.jetbrains.kotlin.types.Variance
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 fun getRenderedTypeArguments(element: KtCallElement): String? {
-    val resolvedCall = element.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
+    val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull() ?: return null
     val typeParameterSymbols = resolvedCall.partiallyAppliedSymbol.symbol.typeParameters
     if (typeParameterSymbols.isEmpty()) return null
     val renderedTypeParameters = buildList {

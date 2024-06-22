@@ -123,7 +123,7 @@ internal fun KtExpression.getKotlinType(): KtType? {
     // So we have to patch the original call type, widening it to its upper bound.
     // Current implementation is not always precise and may result in skipping a useful warning.
     if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.text == "as?") {
-        val call = resolveCallOld()?.singleFunctionCallOrNull()
+        val call = resolveToCall()?.singleFunctionCallOrNull()
         if (call != null) {
             val functionReturnType = (call.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol)?.returnType
             if (functionReturnType is KtTypeParameterType) {
@@ -224,7 +224,7 @@ internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
     val lambdaExpression = lambdaArgument.getLambdaExpression() ?: return null
     val index = expr.valueArguments.indexOf(lambdaArgument)
     assert(index >= 0)
-    val resolvedCall = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
+    val resolvedCall = expr.resolveToCall()?.singleFunctionCallOrNull() ?: return null
     val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol
     if (symbol == null || !symbol.isInline) return null
     val parameterSymbol = resolvedCall.argumentMapping[lambdaExpression]?.symbol ?: return null

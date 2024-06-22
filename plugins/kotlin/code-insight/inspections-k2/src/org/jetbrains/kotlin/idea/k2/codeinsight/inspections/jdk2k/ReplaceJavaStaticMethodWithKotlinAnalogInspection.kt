@@ -47,7 +47,7 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
             it.isApplicable(element)
         }
 
-        val javaMethodFqName = element.resolveCallOld()
+        val javaMethodFqName = element.resolveToCall()
             ?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId?.asSingleFqName()
 
         return replacements.filter {

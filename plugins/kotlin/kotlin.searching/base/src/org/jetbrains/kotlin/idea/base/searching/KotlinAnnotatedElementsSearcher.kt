@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -29,7 +28,6 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toPsiParameters
 import org.jetbrains.kotlin.idea.KotlinIconProvider.Companion.getBaseIcon
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.PsiBasedClassResolver
 import org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex
 import org.jetbrains.kotlin.psi.*
@@ -114,7 +112,7 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                             @OptIn(KaAllowAnalysisFromWriteAction::class)
                             allowAnalysisFromWriteAction {
                                 analyze(elt) {
-                                    val annotationSymbol = elt.resolveCallOld()?.singleConstructorCallOrNull()?.symbol
+                                    val annotationSymbol = elt.resolveToCall()?.singleConstructorCallOrNull()?.symbol
                                         ?: return false
                                     val annotationType = annotationSymbol.returnType as? KtNonErrorClassType ?: return false
                                     val fqName = annotationType.classId.asFqNameString()

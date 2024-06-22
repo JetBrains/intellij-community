@@ -472,7 +472,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             allowAnalysisOnEdt {
                 analyze(codeFragment) {
                     val callExpression = codeFragment.findDescendantOfType<KtCallExpression>() ?: error("Replaced call is not found")
-                    val resolvedCall = callExpression.resolveCallOld()?.successfulFunctionCallOrNull()
+                    val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull()
                     assert(resolvedCall == null)
                 }
             }
@@ -489,7 +489,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             allowAnalysisOnEdt {
                 analyze(codeFragment) {
                     val callExpression = codeFragment.findDescendantOfType<KtCallExpression>() ?: error("Replaced call is not found")
-                    val resolvedCall = callExpression.resolveCallOld()?.successfulFunctionCallOrNull()
+                    val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull()
                     val resolvedFunction = resolvedCall?.symbol as? KaNamedFunctionSymbol
                     assert(resolvedFunction != null && resolvedFunction.name.asString() == "main" )
                 }

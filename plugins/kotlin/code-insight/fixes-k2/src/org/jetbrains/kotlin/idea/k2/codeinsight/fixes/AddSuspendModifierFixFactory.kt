@@ -54,7 +54,7 @@ private fun KtElement.containingFunction(): KtNamedFunction? {
     return when (val containingFunction = getParentOfTypes2<KtFunctionLiteral, KtNamedFunction>()) {
         is KtFunctionLiteral -> {
             val call = containingFunction.getStrictParentOfType<KtCallExpression>()
-            val resolvedCall = call?.resolveCallOld()?.successfulFunctionCallOrNull()
+            val resolvedCall = call?.resolveToCall()?.successfulFunctionCallOrNull()
             if (resolvedCall?.partiallyAppliedSymbol?.symbol?.isInlineOrInsideInline() == true) {
                 containingFunction.containingFunction()
             } else {

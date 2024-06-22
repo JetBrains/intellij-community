@@ -36,7 +36,7 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
 
             val implicitReceiverSmartCastList = e.implicitReceiverSmartCasts
             if (implicitReceiverSmartCastList.isNotEmpty()) {
-                val symbol = e.resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                val symbol = e.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 if (symbol != null) {
                     var receiver = symbol.dispatchReceiver ?: symbol.extensionReceiver
                     if (receiver is KaSmartCastedReceiverValue) {
