@@ -24,7 +24,7 @@ fun KaNamedFunctionSymbol.getByteCodeMethodName(): String {
         .firstNotNullOfOrNull {
             it.arguments.singleOrNull { a -> a.name.asString() == "name" }
                 ?.expression?.asSafely<KaAnnotationValue.ConstantValue>()
-                ?.constantValue?.asSafely<KaConstantValue.KaStringConstantValue>()?.value
+                ?.value?.asSafely<KaConstantValue.KaStringConstantValue>()?.value
         }
     if (jvmName != null) return jvmName
     return name.asString()

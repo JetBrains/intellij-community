@@ -177,7 +177,7 @@ context(KaSession)
 fun getJvmName(symbol: KaAnnotatedSymbol): String? {
     val jvmNameAnnotation = symbol.annotationsByClassId(JvmStandardClassIds.Annotations.JvmName).firstOrNull() ?: return null
     val annotationValue = jvmNameAnnotation.arguments.singleOrNull()?.expression as? KaAnnotationValue.ConstantValue ?: return null
-    val stringValue = annotationValue.constantValue as? KaConstantValue.KaStringConstantValue ?: return null
+    val stringValue = annotationValue.value as? KaConstantValue.KaStringConstantValue ?: return null
     return stringValue.value
 }
 

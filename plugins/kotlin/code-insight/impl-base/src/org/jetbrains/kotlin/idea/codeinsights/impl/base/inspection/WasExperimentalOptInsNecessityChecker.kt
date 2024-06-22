@@ -32,7 +32,7 @@ internal object WasExperimentalOptInsNecessityChecker {
         val sinceKotlin = annotations.findAnnotation(StandardClassIds.Annotations.SinceKotlin) ?: return null
         return sinceKotlin.argumentByName(VERSION_ARGUMENT)
             ?.asSafely<KaAnnotationValue.ConstantValue>()
-            ?.constantValue
+            ?.value
             ?.asSafely<KaConstantValue.KaStringConstantValue>()
             ?.let { ApiVersion.parse(it.value) }
     }

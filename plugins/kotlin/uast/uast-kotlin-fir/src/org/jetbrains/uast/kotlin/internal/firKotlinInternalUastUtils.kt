@@ -268,7 +268,7 @@ private fun KaAnnotatedSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets: Se
         if (allowedUseSiteTargets.isEmpty() || annotation.useSiteTarget in allowedUseSiteTargets) {
             val firstArgumentExpression = annotation.arguments.firstOrNull()?.expression
             if (firstArgumentExpression is KaConstantAnnotationValue) {
-                return firstArgumentExpression.constantValue.value as? String
+                return firstArgumentExpression.value.value as? String
             }
             break
         }
