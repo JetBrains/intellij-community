@@ -8,13 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -104,7 +98,7 @@ object ConvertReferenceToLambdaUtil {
             receiverExpression?.text != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
         ) {
             val body = if (acceptsReceiverAsParameter) {
-                if (callableSymbol is KtPropertySymbol) "it.$targetName"
+                if (callableSymbol is KaPropertySymbol) "it.$targetName"
                 else "it.$targetName()"
             } else {
                 "$receiverPrefix$targetName(${if (matchingParameterIsExtension) "this" else "it"})"
@@ -125,7 +119,7 @@ object ConvertReferenceToLambdaUtil {
                     if (valueArgumentParent != null) it.first
                     else it.first + ": " + it.second.render(position = Variance.IN_VARIANCE)
                 },
-                body = if (callableSymbol is KtPropertySymbol) {
+                body = if (callableSymbol is KaPropertySymbol) {
                     "$receiverPrefix$targetName"
                 } else {
                     args.joinToString(prefix = "$receiverPrefix$targetName(", separator = ", ", postfix = ")")

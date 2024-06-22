@@ -34,7 +34,7 @@ class KtVariableDescriptor(
         when (val result = analyze(module) {
             when (val symbol = pointer.restoreSymbol()) {
                 is KaValueParameterSymbol, is KaEnumEntrySymbol -> return@analyze true
-                is KtPropertySymbol -> return@analyze symbol.isVal
+                is KaPropertySymbol -> return@analyze symbol.isVal
                 is KaLocalVariableSymbol -> {
                     if (symbol.isVal) return@analyze true
                     val psiElement = symbol.psi?.parent as? KtElement
@@ -174,7 +174,7 @@ class KtVariableDescriptor(
         }
 
         private fun isTrackableProperty(target: KtVariableLikeSymbol?) =
-            target is KtPropertySymbol && target.getter?.isDefault != false && target.setter?.isDefault != false
+            target is KaPropertySymbol && target.getter?.isDefault != false && target.setter?.isDefault != false
                     && !target.isDelegatedProperty && target.modality == Modality.FINAL
                     && !target.isExtension && target.backingFieldSymbol?.hasAnnotation(JvmStandardClassIds.VOLATILE_ANNOTATION_CLASS_ID) == false
     }

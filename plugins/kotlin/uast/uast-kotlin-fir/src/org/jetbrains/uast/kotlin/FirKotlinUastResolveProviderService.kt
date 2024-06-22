@@ -495,7 +495,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                                 val psiMethod = toPsiMethod(callable, ktExpression)
                                 psiMethod?.parameterList?.parameters?.firstOrNull()?.let { return it }
                             }
-                            is KtPropertySymbol -> {
+                            is KaPropertySymbol -> {
                                 val getter = callable.getter?.let { toPsiMethod(it, ktExpression) }
                                 getter?.parameterList?.parameters?.firstOrNull()?.let { return it }
                             }

@@ -8,7 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -57,7 +57,7 @@ internal abstract class AbstractAddAccessorIntention(
     context(KaSession)
     override fun prepareContext(element: KtProperty): Unit? {
         if (element.annotationEntries.isEmpty()) return Unit
-        val symbol = element.getVariableSymbol() as? KtPropertySymbol ?: return null
+        val symbol = element.getVariableSymbol() as? KaPropertySymbol ?: return null
 
         val isApplicable = symbol.backingFieldSymbol
             ?.hasAnnotation(JVM_FIELD_CLASS_ID) != true

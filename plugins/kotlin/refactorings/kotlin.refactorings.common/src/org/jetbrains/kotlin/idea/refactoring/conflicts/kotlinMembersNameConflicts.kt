@@ -74,7 +74,7 @@ fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclaration
     if (candidateSymbol is KaFunctionSymbol) {
         val skipCandidate = when (symbol) {
             is KaFunctionSymbol -> !areSameSignatures(candidateSymbol, symbol)
-            is KtPropertySymbol -> !areSameSignatures(symbol, candidateSymbol)
+            is KaPropertySymbol -> !areSameSignatures(symbol, candidateSymbol)
             is KaClassOrObjectSymbol -> symbol.declaredMemberScope.constructors.none { areSameSignatures(it, candidateSymbol) }
             else -> false
         }
@@ -82,7 +82,7 @@ fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclaration
         return !skipCandidate
     }
 
-    if (candidateSymbol is KtPropertySymbol && symbol is KaFunctionSymbol && !areSameSignatures(candidateSymbol, symbol)) {
+    if (candidateSymbol is KaPropertySymbol && symbol is KaFunctionSymbol && !areSameSignatures(candidateSymbol, symbol)) {
         return false
     }
 
@@ -174,7 +174,7 @@ fun checkDeclarationNewNameConflicts(
         }
 
         var potentialCandidates = getPotentialConflictCandidates(symbol, declaration, newName)
-        if (declarationSymbol is KaValueParameterSymbol && symbol is KtPropertySymbol) {
+        if (declarationSymbol is KaValueParameterSymbol && symbol is KaPropertySymbol) {
             val functionLikeSymbol = declarationSymbol.containingSymbol as? KaFunctionSymbol
             val conflictingParameters = functionLikeSymbol?.valueParameters?.filter { it.name == newName && it != declarationSymbol }?.takeIf { it.isNotEmpty() }
             if (conflictingParameters != null) {
@@ -222,7 +222,7 @@ private fun areSameSignatures(candidateSymbol: KaFunctionSymbol, symbol: KaFunct
 }
 
 context(KaSession)
-private fun areSameSignatures(candidateSymbol: KtPropertySymbol, symbol: KaFunctionSymbol) : Boolean {
+private fun areSameSignatures(candidateSymbol: KaPropertySymbol, symbol: KaFunctionSymbol) : Boolean {
     val type = candidateSymbol.returnType
     if (type is KtFunctionalType &&
         areSameSignatures(type.receiverType, symbol.receiverType, type.parameterTypes, symbol.valueParameters.map { it.returnType }, candidateSymbol.contextReceivers, symbol.contextReceivers)) {

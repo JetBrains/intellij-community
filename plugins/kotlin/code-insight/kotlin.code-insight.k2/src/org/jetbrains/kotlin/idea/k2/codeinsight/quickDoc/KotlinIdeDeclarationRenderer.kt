@@ -51,22 +51,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFunctionalTy
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeNameRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeParameterTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtUsualClassTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -200,7 +185,7 @@ internal class KotlinIdeDeclarationRenderer(
                 annotationRenderer: KtAnnotationRenderer,
                 printer: PrettyPrinter
             ) {
-                val backingFieldAnnotations = (owner as? KtPropertySymbol)?.backingFieldSymbol?.annotations
+                val backingFieldAnnotations = (owner as? KaPropertySymbol)?.backingFieldSymbol?.annotations
                 val annotations = (backingFieldAnnotations?.let { owner.annotations + it } ?: owner.annotations).filter {
                     annotationFilter.filter(analysisSession, it, owner)
                 }.ifEmpty { return }
@@ -300,7 +285,7 @@ internal class KotlinIdeDeclarationRenderer(
             }
         }
         otherModifiersProvider = otherModifiersProvider.onlyIf { symbol ->
-            !(symbol is KaNamedFunctionSymbol && symbol.isOverride || symbol is KtPropertySymbol && symbol.isOverride) && !symbol.isInlineClassOrObject()
+          !(symbol is KaNamedFunctionSymbol && symbol.isOverride || symbol is KaPropertySymbol && symbol.isOverride) && !symbol.isInlineClassOrObject()
         }.and(valueModifierRenderer)
         keywordsRenderer = keywordsRenderer.keywordsRenderer()
     }
@@ -494,7 +479,7 @@ internal class KotlinIdeDeclarationRenderer(
                         {
                             val replacedKeyword = when {
                                 keyword != null -> keyword
-                                callableSymbol is KtPropertySymbol -> if (callableSymbol.isVal) KtTokens.VAL_KEYWORD else KtTokens.VAR_KEYWORD
+                              callableSymbol is KaPropertySymbol -> if (callableSymbol.isVal) KtTokens.VAL_KEYWORD else KtTokens.VAR_KEYWORD
                                 else -> null
                             }
                             if (replacedKeyword != null) {
@@ -718,7 +703,7 @@ internal class KotlinIdeDeclarationRenderer(
                         is KtPackageSymbol -> asPackageName
                         is KaTypeParameterSymbol -> asTypeParameterName
                         is KaTypeAliasSymbol -> asTypeAlias
-                        is KtPropertySymbol -> asInstanceProperty
+                        is KaPropertySymbol -> asInstanceProperty
                         else -> asFunDeclaration
                     }
                 })

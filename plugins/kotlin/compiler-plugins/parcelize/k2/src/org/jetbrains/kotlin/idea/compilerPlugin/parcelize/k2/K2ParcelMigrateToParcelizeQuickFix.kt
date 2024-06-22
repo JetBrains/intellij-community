@@ -59,7 +59,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
         context(KaSession)
         override val KtProperty.isJvmField: Boolean
             get() {
-                val symbol = getVariableSymbol() as? KtPropertySymbol ?: return false
+                val symbol = getVariableSymbol() as? KaPropertySymbol ?: return false
                 return symbol.hasBackingField && (symbol.backingFieldSymbol?.hasAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) == true)
             }
 

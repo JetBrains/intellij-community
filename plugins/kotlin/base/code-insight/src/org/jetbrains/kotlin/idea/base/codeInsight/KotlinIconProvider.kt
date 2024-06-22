@@ -53,7 +53,7 @@ object KotlinIconProvider {
         return when (symbol) {
             is KaValueParameterSymbol -> KotlinIcons.PARAMETER
             is KaLocalVariableSymbol -> if (symbol.isVal) KotlinIcons.VAL else KotlinIcons.VAR
-            is KtPropertySymbol -> if (symbol.isVal) KotlinIcons.FIELD_VAL else KotlinIcons.FIELD_VAR
+            is KaPropertySymbol -> if (symbol.isVal) KotlinIcons.FIELD_VAL else KotlinIcons.FIELD_VAR
             is KaTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Class)
             is KaTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
             is KaEnumEntrySymbol -> KotlinIcons.ENUM

@@ -9,11 +9,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
-import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -60,13 +57,13 @@ object ChangeTypeQuickFixFactories {
     )
 
     val changePropertyReturnTypeOnOverride = changeReturnTypeOnOverride<KaFirDiagnostic.PropertyTypeMismatchOnOverride>(
-        getCallableSymbol = { it.property as KtPropertySymbol },
-        getSuperCallableSymbol = { it.superProperty as KtPropertySymbol },
+        getCallableSymbol = { it.property as KaPropertySymbol },
+        getSuperCallableSymbol = { it.superProperty as KaPropertySymbol },
     )
 
     val changeVariableReturnTypeOnOverride = changeReturnTypeOnOverride<KaFirDiagnostic.VarTypeMismatchOnOverride>(
-        getCallableSymbol = { it.variable as KtPropertySymbol },
-        getSuperCallableSymbol = { it.superVariable as KtPropertySymbol },
+        getCallableSymbol = { it.variable as KaPropertySymbol },
+        getSuperCallableSymbol = { it.superVariable as KaPropertySymbol },
     )
 
     context(KaSession)

@@ -8,10 +8,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
@@ -123,7 +120,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         buildList<KtNamedDeclaration> {
             classOrObject.primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
             classOrObject.declarations.asSequence().filterIsInstance<KtProperty>().filterTo(this) {
-                it.getVariableSymbol() is KtPropertySymbol
+                it.getVariableSymbol() is KaPropertySymbol
             }
         }.filter {
             it.name?.quoteIfNeeded().isIdentifier()

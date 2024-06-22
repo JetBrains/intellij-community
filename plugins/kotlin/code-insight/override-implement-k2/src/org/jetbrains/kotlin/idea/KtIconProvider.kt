@@ -88,7 +88,7 @@ object KtIconProvider {
                 symbol.isVal -> KotlinIcons.VAL
                 else -> KotlinIcons.VAR
             }
-            is KtPropertySymbol -> when {
+            is KaPropertySymbol -> when {
                 symbol.isVal -> KotlinIcons.FIELD_VAL
                 else -> KotlinIcons.FIELD_VAR
             }

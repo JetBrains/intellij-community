@@ -9,7 +9,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -35,7 +35,7 @@ internal class VariableLookupElementFactory {
         var builder = createLookupElementBuilder(options, signature, rendered)
 
         val symbol = signature.symbol
-        if (symbol is KtPropertySymbol) {
+        if (symbol is KaPropertySymbol) {
             builder = builder.withLookupString(symbol.javaGetterName.asString())
             symbol.javaSetterName?.let { builder = builder.withLookupString(it.asString()) }
         }

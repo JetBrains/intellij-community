@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.util
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -28,7 +28,7 @@ fun KtCallableDeclaration.getAccessorNames(): List<String> {
         } else {
             symbol
         }
-        if (probablePropertySymbol !is KtPropertySymbol) return emptyList()
+        if (probablePropertySymbol !is KaPropertySymbol) return emptyList()
 
         return listOfNotNull(
             probablePropertySymbol.javaGetterName.identifier,

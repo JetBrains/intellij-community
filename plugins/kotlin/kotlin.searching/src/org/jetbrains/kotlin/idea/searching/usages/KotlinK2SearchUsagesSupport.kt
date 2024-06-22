@@ -310,7 +310,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     val deepestSuperMethods = allSuperMethods.filter {
                         when (it) {
                             is KaNamedFunctionSymbol -> !it.isOverride
-                            is KtPropertySymbol -> !it.isOverride
+                            is KaPropertySymbol -> !it.isOverride
                             else -> false
                         }
                     }

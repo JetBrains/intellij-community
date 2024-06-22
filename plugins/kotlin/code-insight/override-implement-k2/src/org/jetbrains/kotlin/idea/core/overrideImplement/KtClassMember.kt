@@ -62,7 +62,7 @@ data class KtClassMemberInfo internal constructor(
             memberIcon = memberIcon,
             containingSymbolText = containingSymbolText,
             containingSymbolIcon = containingSymbolIcon,
-            isProperty = symbol is KtPropertySymbol,
+            isProperty = symbol is KaPropertySymbol,
         )
     }
 }
@@ -155,7 +155,7 @@ fun generateMember(
                         if (s.isSuspend) add(KtTokens.SUSPEND_KEYWORD)
                     }
 
-                    if (s is KtPropertySymbol) {
+                    if (s is KaPropertySymbol) {
                         if (s.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
                     }
 
@@ -203,7 +203,7 @@ fun generateMember(
 
     val newMember: KtCallableDeclaration = when (symbol) {
         is KaNamedFunctionSymbol -> generateFunction(project, symbol, renderer, bodyType)
-        is KtPropertySymbol -> generateProperty(project, symbol, renderer, bodyType)
+        is KaPropertySymbol -> generateProperty(project, symbol, renderer, bodyType)
         else -> error("Unknown member to override: $symbol")
     }
 
@@ -292,7 +292,7 @@ context(KaSession)
 @KaExperimentalApi
 private fun generateProperty(
     project: Project,
-    symbol: KtPropertySymbol,
+    symbol: KaPropertySymbol,
     renderer: KtDeclarationRenderer,
     bodyType: BodyType,
 ): KtCallableDeclaration {
@@ -321,7 +321,7 @@ private fun <T> KaSession.generateUnsupportedOrSuperCall(
         BodyType.FromTemplate -> {
             val templateKind = when (symbol) {
                 is KaNamedFunctionSymbol -> TemplateKind.FUNCTION
-                is KtPropertySymbol -> TemplateKind.PROPERTY_INITIALIZER
+                is KaPropertySymbol -> TemplateKind.PROPERTY_INITIALIZER
                 else -> throw IllegalArgumentException("$symbol must be either a function or a property")
             }
             return getFunctionBodyTextFromTemplate(

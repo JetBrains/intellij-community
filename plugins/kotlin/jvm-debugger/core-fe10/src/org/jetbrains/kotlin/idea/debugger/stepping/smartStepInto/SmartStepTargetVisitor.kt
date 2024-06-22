@@ -60,7 +60,7 @@ class SmartStepTargetVisitor(
     private fun recordCallableReference(expression: KtCallableReferenceExpression): Boolean {
         analyze(expression) {
             val symbol = expression.callableReference.mainReference.resolveToSymbol() ?: return false
-            if (symbol is KtPropertySymbol) {
+            if (symbol is KaPropertySymbol) {
                 return recordProperty(expression, symbol)
             }
             if (symbol is KaNamedFunctionSymbol) {
@@ -88,7 +88,7 @@ class SmartStepTargetVisitor(
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun recordProperty(expression: KtExpression, symbol: KtPropertySymbol): Boolean {
+    private fun recordProperty(expression: KtExpression, symbol: KaPropertySymbol): Boolean {
         val targetType = (expression as? KtNameReferenceExpression)?.computeTargetType()
         if (symbol is KtSyntheticJavaPropertySymbol) {
             val propertyAccessSymbol = when (targetType) {
@@ -153,7 +153,7 @@ class SmartStepTargetVisitor(
     }
 
     context(KaSession)
-    private fun propertyAccessLabel(symbol: KtPropertySymbol, propertyAccessSymbol: KaDeclarationSymbol) =
+    private fun propertyAccessLabel(symbol: KaPropertySymbol, propertyAccessSymbol: KaDeclarationSymbol) =
         "${symbol.name}.${KotlinMethodSmartStepTarget.calcLabel(propertyAccessSymbol)}"
 
     private fun KtNameReferenceExpression.computeTargetType(): KtNameReferenceExpressionUsage {
@@ -323,7 +323,7 @@ class SmartStepTargetVisitor(
             analyze(expression) {
                 val resolvedCall = expression.resolveCallOld() as? KaSuccessCallInfo ?: return
                 val variableAccessCall = resolvedCall.call as? KaVariableAccessCall ?: return
-                val symbol = variableAccessCall.partiallyAppliedSymbol.symbol as? KtPropertySymbol ?: return
+                val symbol = variableAccessCall.partiallyAppliedSymbol.symbol as? KaPropertySymbol ?: return
                 recordProperty(expression, symbol)
             }
         }

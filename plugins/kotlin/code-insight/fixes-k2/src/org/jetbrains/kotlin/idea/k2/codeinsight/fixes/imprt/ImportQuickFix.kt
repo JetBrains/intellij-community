@@ -347,8 +347,8 @@ class ImportQuickFix(
 
         context(KaSession)
         private fun KaDeclarationSymbol.getImportKind(): ImportFixHelper.ImportKind? = when {
-            this is KtPropertySymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_PROPERTY
-            this is KtPropertySymbol -> ImportFixHelper.ImportKind.PROPERTY
+            this is KaPropertySymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_PROPERTY
+            this is KaPropertySymbol -> ImportFixHelper.ImportKind.PROPERTY
             this is KtJavaFieldSymbol -> ImportFixHelper.ImportKind.PROPERTY
 
             this is KaNamedFunctionSymbol && isOperator -> ImportFixHelper.ImportKind.OPERATOR

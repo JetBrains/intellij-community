@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeToInlineBuilder
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
 import org.jetbrains.kotlin.psi.*
@@ -26,7 +26,7 @@ class CodeToInlineBuilder(
                 val alwaysKeepMainExpression = mainExpression != null && analyze(mainExpression) {
                     val targetSymbol = mainExpression.resolveCallOld()?.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol
                     when (targetSymbol) {
-                        is KtPropertySymbol -> targetSymbol.getter?.isDefault == false
+                        is KaPropertySymbol -> targetSymbol.getter?.isDefault == false
                         else -> false
                     }
                 }

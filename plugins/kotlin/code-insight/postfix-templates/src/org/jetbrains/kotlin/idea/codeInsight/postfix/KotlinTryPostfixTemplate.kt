@@ -13,10 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.name.ClassId
@@ -126,7 +123,7 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
             is KaSimpleFunctionCall -> processCallable(call.symbol)
             is KaSimpleVariableAccessCall -> {
                 val symbol = call.symbol
-                if (symbol is KtPropertySymbol) {
+                if (symbol is KaPropertySymbol) {
                     when (call.simpleAccess) {
                         KaSimpleVariableAccess.Read -> symbol.getter?.let { processCallable(it) }
                         is KaSimpleVariableAccess.Write -> symbol.setter?.let { processCallable(it) }

@@ -194,7 +194,7 @@ internal fun KtDeclaration.canDefinitelyNotBeSeenFromOtherFile(): Boolean {
 
 context(KaSession)
 private fun isEnumEntriesProperty(symbol: KaCallableSymbol): Boolean {
-    return symbol is KtPropertySymbol &&
+    return symbol is KaPropertySymbol &&
             symbol.isStatic &&
             symbol.callableId?.callableName == StandardNames.ENUM_ENTRIES &&
             (symbol.containingSymbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.ENUM_CLASS

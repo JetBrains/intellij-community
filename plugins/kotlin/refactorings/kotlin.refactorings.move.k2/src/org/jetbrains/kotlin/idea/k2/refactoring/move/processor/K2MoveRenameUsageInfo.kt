@@ -181,7 +181,7 @@ sealed class K2MoveRenameUsageInfo(
                 return analyze(this) {
                     val callable = mainReference.resolveToSymbol() as? KaCallableSymbol
                     if (callable?.isExtension == true) return true
-                    if (callable is KtPropertySymbol) {
+                    if (callable is KaPropertySymbol) {
                         val returnType = callable.returnType
                         returnType is KtFunctionalType && returnType.receiverType != null
                     } else false

@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
@@ -62,7 +62,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
                     .mapNotNull {
                         when (target.type) {
                             KotlinTarget.CallableType.FUNCTION -> it as? KaNamedFunctionSymbol
-                            KotlinTarget.CallableType.PROPERTY -> it as? KtPropertySymbol
+                            KotlinTarget.CallableType.PROPERTY -> it as? KaPropertySymbol
                         }
                     }
 

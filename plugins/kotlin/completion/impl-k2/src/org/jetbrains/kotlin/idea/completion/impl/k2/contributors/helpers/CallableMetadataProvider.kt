@@ -206,7 +206,7 @@ internal object CallableMetadataProvider {
     private val KaCallableSymbol.isOverride: Boolean
         get() = when (this) {
             is KaNamedFunctionSymbol -> isOverride
-            is KtPropertySymbol -> isOverride
+            is KaPropertySymbol -> isOverride
             else -> false
         }
 
