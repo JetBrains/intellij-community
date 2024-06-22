@@ -342,7 +342,7 @@ object ChangeSignatureFixFactory {
         symbol: KaSymbol,
         element: PsiElement,
     ): List<ParameterQuickFix> {
-        if (symbol !is KtParameterSymbol) return emptyList()
+        if (symbol !is KaParameterSymbol) return emptyList()
         val containingSymbol = symbol.containingSymbol as? KaFunctionSymbol ?: return emptyList()
         if (containingSymbol is KaNamedFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
             containingSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED ||

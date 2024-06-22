@@ -688,7 +688,7 @@ internal class KotlinIdeDeclarationRenderer(
                             }
                         }
 
-                        is KtParameterSymbol -> asParameter
+                        is KaParameterSymbol -> asParameter
                         is KaPackageSymbol -> asPackageName
                         is KaTypeParameterSymbol -> asTypeParameterName
                         is KaTypeAliasSymbol -> asTypeAlias

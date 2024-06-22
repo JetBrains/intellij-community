@@ -134,7 +134,7 @@ class KotlinFunctionCallInstruction(
         }
     }
 
-    private fun KtParameterSymbol.findDfaValue(
+    private fun KaParameterSymbol.findDfaValue(
         callDescriptor: KaFunctionCall<*>,
         arguments: DfaCallArguments
     ): DfaValue? {
