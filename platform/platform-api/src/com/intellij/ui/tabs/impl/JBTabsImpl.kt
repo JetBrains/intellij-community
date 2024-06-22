@@ -111,7 +111,7 @@ open class JBTabsImpl internal constructor(
   private val parentDisposable: Disposable,
   coroutineScope: CoroutineScope? = null,
   tabListOptions: TabListOptions,
-) : JComponent(), JBTabsEx, PropertyChangeListener, EdtCompatibleDataProvider,
+) : JComponent(), JBTabsEx, PropertyChangeListener, UiCompatibleDataProvider,
     PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
     QuickActionProvider, MorePopupAware, Accessible {
   companion object {

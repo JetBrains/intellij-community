@@ -180,12 +180,12 @@ public class DataManagerImpl extends DataManager {
 
       @Override
       public void dataSnapshot(@NotNull DataSink sink) {
-        if (provider instanceof EdtDataProvider o) o.uiDataSnapshot(sink);
+        if (provider instanceof UiDataProvider o) o.uiDataSnapshot(sink);
         else if (provider instanceof DataSnapshotProvider o) o.dataSnapshot(sink);
       }
     }
     DataProvider p = provider instanceof DataProvider o ? o :
-                     provider instanceof EdtDataProvider ? new MyAdapter() :
+                     provider instanceof UiDataProvider ? new MyAdapter() :
                      provider instanceof DataSnapshotProvider ? new MyAdapter() :
                      null;
     if (p == null) throw new AssertionError("Unexpected provider: " + provider.getClass().getName());

@@ -738,7 +738,7 @@ open class EditorComposite internal constructor(
   override fun toString() = "EditorComposite(identityHashCode=${System.identityHashCode(this)}, file=$file)"
 }
 
-internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : JPanel(BorderLayout()), EdtDataProvider {
+internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : JPanel(BorderLayout()), UiDataProvider {
   var focusComponent: () -> JComponent? = { null }
     private set
 

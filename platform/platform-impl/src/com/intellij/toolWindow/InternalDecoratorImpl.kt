@@ -55,7 +55,7 @@ class InternalDecoratorImpl internal constructor(
   @JvmField internal val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
   private val myDecoratorChild: JComponent
-) : InternalDecorator(), Queryable, EdtDataProvider, ComponentWithMnemonics {
+) : InternalDecorator(), Queryable, UiDataProvider, ComponentWithMnemonics {
   companion object {
     val SHARED_ACCESS_KEY: Key<Boolean> = Key.create("sharedAccess")
 

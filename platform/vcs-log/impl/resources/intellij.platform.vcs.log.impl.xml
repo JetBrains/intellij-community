@@ -64,7 +64,7 @@
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
                     serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
 
-    <edtDataRule implementation="com.intellij.vcs.log.ui.VcsLogEdtDataRule"/>
+    <uiDataRule implementation="com.intellij.vcs.log.ui.VcsLogUiDataRule"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider
       implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowDiff"/>

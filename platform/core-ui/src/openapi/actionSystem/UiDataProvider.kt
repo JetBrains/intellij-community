@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
 
 @ApiStatus.OverrideOnly
-fun interface EdtDataProvider {
+fun interface UiDataProvider {
   /**
-   * Overrides what is already in the sink.
+   * Override what is already in the sink or add new data.
    * Called in EDT.
    */
   @RequiresEdt
@@ -31,7 +31,7 @@ fun interface DataSnapshotProvider {
 }
 
 @ApiStatus.OverrideOnly
-interface EdtDataRule {
+interface UiDataRule {
   /**
    * Adds what is missing in the sink.
    * Called in EDT and BGT (context customization in BGT).
@@ -44,17 +44,17 @@ interface EdtDataRule {
 
   @ApiStatus.Internal
   companion object {
-    private val EP_NAME = ExtensionPointName.create<EdtDataRule>("com.intellij.edtDataRule")
+    private val EP_NAME = ExtensionPointName.create<UiDataRule>("com.intellij.uiDataRule")
 
     @JvmStatic
-    fun forEachRule(consumer: Consumer<in EdtDataRule>) {
+    fun forEachRule(consumer: Consumer<in UiDataRule>) {
       EP_NAME.forEachExtensionSafe(consumer)
     }
   }
 }
 
 @ApiStatus.Obsolete
-fun interface EdtCompatibleDataProvider : EdtDataProvider, DataProvider {
+fun interface UiCompatibleDataProvider : UiDataProvider, DataProvider {
 
   @Deprecated("Migrate to [uiDataSnapshot] ASAP")
   override fun getData(dataId: @NonNls String): Any? {
@@ -81,11 +81,11 @@ interface DataSink {
 
   fun <T : Any> lazy(key: DataKey<T>, data: () -> T?)
 
-  fun uiDataSnapshot(provider: EdtDataProvider)
+  fun uiDataSnapshot(provider: UiDataProvider)
 
   fun dataSnapshot(provider: DataSnapshotProvider)
 
-  /** Prefer [EdtDataProvider] in UI code */
+  /** Prefer [UiDataProvider] in UI code */
   @ApiStatus.Obsolete
   fun uiDataSnapshot(provider: DataProvider)
 
@@ -110,7 +110,7 @@ interface DataSink {
         sink.dataSnapshot(provider)
       }
       else {
-        if (provider is EdtDataProvider) {
+        if (provider is UiDataProvider) {
           sink.uiDataSnapshot(provider)
         }
         if (provider is DataProvider) {
@@ -118,7 +118,7 @@ interface DataSink {
         }
         if (provider is Function1<*, *>) {
           LOG.error("Kotlin functions are not supported, use " +
-                    "DataProvider/EdtDataProvider/DataSnapshotProvider explicitly")
+                    "DataProvider/UiDataProvider/DataSnapshotProvider explicitly")
         }
       }
     }

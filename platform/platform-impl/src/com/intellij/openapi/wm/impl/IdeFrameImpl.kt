@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.EdtDataProvider
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
@@ -31,7 +31,7 @@ import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-class IdeFrameImpl : JFrame(), IdeFrame, EdtDataProvider, DisposableWindow {
+class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   companion object {
     @JvmStatic
     val activeFrame: Window?
@@ -65,7 +65,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, EdtDataProvider, DisposableWindow {
     frameHelper?.uiDataSnapshot(sink)
   }
 
-  interface FrameHelper : EdtDataProvider {
+  interface FrameHelper : UiDataProvider {
     val accessibleName: @Nls String?
     val project: Project?
     val helper: IdeFrame

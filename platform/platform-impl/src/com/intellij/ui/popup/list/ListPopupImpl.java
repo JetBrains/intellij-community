@@ -7,8 +7,8 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.EdtDataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -807,7 +807,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     @Nullable Integer getSelectedButtonIndex();
   }
 
-  private final class MyList extends JBList implements ListWithInlineButtons, EdtDataProvider {
+  private final class MyList extends JBList implements ListWithInlineButtons, UiDataProvider {
 
     private @Nullable Integer selectedButtonIndex;
 

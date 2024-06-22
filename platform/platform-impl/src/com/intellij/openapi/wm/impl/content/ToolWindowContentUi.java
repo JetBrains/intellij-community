@@ -54,7 +54,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.function.Predicate;
 
-public final class ToolWindowContentUi implements ContentUI, EdtCompatibleDataProvider {
+public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataProvider {
   // when client property is put in toolwindow component, hides toolwindow label
   public static final @NonNls String HIDE_ID_LABEL = "HideIdLabel";
   public static final @NonNls Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");

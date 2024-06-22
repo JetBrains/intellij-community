@@ -83,7 +83,7 @@ import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.*;
  * @see AbstractProjectViewPaneWithAsyncSupport
  * @see ProjectViewPane
  */
-public abstract class AbstractProjectViewPane implements EdtCompatibleDataProvider, Disposable, BusyObject {
+public abstract class AbstractProjectViewPane implements UiCompatibleDataProvider, Disposable, BusyObject {
   private static final Logger LOG = Logger.getInstance(AbstractProjectViewPane.class);
   public static final ProjectExtensionPointName<AbstractProjectViewPane> EP
     = new ProjectExtensionPointName<>("com.intellij.projectViewPane");

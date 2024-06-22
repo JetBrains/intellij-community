@@ -1377,7 +1377,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return ActionCallback.REJECTED;
   }
 
-  private final class MyPanel extends JPanel implements EdtDataProvider {
+  private final class MyPanel extends JPanel implements UiDataProvider {
     MyPanel() {
       super(new BorderLayout());
       Collection<AbstractProjectViewPane> snapshot = new ArrayList<>(idToPane.values());

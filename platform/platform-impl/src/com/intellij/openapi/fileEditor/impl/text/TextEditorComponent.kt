@@ -6,8 +6,8 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorFactory
@@ -42,7 +42,7 @@ private val LOG = logger<TextEditorComponent>()
 open class TextEditorComponent(
   val file: VirtualFile,
   @JvmField internal val editorImpl: EditorImpl,
-) : JLayeredPane(), EdtCompatibleDataProvider {
+) : JLayeredPane(), UiCompatibleDataProvider {
   /**
    * Whether the editor's document is modified or not
    */

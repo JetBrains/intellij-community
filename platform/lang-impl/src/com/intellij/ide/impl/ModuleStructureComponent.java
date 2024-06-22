@@ -7,13 +7,13 @@ package com.intellij.ide.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.EdtDataProvider;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-public final class ModuleStructureComponent extends SimpleToolWindowPanel implements Disposable, EdtDataProvider {
+public final class ModuleStructureComponent extends SimpleToolWindowPanel implements Disposable, UiDataProvider {
   private final ModuleStructurePane myStructurePane;
 
   public ModuleStructureComponent(Module module) {

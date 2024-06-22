@@ -130,7 +130,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return busyObject != null ? busyObject.getReady(requestor) : ActionCallback.DONE;
   }
 
-  private final class MyNonOpaquePanel extends JBPanelWithEmptyText implements EdtDataProvider {
+  private final class MyNonOpaquePanel extends JBPanelWithEmptyText implements UiDataProvider {
     MyNonOpaquePanel() {
       super(new BorderLayout());
 

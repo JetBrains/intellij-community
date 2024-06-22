@@ -109,7 +109,7 @@ class EditorTabbedContainer internal constructor(
     editorTabs.component.isFocusable = false
     editorTabs.component.transferHandler = EditorTabbedContainerTransferHandler(window)
     @Suppress("UsagesOfObsoleteApi")
-    editorTabs.setDataProvider(object : EdtCompatibleDataProvider {
+    editorTabs.setDataProvider(object : UiCompatibleDataProvider {
       override fun uiDataSnapshot(sink: DataSink) {
         sink[CommonDataKeys.PROJECT] = window.manager.project
         sink[CommonDataKeys.VIRTUAL_FILE] = window.selectedComposite?.file

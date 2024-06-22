@@ -4,7 +4,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.EdtCompatibleDataProvider;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -23,7 +23,7 @@ import java.awt.event.ContainerEvent;
 import java.util.Collections;
 import java.util.List;
 
-public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements QuickActionProvider, EdtCompatibleDataProvider {
+public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements QuickActionProvider, UiCompatibleDataProvider {
   public static final Key<Boolean> SCROLLED_STATE = Key.create("ScrolledState");
   private static final int GAP = 1;
 

@@ -1321,7 +1321,7 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
   //
 
   @ApiStatus.Internal
-  public class MyPanel extends JBPanelWithEmptyText implements EdtDataProvider {
+  public class MyPanel extends JBPanelWithEmptyText implements UiDataProvider {
     MyPanel() {
       super(new BorderLayout());
     }

@@ -27,7 +27,7 @@ public enum GetDataRuleType {
 
   /**
    * same as {@link #PROVIDER} but can also be invoked on the UI thread
-   * @deprecated Use {@link com.intellij.openapi.actionSystem.EdtDataRule} instead.
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.UiDataRule} instead.
    */
   @Deprecated(forRemoval = true)
   FAST

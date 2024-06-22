@@ -13,7 +13,7 @@
       testServiceImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
       headlessImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
     />
-    <edtDataRule implementation="com.intellij.openapi.fileEditor.ex.FileEditorManagerEx$DataRule"/>
+    <uiDataRule implementation="com.intellij.openapi.fileEditor.ex.FileEditorManagerEx$DataRule"/>
 
     <projectService
       serviceInterface="com.intellij.problems.WolfTheProblemSolver"

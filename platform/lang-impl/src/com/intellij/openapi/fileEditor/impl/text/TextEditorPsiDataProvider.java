@@ -38,7 +38,7 @@ import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 @Deprecated(forRemoval = true)
 public class TextEditorPsiDataProvider implements EditorDataProvider {
 
-  static class DataRule implements EdtDataRule {
+  static class DataRule implements UiDataRule {
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
       Editor editor = snapshot.get(EDITOR);

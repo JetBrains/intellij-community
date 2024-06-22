@@ -7,13 +7,13 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
-import com.intellij.openapi.actionSystem.EdtDataRule
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.platform.navbar.compatibility.extensionData
 import javax.swing.JComponent
 
-internal class NavBarEdtDataRule : EdtDataRule {
+internal class NavBarUiDataRule : UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val project = snapshot[CommonDataKeys.PROJECT] ?: return
     val source = snapshot[PlatformCoreDataKeys.CONTEXT_COMPONENT] as? JComponent ?: return

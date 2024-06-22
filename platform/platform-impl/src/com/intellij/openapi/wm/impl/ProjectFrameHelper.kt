@@ -6,8 +6,8 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.EdtDataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -57,7 +57,7 @@ private val LOG: Logger
 open class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
   loadingState: FrameLoadingState? = null,
-) : IdeFrameEx, AccessibleContextAccessor, EdtDataProvider {
+) : IdeFrameEx, AccessibleContextAccessor, UiDataProvider {
   constructor(frame: IdeFrameImpl) : this(frame = frame, loadingState = null)
 
   private val isUpdatingTitle = AtomicBoolean()

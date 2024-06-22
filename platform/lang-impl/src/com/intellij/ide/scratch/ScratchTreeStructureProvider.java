@@ -189,7 +189,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
     return new MyProjectNode(project, settings);
   }
 
-  static class DataRule implements EdtDataRule {
+  static class DataRule implements UiDataRule {
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {

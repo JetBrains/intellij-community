@@ -2,7 +2,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.EdtDataProvider;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -137,7 +137,7 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
     myList.setFixedCellHeight(dimension.height);
   }
 
-  private final class MyListWrapper extends JBScrollPane implements EdtDataProvider {
+  private final class MyListWrapper extends JBScrollPane implements UiDataProvider {
     private final JList<T> myList;
 
     private MyListWrapper(final JList<T> list) {

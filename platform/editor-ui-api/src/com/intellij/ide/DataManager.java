@@ -102,8 +102,8 @@ public abstract class DataManager {
   public abstract @Nullable <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey);
 
   /**
-   * Implement {@link com.intellij.openapi.actionSystem.EdtDataProvider} on a component directly
-   * and use separate {@link com.intellij.openapi.actionSystem.EdtDataRule} to add specific UI data.
+   * Implement {@link com.intellij.openapi.actionSystem.UiDataProvider} on a component directly
+   * and use separate {@link com.intellij.openapi.actionSystem.UiDataRule} to add specific UI data.
    * <p>
    * Use {@link EdtNoGetDataProvider} as a temporary type-safe and performant solution.
    */

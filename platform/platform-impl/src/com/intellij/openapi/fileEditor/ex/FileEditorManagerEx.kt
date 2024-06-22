@@ -205,7 +205,7 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   }
 
   @Deprecated("Drop together with [registerExtraEditorDataProvider]")
-  internal class DataRule : EdtDataRule {
+  internal class DataRule : UiDataRule {
     override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
       val project = snapshot[PlatformDataKeys.PROJECT] ?: return
       val caret = snapshot[PlatformDataKeys.CARET] ?: return

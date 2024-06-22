@@ -352,7 +352,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     for (Component comp : components) {
       sink.map = null;
       sink.hideEditor = hideEditor(comp);
-      Object dataProvider = comp instanceof EdtDataProvider ? comp : getDataProviderEx(comp);
+      Object dataProvider = comp instanceof UiDataProvider ? comp : getDataProviderEx(comp);
       cacheProviderData(sink, dataProvider, dataManager);
       cachedData = sink.map == null ? cachedData : cachedData.prepend(sink.map);
       ourPrevMaps.put(comp, cachedData);
@@ -401,7 +401,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         return null;
       }
     };
-    EdtDataRule.forEachRule(o -> {
+    UiDataRule.forEachRule(o -> {
       Object prev = sink.source;
       sink.source = o;
       sink.cachedDataForRules = cachedData;
@@ -471,7 +471,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
 
     @Override
-    public void uiDataSnapshot(@NotNull EdtDataProvider provider) {
+    public void uiDataSnapshot(@NotNull UiDataProvider provider) {
       Object prev = source;
       source = provider;
       try {

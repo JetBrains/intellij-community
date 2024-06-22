@@ -67,7 +67,7 @@ import static com.intellij.util.ui.ThreeStateCheckBox.State;
 /**
  * Consider implementing {@link AsyncChangesTree} instead.
  */
-public abstract class ChangesTree extends Tree implements EdtCompatibleDataProvider {
+public abstract class ChangesTree extends Tree implements UiCompatibleDataProvider {
   private static final Logger LOG = Logger.getInstance(ChangesTree.class);
 
   @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";

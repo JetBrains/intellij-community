@@ -25,7 +25,7 @@ import java.awt.*;
  *
  * @see DataKey
  * @see DataProvider
- * @see EdtDataProvider
+ * @see UiDataProvider
  * @see AnActionEvent#getDataContext()
  * @see com.intellij.ide.DataManager#getDataContext(Component)
  * @see com.intellij.openapi.actionSystem.CommonDataKeys

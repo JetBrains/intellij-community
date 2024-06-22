@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.ui;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DataSnapshot;
-import com.intellij.openapi.actionSystem.EdtDataRule;
+import com.intellij.openapi.actionSystem.UiDataRule;
 import com.intellij.openapi.vcs.changes.Change;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ import java.util.Arrays;
 import static com.intellij.openapi.vcs.VcsDataKeys.*;
 
 @ApiStatus.Internal
-public class VcsEdtDataRule implements EdtDataRule {
+public class VcsUiDataRule implements UiDataRule {
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
     sink.set(CHANGES_SELECTION, getListSelection(snapshot));

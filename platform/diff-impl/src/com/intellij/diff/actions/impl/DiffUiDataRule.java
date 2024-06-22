@@ -18,11 +18,11 @@ package com.intellij.diff.actions.impl;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DataSnapshot;
-import com.intellij.openapi.actionSystem.EdtDataRule;
+import com.intellij.openapi.actionSystem.UiDataRule;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 
-public class DiffEdtDataRule implements EdtDataRule {
+public class DiffUiDataRule implements UiDataRule {
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
     Navigatable navigatable = snapshot.get(DiffDataKeys.NAVIGATABLE);

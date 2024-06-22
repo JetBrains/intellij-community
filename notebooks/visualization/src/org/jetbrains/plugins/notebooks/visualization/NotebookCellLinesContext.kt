@@ -30,7 +30,7 @@ private class NotebookCellLinesIntervalDataRule : GetDataRule {
       }
 }
 
-private class EditorsWithOffsetsDataRule : EdtDataRule {
+private class EditorsWithOffsetsDataRule : UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val contextComponent = snapshot[PlatformCoreDataKeys.CONTEXT_COMPONENT]
     val editor = snapshot[PlatformDataKeys.EDITOR]

@@ -548,7 +548,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
   }
 
-  private static final class MyDialog extends JDialog implements DialogWrapperDialog, EdtDataProvider, Queryable, AbstractDialog, DisposableWindow {
+  private static final class MyDialog extends JDialog implements DialogWrapperDialog, UiDataProvider, Queryable, AbstractDialog, DisposableWindow {
     private final WeakReference<DialogWrapper> myDialogWrapper;
 
     /**
@@ -1118,7 +1118,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
-    private final class DialogRootPane extends JRootPane implements EdtDataProvider {
+    private final class DialogRootPane extends JRootPane implements UiDataProvider {
 
       private final boolean myGlassPaneIsSet;
 

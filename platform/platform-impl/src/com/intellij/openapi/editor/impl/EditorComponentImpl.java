@@ -79,7 +79,7 @@ import java.util.List;
 import java.util.Map;
 
 @DirtyUI
-public final class EditorComponentImpl extends JTextComponent implements Scrollable, EdtCompatibleDataProvider, Queryable, TypingTarget, Accessible,
+public final class EditorComponentImpl extends JTextComponent implements Scrollable, UiCompatibleDataProvider, Queryable, TypingTarget, Accessible,
                                                                          UISettingsListener, UiInspectorPreciseContextProvider {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
 

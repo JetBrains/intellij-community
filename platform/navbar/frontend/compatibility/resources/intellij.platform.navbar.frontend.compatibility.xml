@@ -4,7 +4,7 @@
     <module name="intellij.platform.navbar.compatibility"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <edtDataRule implementation="com.intellij.platform.navbar.frontend.compatibility.NavBarEdtDataRule" />
+    <uiDataRule implementation="com.intellij.platform.navbar.frontend.compatibility.NavBarUiDataRule" />
     <selectInTarget implementation="com.intellij.platform.navbar.frontend.compatibility.SelectInNavBarTarget"/>
   </extensions>
   <actions resource-bundle="messages.NavBarFrontendBundle">

@@ -7,8 +7,8 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.EdtDataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -88,7 +88,7 @@ public class TextEditorHolder extends EditorHolder {
     }
   }
 
-  private static class MyPanel extends Wrapper implements EdtDataProvider {
+  private static class MyPanel extends Wrapper implements UiDataProvider {
     final EditorEx editor;
     final Project project;
 

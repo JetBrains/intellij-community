@@ -3,15 +3,15 @@ package com.intellij.ide.impl.dataRules
 
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
-import com.intellij.openapi.actionSystem.EdtDataRule
 import com.intellij.openapi.actionSystem.PlatformDataKeys.*
+import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.ui.EditorTextField
 
-internal class BasicEdtDataRule : EdtDataRule {
+internal class BasicUiDataRule : UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     // editor
     val editor = snapshot[EDITOR]

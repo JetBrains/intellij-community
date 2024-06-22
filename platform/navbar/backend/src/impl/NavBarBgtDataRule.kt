@@ -18,7 +18,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.containers.toArray
 
-internal class NavBarBgtDataRule : EdtDataRule {
+internal class NavBarBgtDataRule : UiDataRule {
 
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val project = snapshot[CommonDataKeys.PROJECT] ?: return
