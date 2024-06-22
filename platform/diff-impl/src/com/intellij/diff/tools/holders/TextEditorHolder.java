@@ -8,9 +8,11 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.EdtDataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.panels.Wrapper;
 import org.jetbrains.annotations.NotNull;
@@ -102,6 +104,8 @@ public class TextEditorHolder extends EditorHolder {
       sink.set(OpenFileDescriptor.NAVIGATE_IN_EDITOR, editor);
       sink.set(CommonDataKeys.EDITOR, editor);
       sink.set(CommonDataKeys.VIRTUAL_FILE, editor.getVirtualFile());
+      sink.set(PlatformCoreDataKeys.FILE_EDITOR,
+               TextEditorProvider.getInstance().getTextEditor(editor));
     }
   }
 }

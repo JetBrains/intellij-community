@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.EdtDataRule
 import com.intellij.openapi.actionSystem.PlatformDataKeys.*
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -24,13 +23,9 @@ internal class BasicEdtDataRule : EdtDataRule {
     }
     if (editor != null && editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY) != true) {
       val fileEditor = snapshot[FILE_EDITOR]
-      if (fileEditor == null || fileEditor !is TextEditor || fileEditor.editor != editor) {
+      if (fileEditor == null) {
         // not applied per-snapshot if fileEditor is present
         sink[FILE_EDITOR] = TextEditorProvider.getInstance().getTextEditor(editor)
-        // but lazy is still applied per-layer
-        sink.lazy(FILE_EDITOR) {
-          TextEditorProvider.getInstance().getTextEditor(editor)
-        }
       }
     }
     // navigatables
