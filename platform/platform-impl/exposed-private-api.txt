@@ -48,7 +48,7 @@ com/intellij/openapi/application/migrations/PluginMigration$PluginMigrationDescr
 com/intellij/openapi/client/ClientAppSession
 com/intellij/openapi/components/impl/stores/IComponentStore
 com/intellij/openapi/editor/colors/Groups
-com/intellij/openapi/editor/impl/softwrap/mapping/SoftWrapAwareDocumentParsingListener
+com/intellij/openapi/editor/impl/CaretImpl
 com/intellij/openapi/editor/markup/AnalyzerStatus
 com/intellij/openapi/extensions/ExtensionsArea
 com/intellij/openapi/extensions/impl/ExtensionPointImpl
