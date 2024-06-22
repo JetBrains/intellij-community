@@ -13767,7 +13767,7 @@ f:com.intellij.openapi.editor.impl.EditorComponentImpl
 - javax.swing.text.JTextComponent
 - com.intellij.ide.ui.UISettingsListener
 - com.intellij.internal.inspector.UiInspectorPreciseContextProvider
-- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.openapi.ui.Queryable
 - com.intellij.openapi.ui.TypingTarget
 - javax.accessibility.Accessible
@@ -21029,7 +21029,7 @@ c:com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder
 - getFileTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getProjectTitle(com.intellij.openapi.project.Project):java.lang.String
 c:com.intellij.openapi.wm.impl.ProjectFrameHelper
-- com.intellij.openapi.actionSystem.EdtDataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - com.intellij.openapi.wm.IdeFrame
 - com.intellij.util.ui.accessibility.AccessibleContextAccessor
 - sf:Companion:com.intellij.openapi.wm.impl.ProjectFrameHelper$Companion
@@ -21518,7 +21518,7 @@ f:com.intellij.openapi.wm.impl.content.TabbedContentTabLabel
 - removeNotify():V
 - update():V
 f:com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.ui.content.ContentUI
 - sf:ALLOW_DND_FOR_TABS:com.intellij.openapi.util.Key
 - sf:DONT_HIDE_TOOLBAR_IN_HEADER:com.intellij.openapi.util.Key

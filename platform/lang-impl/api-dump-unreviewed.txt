@@ -15764,7 +15764,7 @@ f:com.intellij.ide.impl.LangDataValidators
 f:com.intellij.ide.impl.ModuleStructureComponent
 - com.intellij.openapi.ui.SimpleToolWindowPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.EdtDataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.openapi.module.Module):V
 - dispose():V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
@@ -16213,7 +16213,7 @@ a:com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 - isAlwaysLeaf(java.lang.Object):Z
 a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.openapi.util.BusyObject
 - sf:EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 - pf:myProject:com.intellij.openapi.project.Project
@@ -16764,7 +16764,7 @@ f:com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory
 - getIcon():javax.swing.Icon
 c:com.intellij.ide.projectView.impl.ProjectViewTree
 - com.intellij.ide.dnd.aware.DnDAwareTree
-- com.intellij.openapi.actionSystem.EdtDataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - com.intellij.ui.speedSearch.SpeedSearchSupply$SpeedSearchLocator
 - p:<init>(com.intellij.openapi.project.Project,javax.swing.tree.TreeModel):V
 - <init>(javax.swing.tree.TreeModel):V

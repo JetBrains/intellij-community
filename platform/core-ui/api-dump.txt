@@ -69,7 +69,7 @@ com.intellij.openapi.actionSystem.DataSink
 - a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataProvider):V
 - s:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataProvider):V
 - s:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Object):V
-- a:uiDataSnapshot(com.intellij.openapi.actionSystem.EdtDataProvider):V
+- a:uiDataSnapshot(com.intellij.openapi.actionSystem.UiDataProvider):V
 f:com.intellij.openapi.actionSystem.DataSink$Companion
 - f:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataProvider):V
 - f:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Object):V
@@ -77,19 +77,19 @@ com.intellij.openapi.actionSystem.DataSnapshot
 - a:get(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 com.intellij.openapi.actionSystem.DataSnapshotProvider
 - a:dataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
-com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
-- com.intellij.openapi.actionSystem.DataProvider
-- com.intellij.openapi.actionSystem.EdtDataProvider
-- getData(java.lang.String):java.lang.Object
-com.intellij.openapi.actionSystem.EdtDataProvider
-- a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
-com.intellij.openapi.actionSystem.EdtDataRule
-- s:forEachRule(java.util.function.Consumer):V
-- a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
 com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 - com.intellij.openapi.actionSystem.DataProvider
 - com.intellij.openapi.actionSystem.DataSnapshotProvider
 - getData(java.lang.String):java.lang.Object
+com.intellij.openapi.actionSystem.UiCompatibleDataProvider
+- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
+- getData(java.lang.String):java.lang.Object
+com.intellij.openapi.actionSystem.UiDataProvider
+- a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+com.intellij.openapi.actionSystem.UiDataRule
+- s:forEachRule(java.util.function.Consumer):V
+- a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
 com.intellij.openapi.ui.popup.BalloonHandler
 - a:hide():V
 com.intellij.openapi.ui.popup.LightweightWindow

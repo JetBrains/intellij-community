@@ -4694,7 +4694,7 @@ f:com.intellij.openapi.ui.ShadowAction
 - reconnect(com.intellij.openapi.actionSystem.AnAction):V
 c:com.intellij.openapi.ui.SimpleToolWindowPanel
 - com.intellij.ui.components.JBPanelWithEmptyText
-- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.ui.switcher.QuickActionProvider
 - sf:SCROLLED_STATE:com.intellij.openapi.util.Key
 - p:myVertical:Z
@@ -10879,7 +10879,7 @@ f:com.intellij.ui.tabs.impl.JBEditorTabPainter
 - f:paintTopGap(com.intellij.ui.tabs.JBTabsPosition,java.awt.Graphics2D,java.awt.Rectangle,I):V
 c:com.intellij.ui.tabs.impl.JBEditorTabs
 - com.intellij.ide.ui.UISettingsListener
-- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.openapi.ui.Queryable
 - com.intellij.ui.switcher.QuickActionProvider
 - com.intellij.ui.tabs.JBEditorTabsBase

@@ -5290,7 +5290,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesListView
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - com.intellij.ui.treeStructure.Tree
-- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:ALWAYS_KEEP:com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy
 - sf:ALWAYS_RESET:com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy
 - sf:DEFAULT_GROUPING_KEYS:java.util.List

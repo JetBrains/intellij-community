@@ -59,8 +59,8 @@ c:com.intellij.diff.actions.CompareFilesAction
 - p:getDiffRequestChain(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.diff.chains.DiffRequestChain
 - p:isAvailable(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-c:com.intellij.diff.actions.impl.DiffEdtDataRule
-- com.intellij.openapi.actionSystem.EdtDataRule
+c:com.intellij.diff.actions.impl.DiffUiDataRule
+- com.intellij.openapi.actionSystem.UiDataRule
 - <init>():V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
 c:com.intellij.diff.actions.impl.FocusOppositePaneAction
