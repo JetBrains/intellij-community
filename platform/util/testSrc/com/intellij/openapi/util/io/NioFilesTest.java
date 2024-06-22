@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +31,51 @@ public class NioFilesTest {
   public void fileName() {
     assertThat(NioFiles.getFileName(memoryFs.getFs().getPath("/f"))).isEqualTo("f");
     assertThat(NioFiles.getFileName(memoryFs.getFs().getRootDirectories().iterator().next())).isEqualTo("/");
+  }
+
+  @Test
+  public void copyRecursivelyFile() throws IOException {
+    var file = Files.writeString(memoryFs.getFs().getPath("/file"), "...");
+
+    var copy = file.resolveSibling("copy");
+    NioFiles.copyRecursively(file, copy);
+    assertThat(copy).isRegularFile().hasSameBinaryContentAs(file);
+
+    assertThrows(FileAlreadyExistsException.class, () -> NioFiles.copyRecursively(file, copy));
+
+    var link = Files.createSymbolicLink(file.resolveSibling("link"), copy.getFileName());
+    assertThrows(FileAlreadyExistsException.class, () -> NioFiles.copyRecursively(file, link));
+  }
+
+  @Test
+  public void copyRecursivelyDirectory() throws IOException {
+    var dir = Files.createDirectory(memoryFs.getFs().getPath("/dir"));
+    var f1 = Files.createFile(dir.resolve("file1"), PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
+    var f2 = Files.writeString(Files.createDirectories(dir.resolve("d1/d2/d3")).resolve("file2"), "...");
+    var l1 = Files.createSymbolicLink(dir.resolve("link1"), memoryFs.getFs().getPath("d1/d2/d3"));
+    var l2 = Files.createSymbolicLink(dir.resolve("bad-link"), memoryFs.getFs().getPath("no-such-file"));
+
+    var copy = dir.resolveSibling("copy");
+    NioFiles.copyRecursively(dir, copy);
+
+    assertThat(copy).isDirectory();
+    assertThat(copy.resolve(dir.relativize(f1))).isRegularFile();
+    assertThat(Files.getPosixFilePermissions(copy.resolve(dir.relativize(f1)))).isEqualTo(Files.getPosixFilePermissions(f1));
+    assertThat(copy.resolve(dir.relativize(f2))).isRegularFile().hasSameBinaryContentAs(f2);
+    assertThat(copy.resolve(dir.relativize(l1))).isSymbolicLink().isDirectoryContaining(p -> p.getFileName().equals(f2.getFileName()));
+    assertThat(copy.resolve(dir.relativize(l2))).isSymbolicLink();
+
+    var existingTarget = Files.createDirectories(dir.resolveSibling("existing"));
+    NioFiles.copyRecursively(dir, existingTarget);
+    assertThat(existingTarget.resolve(dir.relativize(f2))).isRegularFile().hasSameBinaryContentAs(f2);
+
+    var nonConflictingTarget = Files.createDirectories(dir.resolveSibling("non-conflicting"));
+    NioFiles.copyRecursively(dir, nonConflictingTarget);
+    assertThat(nonConflictingTarget.resolve(dir.relativize(f2))).isRegularFile().hasSameBinaryContentAs(f2);
+
+    var conflictingTarget = Files.createDirectories(dir.resolveSibling("conflicting"));
+    Files.createFile(conflictingTarget.resolve("file1"));
+    assertThrows(FileAlreadyExistsException.class, () -> NioFiles.copyRecursively(dir, conflictingTarget));
   }
 
   @Test

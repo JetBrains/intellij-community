@@ -10,6 +10,7 @@ import com.intellij.util.BitUtil;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.platform.win32.WinNT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -237,6 +238,42 @@ public final class NioFiles {
    */
   public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<? super Path> callback) throws IOException {
     FileUtilRt.deleteRecursively(fileOrDirectory, callback::accept);
+  }
+
+  /**
+   * See {@link #copyRecursively(Path, Path, Consumer)}.
+   */
+  @ApiStatus.Experimental
+  public static void copyRecursively(@NotNull Path from, @NotNull Path to) throws IOException {
+    copyRecursively(from, to, null);
+  }
+
+  /**
+   * <p>Recursively copies the given directory or file; for files, copies attributes.
+   * Does not follow symlinks (i.e. copies just links, not targets).
+   * Merges with an existing directory structure under {@code to} (if any), but does not overwrite existing files.
+   * Invokes the callback before copying a file or a directory.
+   * Fails fast (throws an exception right after meeting a problematic file or directory); does not try to delete an incomplete copy.</p>
+   */
+  @ApiStatus.Experimental
+  public static void copyRecursively(@NotNull Path from, @NotNull Path to, @Nullable Consumer<? super Path> callback) throws IOException {
+    Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        if (callback != null) callback.accept(dir);
+        Path copy = dir == from ? to : to.resolve(from.relativize(dir));
+        createDirectories(copy);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (callback != null) callback.accept(file);
+        Path copy = file == from ? to : to.resolve(from.relativize(file));
+        Files.copy(file, copy, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES);
+        return FileVisitResult.CONTINUE;
+      }
+    });
   }
 
   /**

@@ -465,54 +465,34 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public @NotNull VirtualFile copyFile(Object requestor,
-                                       @NotNull VirtualFile file,
-                                       @NotNull VirtualFile newParent,
-                                       @NotNull String copyName) throws IOException {
-    if (!isValidName(copyName)) {
-      throw new IOException(CoreBundle.message("file.invalid.name.error", copyName));
+  public @NotNull VirtualFile copyFile(
+    Object requestor,
+    @NotNull VirtualFile file,
+    @NotNull VirtualFile newParent,
+    @NotNull String newName
+  ) throws IOException {
+    if (!isValidName(newName)) {
+      throw new IOException(CoreBundle.message("file.invalid.name.error", newName));
     }
-
     if (!file.exists()) {
       throw new IOException(IdeCoreBundle.message("vfs.file.not.exist.error", file.getPath()));
     }
     if (!newParent.exists() || !newParent.isDirectory()) {
       throw new IOException(IdeCoreBundle.message("vfs.target.not.directory.error", newParent.getPath()));
     }
-    if (newParent.findChild(copyName) != null) {
-      throw new IOException(IdeCoreBundle.message("vfs.target.already.exists.error", newParent.getPath() + "/" + copyName));
+    if (newParent.findChild(newName) != null) {
+      throw new IOException(IdeCoreBundle.message("vfs.target.already.exists.error", newParent.getPath() + "/" + newName));
     }
 
-    FileAttributes attributes = getAttributes(file);
-    if (attributes == null) {
-      throw new FileNotFoundException(IdeCoreBundle.message("file.not.exist.error", file.getPath()));
-    }
-    if (attributes.isSpecial()) {
-      throw new FileNotFoundException("Not a file: " + file);
-    }
-    File ioParent = convertToIOFile(newParent);
-    if (!ioParent.isDirectory()) {
-      throw new IOException(IdeCoreBundle.message("target.not.directory.error", ioParent.getPath()));
-    }
-    File ioTarget = new File(ioParent, copyName);
-    if (ioTarget.exists()) {
-      throw new IOException(IdeCoreBundle.message("target.already.exists.error", ioTarget.getPath()));
+    if (!auxCopy(file, newParent, newName)) {
+      var nioFile = convertToNioFileAndCheck(file, false);
+      var nioTarget = convertToNioFileAndCheck(newParent, false).resolve(newName);
+      NioFiles.copyRecursively(nioFile, nioTarget);
     }
 
-    if (!auxCopy(file, newParent, copyName)) {
-      try {
-        File ioFile = convertToIOFile(file);
-        FileUtil.copyFileOrDir(ioFile, ioTarget, attributes.isDirectory());
-      }
-      catch (IOException e) {
-        FileUtil.delete(ioTarget);
-        throw e;
-      }
-    }
+    auxNotifyCompleted(handler -> handler.copy(file, newParent, newName));
 
-    auxNotifyCompleted(handler -> handler.copy(file, newParent, copyName));
-
-    return new FakeVirtualFile(newParent, copyName);
+    return new FakeVirtualFile(newParent, newName);
   }
 
   @Override
