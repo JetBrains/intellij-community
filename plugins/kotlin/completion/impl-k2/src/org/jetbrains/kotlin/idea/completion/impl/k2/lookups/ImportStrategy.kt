@@ -6,8 +6,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
@@ -38,7 +38,7 @@ private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
                 .getCallableSymbols(nameToImport.shortName())
                 .any { callable ->
                     val callableFqName = callable.callableId?.asSingleFqName()
-                    callable is KtKotlinPropertySymbol && callableFqName == nameToImport ||
+                    callable is KaKotlinPropertySymbol && callableFqName == nameToImport ||
                             callable is KaNamedFunctionSymbol && callableFqName == nameToImport
                 }
             if (anyCallableSymbolMatches) return true

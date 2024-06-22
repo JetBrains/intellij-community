@@ -84,7 +84,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
                 }
 
                 val symbol = expression.mainReference.resolveToSymbol()
-                if (symbol is KaLocalVariableSymbol || symbol is KaValueParameterSymbol || symbol is KtKotlinPropertySymbol) {
+                if (symbol is KaLocalVariableSymbol || symbol is KaValueParameterSymbol || symbol is KaKotlinPropertySymbol) {
                     refHolder.registerLocalRef(symbol.psi, expression)
                 }
                 if (!expression.isCalleeExpression()) {

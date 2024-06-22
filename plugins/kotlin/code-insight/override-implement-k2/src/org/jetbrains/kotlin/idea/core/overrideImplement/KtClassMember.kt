@@ -165,7 +165,7 @@ fun generateMember(
                         if (s.isNoinline) add(KtTokens.NOINLINE_KEYWORD)
                     }
 
-                    if (s is KtKotlinPropertySymbol) {
+                    if (s is KaKotlinPropertySymbol) {
                         if (s.isConst) add(KtTokens.CONST_KEYWORD)
                         if (s.isLateInit) add(KtTokens.LATEINIT_KEYWORD)
                     }

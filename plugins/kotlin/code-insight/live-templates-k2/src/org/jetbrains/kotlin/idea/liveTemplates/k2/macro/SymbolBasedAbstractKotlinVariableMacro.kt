@@ -89,7 +89,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
     private fun shouldDisplayVariable(variable: KtVariableLikeSymbol, file: KtFile): Boolean {
         return when (variable) {
             is KaValueParameterSymbol, is KaLocalVariableSymbol -> true
-            is KtKotlinPropertySymbol -> variable.psi?.containingFile == file
+            is KaKotlinPropertySymbol -> variable.psi?.containingFile == file
             else -> false
         }
     }

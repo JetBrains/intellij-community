@@ -604,7 +604,7 @@ internal open class FirCallableCompletionContributor(
 
             when (symbol) {
                 is KtJavaFieldSymbol -> symbol.isStatic && symbol.isVal && symbol.hasPrimitiveOrStringReturnType()
-                is KtKotlinPropertySymbol -> symbol.isConst
+                is KaKotlinPropertySymbol -> symbol.isConst
                 is KaEnumEntrySymbol -> true
                 is KaNamedFunctionSymbol -> {
                     val isArrayOfCall = symbol.callableId?.asSingleFqName() in ArrayFqNames.ARRAY_CALL_FQ_NAMES

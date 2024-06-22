@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.codeInsight.CallTarget
@@ -59,7 +59,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     context(KaSession)
     private fun KaCallableSymbol.isSuspendSymbol(): Boolean {
         // Currently, Kotlin does not support suspending properties except for accessing the coroutineContext
-        if (this is KtKotlinPropertySymbol && getFqNameIfPackageOrNonLocal() == coroutineContextFqName) {
+        if (this is KaKotlinPropertySymbol && getFqNameIfPackageOrNonLocal() == coroutineContextFqName) {
             return true
         }
         return this is KaNamedFunctionSymbol && isSuspend

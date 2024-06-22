@@ -30,7 +30,7 @@ internal class VariableReferenceHighlighter(holder: HighlightInfoHolder) : Kotli
 
         return when (val symbol = expression.mainReference.resolveToSymbol()) {
             is KtBackingFieldSymbol -> highlightBackingField(symbol, expression)
-            is KtKotlinPropertySymbol -> highlightProperty(symbol, expression)
+            is KaKotlinPropertySymbol -> highlightProperty(symbol, expression)
             is KaLocalVariableSymbol -> {
                 val result = mutableListOf<HighlightInfo.Builder>()
                 result.addIfNotNull(symbol.getHighlightingForMutableVar(expression))
@@ -78,7 +78,7 @@ internal class VariableReferenceHighlighter(holder: HighlightInfoHolder) : Kotli
     }
 
     private fun highlightProperty(
-        symbol: KtKotlinPropertySymbol,
+        symbol: KaKotlinPropertySymbol,
         expression: KtSimpleNameExpression
     ): List<HighlightInfo.Builder> {
         val result = mutableListOf<HighlightInfo.Builder>()

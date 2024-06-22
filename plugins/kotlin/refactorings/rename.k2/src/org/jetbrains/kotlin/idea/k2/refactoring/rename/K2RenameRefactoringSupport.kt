@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -124,7 +124,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
 
         analyseOnEdt(propertyOrParameter) {
             val propertySymbol = when (val symbol = propertyOrParameter.symbol) {
-                is KtKotlinPropertySymbol -> symbol
+                is KaKotlinPropertySymbol -> symbol
                 is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty
                 else -> null
             }

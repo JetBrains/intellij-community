@@ -27,7 +27,7 @@ import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.MethodEntryRequest
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
@@ -149,7 +149,7 @@ class KotlinFieldBreakpoint(
             analyze(property) {
                 val hasBackingField = when (val symbol = property.symbol) {
                     is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.hasBackingField ?: false
-                    is KtKotlinPropertySymbol -> symbol.hasBackingField
+                    is KaKotlinPropertySymbol -> symbol.hasBackingField
                     else -> false
                 }
 
