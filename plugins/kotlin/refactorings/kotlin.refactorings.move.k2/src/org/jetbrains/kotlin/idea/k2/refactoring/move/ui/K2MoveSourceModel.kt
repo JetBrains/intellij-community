@@ -31,7 +31,6 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
 
     class FileSource(fsItems: Set<PsiFileSystemItem>) : K2MoveSourceModel<PsiFileSystemItem> {
         override var elements: Set<PsiFileSystemItem> = fsItems
-            internal set
 
         override fun toDescriptor(): K2MoveSourceDescriptor.FileSource = K2MoveSourceDescriptor.FileSource(elements)
 
@@ -39,28 +38,21 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
         override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = elements.firstOrNull()?.project ?: return
 
-            class PresentableFile(val file: PsiFileSystemItem, val presentation: TargetPresentation)
-
             val presentableFiles = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
                 elements.map { file ->
-                    val presentation = TargetPresentation.builder(file.name)
+                    TargetPresentation.builder(file.name)
                         .icon(file.getIcon(0))
-                        .locationText(file.virtualFile.parent.path)
                         .presentation()
-                    PresentableFile(file, presentation)
                 }
             }
 
             group(RefactoringBundle.message("move.files.group")) {
-                lateinit var list: JBList<PresentableFile>
+                lateinit var list: JBList<TargetPresentation>
                 row {
-                    list = JBList(CollectionListModel(presentableFiles))
-                    list.cellRenderer = createTargetPresentationRenderer { presentableFile -> presentableFile.presentation }
-                    cell(list).resizableColumn()
-                }
-                onApply {
-                    elements = (list.model as CollectionListModel).items.map { it.file }.toSet()
-                }
+                    list = cell(JBList(CollectionListModel(presentableFiles)).apply {
+                        cellRenderer = createTargetPresentationRenderer { it }
+                    }).align(Align.FILL).component
+                }.resizableRow()
             }.topGap(TopGap.NONE).bottomGap(BottomGap.NONE).resizableRow()
         }
     }
