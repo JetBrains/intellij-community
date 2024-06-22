@@ -11,7 +11,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtBackingFieldSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.idea.refactoring.rename.findElementForRename
@@ -26,7 +26,7 @@ class RenameBackingFieldReferenceHandler : KotlinVariableInplaceRenameHandler() 
     allowAnalysisOnEdt {
       analyze(refExpression) {
         val target = refExpression.mainReference.resolveToSymbol() ?: return false
-        return target is KtBackingFieldSymbol
+        return target is KaBackingFieldSymbol
       }
     }
   }

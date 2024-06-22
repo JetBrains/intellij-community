@@ -400,7 +400,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
             val resolvedTargetElement =
                 when (resolvedTargetSymbol) {
-                    is KtBackingFieldSymbol -> {
+                    is KaBackingFieldSymbol -> {
                         // [KtBackingFieldSymbol] itself has `null` psi, and thus going to
                         // the below default logic, [psiForUast], will return `null` too.
                         // Use the owning property's psi and let [getMaybeLightElement] find

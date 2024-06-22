@@ -666,7 +666,7 @@ internal class FirCallableReferenceCompletionContributor(
         symbol.isExtension && symbol.symbolKind == KaSymbolKind.CLASS_MEMBER -> false
 
         // References to variables and parameters are unsupported
-        symbol is KaValueParameterSymbol || symbol is KaLocalVariableSymbol || symbol is KtBackingFieldSymbol -> false
+        symbol is KaValueParameterSymbol || symbol is KaLocalVariableSymbol || symbol is KaBackingFieldSymbol -> false
 
         // References to enum entries aren't supported
         symbol is KaEnumEntrySymbol -> false
