@@ -26,5 +26,13 @@
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
                         serviceImplementation="com.intellij.openapi.updateSettings.base.ShowWhatIsNewPageAfterUpdateCustomization"
                         overrides="true"/>
+
+    <registryKey
+      overrides="true"
+      key="wsl.use.remote.agent.for.nio.filesystem"
+      description="Use the experimental remote agent inside WSL to access the file system."
+      os="windows"
+      restartRequired="true"
+      defaultValue="true"/>
   </extensions>
 </idea-plugin>
