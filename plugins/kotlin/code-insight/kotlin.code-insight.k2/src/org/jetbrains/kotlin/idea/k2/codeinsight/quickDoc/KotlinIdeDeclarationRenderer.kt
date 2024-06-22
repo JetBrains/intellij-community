@@ -7,18 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtArrayAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtEnumEntryAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtNamedAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtUnsupportedAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtAnnotationRenderer
@@ -210,7 +199,7 @@ internal class KotlinIdeDeclarationRenderer(
         annotationArgumentsRenderer = object : KtAnnotationArgumentsRenderer {
             override fun renderAnnotationArguments(
                 analysisSession: KaSession,
-                annotation: KtAnnotationApplication,
+                annotation: KaAnnotation,
                 owner: KtAnnotated,
                 annotationRenderer: KtAnnotationRenderer,
                 printer: PrettyPrinter
@@ -229,7 +218,7 @@ internal class KotlinIdeDeclarationRenderer(
         annotationsQualifiedNameRenderer = object : KtAnnotationQualifierRenderer {
             override fun renderQualifier(
                 analysisSession: KaSession,
-                annotation: KtAnnotationApplication,
+                annotation: KaAnnotation,
                 owner: KtAnnotated,
                 annotationRenderer: KtAnnotationRenderer,
                 printer: PrettyPrinter
