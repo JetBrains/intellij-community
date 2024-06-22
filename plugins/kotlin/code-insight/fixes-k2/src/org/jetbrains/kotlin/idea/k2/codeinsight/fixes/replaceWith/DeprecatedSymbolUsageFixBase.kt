@@ -8,10 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.annotations.KaArrayAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KaConstantAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -150,7 +147,7 @@ fun fetchReplaceWithPattern(
 ): ReplaceWithData? {
     val annotation = symbol.annotations.find { it.classId?.asSingleFqName() == StandardNames.FqNames.deprecated } ?: return null
     val replaceWithValue =
-        (annotation.arguments.find { it.name.asString() == "replaceWith" }?.expression as? KtAnnotationApplicationValue)?.annotationValue
+      (annotation.arguments.find { it.name.asString() == "replaceWith" }?.expression as? KaAnnotationValue.NestedAnnotationValue)?.annotationValue
             ?: return null
     val pattern =
         ((replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaConstantAnnotationValue)?.constantValue as? KaConstantValue.KaStringConstantValue)?.value

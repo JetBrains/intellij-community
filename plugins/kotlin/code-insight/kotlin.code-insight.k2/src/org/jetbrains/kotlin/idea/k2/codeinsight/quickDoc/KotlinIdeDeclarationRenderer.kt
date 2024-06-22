@@ -729,7 +729,7 @@ internal class KotlinIdeDeclarationRenderer(
 
     private fun PrettyPrinter.renderConstantValue(value: KtAnnotationValue) {
         when (value) {
-            is KtAnnotationApplicationValue -> {
+            is KaAnnotationValue.NestedAnnotationValue -> {
                 renderAnnotationConstantValue(value)
             }
 
@@ -813,7 +813,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
-    private fun PrettyPrinter.renderAnnotationConstantValue(application: KtAnnotationApplicationValue) {
+    private fun PrettyPrinter.renderAnnotationConstantValue(application: KaAnnotationValue.NestedAnnotationValue) {
         renderAnnotationApplication(application.annotationValue)
     }
 
