@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.utils.getActualAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -101,7 +100,7 @@ private object OptInGeneralUtils : OptInGeneralUtilsBase() {
             return superTypeListEntries.any {
                 val typeReference = it.typeReference
                 val resolvedClass = typeReference?.getKtType()?.expandedSymbol ?: return false
-                val classAnnotation = resolvedClass.annotationsByClassId(OptInNames.SUBCLASS_OPT_IN_REQUIRED_CLASS_ID).firstOrNull()
+                val classAnnotation = resolvedClass.annotations[OptInNames.SUBCLASS_OPT_IN_REQUIRED_CLASS_ID].firstOrNull()
                 classAnnotation != null && findMarkerClassId(classAnnotation)?.asSingleFqName() == annotationFqName
             }
         }

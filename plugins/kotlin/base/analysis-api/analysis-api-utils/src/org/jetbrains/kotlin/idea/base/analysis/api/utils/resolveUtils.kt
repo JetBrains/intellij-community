@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.KtCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -175,7 +174,7 @@ fun isArrayOfCall(callElement: KtCallElement): Boolean {
  */
 context(KaSession)
 fun getJvmName(symbol: KaAnnotatedSymbol): String? {
-    val jvmNameAnnotation = symbol.annotationsByClassId(JvmStandardClassIds.Annotations.JvmName).firstOrNull() ?: return null
+    val jvmNameAnnotation = symbol.annotations[JvmStandardClassIds.Annotations.JvmName].firstOrNull() ?: return null
     val annotationValue = jvmNameAnnotation.arguments.singleOrNull()?.expression as? KaAnnotationValue.ConstantValue ?: return null
     val stringValue = annotationValue.value as? KaConstantValue.KaStringConstantValue ?: return null
     return stringValue.value
