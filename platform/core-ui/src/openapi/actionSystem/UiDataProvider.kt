@@ -8,6 +8,17 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
 
+/**
+ * A UI component implements [UiDataProvider] to add its UI state data to [DataContext].
+ * It is a cleaner, faster and type-safe API than [DataProvider].
+ *
+ * [DataContext] consists of two parts: fast UI snapshot and slow BGT rules.
+ *
+ * 1. UI snapshot = layers of data from [UiDataProvider] or [DataProvider] (obsolete),
+ * and a set of [UiDataRule]
+ * 2. BGT rules = various [DataSink.lazy] and [PlatformCoreDataKeys.BGT_DATA_PROVIDER],
+ * and a set of [com.intellij.ide.impl.dataRules.GetDataRule]
+ */
 @ApiStatus.OverrideOnly
 fun interface UiDataProvider {
   /**
@@ -18,27 +29,48 @@ fun interface UiDataProvider {
   fun uiDataSnapshot(sink: DataSink)
 }
 
+/**
+ * A data snapshot representation.
+ * [UiDataRule] operates on it.
+ */
 @ApiStatus.NonExtendable
 interface DataSnapshot {
 
   operator fun <T : Any> get(key: DataKey<T>): T?
 }
 
+/**
+ * A non-EDT version of [UiDataProvider].
+ * [com.intellij.openapi.actionSystem.CustomizedDataContext] takes it in
+ * for [DataContext] customization in any thread.
+ */
 @ApiStatus.OverrideOnly
 fun interface DataSnapshotProvider {
 
+  /**
+   * Override what is already in the sink or add new data.
+   */
   fun dataSnapshot(sink: DataSink)
 }
 
+/**
+ * A data rule to compute more UI data based on UI snapshot.
+ * 1. Rules are non-recursive - rules cannot depend on other rules
+ * 2. Rules cannot override existing data
+ * Looking on a component hierarchy from top to bottom,
+ * what is already in the snapshot can be modified only by a component data provider on a deeper level
+ * 3. Despite the name, rules can be called in BGT to customize UI snapshot of a [DataContext]
+ */
 @ApiStatus.OverrideOnly
 interface UiDataRule {
   /**
-   * Adds what is missing in the sink.
-   * Called in EDT and BGT (context customization in BGT).
+   * Add what is missing in the sink.
+   * The snapshot = layers of data from [UiDataProvider] or [DataProvider] (obsolete).
    *
-   * The snapshot contains all EDT data down to the current component (CONTEXT_COMPONENT).
-   *
-   * Rules must check CONTEXT_COMPONENT to avoid data duplication for all subcomponents.
+   * 1. Called in EDT after building UI snapshot.
+   * The snapshot provides [PlatformCoreDataKeys.CONTEXT_COMPONENT]
+   * 2. Called in BGT when customizing [DataContext].
+   * The snapshot does not provide [PlatformCoreDataKeys.CONTEXT_COMPONENT]
    */
   fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot)
 
@@ -53,6 +85,9 @@ interface UiDataRule {
   }
 }
 
+/**
+ * A migration tool when [DataProvider.getData] API is required *and used*
+ */
 @ApiStatus.Obsolete
 fun interface UiCompatibleDataProvider : UiDataProvider, DataProvider {
 
@@ -62,6 +97,9 @@ fun interface UiCompatibleDataProvider : UiDataProvider, DataProvider {
   }
 }
 
+/**
+ * A migration tool when [DataProvider.getData] API is required *but must never be used*
+ */
 @ApiStatus.Obsolete
 fun interface EdtNoGetDataProvider : DataSnapshotProvider, DataProvider {
 
@@ -72,32 +110,61 @@ fun interface EdtNoGetDataProvider : DataSnapshotProvider, DataProvider {
   }
 }
 
+/**
+ * API to accommodate data from various sources in a type-safe way
+ */
 @ApiStatus.NonExtendable
 interface DataSink {
 
+  /**
+   * Put the data in the sink
+   */
   operator fun <T : Any> set(key: DataKey<T>, data: T?)
 
+  /**
+   * Put the [com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL] value in the sink
+   */
   fun <T : Any> setNull(key: DataKey<T>)
 
+  /**
+   * Put the [PlatformCoreDataKeys.BGT_DATA_PROVIDER] lambda in the sink
+   */
   fun <T : Any> lazy(key: DataKey<T>, data: () -> T?)
 
+  /**
+   * Put all data from the [provider] in the sink.
+   * When migrating code, consider [DataSink.Companion.uiDataSnapshot] instead.
+   */
   fun uiDataSnapshot(provider: UiDataProvider)
 
+  /**
+   * Put all data from the [provider] in the sink
+   */
   fun dataSnapshot(provider: DataSnapshotProvider)
 
-  /** Prefer [UiDataProvider] in UI code */
+  /**
+   * 1. Consider using [UiDataProvider] in UI code
+   * 2. Call [DataSink.Companion.uiDataSnapshot] instead
+   */
   @ApiStatus.Obsolete
+  @ApiStatus.OverrideOnly
   fun uiDataSnapshot(provider: DataProvider)
 
   companion object {
     private val LOG = Logger.getInstance(DataSink.javaClass)
 
+    /**
+     * A migration tool when [DataProvider.getData] API is still used
+     */
     @ApiStatus.Obsolete
     @JvmStatic
     fun uiDataSnapshot(sink: DataSink, provider: DataProvider?) {
       uiDataSnapshot(sink, provider as Any?)
     }
 
+    /**
+     * A migration tool when [DataProvider.getData] API is still used
+     */
     @ApiStatus.Obsolete
     @JvmStatic
     fun uiDataSnapshot(sink: DataSink, provider: Any?) {
@@ -118,7 +185,7 @@ interface DataSink {
         }
         if (provider is Function1<*, *>) {
           LOG.error("Kotlin functions are not supported, use " +
-                    "DataProvider/UiDataProvider/DataSnapshotProvider explicitly")
+                    "UiDataProvider/DataSnapshotProvider/DataProvider explicitly")
         }
       }
     }
