@@ -9,6 +9,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
@@ -237,8 +238,8 @@ fun areSameSignatures(
     receiverType2: KtType?,
     parameterTypes1: List<KtType>,
     parameterTypes2: List<KtType>,
-    c1: List<org.jetbrains.kotlin.analysis.api.base.KtContextReceiver>,
-    c2: List<org.jetbrains.kotlin.analysis.api.base.KtContextReceiver>,
+    c1: List<KaContextReceiver>,
+    c2: List<KaContextReceiver>,
 ): Boolean {
   return areTypesTheSame(receiverType1, receiverType2) &&
           parameterTypes1.size == parameterTypes2.size && parameterTypes1.zip(parameterTypes2).all { (p1, p2) -> areTypesTheSame(p1, p2) } &&
