@@ -298,7 +298,7 @@ context(KaSession)
 private fun KtExpression.isReferenceToPackage(): Boolean {
     val selectorOrThis = (this as? KtQualifiedExpression)?.selectorExpression ?: this
     val symbols = selectorOrThis.mainReference?.resolveToSymbols() ?: return false
-    return symbols.any { it is KtPackageSymbol }
+    return symbols.any { it is KaPackageSymbol }
 }
 
 context(KaSession)

@@ -700,7 +700,7 @@ internal class KotlinIdeDeclarationRenderer(
                         }
 
                         is KtParameterSymbol -> asParameter
-                        is KtPackageSymbol -> asPackageName
+                        is KaPackageSymbol -> asPackageName
                         is KaTypeParameterSymbol -> asTypeParameterName
                         is KaTypeAliasSymbol -> asTypeAlias
                         is KaPropertySymbol -> asInstanceProperty

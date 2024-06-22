@@ -9,10 +9,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.idea.references.KtReference
 
@@ -37,7 +34,7 @@ internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
                 KtScopeWithKind(scope, KaScopeKind.StaticMemberScope(scopeIndex), token)
             }
 
-            is KtPackageSymbol -> KtScopeWithKind(symbol.packageScope, KaScopeKind.PackageMemberScope(scopeIndex), token)
+            is KaPackageSymbol -> KtScopeWithKind(symbol.packageScope, KaScopeKind.PackageMemberScope(scopeIndex), token)
             else -> null
         }
     }

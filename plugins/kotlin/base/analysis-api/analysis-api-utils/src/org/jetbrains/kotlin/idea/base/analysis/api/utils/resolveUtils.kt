@@ -17,12 +17,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -130,7 +125,7 @@ context(KaSession)
 fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpression): List<KtType> {
     explicitReceiver.referenceExpression()?.mainReference?.let { receiverReference ->
         val receiverSymbol = receiverReference.resolveToExpandedSymbol()
-        if (receiverSymbol == null || receiverSymbol is KtPackageSymbol) return emptyList()
+        if (receiverSymbol == null || receiverSymbol is KaPackageSymbol) return emptyList()
 
         if (receiverSymbol is KaNamedClassOrObjectSymbol && explicitReceiver.parent is KtCallableReferenceExpression) {
             val receiverSymbolType = receiverSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(explicitReceiver)

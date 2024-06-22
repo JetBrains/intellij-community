@@ -251,7 +251,7 @@ internal open class FirCallableCompletionContributor(
 
         val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()
         return when {
-            symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, visibilityChecker, sessionParameters)
+            symbol is KaPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, visibilityChecker, sessionParameters)
 
             else -> sequence {
                 if (symbol is KaNamedClassOrObjectSymbol && symbol.hasImportantStaticMemberScope) {
@@ -283,7 +283,7 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun collectDotCompletionForPackageReceiver(
-        packageSymbol: KtPackageSymbol,
+        packageSymbol: KaPackageSymbol,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
@@ -686,7 +686,7 @@ internal class FirCallableReferenceCompletionContributor(
         explicitReceiver as KtExpression
 
         return when (val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()) {
-            is KtPackageSymbol -> emptySequence()
+            is KaPackageSymbol -> emptySequence()
             is KaNamedClassOrObjectSymbol -> sequence {
                 if (symbol.hasImportantStaticMemberScope) {
                     yieldAll(collectDotCompletionFromStaticScope(symbol, withCompanionScope = false, visibilityChecker, sessionParameters))
@@ -780,7 +780,7 @@ internal class FirKDocCallableCompletionContributor(
         val resolvedSymbols = explicitReceiver.mainReference.resolveToSymbols()
         val scopesWithKinds = resolvedSymbols.flatMap { parentSymbol ->
             when (parentSymbol) {
-                is KtPackageSymbol -> {
+                is KaPackageSymbol -> {
                     val packageScopeKind = KaScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
                     listOf(KtScopeWithKind(parentSymbol.packageScope, packageScopeKind, token))
                 }

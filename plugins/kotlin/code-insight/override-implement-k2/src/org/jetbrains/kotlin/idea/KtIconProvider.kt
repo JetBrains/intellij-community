@@ -59,7 +59,7 @@ object KtIconProvider {
     fun getBaseIcon(symbol: KtSymbol): Icon? {
         val isAbstract = (symbol as? KaSymbolWithModality)?.modality == Modality.ABSTRACT
         return when (symbol) {
-            is KtPackageSymbol -> AllIcons.Nodes.Package
+            is KaPackageSymbol -> AllIcons.Nodes.Package
             is KaFunctionSymbol -> {
                 val isExtension = symbol.isExtension
                 val isMember = symbol.symbolKind == KaSymbolKind.CLASS_MEMBER

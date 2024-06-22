@@ -8,10 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
 import org.jetbrains.kotlin.psi.UserDataProperty
 
@@ -31,10 +28,10 @@ fun addWeight(context: WeighingContext, element: LookupElement, symbol: KtSymbol
         val fqName = when (symbol) {
             is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
             is KaCallableSymbol -> symbol.callableId?.asSingleFqName()
-            is KtPackageSymbol -> symbol.fqName
+            is KaPackageSymbol -> symbol.fqName
             else -> null
         } ?: return
-        val weight = when (context.importableFqNameClassifier.classify(fqName, symbol is KtPackageSymbol)) {
+        val weight = when (context.importableFqNameClassifier.classify(fqName, symbol is KaPackageSymbol)) {
             ImportableFqNameClassifier.Classification.siblingImported -> Weight.SIBLING_IMPORTED
             ImportableFqNameClassifier.Classification.notImported -> Weight.NOT_IMPORTED
             ImportableFqNameClassifier.Classification.notToBeUsedInKotlin -> Weight.NOT_TO_BE_USED_IN_KOTLIN

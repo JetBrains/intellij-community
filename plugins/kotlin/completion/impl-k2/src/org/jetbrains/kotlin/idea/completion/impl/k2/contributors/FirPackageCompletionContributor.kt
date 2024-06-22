@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -32,7 +32,7 @@ internal class FirPackageCompletionContributor(
         val rootSymbol = if (positionContext !is KotlinNameReferencePositionContext || positionContext.explicitReceiver == null) {
             ROOT_PACKAGE_SYMBOL
         } else {
-            positionContext.explicitReceiver?.reference()?.resolveToSymbols()?.filterIsInstance<KtPackageSymbol>()?.singleOrNull()
+            positionContext.explicitReceiver?.reference()?.resolveToSymbols()?.filterIsInstance<KaPackageSymbol>()?.singleOrNull()
         } ?: return
 
         val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
