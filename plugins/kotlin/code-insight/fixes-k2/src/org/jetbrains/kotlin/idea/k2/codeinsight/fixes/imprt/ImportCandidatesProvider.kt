@@ -9,8 +9,8 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.util.positionContext.KDocLinkNamePositionContext
@@ -34,7 +34,7 @@ internal abstract class ImportCandidatesProvider(
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    protected fun KtSymbol.isVisible(fileSymbol: KtFileSymbol): Boolean =
+    protected fun KaSymbol.isVisible(fileSymbol: KtFileSymbol): Boolean =
         this is KaSymbolWithVisibility && isVisible(this, fileSymbol, receiverExpression = null, positionContext.position)
 
     protected fun PsiMember.canBeImported(): Boolean {

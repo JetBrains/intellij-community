@@ -53,9 +53,9 @@ object CreateKotlinCallableActionTextBuilder {
 
     // text, receiverTypeText
     @OptIn(KaExperimentalApi::class)
-    fun renderReceiver(request: CreateMethodFromKotlinUsageRequest, container: KtElement): Pair<String,String> {
+    fun renderReceiver(request: CreateMethodFromKotlinUsageRequest, container: KtElement): Pair<String, String> {
         analyze(request.call) {
-            val receiverSymbol: KtSymbol?
+            val receiverSymbol: KaSymbol?
             val receiverTypeText: String
             if (request.receiverExpression == null) {
                 if (request.receiverType == null) return "" to ""
@@ -83,7 +83,7 @@ object CreateKotlinCallableActionTextBuilder {
 
     context (KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun KtSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KtType?): String? {
+    private fun KaSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KtType?): String? {
         return when (this) {
             is KaCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
                 ?.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)

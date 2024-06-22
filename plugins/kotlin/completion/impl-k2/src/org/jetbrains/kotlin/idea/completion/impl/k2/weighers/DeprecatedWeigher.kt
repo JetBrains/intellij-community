@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
 internal object DeprecatedWeigher {
@@ -15,7 +15,7 @@ internal object DeprecatedWeigher {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    fun addWeight(lookupElement: LookupElement, symbol: KtSymbol) {
+    fun addWeight(lookupElement: LookupElement, symbol: KaSymbol) {
         lookupElement.isDeprecated = symbol.deprecationStatus != null
     }
 

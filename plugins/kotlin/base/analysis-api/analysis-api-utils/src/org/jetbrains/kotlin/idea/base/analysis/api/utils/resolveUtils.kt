@@ -182,7 +182,7 @@ fun getJvmName(symbol: KaAnnotatedSymbol): String? {
 }
 
 context(KaSession)
-fun KtReference.resolveToExpandedSymbol(): KtSymbol? = when (val symbol = resolveToSymbol()) {
+fun KtReference.resolveToExpandedSymbol(): KaSymbol? = when (val symbol = resolveToSymbol()) {
     is KaTypeAliasSymbol -> symbol.expandedType.expandedSymbol
     else -> symbol
 }

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -53,8 +53,8 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
 }
 
 context(KaSession)
-private fun getValuesInExpression(expr: KtExpression): Map<KtSymbol, KtType> {
-    val map = hashMapOf<KtSymbol, KtType>()
+private fun getValuesInExpression(expr: KtExpression): Map<KaSymbol, KtType> {
+    val map = hashMapOf<KaSymbol, KtType>()
     SyntaxTraverser.psiTraverser(expr)
         .filter(KtReferenceExpression::class.java)
         .forEach { e ->

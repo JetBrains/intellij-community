@@ -158,7 +158,7 @@ object KotlinCallProcessor {
     @OptIn(KaExperimentalApi::class)
     private fun handle(element: KtElement, processor: KotlinCallTargetProcessor): Boolean {
         analyze(element) {
-            fun handleSpecial(element: KtElement, filter: (KtSymbol) -> Boolean): Boolean {
+            fun handleSpecial(element: KtElement, filter: (KaSymbol) -> Boolean): Boolean {
                 val symbols = element.mainReference?.resolveToSymbols() ?: return true
                 for (symbol in symbols) {
                     if (!filter(symbol)) {

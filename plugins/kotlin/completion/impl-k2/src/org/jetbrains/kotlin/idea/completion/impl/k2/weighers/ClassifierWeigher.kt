@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.psi.UserDataProperty
@@ -22,7 +22,7 @@ internal object ClassifierWeigher {
     }
 
     context(KaSession)
-fun addWeight(lookupElement: LookupElement, symbol: KtSymbol, symbolOrigin: CompletionSymbolOrigin) {
+fun addWeight(lookupElement: LookupElement, symbol: KaSymbol, symbolOrigin: CompletionSymbolOrigin) {
         if (symbol !is KaClassifierSymbol) return
 
         val isLocal = (symbol as? KaClassLikeSymbol)?.symbolKind == KaSymbolKind.LOCAL

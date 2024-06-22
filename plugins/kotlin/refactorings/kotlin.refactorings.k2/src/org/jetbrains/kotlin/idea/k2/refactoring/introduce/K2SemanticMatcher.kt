@@ -207,12 +207,12 @@ object K2SemanticMatcher {
      * All arguments for a parameter should be equal.
      */
     private data class MatchingContext(
-        val symbols: MutableMap<KtSymbol, KtSymbol> = mutableMapOf(),
+        val symbols: MutableMap<KaSymbol, KaSymbol> = mutableMapOf(),
         val blockBodyOwners: MutableMap<KaFunctionSymbol, KaFunctionSymbol> = mutableMapOf(),
         val parameterSubstitution: MutableMap<PsiNamedElement, KtElement?> = mutableMapOf(),
     ) {
         context(KaSession)
-        fun areSymbolsEqualOrAssociated(targetSymbol: KtSymbol?, patternSymbol: KtSymbol?): Boolean {
+        fun areSymbolsEqualOrAssociated(targetSymbol: KaSymbol?, patternSymbol: KaSymbol?): Boolean {
             if (targetSymbol == null || patternSymbol == null) return targetSymbol == null && patternSymbol == null
 
             if (patternSymbol is KaNamedSymbol) {
@@ -816,7 +816,7 @@ object K2SemanticMatcher {
     private fun KaCallableMemberCall<*, *>.getTypeArguments(): List<KtType?> = symbol.typeParameters.map { typeArgumentsMapping[it] }
 
     context(KaSession)
-    private fun KaExplicitReceiverValue.getSymbolForThisExpressionOrNull(): KtSymbol? =
+    private fun KaExplicitReceiverValue.getSymbolForThisExpressionOrNull(): KaSymbol? =
         (expression as? KtThisExpression)?.mainReference?.resolveToSymbol()
 
     context(KaSession)

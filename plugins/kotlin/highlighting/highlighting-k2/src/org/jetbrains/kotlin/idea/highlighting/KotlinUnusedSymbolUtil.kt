@@ -586,7 +586,7 @@ object KotlinUnusedSymbolUtil {
   }
 
   context(KaSession)
-  private fun KtImportDirective.resolveReferenceToSymbol(): KtSymbol? = when(importedReference) {
+  private fun KtImportDirective.resolveReferenceToSymbol(): KaSymbol? = when (importedReference) {
       is KtReferenceExpression -> importedReference as KtReferenceExpression
       else -> importedReference?.getChildOfType<KtReferenceExpression>()
   }?.mainReference?.resolveToSymbol()

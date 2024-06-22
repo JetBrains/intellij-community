@@ -41,7 +41,7 @@ fun KtDeclaration.isFinalizeMethod(): Boolean {
 }
 
 context(KaSession)
-fun KtSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
+fun KaSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
     is KaPackageSymbol -> fqName
     is KaCallableSymbol -> callableId?.asSingleFqName()
     is KaClassLikeSymbol -> classId?.asSingleFqName()

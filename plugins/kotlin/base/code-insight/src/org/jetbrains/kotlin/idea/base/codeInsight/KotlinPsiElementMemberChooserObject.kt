@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.psi.*
@@ -78,7 +78,7 @@ class KotlinPsiElementMemberChooserObject(
 
         context(KaSession)
         @OptIn(KaExperimentalApi::class)
-        private fun getChooserText(symbol: KtSymbol): @NlsSafe String {
+        private fun getChooserText(symbol: KaSymbol): @NlsSafe String {
             if (symbol is KaClassOrObjectSymbol) {
                 val classId = symbol.classId
                 if (classId != null) {
@@ -94,7 +94,7 @@ class KotlinPsiElementMemberChooserObject(
         }
 
         context(KaSession)
-        private fun getChooserIcon(element: PsiElement, symbol: KtSymbol): Icon? {
+        private fun getChooserIcon(element: PsiElement, symbol: KaSymbol): Icon? {
             val isClass = element is KtClass || element is PsiClass
             val flags = if (isClass) 0 else Iconable.ICON_FLAG_VISIBILITY
 

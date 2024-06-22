@@ -8,10 +8,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
-import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -61,7 +58,7 @@ internal class ThisKeywordHandler(
     }
 
     context(KaSession)
-    private fun canReferenceSymbolByThis(parameters: CompletionParameters, symbol: KtSymbol): Boolean {
+    private fun canReferenceSymbolByThis(parameters: CompletionParameters, symbol: KaSymbol): Boolean {
         if (symbol !is KaClassOrObjectSymbol) return true
         if (symbol.classKind != KaClassKind.COMPANION_OBJECT) return true
         val companionPsi = symbol.psi as KtClassOrObject
@@ -76,7 +73,7 @@ internal class ThisKeywordHandler(
     }
 
     context(KaSession)
-    private fun getThisLabelBySymbol(symbol: KtSymbol): Name? = when {
+    private fun getThisLabelBySymbol(symbol: KaSymbol): Name? = when {
         symbol is KaNamedSymbol && !symbol.name.isSpecial -> symbol.name
         symbol is KaAnonymousFunctionSymbol -> {
             val psi = symbol.psi as KtFunctionLiteral

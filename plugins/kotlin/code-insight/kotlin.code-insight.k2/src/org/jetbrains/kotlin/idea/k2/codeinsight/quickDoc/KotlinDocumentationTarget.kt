@@ -242,7 +242,7 @@ internal fun PsiElement?.isModifier() =
 private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
     declaration: KtDeclaration,
     onlyDefinition: Boolean,
-    symbolFinder: KaSession.(KtSymbol) -> KtSymbol? = { it },
+    symbolFinder: KaSession.(KaSymbol) -> KaSymbol? = { it },
     preBuild: KDocTemplate.() -> Unit = {}
 ) {
     analyze(declaration) {
@@ -268,7 +268,7 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
 
 context(KaSession)
 private fun renderKDoc(
-    symbol: KtSymbol,
+    symbol: KaSymbol,
     stringBuilder: StringBuilder,
 ) {
     val declaration = symbol.psi as? KtElement
@@ -294,7 +294,7 @@ private fun renderKDoc(
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun findKDoc(symbol: KtSymbol): KDocContent? {
+private fun findKDoc(symbol: KaSymbol): KDocContent? {
     val ktElement = symbol.psi?.navigationElement as? KtElement
     ktElement?.findKDocByPsi()?.let {
         return it

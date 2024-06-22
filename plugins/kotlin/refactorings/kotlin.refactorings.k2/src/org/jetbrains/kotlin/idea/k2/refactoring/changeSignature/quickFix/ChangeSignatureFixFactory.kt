@@ -339,7 +339,7 @@ object ChangeSignatureFixFactory {
 
     context(KaSession)
     private fun createRemoveParameterFix(
-        symbol: KtSymbol,
+        symbol: KaSymbol,
         element: PsiElement,
     ): List<ParameterQuickFix> {
         if (symbol !is KtParameterSymbol) return emptyList()

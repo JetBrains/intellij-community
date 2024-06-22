@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -26,7 +26,7 @@ internal object ExpectedTypeWeigher {
     }
 
     context(KaSession)
-    fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KtSymbol?) {
+    fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KaSymbol?) {
         val expectedType = context.expectedType
 
         lookupElement.matchesExpectedType = when {
@@ -51,7 +51,7 @@ internal object ExpectedTypeWeigher {
 
     context(KaSession)
     private fun matchesExpectedType(
-        symbol: KtSymbol,
+        symbol: KaSymbol,
         expectedType: KtType?
     ) = when {
         expectedType == null -> MatchesExpectedType.NON_TYPABLE

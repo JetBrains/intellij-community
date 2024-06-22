@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -46,7 +46,7 @@ internal class WeighingContext private constructor(
     private val myImplicitReceivers: List<KtImplicitReceiver>,
     val contextualSymbolsCache: ContextualSymbolsCache,
     val importableFqNameClassifier: ImportableFqNameClassifier,
-    private val mySymbolsToSkip: Set<KtSymbol>,
+    private val mySymbolsToSkip: Set<KaSymbol>,
 ) : KtLifetimeOwner {
     /**
      * Cache for contextual symbols, i.e. symbols which are overridden by callables containing current position.
@@ -85,7 +85,7 @@ internal class WeighingContext private constructor(
     /**
      * Symbols that are very unlikely to be completed. They will appear on low positions in completion.
      */
-    val symbolsToSkip: Set<KtSymbol>
+    val symbolsToSkip: Set<KaSymbol>
         get() = withValidityAssertion {
             mySymbolsToSkip
         }
@@ -101,7 +101,7 @@ internal class WeighingContext private constructor(
             expectedType: KtType?,
             implicitReceivers: List<KtImplicitReceiver>,
             positionInFakeCompletionFile: PsiElement,
-            symbolsToSkip: Set<KtSymbol> = emptySet(),
+            symbolsToSkip: Set<KaSymbol> = emptySet(),
         ): WeighingContext {
             val fakeCompletionFile = positionInFakeCompletionFile.containingFile as KtFile
             val defaultImportPaths = fakeCompletionFile.getDefaultImportPaths()

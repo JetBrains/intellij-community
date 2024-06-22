@@ -345,7 +345,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     }
 
     private fun isOverridableBySymbol(declaration: KtDeclaration) = analyze(declaration) {
-        var declarationSymbol : KtSymbol? = declaration.symbol
+        var declarationSymbol: KaSymbol? = declaration.symbol
         if (declarationSymbol is KaValueParameterSymbol) {
             declarationSymbol = declarationSymbol.generatedPrimaryConstructorProperty
         }

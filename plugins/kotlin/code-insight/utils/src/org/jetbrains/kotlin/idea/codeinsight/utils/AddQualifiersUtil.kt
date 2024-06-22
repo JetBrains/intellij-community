@@ -12,10 +12,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -51,7 +48,7 @@ object AddQualifiersUtil {
     }
 
     context(KaSession)
-    fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextSymbol: KtSymbol): Boolean {
+    fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextSymbol: KaSymbol): Boolean {
         if (referenceExpression.parent is KtInstanceExpressionWithLabel) return false
 
         val prevElement = referenceExpression.prevLeaf {
@@ -63,7 +60,7 @@ object AddQualifiersUtil {
 
         if (prevElement.elementType == KtTokens.COLONCOLON) {
 
-            fun isTopLevelCallable(callableSymbol: KtSymbol): Boolean {
+            fun isTopLevelCallable(callableSymbol: KaSymbol): Boolean {
                 if (callableSymbol is KaConstructorSymbol) {
                     val containingClassSymbol = callableSymbol.containingSymbol
                     if (containingClassSymbol?.containingSymbol == null) {
@@ -101,7 +98,7 @@ object AddQualifiersUtil {
         return action()
     }
 
-    fun getFqName(symbol: KtSymbol): FqName? {
+    fun getFqName(symbol: KaSymbol): FqName? {
         return when (symbol) {
             is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
             is KaConstructorSymbol -> symbol.containingClassId?.asSingleFqName()

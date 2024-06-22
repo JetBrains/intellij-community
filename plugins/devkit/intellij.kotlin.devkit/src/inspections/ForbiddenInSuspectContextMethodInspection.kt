@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -101,7 +101,7 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
   private class BlockingContextMethodsCallsVisitor(
     private val holder: ProblemsHolder,
   ) : BlockingContextFunctionBodyVisitor() {
-    private val visitedSymbols = mutableSetOf<KtSymbol>()
+    private val visitedSymbols = mutableSetOf<KaSymbol>()
     private var callingElement: KtCallExpression? = null
 
     override fun visitCallExpression(expression: KtCallExpression) {

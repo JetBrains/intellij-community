@@ -71,7 +71,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
     context(KaSession)
-    protected fun addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
+    protected fun addSymbolToCompletion(expectedType: KtType?, symbol: KaSymbol) {
         if (symbol !is KaNamedSymbol) return
 
         lookupElementFactory

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.refactoring.rename.findElementForRename
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -35,7 +35,7 @@ internal abstract class AbstractForbidRenamingSymbolByReferenceHandler : RenameH
   }
 
   context(KaSession)
-  abstract fun shouldForbidRenaming(symbol: KtSymbol): Boolean
+  abstract fun shouldForbidRenaming(symbol: KaSymbol): Boolean
 
   abstract fun getErrorMessage(): @DialogMessage String
 

@@ -3,13 +3,13 @@ package org.jetbrains.kotlin.idea.refactoring.rename.handlers
 
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 internal class RenameCompilerPluginDeclarationByReferenceHandler : AbstractForbidRenamingSymbolByReferenceHandler() {
     context(KaSession)
-    override fun shouldForbidRenaming(symbol: KtSymbol): Boolean {
+    override fun shouldForbidRenaming(symbol: KaSymbol): Boolean {
         return symbol.origin == KtSymbolOrigin.PLUGIN
     }
 

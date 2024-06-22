@@ -331,7 +331,7 @@ private fun isUnclearType(type: KtType, element: KtCallableDeclaration): Boolean
         val selectorExpression = initializer.selectorExpression
         if (type.isEnum()) {
             // Do not show type for enums if initializer has enum entry with explicit enum name: val p = Enum.ENTRY
-            val symbol: KtSymbol? = selectorExpression?.mainReference?.resolveToSymbol()
+            val symbol: KaSymbol? = selectorExpression?.mainReference?.resolveToSymbol()
             if (symbol is KaEnumEntrySymbol) {
                 return false
             }

@@ -59,10 +59,10 @@ internal data class KtCallableSignatureWithContainingScopeKind(
 }
 
 internal data class KtSymbolWithOrigin(
-    private val _symbol: KtSymbol,
+    private val _symbol: KaSymbol,
     val origin: CompletionSymbolOrigin,
 ) : KtLifetimeOwner {
     override val token: KtLifetimeToken
         get() = _symbol.token
-    val symbol: KtSymbol get() = withValidityAssertion { _symbol }
+    val symbol: KaSymbol get() = withValidityAssertion { _symbol }
 }

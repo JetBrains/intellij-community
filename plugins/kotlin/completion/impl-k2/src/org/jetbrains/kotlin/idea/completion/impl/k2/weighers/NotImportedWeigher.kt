@@ -23,7 +23,7 @@ internal object NotImportedWeigher {
     }
 
     context(KaSession)
-fun addWeight(context: WeighingContext, element: LookupElement, symbol: KtSymbol, availableWithoutImport: Boolean) {
+fun addWeight(context: WeighingContext, element: LookupElement, symbol: KaSymbol, availableWithoutImport: Boolean) {
         if (availableWithoutImport) return
         val fqName = when (symbol) {
             is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()

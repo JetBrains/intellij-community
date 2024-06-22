@@ -382,7 +382,7 @@ internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
  * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KaLibraryModule].
  */
 context(KaSession)
-internal tailrec fun psiForUast(symbol: KtSymbol): PsiElement? {
+internal tailrec fun psiForUast(symbol: KaSymbol): PsiElement? {
     if (symbol.origin == KtSymbolOrigin.LIBRARY) {
         val psiProvider = FirKotlinUastLibraryPsiProviderService.getInstance()
         return with(psiProvider) { provide(symbol) }

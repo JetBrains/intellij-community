@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethodAndEntriesPropertyExists
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
@@ -21,7 +21,7 @@ internal object K2SoftDeprecationWeigher {
     context(KaSession)
 fun addWeight(
         lookupElement: LookupElement,
-        symbol: KtSymbol,
+        symbol: KaSymbol,
         languageVersionSettings: LanguageVersionSettings
     ) {
         val callableSymbol = symbol as? KaCallableSymbol ?: return

@@ -23,7 +23,7 @@ object KtIconProvider {
     private val LOG = Logger.getInstance(KtIconProvider::class.java)
 
     context(KaSession)
-    fun getIcon(ktSymbol: KtSymbol): Icon? {
+    fun getIcon(ktSymbol: KaSymbol): Icon? {
         // logic copied from org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
         val declaration = ktSymbol.psi
         return if (declaration?.isValid == true) {
@@ -43,7 +43,7 @@ object KtIconProvider {
     }
 
     context(KaSession)
-    private fun getIcon(symbol: KtSymbol, flags: Int): Icon? {
+    private fun getIcon(symbol: KaSymbol, flags: Int): Icon? {
         var result: Icon = getBaseIcon(symbol) ?: return null
 
         if (flags and Iconable.ICON_FLAG_VISIBILITY > 0) {
@@ -56,7 +56,7 @@ object KtIconProvider {
     }
 
     context(KaSession)
-    fun getBaseIcon(symbol: KtSymbol): Icon? {
+    fun getBaseIcon(symbol: KaSymbol): Icon? {
         val isAbstract = (symbol as? KaSymbolWithModality)?.modality == Modality.ABSTRACT
         return when (symbol) {
             is KaPackageSymbol -> AllIcons.Nodes.Package
@@ -103,7 +103,7 @@ object KtIconProvider {
     }
 
     context(KaSession)
-    private fun getVisibilityIcon(symbol: KtSymbol): Icon? {
+    private fun getVisibilityIcon(symbol: KaSymbol): Icon? {
         return when ((symbol as? KaSymbolWithVisibility)?.visibility?.normalize()) {
             Visibilities.Public -> PlatformIcons.PUBLIC_ICON
             Visibilities.Protected -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected)

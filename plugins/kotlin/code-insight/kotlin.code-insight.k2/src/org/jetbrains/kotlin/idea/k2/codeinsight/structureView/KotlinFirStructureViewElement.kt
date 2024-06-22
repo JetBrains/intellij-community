@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -119,7 +119,7 @@ class KotlinFirStructureViewElement(
         return result
     }
 
-    private fun <T> createSymbolAndThen(modifier: KaSession.(KtSymbol) -> T): T? {
+    private fun <T> createSymbolAndThen(modifier: KaSession.(KaSymbol) -> T): T? {
         val element = element
         return when {
             !element.isValid -> null
@@ -137,7 +137,7 @@ class KotlinFirStructureViewElement(
         }
     }
 
-    class Visibility(symbol: KtSymbol?) {
+    class Visibility(symbol: KaSymbol?) {
         private val visibility: org.jetbrains.kotlin.descriptors.Visibility? = (symbol as? KaSymbolWithVisibility)?.visibility
 
         val isPublic: Boolean
