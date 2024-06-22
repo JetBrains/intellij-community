@@ -745,7 +745,7 @@ internal class KotlinIdeDeclarationRenderer(
                 renderConstantAnnotationValue(value)
             }
 
-            is KtUnsupportedAnnotationValue -> {
+            is KaAnnotationValue.UnsupportedValue -> {
                 append("error(\"non-annotation value\")")
             }
 
