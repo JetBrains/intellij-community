@@ -228,10 +228,10 @@ public final class NioFiles {
   }
 
   /**
-   * <p>Recursively deletes the given directory or file, if it exists. Does not follow symlinks or junctions
-   * (i.e. deletes just links, not targets). Invokes the callback before deleting a file or a directory
-   * (the latter - after deleting it's content). Fails fast (throws an exception right after meeting a problematic file and
-   * does not tries to delete the rest first).</p>
+   * <p>Recursively deletes the given directory or file, if it exists.
+   * Does not follow symlinks or junctions (i.e. deletes just links, not targets).
+   * Invokes the callback before deleting a file or a directory (the latter - after deleting it's content).
+   * Fails fast (throws an exception right after meeting a problematic file and does not try to delete the rest first).</p>
    *
    * <p>Implementation detail: the method tries to delete a file up to 10 times with 10 ms pause between attempts -
    * usually it's enough to overcome intermittent file lock on Windows.</p>

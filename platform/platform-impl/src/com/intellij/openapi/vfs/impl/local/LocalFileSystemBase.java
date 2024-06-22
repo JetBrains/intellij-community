@@ -9,7 +9,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -402,8 +401,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException {
-    String name = file.getName();
-
+    var name = file.getName();
     if (!file.exists()) {
       throw new IOException(IdeCoreBundle.message("vfs.file.not.exist.error", file.getPath()));
     }
@@ -436,9 +434,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (!isValidName(newName)) {
       throw new IOException(CoreBundle.message("file.invalid.name.error", newName));
     }
-
-    var sameName = !file.isCaseSensitive() && newName.equalsIgnoreCase(file.getName());
-
     if (!file.exists()) {
       throw new IOException(IdeCoreBundle.message("vfs.file.not.exist.error", file.getPath()));
     }
@@ -446,6 +441,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (parent == null) {
       throw new IOException(CoreBundle.message("cannot.rename.root.directory", file.getPath()));
     }
+    var sameName = !file.isCaseSensitive() && newName.equalsIgnoreCase(file.getName());
     if (!sameName && parent.findChild(newName) != null) {
       throw new IOException(IdeCoreBundle.message("vfs.target.already.exists.error", parent.getPath() + '/' + newName));
     }
@@ -510,7 +506,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
     var rootPath = FileUtil.extractRootPath(normalizedPath);
-    return StringUtil.notNullize(rootPath);
+    return rootPath != null ? rootPath : "";
   }
 
   @Override
