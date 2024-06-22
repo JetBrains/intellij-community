@@ -727,7 +727,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
-    private fun PrettyPrinter.renderConstantValue(value: KtAnnotationValue) {
+    private fun PrettyPrinter.renderConstantValue(value: KaAnnotationValue) {
         when (value) {
             is KaAnnotationValue.NestedAnnotationValue -> {
                 renderAnnotationConstantValue(value)
@@ -837,7 +837,7 @@ internal class KotlinIdeDeclarationRenderer(
         append(highlight("]") { asBrackets } )
     }
 
-    private fun PrettyPrinter.renderConstantValueList(list: Collection<KtAnnotationValue>) {
+    private fun PrettyPrinter.renderConstantValueList(list: Collection<KaAnnotationValue>) {
         printCollection(list, ", ") { constantValue ->
             renderConstantValue(constantValue)
         }

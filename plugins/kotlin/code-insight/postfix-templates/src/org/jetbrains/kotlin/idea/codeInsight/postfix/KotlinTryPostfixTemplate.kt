@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationValue
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -163,7 +162,7 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
         }
     }
 
-    private fun processAnnotationValue(value: KtAnnotationValue) {
+    private fun processAnnotationValue(value: KaAnnotationValue) {
         when (value) {
           is KaAnnotationValue.ArrayValue -> value.values.forEach(::processAnnotationValue)
             is KaAnnotationValue.ClassLiteralValue -> {

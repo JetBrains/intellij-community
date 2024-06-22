@@ -45,7 +45,7 @@ internal object WasExperimentalOptInsNecessityChecker {
             ?: emptyList()
     }
 
-    private fun computeAnnotationMarkerClassId(value: KtAnnotationValue): ClassId? {
+    private fun computeAnnotationMarkerClassId(value: KaAnnotationValue): ClassId? {
         val type = (value as? KaAnnotationValue.ClassLiteralValue)?.type as? KtNonErrorClassType ?: return null
         return type.classId.takeIf { !it.isLocal }
     }
@@ -53,6 +53,6 @@ internal object WasExperimentalOptInsNecessityChecker {
     private fun KtAnnotationsList.findAnnotation(classId: ClassId): KaAnnotation? =
         annotationsByClassId(classId).firstOrNull()
 
-    private fun KaAnnotation.argumentByName(name: Name): KtAnnotationValue? =
+    private fun KaAnnotation.argumentByName(name: Name): KaAnnotationValue? =
         arguments.firstOrNull { it.name == name }?.expression
 }
