@@ -603,7 +603,7 @@ internal open class FirCallableCompletionContributor(
             if (symbol.hasConstEvaluationAnnotation()) return@filter true
 
             when (symbol) {
-                is KtJavaFieldSymbol -> symbol.isStatic && symbol.isVal && symbol.hasPrimitiveOrStringReturnType()
+                is KaJavaFieldSymbol -> symbol.isStatic && symbol.isVal && symbol.hasPrimitiveOrStringReturnType()
                 is KaKotlinPropertySymbol -> symbol.isConst
                 is KaEnumEntrySymbol -> true
                 is KaNamedFunctionSymbol -> {
@@ -618,7 +618,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KaSession)
-    private fun KtJavaFieldSymbol.hasPrimitiveOrStringReturnType(): Boolean =
+    private fun KaJavaFieldSymbol.hasPrimitiveOrStringReturnType(): Boolean =
         (psi as? PsiField)?.type is PsiPrimitiveType || returnType.isString
 
     context(KaSession)

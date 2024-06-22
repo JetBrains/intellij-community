@@ -43,7 +43,7 @@ internal class VariableReferenceHighlighter(holder: HighlightInfoHolder) : Kotli
             }
             is KaValueParameterSymbol -> listOfNotNull(highlightValueParameter (symbol, expression))
             is KaEnumEntrySymbol -> listOfNotNull(HighlightingFactory.highlightName (expression, KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY))
-            is KtJavaFieldSymbol -> buildList {
+            is KaJavaFieldSymbol -> buildList {
                 if (symbol.isStatic) {
                     addIfNotNull(HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY))
                 } else {
