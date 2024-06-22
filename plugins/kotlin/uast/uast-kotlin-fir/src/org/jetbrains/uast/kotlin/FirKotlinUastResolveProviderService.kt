@@ -198,7 +198,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
                         is KaCompoundVariableAccessCall -> {
                             val variableSymbol = candidate.partiallyAppliedSymbol.symbol
-                            if (variableSymbol is KtSyntheticJavaPropertySymbol) {
+                            if (variableSymbol is KaSyntheticJavaPropertySymbol) {
                                 add(variableSymbol.getter)
                                 addIfNotNull(variableSymbol.setter)
                             } else {
@@ -268,7 +268,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun resolveSyntheticJavaPropertyAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
         return analyzeForUast(ktSimpleNameExpression) {
             val variableAccessCall = ktSimpleNameExpression.resolveCallOld()?.singleCallOrNull<KaSimpleVariableAccessCall>() ?: return null
-            val propertySymbol = variableAccessCall.symbol as? KtSyntheticJavaPropertySymbol ?: return null
+            val propertySymbol = variableAccessCall.symbol as? KaSyntheticJavaPropertySymbol ?: return null
             when (variableAccessCall.simpleAccess) {
                 is KaSimpleVariableAccess.Read -> {
                     toPsiMethod(propertySymbol.javaGetterSymbol, ktSimpleNameExpression)
@@ -391,7 +391,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 else -> null
             } ?: return null
 
-            if (resolvedTargetSymbol is KtSyntheticJavaPropertySymbol && ktExpression is KtSimpleNameExpression) {
+            if (resolvedTargetSymbol is KaSyntheticJavaPropertySymbol && ktExpression is KtSimpleNameExpression) {
                 // No PSI for this synthetic Java property. Either corresponding getter or setter has PSI.
                 return resolveSyntheticJavaPropertyAccessorCall(ktExpression)
             }

@@ -331,7 +331,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
 
     // No references to Java synthetic properties
     if (!languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties) &&
-        partiallyAppliedSymbol.symbol is KtSyntheticJavaPropertySymbol
+        partiallyAppliedSymbol.symbol is KaSyntheticJavaPropertySymbol
     ) return false
 
     val hasReceiver = with(partiallyAppliedSymbol) {

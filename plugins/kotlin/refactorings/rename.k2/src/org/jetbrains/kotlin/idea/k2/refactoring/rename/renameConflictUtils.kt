@@ -117,7 +117,7 @@ fun checkCallableShadowing(
                 PsiTreeUtil.getParentOfType(codeFragment.findElementAt(offsetInCopy.startOffset), false, callExpression.javaClass)
             val resolveCall = copyCallExpression?.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
             val resolvedSymbol = resolveCall?.partiallyAppliedSymbol?.symbol
-            if (resolvedSymbol is KtSyntheticJavaPropertySymbol) {
+            if (resolvedSymbol is KaSyntheticJavaPropertySymbol) {
                 val getter = resolvedSymbol.javaGetterSymbol.psi
                 externalDeclarations.addIfNotNull(getter)
                 externalDeclarations.addIfNotNull(resolvedSymbol.javaSetterSymbol?.psi)

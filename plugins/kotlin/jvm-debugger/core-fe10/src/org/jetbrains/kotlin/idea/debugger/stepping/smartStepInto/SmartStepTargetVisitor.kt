@@ -90,7 +90,7 @@ class SmartStepTargetVisitor(
     @OptIn(KaExperimentalApi::class)
     private fun recordProperty(expression: KtExpression, symbol: KaPropertySymbol): Boolean {
         val targetType = (expression as? KtNameReferenceExpression)?.computeTargetType()
-        if (symbol is KtSyntheticJavaPropertySymbol) {
+        if (symbol is KaSyntheticJavaPropertySymbol) {
             val propertyAccessSymbol = when (targetType) {
                 KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> symbol.javaGetterSymbol
                 KtNameReferenceExpressionUsage.PROPERTY_SETTER -> symbol.javaSetterSymbol

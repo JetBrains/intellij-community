@@ -37,7 +37,7 @@ internal class VariableReferenceHighlighter(holder: HighlightInfoHolder) : Kotli
                 HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)?.let { result.add(it) }
                 result
             }
-            is KtSyntheticJavaPropertySymbol -> buildList {
+            is KaSyntheticJavaPropertySymbol -> buildList {
                 addIfNotNull(HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.SYNTHETIC_EXTENSION_PROPERTY))
                 addIfNotNull(symbol.getHighlightingForMutableVar(expression))
             }

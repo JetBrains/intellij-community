@@ -28,8 +28,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -435,7 +435,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     private fun getSyntheticProperty(
         propertyNames: List<String>,
         receiverType: KtType
-    ): KtSyntheticJavaPropertySymbol? {
+    ): KaSyntheticJavaPropertySymbol? {
 
         val syntheticJavaPropertiesScope = receiverType.syntheticJavaPropertiesScope ?: return null
 
@@ -448,7 +448,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         }
 
         for (syntheticProperty in javaGetterAndSetterSymbols) {
-            if (syntheticProperty is KtSyntheticJavaPropertySymbol) {
+            if (syntheticProperty is KaSyntheticJavaPropertySymbol) {
                 val syntheticPropertyName = syntheticProperty.name.asString()
                 if (propertyNames.contains(syntheticPropertyName)) {
                     if (KtTokens.KEYWORDS.types.any { it.toString() == syntheticPropertyName }) {
@@ -464,7 +464,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
     context(KaSession)
     private fun syntheticPropertyTypeEqualsToExpected(
-        syntheticProperty: KtSyntheticJavaPropertySymbol,
+        syntheticProperty: KaSyntheticJavaPropertySymbol,
         callReturnType: KtType,
         propertyAccessorKind: PropertyAccessorKind
     ): Boolean {

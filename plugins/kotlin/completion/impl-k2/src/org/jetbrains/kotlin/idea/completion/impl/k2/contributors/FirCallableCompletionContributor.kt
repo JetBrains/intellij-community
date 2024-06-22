@@ -803,7 +803,7 @@ internal class FirKDocCallableCompletionContributor(
 
         for (scopeWithKind in scopesWithKinds) {
             scopeWithKind.scope.getCallableSymbols(scopeNameFilter)
-                .filter { it !is KtSyntheticJavaPropertySymbol }
+                .filter { it !is KaSyntheticJavaPropertySymbol }
                 .forEach { symbol ->
                     yield(
                         createCallableWithMetadata(

@@ -104,7 +104,7 @@ internal fun collectNonExtensionsForType(
     val typeScope = type.scope ?: return emptySequence()
 
     val callables = typeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
-        .applyIf(!sessionParameters.allowSyntheticJavaProperties) { filter { it.symbol !is KtSyntheticJavaPropertySymbol } }
+        .applyIf(!sessionParameters.allowSyntheticJavaProperties) { filter { it.symbol !is KaSyntheticJavaPropertySymbol } }
         .applyIf(!sessionParameters.allowJavaGettersAndSetters) {
             filterOutJavaGettersAndSetters(type, visibilityChecker, scopeNameFilter, symbolFilter)
         }
@@ -122,7 +122,7 @@ internal fun collectNonExtensionsForType(
 }
 
 context(KaSession)
-private val KtSyntheticJavaPropertySymbol.getterAndUnitSetter: List<KaCallableSymbol>
+private val KaSyntheticJavaPropertySymbol.getterAndUnitSetter: List<KaCallableSymbol>
     get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol?.takeIf { it.returnType.isUnit })
 
 context(KaSession)
@@ -136,7 +136,7 @@ private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
     val syntheticJavaPropertiesTypeScope = type.syntheticJavaPropertiesScope ?: return this
     val syntheticProperties = syntheticJavaPropertiesTypeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
         .filterNonExtensions(visibilityChecker, symbolFilter)
-        .filterIsInstance<KtCallableSignature<KtSyntheticJavaPropertySymbol>>()
+        .filterIsInstance<KtCallableSignature<KaSyntheticJavaPropertySymbol>>()
     // non-Unit setters are not filtered out because they are likely to be used in a call chain
     val javaGetterAndUnitSetterSymbols = syntheticProperties.flatMapTo(mutableSetOf()) { it.symbol.getterAndUnitSetter }
 

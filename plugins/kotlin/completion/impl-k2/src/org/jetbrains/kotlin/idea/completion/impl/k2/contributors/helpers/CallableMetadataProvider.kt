@@ -82,7 +82,7 @@ internal object CallableMetadataProvider {
         isFunctionalVariableCall: Boolean,
     ): CallableMetadata? {
         val symbol = signature.symbol
-        if (symbol is KtSyntheticJavaPropertySymbol) {
+        if (symbol is KaSyntheticJavaPropertySymbol) {
             return getCallableMetadata(context, symbol.javaGetterSymbol.asSignature(), symbolOrigin, isFunctionalVariableCall)
         }
 
