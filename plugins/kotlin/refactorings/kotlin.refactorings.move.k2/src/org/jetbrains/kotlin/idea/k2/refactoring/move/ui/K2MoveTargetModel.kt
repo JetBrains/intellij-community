@@ -60,7 +60,9 @@ sealed interface K2MoveTargetModel {
                         RECENT_PACKAGE_KEY,
                         RefactoringBundle.message("choose.destination.package")
                     )
-                ).align(AlignX.FILL).component
+                ).align(AlignX.FILL).resizableColumn().component.apply {
+                    setTextFieldPreferredWidth(PREFERED_TEXT_WIDTH)
+                }
                 pkgChooser.prependItem(pkgName.asString())
             }
             row(KotlinBundle.message("label.text.destination")) {
@@ -68,7 +70,9 @@ sealed interface K2MoveTargetModel {
                     override fun getTargetPackage(): String {
                         return pkgChooser.text
                     }
-                }).align(AlignX.FILL).component
+                }).align(AlignX.FILL).component.apply {
+                    setTextFieldPreferredWidth(PREFERED_TEXT_WIDTH)
+                }
             }
 
             fun updateDirectory() {
@@ -100,6 +104,8 @@ sealed interface K2MoveTargetModel {
 
         private companion object {
             const val RECENT_PACKAGE_KEY = "K2MoveDeclarationsDialog.RECENT_PACKAGE_KEY"
+
+            const val PREFERED_TEXT_WIDTH = 40
         }
     }
 
