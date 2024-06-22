@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -12,6 +11,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.PyAstElementVisitor;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
@@ -36,13 +36,8 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
 
   @NotNull
   @Override
-  public Language getLanguage() {
-    if (this instanceof PyFile) {
-      return PythonFileType.INSTANCE.getLanguage();
-    }
-
-    PsiFile file = getContainingFile();
-    return file.getLanguage();
+  public PythonLanguage getLanguage() {
+    return (PythonLanguage)PythonFileType.INSTANCE.getLanguage();
   }
 
   @Override
