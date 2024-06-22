@@ -46,7 +46,7 @@ internal object WasExperimentalOptInsNecessityChecker {
     }
 
     private fun computeAnnotationMarkerClassId(value: KtAnnotationValue): ClassId? {
-        val type = (value as? KtKClassAnnotationValue)?.type as? KtNonErrorClassType ?: return null
+        val type = (value as? KaAnnotationValue.ClassLiteralValue)?.type as? KtNonErrorClassType ?: return null
         return type.classId.takeIf { !it.isLocal }
     }
 

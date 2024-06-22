@@ -749,13 +749,13 @@ internal class KotlinIdeDeclarationRenderer(
                 append("error(\"non-annotation value\")")
             }
 
-            is KtKClassAnnotationValue -> {
+            is KaAnnotationValue.ClassLiteralValue -> {
                 renderKClassAnnotationValue(value)
             }
         }
     }
 
-    private fun PrettyPrinter.renderKClassAnnotationValue(value: KtKClassAnnotationValue) {
+    private fun PrettyPrinter.renderKClassAnnotationValue(value: KaAnnotationValue.ClassLiteralValue) {
         renderType(value.type)
         append("::class")
     }

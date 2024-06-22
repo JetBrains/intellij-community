@@ -281,7 +281,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
         if (fqName in FqNames.OptInFqNames.OPT_IN_FQ_NAMES) {
             fun processValue(value: KtAnnotationValue, isRecursive: Boolean) {
                 when (value) {
-                    is KtKClassAnnotationValue -> {
+                    is KaAnnotationValue.ClassLiteralValue -> {
                         val classId = (value.type as? KtNonErrorClassType)?.classId?.takeUnless { it.isLocal }
                         if (classId != null) {
                             optInMarkerNames.add(classId.asSingleFqName())
