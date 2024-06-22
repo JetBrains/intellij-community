@@ -19,8 +19,8 @@ import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConditionalContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractConditionalContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConstantValue
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractReturnsContractEffectDeclaration.*
@@ -86,7 +86,7 @@ class KotlinFunctionCallInstruction(
         val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return resultValue
         val callEffects = functionSymbol.contractEffects
         for (effect in callEffects) {
-            if (effect !is KtContractConditionalContractEffectDeclaration) continue
+            if (effect !is KaContractConditionalContractEffectDeclaration) continue
             val crv = effect.effect.toContractReturnValue() ?: continue
             val condition = effect.condition.toCondition(factory, functionCall, arguments) ?: continue
             val notCondition = condition.negate()
