@@ -5,8 +5,8 @@ import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtArrayAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -166,7 +166,7 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
 
     private fun processAnnotationValue(value: KtAnnotationValue) {
         when (value) {
-            is KtArrayAnnotationValue -> value.values.forEach(::processAnnotationValue)
+          is KaAnnotationValue.ArrayValue -> value.values.forEach(::processAnnotationValue)
             is KtKClassAnnotationValue -> {
                 val type = value.type
                 if (type is KtNonErrorClassType) {

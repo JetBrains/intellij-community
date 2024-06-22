@@ -733,7 +733,7 @@ internal class KotlinIdeDeclarationRenderer(
                 renderAnnotationConstantValue(value)
             }
 
-            is KtArrayAnnotationValue -> {
+            is KaAnnotationValue.ArrayValue -> {
                 renderArrayConstantValue(value)
             }
 
@@ -831,7 +831,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
-    private fun PrettyPrinter.renderArrayConstantValue(value: KtArrayAnnotationValue) {
+    private fun PrettyPrinter.renderArrayConstantValue(value: KaAnnotationValue.ArrayValue) {
         append(highlight("[") { asBrackets } )
         renderConstantValueList(value.values)
         append(highlight("]") { asBrackets } )

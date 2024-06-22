@@ -287,7 +287,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
                             optInMarkerNames.add(classId.asSingleFqName())
                         }
                     }
-                    is KtArrayAnnotationValue -> {
+                    is KaAnnotationValue.ArrayValue -> {
                         if (isRecursive) {
                             value.values.forEach { processValue(it, isRecursive = false) }
                         }

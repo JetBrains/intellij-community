@@ -39,7 +39,7 @@ internal object WasExperimentalOptInsNecessityChecker {
 
     private fun getWasExperimentalAnnotationMarkerClassArgument(annotation: KaAnnotation): Collection<ClassId> {
         return annotation.argumentByName(OptInNames.WAS_EXPERIMENTAL_ANNOTATION_CLASS)
-            ?.asSafely<KtArrayAnnotationValue>()
+            ?.asSafely<KaAnnotationValue.ArrayValue>()
             ?.values
             ?.mapNotNull { computeAnnotationMarkerClassId(it) }
             ?: emptyList()
