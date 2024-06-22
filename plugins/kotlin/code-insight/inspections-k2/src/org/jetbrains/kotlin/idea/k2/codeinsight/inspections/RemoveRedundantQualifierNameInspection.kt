@@ -94,14 +94,14 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
 
 context (KaSession)
 private fun KaDeclarationSymbol.getContainingClassForCompanionObject(): KaNamedClassOrObjectSymbol? {
-    if (this !is KaClassOrObjectSymbol || this.classKind != KaClassKind.COMPANION_OBJECT) return null
+    if (this !is KaClassSymbol || this.classKind != KaClassKind.COMPANION_OBJECT) return null
 
     val containingClass = containingSymbol as? KaNamedClassOrObjectSymbol
     return containingClass?.takeIf { it.companionObject == this }
 }
 
 private fun KaDeclarationSymbol?.isEnumClass(): Boolean {
-    val classSymbol = this as? KaClassOrObjectSymbol ?: return false
+    val classSymbol = this as? KaClassSymbol ?: return false
     return classSymbol.classKind == KaClassKind.ENUM_CLASS
 }
 

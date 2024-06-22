@@ -270,7 +270,7 @@ class KotlinFunctionCallInstruction(
         val constructedClass = (((expr.resolveCallOld() as? KaSuccessCallInfo)
             ?.call as? KaCallableMemberCall<*, *>)
             ?.partiallyAppliedSymbol?.symbol as? KaConstructorSymbol)
-            ?.containingSymbol as? KaClassOrObjectSymbol
+            ?.containingSymbol as? KaClassSymbol
         if (constructedClass != null) {
             // Set exact class type for constructor
             return TypeConstraints.exactClass(constructedClass.classDef())

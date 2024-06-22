@@ -134,7 +134,7 @@ fun generateMember(
 
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
 
-            val containingSymbol = targetClass?.symbol as? KaClassOrObjectSymbol
+            val containingSymbol = targetClass?.symbol as? KaClassSymbol
             otherModifiersProvider = object : KtRendererOtherModifiersProvider {
                 //copy from KtRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
                 override fun getOtherModifiers(
@@ -251,7 +251,7 @@ private fun keepAnnotation(annotation: KtAnnotationApplication, file: KtFile?): 
 }
 
 context(KaSession)
-private fun KaClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annotations.any { annotation ->
+private fun KaClassSymbol.hasRequiresOptInAnnotation(): Boolean = annotations.any { annotation ->
     isRequiresOptInFqName(annotation.classId?.asSingleFqName())
 }
 

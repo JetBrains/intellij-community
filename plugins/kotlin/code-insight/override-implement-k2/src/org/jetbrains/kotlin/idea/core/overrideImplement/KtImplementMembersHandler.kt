@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
@@ -45,7 +45,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
 
         context(KaSession)
         @OptIn(KaExperimentalApi::class)
-        private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassOrObjectSymbol): List<KaCallableSymbol> {
+        private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassSymbol): List<KaCallableSymbol> {
             return buildList {
                 classWithUnimplementedMembers.memberScope.getCallableSymbols().forEach { symbol ->
                     if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach

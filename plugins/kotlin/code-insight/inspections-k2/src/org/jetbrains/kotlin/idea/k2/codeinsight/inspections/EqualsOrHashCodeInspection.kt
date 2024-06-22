@@ -74,17 +74,17 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
      */
     context(KaSession)
     private fun findMethod(
-        classSymbol: KaClassOrObjectSymbol, methodName: Name, condition: (KaCallableSymbol) -> Boolean
+        classSymbol: KaClassSymbol, methodName: Name, condition: (KaCallableSymbol) -> Boolean
     ): KaCallableSymbol? = classSymbol.memberScope.getCallableSymbols(methodName).filter(condition).singleOrNull()
 
     context(KaSession)
-    private fun findEqualsMethodForClass(classSymbol: KaClassOrObjectSymbol): KaCallableSymbol? =
+    private fun findEqualsMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
         findMethod(classSymbol, EQUALS) { callableSymbol ->
             (callableSymbol as? KaNamedFunctionSymbol)?.let { matchesEqualsMethodSignature(it) } == true
         }
 
     context(KaSession)
-    private fun findHashCodeMethodForClass(classSymbol: KaClassOrObjectSymbol): KaCallableSymbol? =
+    private fun findHashCodeMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
         findMethod(classSymbol, HASH_CODE) { callableSymbol ->
             (callableSymbol as? KaNamedFunctionSymbol)?.let { matchesHashCodeMethodSignature(it) } == true
         }

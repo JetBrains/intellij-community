@@ -19,12 +19,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.*
@@ -149,7 +144,7 @@ class KotlinCallHierarchyNodeDescriptor(
                             when {
                                 element is KtObjectDeclaration && element.isCompanion() -> {
                                     val containingDescriptor = declarationSymbol.containingSymbol
-                                    if (containingDescriptor !is KaClassOrObjectSymbol) return null
+                                    if (containingDescriptor !is KaClassSymbol) return null
                                     declarationSymbol = containingDescriptor
                                     elementText = renderClassOrObject(declarationSymbol)
                                 }
@@ -158,7 +153,7 @@ class KotlinCallHierarchyNodeDescriptor(
                                 }
                                 else -> {
                                     elementText = if (element.name != null) {
-                                        renderClassOrObject(declarationSymbol as KaClassOrObjectSymbol)
+                                        renderClassOrObject(declarationSymbol as KaClassSymbol)
                                     } else {
                                         KotlinBundle.message("hierarchy.text.anonymous")
                                     }
@@ -197,7 +192,7 @@ class KotlinCallHierarchyNodeDescriptor(
         context(KaSession)
         @OptIn(KaExperimentalApi::class)
         fun renderNamedFunction(symbol: KaFunctionSymbol): String? {
-            val name = ((symbol as? KaNamedFunctionSymbol)?.name ?: ((symbol as? KaConstructorSymbol)?.containingSymbol as? KaClassOrObjectSymbol)?.name)?.asString() ?: return null
+            val name = ((symbol as? KaNamedFunctionSymbol)?.name ?: ((symbol as? KaConstructorSymbol)?.containingSymbol as? KaClassSymbol)?.name)?.asString() ?: return null
             val paramTypes =
                 StringUtil.join(
                     symbol.valueParameters,
@@ -209,7 +204,7 @@ class KotlinCallHierarchyNodeDescriptor(
             return "$name($paramTypes)"
         }
 
-        private fun renderClassOrObject(descriptor: KaClassOrObjectSymbol): String {
+        private fun renderClassOrObject(descriptor: KaClassSymbol): String {
             return descriptor.name?.asString() ?: KotlinBundle.message("hierarchy.text.anonymous")
         }
     }

@@ -37,7 +37,7 @@ object KotlinIconProvider {
             }
         }
 
-        if (symbol is KaClassOrObjectSymbol) {
+        if (symbol is KaClassSymbol) {
             val isAbstract = (symbol as? KaNamedClassOrObjectSymbol)?.modality == Modality.ABSTRACT
 
             return when (symbol.classKind) {

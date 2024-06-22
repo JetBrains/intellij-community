@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
@@ -79,7 +79,7 @@ class KotlinPsiElementMemberChooserObject(
         context(KaSession)
         @OptIn(KaExperimentalApi::class)
         private fun getChooserText(symbol: KaSymbol): @NlsSafe String {
-            if (symbol is KaClassOrObjectSymbol) {
+            if (symbol is KaClassSymbol) {
                 val classId = symbol.classId
                 if (classId != null) {
                     return classId.asFqNameString()

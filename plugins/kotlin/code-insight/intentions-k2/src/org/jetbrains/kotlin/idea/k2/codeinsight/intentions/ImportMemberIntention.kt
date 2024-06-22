@@ -67,8 +67,8 @@ context(KaSession)
 private fun computeContext(psi: KtNameReferenceExpression, symbol: KaSymbol): ImportMemberIntention.Context? {
     return when (symbol) {
         is KaConstructorSymbol,
-        is KaClassOrObjectSymbol -> {
-            val classId = if (symbol is KaClassOrObjectSymbol) {
+        is KaClassSymbol -> {
+            val classId = if (symbol is KaClassSymbol) {
                 symbol.classId
             } else {
                 (symbol as KaConstructorSymbol).containingClassId

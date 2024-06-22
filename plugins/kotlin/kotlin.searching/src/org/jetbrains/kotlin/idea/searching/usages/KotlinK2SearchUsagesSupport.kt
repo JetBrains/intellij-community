@@ -51,16 +51,16 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 //`org.jetbrains.kotlin.analysis.api.fir.FirDeserializedDeclarationSourceProvider`
                 val invokeSymbol = psiReference.resolveToSymbol() ?: return false
                 if (invokeSymbol is KaNamedFunctionSymbol && invokeSymbol.name == OperatorNameConventions.INVOKE) {
-                    val searchTargetContainerSymbol = searchTarget.symbol as? KaClassOrObjectSymbol ?: return false
+                    val searchTargetContainerSymbol = searchTarget.symbol as? KaClassSymbol ?: return false
 
-                    fun KaClassOrObjectSymbol.isInheritorOrSelf(
-                        superSymbol: KaClassOrObjectSymbol?
+                    fun KaClassSymbol.isInheritorOrSelf(
+                        superSymbol: KaClassSymbol?
                     ): Boolean {
                         if (superSymbol == null) return false
                         return superSymbol == this || isSubClassOf(superSymbol)
                     }
 
-                    return searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.containingSymbol as? KaClassOrObjectSymbol) ||
+                    return searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.containingSymbol as? KaClassSymbol) ||
                             searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.receiverParameter?.type?.expandedSymbol)
                 }
             }
@@ -158,7 +158,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 if (candidateContainer == null && container == null) { //top level functions should be from the same package
                     declaration.containingKtFile.packageFqName == candidateDeclaration.containingKtFile.packageFqName
                 } else if (candidateContainer != null && container != null) { //instance functions should be from the same class/function or same hierarchy
-                    candidateContainer == container || container is KaClassOrObjectSymbol && candidateContainer is KaClassOrObjectSymbol && container.isSubClassOf(
+                    candidateContainer == container || container is KaClassSymbol && candidateContainer is KaClassSymbol && container.isSubClassOf(
                         candidateContainer
                     )
                 } else false
@@ -169,7 +169,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun isExtensionOfDeclarationClassUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
         if (declaration !is KtCallableDeclaration) return false
         val container = analyze(declaration) {
-            (declaration.symbol.containingSymbol as? KaClassOrObjectSymbol)?.psi?.originalElement as? KtClassOrObject ?: return false
+            (declaration.symbol.containingSymbol as? KaClassSymbol)?.psi?.originalElement as? KtClassOrObject ?: return false
         }
 
         return reference.unwrappedTargets.filterIsInstance<KtDeclaration>().any { candidateDeclaration ->
@@ -177,7 +177,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             if (candidateDeclaration !is KtCallableDeclaration || candidateDeclaration.receiverTypeReference == null) return@any false
             analyze(candidateDeclaration) {
                 if (!container.canBeAnalysed()) return@any false
-                val containerSymbol = container.symbol as? KaClassOrObjectSymbol ?: return@any false
+                val containerSymbol = container.symbol as? KaClassSymbol ?: return@any false
 
                 val receiverType = (candidateDeclaration.symbol as? KaCallableSymbol)?.receiverType ?: return@any false
                 val expandedClassSymbol = receiverType.expandedSymbol ?: return@any false

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -55,7 +55,7 @@ internal object ExpectedTypeWeigher {
         expectedType: KtType?
     ) = when {
         expectedType == null -> MatchesExpectedType.NON_TYPABLE
-        symbol is KaClassOrObjectSymbol && expectedType.expandedSymbol?.let { symbol.isSubClassOf(it) } == true ->
+        symbol is KaClassSymbol && expectedType.expandedSymbol?.let { symbol.isSubClassOf(it) } == true ->
             MatchesExpectedType.MATCHES
 
         symbol !is KaCallableSymbol -> MatchesExpectedType.NON_TYPABLE

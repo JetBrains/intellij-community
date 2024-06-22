@@ -297,7 +297,7 @@ class KtSymbolFromIndexProvider private constructor(
         add(typeName)
         addAll(getPossibleTypeAliasExpansionNames(typeName))
 
-        val superTypes = (type.symbol as? KaClassOrObjectSymbol)?.superTypes
+        val superTypes = (type.symbol as? KaClassSymbol)?.superTypes
         superTypes?.forEach { superType ->
             addAll(findAllNamesForType(superType))
         }

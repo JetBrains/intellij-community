@@ -49,7 +49,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
                 analyze(callExpression) {
                     val resolvedCall = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
                     val resolvedCallSymbol = resolvedCall.partiallyAppliedSymbol.symbol
-                    val enumClassSymbol = (resolvedCallSymbol.containingSymbol as? KaClassOrObjectSymbol) ?: return
+                    val enumClassSymbol = (resolvedCallSymbol.containingSymbol as? KaClassSymbol) ?: return
 
                     if (!isSoftDeprecatedEnumValuesMethod(resolvedCallSymbol, enumClassSymbol)) {
                         return
@@ -92,7 +92,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
 
     context(KaSession)
     private fun createQuickFix(callExpression: KtCallExpression, symbol: KaFunctionSymbol): LocalQuickFix? {
-        val enumClassSymbol = symbol.containingSymbol as? KaClassOrObjectSymbol
+        val enumClassSymbol = symbol.containingSymbol as? KaClassSymbol
         val enumClassQualifiedName = enumClassSymbol?.classId?.asFqNameString() ?: return null
         return createQuickFix(getReplaceFixType(callExpression), enumClassQualifiedName)
     }

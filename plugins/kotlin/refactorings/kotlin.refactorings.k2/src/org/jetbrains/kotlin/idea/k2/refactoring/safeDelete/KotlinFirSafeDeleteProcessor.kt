@@ -24,7 +24,7 @@ import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -128,12 +128,12 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         val containingClass = element.containingClass()
         if (containingClass != null) {
             analyze(containingClass) {
-                val elementClassSymbol = containingClass.symbol as KaClassOrObjectSymbol
+                val elementClassSymbol = containingClass.symbol as KaClassSymbol
 
                 fun isMultipleInheritance(function: KaSymbol): Boolean {
                     val superMethods = (function as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return false
                     return superMethods.any {
-                        val superClassSymbol = it.containingSymbol as? KaClassOrObjectSymbol ?: return@any false
+                        val superClassSymbol = it.containingSymbol as? KaClassSymbol ?: return@any false
                         val superMethod = it.psi ?: return@any false
                         return@any !isInside(superMethod) && !superClassSymbol.isSubClassOf(elementClassSymbol)
                     }

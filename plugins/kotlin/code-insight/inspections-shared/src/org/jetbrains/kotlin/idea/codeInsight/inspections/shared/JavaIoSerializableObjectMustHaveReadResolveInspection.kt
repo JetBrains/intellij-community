@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities.Private
@@ -59,14 +59,14 @@ private class ImplementReadResolveQuickFix : LocalQuickFix {
 }
 
 private fun KtObjectDeclaration.doesImplementSerializable(): Boolean = analyze(this) {
-    true == (this@doesImplementSerializable.symbol as? KaClassOrObjectSymbol)
+    true == (this@doesImplementSerializable.symbol as? KaClassSymbol)
         ?.let(::buildClassType)
         ?.getAllSuperTypes()
         ?.any { it.isClassTypeWithClassId(ClassId.fromString(JAVA_IO_SERIALIZABLE_CLASS_ID)) }
 }
 
 private fun KtObjectDeclaration.doesImplementReadResolve(): Boolean = analyze(this) {
-    val classSymbol = this@doesImplementReadResolve.symbol as? KaClassOrObjectSymbol ?: return false
+    val classSymbol = this@doesImplementReadResolve.symbol as? KaClassSymbol ?: return false
     fun KtScope.isAnyReadResolve(vararg visibilities: Visibility): Boolean =
         getCallableSymbols { it.asString() == JAVA_IO_SERIALIZATION_READ_RESOLVE }.any {
             val functionLikeSymbol = it as? KaFunctionSymbol ?: return@any false

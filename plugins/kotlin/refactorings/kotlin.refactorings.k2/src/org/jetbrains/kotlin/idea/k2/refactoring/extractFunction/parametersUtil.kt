@@ -364,7 +364,7 @@ private fun ExtractionData.registerQualifierReplacements(
         if (listOwner == null || !PsiTreeUtil.isAncestor(listOwner, targetSibling, true)) {
             parametersInfo.typeParameters.add(TypeParameter(typeParameter, typeParameter.collectRelevantConstraints()))
         }
-    } else if (referencedClassifierSymbol is KaClassOrObjectSymbol && originalRef is KtSimpleNameExpression) {
+    } else if (referencedClassifierSymbol is KaClassSymbol && originalRef is KtSimpleNameExpression) {
         val fqName = referencedClassifierSymbol.classId?.asSingleFqName()
         if (fqName != null) {
             val name = when (originalDeclaration) {
@@ -391,7 +391,7 @@ private fun getReferencedClassifierSymbol(
     val referencedSymbol = (thisSymbol ?: (originalDeclaration as? KtNamedDeclaration)?.symbol
     ?: (originalDeclaration as? PsiMember)?.callableSymbol) ?: return null
     return when (referencedSymbol) {
-        is KaClassOrObjectSymbol -> when (referencedSymbol.classKind) {
+        is KaClassSymbol -> when (referencedSymbol.classKind) {
             KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.ENUM_CLASS -> referencedSymbol
             //if type reference or call to implicit constructor, then type expansion might be required
             else -> if (refInfo.refExpr.getNonStrictParentOfType<KtTypeReference>() != null || partiallyAppliedSymbol?.symbol is KaConstructorSymbol) referencedSymbol else null
@@ -481,7 +481,7 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
             val (isCompanionObject, bothReceivers) = analyze(smartCastTarget) {
                 val symbol = originalRefExpr.resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 val receiverSymbol = (symbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
-                ((receiverSymbol?.containingSymbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) to
+                ((receiverSymbol?.containingSymbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) to
                         (symbol?.dispatchReceiver != null && symbol.extensionReceiver != null)
             }
             val shouldSkipPrimaryReceiver = smartCast == null

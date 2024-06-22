@@ -3,10 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinAnnotationTypeNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
@@ -27,9 +24,9 @@ internal open class ClassifierImportCandidatesProvider(
     protected open fun acceptsClassLikeSymbol(symbol: KaClassLikeSymbol): Boolean = true
 
     context(KaSession)
-    protected fun KaClassLikeSymbol.getExpandedClassSymbol(): KaClassOrObjectSymbol? = when (this) {
+    protected fun KaClassLikeSymbol.getExpandedClassSymbol(): KaClassSymbol? = when (this) {
         is KaTypeAliasSymbol -> expandedType.expandedSymbol
-        is KaClassOrObjectSymbol -> this
+        is KaClassSymbol -> this
     }
 
     context(KaSession)

@@ -59,7 +59,7 @@ internal class ThisKeywordHandler(
 
     context(KaSession)
     private fun canReferenceSymbolByThis(parameters: CompletionParameters, symbol: KaSymbol): Boolean {
-        if (symbol !is KaClassOrObjectSymbol) return true
+        if (symbol !is KaClassSymbol) return true
         if (symbol.classKind != KaClassKind.COMPANION_OBJECT) return true
         val companionPsi = symbol.psi as KtClassOrObject
         return parameters.offset in companionPsi.textRange

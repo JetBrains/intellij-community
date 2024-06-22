@@ -63,7 +63,7 @@ fun KtScope.findSiblingsByName(
 
     val classifierSymbols = getClassifierSymbols(newName)
     if (symbol is KaFunctionSymbol) {
-        return (classifierSymbols.flatMap { (it as? KaClassOrObjectSymbol)?.declaredMemberScope?.constructors ?: emptySequence() } + callables)
+        return (classifierSymbols.flatMap { (it as? KaClassSymbol)?.declaredMemberScope?.constructors ?: emptySequence() } + callables)
     }
 
     return (classifierSymbols + callables)
@@ -75,7 +75,7 @@ fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclaration
         val skipCandidate = when (symbol) {
             is KaFunctionSymbol -> !areSameSignatures(candidateSymbol, symbol)
             is KaPropertySymbol -> !areSameSignatures(symbol, candidateSymbol)
-            is KaClassOrObjectSymbol -> symbol.declaredMemberScope.constructors.none { areSameSignatures(it, candidateSymbol) }
+            is KaClassSymbol -> symbol.declaredMemberScope.constructors.none { areSameSignatures(it, candidateSymbol) }
             else -> false
         }
 
@@ -86,7 +86,7 @@ fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclaration
         return false
     }
 
-    if (candidateSymbol is KaClassOrObjectSymbol && symbol is KaFunctionSymbol) {
+    if (candidateSymbol is KaClassSymbol && symbol is KaFunctionSymbol) {
         if (candidateSymbol.declaredMemberScope.constructors.none { areSameSignatures(it, symbol) }) {
             return false
         }
@@ -131,7 +131,7 @@ fun checkDeclarationNewNameConflicts(
         }
 
         return when (containingSymbol) {
-            is KaClassOrObjectSymbol -> {
+            is KaClassSymbol -> {
                 if (symbol is KaClassifierSymbol) {
                     //allow shadowing classes in super
                     containingSymbol.combinedDeclaredMemberScope
@@ -155,7 +155,7 @@ fun checkDeclarationNewNameConflicts(
                 (block.statements.mapNotNull {
                     if (it.name != newName.asString()) return@mapNotNull null
                     val isAccepted = when (symbol) {
-                        is KaClassOrObjectSymbol -> it is KtClassOrObject
+                        is KaClassSymbol -> it is KtClassOrObject
                         is KtVariableSymbol -> it is KtProperty
                         is KaFunctionSymbol -> it is KtNamedFunction
                         else -> false
@@ -332,7 +332,7 @@ fun registerRetargetJobOnPotentialCandidates(
             block.statements.mapNotNull {
                 if (it.name != name) return@mapNotNull null
                 val isAccepted = when (declarationSymbol) {
-                    is KaClassOrObjectSymbol -> it is KtClassOrObject
+                    is KaClassSymbol -> it is KtClassOrObject
                     is KtVariableSymbol -> it is KtProperty
                     is KaFunctionSymbol -> it is KtNamedFunction
                     else -> false
@@ -343,7 +343,7 @@ fun registerRetargetJobOnPotentialCandidates(
         }
 
         while (classOrObjectSymbol != null) {
-            (classOrObjectSymbol as? KaClassOrObjectSymbol)?.memberScope?.processScope(classOrObjectSymbol)
+            (classOrObjectSymbol as? KaClassSymbol)?.memberScope?.processScope(classOrObjectSymbol)
 
             val companionObject = (classOrObjectSymbol as? KaNamedClassOrObjectSymbol)?.companionObject
             companionObject?.memberScope?.processScope(companionObject)

@@ -46,7 +46,7 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun getOverridableMembers(classOrObjectSymbol: KaClassOrObjectSymbol): List<OverrideMember> {
+private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<OverrideMember> {
         return buildList {
             classOrObjectSymbol.memberScope.getCallableSymbols().forEach { symbol ->
                 if (!symbol.isVisibleInClass(classOrObjectSymbol)) return@forEach
@@ -108,7 +108,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassOrObjectSymbol): L
     private data class OverrideMember(
         val symbol: KaCallableSymbol,
         val bodyType: BodyType,
-        val containingSymbol: KaClassOrObjectSymbol?,
+        val containingSymbol: KaClassSymbol?,
         override val token: KtLifetimeToken
     ) : KtLifetimeOwner
 

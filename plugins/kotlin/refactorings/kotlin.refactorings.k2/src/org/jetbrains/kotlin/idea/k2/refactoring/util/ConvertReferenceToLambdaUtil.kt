@@ -51,7 +51,7 @@ object ConvertReferenceToLambdaUtil {
         }
 
         val receiverSymbol = receiverExpression?.getQualifiedElementSelector()?.mainReference?.resolveToSymbol()
-        val acceptsReceiverAsParameter = receiverSymbol is KaClassOrObjectSymbol &&
+        val acceptsReceiverAsParameter = receiverSymbol is KaClassSymbol &&
                 !matchingParameterIsExtension &&
                 (callableSymbol as? KaNamedFunctionSymbol)?.isStatic != true && !receiverSymbol.classKind.isObject &&
                 (callableSymbol?.containingSymbol != null || callableSymbol?.isExtension == true || symbol is KaNamedClassOrObjectSymbol && symbol.isInner)

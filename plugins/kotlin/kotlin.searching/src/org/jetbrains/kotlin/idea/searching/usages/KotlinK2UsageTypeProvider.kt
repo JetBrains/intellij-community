@@ -50,7 +50,7 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
             when (val targetElement = reference.resolveToSymbol()) {
                 is KaClassifierSymbol ->
                     when (targetElement) {
-                        is KaClassOrObjectSymbol -> when (targetElement.classKind) {
+                        is KaClassSymbol -> when (targetElement.classKind) {
                           KaClassKind.COMPANION_OBJECT -> COMPANION_OBJECT_ACCESS
                           KaClassKind.OBJECT -> getVariableUsageType(refExpr)
                           else -> getClassUsageType(refExpr)

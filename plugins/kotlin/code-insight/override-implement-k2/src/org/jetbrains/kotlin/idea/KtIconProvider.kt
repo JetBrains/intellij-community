@@ -71,7 +71,7 @@ object KtIconProvider {
                     else -> KotlinIcons.FUNCTION
                 }
             }
-            is KaClassOrObjectSymbol -> {
+            is KaClassSymbol -> {
                 when (symbol.classKind) {
                     KaClassKind.CLASS -> when {
                         isAbstract -> KotlinIcons.ABSTRACT_CLASS

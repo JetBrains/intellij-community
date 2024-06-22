@@ -104,7 +104,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
                     getImplicitReceiverTypesAtPosition(unresolvedRef).any { it.isSubTypeOf(extensionReceiverType) }
                 }
             }
-            is KaClassOrObjectSymbol -> when {
+            is KaClassSymbol -> when {
                 receiver != null -> false
                 refExprParent is KtUserType -> true
                 refExprParent is KtCallExpression -> symbol.classKind == KaClassKind.CLASS

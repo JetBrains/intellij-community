@@ -78,7 +78,7 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
             dispatchReceiver = dispatchReceiver.original
         }
 
-        val containingClass = target.symbol.containingSymbol as? KaClassOrObjectSymbol ?: return true
+        val containingClass = target.symbol.containingSymbol as? KaClassSymbol ?: return true
 
         if (dispatchReceiver is KaExplicitReceiverValue) {
             if (dispatchReceiver.isSafeNavigation) {
@@ -94,7 +94,7 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
                                 && containingClass.classKind.isObject
                                 && receiverSymbol.containingSymbol == containingClass
                     }
-                    is KaClassOrObjectSymbol -> {
+                    is KaClassSymbol -> {
                         receiverSymbol.classKind.isObject
                                 && receiverSymbol == containingClass
                     }

@@ -6,7 +6,7 @@ import com.intellij.ide.util.InheritedMembersNodeProvider
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.psi.NavigatablePsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
@@ -19,11 +19,11 @@ class KotlinFirInheritedMembersNodeProvider : InheritedMembersNodeProvider<TreeE
         analyze(ktClassOrObject) {
             
             val children = mutableListOf<TreeElement>()
-            val descriptor = ktClassOrObject.symbol as? KaClassOrObjectSymbol ?: return listOf()
+            val descriptor = ktClassOrObject.symbol as? KaClassSymbol ?: return listOf()
 
             for (memberSymbol in descriptor.memberScope.getAllSymbols()) {
                 if (memberSymbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE) continue
-                if (memberSymbol is KaClassOrObjectSymbol) continue
+                if (memberSymbol is KaClassSymbol) continue
                 val psi = memberSymbol.psi
                 if (psi is NavigatablePsiElement) {
                     children.add(KotlinFirStructureViewElement(psi, ktClassOrObject, memberSymbol.createPointer(), isInherited = true))

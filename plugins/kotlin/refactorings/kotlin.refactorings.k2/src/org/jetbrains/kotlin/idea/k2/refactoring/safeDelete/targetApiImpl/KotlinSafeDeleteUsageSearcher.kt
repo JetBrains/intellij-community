@@ -17,7 +17,7 @@ import com.intellij.util.Processor
 import com.intellij.util.Query
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -82,11 +82,11 @@ class KotlinSafeDeleteUsageSearcher : SafeDeleteUsageSearcher {
                     return runReadAction {
                         val classOrObject = ktElement.containingClassOrObject
                         analyze(ktElement) {
-                            val elementClassSymbol = classOrObject?.symbol as? KaClassOrObjectSymbol ?: return@analyze
+                            val elementClassSymbol = classOrObject?.symbol as? KaClassSymbol ?: return@analyze
                             val superMethods =
                                 (ktElement.symbol as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return@analyze
                             val abstractExternalSuper = superMethods.find {
-                                val superClassSymbol = it.containingSymbol as? KaClassOrObjectSymbol ?: return@find false
+                                val superClassSymbol = it.containingSymbol as? KaClassSymbol ?: return@find false
                                 if ((it as? KaSymbolWithModality)?.modality != Modality.ABSTRACT) return@find false
                                 return@find !superClassSymbol.isSubClassOf(elementClassSymbol)
                             }

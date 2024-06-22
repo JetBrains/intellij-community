@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
@@ -53,7 +53,7 @@ private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
             val result = LinkedHashSet<KtNamedFunction>()
             listOfNotNull(
                 getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.packageScope,
-                (symbol.containingSymbol as? KaClassOrObjectSymbol)?.declaredMemberScope,
+                (symbol.containingSymbol as? KaClassSymbol)?.declaredMemberScope,
                 symbol.receiverParameter?.type?.expandedSymbol?.declaredMemberScope
             ).flatMapTo(result) { scope ->
                 scope.getCallableSymbols(name).mapNotNull {

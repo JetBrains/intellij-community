@@ -49,7 +49,7 @@ private fun explicitVisibilityRequired(symbol: KaSymbolWithVisibility): Boolean 
     if (symbol is KaPropertySymbol && (symbol.containingSymbol as? KaNamedClassOrObjectSymbol)?.isData == true) return false // 2
     if ((symbol as? KaCallableSymbol)?.allOverriddenSymbols?.any() == true) return false // 3
     if (symbol is KaPropertyAccessorSymbol) return false // 4
-    if (symbol is KaPropertySymbol && (symbol.containingSymbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS) return false // 5
+    if (symbol is KaPropertySymbol && (symbol.containingSymbol as? KaClassSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS) return false // 5
     return true
 }
 

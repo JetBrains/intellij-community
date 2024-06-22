@@ -157,12 +157,12 @@ sealed class K2MoveRenameUsageInfo(
         private fun KtSimpleNameExpression.isNameDeterminantInQualifiedChain(): Boolean = allowAnalysisOnEdt {
             analyze(this) {
                 val resolvedSymbol = mainReference.resolveToSymbol()
-                if (resolvedSymbol is KaClassOrObjectSymbol && resolvedSymbol.classKind == KaClassKind.COMPANION_OBJECT) return true
+                if (resolvedSymbol is KaClassSymbol && resolvedSymbol.classKind == KaClassKind.COMPANION_OBJECT) return true
                 if (resolvedSymbol is KaConstructorSymbol) return true
                 val containingSymbol = resolvedSymbol?.containingSymbol
                 if (resolvedSymbol is KaPackageSymbol) return false // ignore packages
                 if (containingSymbol == null) return true // top levels are static
-                if (containingSymbol is KaClassOrObjectSymbol) {
+                if (containingSymbol is KaClassSymbol) {
                     when (containingSymbol.classKind) {
                         KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.ENUM_CLASS -> return true
                         else -> {}

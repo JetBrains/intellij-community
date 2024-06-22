@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -29,7 +29,7 @@ import java.util.stream.Stream
 class KtClassDef(
     private val module: KaModule,
     private val hash: Int,
-    private val cls: KaSymbolPointer<KaClassOrObjectSymbol>,
+    private val cls: KaSymbolPointer<KaClassSymbol>,
     private val kind: KaClassKind,
     private val modality: Modality?
 ) : TypeConstraints.ClassDef {
@@ -120,7 +120,7 @@ class KtClassDef(
 
     companion object {
         context(KaSession)
-        fun KaClassOrObjectSymbol.classDef(): KtClassDef = KtClassDef(
+        fun KaClassSymbol.classDef(): KtClassDef = KtClassDef(
             useSiteModule, classId?.hashCode() ?: name.hashCode(), createPointer(),
             classKind, (this as? KaSymbolWithModality)?.modality
         )

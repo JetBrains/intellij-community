@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -33,7 +33,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
             isIgnored(symbol) -> false
             (symbol as? KaSymbolWithVisibility)?.visibility != Visibilities.Public -> false
             symbol.hasAnnotation(KotlinTestAvailabilityChecker.TEST_FQ_NAME) -> true
-            symbol is KaClassOrObjectSymbol -> symbol.declaredMemberScope.getCallableSymbols().any { isTestDeclaration(it) }
+            symbol is KaClassSymbol -> symbol.declaredMemberScope.getCallableSymbols().any { isTestDeclaration(it) }
             else -> false
         }
     }
@@ -44,7 +44,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
             return true
         }
 
-        val containingSymbol = symbol.containingSymbol as? KaClassOrObjectSymbol ?: return false
+        val containingSymbol = symbol.containingSymbol as? KaClassSymbol ?: return false
         return isIgnored(containingSymbol)
     }
 }

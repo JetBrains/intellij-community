@@ -33,12 +33,12 @@ fun KtExpression.getImplicitReceiverInfo(): ImplicitReceiverInfo? {
 }
 
 context(KaSession)
-private fun getAssociatedClass(symbol: KaSymbol): KaClassOrObjectSymbol? {
+private fun getAssociatedClass(symbol: KaSymbol): KaClassSymbol? {
     // both variables and functions are callable, and only they can be referenced by "this"
     if (symbol !is KaCallableSymbol) return null
     return when (symbol) {
         is KaNamedFunctionSymbol, is KtPropertySymbol ->
-            if (symbol.isExtension) symbol.receiverType?.expandedSymbol else symbol.containingSymbol as? KaClassOrObjectSymbol
+            if (symbol.isExtension) symbol.receiverType?.expandedSymbol else symbol.containingSymbol as? KaClassSymbol
         is KtVariableLikeSymbol -> {
             val variableType = symbol.returnType as? KtFunctionalType
             variableType?.receiverType?.expandedSymbol
@@ -49,7 +49,7 @@ private fun getAssociatedClass(symbol: KaSymbol): KaClassOrObjectSymbol? {
 
 context(KaSession)
 private fun getImplicitReceiverInfoOfClass(
-    implicitReceivers: List<KtImplicitReceiver>, associatedClass: KaClassOrObjectSymbol
+    implicitReceivers: List<KtImplicitReceiver>, associatedClass: KaClassSymbol
 ): ImplicitReceiverInfo? {
     // We can't use "this" with label if the label is already taken
     val alreadyReservedLabels = mutableListOf<Name>()
@@ -73,10 +73,10 @@ private fun getImplicitReceiverInfoOfClass(
 }
 
 context(KaSession)
-private fun getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<KaClassOrObjectSymbol, Name?>? {
+private fun getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<KaClassSymbol, Name?>? {
     val associatedClass = receiver.type.expandedSymbol ?: return null
     val associatedTag: Name? = when (val receiverSymbol = receiver.ownerSymbol) {
-        is KaClassOrObjectSymbol -> receiverSymbol.name
+        is KaClassSymbol -> receiverSymbol.name
         is KaAnonymousFunctionSymbol -> {
             val receiverPsi = receiverSymbol.psi
             val potentialLabeledPsi = receiverPsi?.parent?.parent

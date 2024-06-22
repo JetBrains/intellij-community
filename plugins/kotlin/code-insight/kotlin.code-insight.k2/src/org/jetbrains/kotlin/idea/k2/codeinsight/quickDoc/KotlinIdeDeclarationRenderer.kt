@@ -257,7 +257,7 @@ internal class KotlinIdeDeclarationRenderer(
         visibilityProvider = KaRendererVisibilityModifierProvider.WITH_IMPLICIT_VISIBILITY
         modalityProvider = KaRendererModalityModifierProvider.WITH_IMPLICIT_MODALITY.onlyIf { symbol ->
             when {
-                symbol is KaClassOrObjectSymbol -> !(symbol.classKind == KaClassKind.INTERFACE && symbol.modality == Modality.ABSTRACT || symbol.classKind.isObject && symbol.modality == Modality.FINAL)
+                symbol is KaClassSymbol -> !(symbol.classKind == KaClassKind.INTERFACE && symbol.modality == Modality.ABSTRACT || symbol.classKind.isObject && symbol.modality == Modality.FINAL)
 
                 symbol is KaCallableSymbol -> {
                     symbol.modality == Modality.OPEN || symbol.containingSymbol != null && symbol.modality == Modality.FINAL || symbol.modality == Modality.ABSTRACT
@@ -675,8 +675,8 @@ internal class KotlinIdeDeclarationRenderer(
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
             ): Unit = with(analysisSession) {
-                if (symbol is KaClassOrObjectSymbol && symbol.classKind == KaClassKind.COMPANION_OBJECT && symbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) {
-                    val className = (symbol.containingSymbol as? KaClassOrObjectSymbol)?.name
+                if (symbol is KaClassSymbol && symbol.classKind == KaClassKind.COMPANION_OBJECT && symbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) {
+                    val className = (symbol.containingSymbol as? KaClassSymbol)?.name
                     if (className != null) {
                         printer.append(highlight("of ") { asInfo } )
                         printer.append(highlight(className.renderName()) { asClassName } )
@@ -689,7 +689,7 @@ internal class KotlinIdeDeclarationRenderer(
                 }
                 printer.append(highlight(name.renderName()) {
                     when (symbol) {
-                        is KaClassOrObjectSymbol -> {
+                        is KaClassSymbol -> {
                             if (symbol.classKind.isObject) {
                                 asObjectName
                             } else if (symbol.classKind == KaClassKind.ENUM_CLASS || symbol.classKind == KaClassKind.CLASS || symbol.classKind == KaClassKind.INTERFACE) {

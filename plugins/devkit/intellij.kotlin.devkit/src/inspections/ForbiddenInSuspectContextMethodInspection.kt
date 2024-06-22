@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -366,5 +366,5 @@ private fun KaSession.isSuspensionRestricted(lambdaType: KtType): Boolean {
   return receiverTypeSymbol != null && restrictsSuspension(receiverTypeSymbol)
 }
 
-private fun restrictsSuspension(symbol: KaClassOrObjectSymbol): Boolean =
+private fun restrictsSuspension(symbol: KaClassSymbol): Boolean =
   symbol.hasAnnotation(ClassId.topLevel(restrictsSuspensionName))

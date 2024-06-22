@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -48,7 +48,7 @@ internal val MatchingHandler.withinHierarchyTextFilterSet: Boolean
 context(KaSession)
 fun KtExpression.findDispatchReceiver(): KtType? {
     val symbol = resolveCallOld()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return null
-    val containingClass = symbol.containingSymbol as? KaClassOrObjectSymbol ?: return null
+    val containingClass = symbol.containingSymbol as? KaClassSymbol ?: return null
     val classId = containingClass.classId ?: return null
     val fromKotlinPkg = classId.packageFqName.asString().startsWith("kotlin")
     val isFunctionCall = classId.relativeClassName.asString().startsWith("Function")
