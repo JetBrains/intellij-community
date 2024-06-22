@@ -212,7 +212,7 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
         is KaConstantValue.KaCharConstantValue -> DfTypes.intValue(constant.value.code)
         is KaConstantValue.KaIntConstantValue -> DfTypes.intValue(constant.value)
         is KaConstantValue.KaLongConstantValue -> DfTypes.longValue(constant.value)
-        is KaConstantValue.KaFloatConstantValue -> DfTypes.floatValue(constant.value)
+        is KaConstantValue.FloatValue -> DfTypes.floatValue(constant.value)
         is KaConstantValue.DoubleValue -> DfTypes.doubleValue(constant.value)
         else -> DfType.TOP
     }
