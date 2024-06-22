@@ -29,6 +29,16 @@ import java.util.function.BiFunction;
  */
 public final class MultiRoutingFileSystemProvider
   extends DelegatingFileSystemProvider<MultiRoutingFileSystemProvider, MultiRoutingFileSystem> {
+
+  /**
+   * A production IDE has two VM options file: the bundled one and the user-defined one.
+   * The user can only add new options to the user level file, but there's no way to remove a system property
+   * defined in the bundled VM options file.
+   *
+   * When it's not possible to unregister a custom file system, this option orders the file system to behave like the default one.
+   */
+  static final boolean ourForceDefaultFs = Objects.equals(System.getProperty("idea.force.default.filesystem"), "true");
+
   /**
    * The fallback provider for requests to roots
    * not registered via {@link #computeBackend(FileSystemProvider, String, boolean, boolean, BiFunction)}.
@@ -88,9 +98,12 @@ public final class MultiRoutingFileSystemProvider
 
   public MultiRoutingFileSystemProvider(FileSystemProvider localFSProvider) {
     // TODO I wouldn't force using CorePosixFilteringFileSystemProvider at the top level.
-    myLocalProvider = localFSProvider.getFileSystem(URI.create("file:///")).supportedFileAttributeViews().contains("posix")
-                      ? localFSProvider
-                      : new CorePosixFilteringFileSystemProvider(localFSProvider);
+    if (ourForceDefaultFs || localFSProvider.getFileSystem(URI.create("file:///")).supportedFileAttributeViews().contains("posix")) {
+      myLocalProvider = localFSProvider;
+    }
+    else {
+      myLocalProvider = new CorePosixFilteringFileSystemProvider(localFSProvider);
+    }
     myFileSystem = new MultiRoutingFileSystem(this, myLocalProvider.getFileSystem(URI.create("file:///")));
   }
 
@@ -140,6 +153,10 @@ public final class MultiRoutingFileSystemProvider
 
   @Override
   protected @NotNull FileSystemProvider getDelegate(@Nullable Path path1, @Nullable Path path2) {
+    if (ourForceDefaultFs) {
+      return myLocalProvider;
+    }
+
     if (path1 == null) {
       if (path2 == null) {
         return myLocalProvider;

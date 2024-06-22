@@ -10,7 +10,9 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFrame
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.concurrent.thread
 
 internal class IjentWslNioFsVmOptionsSetter : ApplicationActivationListener {
   override fun applicationActivated(ideFrame: IdeFrame) {
@@ -40,7 +42,11 @@ internal class IjentWslNioFsVmOptionsSetter : ApplicationActivationListener {
               AllIcons.General.Warning,
             )
             if (doThat) {
-              ApplicationManagerEx.getApplicationEx().restart(true)
+              thread(isDaemon = true) {
+                // If it wasn't called in a separate thread, it would block the coroutine scope,
+                // preventing the service to be disposed and preventing the IDE from exiting.
+                ApplicationManagerEx.getApplicationEx().restart(true)
+              }
             }
           }
 

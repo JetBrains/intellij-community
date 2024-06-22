@@ -4,8 +4,9 @@ package com.intellij.execution.wsl.ijent.nio.toggle
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslIjentAvailabilityService
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -15,7 +16,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.IjentId
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -31,6 +32,100 @@ class IjentWslNioFsToggler(@VisibleForTesting val coroutineScope: CoroutineScope
   companion object {
     suspend fun instanceAsync(): IjentWslNioFsToggler = serviceAsync()
     fun instance(): IjentWslNioFsToggler = service()
+
+    @VisibleForTesting
+    fun ensureInVmOptionsImpl(
+      isEnabled: Boolean,
+      forceProductionOptions: Boolean,
+      getOptionByPrefix: (String) -> String?,
+    ): Collection<Pair<String, String?>> {
+      val changedOptions = mutableListOf<Pair<String, String?>>()
+
+      var forceDefaultFs = false
+      run {
+        val prefix = "-Djava.nio.file.spi.DefaultFileSystemProvider="
+        val actualValue = getOptionByPrefix(prefix)
+
+        if (isEnabled) {
+          if (actualValue != MultiRoutingFileSystemProvider::class.java.name) {
+            changedOptions += prefix to MultiRoutingFileSystemProvider::class.java.name
+          }
+        }
+        else if (actualValue == MultiRoutingFileSystemProvider::class.java.name) {
+          // sun.nio.fs.WindowsFileSystemProvider doesn't have the constructor required for SPI.
+          // Also, it's not always possible to remove a VM option.
+          // Therefore, this special flag orders MultiRoutingFileSystemProvider to delegate everything to the default FS.
+          forceDefaultFs = true
+        }
+      }
+
+      run {
+        //see idea/nativeHelpers/buildTypes/ijent/performance/IJentWslBenchmarkTests.kt:38
+        val testSubdir = when {
+          forceProductionOptions || !isEnabled -> null
+          ApplicationManager.getApplication().isUnitTestMode -> "/tests"
+          PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> ""
+          else -> null
+        }
+
+        if (testSubdir != null) {
+          val prefix = "-Xbootclasspath/a:out${testSubdir}/classes/production/intellij.platform.core.nio.fs"
+          val actualValue = getOptionByPrefix(prefix)
+
+          if (actualValue != "") {
+            changedOptions += prefix to ""
+          }
+        }
+      }
+
+      run {
+        val prefix = "-Djava.security.manager="
+        val actualValue = getOptionByPrefix(prefix)
+
+        if (isEnabled) {
+          if (actualValue != CoreBootstrapSecurityManager::class.java.name) {
+            changedOptions += prefix to CoreBootstrapSecurityManager::class.java.name
+          }
+        }
+        else {
+          // It's not always possible to remove a VM Option (if an option is defined in a product-level vmoptions file).
+          // However, CoreBootstrapSecurityManager does nothing potentially harmful.
+          // The option is kept as is.
+        }
+      }
+
+      run {
+        val prefix = "-Didea.io.use.nio2="
+        val actualValue = getOptionByPrefix(prefix)
+
+        if (isEnabled) {
+          if (actualValue != "true") {
+            changedOptions += prefix to "true"
+          }
+        }
+        else if (actualValue != null && actualValue != "false") {
+          changedOptions += prefix to "false"
+        }
+      }
+
+      run {
+        val prefix = "-Didea.force.default.filesystem="
+        val actualValue = getOptionByPrefix(prefix)
+
+        if (isEnabled) {
+          if (actualValue != null && actualValue != "false") {
+            // It's not always possible to remove a VM Option (if an option is defined in a product-leve vmoptions file).
+            // Therefore, this code sets an opposite option.
+            changedOptions += prefix to "false"
+          }
+        }
+        else if (forceDefaultFs && actualValue != "true") {
+          changedOptions += prefix to "true"
+        }
+      }
+
+      return changedOptions
+    }
   }
 
   init {
@@ -39,49 +134,24 @@ class IjentWslNioFsToggler(@VisibleForTesting val coroutineScope: CoroutineScope
     }
   }
 
-  fun ensureInVmOptions(): List<Pair<String, String?>> {
-    val options: List<Triple<String, String, String?>> = listOf(
-      Triple(
-        "-Djava.nio.file.spi.DefaultFileSystemProvider=",
-        MultiRoutingFileSystemProvider::class.java.name,
-        null,
-      ),
-      Triple(
-        run {
-          //see idea/nativeHelpers/buildTypes/ijent/performance/IJentWslBenchmarkTests.kt:38
-          val testSubdir = if (ApplicationManager.getApplication().isUnitTestMode) "/tests" else ""
-          "-Xbootclasspath/a:out${testSubdir}/classes/production/intellij.platform.core.nio.fs"
-        },
-        "",
-        null,
-      ),
-      Triple(
-        "-Djava.security.manager=",
-        CoreBootstrapSecurityManager::class.java.name,
-        null,
-      ),
-      Triple(
-        "-Didea.io.use.nio2=",
-        "true",
-        null,
-      ),
-    )
-
-    val changedOptions = mutableListOf<Pair<String, String?>>()
+  fun ensureInVmOptions(): Collection<Pair<String, String?>> {
     val isEnabled = WslIjentAvailabilityService.Companion.getInstance().useIjentForWslNioFileSystem()
 
-    for ((name, valueForEnabled, valueForDisabled) in options) {
-      val value = if (isEnabled) valueForEnabled else valueForDisabled
-      // TODO Explain why there's a difference in Dev Mode.
-      if (VMOptions.readOption(name, AppMode.isDevServer() || ApplicationManager.getApplication().isUnitTestMode) != value) {
-        changedOptions += name to value
-        try {
-          VMOptions.setOption(name, value)
-        }
-        catch (err: IOException) {
-          if (!ApplicationManager.getApplication().isUnitTestMode) {
-            throw err
-          }
+    // In Dev Server, it's possible to customize VM options only through the Run Configuration.
+    // Invoking the action "Customize VM Options" won't have any effect because the Dev Server resets the file on restart.
+    val getEffectiveVmOptions = AppMode.isDevServer() || ApplicationManager.getApplication().isUnitTestMode
+
+    val changedOptions = ensureInVmOptionsImpl(isEnabled, false) { prefix ->
+      VMOptions.readOption(prefix, getEffectiveVmOptions)
+    }
+
+    for ((prefix, value) in changedOptions) {
+      try {
+        VMOptions.setOption(prefix, value)
+      }
+      catch (err: IOException) {
+        if (!ApplicationManager.getApplication().isUnitTestMode) {
+          throw err
         }
       }
     }

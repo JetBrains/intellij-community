@@ -101,6 +101,9 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
 
   @Override
   protected @NotNull FileSystem getDelegate(@NotNull String root) {
+    if (MultiRoutingFileSystemProvider.ourForceDefaultFs) {
+      return myLocalFS;
+    }
     return getBackend(root);
   }
 
