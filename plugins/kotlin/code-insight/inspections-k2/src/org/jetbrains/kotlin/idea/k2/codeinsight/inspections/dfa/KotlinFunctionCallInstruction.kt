@@ -123,7 +123,7 @@ class KotlinFunctionCallInstruction(
                 parameterSymbol.findDfaValue(callDescriptor, arguments)?.cond(RelationType.EQ, factory.fromDfType(DfTypes.TRUE))
             }
 
-            is KtContractLogicalNotExpression -> argument.toCondition(factory, callDescriptor, arguments)?.negate()
+            is KaContractLogicalNotExpression -> argument.toCondition(factory, callDescriptor, arguments)?.negate()
             is KtContractIsNullPredicateExpression -> argument.parameterSymbol.findDfaValue(callDescriptor, arguments)
                 ?.cond(RelationType.equivalence(!isNegated), factory.fromDfType(DfTypes.NULL))
 
