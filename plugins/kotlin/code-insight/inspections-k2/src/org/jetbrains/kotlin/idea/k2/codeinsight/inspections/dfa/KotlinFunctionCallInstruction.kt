@@ -127,7 +127,7 @@ class KotlinFunctionCallInstruction(
             is KaContractIsNullPredicateExpression -> argument.parameterSymbol.findDfaValue(callDescriptor, arguments)
                 ?.cond(RelationType.equivalence(!isNegated), factory.fromDfType(DfTypes.NULL))
 
-            is KtContractIsInstancePredicateExpression -> argument.parameterSymbol.findDfaValue(callDescriptor, arguments)
+            is KaContractIsInstancePredicateExpression -> argument.parameterSymbol.findDfaValue(callDescriptor, arguments)
                 ?.cond(if (isNegated) RelationType.IS_NOT else RelationType.IS, factory.fromDfType(type.toDfType()))
 
             else -> null
