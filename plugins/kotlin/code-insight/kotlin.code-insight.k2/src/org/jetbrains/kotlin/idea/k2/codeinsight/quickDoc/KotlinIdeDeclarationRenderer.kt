@@ -737,7 +737,7 @@ internal class KotlinIdeDeclarationRenderer(
                 renderArrayConstantValue(value)
             }
 
-            is KtEnumEntryAnnotationValue -> {
+            is KaAnnotationValue.EnumEntryValue -> {
                 renderEnumEntryConstantValue(value)
             }
 
@@ -804,7 +804,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
-    private fun PrettyPrinter.renderEnumEntryConstantValue(value: KtEnumEntryAnnotationValue) {
+    private fun PrettyPrinter.renderEnumEntryConstantValue(value: KaAnnotationValue.EnumEntryValue) {
         val callableId = value.callableId
         if (callableId != null) {
             append(highlight(callableId.classId!!.shortClassName.renderName()) { asClassName})
