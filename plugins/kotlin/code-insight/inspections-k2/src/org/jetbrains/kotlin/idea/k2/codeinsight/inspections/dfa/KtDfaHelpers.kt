@@ -205,7 +205,7 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
     val type = expr.getKtType()
     val constant: KaConstantValue? = if (type == null) null else expr.evaluate()
     return when (constant) {
-        is KaConstantValue.KaNullConstantValue -> DfTypes.NULL
+        is KaConstantValue.NullValue -> DfTypes.NULL
         is KaConstantValue.BooleanValue -> DfTypes.booleanValue(constant.value)
         is KaConstantValue.ByteValue -> DfTypes.intValue(constant.value.toInt())
         is KaConstantValue.ShortValue -> DfTypes.intValue(constant.value.toInt())
