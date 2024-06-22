@@ -91,6 +91,6 @@ private fun KaAnnotation.getStringValueOfArgument(argumentName: String): String?
     return when (val argumentAsConstant = argumentValueExpression.value) {
         is KaConstantValue.KaStringConstantValue -> argumentAsConstant.value
         is KaConstantValue.KaErrorConstantValue -> error("We cannot render this argument as a constant")
-        else -> argumentAsConstant.renderAsKotlinConstant()
+        else -> argumentAsConstant.render()
     }
 }

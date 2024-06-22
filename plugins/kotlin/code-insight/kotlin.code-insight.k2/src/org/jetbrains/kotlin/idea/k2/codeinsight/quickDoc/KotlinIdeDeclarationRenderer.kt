@@ -799,7 +799,7 @@ internal class KotlinIdeDeclarationRenderer(
     private fun PrettyPrinter.renderConstantAnnotationValue(value: KaAnnotationValue.ConstantValue) {
         with(highlightingManager) {
             val builder = StringBuilder()
-            builder.appendCodeSnippetHighlightedByLexer(value.value.renderAsKotlinConstant())
+            builder.appendCodeSnippetHighlightedByLexer(value.value.render())
             append(builder)
         }
     }

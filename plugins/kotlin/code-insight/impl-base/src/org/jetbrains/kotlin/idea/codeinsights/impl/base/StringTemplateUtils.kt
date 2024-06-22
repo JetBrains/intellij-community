@@ -130,7 +130,7 @@ context(KaSession)
 private fun KtConstantExpression.buildStringTemplateForExpression(forceBraces: Boolean): String? {
     val constantValue = evaluate() ?: return "\${${text}}"
     val isChar = constantValue.constantValueKind == ConstantValueKind.Char
-    val stringValue = if (isChar) "${constantValue.value}" else constantValue.renderAsKotlinConstant()
+  val stringValue = if (isChar) "${constantValue.value}" else constantValue.render()
     if (isChar || stringValue == text) {
         return StringUtil.escapeStringCharacters(
             stringValue.length, stringValue, if (forceBraces) "\"$" else "\"", StringBuilder()

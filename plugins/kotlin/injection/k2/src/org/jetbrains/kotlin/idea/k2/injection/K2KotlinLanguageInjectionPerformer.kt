@@ -10,7 +10,7 @@ internal class K2KotlinLanguageInjectionPerformer : KotlinLanguageInjectionPerfo
     override fun tryEvaluateConstant(expression: KtExpression?): String? = expression?.let { exp ->
         analyze(exp) {
             exp.evaluate()?.takeUnless { it is KaConstantValue.KaErrorConstantValue }
-                ?.renderAsKotlinConstant()
+                ?.render()
         }
     }
 }
