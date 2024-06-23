@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.util.awaitCancellationAndInvoke
@@ -22,18 +23,25 @@ open class ManagedPersistentCache<K, V>(
   private val name: String,
   private val mapBuilder: PersistentMapBuilder<K, V>,
   closeOnAppShutdown: Boolean = true,
+  cleanDirOnFailure: Boolean = !ApplicationManager.getApplication().isUnitTestMode,
 ) : ManagedCache<K, V> {
-  private val persistentMap: AtomicReference<PersistentMapBase<K, V>> = AtomicReference(createPersistentMap(closeOnAppShutdown))
+  private val persistentMap: AtomicReference<PersistentMapBase<K, V>> = AtomicReference()
   private val errorCounter: AtomicInteger = AtomicInteger()
+
+  init {
+    persistentMap.set(createPersistentMap(closeOnAppShutdown, cleanDirOnFailure))
+  }
 
   companion object {
     private const val IO_ERRORS_THRESHOLD: Int = 20
     private const val CREATE_ATTEMPT_COUNT: Int = 5
     private const val CREATE_ATTEMPT_DELAY_MS: Long = 10
-    private val logger = Logger.getInstance(ManagedPersistentCache::class.java)
-    private val cachesToClose: MutableSet<ManagedPersistentCache<*, *>> = ConcurrentCollectionFactory.createConcurrentSet()
+    private val LOG: Logger = logger<ManagedPersistentCache<*, *>>()
+    private val TRACKED_CACHES: MutableSet<ManagedPersistentCache<*, *>> = ConcurrentCollectionFactory.createConcurrentSet()
     init {
-      ShutDownTracker.getInstance().registerCacheShutdownTask { cachesToClose.forEach { it.close(isAppShutdown=true) } }
+      ShutDownTracker.getInstance().registerCacheShutdownTask {
+        TRACKED_CACHES.forEach { cache -> cache.close(isAppShutdown=true) }
+      }
     }
   }
 
@@ -107,7 +115,7 @@ open class ManagedPersistentCache<K, V>(
       return
     }
     if (!isAppShutdown) {
-      cachesToClose.remove(this)
+      TRACKED_CACHES.remove(this)
     }
     close(persistentMap)
   }
@@ -116,11 +124,14 @@ open class ManagedPersistentCache<K, V>(
     try {
       persistentMap.close()
     } catch (e: Exception) {
-      logger.warn("error closing persistent map $name", e)
+      LOG.warn("error closing persistent map $name", e)
     }
   }
 
-  private fun createPersistentMap(closeOnAppShutdown: Boolean): PersistentMapBase<K, V>? {
+  private fun createPersistentMap(
+    closeOnAppShutdown: Boolean,
+    cleanDirOnFailure: Boolean,
+  ): PersistentMapBase<K, V>? {
     var map: PersistentMapBase<K, V>? = null
     var exception: Exception? = null
     for (attempt in 0 until CREATE_ATTEMPT_COUNT) {
@@ -132,37 +143,36 @@ open class ManagedPersistentCache<K, V>(
         break
       } catch (e: VersionUpdatedException) {
         exception = e
-        logger.info("$name ${e.message}")
+        LOG.info("$name ${e.message}")
       } catch (e: IOException) {
         exception = e
         if (attempt != CREATE_ATTEMPT_COUNT - 1) {
-          logger.warn("error creating persistent map $name, attempt $attempt", e)
+          LOG.warn("error creating persistent map $name, attempt $attempt", e)
         }
       } catch (e: Exception) {
         // e.g., storage is already registered
         exception = e
         break
       }
-      if (ApplicationManager.getApplication().isUnitTestMode) {
+      if (cleanDirOnFailure) {
+        IOUtil.deleteAllFilesStartingWith(mapBuilder.file)
+      } else {
         // IJPL-149672 do not delete files in test mode
-        break
+        return null
       }
-      IOUtil.deleteAllFilesStartingWith(mapBuilder.file)
     }
     if (map == null) {
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        logger.error("cannot create persistent map $name", exception)
-      }
+      LOG.error("cannot create persistent map $name", exception)
       return null
     }
-    logger.info("created persistent map $name with size ${map.keysCount()}")
+    LOG.info("created persistent map $name with size ${map.keysCount()}")
     if (closeOnAppShutdown) {
-      val added = cachesToClose.add(this)
+      val added = TRACKED_CACHES.add(this)
       if (!added) {
-        logger.error(
+        LOG.error(
           "Probably the project was not disposed properly before reopening. " +
           "Persistent map $name has already been registered. " +
-          "List of registered maps: $cachesToClose"
+          "List of registered maps: $TRACKED_CACHES"
         )
         close(map)
         return null
@@ -181,10 +191,10 @@ open class ManagedPersistentCache<K, V>(
       errorCounter.set(0)
       return result
     } catch (e: IOException) {
-      logger.warn("error performing $opName by persistent map $name", e)
+      LOG.warn("error performing $opName by persistent map $name", e)
       val count = errorCounter.incrementAndGet()
       if (count > IO_ERRORS_THRESHOLD) {
-        logger.warn("error count exceeds the threshold, closing persistent map $name")
+        LOG.warn("error count exceeds the threshold, closing persistent map $name")
         this.persistentMap.compareAndSet(persistentMap, null)
         close(persistentMap)
       }

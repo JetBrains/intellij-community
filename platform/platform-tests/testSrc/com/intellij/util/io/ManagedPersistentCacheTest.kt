@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import org.junit.jupiter.api.Test
@@ -9,11 +9,11 @@ import kotlin.test.assertTrue
 open class ManagedPersistentCacheTest : ManagedCacheTestBase() {
 
   override fun createCache(): ManagedPersistentCache<Int, Int> {
-    return ManagedPersistentCache("test-cache", mapBuilder(), false)
+    return ManagedPersistentCache("test-cache", mapBuilder(), closeOnAppShutdown=false, cleanDirOnFailure=true)
   }
 
   @Test
-  open fun testNullsWhenCorrupted() {
+  open fun testReadNullWhenCorrupted() {
     withCache { cache ->
       cache[1] = 10
     }

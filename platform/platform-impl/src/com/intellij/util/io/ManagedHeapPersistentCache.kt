@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
@@ -16,15 +18,16 @@ class ManagedHeapPersistentCache<K, V>(
   mapBuilder: PersistentMapBuilder<K, V>,
   inMemoryCount: Int = 5,
   closeAppOnShutdown: Boolean = true,
-) : ManagedPersistentCache<K, V>(name, mapBuilder, closeAppOnShutdown) {
+  cleanDirOnFailure: Boolean = !ApplicationManager.getApplication().isUnitTestMode,
+) : ManagedPersistentCache<K, V>(name, mapBuilder, closeAppOnShutdown, cleanDirOnFailure) {
   private val inMemoryMap: LinkedHashMap<K, InMemoryValue<V>> = createInMemoryMap(inMemoryCount)
   private val rwLock: ReadWriteLock = ReentrantReadWriteLock()
 
   companion object {
-    private val logger = Logger.getInstance(ManagedHeapPersistentCache::class.java)
-
-    private data class InMemoryValue<V>(val value: V?, val isDirty: AtomicBoolean)
+    private val LOG: Logger = logger<ManagedHeapPersistentCache<*, *>>()
   }
+
+  private data class InMemoryValue<V>(val value: V?, val isDirty: AtomicBoolean)
 
   override fun get(key: K): V? {
     ThreadingAssertions.assertBackgroundThread()
@@ -74,7 +77,7 @@ class ManagedHeapPersistentCache<K, V>(
       }
     }
     if (persistedCount > 0) {
-      logger.debug { "flushing $persistedCount folding states" }
+      LOG.debug { "flushing $persistedCount folding states" }
     }
     super.force()
   }
