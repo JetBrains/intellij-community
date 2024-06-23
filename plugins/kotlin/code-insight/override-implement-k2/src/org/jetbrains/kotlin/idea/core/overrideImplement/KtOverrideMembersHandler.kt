@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
@@ -109,7 +109,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
         val symbol: KaCallableSymbol,
         val bodyType: BodyType,
         val containingSymbol: KaClassSymbol?,
-        override val token: KtLifetimeToken
+        override val token: KaLifetimeToken
     ) : KtLifetimeOwner
 
     override fun getChooserTitle() = KotlinIdeaCoreBundle.message("override.members.handler.title")

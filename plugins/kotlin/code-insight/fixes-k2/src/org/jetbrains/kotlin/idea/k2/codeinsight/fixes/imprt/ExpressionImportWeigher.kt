@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -121,7 +121,7 @@ internal abstract class AbstractExpressionImportWeigher : ExpressionImportWeighe
 }
 
 internal class CallExpressionImportWeigher(
-    override val token: KtLifetimeToken,
+    override val token: KaLifetimeToken,
     // the weigher is not saved in any context/state, and weigh() is called when element is still valid
     private val element: KtNameReferenceExpression,
     private val presentReceiverTypes: List<KtType>,
@@ -209,7 +209,7 @@ internal class CallExpressionImportWeigher(
 }
 
 internal class OperatorExpressionImportWeigher(
-    override val token: KtLifetimeToken,
+    override val token: KaLifetimeToken,
     private val operatorName: Name?,
     private val leftOperandType: KtType? = null,
     private val rightOperandType: KtType? = null,

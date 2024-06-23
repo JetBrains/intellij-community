@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtCompletionExtensionCandida
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
@@ -119,7 +119,7 @@ internal open class FirCallableCompletionContributor(
         val options: CallableInsertionOptions,
         val symbolOrigin: CompletionSymbolOrigin,
     ) : KtLifetimeOwner {
-        override val token: KtLifetimeToken
+        override val token: KaLifetimeToken
             get() = _signature.token
         val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
         val explicitReceiverTypeHint: KtType? get() = withValidityAssertion { _explicitReceiverTypeHint }
