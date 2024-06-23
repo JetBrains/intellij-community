@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classif
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesCallArgumentsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFunctionalTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeNameRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeParameterTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtUsualClassTypeRenderer
@@ -280,8 +280,8 @@ internal class KotlinIdeDeclarationRenderer(
     }
 
     @KaExperimentalApi
-    private fun createFunctionalTypeRenderer(): KtFunctionalTypeRenderer {
-        return object : KtFunctionalTypeRenderer {
+    private fun createFunctionalTypeRenderer(): KaFunctionalTypeRenderer {
+        return object : KaFunctionalTypeRenderer {
             override fun renderType(
                 analysisSession: KaSession,
                 type: KtFunctionalType,

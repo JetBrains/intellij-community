@@ -96,7 +96,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
             }
         }
         is KtFunctionalType -> {
-            // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+            // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
             type.receiverType?.let {
                 printKtType(it)
                 text(".")
