@@ -106,7 +106,7 @@ private fun buildType(type: KtType, typeArgumentsMapping: Map<KaTypeParameterSym
         is KaTypeParameterType -> typeArgumentsMapping[type.symbol]
 
         is KaClassType -> buildClassType(type.symbol) {
-            type.ownTypeArguments.mapNotNull { it.type }.forEach {
+            type.typeArguments.mapNotNull { it.type }.forEach {
                 val builtType = buildType(it, typeArgumentsMapping)
                 if (builtType != null) argument(builtType)
             }
@@ -242,7 +242,7 @@ private fun collectTypeParameterTypes(type: KtType): Set<KaTypeParameterType> {
     fun collect(type: KtType) {
         when (type) {
             is KaTypeParameterType -> result.add(type)
-            is KaClassType -> type.ownTypeArguments.mapNotNull { it.type }.forEach { collect(it) }
+            is KaClassType -> type.typeArguments.mapNotNull { it.type }.forEach { collect(it) }
             else -> {}
         }
     }

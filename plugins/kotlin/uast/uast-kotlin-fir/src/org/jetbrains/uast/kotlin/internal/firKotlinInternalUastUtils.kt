@@ -299,7 +299,7 @@ internal fun toPsiType(
     context: KtElement,
     config: PsiTypeConversionConfiguration,
 ): PsiType {
-    if (ktType is KaClassType && ktType.ownTypeArguments.isEmpty()) {
+    if (ktType is KaClassType && ktType.typeArguments.isEmpty()) {
         fun PsiPrimitiveType.orBoxed() = if (config.isBoxed) getBoxedType(context) else this
         val psiType = when (ktType.classId) {
             StandardClassIds.Int -> PsiTypes.intType().orBoxed()

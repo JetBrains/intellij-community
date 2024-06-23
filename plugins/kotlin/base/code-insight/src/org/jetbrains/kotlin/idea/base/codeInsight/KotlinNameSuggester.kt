@@ -592,13 +592,13 @@ private val ITERABLE_LIKE_CLASS_IDS =
 context(KaSession)
 private fun getIterableElementType(type: KtType): KtType? {
     if (type is KaClassType && type.classId in ITERABLE_LIKE_CLASS_IDS) {
-        return type.ownTypeArguments.singleOrNull()?.type
+        return type.typeArguments.singleOrNull()?.type
     }
 
     for (supertype in type.getAllSuperTypes()) {
         if (supertype is KaClassType) {
             if (supertype.classId in ITERABLE_LIKE_CLASS_IDS) {
-                return supertype.ownTypeArguments.singleOrNull()?.type
+                return supertype.typeArguments.singleOrNull()?.type
             }
         }
     }

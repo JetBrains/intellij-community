@@ -71,7 +71,7 @@ object ReplaceCallFixFactories {
             if (operationToken in KtTokens.AUGMENTED_ASSIGNMENTS && left is KtArrayAccessExpression) {
                 val type = left.arrayExpression?.getKtType()
                     ?: return@IntentionBased emptyList()
-                val argumentType = (type as? KaClassType)?.ownTypeArguments?.firstOrNull()
+                val argumentType = (type as? KaClassType)?.typeArguments?.firstOrNull()
                 if (type.isMap() && argumentType?.type?.isMarkedNullable != true) {
                     return@IntentionBased emptyList()
                 }

@@ -136,7 +136,7 @@ internal fun ExtractionData.inferParametersInfo(
 
     val existingParameterNames = hashSetOf<String>()
     val generateArguments: (KtType) -> List<KtType> =
-        { ktType -> (ktType as? KaClassType)?.ownTypeArguments?.mapNotNull { it.type } ?: emptyList() }
+        { ktType -> (ktType as? KaClassType)?.typeArguments?.mapNotNull { it.type } ?: emptyList() }
     for ((namedElement, parameter) in extractedDescriptorToParameter) {
         if (!parameter
                 .parameterType

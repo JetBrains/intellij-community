@@ -778,8 +778,8 @@ internal class KotlinIdeDeclarationRenderer(
                     append(classId.asSingleFqName().render())
                 }
 
-                if (type.ownTypeArguments.isNotEmpty()) {
-                    printCollection(type.ownTypeArguments, ", ", prefix = "<", postfix = ">") { typeProjection ->
+                if (type.typeArguments.isNotEmpty()) {
+                    printCollection(type.typeArguments, ", ", prefix = "<", postfix = ">") { typeProjection ->
                         when (typeProjection) {
                             is KtStarTypeProjection -> append('*')
                             is KtTypeArgumentWithVariance -> renderType(typeProjection.type)

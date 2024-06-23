@@ -60,7 +60,7 @@ object ConvertReferenceToLambdaUtil {
                 val paramNameAndTypes = callableSymbol.valueParameters.map { it.name.asString() to it.returnType }
                 if (matchingParameterType != null) {
                     val parameterSize =
-                        (matchingParameterType as KaClassType).ownTypeArguments.size - (if (acceptsReceiverAsParameter) 2 else 1)
+                        (matchingParameterType as KaClassType).typeArguments.size - (if (acceptsReceiverAsParameter) 2 else 1)
                     if (parameterSize >= 0) paramNameAndTypes.take(parameterSize) else paramNameAndTypes
                 } else {
                     paramNameAndTypes

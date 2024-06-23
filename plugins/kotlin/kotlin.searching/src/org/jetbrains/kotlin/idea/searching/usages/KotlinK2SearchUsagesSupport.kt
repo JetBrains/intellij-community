@@ -208,7 +208,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                                         fun KtType.containsClassType(clazz: KtClassOrObject?): Boolean {
                                             if (clazz == null) return false
                                             return this is KaClassType && (clazz.isEquivalentTo(symbol.psi) ||
-                                                    ownTypeArguments.any { arg ->
+                                                    typeArguments.any { arg ->
                                                         when (arg) {
                                                             is KtStarTypeProjection -> false
                                                             is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)

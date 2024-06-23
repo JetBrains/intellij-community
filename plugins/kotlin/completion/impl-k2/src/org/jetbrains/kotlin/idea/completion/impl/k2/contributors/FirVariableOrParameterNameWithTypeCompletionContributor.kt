@@ -276,7 +276,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         is KaTypeParameterType -> type.symbol in availableTypeParameters
 
         is KaUsualClassType -> {
-            visibilityChecker.isVisible(type.symbol) && type.ownTypeArguments.all { typeArgument ->
+            visibilityChecker.isVisible(type.symbol) && type.typeArguments.all { typeArgument ->
                 when (typeArgument) {
                     is KtStarTypeProjection -> true
                     is KtTypeArgumentWithVariance -> typeIsVisible(typeArgument.type, visibilityChecker, availableTypeParameters)

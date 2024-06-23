@@ -131,11 +131,11 @@ context(KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
     type.classId.let { printClassId(it, shortNameWithCompanionNameSkip(it)) }
 
-    val ownTypeArguments = type.ownTypeArguments
+    val ownTypeArguments = type.typeArguments
     if (ownTypeArguments.isNotEmpty()) {
         text("<")
 
-        val anotherOwnTypeArguments = anotherType?.ownTypeArguments
+        val anotherOwnTypeArguments = anotherType?.typeArguments
         val iterator = ownTypeArguments.iterator()
         val anotherIterator = anotherOwnTypeArguments?.iterator()
         while (iterator.hasNext()) {
@@ -208,8 +208,8 @@ private fun isNonNullableFlexibleType(lower: KtType, upper: KtType): Boolean {
         upper.nullability == lower.nullability &&
         isSimilarTypes(lower, upper)
     ) {
-        val lowerTypeArguments = lower.ownTypeArguments
-        val upperTypeArguments = upper.ownTypeArguments
+        val lowerTypeArguments = lower.typeArguments
+        val upperTypeArguments = upper.typeArguments
         return lowerTypeArguments.isNotEmpty() && lowerTypeArguments.zip(upperTypeArguments)
             .any { (lowerTypeArg, upperTypeArg) ->
                 lowerTypeArg != upperTypeArg
@@ -221,7 +221,7 @@ private fun isNonNullableFlexibleType(lower: KtType, upper: KtType): Boolean {
 private fun isSimilarTypes(
     lower: KaClassType,
     upper: KaClassType
-): Boolean = lower.ownTypeArguments.zip(upper.ownTypeArguments)
+): Boolean = lower.typeArguments.zip(upper.typeArguments)
     .none { (lowerTypeArg, upperTypeArg) -> lowerTypeArg.type != upperTypeArg.type }
 
 private fun shortNameWithCompanionNameSkip(classId: ClassId): String {

@@ -128,7 +128,7 @@ object FunctionInsertionHelper {
                     // e.g. <T, C: Iterable<T>>, so T is inferred from C
                     type.symbol.upperBounds
                         .filterIsInstance<KaClassType>()
-                        .filter { it.ownTypeArguments.isNotEmpty() }
+                        .filter { it.typeArguments.isNotEmpty() }
                         .forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType = false) }
                 }
 
@@ -143,7 +143,7 @@ object FunctionInsertionHelper {
                 }
 
                 is KaUsualClassType -> {
-                    val typeArguments = type.ownTypeArguments.mapNotNull { it.type }
+                    val typeArguments = type.typeArguments.mapNotNull { it.type }
                     typeArguments.forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType) }
                 }
 

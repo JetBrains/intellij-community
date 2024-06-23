@@ -1296,7 +1296,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val receiver = expr.receiverExpression
         if (kotlinType is KaClassType) {
             if (receiver is KtSimpleNameExpression && receiver.mainReference.resolve() is KtClass) {
-                val arguments = kotlinType.ownTypeArguments
+                val arguments = kotlinType.typeArguments
                 if (arguments.size == 1) {
                     val kType = arguments[0].type?.expandedSymbol?.classDef()
                     val kClassPsiType = TypeConstraint.fromDfType(kotlinType.toDfType())

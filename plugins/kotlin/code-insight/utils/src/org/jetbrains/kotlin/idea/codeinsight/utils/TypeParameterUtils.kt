@@ -29,7 +29,7 @@ object TypeParameterUtils {
     fun typeReferencesTypeParameter(typeParameter: KaTypeParameterSymbol, type: KtType): Boolean {
         return when (type) {
             is KaTypeParameterType -> type.symbol == typeParameter
-            is KaClassType -> type.ownTypeArguments.mapNotNull { it.type }.any { typeReferencesTypeParameter(typeParameter, it) }
+            is KaClassType -> type.typeArguments.mapNotNull { it.type }.any { typeReferencesTypeParameter(typeParameter, it) }
             else -> false
         }
     }

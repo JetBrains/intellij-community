@@ -66,7 +66,7 @@ internal object ChangeToStarProjectionFixFactory {
                 else ->
                     null
             }
-            val typeArguments = (type as? KaClassType)?.ownTypeArguments
+            val typeArguments = (type as? KaClassType)?.typeArguments
             if (typeArguments?.any { it !is KtStarTypeProjection && it.type !is KaTypeParameterType } == true) return null
         }
 

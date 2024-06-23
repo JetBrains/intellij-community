@@ -100,7 +100,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
 
     override fun typeArguments(ktType: KtType): List<KtType> {
         analyze(data.commonParent) {
-            return (ktType as? KaClassType)?.ownTypeArguments?.mapNotNull { it.type } ?: emptyList()
+            return (ktType as? KaClassType)?.typeArguments?.mapNotNull { it.type } ?: emptyList()
         }
     }
 
@@ -157,7 +157,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
                 return false
             }
         }
-        typeToCheck.ownTypeArguments.mapNotNull { it.type }.forEach {
+        typeToCheck.typeArguments.mapNotNull { it.type }.forEach {
             if (!isResolvableInScope(it, scope, typeParameters)) return false
         }
     }

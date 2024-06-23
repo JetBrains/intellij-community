@@ -74,7 +74,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         conversion: Conversion
     ) {
         val receiverType = expression.receiverExpression.getKtType() as? KaClassType ?: return
-        val receiverTypeArgument = receiverType.ownTypeArguments.singleOrNull() ?: return
+        val receiverTypeArgument = receiverType.typeArguments.singleOrNull() ?: return
         val receiverTypeArgumentType = receiverTypeArgument.type ?: return
         val resolvedCall = expression.resolveToCall()?.singleFunctionCallOrNull() ?: return
         val callableName = resolvedCall.symbol.callableId?.callableName?.asString() ?: return

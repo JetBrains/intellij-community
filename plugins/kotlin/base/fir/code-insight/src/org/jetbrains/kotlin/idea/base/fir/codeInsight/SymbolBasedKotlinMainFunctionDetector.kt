@@ -106,7 +106,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
 
     context(KaSession)
     private fun KtType.isResolvedClassType(): Boolean = when (this) {
-        is KaClassType -> ownTypeArguments.mapNotNull { it.type }.all { it.isResolvedClassType() }
+        is KaClassType -> typeArguments.mapNotNull { it.type }.all { it.isResolvedClassType() }
         else -> false
     }
 }

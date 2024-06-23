@@ -114,7 +114,7 @@ internal object CallableMetadataProvider {
         val expectedReceiverType = buildClassType(expectedReceiver)
         val flattenedActualReceiverTypes = getFlattenedActualReceiverTypes(context)
 
-        val replaceTypeArguments = expectedReceiverType is KaClassType && expectedReceiverType.ownTypeArguments.isNotEmpty()
+        val replaceTypeArguments = expectedReceiverType is KaClassType && expectedReceiverType.typeArguments.isNotEmpty()
         val correctedFlattenedActualReceiverTypes = if (replaceTypeArguments) {
             // replace type arguments to correctly compare actual types with built expected type
             flattenedActualReceiverTypes.map { typeConjuncts ->
