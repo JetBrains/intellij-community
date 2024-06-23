@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.KtTypeProjection
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.types.KtCapturedType
+import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KtDynamicType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -42,7 +42,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
 
     var markedNullable = type.isMarkedNullable
     when (type) {
-        is KtCapturedType -> text("*")
+        is KaCapturedType -> text("*")
         is KtDefinitelyNotNullType -> {
             printKtType(type.original)
             text(" & ")

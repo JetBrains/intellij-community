@@ -285,7 +285,7 @@ object K2CreateFunctionFromUsageUtil {
             }
             is KaClassErrorType -> acceptTypeQualifiers(type.qualifiers, visited, predicate)
             is KtFlexibleType -> accept(type.lowerBound, visited, predicate) && accept(type.upperBound, visited, predicate)
-            is KtCapturedType -> accept(type.projection.type, visited, predicate)
+            is KaCapturedType -> accept(type.projection.type, visited, predicate)
             is KtDefinitelyNotNullType -> accept(type.original, visited, predicate)
             is KtIntersectionType -> type.conjuncts.all { accept(it, visited, predicate) }
             else -> true
