@@ -82,7 +82,7 @@ class KtVariableDescriptor(
 
         context(KaSession)
         fun getLambdaReceiver(factory: DfaValueFactory, lambda: KtLambdaExpression): DfaVariableValue? {
-            val receiverType = (lambda.functionLiteral.getFunctionalType() as? KaFunctionType)?.receiverType ?: return null
+            val receiverType = (lambda.functionLiteral.functionType as? KaFunctionType)?.receiverType ?: return null
             val descriptor = KtLambdaThisVariableDescriptor(lambda.functionLiteral, receiverType.toDfType())
             return factory.varFactory.createVariableValue(descriptor)
         }

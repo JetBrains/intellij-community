@@ -477,7 +477,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             return false
         }
         val isUnitReturnType = analyze(function) {
-            val functionalType = function.getFunctionalType()
+            val functionalType = function.functionType
             (functionalType as? KaFunctionType)?.returnType?.isUnit == true
         }
         if (!isUnitReturnType) {

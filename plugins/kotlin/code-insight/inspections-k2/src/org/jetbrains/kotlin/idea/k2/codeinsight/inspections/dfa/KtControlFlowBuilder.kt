@@ -1543,7 +1543,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 when (name) {
                     LET, RUN -> {
                         addInstruction(PopInstruction())
-                        val lambdaResultType = (functionLiteral.getFunctionalType() as? KaFunctionType)?.returnType
+                        val lambdaResultType = (functionLiteral.functionType as? KaFunctionType)?.returnType
                         val result = flow.createTempVariable(lambdaResultType.toDfType())
                         inlinedBlock(lambda) {
                             processExpression(bodyExpression)
