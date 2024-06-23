@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractCallsInPlaceContractEffectDeclaration
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -91,5 +91,5 @@ private fun PsiElement.findMatchingCallExpr(): KtCallExpression? =
         ?: parentsWithSelf.match(KtLambdaExpression::class, KtLambdaArgument::class, last = KtCallExpression::class)
         ?: parentsWithSelf.match(KtNamedFunction::class, KtValueArgument::class, KtValueArgumentList::class, last = KtCallExpression::class)
 
-private fun isInlinedParameter(parameter: KtVariableLikeSignature<KaValueParameterSymbol>): Boolean =
+private fun isInlinedParameter(parameter: KaVariableSignature<KaValueParameterSymbol>): Boolean =
     parameter.symbol.run { !isCrossinline && !isNoinline }

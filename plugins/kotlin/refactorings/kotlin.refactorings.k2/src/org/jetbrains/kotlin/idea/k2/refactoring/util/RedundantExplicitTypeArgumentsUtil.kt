@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -256,7 +256,7 @@ private fun collectTypeParameterTypes(type: KtType): Set<KtTypeParameterType> {
  */
 context(KaSession)
 private fun KtLambdaExpression.isExplicitTypeArgumentsNeededForTypeInference(
-    parameter: KtVariableLikeSignature<KaValueParameterSymbol>
+    parameter: KaVariableSignature<KaValueParameterSymbol>
 ): Boolean {
     if (!parameter.returnType.isFunctionType) return false
     val parameterType = parameter.symbol.returnType

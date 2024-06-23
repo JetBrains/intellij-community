@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -43,7 +43,7 @@ internal object TypeTextProvider {
     ): String? = when (signature) {
         is KtFunctionLikeSignature<*> -> signature.returnType.renderNonErrorOrUnsubstituted(signature.symbol.returnType)
 
-        is KtVariableLikeSignature<*> -> {
+        is KaVariableSignature<*> -> {
             val type = signature.returnType
             val typeToRender = when {
                 treatAsFunctionCall && type is KtFunctionalType -> type.returnType

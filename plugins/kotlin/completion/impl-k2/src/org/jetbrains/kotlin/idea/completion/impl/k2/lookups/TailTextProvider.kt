@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -37,7 +37,7 @@ internal object TailTextProvider {
     }
 
     context(KaSession)
-    fun getTailTextForVariableCall(functionalType: KtFunctionalType, signature: KtVariableLikeSignature<*>): String = buildString {
+    fun getTailTextForVariableCall(functionalType: KtFunctionalType, signature: KaVariableSignature<*>): String = buildString {
         if (insertLambdaBraces(functionalType)) {
             append(" {...} ")
         }

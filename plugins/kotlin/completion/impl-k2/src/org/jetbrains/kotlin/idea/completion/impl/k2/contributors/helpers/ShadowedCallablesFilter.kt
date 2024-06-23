@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -70,7 +70,7 @@ internal class ShadowedCallablesFilter {
     ): Boolean {
         val (importingStrategy, insertionStrategy) = insertionOptions
 
-        val isVariableCall = callable is KtVariableLikeSignature<*> && insertionStrategy is CallableInsertionStrategy.AsCall
+        val isVariableCall = callable is KaVariableSignature<*> && insertionStrategy is CallableInsertionStrategy.AsCall
 
         return when (importingStrategy) {
             is ImportStrategy.DoNothing ->
@@ -174,7 +174,7 @@ internal class ShadowedCallablesFilter {
                     val signature = applicableExtension.signature
                     val insertionStrategy = applicableExtension.insertionOptions.insertionStrategy
                     val receiverType = when {
-                        signature is KtVariableLikeSignature<*> && insertionStrategy is CallableInsertionStrategy.AsCall ->
+                        signature is KaVariableSignature<*> && insertionStrategy is CallableInsertionStrategy.AsCall ->
                             (signature.returnType as? KtFunctionalType)?.receiverType
 
                         else -> signature.receiverType
@@ -185,7 +185,7 @@ internal class ShadowedCallablesFilter {
                 .sortedWith(compareBy(
                     { (_, receiverId) -> indexOfReceiverFromContext[receiverId] ?: Int.MAX_VALUE },
                     { (_, receiverId) -> indexInClassHierarchy[receiverId] ?: Int.MAX_VALUE },
-                    { (applicableExtension, _) -> applicableExtension.signature is KtVariableLikeSignature<*> }
+                    { (applicableExtension, _) -> applicableExtension.signature is KaVariableSignature<*> }
                 ))
                 .map { (applicableExtension, _) -> applicableExtension }
         }
@@ -240,7 +240,7 @@ private sealed class SimplifiedSignature {
             val containerFqName = if (considerContainer) symbol.getContainerFqName() else null
 
             return when (callableSignature) {
-                is KtVariableLikeSignature<*> -> createSimplifiedSignature(callableSignature, isVariableCall, containerFqName)
+                is KaVariableSignature<*> -> createSimplifiedSignature(callableSignature, isVariableCall, containerFqName)
                 is KtFunctionLikeSignature<*> -> FunctionLikeSimplifiedSignature(
                     symbol.name,
                     containerFqName,
@@ -254,7 +254,7 @@ private sealed class SimplifiedSignature {
 
         context(KaSession)
         private fun createSimplifiedSignature(
-            signature: KtVariableLikeSignature<*>,
+            signature: KaVariableSignature<*>,
             isFunctionalVariableCall: Boolean,
             containerFqName: FqName?,
         ): SimplifiedSignature = when {

@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
@@ -28,7 +28,7 @@ internal class VariableLookupElementFactory {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createLookup(
-        signature: KtVariableLikeSignature<*>,
+        signature: KaVariableSignature<*>,
         options: CallableInsertionOptions,
     ): LookupElementBuilder {
         val rendered = renderVariable(signature)
@@ -46,7 +46,7 @@ internal class VariableLookupElementFactory {
     context(KaSession)
     private fun createLookupElementBuilder(
         options: CallableInsertionOptions,
-        signature: KtVariableLikeSignature<*>,
+        signature: KaVariableSignature<*>,
         rendered: String,
         insertionStrategy: CallableInsertionStrategy = options.insertionStrategy
     ): LookupElementBuilder {

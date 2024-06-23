@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
@@ -49,7 +49,7 @@ class VariableCallTarget(
     override val caller: KtElement,
     override val call: KaCall,
     override val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>
-) : TypedCallTarget<KaVariableSymbol, KtVariableLikeSignature<KaVariableSymbol>> {
+) : TypedCallTarget<KaVariableSymbol, KaVariableSignature<KaVariableSymbol>> {
     override val symbol: KaVariableSymbol
         get() = partiallyAppliedSymbol.symbol
 }

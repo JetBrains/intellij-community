@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KtExpandedTypeRenderingM
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -29,20 +29,20 @@ internal object CompletionShortNamesRenderer {
         }
 
     context(KaSession)
-    fun renderVariable(variable: KtVariableLikeSignature<*>): String {
+    fun renderVariable(variable: KaVariableSignature<*>): String {
         return renderReceiver(variable)
     }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun renderReceiver(variable: KtVariableLikeSignature<*>): String {
+    private fun renderReceiver(variable: KaVariableSignature<*>): String {
         val receiverType = variable.receiverType ?: return ""
         return receiverType.render(rendererVerbose, position = Variance.INVARIANT) + "."
     }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun renderFunctionParameter(parameter: KtVariableLikeSignature<KaValueParameterSymbol>): String =
+    private fun renderFunctionParameter(parameter: KaVariableSignature<KaValueParameterSymbol>): String =
         "${if (parameter.symbol.isVararg) "vararg " else ""}${parameter.name.asString()}: ${
             parameter.returnType.renderNonErrorOrUnsubstituted(parameter.symbol.returnType)
         }${if (parameter.symbol.hasDefaultValue) " = ..." else ""}"
