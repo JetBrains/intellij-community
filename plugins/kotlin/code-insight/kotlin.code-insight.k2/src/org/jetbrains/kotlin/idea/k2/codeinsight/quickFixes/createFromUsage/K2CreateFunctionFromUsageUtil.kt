@@ -283,7 +283,7 @@ object K2CreateFunctionFromUsageUtil {
                 acceptTypeQualifiers(type.qualifiers, visited, predicate)
                         && (type !is KaFunctionType || (accept(type.returnType, visited,predicate) && accept(type.receiverType, visited, predicate)))
             }
-            is KtClassErrorType -> acceptTypeQualifiers(type.qualifiers, visited, predicate)
+            is KaClassErrorType -> acceptTypeQualifiers(type.qualifiers, visited, predicate)
             is KtFlexibleType -> accept(type.lowerBound, visited, predicate) && accept(type.upperBound, visited, predicate)
             is KtCapturedType -> accept(type.projection.type, visited, predicate)
             is KtDefinitelyNotNullType -> accept(type.original, visited, predicate)

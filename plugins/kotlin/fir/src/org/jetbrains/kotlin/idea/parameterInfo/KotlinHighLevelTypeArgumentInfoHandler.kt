@@ -30,7 +30,7 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
         val typeReference = argumentList.parentOfType<KtTypeReference>() ?: return null
         return when (val ktType = typeReference.getKtType()) {
             is KaClassType -> listOfNotNull(ktType.expandedSymbol as? KaNamedClassOrObjectSymbol)
-            is KtClassErrorType -> {
+            is KaClassErrorType -> {
                 ktType.candidateSymbols.mapNotNull { candidateSymbol ->
                     when (candidateSymbol) {
                         is KaClassSymbol -> candidateSymbol

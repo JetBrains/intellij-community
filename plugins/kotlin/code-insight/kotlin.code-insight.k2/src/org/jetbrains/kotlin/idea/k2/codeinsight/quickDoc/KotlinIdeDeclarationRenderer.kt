@@ -787,7 +787,7 @@ internal class KotlinIdeDeclarationRenderer(
                     }
                 }
             }
-            is KtClassErrorType -> {
+            is KaClassErrorType -> {
                 append("UNRESOLVED_CLASS")
             }
             else -> {
