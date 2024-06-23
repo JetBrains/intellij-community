@@ -20,7 +20,7 @@ internal object ConvertLateinitPropertyToNotNullDelegateFixFactory {
             if (!property.hasModifier(KtTokens.LATEINIT_KEYWORD) || !property.isVar || property.hasInitializer()) {
                 return@ModCommandBased emptyList()
             }
-            val type = property.typeReference?.getKaType() ?: return@ModCommandBased emptyList()
+            val type = property.typeReference?.type ?: return@ModCommandBased emptyList()
             if (!type.isPrimitive || type.isMarkedNullable) return@ModCommandBased emptyList()
 
             val renderedType = type.render(

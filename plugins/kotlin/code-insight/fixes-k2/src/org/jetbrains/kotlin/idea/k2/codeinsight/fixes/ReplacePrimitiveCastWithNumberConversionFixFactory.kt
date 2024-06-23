@@ -20,7 +20,7 @@ internal object ReplacePrimitiveCastWithNumberConversionFixFactory {
             val expressionType = binaryExpression.left.expressionType ?: return@ModCommandBased emptyList()
             if (!expressionType.isPrimitiveNumberType()) return@ModCommandBased emptyList()
 
-            val castType = binaryExpression.right?.getKaType() ?: return@ModCommandBased emptyList()
+            val castType = binaryExpression.right?.type ?: return@ModCommandBased emptyList()
             if (!castType.isPrimitiveNumberType()) return@ModCommandBased emptyList()
 
             listOf(
