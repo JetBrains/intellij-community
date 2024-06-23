@@ -240,6 +240,7 @@ sealed class K2MoveRenameUsageInfo(
         fun markInternalUsages(containing: KtElement) {
             containing.forEachDescendantOfType<KtReferenceExpression> { refExpr ->
                 if (refExpr is KtEnumEntrySuperclassReferenceExpression) return@forEachDescendantOfType
+                if (refExpr.parent is KtSuperExpression || refExpr.parent is KtThisExpression) return@forEachDescendantOfType
                 val mainReference= refExpr.mainReference
                 if (mainReference is KtConstructorDelegationReference) return@forEachDescendantOfType
                 val resolved = mainReference.resolve() as? PsiNamedElement ?: return@forEachDescendantOfType
@@ -250,7 +251,6 @@ sealed class K2MoveRenameUsageInfo(
         fun unMarkAllUsages(containing: KtElement) = containing.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
             refExpr.internalUsageInfo = null
         }
-
 
         /**
          * Removes any internal usage infos that don't need to be updated.
