@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -109,4 +109,4 @@ fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): K
  */
 context(KaSession)
 fun KaCallableSymbol.canBeUsedAsExtension(): Boolean =
-    isExtension || this is KaVariableSymbol && (returnType as? KaFunctionalType)?.hasReceiver == true
+    isExtension || this is KaVariableSymbol && (returnType as? KaFunctionType)?.hasReceiver == true
