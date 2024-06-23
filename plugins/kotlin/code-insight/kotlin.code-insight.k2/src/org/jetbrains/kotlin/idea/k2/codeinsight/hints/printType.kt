@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -72,7 +72,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
                 }
             }
         }
-        is KtTypeParameterType -> {
+        is KaTypeParameterType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeParameterTypeRenderer.AS_SOURCE
             val symbol = type.symbol
             text(
@@ -191,7 +191,7 @@ private fun isMutabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
 
 private fun isNullabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
     if (lower.nullability == KaTypeNullability.NON_NULLABLE && upper.nullability == KaTypeNullability.NULLABLE) {
-        if (lower is KtTypeParameterType && upper is KtTypeParameterType && lower.symbol == upper.symbol) {
+        if (lower is KaTypeParameterType && upper is KaTypeParameterType && lower.symbol == upper.symbol) {
             return true
         }
         if (lower is KaClassType && upper is KaClassType && lower.classId == upper.classId) {

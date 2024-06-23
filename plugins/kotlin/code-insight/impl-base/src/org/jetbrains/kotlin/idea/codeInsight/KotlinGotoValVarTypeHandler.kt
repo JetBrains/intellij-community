@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtProperty
 
@@ -21,7 +21,7 @@ class KotlinGotoValVarTypeHandler: GotoDeclarationHandlerBase() {
             return analyze(property) {
                 val ktType = property.getReturnKtType()
                 when (ktType) {
-                    is KtTypeParameterType -> ktType.symbol.psi
+                    is KaTypeParameterType -> ktType.symbol.psi
                     else -> ktType.upperBoundIfFlexible().expandedSymbol?.psi
                 }
             }

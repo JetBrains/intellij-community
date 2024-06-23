@@ -155,7 +155,7 @@ internal fun canBeIterated(type: KtType, checkNullability: Boolean = true): Bool
         is KtFlexibleType -> canBeIterated(type.lowerBoundIfFlexible())
         is KtIntersectionType -> type.conjuncts.all { canBeIterated(it) }
         is KtDefinitelyNotNullType -> canBeIterated(type.original, checkNullability = false)
-        is KtTypeParameterType -> type.symbol.upperBounds.any { canBeIterated(it) }
+        is KaTypeParameterType -> type.symbol.upperBounds.any { canBeIterated(it) }
         is KaClassType -> {
             (!checkNullability || !type.isMarkedNullable)
                     && (type.classId in ITERABLE_CLASS_IDS || type.getAllSuperTypes(true).any { canBeIterated(it) })

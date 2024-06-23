@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 
 /**
  * Checks whether [this] is possibly a subtype of [superType] by replacing all type arguments in [superType] with star projections and
@@ -18,9 +18,9 @@ import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
  */
 context(KaSession)
 infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
-    if (this is KtTypeParameterType) return this.hasCommonSubTypeWith(superType)
+    if (this is KaTypeParameterType) return this.hasCommonSubTypeWith(superType)
 
-    if (superType is KtTypeParameterType) return superType.symbol.upperBounds.all { this isPossiblySubTypeOf it }
+    if (superType is KaTypeParameterType) return superType.symbol.upperBounds.all { this isPossiblySubTypeOf it }
 
     val superTypeWithReplacedTypeArguments = superType.expandedSymbol?.let { symbol ->
         buildClassTypeWithStarProjections(symbol, superType.nullability)

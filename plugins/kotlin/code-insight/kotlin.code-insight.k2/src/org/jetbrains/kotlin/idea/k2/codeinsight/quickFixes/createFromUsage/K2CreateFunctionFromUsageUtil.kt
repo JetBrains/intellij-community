@@ -316,7 +316,7 @@ object K2CreateFunctionFromUsageUtil {
             return parameterList.parent as? KtTypeParameterListOwner
         }
         return accept(ktType, mutableSetOf()) { ktLeaf ->
-                if (ktLeaf is KtTypeParameterType) {
+                if (ktLeaf is KaTypeParameterType) {
                     // having `<T> caller(T t) { unknownMethod(t); }` the type `T` is not accessible in created method unknownMethod(t)
                     val owner = (ktLeaf.symbol.psi as? KtTypeParameter)?.getOwningTypeParameterOwner()
                     // todo must have been "insertion point" instead of `call`

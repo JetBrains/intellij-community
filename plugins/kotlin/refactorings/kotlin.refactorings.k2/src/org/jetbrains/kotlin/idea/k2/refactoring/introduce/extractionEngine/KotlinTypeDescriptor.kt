@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.Parameter
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionData
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IParameter
@@ -131,7 +131,7 @@ context(KaSession)
 @OptIn(KaExperimentalApi::class)
 fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: MutableSet<TypeParameter>): Boolean {
     require(scope.containingFile is KtFile)
-    ((typeToCheck as? KtTypeParameterType)?.symbol?.psi as? KtTypeParameter)?.let { typeParameter ->
+    ((typeToCheck as? KaTypeParameterType)?.symbol?.psi as? KtTypeParameter)?.let { typeParameter ->
         val typeParameterListOwner = typeParameter.parentOfType<KtTypeParameterListOwner>()
         if (typeParameterListOwner == null || !PsiTreeUtil.isAncestor(typeParameterListOwner, scope, true)) {
             typeParameters.add(TypeParameter(typeParameter, typeParameter.collectRelevantConstraints()))

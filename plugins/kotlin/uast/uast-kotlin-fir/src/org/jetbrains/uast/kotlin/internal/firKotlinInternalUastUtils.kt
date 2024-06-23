@@ -356,7 +356,7 @@ internal val KtType.typeForValueClass: Boolean
 context(KaSession)
 internal fun isInheritedGenericType(ktType: KtType?): Boolean {
     if (ktType == null) return false
-    return ktType is KtTypeParameterType &&
+    return ktType is KaTypeParameterType &&
         // explicitly nullable, e.g., T?
         !ktType.isMarkedNullable &&
         // non-null upper bound, e.g., T : Any

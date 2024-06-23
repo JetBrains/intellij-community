@@ -102,7 +102,7 @@ private fun KtType.toDfTypeNotNullable(): DfType {
             }
         }
 
-        is KtTypeParameterType -> symbol.upperBounds.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
+        is KaTypeParameterType -> symbol.upperBounds.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
         is KtIntersectionType -> conjuncts.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
         else -> DfType.TOP
     }
@@ -126,7 +126,7 @@ internal fun KtExpression.getKotlinType(): KtType? {
         val call = resolveToCall()?.singleFunctionCallOrNull()
         if (call != null) {
             val functionReturnType = (call.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol)?.returnType
-            if (functionReturnType is KtTypeParameterType) {
+            if (functionReturnType is KaTypeParameterType) {
                 val upperBound = functionReturnType.symbol.upperBounds.singleOrNull()
                 if (upperBound != null) {
                     return upperBound

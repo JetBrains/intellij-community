@@ -227,7 +227,7 @@ class KotlinNameSuggester(
 
             fun getClassId(type: KtType): ClassId = when (type) {
                 is KaClassType -> type.classId
-                is KtTypeParameterType -> ClassId(FqName.ROOT, FqName.topLevel(type.name), false)
+                is KaTypeParameterType -> ClassId(FqName.ROOT, FqName.topLevel(type.name), false)
 
                 else -> ClassId(FqName.ROOT, FqName.topLevel(Name.identifier("Value")), false)
             }

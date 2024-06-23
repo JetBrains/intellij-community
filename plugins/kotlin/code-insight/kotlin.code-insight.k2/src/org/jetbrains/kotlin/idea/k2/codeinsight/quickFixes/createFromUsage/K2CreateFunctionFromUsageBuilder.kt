@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.canRefactor
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
@@ -253,7 +253,7 @@ object K2CreateFunctionFromUsageBuilder {
             if (callable !is KtFunctionLiteral && callable.receiverTypeReference == null) return null
 
             var type: KtType? = implicitReceiver.type
-            if (type is KtTypeParameterType) {
+            if (type is KaTypeParameterType) {
                 type = type.getDirectSuperTypes().firstOrNull()
             }
             return type

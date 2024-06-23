@@ -104,7 +104,7 @@ object FunctionInsertionHelper {
         val potentiallyInferredTypeParameters = mutableSetOf<KaTypeParameterSymbol>()
 
         /**
-         * Collects type arguments of [type] (or type itself in case of [KtTypeParameterType]), which are probably will be inferred.
+         * Collects type arguments of [type] (or type itself in case of [KaTypeParameterType]), which are probably will be inferred.
          *
          * @param onlyCollectReturnTypeOfFunctionalType if true, then only the return type of functional type is considered inferred.
          * For example, in the following case:
@@ -119,7 +119,7 @@ object FunctionInsertionHelper {
          */
         fun collectPotentiallyInferredTypes(type: KtType, onlyCollectReturnTypeOfFunctionalType: Boolean) {
             when (type) {
-                is KtTypeParameterType -> {
+                is KaTypeParameterType -> {
                     val typeParameterSymbol = type.symbol
                     if (typeParameterSymbol !in typeParametersToInfer || typeParameterSymbol in potentiallyInferredTypeParameters) return
 

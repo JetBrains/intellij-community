@@ -343,7 +343,7 @@ internal class KotlinIdeDeclarationRenderer(
         return object : KtTypeParameterTypeRenderer {
             override fun renderType(
                 analysisSession: KaSession,
-                type: KtTypeParameterType,
+                type: KaTypeParameterType,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
@@ -426,7 +426,7 @@ internal class KotlinIdeDeclarationRenderer(
                 }
                 val qName = when (owner) {
                     is KaClassType -> owner.classId.asSingleFqName()
-                    is KtTypeParameterType -> owner.symbol.containingSymbol?.getFqNameIfPackageOrNonLocal()?.child(name)
+                    is KaTypeParameterType -> owner.symbol.containingSymbol?.getFqNameIfPackageOrNonLocal()?.child(name)
                         ?: FqName.topLevel(name)
 
                     else -> FqName.topLevel(name)
@@ -437,7 +437,7 @@ internal class KotlinIdeDeclarationRenderer(
                 val buffer = StringBuilder()
                 DocumentationManagerUtil.createHyperlink(buffer, qualifiedName, name.renderName(), true, false)
 
-                printer.append(highlight(buffer.toString()) { if (owner is KtTypeParameterType) asTypeParameterName else asClassName })
+                printer.append(highlight(buffer.toString()) { if (owner is KaTypeParameterType) asTypeParameterName else asClassName })
             }
         }
     }

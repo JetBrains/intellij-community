@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.collectTypeParametersOnWhichReturnTypeDepends
 import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.returnTypeOfCallDependsOnTypeParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.singleReturnExpressionOrNull
@@ -103,7 +103,7 @@ private fun collectTypesInferredFromExtensionReceiver(resolvedCall: KaFunctionCa
 context(KaSession)
 private fun buildType(type: KtType, typeArgumentsMapping: Map<KaTypeParameterSymbol, KtType>): KtType? {
     return when (type) {
-        is KtTypeParameterType -> typeArgumentsMapping[type.symbol]
+        is KaTypeParameterType -> typeArgumentsMapping[type.symbol]
 
         is KaClassType -> buildClassType(type.symbol) {
             type.ownTypeArguments.mapNotNull { it.type }.forEach {
@@ -236,12 +236,12 @@ private fun canTypesInferredFromAnotherArguments(
 }
 
 context(KaSession)
-private fun collectTypeParameterTypes(type: KtType): Set<KtTypeParameterType> {
-    val result = mutableSetOf<KtTypeParameterType>()
+private fun collectTypeParameterTypes(type: KtType): Set<KaTypeParameterType> {
+    val result = mutableSetOf<KaTypeParameterType>()
 
     fun collect(type: KtType) {
         when (type) {
-            is KtTypeParameterType -> result.add(type)
+            is KaTypeParameterType -> result.add(type)
             is KaClassType -> type.ownTypeArguments.mapNotNull { it.type }.forEach { collect(it) }
             else -> {}
         }

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtTypeWithNullability
@@ -189,7 +189,7 @@ internal class CreateKotlinCallableAction(
         if (request is CreateMethodFromKotlinUsageRequest && request.receiverExpression != null && request.isExtension) {
             analyze(call as? KtElement ?: container) {
                 val receiverSymbol = request.receiverExpression.resolveExpression()
-                if (receiverSymbol is KaCallableSymbol && receiverSymbol.returnType is KtTypeParameterType) {
+                if (receiverSymbol is KaCallableSymbol && receiverSymbol.returnType is KaTypeParameterType) {
                     return ("<$receiverTypeText>")
                 }
             }

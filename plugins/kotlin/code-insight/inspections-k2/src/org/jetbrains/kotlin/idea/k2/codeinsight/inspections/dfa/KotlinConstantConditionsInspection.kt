@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -620,8 +620,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         return true
                     }
                     val typeParameterType = when (kotlinType) {
-                        is KtTypeParameterType -> kotlinType
-                        is KtIntersectionType -> kotlinType.conjuncts.find { it is KtTypeParameterType }
+                        is KaTypeParameterType -> kotlinType
+                        is KtIntersectionType -> kotlinType.conjuncts.find { it is KaTypeParameterType }
                         else -> null
                     }
                     if (typeParameterType != null && expression.expectedType == typeParameterType) {

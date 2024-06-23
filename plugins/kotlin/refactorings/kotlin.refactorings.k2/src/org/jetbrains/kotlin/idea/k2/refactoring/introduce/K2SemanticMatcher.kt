@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.utils.errors.unexpectedElementError
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.getArgumentOrIndexExpressions
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.mapArgumentsToParameterIndices
@@ -241,8 +241,8 @@ object K2SemanticMatcher {
             if (targetType == null || patternType == null) return targetType == null && patternType == null
 
             return targetType.isEqualTo(patternType) ||
-                    targetType is KtTypeParameterType &&
-                    patternType is KtTypeParameterType &&
+                    targetType is KaTypeParameterType &&
+                    patternType is KaTypeParameterType &&
                     symbols[targetType.symbol] == patternType.symbol
         }
 

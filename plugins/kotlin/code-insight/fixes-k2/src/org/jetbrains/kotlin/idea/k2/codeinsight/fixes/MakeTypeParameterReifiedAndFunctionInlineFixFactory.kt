@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -20,7 +20,7 @@ internal object MakeTypeParameterReifiedAndFunctionInlineFixFactory {
         val typeReference = diagnostic.psi as? KtTypeReference ?: return@ModCommandBased emptyList()
         val function = typeReference.getStrictParentOfType<KtNamedFunction>() ?: return@ModCommandBased emptyList()
         val typeParameter = function.typeParameterList?.parameters?.firstOrNull {
-            it.symbol == (diagnostic.type as? KtTypeParameterType)?.symbol
+            it.symbol == (diagnostic.type as? KaTypeParameterType)?.symbol
         } ?: return@ModCommandBased emptyList()
         listOf(MakeTypeParameterReifiedAndFunctionInlineFix(typeParameter))
     }
