@@ -16,7 +16,7 @@ internal object WasExperimentalOptInsNecessityChecker {
     private val VERSION_ARGUMENT = Name.identifier("version")
 
     fun getNecessaryOptInsFromWasExperimental(
-        annotations: KtAnnotationsList,
+        annotations: KaAnnotationList,
         moduleApiVersion: ApiVersion,
     ): Collection<ClassId> {
         val wasExperimental = annotations.findAnnotation(StandardClassIds.Annotations.WasExperimental)
@@ -28,7 +28,7 @@ internal object WasExperimentalOptInsNecessityChecker {
         return getWasExperimentalAnnotationMarkerClassArgument(wasExperimental)
     }
 
-    private fun getSinceKotlinAnnotationApiVersionArgumentIfPresent(annotations: KtAnnotationsList): ApiVersion? {
+    private fun getSinceKotlinAnnotationApiVersionArgumentIfPresent(annotations: KaAnnotationList): ApiVersion? {
         val sinceKotlin = annotations.findAnnotation(StandardClassIds.Annotations.SinceKotlin) ?: return null
         return sinceKotlin.argumentByName(VERSION_ARGUMENT)
             ?.asSafely<KaAnnotationValue.ConstantValue>()
@@ -50,7 +50,7 @@ internal object WasExperimentalOptInsNecessityChecker {
         return type.classId.takeIf { !it.isLocal }
     }
 
-    private fun KtAnnotationsList.findAnnotation(classId: ClassId): KaAnnotation? =
+    private fun KaAnnotationList.findAnnotation(classId: ClassId): KaAnnotation? =
         annotationsByClassId(classId).firstOrNull()
 
     private fun KaAnnotation.argumentByName(name: Name): KaAnnotationValue? =
