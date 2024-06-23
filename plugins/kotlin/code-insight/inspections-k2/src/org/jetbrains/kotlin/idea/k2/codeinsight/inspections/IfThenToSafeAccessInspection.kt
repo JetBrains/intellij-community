@@ -117,7 +117,7 @@ internal class IfThenToSafeAccessInspection :
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun conditionIsSenseless(data: IfThenTransformationData): Boolean = data.condition
-        .getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        .diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         .map { it.diagnosticClass }
         .any { it == KaFirDiagnostic.SenselessComparison::class || it == KaFirDiagnostic.UselessIsCheck::class }
 }

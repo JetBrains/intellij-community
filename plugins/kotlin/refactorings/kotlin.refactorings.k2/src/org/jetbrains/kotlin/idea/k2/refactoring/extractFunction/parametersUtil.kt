@@ -514,7 +514,7 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
         }
 
         fun hasResolveErrors(): Boolean =
-            analyze(newRef) { newRef.getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS) }
+            analyze(newRef) { newRef.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS) }
                 .any {
                     it.diagnosticClass == KaFirDiagnostic.UnresolvedReferenceWrongReceiver::class ||
                             it.diagnosticClass == KaFirDiagnostic.UnresolvedReference::class

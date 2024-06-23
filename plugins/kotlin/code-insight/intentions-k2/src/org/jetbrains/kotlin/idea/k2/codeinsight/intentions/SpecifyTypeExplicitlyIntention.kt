@@ -33,7 +33,7 @@ internal class SpecifyTypeExplicitlyIntention:
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun skip(element: KtCallableDeclaration): Boolean =
-        element.getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             .any { diagnostic ->
                 diagnostic is KaFirDiagnostic.AmbiguousAnonymousTypeInferred
                         || diagnostic is KaFirDiagnostic.PropertyWithNoTypeNoInitializer

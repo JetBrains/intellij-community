@@ -36,7 +36,7 @@ abstract class KotlinDiagnosticBasedInspectionBase<
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     final override fun prepareContext(element: E): C? =
-        element.getDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+        element.diagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
             .firstNotNullOfOrNull { diagnosticType.safeCast(it) }
             ?.let { prepareContextByDiagnostic(element, it) }
 }

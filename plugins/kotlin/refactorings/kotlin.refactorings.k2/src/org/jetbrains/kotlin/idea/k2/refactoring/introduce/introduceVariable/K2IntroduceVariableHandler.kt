@@ -377,7 +377,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         if (call.typeArgumentList != null) return false
         val callee = call.calleeExpression ?: return false
         val diagnostics = analyzeInModalWindow(callee, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            callee.getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            callee.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         }
         return (diagnostics.any { diagnostic -> diagnostic is KaFirDiagnostic.NewInferenceNoInformationForParameter })
     }

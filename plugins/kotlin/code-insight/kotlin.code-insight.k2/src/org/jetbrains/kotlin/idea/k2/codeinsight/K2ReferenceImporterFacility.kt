@@ -63,7 +63,7 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
 
             val quickFixService = KotlinQuickFixService.getInstance()
             val diagnostics = expression
-                .getDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
+                .diagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
                 .filter { it.severity == KaSeverity.ERROR && expression.textRange in it.psi.textRange }
 
             for (diagnostic in diagnostics) {

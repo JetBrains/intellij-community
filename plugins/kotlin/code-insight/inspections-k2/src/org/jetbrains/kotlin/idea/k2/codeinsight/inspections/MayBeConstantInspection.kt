@@ -73,7 +73,7 @@ class MayBeConstantInspection : MayBeConstantInspectionBase() {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KtExpression.usesNonConstValAsConstant(): Boolean {
-        val diagnostics = getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        val diagnostics = diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         return diagnostics.find { it is KaFirDiagnostic.NonConstValUsedInConstantExpression } != null
     }
 
