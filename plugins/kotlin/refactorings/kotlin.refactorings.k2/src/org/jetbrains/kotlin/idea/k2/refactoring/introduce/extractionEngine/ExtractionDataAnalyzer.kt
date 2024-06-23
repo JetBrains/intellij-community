@@ -160,7 +160,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
     @OptIn(KaNonPublicApi::class)
     override fun createOutputDescriptor(): OutputDescriptor<KaType> {
         analyze(extractionData.commonParent) {
-            val exitSnapshot: KaDataFlowExitPointSnapshot = getExitPointSnapshot(extractionData.expressions)
+            val exitSnapshot: KaDataFlowExitPointSnapshot = computeExitPointSnapshot(extractionData.expressions)
             val defaultExpressionInfo = exitSnapshot.defaultExpressionInfo
             val typeOfDefaultFlow = defaultExpressionInfo?.type?.takeIf {
                 //extract as Unit function if the last expression is not used afterward
