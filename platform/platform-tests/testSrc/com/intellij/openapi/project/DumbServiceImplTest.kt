@@ -300,7 +300,7 @@ class DumbServiceImplTest {
               .indexFiles(project, IndexUpdateRunner.FileSet(project, "child",
                                                              PerProjectIndexingQueue.QueuedFiles.fromFilesCollection(listOf(child), emptyList())),
                           ProjectDumbIndexingHistoryImpl(project),
-                          IndexingProgressReporter2.createEmpty(), { false })
+                          IndexingProgressReporter2.createEmpty())
           }
         }
         catch (e: ProcessCanceledException) {

@@ -134,39 +134,39 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     IndexingRequestToken indexingRequest = myProject.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, indexingRequest);
 
-    IndexUpdateRunner.FileSet fileSets = getExplicitlyRequestedFilesSets();
+    IndexUpdateRunner.FileSet fileSets = getExplicitlyRequestedFilesSets(pauseCondition);
     if (!fileSets.isEmpty()) {
-      doIndexFiles(projectDumbIndexingHistory, indexUpdateRunner, fileSets, reporter, pauseCondition);
+      doIndexFiles(projectDumbIndexingHistory, indexUpdateRunner, fileSets, reporter);
     }
 
     // Order is important: getRefreshedFiles may return some subset of getExplicitlyRequestedFilesSets files (e.g., new files)
     // We first index explicitly requested files, this will also mark indexed files as "up-to-date", then we index remaining dirty files
-    fileSets = getRefreshedFiles(projectDumbIndexingHistory);
+    fileSets = getRefreshedFiles(projectDumbIndexingHistory, pauseCondition);
     if (!fileSets.isEmpty()) {
-      doIndexFiles(projectDumbIndexingHistory, indexUpdateRunner, fileSets, reporter, pauseCondition);
+      doIndexFiles(projectDumbIndexingHistory, indexUpdateRunner, fileSets, reporter);
     }
   }
 
-  private IndexUpdateRunner.FileSet getRefreshedFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) {
+  private IndexUpdateRunner.FileSet getRefreshedFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
+                                                      @NotNull Function0<@NotNull Boolean> pauseCondition) {
     String filesetName = "Refreshed files";
     Collection<FileIndexingRequest> files =
       new ProjectChangedFilesScanner(myProject).scan(projectDumbIndexingHistory);
-    return new IndexUpdateRunner.FileSet(myProject, filesetName, QueuedFiles.fromRequestsCollection(files, Collections.emptyList()));
+    return new IndexUpdateRunner.FileSet(myProject, filesetName, QueuedFiles.fromRequestsCollection(files, Collections.emptyList()),
+                                         pauseCondition);
   }
 
-  @NotNull
-  private IndexUpdateRunner.FileSet getExplicitlyRequestedFilesSets() {
-    return new IndexUpdateRunner.FileSet(myProject, "<indexing queue>", files);
+  private IndexUpdateRunner.@NotNull FileSet getExplicitlyRequestedFilesSets(@NotNull Function0<@NotNull Boolean> pauseCondition) {
+    return new IndexUpdateRunner.FileSet(myProject, "<indexing queue>", files, pauseCondition);
   }
 
   private void doIndexFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
                             IndexUpdateRunner indexUpdateRunner,
                             IndexUpdateRunner.FileSet fileSet,
-                            @NotNull IndexingProgressReporter2 reporter,
-                            @NotNull Function0<@NotNull Boolean> pauseCondition) {
+                            @NotNull IndexingProgressReporter2 reporter) {
     IndexUpdateRunner.IndexingInterruptedException exception = null;
     try {
-      indexUpdateRunner.indexFiles(myProject, fileSet, projectDumbIndexingHistory, reporter, pauseCondition);
+      indexUpdateRunner.indexFiles(myProject, fileSet, projectDumbIndexingHistory, reporter);
     }
     catch (IndexUpdateRunner.IndexingInterruptedException e) {
       exception = e;

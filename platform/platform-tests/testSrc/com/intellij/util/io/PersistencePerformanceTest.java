@@ -120,7 +120,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
                         new IndexUpdateRunner.FileSet(getProject(), "test files",
                                                       QueuedFiles.fromRequestsCollection(files, Collections.emptyList())),
                         new ProjectDumbIndexingHistoryImpl(getProject()),
-                        IndexingProgressReporter2.Companion.createEmpty(), () -> false);
+                        IndexingProgressReporter2.Companion.createEmpty());
         }
         catch (Exception e) {
           throw new RuntimeException(e);
