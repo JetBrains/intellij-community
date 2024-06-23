@@ -27,18 +27,23 @@ import static com.intellij.openapi.util.NlsActions.ActionDescription;
 import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
- * An action has a state, a presentation and can be performed.
+ * An action has a state, a number of presentations and can be performed.
  * <p>
- * For an action to be useful, implement {@link AnAction#actionPerformed}.
+ * For an action to be useful, implement {@link #actionPerformed(AnActionEvent)}.
+ * To alter how the action is presented in UI, implement {@link #update(AnActionEvent)}.
  * <p>
- * The same action can have various presentations.
- * To dynamically change the action's presentation depending on the place, override {@link AnAction#update}.
- * For more information on places, see {@link ActionPlaces}.
+ * Actions have dedicated presentations wherever they are presented to the user.
+ * A single action can be present in different toolbars, popups and menus on the screen at the same time.
+ * The default presentation for each place is a copy of {@link #getTemplatePresentation()}.
+ * <p>
+ * {@link AnActionEvent#getPlace()} is a non-unique, free form, human-readable name of a place.
+ * Some standard platform place names are listed in {@link ActionPlaces}.
  * <pre>
  * public void update(AnActionEvent e) {
- *   if (e.getPlace().equals(ActionPlaces.MAIN_MENU)) {
+ *   if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
  *     e.getPresentation().setText("My Menu item name");
- *   } else if (e.getPlace().equals(ActionPlaces.MAIN_TOOLBAR)) {
+ *   }
+ *   else if (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
  *     e.getPresentation().setText("My Toolbar item name");
  *   }
  * }
@@ -46,8 +51,9 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  *
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/basic-action-system.html">Actions (IntelliJ Platform Docs)</a>
  * @see AnActionEvent
- * @see Presentation
  * @see ActionPlaces
+ * @see Presentation
+ * @see DataContext
  * @see com.intellij.openapi.project.DumbAwareAction
  */
 public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadAware {
@@ -290,21 +296,24 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Updates the presentation of the action.
+   * Updates the presentation of the action to show a menu, a popup item, a toolbar button,
+   * and when the action is invoked via a shortcut.
    * The default implementation does nothing.
+   * The Platform tries its best to invoke this method and act upon the updated presentation flags
+   * a little before the action is called.
    * <p>
    * Override this method to dynamically change the action's state or presentation depending on the context.
    * For example, when your action state depends on the selection,
    * you can check for the selection and change the state accordingly.
    * <p>
-   * This method can be called frequently and on the UI thread.
-   * This means that this method is supposed to work really fast,
-   * no real work should be done at this phase.
-   * For example, checking the selection in a tree or a list is considered valid,
-   * but working with a file system or PSI (especially resolve) is not.
-   * If you cannot determine the state of the action fast enough,
-   * you should do it in the {@link #actionPerformed(AnActionEvent)} method
-   * and notify the user that the action cannot be executed if it's the case.
+   * This method can be called frequently.
+   * It shall be fast.
+   * It must not change UI or any state, except populating some caches.
+   * <p>
+   * {@link #getActionUpdateThread()} controls whether the method is called on EDT or BGT.
+   * BGT actions can rely on slow PSI, VFS, etc. but that can lead to slow menus and popups.
+   * To speed them up, you can move slow checks to {@link #actionPerformed(AnActionEvent)} method
+   * and notify the user that the action cannot be executed when it is so.
    * <p>
    * If the action is added to a toolbar, its {@code update} method can be called twice a second,
    * but only if there was any user activity or a focus transfer.
@@ -320,13 +329,13 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Updates the presentation of the action just before the {@link #actionPerformed(AnActionEvent)} method is called.
-   * The default implementation simply delegates to the {@link #update(AnActionEvent)} method.
-   * <p/>
-   * It is called on the UI thread with all data in the provided {@link DataContext} instance.
+   * <b>Deprecated and unused</b>
+   * The method is a part of a dropped contract.
+   * Drop it ASAP and move all the required code to {@link #actionPerformed(AnActionEvent)}.
    *
-   * @see #actionPerformed(AnActionEvent)
+   * @deprecated Move any code to {@link #actionPerformed(AnActionEvent)}
    */
+  @Deprecated(forRemoval = true)
   @ApiStatus.OverrideOnly
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     update(e);
