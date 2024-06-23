@@ -52,12 +52,12 @@ private class ExtensionForTests(private val xmlFile: XmlFile) : KaResolveExtensi
         return setOfNotNull(packageName)
     }
 
-    override fun getKtFiles(): List<KtResolveExtensionFile> {
+    override fun getKtFiles(): List<KaResolveExtensionFile> {
         return files
     }
 }
 
-private class ExtensionFileForTest(private val rootTag: XmlTag, private val packageName: FqName) : KtResolveExtensionFile() {
+private class ExtensionFileForTest(private val rootTag: XmlTag, private val packageName: FqName) : KaResolveExtensionFile() {
     private val functionNames by lazy {
         rootTag.findSubTags("function").mapTo(mutableSetOf()) { Name.identifier(it.getAttributeValue("name")!!) }
     }
