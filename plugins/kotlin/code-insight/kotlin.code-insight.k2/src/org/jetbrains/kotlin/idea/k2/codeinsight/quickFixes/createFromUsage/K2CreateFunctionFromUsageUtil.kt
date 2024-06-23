@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaDefinitelyNotNullTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -207,7 +207,7 @@ object K2CreateFunctionFromUsageUtil {
     @KaExperimentalApi
     val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
         // Without this, it will render `kotlin.String!` for `kotlin.String`, which causes a syntax error.
-        flexibleTypeRenderer = object : KtFlexibleTypeRenderer {
+        flexibleTypeRenderer = object : KaFlexibleTypeRenderer {
             override fun renderType(
                 analysisSession: KaSession,
                 type: KtFlexibleType,

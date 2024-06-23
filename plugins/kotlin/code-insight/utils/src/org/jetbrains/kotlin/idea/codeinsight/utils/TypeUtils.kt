@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
@@ -31,10 +31,10 @@ fun KtType.isEnum(): Boolean {
 /**
  * Always renders flexible type as its upper bound.
  *
- * TODO should be moved to [KtFlexibleTypeRenderer] and removed from here, see KT-64138
+ * TODO should be moved to [KaFlexibleTypeRenderer] and removed from here, see KT-64138
  */
 @KaExperimentalApi
-object KtFlexibleTypeAsUpperBoundRenderer : KtFlexibleTypeRenderer {
+object KtFlexibleTypeAsUpperBoundRenderer : KaFlexibleTypeRenderer {
     override fun renderType(
         analysisSession: KaSession,
         type: KtFlexibleType,

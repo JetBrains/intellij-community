@@ -182,7 +182,7 @@ private fun PresentationTreeBuilder.printClassId(classId: ClassId, name: String)
 }
 
 private fun isMutabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
-    // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer.AS_SHORT.isMutabilityFlexibleType
+    // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer.AS_SHORT.isMutabilityFlexibleType
     if (lower !is KtNonErrorClassType || upper !is KtNonErrorClassType) return false
 
     return (StandardClassIds.Collections.mutableCollectionToBaseCollection[lower.classId] == upper.classId)
