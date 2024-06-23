@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.annotations.*
-import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaAnnotationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationArgumentsRenderer
@@ -150,7 +150,7 @@ internal class KotlinIdeDeclarationRenderer(
 
     @KaExperimentalApi
     private fun KtKeywordsRenderer.keywordsRenderer(): KtKeywordsRenderer = with {
-        keywordRenderer = object : KtKeywordRenderer {
+        keywordRenderer = object : KaKeywordRenderer {
             override fun renderKeyword(
                 analysisSession: KaSession,
                 keyword: KtKeywordToken,
