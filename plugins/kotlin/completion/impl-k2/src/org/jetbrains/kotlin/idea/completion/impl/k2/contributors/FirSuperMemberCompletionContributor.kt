@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
@@ -227,7 +227,7 @@ internal class FirSuperMemberCompletionContributor(
         namesNeedDisambiguation: Set<Name>,
         superReceiver: KtSuperExpression
     ): CallableInsertionStrategy {
-        val superClassId = (superType as? KtUsualClassType)?.classId
+        val superClassId = (superType as? KaUsualClassType)?.classId
         val needDisambiguation = callableSignature.callableId?.callableName in namesNeedDisambiguation
         return if (needDisambiguation && superClassId != null) {
             CallableInsertionStrategy.WithSuperDisambiguation(superReceiver.createSmartPointer(), superClassId, insertionStrategy)

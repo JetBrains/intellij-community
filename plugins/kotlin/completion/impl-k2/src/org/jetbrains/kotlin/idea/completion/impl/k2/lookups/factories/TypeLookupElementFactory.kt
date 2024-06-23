@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
@@ -38,7 +38,7 @@ class TypeLookupElementFactory {
         return when (type) {
             is KtTypeParameterType -> element
 
-            is KtUsualClassType -> {
+            is KaUsualClassType -> {
                 val tailText = getTailText(type.symbol, usePackageFqName = true, addTypeParameters = false)
                 element.withTailText(tailText)
             }
@@ -70,7 +70,7 @@ class TypeLookupElementFactory {
 
     private fun KtType.getSymbolIfTypeParameterOrUsualClass(): KaClassifierSymbol? = when (this) {
         is KtTypeParameterType -> symbol
-        is KtUsualClassType -> symbol
+        is KaUsualClassType -> symbol
         else -> null
     }
 

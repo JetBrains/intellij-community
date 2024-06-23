@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
@@ -290,7 +290,7 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
             return@calculateAllTypes null
         }
 
-        val name = (declarationType as? KtUsualClassType)?.classId?.relativeClassName?.shortName()
+        val name = (declarationType as? KaUsualClassType)?.classId?.relativeClassName?.shortName()
         val ktType = when {
             name == SpecialNames.NO_NAME_PROVIDED -> {
                 if (element is KtProperty && element.isLocal) {

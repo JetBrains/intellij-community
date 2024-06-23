@@ -142,7 +142,7 @@ object FunctionInsertionHelper {
                     typesToProcess.forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType) }
                 }
 
-                is KtUsualClassType -> {
+                is KaUsualClassType -> {
                     val typeArguments = type.ownTypeArguments.mapNotNull { it.type }
                     typeArguments.forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType) }
                 }

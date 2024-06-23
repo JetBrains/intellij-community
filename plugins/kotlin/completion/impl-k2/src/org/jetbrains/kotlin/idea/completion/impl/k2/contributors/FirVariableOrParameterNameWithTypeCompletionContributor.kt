@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
@@ -275,7 +275,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
     ): Boolean = when (type) {
         is KtTypeParameterType -> type.symbol in availableTypeParameters
 
-        is KtUsualClassType -> {
+        is KaUsualClassType -> {
             visibilityChecker.isVisible(type.symbol) && type.ownTypeArguments.all { typeArgument ->
                 when (typeArgument) {
                     is KtStarTypeProjection -> true

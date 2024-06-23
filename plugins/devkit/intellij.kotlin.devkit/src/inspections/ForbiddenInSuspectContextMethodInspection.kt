@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl
@@ -202,10 +202,10 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
         val implicitReceiverTypesAtPosition = getImplicitReceiverTypesAtPosition(callExpression)
         val coroutineScopeClass = ClassId.topLevel(FqName(COROUTINE_SCOPE))
         val hasCoroutineScope = implicitReceiverTypesAtPosition.any { type ->
-          type is KtUsualClassType &&
+          type is KaUsualClassType &&
           (
             type.classId == coroutineScopeClass ||
-            type.getAllSuperTypes().any { superType -> superType is KtUsualClassType && superType.classId == coroutineScopeClass }
+            type.getAllSuperTypes().any { superType -> superType is KaUsualClassType && superType.classId == coroutineScopeClass }
           )
         }
         if (hasCoroutineScope) {

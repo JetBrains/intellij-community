@@ -363,7 +363,7 @@ internal class KotlinIdeDeclarationRenderer(
         return object : KtUsualClassTypeRenderer {
             override fun renderType(
                 analysisSession: KaSession,
-                type: KtUsualClassType,
+                type: KaUsualClassType,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
@@ -770,7 +770,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
 
         when (type) {
-            is KtUsualClassType -> {
+            is KaUsualClassType -> {
                 val classId = type.classId
                 if (classId.isLocal) {
                     append(classId.shortClassName.render())

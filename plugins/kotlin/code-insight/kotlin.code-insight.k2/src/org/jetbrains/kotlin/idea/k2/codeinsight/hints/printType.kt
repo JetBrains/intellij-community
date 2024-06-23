@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -48,7 +48,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
             text(" & ")
             text(DefaultTypeClassIds.ANY.relativeClassName.asString())
         }
-        is KtUsualClassType -> printNonErrorClassType(type)
+        is KaUsualClassType -> printNonErrorClassType(type)
         is KtFlexibleType -> {
             val lower = type.lowerBound
             val upper = type.upperBound

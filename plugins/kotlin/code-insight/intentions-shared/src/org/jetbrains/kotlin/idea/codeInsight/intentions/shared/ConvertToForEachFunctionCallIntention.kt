@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -94,7 +94,7 @@ internal class ConvertToForEachFunctionCallIntention :
 
     context(KaSession)
     private fun KtType.isLoopRangeType(): Boolean {
-        fun KtType.fqNameMatches() = (this as? KtUsualClassType)?.classId?.asSingleFqName() in loopRangeTypeFqNames
+        fun KtType.fqNameMatches() = (this as? KaUsualClassType)?.classId?.asSingleFqName() in loopRangeTypeFqNames
 
         return fqNameMatches() || getAllSuperTypes().any { it.fqNameMatches() }
     }
