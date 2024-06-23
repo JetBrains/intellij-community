@@ -124,7 +124,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     }
 
     @NlsSafe
-    private fun KtDiagnostic.getMessageToRender(): String =
+    private fun KaDiagnostic.getMessageToRender(): String =
         if (isInternalOrUnitTestMode())
             getDefaultMessageWithFactoryName()
         else defaultMessage

@@ -10,14 +10,14 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-interface KotlinCompilerIdeAllowedErrorFilter : (KtDiagnostic) -> Boolean {
+interface KotlinCompilerIdeAllowedErrorFilter : (KaDiagnostic) -> Boolean {
     companion object {
         fun getInstance(): KotlinCompilerIdeAllowedErrorFilter = service()
     }
@@ -29,7 +29,7 @@ fun KaSession.compileToDirectory(
     file: KtFile,
     configuration: CompilerConfiguration,
     target: KaCompilerTarget,
-    allowedErrorFilter: (KtDiagnostic) -> Boolean,
+    allowedErrorFilter: (KaDiagnostic) -> Boolean,
     destination: File
 ): KaCompilationResult {
     val result = compile(file, configuration, target, allowedErrorFilter)
@@ -49,7 +49,7 @@ fun KaSession.compileToJar(
     file: KtFile,
     configuration: CompilerConfiguration,
     target: KaCompilerTarget,
-    allowedErrorFilter: (KtDiagnostic) -> Boolean,
+    allowedErrorFilter: (KaDiagnostic) -> Boolean,
     destination: File
 ): KaCompilationResult {
     val result = compile(file, configuration, target, allowedErrorFilter)

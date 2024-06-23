@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.codeInsight.compiler
 
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
 
@@ -23,6 +23,6 @@ internal class K2KotlinCompilerIdeAllowedErrorFilter : KotlinCompilerIdeAllowedE
         FirErrors.DSL_SCOPE_VIOLATION,
     ).map { it.name }
 
-    override fun invoke(diagnostic: KtDiagnostic): Boolean =
+    override fun invoke(diagnostic: KaDiagnostic): Boolean =
         diagnostic.factoryName in allowedErrors
 }

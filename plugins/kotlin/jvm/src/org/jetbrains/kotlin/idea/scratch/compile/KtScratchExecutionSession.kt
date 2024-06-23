@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -169,7 +169,7 @@ class KtScratchExecutionSession(
 
             try {
                 val compilerTarget = KaCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
-                val allowedErrorFilter: (KtDiagnostic) -> Boolean = { false }
+                val allowedErrorFilter: (KaDiagnostic) -> Boolean = { false }
 
                 compileToDirectory(psiFile, configuration, compilerTarget, allowedErrorFilter, tmpDir)
             } catch (e: ProcessCanceledException) {
