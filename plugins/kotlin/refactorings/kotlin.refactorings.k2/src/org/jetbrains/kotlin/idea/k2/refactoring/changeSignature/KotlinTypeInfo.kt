@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeErrorTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaErrorTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
@@ -34,7 +34,7 @@ data class KotlinTypeInfo(var text: String?, val context: KtElement) {
 @KaExperimentalApi
 @OptIn(KaAnalysisNonPublicApi::class)
 private val errorIgnoringRenderer: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-    errorTypeRenderer = object : KtTypeErrorTypeRenderer {
+    errorTypeRenderer = object : KaErrorTypeRenderer {
         override fun renderType(
             analysisSession: KaSession,
             type: KaErrorType,
