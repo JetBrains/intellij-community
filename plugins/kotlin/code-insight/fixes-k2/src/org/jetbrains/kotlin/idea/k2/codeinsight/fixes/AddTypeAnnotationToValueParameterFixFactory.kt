@@ -7,7 +7,7 @@ import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -57,7 +57,7 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
     @OptIn(KaExperimentalApi::class)
     private fun getTypeName(type: KaType): String {
         val typeName = type.render(
-            KtTypeRendererForSource.WITH_SHORT_NAMES,
+            KaTypeRendererForSource.WITH_SHORT_NAMES,
             Variance.INVARIANT
         )
         return typeName

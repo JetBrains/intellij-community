@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaTypeP
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableReceiverRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -57,7 +57,7 @@ class KotlinMethodSmartStepTarget(
             modifiersRenderer = modifiersRenderer.with {
                 modifierListRenderer = NO_MODIFIER_LIST
             }
-            typeRenderer = KtTypeRendererForSource.WITH_SHORT_NAMES.with {
+            typeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
                 functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
             }
             returnTypeFilter = NO_RETURN_TYPE

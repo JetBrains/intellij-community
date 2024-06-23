@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -30,11 +30,11 @@ internal fun getCommentText(comment: PsiComment): String {
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun KaType.renderNames(): Array<String> = arrayOf(
-    render(KtTypeRendererForSource.WITH_SHORT_NAMES.with {
+    render(KaTypeRendererForSource.WITH_SHORT_NAMES.with {
         classIdRenderer = KaClassTypeQualifierRenderer.WITH_SHORT_NAMES
     }, Variance.INVARIANT),
-    render(KtTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT),
-    render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+    render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT),
+    render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
 )
 
 internal fun String.removeTypeParameters(): String {

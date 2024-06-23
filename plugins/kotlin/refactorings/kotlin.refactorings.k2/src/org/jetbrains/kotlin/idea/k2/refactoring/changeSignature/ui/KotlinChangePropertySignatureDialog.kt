@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiCodeFragment
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -37,7 +37,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
     override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         val returnPresentableText =
             analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {
-                m.method.getReturnKtType().render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                m.method.getReturnKtType().render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
             }
         return kotlinPsiFactory.createTypeCodeFragment(returnPresentableText, m.method)
     }
@@ -46,7 +46,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
     override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         val receiverPresentableType =
             analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {
-                (m.method as? KtCallableDeclaration)?.receiverTypeReference?.getKtType()?.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                (m.method as? KtCallableDeclaration)?.receiverTypeReference?.getKtType()?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
             }
         return kotlinPsiFactory.createTypeCodeFragment(receiverPresentableType ?: "", m.method)
     }

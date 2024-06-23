@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaDefinitelyNotNullTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
@@ -205,7 +205,7 @@ object K2CreateFunctionFromUsageUtil {
     private val NAME_SUGGESTER = KotlinNameSuggester()
 
     @KaExperimentalApi
-    val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KaTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+    val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KaTypeRenderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
         // Without this, it will render `kotlin.String!` for `kotlin.String`, which causes a syntax error.
         flexibleTypeRenderer = object : KaFlexibleTypeRenderer {
             override fun renderType(

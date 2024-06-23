@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -168,7 +168,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
             } else if (expressionType.isUnit || expressionType.isNothing) {
                 KotlinBundle.message(
                     "cannot.introduce.parameter.of.0.type",
-                    expressionType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
+                    expressionType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
                 )
             } else null
 
@@ -285,9 +285,9 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
     ) {
         val types = analyzeInModalWindow(physicalExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             buildList {
-                add(replacementType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
+                add(replacementType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
                 replacementType.getAllSuperTypes(true).mapTo(this) {
-                    it.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                    it.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
                 }
             }
         }
@@ -318,7 +318,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
             callableDescriptor = targetParent,
             newParameterName = suggestedNames.first().quoteIfNeeded(),
             newParameterTypeText = analyze(physicalExpression) {
-                replacementType.render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+                replacementType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
                     functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
                 }, position = Variance.IN_VARIANCE)
             },

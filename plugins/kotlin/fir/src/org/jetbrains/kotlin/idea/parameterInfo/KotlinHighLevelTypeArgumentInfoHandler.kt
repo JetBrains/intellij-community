@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
@@ -114,7 +114,7 @@ abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeAr
             } else {
                 it.isAny && it.isMarkedNullable
             }
-            val renderedType = it.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+            val renderedType = it.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
             UpperBoundInfo(isNullableAnyOrFlexibleAny, renderedType)
         }
         return TypeParameterInfo(parameter.name.asString(), parameter.isReified, parameter.variance, upperBounds)
