@@ -6,7 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames.arrayClassFqNameToPrimitiveType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -78,7 +78,7 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
 
     context(KaSession)
     private fun createFix(
-        expectedArrayType: KtType,
+        expectedArrayType: KaType,
         element: KtExpression,
     ): List<SurroundWithArrayModCommandAction> {
         val arrayClassId = (expectedArrayType as? KaUsualClassType)?.classId

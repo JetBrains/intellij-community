@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
@@ -94,7 +94,7 @@ internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun collectNonExtensionsForType(
-    type: KtType,
+    type: KaType,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
@@ -128,7 +128,7 @@ private val KaSyntheticJavaPropertySymbol.getterAndUnitSetter: List<KaCallableSy
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun Sequence<KaCallableSignature<*>>.filterOutJavaGettersAndSetters(
-    type: KtType,
+    type: KaType,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
     symbolFilter: (KaCallableSymbol) -> Boolean

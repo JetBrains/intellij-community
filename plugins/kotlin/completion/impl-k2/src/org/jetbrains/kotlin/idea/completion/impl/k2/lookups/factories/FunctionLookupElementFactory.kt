@@ -38,7 +38,7 @@ internal class FunctionLookupElementFactory {
         name: Name,
         signature: KaFunctionSignature<*>,
         options: CallableInsertionOptions,
-        expectedType: KtType? = null,
+        expectedType: KaType? = null,
     ): LookupElementBuilder {
         val insertEmptyLambda = insertLambdaBraces(signature, options)
         val lookupObject = FunctionCallLookupObject(
@@ -96,7 +96,7 @@ object FunctionInsertionHelper {
     context(KaSession)
     fun functionCanBeCalledWithoutExplicitTypeArguments(
         symbol: KaFunctionSymbol,
-        expectedType: KtType?
+        expectedType: KaType?
     ): Boolean {
         if (symbol.typeParameters.isEmpty()) return true
 
@@ -117,7 +117,7 @@ object FunctionInsertionHelper {
          * ```
          * we can't rely on the inference from `handler`, because lambda input types may not be declared explicitly.
          */
-        fun collectPotentiallyInferredTypes(type: KtType, onlyCollectReturnTypeOfFunctionalType: Boolean) {
+        fun collectPotentiallyInferredTypes(type: KaType, onlyCollectReturnTypeOfFunctionalType: Boolean) {
             when (type) {
                 is KaTypeParameterType -> {
                     val typeParameterSymbol = type.symbol

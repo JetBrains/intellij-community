@@ -9,7 +9,7 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -49,7 +49,7 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
         isUnderscoreTypeArgument(element)
 
     context(KaSession)
-    private fun KtTypeProjection.resolveType(): KtType? {
+    private fun KtTypeProjection.resolveType(): KaType? {
         val typeArgumentList = parent as KtTypeArgumentList
         val call = (typeArgumentList.parent as? KtCallExpression)?.resolveToCall()?.singleFunctionCallOrNull() ?: return null
         val argumentsTypes = call.typeArgumentsMapping.map { it.value }.toTypedArray()

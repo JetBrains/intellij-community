@@ -9,7 +9,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.renderNames
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -52,7 +52,7 @@ class KotlinExprTypePredicate(
     }
 
     context(KaSession)
-    fun match(type: KtType): Boolean {
+    fun match(type: KaType): Boolean {
         val typesToTest = mutableListOf(type)
         if (withinHierarchy) typesToTest.addAll(type.getAllSuperTypes())
         if (regex) {

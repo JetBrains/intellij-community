@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -14,10 +14,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.types.Variance
 
-class ExpectedExpressionMatcher(val types: List<KtType>? = null, val nullability: KaTypeNullability? = null) {
+class ExpectedExpressionMatcher(val types: List<KaType>? = null, val nullability: KaTypeNullability? = null) {
 
     context(KaSession)
-    fun match(candidateType: KtType): Boolean {
+    fun match(candidateType: KaType): Boolean {
         if (types != null && types.none { candidateType.isSubTypeOf(it) }) {
             return false
         }
@@ -191,7 +191,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
                 else -> buildClassType(DefaultTypeClassIds.ANY)
             }
 
-            fun constructType(classId: ClassId): KtType {
+            fun constructType(classId: ClassId): KaType {
                 return buildClassType(classId) {
                     argument(elementType, Variance.OUT_VARIANCE)
                 }

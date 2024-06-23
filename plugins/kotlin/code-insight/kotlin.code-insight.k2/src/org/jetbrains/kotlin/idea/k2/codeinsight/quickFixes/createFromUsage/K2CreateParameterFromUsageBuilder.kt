@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
@@ -62,7 +62,7 @@ object K2CreateParameterFromUsageBuilder {
             return CreateParameterFromUsageAction(expression, name, valVar, namedDeclaration)
         }
     }
-    fun generateCreateParameterActionForComponentFunctionMissing(arg: PsiElement, destructingType: KtType): IntentionAction? {
+    fun generateCreateParameterActionForComponentFunctionMissing(arg: PsiElement, destructingType: KaType): IntentionAction? {
         val decl = arg.findParentOfType<KtDestructuringDeclaration>(strict = false) ?: return null
         val lastEntry = decl.entries.lastOrNull()
         val name = lastEntry?.name?:return null
@@ -99,7 +99,7 @@ object K2CreateParameterFromUsageBuilder {
         override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 
         context(KaSession)
-        private fun getExpectedType(expression: KtExpression): KtType {
+        private fun getExpectedType(expression: KtExpression): KaType {
             if (expression is KtDestructuringDeclarationEntry) {
                 val type = expression.getReturnKtType()
                 return if (type is KaErrorType) builtinTypes.ANY else type

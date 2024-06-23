@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -144,7 +144,7 @@ private sealed class CaseBranch {
     class Instance(val classId: ClassId) : CaseBranch()
 }
 
-private fun isSealedType(type: KtType): Boolean {
+private fun isSealedType(type: KaType): Boolean {
     if (type is KaClassType) {
         val symbol = type.symbol
         if (symbol is KaNamedClassOrObjectSymbol) {

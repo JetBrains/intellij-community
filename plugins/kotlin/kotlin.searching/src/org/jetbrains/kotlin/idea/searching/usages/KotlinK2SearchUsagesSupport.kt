@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
@@ -191,7 +191,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return when (psiElement) {
             is KtCallableDeclaration -> {
                 analyze(psiElement) {
-                    fun resolveKtClassOrObject(ktType: KtType): KtClassOrObject? {
+                    fun resolveKtClassOrObject(ktType: KaType): KtClassOrObject? {
                         return (ktType as? KaClassType)?.symbol?.psiSafe<KtClassOrObject>()
                     }
 
@@ -205,7 +205,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                             ReceiverTypeSearcherInfo(ktClass) { declaration ->
                                 runReadAction {
                                     analyze(declaration) {
-                                        fun KtType.containsClassType(clazz: KtClassOrObject?): Boolean {
+                                        fun KaType.containsClassType(clazz: KtClassOrObject?): Boolean {
                                             if (clazz == null) return false
                                             return this is KaClassType && (clazz.isEquivalentTo(symbol.psi) ||
                                                     typeArguments.any { arg ->
@@ -254,7 +254,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     }
 
     context(KaSession)
-    private fun getContainingClassType(symbol: KaCallableSymbol): KtType? {
+    private fun getContainingClassType(symbol: KaCallableSymbol): KaType? {
         val containingSymbol = symbol.containingSymbol ?: return null
         val classSymbol = containingSymbol as? KaNamedClassOrObjectSymbol ?: return null
         return classSymbol.buildSelfClassType()

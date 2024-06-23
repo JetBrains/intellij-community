@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -197,8 +197,8 @@ object BranchedFoldingUtils {
         first: KtBinaryExpression,
         second: KtBinaryExpression,
         firstOperation: PsiElement?,
-        leftType: KtType,
-        nonNullableRightTypeOfFirst: KtType,
+        leftType: KaType,
+        nonNullableRightTypeOfFirst: KaType,
     ): Boolean {
         // Check if they satisfy the above condition 1 and 2.
         fun haveSameLeft(first: KtBinaryExpression, second: KtBinaryExpression): Boolean {

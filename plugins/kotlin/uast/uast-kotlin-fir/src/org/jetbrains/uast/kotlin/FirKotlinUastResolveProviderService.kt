@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
@@ -742,7 +742,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     private inline fun <R> getTargetType(
         psiElement: PsiElement,
         defaultValue: R,
-        typeConsumer: KaSession.(KtType?) -> R,
+        typeConsumer: KaSession.(KaType?) -> R,
     ): R {
         return when (psiElement) {
             is KtTypeReference -> {

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -97,10 +97,10 @@ class KotlinIntroduceConstantHandler(
                     ExtractionData(file, adjustedElements.toRange(), target, null, options)
                 }
                 val engine = object :
-                    IExtractionEngine<KtType, ExtractionData, ExtractionGeneratorConfiguration, ExtractionResult, ExtractableCodeDescriptor, ExtractableCodeDescriptorWithConflicts>(
+                    IExtractionEngine<KaType, ExtractionData, ExtractionGeneratorConfiguration, ExtractionResult, ExtractableCodeDescriptor, ExtractableCodeDescriptorWithConflicts>(
                         helper
                     ) {
-                    override fun performAnalysis(extractionData: ExtractionData): AnalysisResult<KtType> {
+                    override fun performAnalysis(extractionData: ExtractionData): AnalysisResult<KaType> {
                         return ExtractionDataAnalyzer(extractionData).performAnalysis()
                     }
                 }

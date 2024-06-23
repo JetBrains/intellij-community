@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -272,7 +272,7 @@ private fun getCalleeReferenceExpression(callableExpression: KtExpression): KtNa
 }
 
 context(KaSession)
-private fun KtLambdaExpression.lambdaParameterType(): KtType? {
+private fun KtLambdaExpression.lambdaParameterType(): KaType? {
     val argument = parentValueArgument() ?: return null
     val callExpression = argument.getStrictParentOfType<KtCallExpression>() ?: return null
     return callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.argumentMapping?.get(argument.getArgumentExpression())?.returnType
@@ -391,7 +391,7 @@ private fun KtExpression.isObject(): Boolean {
     return getKtType()?.expandedSymbol?.classKind?.isObject == true
 }
 
-private fun isExtensionFunctionType(type: KtType): Boolean {
+private fun isExtensionFunctionType(type: KaType): Boolean {
     val functionalType = type as? KaFunctionType ?: return false
     return functionalType.hasReceiver
 }

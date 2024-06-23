@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRend
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableSignatureRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.lexer.KtKeywordToken
@@ -29,7 +29,7 @@ object K2StatisticsInfoProvider {
         modifiersRenderer = modifiersRenderer.with { keywordsRenderer = KaKeywordsRenderer.NONE }
 
         returnTypeFilter = object : KaCallableReturnTypeFilter {
-            override fun shouldRenderReturnType(analysisSession: KaSession, type: KtType, symbol: KaCallableSymbol): Boolean {
+            override fun shouldRenderReturnType(analysisSession: KaSession, type: KaType, symbol: KaCallableSymbol): Boolean {
                 return symbol !is KaFunctionSymbol
             }
         }

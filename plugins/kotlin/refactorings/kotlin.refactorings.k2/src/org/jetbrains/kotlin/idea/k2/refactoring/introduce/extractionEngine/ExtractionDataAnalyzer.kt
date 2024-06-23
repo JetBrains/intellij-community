@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResoluti
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
@@ -71,7 +71,7 @@ import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData) :
-    AbstractExtractionDataAnalyzer<KtType, MutableParameter>(extractionData) {
+    AbstractExtractionDataAnalyzer<KaType, MutableParameter>(extractionData) {
 
     override fun hasSyntaxErrors(): Boolean {
         return false
@@ -158,7 +158,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
     }
 
     @OptIn(KaNonPublicApi::class)
-    override fun createOutputDescriptor(): OutputDescriptor<KtType> {
+    override fun createOutputDescriptor(): OutputDescriptor<KaType> {
         analyze(extractionData.commonParent) {
             val exitSnapshot: KaDataFlowExitPointSnapshot = getExitPointSnapshot(extractionData.expressions)
             val defaultExpressionInfo = exitSnapshot.defaultExpressionInfo
@@ -184,12 +184,12 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
 
     override val nameSuggester = KotlinNameSuggester
 
-    override val typeDescriptor: TypeDescriptor<KtType> = KotlinTypeDescriptor(extractionData)
+    override val typeDescriptor: TypeDescriptor<KaType> = KotlinTypeDescriptor(extractionData)
 
     override fun inferParametersInfo(
         virtualBlock: KtBlockExpression,
         modifiedVariables: Set<String>
-    ): ParametersInfo<KtType, MutableParameter> {
+    ): ParametersInfo<KaType, MutableParameter> {
         analyze(extractionData.commonParent) {
             return extractionData.inferParametersInfo(
                 virtualBlock,
@@ -206,10 +206,10 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         parameters: List<MutableParameter>,
         receiverParameter: MutableParameter?,
         typeParameters: List<TypeParameter>,
-        replacementMap: MultiMap<KtSimpleNameExpression, IReplacement<KtType>>,
-        flow: ControlFlow<KtType>,
-        returnType: KtType
-    ): IExtractableCodeDescriptor<KtType> {
+        replacementMap: MultiMap<KtSimpleNameExpression, IReplacement<KaType>>,
+        flow: ControlFlow<KaType>,
+        returnType: KaType
+    ): IExtractableCodeDescriptor<KaType> {
         val experimentalMarkers = analyze(extractionData.commonParent) { extractionData.getExperimentalMarkers() }
         var descriptor = ExtractableCodeDescriptor(
             context = extractionData.commonParent,

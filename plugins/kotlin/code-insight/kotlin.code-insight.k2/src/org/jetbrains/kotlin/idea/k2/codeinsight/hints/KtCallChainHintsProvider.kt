@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtPostfixExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
 class KtCallChainHintsProvider : AbstractKtInlayHintsProvider() {
-    private data class ExpressionWithType(val expression: KtExpression, val type: KtType)
+    private data class ExpressionWithType(val expression: KtExpression, val type: KaType)
 
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
         val topmostDotQualifiedExpression = (element as? KtQualifiedExpression)

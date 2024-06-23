@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
@@ -52,7 +52,7 @@ internal object ExpectedTypeWeigher {
     context(KaSession)
     private fun matchesExpectedType(
         symbol: KaSymbol,
-        expectedType: KtType?
+        expectedType: KaType?
     ) = when {
         expectedType == null -> MatchesExpectedType.NON_TYPABLE
         symbol is KaClassSymbol && expectedType.expandedSymbol?.let { symbol.isSubClassOf(it) } == true ->
@@ -78,7 +78,7 @@ internal object ExpectedTypeWeigher {
 
         companion object {
             context(KaSession)
-            fun matches(actualType: KtType, expectedType: KtType): MatchesExpectedType = when {
+            fun matches(actualType: KaType, expectedType: KaType): MatchesExpectedType = when {
                 actualType isPossiblySubTypeOf expectedType -> MATCHES
                 actualType.withNullability(KaTypeNullability.NON_NULLABLE) isPossiblySubTypeOf expectedType -> MATCHES_WITHOUT_NULLABILITY
                 else -> NOT_MATCHES

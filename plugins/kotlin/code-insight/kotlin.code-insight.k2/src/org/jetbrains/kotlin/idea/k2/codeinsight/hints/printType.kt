@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 
 context(KaSession)
 @ApiStatus.Internal
-internal fun PresentationTreeBuilder.printKtType(type: KtType) {
+internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     // See org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer.renderType
     type.abbreviatedType?.let { abbreviatedType ->
         printKtType(abbreviatedType)
@@ -181,7 +181,7 @@ private fun PresentationTreeBuilder.printClassId(classId: ClassId, name: String)
     )
 }
 
-private fun isMutabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
+private fun isMutabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
     // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer.AS_SHORT.isMutabilityFlexibleType
     if (lower !is KaClassType || upper !is KaClassType) return false
 
@@ -189,7 +189,7 @@ private fun isMutabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
 }
 
 
-private fun isNullabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
+private fun isNullabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
     if (lower.nullability == KaTypeNullability.NON_NULLABLE && upper.nullability == KaTypeNullability.NULLABLE) {
         if (lower is KaTypeParameterType && upper is KaTypeParameterType && lower.symbol == upper.symbol) {
             return true
@@ -201,7 +201,7 @@ private fun isNullabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
     return false
 }
 
-private fun isNonNullableFlexibleType(lower: KtType, upper: KtType): Boolean {
+private fun isNonNullableFlexibleType(lower: KaType, upper: KaType): Boolean {
     if (lower is KaClassType && upper is KaClassType &&
         lower.classId == upper.classId &&
         lower.nullability == KaTypeNullability.NON_NULLABLE &&

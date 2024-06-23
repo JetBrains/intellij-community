@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -21,7 +21,7 @@ class K2ExtractableSubstringInfo(
 ) : ExtractableSubstringInfo(startEntry, endEntry, prefix, suffix) {
 
     context(KaSession)
-    fun guessLiteralType(): KtType {
+    fun guessLiteralType(): KaType {
         val stringType = builtinTypes.STRING
 
         if (startEntry != endEntry || startEntry !is KtLiteralStringTemplateEntry) return stringType

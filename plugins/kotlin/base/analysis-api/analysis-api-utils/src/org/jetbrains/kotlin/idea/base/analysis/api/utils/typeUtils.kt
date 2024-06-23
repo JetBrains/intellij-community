@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
  * An accurate estimation requires the use of the constraint system, which can lead to a loss in performance.
  */
 context(KaSession)
-infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
+infix fun KaType.isPossiblySubTypeOf(superType: KaType): Boolean {
     if (this is KaTypeParameterType) return this.hasCommonSubTypeWith(superType)
 
     if (superType is KaTypeParameterType) return superType.symbol.upperBounds.all { this isPossiblySubTypeOf it }
@@ -29,7 +29,7 @@ infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
 }
 
 context(KaSession)
-private fun buildClassTypeWithStarProjections(symbol: KaClassSymbol, nullability: KaTypeNullability): KtType =
+private fun buildClassTypeWithStarProjections(symbol: KaClassSymbol, nullability: KaTypeNullability): KaType =
     buildClassType(symbol) {
         repeat(symbol.typeParameters.size) {
             argument(KtStarTypeProjection(token))

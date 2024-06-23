@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
@@ -103,9 +103,9 @@ context(KaSession)
 internal fun ExtractionData.inferParametersInfo(
     virtualBlock: KtBlockExpression,
     modifiedVariables: Set<String>,
-    typeDescriptor: TypeDescriptor<KtType>,
-): ParametersInfo<KtType, MutableParameter> {
-    val info = ParametersInfo<KtType, MutableParameter>()
+    typeDescriptor: TypeDescriptor<KaType>,
+): ParametersInfo<KaType, MutableParameter> {
+    val info = ParametersInfo<KaType, MutableParameter>()
 
     val extractedDescriptorToParameter = LinkedHashMap<ParameterWithReference, MutableParameter>()
 
@@ -135,7 +135,7 @@ internal fun ExtractionData.inferParametersInfo(
     )
 
     val existingParameterNames = hashSetOf<String>()
-    val generateArguments: (KtType) -> List<KtType> =
+    val generateArguments: (KaType) -> List<KaType> =
         { ktType -> (ktType as? KaClassType)?.typeArguments?.mapNotNull { it.type } ?: emptyList() }
     for ((namedElement, parameter) in extractedDescriptorToParameter) {
         if (!parameter
@@ -196,8 +196,8 @@ internal fun ExtractionData.inferParametersInfo(
 
 context(KaSession)
 private fun ExtractionData.registerParameter(
-    info: ParametersInfo<KtType, MutableParameter>,
-    refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KtType>,
+    info: ParametersInfo<KaType, MutableParameter>,
+    refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KaType>,
     extractedDescriptorToParameter: HashMap<ParameterWithReference, MutableParameter>,
     isMemberExtension: Boolean
 ) {
@@ -306,7 +306,7 @@ private fun ExtractionData.registerParameter(
 private fun getParameterArgumentExpression(
     originalRef: KtReferenceExpression,
     receiverToExtract: KaReceiverValue?,
-    smartCast: KtType?
+    smartCast: KaType?
 ): KtExpression? = when {
     receiverToExtract is KaExplicitReceiverValue -> {
         val receiverExpression = receiverToExtract.expression
@@ -354,7 +354,7 @@ private fun ExtractionData.calculateArgumentText(
 context(KaSession)
 private fun ExtractionData.registerQualifierReplacements(
     referencedClassifierSymbol: KaClassifierSymbol,
-    parametersInfo: ParametersInfo<KtType, MutableParameter>,
+    parametersInfo: ParametersInfo<KaType, MutableParameter>,
     originalDeclaration: PsiNamedElement,
     originalRef: KtReferenceExpression
 ) {
@@ -385,7 +385,7 @@ context(KaSession)
 private fun getReferencedClassifierSymbol(
     thisSymbol: KaSymbol?,
     originalDeclaration: PsiNamedElement,
-    refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KtType>,
+    refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KaType>,
     partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaCallableSymbol, KaCallableSignature<KaCallableSymbol>>?
 ): KaClassifierSymbol? {
     val referencedSymbol = (thisSymbol ?: (originalDeclaration as? KtNamedDeclaration)?.symbol
@@ -412,7 +412,7 @@ private fun createOriginalType(
     originalDeclaration: PsiNamedElement,
     parameterExpression: KtExpression?,
     receiverToExtract: KaReceiverValue?
-): KtType = (if (extractFunctionRef) {
+): KaType = (if (extractFunctionRef) {
     val functionSymbol = (originalDeclaration as KtNamedFunction).symbol as KaNamedFunctionSymbol
     val typeString =
         buildString { //todo rewrite as soon as functional type can be created by api call: https://youtrack.jetbrains.com/issue/KT-66566
@@ -441,19 +441,19 @@ private fun createOriginalType(
 
 
 @OptIn(KaExperimentalApi::class)
-private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): List<ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KtType>> {
+private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): List<ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KaType>> {
     val newReferences = body.collectDescendantsOfType<KtReferenceExpression> { it.resolveResult != null }
 
     val smartCastPossibleRoots = mutableSetOf<KtExpression>()
-    val referencesInfo = ArrayList<ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KtType>>()
+    val referencesInfo = ArrayList<ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KaType>>()
     for (newRef in newReferences) {
         val originalResolveResult = newRef.resolveResult as? ResolveResult<PsiNamedElement, KtReferenceExpression> ?: continue
         val originalRefExpr = originalResolveResult.originalRefExpr
         val parent = newRef.parent
 
-        val smartCast: KtType?
+        val smartCast: KaType?
 
-        fun calculateSmartCastType(target: KtExpression): KtType? {
+        fun calculateSmartCastType(target: KtExpression): KaType? {
             return analyze(target) {
                 val cast = target.smartCastInfo?.smartCastType
                 when {
@@ -470,7 +470,7 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
             }
         }
 
-        val possibleTypes: Set<KtType>
+        val possibleTypes: Set<KaType>
 
         // Qualified property reference: a.b
         val qualifiedExpression = newRef.getQualifiedExpressionForSelector()

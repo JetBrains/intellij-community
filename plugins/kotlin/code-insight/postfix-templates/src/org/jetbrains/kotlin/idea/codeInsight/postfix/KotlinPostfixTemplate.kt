@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -62,7 +62,7 @@ internal object StatementFilter : (KtExpression) -> Boolean {
     }
 }
 
-internal class ExpressionTypeFilter(val predicate: KaSession.(KtType) -> Boolean) : (KtExpression) -> Boolean {
+internal class ExpressionTypeFilter(val predicate: KaSession.(KaType) -> Boolean) : (KtExpression) -> Boolean {
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun invoke(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {

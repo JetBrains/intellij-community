@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -113,8 +113,8 @@ object CastExpressionFixFactories {
     context(KaSession)
     private fun createFixes(
         isDueToNullability: Boolean,
-        actualType: KtType,
-        expectedType: KtType,
+        actualType: KaType,
+        expectedType: KaType,
         element: PsiElement,
     ): List<CastExpressionModCommandAction> {
         // `null` related issue should not be handled by a cast fix.

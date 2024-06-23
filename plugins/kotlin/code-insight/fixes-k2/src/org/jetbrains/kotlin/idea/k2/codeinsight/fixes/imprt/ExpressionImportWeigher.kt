@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinAutoImportCallableWeigher
@@ -57,7 +57,7 @@ interface ExpressionImportWeigher {
             }
 
         context(KaSession)
-        private fun calculateReceiverTypes(element: KtNameReferenceExpression): List<KtType> {
+        private fun calculateReceiverTypes(element: KtNameReferenceExpression): List<KaType> {
             val receiverExpression = element.getParentOfType<KtQualifiedExpression>(false)?.receiverExpression
 
             return if (receiverExpression != null) {
@@ -73,7 +73,7 @@ interface ExpressionImportWeigher {
         }
 
         context(KaSession)
-        private fun calculateValueArgumentTypes(element: KtNameReferenceExpression): List<KtType?> {
+        private fun calculateValueArgumentTypes(element: KtNameReferenceExpression): List<KaType?> {
             val callExpression = element.getParentOfType<KtCallElement>(strict = false)
             val valueArgumentList = callExpression?.valueArgumentList ?: return emptyList()
 
@@ -101,8 +101,8 @@ internal abstract class AbstractExpressionImportWeigher : ExpressionImportWeighe
     protected abstract fun ownWeigh(symbol: KaDeclarationSymbol): Int
 
     context(KaSession)
-    protected fun weighType(presentType: KtType, typeFromImport: KtType, baseWeight: Int): Int? {
-        val adjustedType: KtType
+    protected fun weighType(presentType: KaType, typeFromImport: KaType, baseWeight: Int): Int? {
+        val adjustedType: KaType
         val nullablesWeight = if (presentType.nullability.isNullable == typeFromImport.nullability.isNullable) {
             adjustedType = presentType
             2
@@ -124,8 +124,8 @@ internal class CallExpressionImportWeigher(
     override val token: KaLifetimeToken,
     // the weigher is not saved in any context/state, and weigh() is called when element is still valid
     private val element: KtNameReferenceExpression,
-    private val presentReceiverTypes: List<KtType>,
-    private val valueArgumentTypes: List<KtType?>,
+    private val presentReceiverTypes: List<KaType>,
+    private val valueArgumentTypes: List<KaType?>,
 ) : AbstractExpressionImportWeigher(), KaLifetimeOwner {
 
     context(KaSession)
@@ -145,8 +145,8 @@ internal class CallExpressionImportWeigher(
     context(KaSession)
     private fun calculateWeight(
         symbolToBeImported: KaCallableSymbol,
-        presentReceiverTypes: List<KtType>,
-        presentValueArgumentTypes: List<KtType?>,
+        presentReceiverTypes: List<KaType>,
+        presentValueArgumentTypes: List<KaType?>,
     ): Int {
         var weight = 0
 
@@ -211,8 +211,8 @@ internal class CallExpressionImportWeigher(
 internal class OperatorExpressionImportWeigher(
     override val token: KaLifetimeToken,
     private val operatorName: Name?,
-    private val leftOperandType: KtType? = null,
-    private val rightOperandType: KtType? = null,
+    private val leftOperandType: KaType? = null,
+    private val rightOperandType: KaType? = null,
 ) : AbstractExpressionImportWeigher(), KaLifetimeOwner {
 
     context(KaSession)

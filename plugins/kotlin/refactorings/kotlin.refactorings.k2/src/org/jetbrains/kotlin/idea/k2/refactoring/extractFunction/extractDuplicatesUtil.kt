@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
 
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.matchRanges
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionDataAnalyzer
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 
 
-fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo<KtType>> {
+fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo<KaType>> {
     val scopeElement = getOccurrenceContainer() as? KtElement ?: return emptyList()
     val originalTextRange = extractionData.originalRange.getPhysicalTextRange()
     return analyze(scopeElement) {

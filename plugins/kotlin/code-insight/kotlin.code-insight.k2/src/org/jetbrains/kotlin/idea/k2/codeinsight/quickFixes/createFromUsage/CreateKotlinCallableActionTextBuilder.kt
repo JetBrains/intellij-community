@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -83,7 +83,7 @@ object CreateKotlinCallableActionTextBuilder {
 
     context (KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun KaSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KtType?): String? {
+    private fun KaSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KaType?): String? {
         return when (this) {
             is KaCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
                 ?.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)
@@ -94,7 +94,7 @@ object CreateKotlinCallableActionTextBuilder {
     }
 
     context (KaSession)
-    private fun KtType.selfOrSuperTypeWithAbstractMatch(isAbstract: Boolean): KtType? {
+    private fun KaType.selfOrSuperTypeWithAbstractMatch(isAbstract: Boolean): KaType? {
         if (this.hasAbstractDeclaration() == isAbstract || this is KaClassType && (symbol as? KaClassSymbol)?.classKind == KaClassKind.INTERFACE) return this
         return getDirectSuperTypes().firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
     }
@@ -105,7 +105,7 @@ object CreateKotlinCallableActionTextBuilder {
         classIdRenderer = object : KaClassTypeQualifierRenderer {
             override fun renderClassTypeQualifier(
                 analysisSession: KaSession,
-                type: KtType,
+                type: KaType,
                 qualifiers: List<KaClassTypeQualifier>,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter

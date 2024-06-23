@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.collectTypeParametersOnWhichReturnTypeDepends
@@ -101,7 +101,7 @@ private fun collectTypesInferredFromExtensionReceiver(resolvedCall: KaFunctionCa
 }
 
 context(KaSession)
-private fun buildType(type: KtType, typeArgumentsMapping: Map<KaTypeParameterSymbol, KtType>): KtType? {
+private fun buildType(type: KaType, typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType>): KaType? {
     return when (type) {
         is KaTypeParameterType -> typeArgumentsMapping[type.symbol]
 
@@ -117,13 +117,13 @@ private fun buildType(type: KtType, typeArgumentsMapping: Map<KaTypeParameterSym
 }
 
 context(KaSession)
-private fun isApplicableType(type: KtType, expectedType: KtType): Boolean {
+private fun isApplicableType(type: KaType, expectedType: KaType): Boolean {
     return type.isEqualTo(expectedType) ||
             (expectedType.isMarkedNullable && type.withNullability(KaTypeNullability.NULLABLE).isEqualTo(expectedType))
 }
 
 context(KaSession)
-private fun findExpectedType(callExpression: KtCallExpression): KtType? {
+private fun findExpectedType(callExpression: KtCallExpression): KaType? {
     for (element in callExpression.parentsWithSelf) {
         if (element !is KtExpression) continue
 
@@ -236,10 +236,10 @@ private fun canTypesInferredFromAnotherArguments(
 }
 
 context(KaSession)
-private fun collectTypeParameterTypes(type: KtType): Set<KaTypeParameterType> {
+private fun collectTypeParameterTypes(type: KaType): Set<KaTypeParameterType> {
     val result = mutableSetOf<KaTypeParameterType>()
 
-    fun collect(type: KtType) {
+    fun collect(type: KaType) {
         when (type) {
             is KaTypeParameterType -> result.add(type)
             is KaClassType -> type.typeArguments.mapNotNull { it.type }.forEach { collect(it) }

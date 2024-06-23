@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinChangeSignatureConflictingUsageInfo
@@ -140,7 +140,7 @@ class KotlinChangeSignatureConflictSearcher(
     }
 
     context(KaSession)
-    private fun KtPsiFactory.createContextType(text: String, context: KtElement): KtType? {
+    private fun KtPsiFactory.createContextType(text: String, context: KtElement): KaType? {
         return createTypeCodeFragment(text, context).getContentElement()?.getKtType()
     }
     context(KaSession)

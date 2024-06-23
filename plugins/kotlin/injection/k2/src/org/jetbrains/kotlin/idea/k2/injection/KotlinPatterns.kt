@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.injection.KotlinFunctionPatternBase
 import org.jetbrains.kotlin.idea.base.injection.KotlinReceiverPattern
 import org.jetbrains.kotlin.idea.base.injection.KtParameterPatternBase
@@ -34,7 +34,7 @@ internal object KotlinPatterns : StandardPatterns() {
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun KtType.renderFullyQualifiedName() = render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+private fun KaType.renderFullyQualifiedName() = render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
 
 // Methods in this class are used through reflection during pattern construction
 @Suppress("unused")

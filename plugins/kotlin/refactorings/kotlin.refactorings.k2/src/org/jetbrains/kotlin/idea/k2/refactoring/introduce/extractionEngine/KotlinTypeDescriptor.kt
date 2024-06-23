@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.Parameter
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionData
@@ -33,23 +33,23 @@ import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.types.Variance
 
-class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<KtType> {
-    override fun KtType.isMeaningful(): Boolean =
+class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<KaType> {
+    override fun KaType.isMeaningful(): Boolean =
         analyze(data.commonParent) {
             !this@isMeaningful.isEqualTo(builtinTypes.UNIT) && !this@isMeaningful.isEqualTo(builtinTypes.NOTHING)
         }
 
-    override fun KtType.isError(): Boolean {
+    override fun KaType.isError(): Boolean {
         return this is KaErrorType
     }
 
-    override val booleanType: KtType = analyze(data.commonParent) { builtinTypes.BOOLEAN }
+    override val booleanType: KaType = analyze(data.commonParent) { builtinTypes.BOOLEAN }
 
-    override val unitType: KtType = analyze(data.commonParent) { builtinTypes.UNIT }
-    override val nothingType: KtType = analyze(data.commonParent) { builtinTypes.NOTHING }
-    override val nullableAnyType: KtType = analyze(data.commonParent) { builtinTypes.NULLABLE_ANY }
+    override val unitType: KaType = analyze(data.commonParent) { builtinTypes.UNIT }
+    override val nothingType: KaType = analyze(data.commonParent) { builtinTypes.NOTHING }
+    override val nullableAnyType: KaType = analyze(data.commonParent) { builtinTypes.NULLABLE_ANY }
 
-    override fun createListType(argTypes: List<KtType>): KtType {
+    override fun createListType(argTypes: List<KaType>): KaType {
         return analyze(data.commonParent) {
             buildClassType(StandardClassIds.List) {
                 argument(commonSuperType(argTypes) ?: builtinTypes.NULLABLE_ANY)
@@ -57,7 +57,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
         }
     }
 
-    override fun createTuple(outputValues: List<OutputValue<KtType>>): KtType {
+    override fun createTuple(outputValues: List<OutputValue<KaType>>): KaType {
         analyze(data.commonParent) {
             val boxingClass = when (outputValues.size) {
                 1 -> return outputValues.first().valueType
@@ -73,7 +73,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
         }
     }
 
-    override fun returnType(ktNamedDeclaration: KtNamedDeclaration): KtType? =
+    override fun returnType(ktNamedDeclaration: KtNamedDeclaration): KaType? =
         analyze(data.commonParent) { ktNamedDeclaration.getReturnKtType() }
 
     @OptIn(KaExperimentalApi::class)
@@ -83,7 +83,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
         }
     }
 
-    override fun renderForMessage(param: IParameter<KtType>): String {
+    override fun renderForMessage(param: IParameter<KaType>): String {
         val descriptor = (param as Parameter).originalDescriptor
         return if (descriptor is KtNamedDeclaration) {
             renderForMessage(descriptor)
@@ -92,13 +92,13 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
     }
 
     @OptIn(KaExperimentalApi::class)
-    override fun renderTypeWithoutApproximation(kotlinType: KtType): String {
+    override fun renderTypeWithoutApproximation(kotlinType: KaType): String {
         return analyze(data.commonParent) {
             kotlinType.render(position = Variance.INVARIANT)
         }
     }
 
-    override fun typeArguments(ktType: KtType): List<KtType> {
+    override fun typeArguments(ktType: KaType): List<KaType> {
         analyze(data.commonParent) {
             return (ktType as? KaClassType)?.typeArguments?.mapNotNull { it.type } ?: emptyList()
         }
@@ -106,14 +106,14 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
 
     @OptIn(KaExperimentalApi::class)
     override fun renderType(
-        ktType: KtType, isReceiver: Boolean, variance: Variance
+        ktType: KaType, isReceiver: Boolean, variance: Variance
     ): String = analyze(data.commonParent) {
         val renderType = ktType.render(position = variance)
         if (ktType.isFunctionType && isReceiver) "($renderType)" else renderType
     }
 
     override fun isResolvableInScope(
-        typeToCheck: KtType,
+        typeToCheck: KaType,
         typeParameters: MutableSet<TypeParameter>,
     ): Boolean {
         return analyze(data.commonParent) {
@@ -129,7 +129,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
  */
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: MutableSet<TypeParameter>): Boolean {
+fun isResolvableInScope(typeToCheck: KaType, scope: PsiElement, typeParameters: MutableSet<TypeParameter>): Boolean {
     require(scope.containingFile is KtFile)
     ((typeToCheck as? KaTypeParameterType)?.symbol?.psi as? KtTypeParameter)?.let { typeParameter ->
         val typeParameterListOwner = typeParameter.parentOfType<KtTypeParameterListOwner>()
@@ -175,7 +175,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
 
 
 context(KaSession)
-fun approximateWithResolvableType(type: KtType?, scope: PsiElement): KtType? {
+fun approximateWithResolvableType(type: KaType?, scope: PsiElement): KaType? {
     if (type == null) return null
     if (!(type is KaClassType && type.symbol is KaAnonymousObjectSymbol)
         && isResolvableInScope(type, scope, mutableSetOf())

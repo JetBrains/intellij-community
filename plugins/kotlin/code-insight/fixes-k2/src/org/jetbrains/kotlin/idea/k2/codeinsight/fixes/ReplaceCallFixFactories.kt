@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ReplaceImplicitReceiverCallFix
@@ -110,7 +110,7 @@ object ReplaceCallFixFactories {
     }
 
     context(KaSession)
-    private fun KtType.isMap(): Boolean {
+    private fun KaType.isMap(): Boolean {
         val symbol = this.expandedSymbol ?: return false
         if (symbol.name?.asString()?.endsWith("Map") != true) return false
         val mapSymbol = getClassOrObjectSymbolByClassId(StandardClassIds.Map) ?: return false

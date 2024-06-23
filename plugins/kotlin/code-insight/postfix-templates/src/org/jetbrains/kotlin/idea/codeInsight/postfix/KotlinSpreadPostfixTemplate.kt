@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.KtExpression
@@ -40,6 +40,6 @@ private val ARRAY_CLASS_FQ_NAMES: Set<FqNameUnsafe> = buildSet {
     add(StandardNames.FqNames.uLongArrayFqName.toUnsafe())
 }
 
-private fun KtType.canSpread(): Boolean {
+private fun KaType.canSpread(): Boolean {
     return this is KaClassType && classId.asSingleFqName().toUnsafe() in ARRAY_CLASS_FQ_NAMES
 }

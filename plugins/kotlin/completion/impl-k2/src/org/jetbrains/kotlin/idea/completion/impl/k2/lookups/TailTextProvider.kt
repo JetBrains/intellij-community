@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionImplK2Bundle
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionalTypeParameters
@@ -71,7 +71,7 @@ internal object TailTextProvider {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun StringBuilder.renderReceiverType(receiverType: KtType) {
+    private fun StringBuilder.renderReceiverType(receiverType: KaType) {
         val renderedType = receiverType.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT)
         append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))
     }

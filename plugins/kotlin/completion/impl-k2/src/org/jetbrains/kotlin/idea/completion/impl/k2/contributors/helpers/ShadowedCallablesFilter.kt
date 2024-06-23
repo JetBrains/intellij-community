@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
@@ -152,7 +152,7 @@ internal class ShadowedCallablesFilter {
         context(KaSession)
         fun sortExtensions(
             extensions: Collection<ApplicableExtension>,
-            receiversFromContext: List<KtType>
+            receiversFromContext: List<KaType>
         ): Collection<ApplicableExtension> {
             if (extensions.isEmpty()) return emptyList()
 
@@ -196,7 +196,7 @@ internal class ShadowedCallablesFilter {
 
             companion object {
                 context(KaSession)
-                fun create(type: KtType): ReceiverId? {
+                fun create(type: KaType): ReceiverId? {
                     val expandedClassSymbol = type.expandedSymbol ?: return null
                     val name = expandedClassSymbol.name ?: return null
 
@@ -303,7 +303,7 @@ private class FunctionLikeSimplifiedSignature(
     override val name: Name,
     override val containerFqName: FqName?,
     private val requiredTypeArgumentsCount: Int,
-    private val valueParameterTypes: Lazy<List<KtType>>,
+    private val valueParameterTypes: Lazy<List<KaType>>,
     private val varargValueParameterIndices: List<Int>,
     private val analysisSession: KaSession,
 ) : SimplifiedSignature() {
@@ -324,7 +324,7 @@ private class FunctionLikeSimplifiedSignature(
             areValueParameterTypesEqualTo(other)
 
     /**
-     * We need to use semantic type equality instead of the default structural equality of [KtType] to check if two signatures overlap.
+     * We need to use semantic type equality instead of the default structural equality of [KaType] to check if two signatures overlap.
      */
     private fun areValueParameterTypesEqualTo(other: FunctionLikeSimplifiedSignature): Boolean {
         val types1 = other.valueParameterTypes.value

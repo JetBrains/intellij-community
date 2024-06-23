@@ -173,7 +173,7 @@ internal object CallableMetadataProvider {
     }
 
     context(KaSession)
-    private fun getFlattenedActualReceiverTypes(context: WeighingContext): List<List<KtType>> {
+    private fun getFlattenedActualReceiverTypes(context: WeighingContext): List<List<KaType>> {
         val actualExplicitReceiverTypes = context.explicitReceiver?.let { receiver ->
             val referencedClass = getReferencedClassInCallableReferenceExpression(receiver) ?: getQualifierClassInKDocName(receiver)
             val typesFromClass = referencedClass?.let { listOfNotNull(it, it.companionObject).map { buildClassType(it) } }
@@ -191,13 +191,13 @@ internal object CallableMetadataProvider {
         get() = (this as? KaNamedClassOrObjectSymbol)?.companionObject
 
     context(KaSession)
-    private fun KtType.flatten(): List<KtType> = when (this) {
+    private fun KaType.flatten(): List<KaType> = when (this) {
         is KaIntersectionType -> conjuncts.flatMap { it.flatten() }
         else -> listOf(this)
     }
 
     context(KaSession)
-    private fun KtExpression.getTypeWithCorrectedNullability(): KtType? {
+    private fun KtExpression.getTypeWithCorrectedNullability(): KaType? {
         val isSafeCall = parent is KtSafeQualifiedExpression
         return getKtType()?.applyIf(isSafeCall) { withNullability(KaTypeNullability.NON_NULLABLE) }
     }
@@ -232,21 +232,21 @@ internal object CallableMetadataProvider {
     }
 
     context(KaSession)
-    private fun buildClassType(symbol: KaClassLikeSymbol): KtType = buildClassType(symbol) {
+    private fun buildClassType(symbol: KaClassLikeSymbol): KaType = buildClassType(symbol) {
         repeat(symbol.typeParameters.size) {
             argument(KtStarTypeProjection(token))
         }
     }
 
     context(KaSession)
-    private fun KtType.replaceTypeArgumentsWithStarProjections(): KtType? =
+    private fun KaType.replaceTypeArgumentsWithStarProjections(): KaType? =
         expandedSymbol?.let { buildClassType(it) }?.withNullability(nullability)
 
     context(KaSession)
     private fun callableWeightByReceiver(
         symbol: KaCallableSymbol,
-        flattenedActualReceiverTypes: List<List<KtType>>,
-        expectedReceiverType: KtType,
+        flattenedActualReceiverTypes: List<List<KaType>>,
+        expectedReceiverType: KaType,
     ): CallableMetadata {
         var allReceiverTypesMatch = true
         var bestMatchIndex: Int? = null
@@ -283,8 +283,8 @@ internal object CallableMetadataProvider {
     context(KaSession)
     private fun callableWeightKindByReceiverType(
         symbol: KaCallableSymbol,
-        actualReceiverType: KtType,
-        expectedReceiverType: KtType,
+        actualReceiverType: KaType,
+        expectedReceiverType: KaType,
     ): CallableKind? = when {
         actualReceiverType.isEqualTo(expectedReceiverType) -> when {
             isExtensionCallOnTypeParameterReceiver(symbol) -> CallableKind.TYPE_PARAMETER_EXTENSION

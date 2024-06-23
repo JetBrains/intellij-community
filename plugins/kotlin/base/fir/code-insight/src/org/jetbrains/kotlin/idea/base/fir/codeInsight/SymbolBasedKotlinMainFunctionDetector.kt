@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getJvmName
@@ -93,7 +93,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
     }
 
     context(KaSession)
-    private fun buildMainParameterType(): KtType {
+    private fun buildMainParameterType(): KaType {
         return buildClassType(StandardClassIds.Array) {
             val argumentType = buildClassType(StandardClassIds.String) {
                 nullability = KaTypeNullability.NON_NULLABLE
@@ -105,7 +105,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
     }
 
     context(KaSession)
-    private fun KtType.isResolvedClassType(): Boolean = when (this) {
+    private fun KaType.isResolvedClassType(): Boolean = when (this) {
         is KaClassType -> typeArguments.mapNotNull { it.type }.all { it.isResolvedClassType() }
         else -> false
     }

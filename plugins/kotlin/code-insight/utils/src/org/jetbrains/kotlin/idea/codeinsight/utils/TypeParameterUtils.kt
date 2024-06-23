@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -26,7 +26,7 @@ object TypeParameterUtils {
     }
 
     context(KaSession)
-    fun typeReferencesTypeParameter(typeParameter: KaTypeParameterSymbol, type: KtType): Boolean {
+    fun typeReferencesTypeParameter(typeParameter: KaTypeParameterSymbol, type: KaType): Boolean {
         return when (type) {
             is KaTypeParameterType -> type.symbol == typeParameter
             is KaClassType -> type.typeArguments.mapNotNull { it.type }.any { typeReferencesTypeParameter(typeParameter, it) }

@@ -56,7 +56,7 @@ object K2CreateFunctionFromUsageUtil {
     fun KtModifierList?.hasAbstractModifier(): Boolean = this?.hasModifier(KtTokens.ABSTRACT_KEYWORD) == true
 
     context (KaSession)
-    internal fun KtType.hasAbstractDeclaration(): Boolean {
+    internal fun KaType.hasAbstractDeclaration(): Boolean {
         val classSymbol = expandedSymbol ?: return false
         if (classSymbol.classKind == KaClassKind.INTERFACE) return true
         val declaration = classSymbol.psi as? KtDeclaration ?: return false
@@ -64,7 +64,7 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     context (KaSession)
-    internal fun KtType.canRefactor(): Boolean = expandedSymbol?.psi?.canRefactorElement() == true
+    internal fun KaType.canRefactor(): Boolean = expandedSymbol?.psi?.canRefactorElement() == true
 
     context (KaSession)
     internal fun KtExpression.resolveExpression(): KaSymbol? {
@@ -74,7 +74,7 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     context (KaSession)
-    internal fun KtType.convertToClass(): KtClass? = expandedSymbol?.psi as? KtClass
+    internal fun KaType.convertToClass(): KtClass? = expandedSymbol?.psi as? KtClass
 
     context (KaSession)
     internal fun KtElement.getExpectedKotlinType(): ExpectedKotlinType? {
@@ -117,7 +117,7 @@ object K2CreateFunctionFromUsageUtil {
     // Given: `println("a = ${A().foo()}")`
     // Expected type of `foo()` is `String`
     context (KaSession)
-    private fun getExpectedTypeByStringTemplateEntry(expression: KtExpression): KtType? {
+    private fun getExpectedTypeByStringTemplateEntry(expression: KtExpression): KaType? {
         var e:PsiElement = expression
         while (e is KtExpression && e !is KtStringTemplateEntry) {
             val parent = e.parent
@@ -133,7 +133,7 @@ object K2CreateFunctionFromUsageUtil {
     // Given: `fun f(): T = expression`
     // Expected type of `expression` is `T`
     context (KaSession)
-    private fun getExpectedTypeByFunctionExpressionBody(expression: KtExpression): KtType? {
+    private fun getExpectedTypeByFunctionExpressionBody(expression: KtExpression): KaType? {
         var e:PsiElement = expression
         while (e is KtExpression && e !is KtFunction) {
             e=e.parent
@@ -146,7 +146,7 @@ object K2CreateFunctionFromUsageUtil {
 
     context (KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun KtType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
+    private fun KaType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
 
     context (KaSession)
     private fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
@@ -234,7 +234,7 @@ object K2CreateFunctionFromUsageUtil {
 
     context (KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun JvmType.toKtType(useSitePosition: PsiElement): KtType? = when (this) {
+    private fun JvmType.toKtType(useSitePosition: PsiElement): KaType? = when (this) {
         is PsiType -> if (isValid) {
             try {
                 asKtType(useSitePosition)
@@ -243,7 +243,7 @@ object K2CreateFunctionFromUsageUtil {
 
                 // Some requests from Java side do not have a type. For example, in `var foo = dep.<caret>foo();`, we cannot guess
                 // the type of `foo()`. In this case, the request passes "PsiType:null" whose name is "null" as a text. The analysis
-                // API cannot get a KtType from this weird type. We return `Any?` for this case.
+                // API cannot get a KaType from this weird type. We return `Any?` for this case.
                 builtinTypes.nullableAny
             }
         } else {
@@ -254,7 +254,7 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     context (KaSession)
-    fun ExpectedType.toKtTypeWithNullability(useSitePosition: PsiElement): KtType? {
+    fun ExpectedType.toKtTypeWithNullability(useSitePosition: PsiElement): KaType? {
         val nullability = if (this is ExpectedTypeWithNullability) this.nullability else null
         val ktTypeNullability = when (nullability) {
             Nullability.NOT_NULL -> KaTypeNullability.NON_NULLABLE
@@ -275,7 +275,7 @@ object K2CreateFunctionFromUsageUtil {
 
     // inspect `type` recursively and call `predicate` on all types inside, return true if all calls returned true
     context (KaSession)
-    private fun accept(type: KtType?, visited: MutableSet<KtType>, predicate: (KtType) -> Boolean) : Boolean {
+    private fun accept(type: KaType?, visited: MutableSet<KaType>, predicate: (KaType) -> Boolean) : Boolean {
         if (type == null || !visited.add(type)) return true
         if (!predicate.invoke(type)) return false
         return when (type) {
@@ -293,14 +293,14 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     context (KaSession)
-    private fun acceptTypeQualifiers(qualifiers: List<KaClassTypeQualifier>, visited: MutableSet<KtType>, predicate: (KtType) -> Boolean) =
+    private fun acceptTypeQualifiers(qualifiers: List<KaClassTypeQualifier>, visited: MutableSet<KaType>, predicate: (KaType) -> Boolean) =
         qualifiers.flatMap { it.typeArguments }.map { it.type }.all { accept(it, visited, predicate) }
 
     /**
      * return [ktType] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null if can't figure out which type to use
      */
     context (KaSession)
-    private fun makeAccessibleInCreationPlace(ktType: KtType, call: KtElement): KtType? {
+    private fun makeAccessibleInCreationPlace(ktType: KaType, call: KtElement): KaType? {
         var type = ktType
         do {
             if (allTypesInsideAreAccessible(type, call)) return ktType
@@ -310,7 +310,7 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     context (KaSession)
-    private fun allTypesInsideAreAccessible(ktType: KtType, call: KtElement) : Boolean {
+    private fun allTypesInsideAreAccessible(ktType: KaType, call: KtElement) : Boolean {
         fun KtTypeParameter.getOwningTypeParameterOwner(): KtTypeParameterListOwner? {
             val parameterList = parent as? KtTypeParameterList ?: return null
             return parameterList.parent as? KtTypeParameterListOwner

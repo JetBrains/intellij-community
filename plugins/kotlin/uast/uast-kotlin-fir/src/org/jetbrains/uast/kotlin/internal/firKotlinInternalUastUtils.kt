@@ -61,7 +61,7 @@ internal fun containingKtClass(
 
 context(KaSession)
 internal fun toPsiClass(
-    ktType: KtType,
+    ktType: KaType,
     source: UElement?,
     context: KtElement,
     typeOwnerKind: TypeOwnerKind,
@@ -279,7 +279,7 @@ private fun KaAnnotatedSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets: Se
 
 context(KaSession)
 internal fun toPsiType(
-    ktType: KtType,
+    ktType: KaType,
     source: UElement?,
     context: KtElement,
     config: PsiTypeConversionConfiguration,
@@ -294,7 +294,7 @@ internal fun toPsiType(
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun toPsiType(
-    ktType: KtType,
+    ktType: KaType,
     containingLightDeclaration: PsiModifierListOwner?,
     context: KtElement,
     config: PsiTypeConversionConfiguration,
@@ -347,14 +347,14 @@ internal fun receiverType(
 }
 
 context(KaSession)
-internal val KtType.typeForValueClass: Boolean
+internal val KaType.typeForValueClass: Boolean
     get() {
         val symbol = expandedSymbol as? KaNamedClassOrObjectSymbol ?: return false
         return symbol.isInline
     }
 
 context(KaSession)
-internal fun isInheritedGenericType(ktType: KtType?): Boolean {
+internal fun isInheritedGenericType(ktType: KaType?): Boolean {
     if (ktType == null) return false
     return ktType is KaTypeParameterType &&
         // explicitly nullable, e.g., T?
@@ -364,7 +364,7 @@ internal fun isInheritedGenericType(ktType: KtType?): Boolean {
 }
 
 context(KaSession)
-internal fun nullability(ktType: KtType?): KaTypeNullability? {
+internal fun nullability(ktType: KaType?): KaTypeNullability? {
     if (ktType == null) return null
     if (ktType is KaErrorType) return null
     return if (ktType.fullyExpandedType.canBeNull)
@@ -374,7 +374,7 @@ internal fun nullability(ktType: KtType?): KaTypeNullability? {
 }
 
 context(KaSession)
-internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
+internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KaType? {
     return (ktCallableDeclaration.symbol as? KaCallableSymbol)?.returnType
 }
 

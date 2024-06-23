@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.types.Variance
 
 internal object CompletionShortNamesRenderer {
@@ -58,8 +58,8 @@ internal object CompletionShortNamesRenderer {
 
 context(KaSession)
 @KaExperimentalApi
-internal fun KtType.renderNonErrorOrUnsubstituted(
-    unsubstituted: KtType,
+internal fun KaType.renderNonErrorOrUnsubstituted(
+    unsubstituted: KaType,
     renderer: KtTypeRenderer = CompletionShortNamesRenderer.rendererVerbose
 ): String {
     val typeToRender = this.takeUnless { it is KaErrorType } ?: unsubstituted

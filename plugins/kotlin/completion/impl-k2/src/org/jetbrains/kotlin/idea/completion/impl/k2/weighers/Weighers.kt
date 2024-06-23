@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
@@ -42,7 +42,7 @@ internal class WeighingContext private constructor(
     val languageVersionSettings: LanguageVersionSettings,
     val explicitReceiver: KtElement?,
     private val positionInFakeCompletionFile: PsiElement,
-    private val myExpectedType: KtType?,
+    private val myExpectedType: KaType?,
     private val myImplicitReceivers: List<KaImplicitReceiver>,
     val contextualSymbolsCache: ContextualSymbolsCache,
     val importableFqNameClassifier: ImportableFqNameClassifier,
@@ -71,7 +71,7 @@ internal class WeighingContext private constructor(
         operator fun contains(name: Name): Boolean = withValidityAssertion { name in symbolsContainingPosition }
     }
 
-    val expectedType: KtType?
+    val expectedType: KaType?
         get() = withValidityAssertion {
             myExpectedType
         }
@@ -98,7 +98,7 @@ internal class WeighingContext private constructor(
         fun createWeighingContext(
             basicContext: FirBasicCompletionContext,
             receiver: KtElement?,
-            expectedType: KtType?,
+            expectedType: KaType?,
             implicitReceivers: List<KaImplicitReceiver>,
             positionInFakeCompletionFile: PsiElement,
             symbolsToSkip: Set<KaSymbol> = emptySet(),

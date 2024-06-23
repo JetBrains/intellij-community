@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeErrorTyp
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.types.Variance
 
 data class KotlinTypeInfo(var text: String?, val context: KtElement) {
     @OptIn(KaExperimentalApi::class)
-    constructor(ktType: KtType, context: KtElement): this(analyze(context) { ktType.render(errorIgnoringRenderer, Variance.INVARIANT) }, context)
+    constructor(ktType: KaType, context: KtElement): this(analyze(context) { ktType.render(errorIgnoringRenderer, Variance.INVARIANT) }, context)
 }
 
 @KaExperimentalApi

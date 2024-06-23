@@ -24,7 +24,7 @@ abstract class KotlinApplicatorBasedQuickFix<T : PsiElement, in I : KotlinApplic
      * Should not store inside
      * - Everything that came from [org.jetbrains.kotlin.analysis.api.KaSession] like :
      *      - [org.jetbrains.kotlin.analysis.api.symbols.KtSymbol] consider using [org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer] instead
-     *      - [org.jetbrains.kotlin.analysis.api.types.KtType]
+     *      - [org.jetbrains.kotlin.analysis.api.types.KaType]
      *      - [org.jetbrains.kotlin.analysis.api.resolution.KaCall]
      * - [org.jetbrains.kotlin.analysis.api.KaSession] instance itself
      * - [PsiElement] consider using [com.intellij.psi.SmartPsiElementPointer] instead

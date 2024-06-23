@@ -7,7 +7,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -120,7 +120,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
     }
 
     context(KaSession)
-    private fun getReceiverType(symbol: KaCallableSymbol): KtType? {
+    private fun getReceiverType(symbol: KaCallableSymbol): KaType? {
         return symbol.receiverType ?: (symbol as? KaCallableSymbol)?.dispatchReceiverType
     }
 

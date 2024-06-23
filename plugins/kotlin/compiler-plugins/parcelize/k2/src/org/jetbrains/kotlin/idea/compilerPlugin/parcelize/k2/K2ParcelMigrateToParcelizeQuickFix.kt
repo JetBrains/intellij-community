@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
 import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelMigrateToParcelizeQuickFixApplicator
@@ -41,7 +41,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
 
     private object Resolver : ParcelMigrateToParcelizeResolver<KaSession> {
         context(KaSession)
-        private val KtType.classId: ClassId?
+        private val KaType.classId: ClassId?
             get() = expandedSymbol?.classId
 
         context(KaSession)
@@ -64,7 +64,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
             }
 
         context(KaSession)
-        private fun KaClassLikeSymbol.buildStarProjectedType(): KtType =
+        private fun KaClassLikeSymbol.buildStarProjectedType(): KaType =
             buildClassType(this@buildStarProjectedType) {
                 repeat(typeParameters.size) {
                     argument(KtStarTypeProjection(token))
@@ -72,7 +72,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
             }
 
         context(KaSession)
-        private fun KtType.hasSuperTypeClassId(superTypeClassId: ClassId): Boolean {
+        private fun KaType.hasSuperTypeClassId(superTypeClassId: ClassId): Boolean {
             val superClassSymbol = getClassOrObjectSymbolByClassId(superTypeClassId) ?: return false
             return isSubTypeOf(superClassSymbol.buildStarProjectedType())
         }

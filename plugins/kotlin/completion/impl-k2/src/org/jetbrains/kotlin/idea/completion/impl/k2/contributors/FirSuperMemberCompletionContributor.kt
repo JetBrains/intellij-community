@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
@@ -38,13 +38,13 @@ internal class FirSuperMemberCompletionContributor(
     priority: Int
 ) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(basicContext, priority) {
     private data class CallableInfo(
-        private val _type: KtType,
+        private val _type: KaType,
         private val _signature: KaCallableSignature<*>,
         val scopeKind: KaScopeKind
     ) : KaLifetimeOwner {
         override val token: KaLifetimeToken
             get() = _signature.token
-        val type: KtType get() = withValidityAssertion { _type }
+        val type: KaType get() = withValidityAssertion { _type }
         val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
     }
 
@@ -71,7 +71,7 @@ internal class FirSuperMemberCompletionContributor(
 
     context(KaSession)
     private fun getSymbolsAndNamesNeedDisambiguation(
-        superTypes: List<KtType>,
+        superTypes: List<KaType>,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Pair<List<CallableInfo>, Set<Name>> {
@@ -108,7 +108,7 @@ internal class FirSuperMemberCompletionContributor(
 
     context(KaSession)
     private fun getNonExtensionsMemberSymbols(
-        receiverType: KtType,
+        receiverType: KaType,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableInfo> {
@@ -222,7 +222,7 @@ internal class FirSuperMemberCompletionContributor(
     context(KaSession)
     private fun wrapWithDisambiguationIfNeeded(
         insertionStrategy: CallableInsertionStrategy,
-        superType: KtType,
+        superType: KaType,
         callableSignature: KaCallableSignature<*>,
         namesNeedDisambiguation: Set<Name>,
         superReceiver: KtSuperExpression

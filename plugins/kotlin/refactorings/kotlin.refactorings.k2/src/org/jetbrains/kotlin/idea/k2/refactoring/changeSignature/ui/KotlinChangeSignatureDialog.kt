@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -288,4 +288,4 @@ internal fun KtTypeCodeFragment.getCanonicalText(forPreview: Boolean): String {
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun KtType.getPresentableText(): String = render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+private fun KaType.getPresentableText(): String = render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)

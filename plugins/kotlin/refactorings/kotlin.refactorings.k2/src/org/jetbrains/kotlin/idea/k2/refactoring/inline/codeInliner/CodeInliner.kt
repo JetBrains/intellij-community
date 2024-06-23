@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -50,7 +50,7 @@ class CodeInliner(
     private val call: KtElement,
     private val inlineSetter: Boolean,
     codeToInline: CodeToInline
-) : AbstractCodeInliner<KtElement, KtParameter, KtType, KtDeclaration>(call, codeToInline) {
+) : AbstractCodeInliner<KtElement, KtParameter, KaType, KtDeclaration>(call, codeToInline) {
     private val mapping: Map<KtExpression, Name>? = analyze(call) {
         call.resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
     }
@@ -276,7 +276,7 @@ class CodeInliner(
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun arrayOfFunctionName(elementType: KtType): String {
+    private fun arrayOfFunctionName(elementType: KaType): String {
         return when {
             elementType.isInt -> "kotlin.intArrayOf"
             elementType.isLong -> "kotlin.longArrayOf"
@@ -376,7 +376,7 @@ class CodeInliner(
 
     override fun introduceValue(
         value: KtExpression,
-        valueType: KtType?,
+        valueType: KaType?,
         usages: Collection<KtExpression>,
         expressionToBeReplaced: KtExpression,
         nameSuggestion: String?,

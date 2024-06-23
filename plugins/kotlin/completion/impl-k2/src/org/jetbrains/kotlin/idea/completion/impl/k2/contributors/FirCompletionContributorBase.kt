@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.*
@@ -71,7 +71,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
     context(KaSession)
-    protected fun addSymbolToCompletion(expectedType: KtType?, symbol: KaSymbol) {
+    protected fun addSymbolToCompletion(expectedType: KaType?, symbol: KaSymbol) {
         if (symbol !is KaNamedSymbol) return
 
         lookupElementFactory
@@ -107,7 +107,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         options: CallableInsertionOptions,
         symbolOrigin: CompletionSymbolOrigin,
         priority: ItemPriority? = null,
-        explicitReceiverTypeHint: KtType? = null,
+        explicitReceiverTypeHint: KaType? = null,
     ) {
         val symbol = signature.symbol
         val name = when (symbol) {

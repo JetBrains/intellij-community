@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ControlFlow
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.DuplicateInfo
@@ -36,16 +36,16 @@ data class ExtractableCodeDescriptor(
     override val parameters: List<Parameter>,
     override val receiverParameter: Parameter?,
     override val typeParameters: List<TypeParameter>,
-    override val replacementMap: MultiMap<KtSimpleNameExpression, IReplacement<KtType>>,
-    override val controlFlow: ControlFlow<KtType>,
-    override val returnType: KtType,
+    override val replacementMap: MultiMap<KtSimpleNameExpression, IReplacement<KaType>>,
+    override val controlFlow: ControlFlow<KaType>,
+    override val returnType: KaType,
     override val modifiers: List<KtKeywordToken> = emptyList(),
     override val optInMarkers: List<FqName> = emptyList(),
     val annotationClassIds: Set<ClassId> = emptySet()
-) : IExtractableCodeDescriptor<KtType> {
+) : IExtractableCodeDescriptor<KaType> {
     override val name: String get() = suggestedNames.firstOrNull() ?: ""
 
-    override val duplicates: List<DuplicateInfo<KtType>> by lazy { findDuplicates() }
+    override val duplicates: List<DuplicateInfo<KaType>> by lazy { findDuplicates() }
 
     private val isUnitReturn: Boolean = analyze(context) { returnType.isUnit }
 
@@ -76,11 +76,11 @@ data class ExtractableCodeDescriptor(
         }
 }
 
-internal fun getPossibleReturnTypes(cfg: ControlFlow<KtType>): List<KtType> {
+internal fun getPossibleReturnTypes(cfg: ControlFlow<KaType>): List<KaType> {
     return cfg.possibleReturnTypes
 }
 
 data class ExtractableCodeDescriptorWithConflicts(
     override val descriptor: ExtractableCodeDescriptor,
     override val conflicts: MultiMap<PsiElement, String>
-) : ExtractableCodeDescriptorWithConflictsResult(), IExtractableCodeDescriptorWithConflicts<KtType>
+) : ExtractableCodeDescriptorWithConflictsResult(), IExtractableCodeDescriptorWithConflicts<KaType>

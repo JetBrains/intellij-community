@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
@@ -282,8 +282,8 @@ private fun isMultilineLocalProperty(element: PsiElement): Boolean {
 }
 
 context(KaSession)
-private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalProperty: Boolean): KtType? =
-    calculateAllTypes<KtType>(element) { declarationType, allTypes, cannotBeNull ->
+private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalProperty: Boolean): KaType? =
+    calculateAllTypes<KaType>(element) { declarationType, allTypes, cannotBeNull ->
         if (declarationType is KaErrorType) return@calculateAllTypes null
 
         if (declarationType.isUnit && multilineLocalProperty) {
@@ -316,7 +316,7 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
     }
 
 context(KaSession)
-private fun isUnclearType(type: KtType, element: KtCallableDeclaration): Boolean {
+private fun isUnclearType(type: KaType, element: KtCallableDeclaration): Boolean {
     if (element !is KtProperty) return true
 
     val initializer = element.initializer ?: return true

@@ -385,7 +385,7 @@ internal class KotlinIdeDeclarationRenderer(
         return object : KaClassTypeQualifierRenderer {
             override fun renderClassTypeQualifier(
                 analysisSession: KaSession,
-                type: KtType,
+                type: KaType,
                 qualifiers: List<KaClassTypeQualifier>,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
@@ -408,7 +408,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderName(
                 analysisSession: KaSession,
                 name: Name,
-                owner: KtType,
+                owner: KaType,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = with(analysisSession) {
@@ -760,7 +760,7 @@ internal class KotlinIdeDeclarationRenderer(
         append("::class")
     }
 
-    private fun PrettyPrinter.renderType(type: KtType) {
+    private fun PrettyPrinter.renderType(type: KaType) {
         if (type.annotations.isNotEmpty()) {
             for (annotation in type.annotations) {
                 append('@')

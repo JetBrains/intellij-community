@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.ClassId
@@ -136,5 +136,5 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     }
 
     context(KaSession)
-    private fun KtType.isList() = this.fullyExpandedType.isClassTypeWithClassId(ClassId.topLevel(StandardNames.FqNames.list))
+    private fun KaType.isList() = this.fullyExpandedType.isClassTypeWithClassId(ClassId.topLevel(StandardNames.FqNames.list))
 }

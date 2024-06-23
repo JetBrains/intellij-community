@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.utils.errors.unexpectedElementError
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.getArgumentOrIndexExpressions
@@ -237,7 +237,7 @@ object K2SemanticMatcher {
 
         // TODO: current approach doesn't work on pairs of types such as `List<U>` and `List<T>`, where `U` and `T` are associated
         context(KaSession)
-        fun areTypesEqualOrAssociated(targetType: KtType?, patternType: KtType?): Boolean {
+        fun areTypesEqualOrAssociated(targetType: KaType?, patternType: KaType?): Boolean {
             if (targetType == null || patternType == null) return targetType == null && patternType == null
 
             return targetType.isEqualTo(patternType) ||
@@ -813,7 +813,7 @@ object K2SemanticMatcher {
     }
 
     context(KaSession)
-    private fun KaCallableMemberCall<*, *>.getTypeArguments(): List<KtType?> = symbol.typeParameters.map { typeArgumentsMapping[it] }
+    private fun KaCallableMemberCall<*, *>.getTypeArguments(): List<KaType?> = symbol.typeParameters.map { typeArgumentsMapping[it] }
 
     context(KaSession)
     private fun KaExplicitReceiverValue.getSymbolForThisExpressionOrNull(): KaSymbol? =

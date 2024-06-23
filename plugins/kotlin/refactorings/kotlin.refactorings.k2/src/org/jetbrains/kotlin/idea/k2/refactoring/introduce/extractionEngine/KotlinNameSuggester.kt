@@ -2,16 +2,16 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidator
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionNameSuggester
 import org.jetbrains.kotlin.psi.KtElement
 
-object KotlinNameSuggester : IExtractionNameSuggester<KtType> {
+object KotlinNameSuggester : IExtractionNameSuggester<KaType> {
 
     override fun suggestNamesByType(
-        kotlinType: KtType,
+        kotlinType: KaType,
         container: KtElement,
         validator: KotlinNameValidator,
         defaultName: String?,

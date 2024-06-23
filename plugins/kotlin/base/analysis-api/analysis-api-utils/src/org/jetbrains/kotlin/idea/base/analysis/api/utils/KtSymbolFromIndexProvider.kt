@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
@@ -199,7 +199,7 @@ class KtSymbolFromIndexProvider private constructor(
     context(KaSession)
     fun getTopLevelExtensionCallableSymbolsByName(
         name: Name,
-        receiverTypes: List<KtType>,
+        receiverTypes: List<KaType>,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true }
     ): Sequence<KaCallableSymbol> =
         getExtensionCallableSymbolsByName(name, receiverTypes, psiFilter, KotlinTopLevelExtensionsByReceiverTypeIndex)
@@ -207,7 +207,7 @@ class KtSymbolFromIndexProvider private constructor(
     context(KaSession)
     fun getDeclaredInObjectExtensionCallableSymbolsByName(
         name: Name,
-        receiverTypes: List<KtType>,
+        receiverTypes: List<KaType>,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true }
     ): Sequence<KaCallableSymbol> =
         getExtensionCallableSymbolsByName(name, receiverTypes, psiFilter, KotlinExtensionsInObjectsByReceiverTypeIndex)
@@ -215,7 +215,7 @@ class KtSymbolFromIndexProvider private constructor(
     context(KaSession)
     private fun getExtensionCallableSymbolsByName(
         name: Name,
-        receiverTypes: List<KtType>,
+        receiverTypes: List<KaType>,
         psiFilter: (KtCallableDeclaration) -> Boolean,
         indexHelper: KotlinExtensionsByReceiverTypeStubIndexHelper,
     ): Sequence<KaCallableSymbol> {
@@ -238,7 +238,7 @@ class KtSymbolFromIndexProvider private constructor(
     context(KaSession)
     fun getTopLevelExtensionCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
-        receiverTypes: List<KtType>,
+        receiverTypes: List<KaType>,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true }
     ): Sequence<KaCallableSymbol> {
         val receiverTypeNames = receiverTypes.flatMapTo(hashSetOf()) { findAllNamesForType(it) }
@@ -262,7 +262,7 @@ class KtSymbolFromIndexProvider private constructor(
     }
 
     context(KaSession)
-    private fun Sequence<KaCallableSymbol>.filterExtensionsByReceiverTypes(receiverTypes: List<KtType>): Sequence<KaCallableSymbol> {
+    private fun Sequence<KaCallableSymbol>.filterExtensionsByReceiverTypes(receiverTypes: List<KaType>): Sequence<KaCallableSymbol> {
         val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(KaTypeNullability.NON_NULLABLE) }
 
         return filter { symbol ->
@@ -283,7 +283,7 @@ class KtSymbolFromIndexProvider private constructor(
     private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
 
     context(KaSession)
-    private fun findAllNamesForType(type: KtType): Set<String> = buildSet {
+    private fun findAllNamesForType(type: KaType): Set<String> = buildSet {
         if (type is KaFlexibleType) {
             return findAllNamesForType(type.lowerBound)
         }

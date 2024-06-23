@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -68,7 +68,7 @@ object ChangeTypeQuickFixFactories {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun getActualType(ktType: KtType): KtType {
+    private fun getActualType(ktType: KaType): KaType {
         val typeKind = ktType.functionTypeKind
         when (typeKind) {
             FunctionTypeKind.KFunction -> typeKind.nonReflectKind()
@@ -87,7 +87,7 @@ object ChangeTypeQuickFixFactories {
     }
 
     context(KaSession)
-    private fun KtElement.returnType(candidateType: KtType): KtType {
+    private fun KtElement.returnType(candidateType: KaType): KaType {
         val (initializers, functionOrGetter) = when (this) {
             is KtNamedFunction -> listOfNotNull(this.initializer) to this
             is KtProperty -> listOfNotNull(this.initializer, this.getter?.initializer) to this.getter
@@ -121,7 +121,7 @@ object ChangeTypeQuickFixFactories {
     }
 
     context(KaSession)
-    private fun KtProperty.getPropertyInitializerType(): KtType? {
+    private fun KtProperty.getPropertyInitializerType(): KaType? {
         val initializer = initializer
         return if (typeReference != null && initializer != null) {
             //copy property initializer to calculate initializer's type without property's declared type
@@ -187,7 +187,7 @@ object ChangeTypeQuickFixFactories {
         }
 
     context(KaSession)
-    private fun registerVariableTypeFixes(declaration: KtProperty, type: KtType): List<KotlinQuickFixAction<KtExpression>> {
+    private fun registerVariableTypeFixes(declaration: KtProperty, type: KaType): List<KotlinQuickFixAction<KtExpression>> {
         val expectedType = declaration.getReturnKtType()
         val expression = declaration.initializer
         return buildList {
@@ -271,7 +271,7 @@ object ChangeTypeQuickFixFactories {
     }
 
     context(KaSession)
-    private fun createTypeInfo(ktType: KtType) = with(CallableReturnTypeUpdaterUtils.TypeInfo) {
+    private fun createTypeInfo(ktType: KaType) = with(CallableReturnTypeUpdaterUtils.TypeInfo) {
         createByKtTypes(ktType)
     }
 
@@ -334,10 +334,10 @@ object ChangeTypeQuickFixFactories {
 }
 
 context(KaSession)
-fun KtType.isNumberOrUNumberType(): Boolean = isNumberType() || isUNumberType()
+fun KaType.isNumberOrUNumberType(): Boolean = isNumberType() || isUNumberType()
 
 context(KaSession)
-fun KtType.isNumberType(): Boolean = isPrimitive && !isBoolean && !isChar
+fun KaType.isNumberType(): Boolean = isPrimitive && !isBoolean && !isChar
 
 context(KaSession)
-fun KtType.isUNumberType(): Boolean = isUByte || isUShort || isUInt || isULong
+fun KaType.isUNumberType(): Boolean = isUByte || isUShort || isUInt || isULong

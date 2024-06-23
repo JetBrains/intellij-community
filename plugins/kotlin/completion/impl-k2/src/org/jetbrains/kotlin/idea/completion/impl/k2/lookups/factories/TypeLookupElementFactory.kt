@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.types.Variance
 class TypeLookupElementFactory {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    fun createLookup(type: KtType): LookupElement? {
+    fun createLookup(type: KaType): LookupElement? {
         val renderedType = type.render(TYPE_RENDERING_OPTIONS_SHORT_NAMES, position = Variance.INVARIANT)
         val lookupObject = TypeLookupObject(type.render(TYPE_RENDERING_OPTIONS, position = Variance.INVARIANT))
 
@@ -68,7 +68,7 @@ class TypeLookupElementFactory {
             .withTailText(tailText)
     }
 
-    private fun KtType.getSymbolIfTypeParameterOrUsualClass(): KaClassifierSymbol? = when (this) {
+    private fun KaType.getSymbolIfTypeParameterOrUsualClass(): KaClassifierSymbol? = when (this) {
         is KaTypeParameterType -> symbol
         is KaUsualClassType -> symbol
         else -> null

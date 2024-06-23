@@ -9,7 +9,7 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -130,7 +130,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
 
     context(KaSession)
     private fun generateArraysEqualsCall(
-        type: KtType, canUseContentFunctions: Boolean, arg1: String, arg2: String
+        type: KaType, canUseContentFunctions: Boolean, arg1: String, arg2: String
     ): String {
         return if (canUseContentFunctions) {
             val methodName = if (type.isNestedArray) "contentDeepEquals" else "contentEquals"
@@ -143,7 +143,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
 
     context(KaSession)
     private fun generateArrayHashCodeCall(
-        variableType: KtType?, canUseContentFunctions: Boolean, argument: String
+        variableType: KaType?, canUseContentFunctions: Boolean, argument: String
     ): String {
         return if (canUseContentFunctions) {
             val methodName = if (variableType?.isNestedArray == true) "contentDeepHashCode" else "contentHashCode"

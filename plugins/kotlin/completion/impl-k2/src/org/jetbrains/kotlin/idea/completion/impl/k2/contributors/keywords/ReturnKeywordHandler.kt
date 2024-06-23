@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.createKeywordElementWithSpace
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.isInlineFunctionCall
@@ -69,7 +69,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
     context(KaSession)
     private fun addAllReturnVariants(
         result: MutableList<LookupElement>,
-        returnType: KtType,
+        returnType: KaType,
         label: Name?,
         isLikelyInPositionForReturn: Boolean = false
     ) {
@@ -89,7 +89,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
     }
 
     context(KaSession)
-    private fun getExpressionsToReturnByType(returnType: KtType): List<ExpressionTarget> = buildList {
+    private fun getExpressionsToReturnByType(returnType: KaType): List<ExpressionTarget> = buildList {
         if (returnType.canBeNull) {
             add(ExpressionTarget("null", addToLookupElementTail = false))
         }

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.name.ClassId
@@ -67,7 +67,7 @@ fun KtClass.getDslStyleId(): Int? {
  * A Dsl annotation is an annotation that is itself marked by [DslMarker] annotation.
  */
 context(KaSession)
-private fun getDslAnnotation(type: KtType): ClassId? {
+private fun getDslAnnotation(type: KaType): ClassId? {
     val allAnnotationsWithSuperTypes = sequence {
         yieldAll(type.annotationClassIds)
         val symbol = type.expandedSymbol ?: return@sequence

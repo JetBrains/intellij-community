@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider.ValidatorTarget
@@ -108,7 +108,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
     private fun getExpressionType(
         physicalExpression: KtExpression,
         expression: KtExpression
-    ): KtType? {
+    ): KaType? {
         val type = if (physicalExpression is KtProperty && physicalExpression.isLocal) {
             physicalExpression.getReturnKtType()
         } else {
@@ -118,11 +118,11 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
     }
 
     operator fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
-        val expressionTypeEvaluator: KaSession.() -> KtType? = {
+        val expressionTypeEvaluator: KaSession.() -> KaType? = {
             val physicalExpression = expression.substringContextOrThis
             getExpressionType(physicalExpression, expression)
         }
-        val nameSuggester: KaSession.(KtType) -> List<String> = { expressionType ->
+        val nameSuggester: KaSession.(KaType) -> List<String> = { expressionType ->
             val suggestedNames = SmartList<String>()
             val physicalExpression = expression.substringContextOrThis
             val body = when (targetParent) {
@@ -152,7 +152,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
      * (to be reused in "create parameter from usage" where both type and name are fixed, and computed a bit differently from the regular "introduce parameter")
      */
     @OptIn(KaExperimentalApi::class)
-    fun addParameter(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration, expressionTypeEvaluator: KaSession.()->KtType?, nameSuggester:  KaSession.(KtType)->List<String>) {
+    fun addParameter(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration, expressionTypeEvaluator: KaSession.()->KaType?, nameSuggester:  KaSession.(KaType)->List<String>) {
         val physicalExpression = expression.substringContextOrThis
         if (physicalExpression is KtProperty && physicalExpression.isLocal && physicalExpression.nameIdentifier == null) {
             showErrorHintByKey(project, editor, "cannot.refactor.no.expression", INTRODUCE_PARAMETER)
@@ -248,7 +248,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
 
                 if (inplaceIsAvailable) {
 
-                    val introducer = object : KotlinInplaceParameterIntroducerBase<KtType, KtNamedDeclaration>(
+                    val introducer = object : KotlinInplaceParameterIntroducerBase<KaType, KtNamedDeclaration>(
                         introduceParameterDescriptor,
                         replacementType,
                         suggestedNames.toTypedArray(),
@@ -279,7 +279,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         project: Project,
         editor: Editor,
         physicalExpression: KtExpression,
-        replacementType: KtType,
+        replacementType: KaType,
         suggestedNames: List<String>,
         introduceParameterDescriptor: IntroduceParameterDescriptor<KtNamedDeclaration>
     ) {
@@ -307,7 +307,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         targetParent: KtNamedDeclaration,
         suggestedNames: List<String>,
         physicalExpression: KtExpression,
-        replacementType: KtType,
+        replacementType: KaType,
         parametersUsages: MultiMap<KtElement, KtElement>,
         occurrencesToReplace: List<KotlinPsiRange>,
         psiFactory: KtPsiFactory

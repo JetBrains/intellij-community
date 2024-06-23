@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
@@ -55,7 +55,7 @@ private fun getClassType(declaration: KtDestructuringDeclaration): KaClassType? 
     return toNonErrorClassType(type)
 }
 
-private fun toNonErrorClassType(type: KtType?): KaClassType? {
+private fun toNonErrorClassType(type: KaType?): KaClassType? {
     return when (type) {
         is KaClassType -> type
         is KaFlexibleType -> type.lowerBound as? KaClassType

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -105,7 +105,7 @@ fun filterCandidateByReceiverTypeAndVisibility(
  * If explicit receiver is present and can be resolved, returns its type. Otherwise, returns empty list.
  */
 context(KaSession)
-fun collectReceiverTypesForElement(callElement: KtElement, explicitReceiver: KtExpression?): List<KtType> {
+fun collectReceiverTypesForElement(callElement: KtElement, explicitReceiver: KtExpression?): List<KaType> {
     return if (explicitReceiver != null) {
         collectReceiverTypesForExplicitReceiverExpression(explicitReceiver)
     } else {
@@ -115,7 +115,7 @@ fun collectReceiverTypesForElement(callElement: KtElement, explicitReceiver: KtE
 }
 
 context(KaSession)
-fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpression): List<KtType> {
+fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpression): List<KaType> {
     explicitReceiver.referenceExpression()?.mainReference?.let { receiverReference ->
         val receiverSymbol = receiverReference.resolveToExpandedSymbol()
         if (receiverSymbol == null || receiverSymbol is KaPackageSymbol) return emptyList()
@@ -128,7 +128,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 
     val isSafeCall = explicitReceiver.parent is KtSafeQualifiedExpression
 
-    val explicitReceiverType = explicitReceiver.getKtType() ?: error("Receiver should have a KtType")
+    val explicitReceiverType = explicitReceiver.getKtType() ?: error("Receiver should have a KaType")
     val adjustedType = if (isSafeCall) {
         explicitReceiverType.withNullability(KaTypeNullability.NON_NULLABLE)
     } else {
@@ -138,7 +138,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 }
 
 context(KaSession)
-private fun KaNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KtType =
+private fun KaNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KaType =
     buildClassType(this) {
         if (expression is KtCallExpression) {
             val typeArgumentTypes = expression.typeArguments.map { it.typeReference?.getKtType() }

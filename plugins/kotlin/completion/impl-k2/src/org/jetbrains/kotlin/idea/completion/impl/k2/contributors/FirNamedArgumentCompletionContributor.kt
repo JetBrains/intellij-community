@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
@@ -86,7 +86,7 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
      */
     private data class NamedArgumentInfo(
         val name: Name,
-        val indexedTypes: List<IndexedValue<KtType>>
+        val indexedTypes: List<IndexedValue<KaType>>
     )
 
     context(KaSession)
@@ -97,7 +97,7 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
     ): List<NamedArgumentInfo> {
         val argumentsBeforeCurrent = callElement.valueArgumentList?.arguments?.take(currentArgumentIndex) ?: return emptyList()
 
-        val nameToTypes = mutableMapOf<Name, MutableSet<IndexedValue<KtType>>>()
+        val nameToTypes = mutableMapOf<Name, MutableSet<IndexedValue<KaType>>>()
         for (candidate in candidates) {
             val indexedParameterCandidates = collectNotUsedIndexedParameterCandidates(callElement, candidate, argumentsBeforeCurrent)
             indexedParameterCandidates.forEach { (index, parameter) ->

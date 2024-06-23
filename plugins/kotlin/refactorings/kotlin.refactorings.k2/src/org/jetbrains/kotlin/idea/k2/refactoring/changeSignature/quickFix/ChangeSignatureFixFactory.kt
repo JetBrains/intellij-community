@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -259,7 +259,7 @@ object ChangeSignatureFixFactory {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun getKtType(argumentExpression: KtExpression?): KtType? {
+    private fun getKtType(argumentExpression: KtExpression?): KaType? {
         var ktType = argumentExpression?.getKtType()
         val typeKind = ktType?.functionTypeKind
         when (typeKind) {
@@ -368,7 +368,7 @@ object ChangeSignatureFixFactory {
     @OptIn(KaExperimentalApi::class)
     private fun createMismatchParameterTypeFix(
         element: PsiElement,
-        expectedType: KtType
+        expectedType: KaType
     ): List<ParameterQuickFix> {
         val valueArgument = element.getStrictParentOfType<KtValueArgument>()
         if (valueArgument == null) return emptyList()

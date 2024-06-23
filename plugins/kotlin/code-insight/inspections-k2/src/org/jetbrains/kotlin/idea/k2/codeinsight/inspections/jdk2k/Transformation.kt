@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.jdk2k
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
@@ -102,10 +102,10 @@ object ToExtensionFunctionWithNullableReceiverForMutableCollection : Transformat
         callExpression.valueArguments.firstOrNull()?.getArgumentExpression()?.getKtType()?.isMutableListOrSubtype() == true
 
     context(KaSession)
-    private fun KtType?.isMutableList(): Boolean =
+    private fun KaType?.isMutableList(): Boolean =
         this?.expandedSymbol?.classId?.asSingleFqName() == StandardNames.FqNames.mutableList
 
     context(KaSession)
-    private fun KtType?.isMutableListOrSubtype(): Boolean =
+    private fun KaType?.isMutableListOrSubtype(): Boolean =
         isMutableList() || this?.expandedSymbol?.superTypes?.reversed()?.any { it.isMutableList() } == true
 }

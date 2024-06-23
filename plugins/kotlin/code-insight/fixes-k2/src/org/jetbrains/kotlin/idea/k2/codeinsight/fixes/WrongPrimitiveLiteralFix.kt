@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -33,7 +33,7 @@ data class PrimitiveLiteralData(
 )
 
 context(KaSession)
-fun preparePrimitiveLiteral(element: KtExpression, type: KtType): PrimitiveLiteralData {
+fun preparePrimitiveLiteral(element: KtExpression, type: KaType): PrimitiveLiteralData {
     val typeName = type.expandedSymbol?.classId?.asSingleFqName()?.toUnsafe()
     val expectedTypeIsFloat = type.isFloat
     val expectedTypeIsDouble = type.isDouble

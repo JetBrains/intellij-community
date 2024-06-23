@@ -195,7 +195,7 @@ class KotlinNameSuggester(
      *  - `List<User>` -> {users}
      */
     context(KaSession)
-    fun suggestTypeNames(type: KtType): Sequence<String> {
+    fun suggestTypeNames(type: KaType): Sequence<String> {
         return sequence {
             val presentableType = getPresentableType(type)
 
@@ -225,14 +225,14 @@ class KotlinNameSuggester(
                 return@sequence
             }
 
-            fun getClassId(type: KtType): ClassId = when (type) {
+            fun getClassId(type: KaType): ClassId = when (type) {
                 is KaClassType -> type.classId
                 is KaTypeParameterType -> ClassId(FqName.ROOT, FqName.topLevel(type.name), false)
 
                 else -> ClassId(FqName.ROOT, FqName.topLevel(Name.identifier("Value")), false)
             }
 
-            suspend fun SequenceScope<String>.registerClassNames(type: KtType, preprocessor: (String) -> String = { it }) {
+            suspend fun SequenceScope<String>.registerClassNames(type: KaType, preprocessor: (String) -> String = { it }) {
                 val classId = getClassId(type)
 
                 KotlinNameSuggester(case, EscapingRules.NONE, ignoreCompanionNames)
@@ -274,7 +274,7 @@ class KotlinNameSuggester(
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun getPresentableType(type: KtType): KtType = type.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
+    private fun getPresentableType(type: KaType): KaType = type.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
 
     /**
      * Suggests type alias name for a given type element.
@@ -571,7 +571,7 @@ class KotlinNameSuggester(
 }
 
 context(KaSession)
-private fun getPrimitiveType(type: KtType): PrimitiveType? {
+private fun getPrimitiveType(type: KaType): PrimitiveType? {
     return when {
         type.isBoolean -> PrimitiveType.BOOLEAN
         type.isChar -> PrimitiveType.CHAR
@@ -590,7 +590,7 @@ private val ITERABLE_LIKE_CLASS_IDS =
         .map { ClassId.topLevel(it) }
 
 context(KaSession)
-private fun getIterableElementType(type: KtType): KtType? {
+private fun getIterableElementType(type: KaType): KaType? {
     if (type is KaClassType && type.classId in ITERABLE_LIKE_CLASS_IDS) {
         return type.typeArguments.singleOrNull()?.type
     }

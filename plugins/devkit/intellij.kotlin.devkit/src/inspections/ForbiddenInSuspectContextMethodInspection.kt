@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
@@ -359,7 +359,7 @@ private fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
   }
 }
 
-private fun KaSession.isSuspensionRestricted(lambdaType: KtType): Boolean {
+private fun KaSession.isSuspensionRestricted(lambdaType: KaType): Boolean {
   assert(lambdaType.isSuspendFunctionType)
 
   val receiverTypeSymbol = (lambdaType as? KaFunctionType)?.receiverType?.expandedSymbol

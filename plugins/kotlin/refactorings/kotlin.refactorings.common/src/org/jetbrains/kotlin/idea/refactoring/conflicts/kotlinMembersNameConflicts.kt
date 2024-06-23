@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.asJava.accessorNameByPropertyName
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -234,10 +234,10 @@ private fun areSameSignatures(candidateSymbol: KaPropertySymbol, symbol: KaFunct
 
 context(KaSession)
 fun areSameSignatures(
-    receiverType1: KtType?,
-    receiverType2: KtType?,
-    parameterTypes1: List<KtType>,
-    parameterTypes2: List<KtType>,
+    receiverType1: KaType?,
+    receiverType2: KaType?,
+    parameterTypes1: List<KaType>,
+    parameterTypes2: List<KaType>,
     c1: List<KaContextReceiver>,
     c2: List<KaContextReceiver>,
 ): Boolean {
@@ -247,7 +247,7 @@ fun areSameSignatures(
 }
 
 context(KaSession)
-private fun areTypesTheSame(t1: KtType?, t2: KtType?): Boolean {
+private fun areTypesTheSame(t1: KaType?, t2: KaType?): Boolean {
   if (t1 === t2) return true
   if (t2 == null) return false
   return t1?.isEqualTo(t2) == true

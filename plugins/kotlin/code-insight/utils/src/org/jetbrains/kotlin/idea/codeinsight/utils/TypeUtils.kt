@@ -12,17 +12,17 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
 context(KaSession)
-fun KtType.isNullableAnyType() = isAny && isMarkedNullable
+fun KaType.isNullableAnyType() = isAny && isMarkedNullable
 
 context(KaSession)
-fun KtType.isNonNullableBooleanType() = isBoolean && !isMarkedNullable
+fun KaType.isNonNullableBooleanType() = isBoolean && !isMarkedNullable
 
 context(KaSession)
-fun KtType.isEnum(): Boolean {
+fun KaType.isEnum(): Boolean {
     if (this !is KaClassType) return false
     val classSymbol = symbol
     return classSymbol is KaClassSymbol && classSymbol.classKind == KaClassKind.ENUM_CLASS

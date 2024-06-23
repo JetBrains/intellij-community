@@ -441,7 +441,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(KaSession)
-    private fun processInCheck(kotlinType: KtType?, range: KtExpression?, anchor: KotlinAnchor, negated: Boolean) {
+    private fun processInCheck(kotlinType: KaType?, range: KtExpression?, anchor: KotlinAnchor, negated: Boolean) {
         if (kotlinType != null && (kotlinType.isInt || kotlinType.isLong)) {
             if (range is KtBinaryExpression) {
                 val op = range.operationReference.getReferencedNameAsName().asString()
@@ -515,7 +515,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if ((relation == RelationType.EQ || relation == RelationType.NE) ||
             (leftDfType is DfPrimitiveType && rightDfType is DfPrimitiveType)
         ) {
-            val balancedType: KtType? = balanceType(leftType, rightType, forceEqualityByContent)
+            val balancedType: KaType? = balanceType(leftType, rightType, forceEqualityByContent)
             val adjustedContentEquality = forceEqualityByContent && balancedType.toDfType() !is DfPrimitiveType
             addImplicitConversion(left, balancedType)
             processExpression(right)
@@ -680,7 +680,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(KaSession)
-    private fun KtType?.isSubTypeOf(wantedType: ClassId) =
+    private fun KaType?.isSubTypeOf(wantedType: ClassId) =
         this is KaClassType && classId == wantedType ||
         this != null && getAllSuperTypes().any { type -> type is KaClassType && type.classId == wantedType }
 
@@ -880,7 +880,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processWhenExpression(expr: KtWhenExpression) {
         val subjectExpression = expr.subjectExpression
         val dfVar: DfaVariableValue?
-        val kotlinType: KtType?
+        val kotlinType: KaType?
         if (subjectExpression == null) {
             dfVar = null
             kotlinType = null
@@ -922,7 +922,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(KaSession)
-    private fun processWhenCondition(dfVar: DfaVariableValue?, dfVarType: KtType?, condition: KtWhenCondition) {
+    private fun processWhenCondition(dfVar: DfaVariableValue?, dfVarType: KaType?, condition: KtWhenCondition) {
         when (condition) {
             is KtWhenConditionWithExpression -> {
                 val expr = condition.expression
@@ -1135,7 +1135,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(KaSession)
-    private fun processForRange(expr: KtForExpression, parameterVar: DfaVariableValue, parameterType: KtType?): () -> Unit {
+    private fun processForRange(expr: KtForExpression, parameterVar: DfaVariableValue, parameterType: KaType?): () -> Unit {
         val range = expr.loopRange
         if (parameterVar.dfType is DfIntegralType) {
             when (range) {
@@ -1221,7 +1221,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(KaSession)
-    private fun findSpecialField(type: KtType?): SpecialField? {
+    private fun findSpecialField(type: KaType?): SpecialField? {
         type ?: return null
         return when {
             type.isEnum() -> SpecialField.ENUM_ORDINAL
@@ -1838,12 +1838,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(KaSession)
-    private fun addImplicitConversion(expression: KtExpression?, expectedType: KtType?) {
+    private fun addImplicitConversion(expression: KtExpression?, expectedType: KaType?) {
         addImplicitConversion(expression?.getKotlinType(), expectedType)
     }
 
     context(KaSession)
-    private fun addImplicitConversion(actualType: KtType?, expectedType: KtType?) {
+    private fun addImplicitConversion(actualType: KaType?, expectedType: KaType?) {
         actualType ?: return
         expectedType ?: return
         if (actualType == expectedType) return
@@ -1865,11 +1865,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(KaSession)
-    private fun KtType?.isInlineClass() =
+    private fun KaType?.isInlineClass() =
         ((this as? KaClassType)?.expandedSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true
 
     context(KaSession)
-    private fun balanceType(leftType: KtType?, rightType: KtType?, forceEqualityByContent: Boolean): KtType? = when {
+    private fun balanceType(leftType: KaType?, rightType: KaType?, forceEqualityByContent: Boolean): KaType? = when {
         leftType == null || rightType == null -> null
         leftType.isNothing && leftType.isMarkedNullable -> rightType.withNullability(KaTypeNullability.NULLABLE)
         rightType.isNothing && rightType.isMarkedNullable -> leftType.withNullability(KaTypeNullability.NULLABLE)
@@ -1880,7 +1880,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(KaSession)
-    private fun balanceType(left: KtType?, right: KtType?): KtType? {
+    private fun balanceType(left: KaType?, right: KaType?): KaType? {
         if (left == null || right == null) return null
         if (left == right) return left
         if (left.canBeNull() && !right.canBeNull()) {

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -61,7 +61,7 @@ class KotlinFirExtractFunctionHandler(
     }
 
     class InplaceExtractionHelper(private val acceptAllScopes: Boolean) : ExtractionEngineHelper(EXTRACT_FUNCTION),
-                                                                          AbstractInplaceExtractionHelper<KtType, ExtractionResult, ExtractableCodeDescriptorWithConflicts> {
+                                                                          AbstractInplaceExtractionHelper<KaType, ExtractionResult, ExtractableCodeDescriptorWithConflicts> {
         override fun createRestartHandler(): AbstractExtractKotlinFunctionHandler =
             KotlinFirExtractFunctionHandler(acceptAllScopes, InteractiveExtractionHelper)
 
@@ -69,7 +69,7 @@ class KotlinFirExtractFunctionHandler(
             KotlinFirExtractFunctionHandler(acceptAllScopes, this)
 
         override fun doRefactor(
-            descriptor: IExtractableCodeDescriptor<KtType>, onFinish: (ExtractionResult) -> Unit
+            descriptor: IExtractableCodeDescriptor<KaType>, onFinish: (ExtractionResult) -> Unit
         ) {
             val configuration =
                 ExtractionGeneratorConfiguration(descriptor as ExtractableCodeDescriptor, withCollapseOption(descriptor.context.project))
@@ -113,10 +113,10 @@ class KotlinFirExtractFunctionHandler(
         }
 
         val engine = object :
-            IExtractionEngine<KtType, ExtractionData, ExtractionGeneratorConfiguration, ExtractionResult, ExtractableCodeDescriptor, ExtractableCodeDescriptorWithConflicts>(
+            IExtractionEngine<KaType, ExtractionData, ExtractionGeneratorConfiguration, ExtractionResult, ExtractableCodeDescriptor, ExtractableCodeDescriptorWithConflicts>(
                 helper
             ) {
-            override fun performAnalysis(extractionData: ExtractionData): AnalysisResult<KtType> {
+            override fun performAnalysis(extractionData: ExtractionData): AnalysisResult<KaType> {
                 return ExtractionDataAnalyzer(extractionData).performAnalysis()
             }
         }

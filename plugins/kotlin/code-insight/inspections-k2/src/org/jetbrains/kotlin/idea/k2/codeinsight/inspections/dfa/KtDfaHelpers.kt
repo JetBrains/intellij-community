@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
 context(KaSession)
-internal fun KtType?.toDfType(): DfType {
+internal fun KaType?.toDfType(): DfType {
     if (this == null) return DfType.TOP
     if (canBeNull()) {
         var notNullableType = this.withNullability(KaTypeNullability.NON_NULLABLE).toDfTypeNotNullable()
@@ -53,7 +53,7 @@ internal fun KtType?.toDfType(): DfType {
 }
 
 context(KaSession)
-private fun KtType.toDfTypeNotNullable(): DfType {
+private fun KaType.toDfTypeNotNullable(): DfType {
     return when (this) {
         is KaClassType -> {
             // TODO: anonymous objects
@@ -109,7 +109,7 @@ private fun KtType.toDfTypeNotNullable(): DfType {
 }
 
 context(KaSession)
-internal fun KtExpression.getKotlinType(): KtType? {
+internal fun KtExpression.getKotlinType(): KaType? {
     var parent = this.parent
     if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
         parent = parent.parent
@@ -138,7 +138,7 @@ internal fun KtExpression.getKotlinType(): KtType? {
 }
 
 context(KaSession)
-internal fun KtType.getJvmAwareArrayElementType(): KtType? {
+internal fun KaType.getJvmAwareArrayElementType(): KaType? {
     if (!isArrayOrPrimitiveArray) return null
     val type = arrayElementType ?: return null
     if (this.isClassTypeWithClassId(StandardClassIds.Array) && type.isPrimitive) {
@@ -185,7 +185,7 @@ internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = w
 }
 
 context(KaSession)
-internal fun KtType.toPsiPrimitiveType(): PsiPrimitiveType = when ((this as? KaClassType)?.classId) {
+internal fun KaType.toPsiPrimitiveType(): PsiPrimitiveType = when ((this as? KaClassType)?.classId) {
     DefaultTypeClassIds.BOOLEAN -> PsiTypes.booleanType()
     DefaultTypeClassIds.BYTE -> PsiTypes.byteType()
     DefaultTypeClassIds.CHAR -> PsiTypes.charType()
@@ -198,7 +198,7 @@ internal fun KtType.toPsiPrimitiveType(): PsiPrimitiveType = when ((this as? KaC
 }
 
 context(KaSession)
-internal fun KtType.canBeNull() = isMarkedNullable || hasFlexibleNullability
+internal fun KaType.canBeNull() = isMarkedNullable || hasFlexibleNullability
 
 context(KaSession)
 internal fun getConstant(expr: KtConstantExpression): DfType {

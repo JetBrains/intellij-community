@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
 import org.jetbrains.kotlin.idea.codeinsight.utils.isConvertableToExpressionBody
@@ -21,14 +21,14 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 
-internal object Generator : ExtractFunctionGenerator<KtType, ExtractionResult>() {
-    override val nameGenerator: IExtractionNameSuggester<KtType> = KotlinNameSuggester
+internal object Generator : ExtractFunctionGenerator<KaType, ExtractionResult>() {
+    override val nameGenerator: IExtractionNameSuggester<KaType> = KotlinNameSuggester
 
-    override fun createTypeDescriptor(data: IExtractionData): TypeDescriptor<KtType> {
+    override fun createTypeDescriptor(data: IExtractionData): TypeDescriptor<KaType> {
         return KotlinTypeDescriptor(data)
     }
 
-    override fun IExtractionGeneratorConfiguration<KtType>.collapseBody(
+    override fun IExtractionGeneratorConfiguration<KaType>.collapseBody(
         blockExpression: KtBlockExpression
     ) {
         val declarationWithBody = blockExpression.parent as? KtDeclarationWithBody ?: return
@@ -47,7 +47,7 @@ internal object Generator : ExtractFunctionGenerator<KtType, ExtractionResult>()
                 analyze(args) { areTypeArgumentsRedundant(args) }
     }
 
-    override fun IExtractionGeneratorConfiguration<KtType>.createExtractionResult(
+    override fun IExtractionGeneratorConfiguration<KaType>.createExtractionResult(
         declaration: KtNamedDeclaration,
         duplicatesReplacer: Map<KotlinPsiRange, () -> Unit>
     ): ExtractionResult = ExtractionResult(this as ExtractionGeneratorConfiguration, declaration, duplicatesReplacer)

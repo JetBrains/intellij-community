@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -28,7 +28,7 @@ object NegatedBinaryExpressionSimplificationUtils {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(expression) {
-                    fun KtType?.isFloatingPoint() = this != null && (isFloat || isDouble)
+                    fun KaType?.isFloatingPoint() = this != null && (isFloat || isDouble)
                     return !expression.left?.getKtType().isFloatingPoint() && !expression.right?.getKtType().isFloatingPoint()
                 }
             }

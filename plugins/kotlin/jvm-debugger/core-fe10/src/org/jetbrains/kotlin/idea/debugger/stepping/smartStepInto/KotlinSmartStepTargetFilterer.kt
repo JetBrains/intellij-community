@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
@@ -138,7 +138,7 @@ private fun KaFunctionSymbol.getJvmSignature(): String? {
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun KtType.jvmName(element: PsiElement): String? {
+private fun KaType.jvmName(element: PsiElement): String? {
     if (this !is KaClassType) return null
     val psiType = asPsiType(element, allowErrorTypes = false) ?: return null
     if (symbol.isInlineClass()) {

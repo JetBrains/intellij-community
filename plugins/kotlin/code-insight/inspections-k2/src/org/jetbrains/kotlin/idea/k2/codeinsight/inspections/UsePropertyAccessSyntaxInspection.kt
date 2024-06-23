@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -397,7 +397,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     private fun canConvert(
         symbol: KaCallableSymbol,
         callExpression: KtExpression,
-        receiverType: KtType,
+        receiverType: KaType,
         propertyName: String
     ): Boolean {
         val allOverriddenSymbols = listOf(symbol) + symbol.allOverriddenSymbols
@@ -423,7 +423,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
      */
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KtType, propertyName: String): Boolean {
+    private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KaType, propertyName: String): Boolean {
         val fieldWithSameName = receiverType.scope?.declarationScope?.getCallableSymbols()
             ?.filter { it is KaJavaFieldSymbol && it.name.toString() == propertyName && !it.visibility.isPrivateOrPrivateToThis() }
             ?.singleOrNull()
@@ -434,7 +434,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     @OptIn(KaExperimentalApi::class)
     private fun getSyntheticProperty(
         propertyNames: List<String>,
-        receiverType: KtType
+        receiverType: KaType
     ): KaSyntheticJavaPropertySymbol? {
 
         val syntheticJavaPropertiesScope = receiverType.syntheticJavaPropertiesScope ?: return null
@@ -465,7 +465,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     context(KaSession)
     private fun syntheticPropertyTypeEqualsToExpected(
         syntheticProperty: KaSyntheticJavaPropertySymbol,
-        callReturnType: KtType,
+        callReturnType: KaType,
         propertyAccessorKind: PropertyAccessorKind
     ): Boolean {
         val propertyExpectedType = if (propertyAccessorKind is PropertyAccessorKind.Setter) {
@@ -483,7 +483,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         callExpression: KtExpression,
         propertyAccessorKind: PropertyAccessorKind,
         syntheticPropertyName: Name,
-        receiverType: KtType
+        receiverType: KaType
     ): Boolean {
         val qualifiedExpressionForSelector = callExpression.getQualifiedExpressionForSelector()
         val newExpression = if (propertyAccessorKind is PropertyAccessorKind.Setter) {
@@ -544,7 +544,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     private fun receiverTypeOfNewExpressionEqualsToExpectedReceiverType(
         callExpression: KtExpression,
         newExpression: KtExpression,
-        expectedReceiverType: KtType
+        expectedReceiverType: KaType
     ): Boolean {
         val resolvedCall = getSuccessfullyResolvedCall(callExpression, newExpression) ?: return false
         val replacementReceiverType =

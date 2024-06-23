@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
@@ -87,14 +87,14 @@ internal class FirWhenWithSubjectConditionContributor(
     }
 
     context(KaSession)
-    private fun getClassSymbol(subjectType: KtType): KaNamedClassOrObjectSymbol? {
+    private fun getClassSymbol(subjectType: KaType): KaNamedClassOrObjectSymbol? {
         val classType = subjectType as? KaClassType
         return classType?.symbol as? KaNamedClassOrObjectSymbol
     }
 
 
     context(KaSession)
-    private fun addNullIfWhenExpressionCanReturnNull(context: WeighingContext, type: KtType?) {
+    private fun addNullIfWhenExpressionCanReturnNull(context: WeighingContext, type: KaType?) {
         if (type?.canBeNull == true) {
             val lookupElement = createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
             applyWeighsAndAddElementToSink(context, lookupElement, symbolWithOrigin = null)
