@@ -251,7 +251,7 @@ object K2SemanticMatcher {
             val targetSymbol = targetDeclaration.symbol
             val patternSymbol = patternDeclaration.symbol
 
-            if (targetSymbol is KtDestructuringDeclarationSymbol && patternSymbol is KtDestructuringDeclarationSymbol) {
+            if (targetSymbol is KaDestructuringDeclarationSymbol && patternSymbol is KaDestructuringDeclarationSymbol) {
                 for ((targetEntry, patternEntry) in targetSymbol.entries.zip(patternSymbol.entries)) {
                     symbols[targetEntry] = patternEntry
                 }
