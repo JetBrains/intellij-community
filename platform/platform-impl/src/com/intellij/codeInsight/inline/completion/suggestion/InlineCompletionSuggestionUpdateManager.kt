@@ -9,6 +9,7 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionEleme
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -152,26 +153,30 @@ interface InlineCompletionSuggestionUpdateManager {
 
     @ApiStatus.Experimental
     override fun onInsertNextWord(event: InlineCompletionEvent.InsertNextWord, variant: InlineCompletionVariant.Snapshot): UpdateResult {
-      if (!variant.isActive) {
-        // Update of the current variant must invalidate all other variants, hard to maintain all the variants.
-        return Invalidated
-      }
-      val file = InlineCompletionSession.getOrNull(event.editor)?.request?.file ?: return Invalidated
-      val partialAcceptHandler = InlineCompletionPartialAcceptHandler.get()
-      val newElements = partialAcceptHandler.insertNextWord(event.editor, file, variant.elements)
-      return Changed(variant.copy(elements = newElements))
+      return doPartialAccept(event, variant, InlineCompletionPartialAcceptHandler::insertNextWord)
     }
 
     @ApiStatus.Experimental
     override fun onInsertNextLine(event: InlineCompletionEvent.InsertNextLine, variant: InlineCompletionVariant.Snapshot): UpdateResult {
-      // TODO merge two methods
+      return doPartialAccept(event, variant, InlineCompletionPartialAcceptHandler::insertNextLine)
+    }
+
+    private inline fun doPartialAccept(
+      event: InlineCompletionEvent.PartialAccept,
+      variant: InlineCompletionVariant.Snapshot,
+      implementation: InlineCompletionPartialAcceptHandler.(
+        editor: Editor,
+        file: PsiFile,
+        elements: List<InlineCompletionElement>
+      ) -> List<InlineCompletionElement>
+    ): UpdateResult {
       if (!variant.isActive) {
         // Update of the current variant must invalidate all other variants, hard to maintain all the variants.
         return Invalidated
       }
       val file = InlineCompletionSession.getOrNull(event.editor)?.request?.file ?: return Invalidated
       val partialAcceptHandler = InlineCompletionPartialAcceptHandler.get()
-      val newElements = partialAcceptHandler.insertNextLine(event.editor, file, variant.elements)
+      val newElements = partialAcceptHandler.implementation(event.editor, file, variant.elements)
       return Changed(variant.copy(elements = newElements))
     }
 
