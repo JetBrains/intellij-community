@@ -28,7 +28,7 @@ fun KtExpression.getImplicitReceiverInfo(): ImplicitReceiverInfo? {
     val declarationAssociatedClass = getAssociatedClass(declarationSymbol) ?: return null
 
     // Getting the implicit receiver
-    val allImplicitReceivers = reference.containingKtFile.getScopeContextForPosition(reference).implicitReceivers
+    val allImplicitReceivers = reference.containingKtFile.scopeContext(reference).implicitReceivers
     return getImplicitReceiverInfoOfClass(allImplicitReceivers, declarationAssociatedClass)
 }
 

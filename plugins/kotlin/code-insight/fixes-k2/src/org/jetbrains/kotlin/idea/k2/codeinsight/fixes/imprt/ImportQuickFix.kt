@@ -315,7 +315,7 @@ class ImportQuickFix(
                 suggestions = sortedImportCandidateSymbolsWithPriorities.map { (symbol, _) -> symbol.getFqName() }.distinct()
             )
 
-            val implicitReceiverTypes = containingKtFile.getScopeContextForPosition(position).implicitReceivers.map { it.type }
+            val implicitReceiverTypes = containingKtFile.scopeContext(position).implicitReceivers.map { it.type }
             // don't import callable on the fly as it might be unresolved because of an erroneous implicit receiver
             val doNotImportCallablesOnFly = implicitReceiverTypes.any { it is KaErrorType }
 

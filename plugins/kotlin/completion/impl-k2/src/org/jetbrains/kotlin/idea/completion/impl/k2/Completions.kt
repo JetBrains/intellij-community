@@ -188,7 +188,7 @@ internal object Completions {
             else -> positionContext.nameExpression.expectedType
         }
         val receiver = positionContext.explicitReceiver
-        val implicitReceivers = basicContext.originalKtFile.getScopeContextForPosition(positionContext.nameExpression).implicitReceivers
+        val implicitReceivers = basicContext.originalKtFile.scopeContext(positionContext.nameExpression).implicitReceivers
 
         return WeighingContext.createWeighingContext(
             basicContext,

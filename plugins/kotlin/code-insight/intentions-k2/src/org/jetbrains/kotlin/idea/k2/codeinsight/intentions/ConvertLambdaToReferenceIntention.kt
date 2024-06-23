@@ -400,7 +400,7 @@ context(KaSession)
 private fun KaNamedFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpression): List<KaNamedFunctionSymbol> {
     val scope = when (val containingSymbol = this.containingSymbol) {
         is KaClassSymbol -> containingSymbol.memberScope
-        else -> lambdaArgument.containingKtFile.getScopeContextForPosition(lambdaArgument).getCompositeScope()
+        else -> lambdaArgument.containingKtFile.scopeContext(lambdaArgument).getCompositeScope()
     }
 
     val symbols = scope.getCallableSymbols(name).filterIsInstance<KaNamedFunctionSymbol>().toList()

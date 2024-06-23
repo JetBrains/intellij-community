@@ -68,7 +68,7 @@ interface ExpressionImportWeigher {
                 }
                 listOfNotNull(correctedExplicitType)
             } else {
-                element.containingKtFile.getScopeContextForPosition(element).implicitReceivers.map { it.type }
+                element.containingKtFile.scopeContext(element).implicitReceivers.map { it.type }
             }
         }
 

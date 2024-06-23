@@ -63,7 +63,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
         val lookupNamesAdded = mutableSetOf<String>()
-        val scopeContext = originalKtFile.getScopeContextForPosition(variableOrParameter)
+        val scopeContext = originalKtFile.scopeContext(variableOrParameter)
 
         completeFromParametersInFile(variableOrParameter, visibilityChecker, lookupNamesAdded, scopeContext)
         completeClassesFromScopeContext(variableOrParameter, visibilityChecker, lookupNamesAdded, scopeContext, weighingContext)

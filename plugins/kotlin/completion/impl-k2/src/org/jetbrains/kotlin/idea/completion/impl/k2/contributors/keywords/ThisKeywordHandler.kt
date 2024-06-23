@@ -40,7 +40,7 @@ internal class ThisKeywordHandler(
         }
 
         val result = mutableListOf<LookupElement>()
-        val receivers = basicContext.originalKtFile.getScopeContextForPosition(expression).implicitReceivers
+        val receivers = basicContext.originalKtFile.scopeContext(expression).implicitReceivers
 
         receivers.forEachIndexed { index, receiver ->
             if (!canReferenceSymbolByThis(parameters, receiver.ownerSymbol)) {

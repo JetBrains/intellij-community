@@ -181,7 +181,7 @@ object WrapWithSafeLetCallFixFactories {
         val calleeName = calleeExpression?.text?.let(Name::identifierIfValid) ?: return null
         val callSite = callExpression.parent as? KtQualifiedExpression ?: callExpression
         val functionalVariableSymbol = (calleeExpression.resolveToCall()?.singleCallOrNull<KaSimpleVariableAccessCall>())?.symbol ?: return false
-        val localScope = callExpression.containingKtFile.getScopeContextForPosition(callSite).getCompositeScope()
+        val localScope = callExpression.containingKtFile.scopeContext(callSite).getCompositeScope()
         // If no symbol in the local scope contains the called symbol, then the symbol must be a member symbol.
 
         return localScope.getCallableSymbols(calleeName).any { symbol ->
@@ -235,7 +235,7 @@ object WrapWithSafeLetCallFixFactories {
             ?: nullableExpression?.surroundingExpression,
     ): List<WrapWithSafeLetCallModCommandAction> {
         if (nullableExpression == null || surroundingExpression == null) return emptyList()
-        val scope = nullableExpression.containingKtFile.getScopeContextForPosition(nullableExpression).getCompositeScope()
+        val scope = nullableExpression.containingKtFile.scopeContext(nullableExpression).getCompositeScope()
         val existingNames = scope.getPossibleCallableNames().mapNotNull { it.identifierOrNullIfSpecial }
 
         // Note, the order of the candidate matters. We would prefer the default `it` so the generated code won't need to declare the

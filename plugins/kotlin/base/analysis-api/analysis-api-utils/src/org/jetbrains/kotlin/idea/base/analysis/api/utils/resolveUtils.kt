@@ -109,7 +109,7 @@ fun collectReceiverTypesForElement(callElement: KtElement, explicitReceiver: KtE
     return if (explicitReceiver != null) {
         collectReceiverTypesForExplicitReceiverExpression(explicitReceiver)
     } else {
-        val scopeContext = callElement.containingKtFile.getScopeContextForPosition(callElement)
+        val scopeContext = callElement.containingKtFile.scopeContext(callElement)
         scopeContext.implicitReceivers.map { it.type }
     }
 }

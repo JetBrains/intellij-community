@@ -245,7 +245,7 @@ object K2CreateFunctionFromUsageBuilder {
     }
     context (KaSession)
     private fun computeImplicitReceiverType(calleeExpression: KtSimpleNameExpression): KaType? {
-        val implicitReceiver = calleeExpression.containingKtFile.getScopeContextForPosition(calleeExpression).implicitReceivers.firstOrNull()
+        val implicitReceiver = calleeExpression.containingKtFile.scopeContext(calleeExpression).implicitReceivers.firstOrNull()
         if (implicitReceiver != null) {
             val callable = (calleeExpression.getParentOfTypeAndBranch<KtFunction> { bodyExpression }
                 ?: calleeExpression.getParentOfTypeAndBranches<KtProperty> { listOf(getter, setter) })

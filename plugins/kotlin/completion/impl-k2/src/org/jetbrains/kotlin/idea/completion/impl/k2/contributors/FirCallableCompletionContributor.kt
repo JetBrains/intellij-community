@@ -130,7 +130,7 @@ internal open class FirCallableCompletionContributor(
         sessionParameters: FirCompletionSessionParameters,
     ): Unit = with(positionContext) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
-        val scopesContext = originalKtFile.getScopeContextForPosition(nameExpression)
+        val scopesContext = originalKtFile.scopeContext(nameExpression)
 
         val extensionChecker = if (positionContext is KotlinSimpleNameReferencePositionContext) {
             CachingKtCompletionExtensionCandidateChecker(
