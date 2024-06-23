@@ -10,7 +10,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.annotations.*
-import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
+import org.jetbrains.kotlin.analysis.api.components.KaDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
@@ -160,7 +160,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
     @OptIn(KaNonPublicApi::class)
     override fun createOutputDescriptor(): OutputDescriptor<KtType> {
         analyze(extractionData.commonParent) {
-            val exitSnapshot: KtDataFlowExitPointSnapshot = getExitPointSnapshot(extractionData.expressions)
+            val exitSnapshot: KaDataFlowExitPointSnapshot = getExitPointSnapshot(extractionData.expressions)
             val defaultExpressionInfo = exitSnapshot.defaultExpressionInfo
             val typeOfDefaultFlow = defaultExpressionInfo?.type?.takeIf {
                 //extract as Unit function if the last expression is not used afterward
