@@ -412,7 +412,7 @@ internal class KotlinIdeDeclarationRenderer(
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = with(analysisSession) {
-                if (owner is KtNonErrorClassType) {
+                if (owner is KaClassType) {
                     val superTypes = (owner.expandedSymbol as? KaAnonymousObjectSymbol)?.superTypes
                     if (superTypes != null) {
                         printer.append("<".escape())
@@ -425,7 +425,7 @@ internal class KotlinIdeDeclarationRenderer(
                     }
                 }
                 val qName = when (owner) {
-                    is KtNonErrorClassType -> owner.classId.asSingleFqName()
+                    is KaClassType -> owner.classId.asSingleFqName()
                     is KtTypeParameterType -> owner.symbol.containingSymbol?.getFqNameIfPackageOrNonLocal()?.child(name)
                         ?: FqName.topLevel(name)
 

@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -85,7 +85,7 @@ private fun isArrayGeneratorConstructorCall(symbol: KaFunctionSymbol): Boolean {
         return isArrayClass && checkParameters(symbol)
     } else if (symbol is KaNamedFunctionSymbol && symbol.isExtension) {
         val receiverType = symbol.receiverType
-        return receiverType is KtNonErrorClassType
+        return receiverType is KaClassType
                 && receiverType.classId in StandardClassIds.elementTypeByUnsignedArrayType
                 && symbol.callableId?.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME
                 && checkParameters(symbol)

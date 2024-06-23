@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
@@ -229,7 +229,7 @@ object ChangeTypeQuickFixFactories {
             buildList {
                 add(UpdateTypeQuickFix(entryWithWrongType, TargetType.VARIABLE, createTypeInfo(diagnostic.destructingType)))
 
-                val classSymbol = (diagnostic.psi.getKtType() as? KtNonErrorClassType)?.symbol as? KaSymbolWithMembers ?: return@buildList
+                val classSymbol = (diagnostic.psi.getKtType() as? KaClassType)?.symbol as? KaSymbolWithMembers ?: return@buildList
                 val componentFunction = classSymbol.memberScope
                     .getCallableSymbols(diagnostic.componentFunctionName)
                     .firstOrNull()?.psi as? KtCallableDeclaration

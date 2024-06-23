@@ -226,7 +226,7 @@ class KotlinNameSuggester(
             }
 
             fun getClassId(type: KtType): ClassId = when (type) {
-                is KtNonErrorClassType -> type.classId
+                is KaClassType -> type.classId
                 is KtTypeParameterType -> ClassId(FqName.ROOT, FqName.topLevel(type.name), false)
 
                 else -> ClassId(FqName.ROOT, FqName.topLevel(Name.identifier("Value")), false)
@@ -591,12 +591,12 @@ private val ITERABLE_LIKE_CLASS_IDS =
 
 context(KaSession)
 private fun getIterableElementType(type: KtType): KtType? {
-    if (type is KtNonErrorClassType && type.classId in ITERABLE_LIKE_CLASS_IDS) {
+    if (type is KaClassType && type.classId in ITERABLE_LIKE_CLASS_IDS) {
         return type.ownTypeArguments.singleOrNull()?.type
     }
 
     for (supertype in type.getAllSuperTypes()) {
-        if (supertype is KtNonErrorClassType) {
+        if (supertype is KaClassType) {
             if (supertype.classId in ITERABLE_LIKE_CLASS_IDS) {
                 return supertype.ownTypeArguments.singleOrNull()?.type
             }

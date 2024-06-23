@@ -279,7 +279,7 @@ object K2CreateFunctionFromUsageUtil {
         if (type == null || !visited.add(type)) return true
         if (!predicate.invoke(type)) return false
         return when (type) {
-            is KtNonErrorClassType -> {
+            is KaClassType -> {
                 acceptTypeQualifiers(type.qualifiers, visited, predicate)
                         && (type !is KtFunctionalType || (accept(type.returnType, visited,predicate) && accept(type.receiverType, visited, predicate)))
             }

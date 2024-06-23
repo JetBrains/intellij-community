@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -176,7 +176,7 @@ class CodeInliner(
             },
             renderClassifier = {
                 analyze(call) {
-                    (it as? KtNonErrorClassType)?.classId?.asSingleFqName()?.asString()
+                    (it as? KaClassType)?.classId?.asSingleFqName()?.asString()
                 }
             }
         )

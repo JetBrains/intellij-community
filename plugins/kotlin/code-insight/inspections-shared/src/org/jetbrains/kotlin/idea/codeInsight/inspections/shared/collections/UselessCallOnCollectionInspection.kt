@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -73,7 +73,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         calleeExpression: KtExpression,
         conversion: Conversion
     ) {
-        val receiverType = expression.receiverExpression.getKtType() as? KtNonErrorClassType ?: return
+        val receiverType = expression.receiverExpression.getKtType() as? KaClassType ?: return
         val receiverTypeArgument = receiverType.ownTypeArguments.singleOrNull() ?: return
         val receiverTypeArgumentType = receiverTypeArgument.type ?: return
         val resolvedCall = expression.resolveToCall()?.singleFunctionCallOrNull() ?: return

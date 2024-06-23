@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -71,7 +71,7 @@ object ReplaceCallFixFactories {
             if (operationToken in KtTokens.AUGMENTED_ASSIGNMENTS && left is KtArrayAccessExpression) {
                 val type = left.arrayExpression?.getKtType()
                     ?: return@IntentionBased emptyList()
-                val argumentType = (type as? KtNonErrorClassType)?.ownTypeArguments?.firstOrNull()
+                val argumentType = (type as? KaClassType)?.ownTypeArguments?.firstOrNull()
                 if (type.isMap() && argumentType?.type?.isMarkedNullable != true) {
                     return@IntentionBased emptyList()
                 }

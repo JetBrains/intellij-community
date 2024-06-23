@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -60,7 +60,7 @@ object ConvertReferenceToLambdaUtil {
                 val paramNameAndTypes = callableSymbol.valueParameters.map { it.name.asString() to it.returnType }
                 if (matchingParameterType != null) {
                     val parameterSize =
-                        (matchingParameterType as KtNonErrorClassType).ownTypeArguments.size - (if (acceptsReceiverAsParameter) 2 else 1)
+                        (matchingParameterType as KaClassType).ownTypeArguments.size - (if (acceptsReceiverAsParameter) 2 else 1)
                     if (parameterSize >= 0) paramNameAndTypes.take(parameterSize) else paramNameAndTypes
                 } else {
                     paramNameAndTypes

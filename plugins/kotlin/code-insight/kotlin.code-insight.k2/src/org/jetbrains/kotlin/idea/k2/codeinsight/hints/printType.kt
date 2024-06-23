@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -55,7 +55,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
             markedNullable = lower.isMarkedNullable
             if (isMutabilityFlexibleType(lower, upper)) {
                 text("(")
-                printClassId((lower as KtNonErrorClassType).classId, "Mutable")
+                printClassId((lower as KaClassType).classId, "Mutable")
                 text(")")
                 printKtType(upper.withNullability(KaTypeNullability.NON_NULLABLE))
             } else {
@@ -63,7 +63,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
                     printKtType(lower)
                     text("!")
                 } else if (isNonNullableFlexibleType(upper, lower)) {
-                    printNonErrorClassType(upper as KtNonErrorClassType, lower as KtNonErrorClassType)
+                    printNonErrorClassType(upper as KaClassType, lower as KaClassType)
                 } else {
                     // fallback case
                     printKtType(lower)
@@ -128,7 +128,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
 }
 
 context(KaSession)
-private fun PresentationTreeBuilder.printNonErrorClassType(type: KtNonErrorClassType, anotherType: KtNonErrorClassType? = null) {
+private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
     type.classId.let { printClassId(it, shortNameWithCompanionNameSkip(it)) }
 
     val ownTypeArguments = type.ownTypeArguments
@@ -183,7 +183,7 @@ private fun PresentationTreeBuilder.printClassId(classId: ClassId, name: String)
 
 private fun isMutabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
     // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer.AS_SHORT.isMutabilityFlexibleType
-    if (lower !is KtNonErrorClassType || upper !is KtNonErrorClassType) return false
+    if (lower !is KaClassType || upper !is KaClassType) return false
 
     return (StandardClassIds.Collections.mutableCollectionToBaseCollection[lower.classId] == upper.classId)
 }
@@ -194,7 +194,7 @@ private fun isNullabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
         if (lower is KtTypeParameterType && upper is KtTypeParameterType && lower.symbol == upper.symbol) {
             return true
         }
-        if (lower is KtNonErrorClassType && upper is KtNonErrorClassType && lower.classId == upper.classId) {
+        if (lower is KaClassType && upper is KaClassType && lower.classId == upper.classId) {
             return isSimilarTypes(lower, upper)
         }
     }
@@ -202,7 +202,7 @@ private fun isNullabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
 }
 
 private fun isNonNullableFlexibleType(lower: KtType, upper: KtType): Boolean {
-    if (lower is KtNonErrorClassType && upper is KtNonErrorClassType &&
+    if (lower is KaClassType && upper is KaClassType &&
         lower.classId == upper.classId &&
         lower.nullability == KaTypeNullability.NON_NULLABLE &&
         upper.nullability == lower.nullability &&
@@ -219,8 +219,8 @@ private fun isNonNullableFlexibleType(lower: KtType, upper: KtType): Boolean {
 }
 
 private fun isSimilarTypes(
-    lower: KtNonErrorClassType,
-    upper: KtNonErrorClassType
+    lower: KaClassType,
+    upper: KaClassType
 ): Boolean = lower.ownTypeArguments.zip(upper.ownTypeArguments)
     .none { (lowerTypeArg, upperTypeArg) -> lowerTypeArg.type != upperTypeArg.type }
 

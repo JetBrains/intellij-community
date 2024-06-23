@@ -127,7 +127,7 @@ object FunctionInsertionHelper {
                     // Add type parameters possibly inferred by type arguments of parameter's upper-bound
                     // e.g. <T, C: Iterable<T>>, so T is inferred from C
                     type.symbol.upperBounds
-                        .filterIsInstance<KtNonErrorClassType>()
+                        .filterIsInstance<KaClassType>()
                         .filter { it.ownTypeArguments.isNotEmpty() }
                         .forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType = false) }
                 }

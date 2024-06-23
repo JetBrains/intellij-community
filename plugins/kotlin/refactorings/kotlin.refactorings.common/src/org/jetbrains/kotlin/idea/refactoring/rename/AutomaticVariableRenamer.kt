@@ -16,7 +16,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
@@ -123,7 +123,7 @@ private fun KtCallableDeclaration.isCollectionLikeOf(classPsiElement: PsiNamedEl
     analyze(this) {
         fun KtType.isCollectionLikeOf(classPsiElement: PsiNamedElement): Boolean {
             if (isArrayOrPrimitiveArray || isClassTypeWithClassId(StandardClassIds.Collection) || getAllSuperTypes().any { it.isClassTypeWithClassId(StandardClassIds.Collection) }) {
-                val typeArgument = (this as? KtNonErrorClassType)?.ownTypeArguments?.singleOrNull()?.type ?: return false
+                val typeArgument = (this as? KaClassType)?.ownTypeArguments?.singleOrNull()?.type ?: return false
                 if (typeArgument.expandedSymbol?.psi == classPsiElement) {
                     return true
                 }

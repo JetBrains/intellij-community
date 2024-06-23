@@ -54,7 +54,7 @@ private fun KtType.containsErrorType(): Boolean = when (this) {
                 || ownTypeArguments.any { it.type?.containsErrorType() == true }
     }
 
-    is KtNonErrorClassType -> ownTypeArguments.any { it.type?.containsErrorType() == true }
+    is KaClassType -> ownTypeArguments.any { it.type?.containsErrorType() == true }
     is KtDefinitelyNotNullType -> original.containsErrorType()
     is KtFlexibleType -> lowerBound.containsErrorType() || upperBound.containsErrorType()
     is KtIntersectionType -> conjuncts.any { it.containsErrorType() }

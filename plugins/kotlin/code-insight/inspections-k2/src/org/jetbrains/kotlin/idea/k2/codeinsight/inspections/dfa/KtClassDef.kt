@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.Modality
@@ -37,7 +37,7 @@ class KtClassDef(
         analyze(module) {
             val classLikeSymbol = cls.restoreSymbol() ?: return@analyze false
             classLikeSymbol.superTypes.any { superType ->
-                (superType as? KtNonErrorClassType)?.expandedSymbol?.classId?.asFqNameString() == superClassQualifiedName
+                (superType as? KaClassType)?.expandedSymbol?.classId?.asFqNameString() == superClassQualifiedName
             }
         }
 
@@ -91,7 +91,7 @@ class KtClassDef(
         analyze(module) {
             val classLikeSymbol = cls.restoreSymbol() ?: return@analyze Stream.empty<TypeConstraints.ClassDef>()
             val list: List<TypeConstraints.ClassDef> = classLikeSymbol.superTypes.asSequence()
-                .filterIsInstance<KtNonErrorClassType>()
+                .filterIsInstance<KaClassType>()
                 .mapNotNull { type -> type.expandedSymbol }
                 .map { symbol -> symbol.classDef() }
                 .toList()

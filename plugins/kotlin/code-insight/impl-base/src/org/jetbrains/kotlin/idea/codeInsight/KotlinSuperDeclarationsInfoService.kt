@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
@@ -47,7 +47,7 @@ object SuperDeclarationProvider {
                     is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.directlyOverriddenSymbols ?: emptySequence()
 
                     is KaCallableSymbol -> symbol.directlyOverriddenSymbols
-                    is KaClassSymbol -> symbol.superTypes.asSequence().mapNotNull { (it as? KtNonErrorClassType)?.symbol }
+                    is KaClassSymbol -> symbol.superTypes.asSequence().mapNotNull { (it as? KaClassType)?.symbol }
                     else -> emptySequence()
                 }
 

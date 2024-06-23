@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
@@ -88,7 +88,7 @@ internal class FirWhenWithSubjectConditionContributor(
 
     context(KaSession)
     private fun getClassSymbol(subjectType: KtType): KaNamedClassOrObjectSymbol? {
-        val classType = subjectType as? KtNonErrorClassType
+        val classType = subjectType as? KaClassType
         return classType?.symbol as? KaNamedClassOrObjectSymbol
     }
 
@@ -148,7 +148,7 @@ internal class FirWhenWithSubjectConditionContributor(
             is KaAnonymousObjectSymbol -> return false
             is KaNamedClassOrObjectSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
             is KaTypeAliasSymbol -> {
-                (symbol.expandedType as? KtNonErrorClassType)?.symbol?.let { it is KaNamedSymbol && isPrefixNeeded(it) } == true
+                (symbol.expandedType as? KaClassType)?.symbol?.let { it is KaNamedSymbol && isPrefixNeeded(it) } == true
             }
 
             is KaTypeParameterSymbol -> true

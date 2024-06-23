@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -106,7 +106,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
 
     context(KaSession)
     private fun KtType.isResolvedClassType(): Boolean = when (this) {
-        is KtNonErrorClassType -> ownTypeArguments.mapNotNull { it.type }.all { it.isResolvedClassType() }
+        is KaClassType -> ownTypeArguments.mapNotNull { it.type }.all { it.isResolvedClassType() }
         else -> false
     }
 }

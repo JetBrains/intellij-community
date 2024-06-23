@@ -46,7 +46,7 @@ fun PsiParameter.typeFqNamePossiblyMappedToKotlin(): FqName {
     // TODO: support (nested) array types: KTIJ-28739
     // TODO: use `asKtType` function in the K2 implementation (it doesn't work in K1 yet: KT-65545)
     // TODO: revise vararg support (depends on KT-66058)
-    //val ktType = type.asKtType(useSitePosition = this) as? KtNonErrorClassType ?: return null
+    //val ktType = type.asKtType(useSitePosition = this) as? KaClassType ?: return null
     //return ktType.classId.asSingleFqName()
 
     val typeName = if (type is PsiEllipsisType) type.canonicalText.trimEnd('.') else type.canonicalText

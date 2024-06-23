@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -48,7 +48,7 @@ internal class ReplaceCollectionCountWithSizeInspection : KotlinApplicableInspec
     context(KaSession)
     override fun prepareContext(element: KtCallExpression): Unit? {
         val functionSymbol = element.resolveToFunctionSymbol() ?: return null
-        val receiverClassId = (functionSymbol.receiverType as? KtNonErrorClassType)?.classId ?: return null
+        val receiverClassId = (functionSymbol.receiverType as? KaClassType)?.classId ?: return null
         return (functionSymbol.callableId == COLLECTION_COUNT_CALLABLE_ID
                 && receiverClassId in COLLECTION_CLASS_IDS).asUnit
     }

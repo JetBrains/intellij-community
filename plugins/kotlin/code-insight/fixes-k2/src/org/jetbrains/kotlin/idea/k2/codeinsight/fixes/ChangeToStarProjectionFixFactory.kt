@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.base.psi.typeArguments
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -66,7 +66,7 @@ internal object ChangeToStarProjectionFixFactory {
                 else ->
                     null
             }
-            val typeArguments = (type as? KtNonErrorClassType)?.ownTypeArguments
+            val typeArguments = (type as? KaClassType)?.ownTypeArguments
             if (typeArguments?.any { it !is KtStarTypeProjection && it.type !is KtTypeParameterType } == true) return null
         }
 

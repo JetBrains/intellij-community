@@ -108,7 +108,7 @@ internal abstract class AbstractKotlinForLoopNumbersPostfixTemplate(
     allExpressions(
         ValuedFilter,
         StatementFilter,
-        ExpressionTypeFilter { it is KtNonErrorClassType && !it.isMarkedNullable && it.classId == INT_CLASS_ID }),
+        ExpressionTypeFilter { it is KaClassType && !it.isMarkedNullable && it.classId == INT_CLASS_ID }),
     /* provider = */ provider
 ) {
     override fun setVariables(template: Template, element: PsiElement) {
@@ -156,7 +156,7 @@ internal fun canBeIterated(type: KtType, checkNullability: Boolean = true): Bool
         is KtIntersectionType -> type.conjuncts.all { canBeIterated(it) }
         is KtDefinitelyNotNullType -> canBeIterated(type.original, checkNullability = false)
         is KtTypeParameterType -> type.symbol.upperBounds.any { canBeIterated(it) }
-        is KtNonErrorClassType -> {
+        is KaClassType -> {
             (!checkNullability || !type.isMarkedNullable)
                     && (type.classId in ITERABLE_CLASS_IDS || type.getAllSuperTypes(true).any { canBeIterated(it) })
         }

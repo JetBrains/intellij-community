@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -30,7 +29,7 @@ internal object AddDataModifierFixFactory {
             element.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
         }
 
-        val type = (callableSymbol?.returnType as? KtNonErrorClassType)?.typeArguments?.firstOrNull()?.type
+        val type = (callableSymbol?.returnType as? KaClassType)?.typeArguments?.firstOrNull()?.type
             ?: callableSymbol?.returnType
 
         val classSymbol = (type as? KaClassType)?.symbol as? KaNamedClassOrObjectSymbol

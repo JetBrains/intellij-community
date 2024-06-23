@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -114,7 +114,7 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                                 analyze(elt) {
                                     val annotationSymbol = elt.resolveToCall()?.singleConstructorCallOrNull()?.symbol
                                         ?: return false
-                                    val annotationType = annotationSymbol.returnType as? KtNonErrorClassType ?: return false
+                                    val annotationType = annotationSymbol.returnType as? KaClassType ?: return false
                                     val fqName = annotationType.classId.asFqNameString()
                                     if (fqName != annotationFQN) return true
                                 }

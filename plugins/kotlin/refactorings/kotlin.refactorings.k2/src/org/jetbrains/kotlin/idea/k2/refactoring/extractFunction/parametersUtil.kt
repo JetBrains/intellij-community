@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -136,7 +136,7 @@ internal fun ExtractionData.inferParametersInfo(
 
     val existingParameterNames = hashSetOf<String>()
     val generateArguments: (KtType) -> List<KtType> =
-        { ktType -> (ktType as? KtNonErrorClassType)?.ownTypeArguments?.mapNotNull { it.type } ?: emptyList() }
+        { ktType -> (ktType as? KaClassType)?.ownTypeArguments?.mapNotNull { it.type } ?: emptyList() }
     for ((namedElement, parameter) in extractedDescriptorToParameter) {
         if (!parameter
                 .parameterType

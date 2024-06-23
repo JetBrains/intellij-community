@@ -35,7 +35,7 @@ internal fun KtType?.toDfType(): DfType {
     if (canBeNull()) {
         var notNullableType = this.withNullability(KaTypeNullability.NON_NULLABLE).toDfTypeNotNullable()
         if (notNullableType is DfPrimitiveType) {
-            val cls = (this as? KtNonErrorClassType)?.expandedSymbol
+            val cls = (this as? KaClassType)?.expandedSymbol
             val boxedType = if (cls != null) {
                 TypeConstraints.exactClass(cls.classDef()).asDfType()
             } else {
@@ -55,7 +55,7 @@ internal fun KtType?.toDfType(): DfType {
 context(KaSession)
 private fun KtType.toDfTypeNotNullable(): DfType {
     return when (this) {
-        is KtNonErrorClassType -> {
+        is KaClassType -> {
             // TODO: anonymous objects
             when (classId) {
                 DefaultTypeClassIds.BOOLEAN -> DfTypes.BOOLEAN
@@ -185,7 +185,7 @@ internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = w
 }
 
 context(KaSession)
-internal fun KtType.toPsiPrimitiveType(): PsiPrimitiveType = when ((this as? KtNonErrorClassType)?.classId) {
+internal fun KtType.toPsiPrimitiveType(): PsiPrimitiveType = when ((this as? KaClassType)?.classId) {
     DefaultTypeClassIds.BOOLEAN -> PsiTypes.booleanType()
     DefaultTypeClassIds.BYTE -> PsiTypes.byteType()
     DefaultTypeClassIds.CHAR -> PsiTypes.charType()

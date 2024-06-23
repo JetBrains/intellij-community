@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
@@ -287,7 +287,7 @@ class KtSymbolFromIndexProvider private constructor(
         if (type is KtFlexibleType) {
             return findAllNamesForType(type.lowerBound)
         }
-        if (type !is KtNonErrorClassType) return@buildSet
+        if (type !is KaClassType) return@buildSet
 
         val typeName = type.classId.shortClassName.let {
             if (it.isSpecial) return@buildSet

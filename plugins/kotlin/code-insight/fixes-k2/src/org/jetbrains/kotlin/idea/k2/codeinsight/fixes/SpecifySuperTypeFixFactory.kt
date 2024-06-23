@@ -11,7 +11,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.toMutableSmartList
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
@@ -96,7 +96,7 @@ object SpecifySuperTypeFixFactory {
         val superTypes = candidates.mapNotNull { superType ->
             when (superType) {
                 is KaErrorType -> null
-                is KtNonErrorClassType ->
+                is KaClassType ->
                     TypeStringWithoutArgs(superType.classId.asSingleFqName().render(), superType.classId.shortClassName.render())
 
                 else -> error("Expected a class or an error type, but ${superType::class} was found")

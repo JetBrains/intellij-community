@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.name.CallableId
@@ -75,7 +75,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
             allowAnalysisFromWriteAction {
                 analyze(element) {
                     val type = element.getKtType()
-                    if (type is KtNonErrorClassType) {
+                    if (type is KaClassType) {
                         val klass = type.symbol
                         if (klass is KaNamedClassOrObjectSymbol) {
                             return when (klass.classKind) {
@@ -145,7 +145,7 @@ private sealed class CaseBranch {
 }
 
 private fun isSealedType(type: KtType): Boolean {
-    if (type is KtNonErrorClassType) {
+    if (type is KaClassType) {
         val symbol = type.symbol
         if (symbol is KaNamedClassOrObjectSymbol) {
             return symbol.classKind == KaClassKind.ENUM_CLASS || symbol.modality == Modality.SEALED

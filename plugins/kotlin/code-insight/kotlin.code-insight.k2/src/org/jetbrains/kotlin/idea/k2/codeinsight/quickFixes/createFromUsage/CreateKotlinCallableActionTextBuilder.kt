@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQua
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
@@ -95,7 +95,7 @@ object CreateKotlinCallableActionTextBuilder {
 
     context (KaSession)
     private fun KtType.selfOrSuperTypeWithAbstractMatch(isAbstract: Boolean): KtType? {
-        if (this.hasAbstractDeclaration() == isAbstract || this is KtNonErrorClassType && (symbol as? KaClassSymbol)?.classKind == KaClassKind.INTERFACE) return this
+        if (this.hasAbstractDeclaration() == isAbstract || this is KaClassType && (symbol as? KaClassSymbol)?.classKind == KaClassKind.INTERFACE) return this
         return getDirectSuperTypes().firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
     }
 

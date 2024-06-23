@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeLeftAndRightSigns
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -67,7 +67,7 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
             else -> {
                 val type = resolveToCall()?.singleFunctionCallOrNull()?.symbol?.returnType
                     ?: ((this as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KaCallableSymbol)?.returnType
-                (type is KtNonErrorClassType) && (
+                (type is KaClassType) && (
                         type.classId in DefaultTypeClassIds.PRIMITIVES ||
                                 type.getAllSuperTypes(true).any {
                                     val classTypeWithClassId = it.isClassTypeWithClassId(StandardClassIds.Comparable)

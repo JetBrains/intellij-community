@@ -681,8 +681,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KaSession)
     private fun KtType?.isSubTypeOf(wantedType: ClassId) =
-        this is KtNonErrorClassType && classId == wantedType ||
-        this != null && getAllSuperTypes().any { type -> type is KtNonErrorClassType && type.classId == wantedType }
+        this is KaClassType && classId == wantedType ||
+        this != null && getAllSuperTypes().any { type -> type is KaClassType && type.classId == wantedType }
 
     context(KaSession)
     private fun processMathExpression(expr: KtBinaryExpression, mathOp: LongRangeBinOp) {
@@ -1294,7 +1294,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processClassLiteralExpression(expr: KtClassLiteralExpression) {
         val kotlinType = expr.getKotlinType()
         val receiver = expr.receiverExpression
-        if (kotlinType is KtNonErrorClassType) {
+        if (kotlinType is KaClassType) {
             if (receiver is KtSimpleNameExpression && receiver.mainReference.resolve() is KtClass) {
                 val arguments = kotlinType.ownTypeArguments
                 if (arguments.size == 1) {
@@ -1866,7 +1866,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KaSession)
     private fun KtType?.isInlineClass() =
-        ((this as? KtNonErrorClassType)?.expandedSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true
+        ((this as? KaClassType)?.expandedSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true
 
     context(KaSession)
     private fun balanceType(leftType: KtType?, rightType: KtType?, forceEqualityByContent: Boolean): KtType? = when {

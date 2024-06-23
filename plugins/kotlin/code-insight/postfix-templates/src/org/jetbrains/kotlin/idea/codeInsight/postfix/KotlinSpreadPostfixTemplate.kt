@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -41,5 +41,5 @@ private val ARRAY_CLASS_FQ_NAMES: Set<FqNameUnsafe> = buildSet {
 }
 
 private fun KtType.canSpread(): Boolean {
-    return this is KtNonErrorClassType && classId.asSingleFqName().toUnsafe() in ARRAY_CLASS_FQ_NAMES
+    return this is KaClassType && classId.asSingleFqName().toUnsafe() in ARRAY_CLASS_FQ_NAMES
 }

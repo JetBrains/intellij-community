@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
@@ -281,7 +281,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
             fun processValue(value: KaAnnotationValue, isRecursive: Boolean) {
                 when (value) {
                     is KaAnnotationValue.ClassLiteralValue -> {
-                        val classId = (value.type as? KtNonErrorClassType)?.classId?.takeUnless { it.isLocal }
+                        val classId = (value.type as? KaClassType)?.classId?.takeUnless { it.isLocal }
                         if (classId != null) {
                             optInMarkerNames.add(classId.asSingleFqName())
                         }

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -105,7 +105,7 @@ private fun buildType(type: KtType, typeArgumentsMapping: Map<KaTypeParameterSym
     return when (type) {
         is KtTypeParameterType -> typeArgumentsMapping[type.symbol]
 
-        is KtNonErrorClassType -> buildClassType(type.symbol) {
+        is KaClassType -> buildClassType(type.symbol) {
             type.ownTypeArguments.mapNotNull { it.type }.forEach {
                 val builtType = buildType(it, typeArgumentsMapping)
                 if (builtType != null) argument(builtType)
@@ -242,7 +242,7 @@ private fun collectTypeParameterTypes(type: KtType): Set<KtTypeParameterType> {
     fun collect(type: KtType) {
         when (type) {
             is KtTypeParameterType -> result.add(type)
-            is KtNonErrorClassType -> type.ownTypeArguments.mapNotNull { it.type }.forEach { collect(it) }
+            is KaClassType -> type.ownTypeArguments.mapNotNull { it.type }.forEach { collect(it) }
             else -> {}
         }
     }

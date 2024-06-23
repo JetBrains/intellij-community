@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -123,7 +123,7 @@ internal class FirAnnotationCompletionContributor(
         }
 
         is KaTypeAliasSymbol -> {
-            val expendedClass = (classifierSymbol.expandedType as? KtNonErrorClassType)?.symbol
+            val expendedClass = (classifierSymbol.expandedType as? KaClassType)?.symbol
             expendedClass?.let { filterClassifiers(it) } == true
         }
     }

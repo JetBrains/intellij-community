@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
@@ -29,7 +29,7 @@ fun getParameterNames(expression: KtExpression): List<String>? {
 }
 
 context(KaSession)
-private fun getParameterNames(type: KtNonErrorClassType): List<String>? {
+private fun getParameterNames(type: KaClassType): List<String>? {
     if (type.nullability != KaTypeNullability.NON_NULLABLE) return null
     val classSymbol = type.expandedSymbol
 
@@ -44,7 +44,7 @@ private fun getParameterNames(type: KtNonErrorClassType): List<String>? {
 }
 
 context(KaSession)
-private fun getClassType(declaration: KtDestructuringDeclaration): KtNonErrorClassType? {
+private fun getClassType(declaration: KtDestructuringDeclaration): KaClassType? {
     val initializer = declaration.initializer
     val type = if (initializer != null) {
         initializer.getKtType()
@@ -55,10 +55,10 @@ private fun getClassType(declaration: KtDestructuringDeclaration): KtNonErrorCla
     return toNonErrorClassType(type)
 }
 
-private fun toNonErrorClassType(type: KtType?): KtNonErrorClassType? {
+private fun toNonErrorClassType(type: KtType?): KaClassType? {
     return when (type) {
-        is KtNonErrorClassType -> type
-        is KtFlexibleType -> type.lowerBound as? KtNonErrorClassType
+        is KaClassType -> type
+        is KtFlexibleType -> type.lowerBound as? KaClassType
         else -> null
     }
 }

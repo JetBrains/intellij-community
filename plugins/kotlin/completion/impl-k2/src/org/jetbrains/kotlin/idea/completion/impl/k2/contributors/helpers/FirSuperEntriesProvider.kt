@@ -10,7 +10,7 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.nextLeafs
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -24,7 +24,7 @@ internal object FirSuperEntriesProvider {
         val containingClass = context.getStrictParentOfType<KtClassOrObject>() ?: return emptyList()
         val containingClassSymbol = containingClass.getClassOrObjectSymbol() ?: return emptyList()
         return containingClassSymbol.superTypes.mapNotNull { superType ->
-            val classType = superType as? KtNonErrorClassType ?: return@mapNotNull null
+            val classType = superType as? KaClassType ?: return@mapNotNull null
             classType.symbol as? KaNamedClassOrObjectSymbol
         }
     }

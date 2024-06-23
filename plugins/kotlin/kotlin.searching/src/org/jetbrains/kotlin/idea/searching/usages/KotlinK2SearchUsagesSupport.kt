@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -192,7 +192,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             is KtCallableDeclaration -> {
                 analyze(psiElement) {
                     fun resolveKtClassOrObject(ktType: KtType): KtClassOrObject? {
-                        return (ktType as? KtNonErrorClassType)?.symbol?.psiSafe<KtClassOrObject>()
+                        return (ktType as? KaClassType)?.symbol?.psiSafe<KtClassOrObject>()
                     }
 
                     when (val elementSymbol = psiElement.symbol) {
@@ -207,7 +207,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                                     analyze(declaration) {
                                         fun KtType.containsClassType(clazz: KtClassOrObject?): Boolean {
                                             if (clazz == null) return false
-                                            return this is KtNonErrorClassType && (clazz.isEquivalentTo(symbol.psi) ||
+                                            return this is KaClassType && (clazz.isEquivalentTo(symbol.psi) ||
                                                     ownTypeArguments.any { arg ->
                                                         when (arg) {
                                                             is KtStarTypeProjection -> false

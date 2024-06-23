@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.utils.getActualAnnotationTargets
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix
@@ -109,7 +109,7 @@ private object OptInGeneralUtils : OptInGeneralUtilsBase() {
     private fun findMarkerClassId(annotation: KaAnnotation): ClassId? {
         val argument = annotation.arguments.find { arg -> arg.name == OptInNames.OPT_IN_ANNOTATION_CLASS } ?: return null
         val value = argument.expression as? KaAnnotationValue.ClassLiteralValue ?: return null
-        val type = value.type as? KtNonErrorClassType ?: return null
+        val type = value.type as? KaClassType ?: return null
         return type.classId.takeUnless { it.isLocal }
     }
 }

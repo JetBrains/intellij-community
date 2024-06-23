@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
@@ -167,7 +167,7 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
           is KaAnnotationValue.ArrayValue -> value.values.forEach(::processAnnotationValue)
             is KaAnnotationValue.ClassLiteralValue -> {
                 val type = value.type
-                if (type is KtNonErrorClassType) {
+                if (type is KaClassType) {
                     val classId = type.classId
                     if (classId.isLocal) {
                         hasLocalClasses = true

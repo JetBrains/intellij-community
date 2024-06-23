@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
@@ -23,7 +23,7 @@ fun KtType.isNonNullableBooleanType() = isBoolean && !isMarkedNullable
 
 context(KaSession)
 fun KtType.isEnum(): Boolean {
-    if (this !is KtNonErrorClassType) return false
+    if (this !is KaClassType) return false
     val classSymbol = symbol
     return classSymbol is KaClassSymbol && classSymbol.classKind == KaClassKind.ENUM_CLASS
 }

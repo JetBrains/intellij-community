@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.ClassId
@@ -70,7 +70,7 @@ private fun getArrayFunctionName(element: PsiElement): String {
                     }
 
                     val elementType = element.getKtType()
-                    if (elementType != null && elementType is KtNonErrorClassType && !elementType.isMarkedNullable) {
+                    if (elementType != null && elementType is KaClassType && !elementType.isMarkedNullable) {
                         val functionName = PRIMITIVES_TO_ARRAYS[elementType.classId]
                         if (functionName != null) {
                             return functionName
