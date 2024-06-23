@@ -32,10 +32,10 @@ fun collectCallCandidates(callElement: KtElement): List<KaCallCandidateInfo> {
     val (candidates, explicitReceiver) = when (callElement) {
         is KtCallElement -> {
             val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression
-            callElement.collectCallCandidatesOld() to explicitReceiver
+            callElement.resolveToCallCandidates() to explicitReceiver
         }
 
-        is KtArrayAccessExpression -> callElement.collectCallCandidatesOld() to callElement.arrayExpression
+        is KtArrayAccessExpression -> callElement.resolveToCallCandidates() to callElement.arrayExpression
         else -> return emptyList()
     }
 
