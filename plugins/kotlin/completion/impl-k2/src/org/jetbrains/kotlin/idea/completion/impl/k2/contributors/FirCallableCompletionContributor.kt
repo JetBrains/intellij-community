@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.KtCompletionExtensionCandidateChecker
+import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
@@ -170,7 +170,7 @@ internal open class FirCallableCompletionContributor(
     @OptIn(KaExperimentalApi::class)
     private fun completeWithoutReceiver(
         scopeContext: KtScopeContext,
-        extensionChecker: KtCompletionExtensionCandidateChecker?,
+        extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
@@ -243,7 +243,7 @@ internal open class FirCallableCompletionContributor(
     protected open fun collectDotCompletion(
         scopeContext: KtScopeContext,
         explicitReceiver: KtElement,
-        extensionChecker: KtCompletionExtensionCandidateChecker?,
+        extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
@@ -307,7 +307,7 @@ internal open class FirCallableCompletionContributor(
     protected fun collectDotCompletionForCallableReceiver(
         scopeContext: KtScopeContext,
         explicitReceiver: KtExpression,
-        extensionChecker: KtCompletionExtensionCandidateChecker?,
+        extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
@@ -342,7 +342,7 @@ internal open class FirCallableCompletionContributor(
         typesOfPossibleReceiver: List<KtType>,
         visibilityChecker: CompletionVisibilityChecker,
         scopeContext: KtScopeContext,
-        extensionChecker: KtCompletionExtensionCandidateChecker?,
+        extensionChecker: KaCompletionExtensionCandidateChecker?,
         sessionParameters: FirCompletionSessionParameters,
         explicitReceiverTypeHint: KtType? = null
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
@@ -430,7 +430,7 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     private fun collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
         receiverTypes: List<KtType>,
-        extensionChecker: KtCompletionExtensionCandidateChecker?,
+        extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Collection<ApplicableExtension> {
@@ -451,7 +451,7 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     private fun collectSuitableExtensions(
         scopeContext: KtScopeContext,
-        extensionChecker: KtCompletionExtensionCandidateChecker?,
+        extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
         explicitReceiverTypes: List<KtType>? = null,
@@ -468,7 +468,7 @@ internal open class FirCallableCompletionContributor(
     private fun collectSuitableExtensions(
         scope: KtScope,
         receiverTypes: List<KtType>,
-        hasSuitableExtensionReceiver: KtCompletionExtensionCandidateChecker?,
+        hasSuitableExtensionReceiver: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Collection<ApplicableExtension> =
@@ -487,7 +487,7 @@ internal open class FirCallableCompletionContributor(
     @OptIn(KaExperimentalApi::class)
     private fun checkApplicabilityAndSubstitute(
         callableSymbol: KaCallableSymbol,
-        extensionChecker: KtCompletionExtensionCandidateChecker?
+        extensionChecker: KaCompletionExtensionCandidateChecker?
     ): ApplicableExtension? {
         val (signature, applicabilityResult) = if (extensionChecker != null) {
             val result = extensionChecker.computeApplicability(callableSymbol) as? KaExtensionApplicabilityResult.Applicable ?: return null
@@ -679,7 +679,7 @@ internal class FirCallableReferenceCompletionContributor(
     override fun collectDotCompletion(
         scopeContext: KtScopeContext,
         explicitReceiver: KtElement,
-        extensionChecker: KtCompletionExtensionCandidateChecker?,
+        extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
@@ -771,7 +771,7 @@ internal class FirKDocCallableCompletionContributor(
     override fun collectDotCompletion(
         scopeContext: KtScopeContext,
         explicitReceiver: KtElement,
-        extensionChecker: KtCompletionExtensionCandidateChecker?,
+        extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
@@ -818,8 +818,8 @@ internal class FirKDocCallableCompletionContributor(
 }
 
 private class CachingKtCompletionExtensionCandidateChecker(
-    private val delegate: KtCompletionExtensionCandidateChecker
-) : KtCompletionExtensionCandidateChecker {
+    private val delegate: KaCompletionExtensionCandidateChecker
+) : KaCompletionExtensionCandidateChecker {
     /**
      * Cached applicability results for callable extension symbols.
      * The cache **must not outlive the lifetime of a single completion session**.
