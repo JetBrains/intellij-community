@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtDefinitelyNotNullTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaDefinitelyNotNullTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
@@ -218,7 +218,7 @@ object K2CreateFunctionFromUsageUtil {
             }
         }
         // Without this, it can render `kotlin.String & kotlin.Any`, which causes a syntax error.
-        definitelyNotNullTypeRenderer = object : KtDefinitelyNotNullTypeRenderer {
+        definitelyNotNullTypeRenderer = object : KaDefinitelyNotNullTypeRenderer {
             override fun renderType(
                 analysisSession: KaSession,
                 type: KtDefinitelyNotNullType,
