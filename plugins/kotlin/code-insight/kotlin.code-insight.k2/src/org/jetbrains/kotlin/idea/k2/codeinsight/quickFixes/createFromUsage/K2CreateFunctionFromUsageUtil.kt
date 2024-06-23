@@ -293,7 +293,7 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     context (KaSession)
-    private fun acceptTypeQualifiers(qualifiers: List<KtClassTypeQualifier>, visited: MutableSet<KtType>, predicate: (KtType) -> Boolean) =
+    private fun acceptTypeQualifiers(qualifiers: List<KaClassTypeQualifier>, visited: MutableSet<KtType>, predicate: (KtType) -> Boolean) =
         qualifiers.flatMap { it.typeArguments }.map { it.type }.all { accept(it, visited, predicate) }
 
     /**

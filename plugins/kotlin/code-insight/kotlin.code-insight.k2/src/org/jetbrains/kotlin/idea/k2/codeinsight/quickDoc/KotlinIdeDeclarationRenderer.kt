@@ -386,7 +386,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderClassTypeQualifier(
                 analysisSession: KaSession,
                 type: KtType,
-                qualifiers: List<KtClassTypeQualifier>,
+                qualifiers: List<KaClassTypeQualifier>,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
