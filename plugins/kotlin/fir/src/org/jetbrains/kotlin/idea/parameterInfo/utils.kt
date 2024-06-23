@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KtApplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -20,7 +20,7 @@ internal val KaCallCandidateInfo.withMapping: CandidateWithMapping
         return CandidateWithMapping(
             functionCall.partiallyAppliedSymbol.signature,
             functionCall.argumentMapping,
-            isApplicableBestCandidate = this is KtApplicableCallCandidateInfo && this.isInBestCandidates,
+            isApplicableBestCandidate = this is KaApplicableCallCandidateInfo && this.isInBestCandidates,
             token,
         )
     }
