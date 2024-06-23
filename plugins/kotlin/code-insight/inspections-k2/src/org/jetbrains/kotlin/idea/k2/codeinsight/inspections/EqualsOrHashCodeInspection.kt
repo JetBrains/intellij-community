@@ -177,7 +177,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
              *  generates `equals(other: Any?)` by default and it generates `equals(other: kotlin.Any?)` if the project has a custom class
              *  named "Any". To preserve the same behavior for FIR, we tried
              *  [org.jetbrains.kotlin.analysis.api.components.KtSymbolDeclarationRendererMixIn.render] with
-             *  [org.jetbrains.kotlin.analysis.api.components.KtBuiltinTypes.ANY],
+             *  [org.jetbrains.kotlin.analysis.api.components.KaBuiltinTypes.any],
              *  `builtinTypes.ANY.expandedClassSymbol.classId?.asSingleFqName()?.asString()`, and
              *  `org.jetbrains.kotlin.builtins.StandardNames.FqNames.any.render()`, but they all have the same rendering result
              *  regardless of the user-defined "Any" class. We specify the parameter and the return type as `kotlin.Any?` and
