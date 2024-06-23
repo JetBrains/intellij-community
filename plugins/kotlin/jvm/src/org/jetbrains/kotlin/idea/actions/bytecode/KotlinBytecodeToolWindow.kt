@@ -24,10 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
-import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
-import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
-import org.jetbrains.kotlin.analysis.api.components.isClassFile
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.descriptors.components.STUB_UNBOUND_IR_SYMBOLS
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
@@ -350,7 +347,7 @@ class KotlinBytecodeToolWindow(
         /**
          * Returns a list of class files from [outputFiles] that should be shown to the user.
          *
-         * An [KtCompiledFile] is linked to its source [KtFile] via [KtCompiledFile.sourceFiles].
+         * An [KaCompiledFile] is linked to its source [KtFile] via [KaCompiledFile.sourceFiles].
          * However, all source files are physical, while a [KtFile] might not necessarily be physical.
          * As a fallback for non-physical [KtFile]s, [classFileOrigins] are instead used to map the class file name to the original [KtFile].
          * [classFileOrigins] cannot be used on their own, because some class files are generated without an originating PSI file
@@ -361,9 +358,9 @@ class KotlinBytecodeToolWindow(
         @KaExperimentalApi
         private fun getRelevantClassFiles(
             ktFile: KtFile,
-            outputFiles: List<KtCompiledFile>,
+            outputFiles: List<KaCompiledFile>,
             classFileOrigins: ClassFileOrigins
-        ): List<KtCompiledFile> {
+        ): List<KaCompiledFile> {
             val classFiles = outputFiles.filter { it.isClassFile }
             val sourceFile = File(ktFile.virtualFile.path)
 

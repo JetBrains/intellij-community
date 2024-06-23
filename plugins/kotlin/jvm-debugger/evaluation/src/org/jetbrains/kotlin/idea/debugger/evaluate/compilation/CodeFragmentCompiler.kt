@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
+import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
@@ -336,7 +336,7 @@ internal val OutputFile.internalClassName: String
     get() = computeInternalClassName(relativePath)
 
 @KaExperimentalApi
-internal val KtCompiledFile.internalClassName: String
+internal val KaCompiledFile.internalClassName: String
     get() = computeInternalClassName(path)
 
 private fun computeInternalClassName(path: String): String {
