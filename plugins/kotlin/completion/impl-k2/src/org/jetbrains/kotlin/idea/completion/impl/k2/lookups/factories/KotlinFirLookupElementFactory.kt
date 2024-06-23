@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -59,7 +59,7 @@ class KotlinFirLookupElementFactory {
     context(KaSession)
     fun createCallableLookupElement(
         name: Name,
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KtType? = null,
     ): LookupElementBuilder {

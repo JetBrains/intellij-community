@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
@@ -77,7 +77,7 @@ internal object CallableMetadataProvider {
     @OptIn(KaExperimentalApi::class)
     fun getCallableMetadata(
         context: WeighingContext,
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
         isFunctionalVariableCall: Boolean,
     ): CallableMetadata? {
@@ -105,7 +105,7 @@ internal object CallableMetadataProvider {
 
     context(KaSession)
     private fun nonExtensionWeight(
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         context: WeighingContext,
     ): CallableMetadata? {
         val symbol = signature.symbol
@@ -138,7 +138,7 @@ internal object CallableMetadataProvider {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun extensionWeight(
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         context: WeighingContext,
         isFunctionalVariableCall: Boolean,
     ): CallableMetadata? {

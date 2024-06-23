@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossibleMultiplatformSymbol
@@ -60,7 +60,7 @@ internal open class FirCallableCompletionContributor(
     priority: Int,
 ) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
     context(KaSession)
-    protected open fun getImportStrategy(signature: KtCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy =
+    protected open fun getImportStrategy(signature: KaCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy =
         if (isImportDefinitelyNotRequired) {
             ImportStrategy.DoNothing
         } else {
@@ -68,7 +68,7 @@ internal open class FirCallableCompletionContributor(
         }
 
     context(KaSession)
-    protected open fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
+    protected open fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
         when (signature) {
             is KtFunctionLikeSignature<*> -> CallableInsertionStrategy.AsCall
             else -> CallableInsertionStrategy.AsIdentifier
@@ -77,7 +77,7 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     @KaExperimentalApi
     protected open fun getInsertionStrategyForExtensionFunction(
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
     ): CallableInsertionStrategy? = when (applicabilityResult) {
         is KaExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(signature)
@@ -87,7 +87,7 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     private fun getOptions(
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         isImportDefinitelyNotRequired: Boolean = false
     ): CallableInsertionOptions = CallableInsertionOptions(
         getImportStrategy(signature, isImportDefinitelyNotRequired),
@@ -97,7 +97,7 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     @KaExperimentalApi
     private fun getExtensionOptions(
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         applicability: KaExtensionApplicabilityResult?
     ): CallableInsertionOptions? {
         val insertionStrategy = getInsertionStrategyForExtensionFunction(signature, applicability) ?: return null
@@ -114,14 +114,14 @@ internal open class FirCallableCompletionContributor(
         get() = prefixMatcher.prefix.isNotEmpty()
 
     protected data class CallableWithMetadataForCompletion(
-        private val _signature: KtCallableSignature<*>,
+        private val _signature: KaCallableSignature<*>,
         private val _explicitReceiverTypeHint: KtType?,
         val options: CallableInsertionOptions,
         val symbolOrigin: CompletionSymbolOrigin,
     ) : KtLifetimeOwner {
         override val token: KtLifetimeToken
             get() = _signature.token
-        val signature: KtCallableSignature<*> get() = withValidityAssertion { _signature }
+        val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
         val explicitReceiverTypeHint: KtType? get() = withValidityAssertion { _explicitReceiverTypeHint }
     }
 
@@ -508,7 +508,7 @@ internal open class FirCallableCompletionContributor(
      */
     context(KaSession)
     protected fun createCallableWithMetadata(
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         scopeKind: KaScopeKind,
         isImportDefinitelyNotRequired: Boolean = false,
         options: CallableInsertionOptions = getOptions(signature, isImportDefinitelyNotRequired),
@@ -520,7 +520,7 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     private fun createCallableWithMetadata(
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
         options: CallableInsertionOptions = getOptions(signature),
         explicitReceiverTypeHint: KtType? = null,
@@ -639,20 +639,20 @@ internal class FirCallableReferenceCompletionContributor(
     priority: Int
 ) : FirCallableCompletionContributor(basicContext, priority) {
     context(KaSession)
-    override fun getImportStrategy(signature: KtCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy {
+    override fun getImportStrategy(signature: KaCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy {
         if (isImportDefinitelyNotRequired) return ImportStrategy.DoNothing
 
         return signature.callableId?.let { ImportStrategy.AddImport(it.asSingleFqName()) } ?: ImportStrategy.DoNothing
     }
 
     context(KaSession)
-    override fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
+    override fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
         CallableInsertionStrategy.AsIdentifier
 
     context(KaSession)
     @KaExperimentalApi
     override fun getInsertionStrategyForExtensionFunction(
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
     ): CallableInsertionStrategy? = when (applicabilityResult) {
         is KaExtensionApplicabilityResult.ApplicableAsExtensionCallable -> CallableInsertionStrategy.AsIdentifier
@@ -721,13 +721,13 @@ internal class FirInfixCallableCompletionContributor(
     priority: Int
 ) : FirCallableCompletionContributor(basicContext, priority) {
     context(KaSession)
-    override fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
+    override fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
         infixCallableInsertionStrategy
 
     context(KaSession)
     @KaExperimentalApi
     override fun getInsertionStrategyForExtensionFunction(
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
     ): CallableInsertionStrategy? = when (applicabilityResult) {
         is KaExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(signature)
@@ -756,13 +756,13 @@ internal class FirKDocCallableCompletionContributor(
     priority: Int
 ) : FirCallableCompletionContributor(basicContext, priority) {
     context(KaSession)
-    override fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
+    override fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
         CallableInsertionStrategy.AsIdentifier
 
     context(KaSession)
     @KaExperimentalApi
     override fun getInsertionStrategyForExtensionFunction(
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
     ): CallableInsertionStrategy = CallableInsertionStrategy.AsIdentifier
 

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.name.Name
 internal class ShadowedCallablesFilter {
     data class FilterResult(val excludeFromCompletion: Boolean, val updatedInsertionOptions: CallableInsertionOptions)
 
-    private val processedSignatures: MutableSet<KtCallableSignature<*>> = HashSet()
+    private val processedSignatures: MutableSet<KaCallableSignature<*>> = HashSet()
     private val processedSimplifiedSignatures: MutableMap<SimplifiedSignature, CompletionSymbolOrigin> = HashMap()
 
     /**
@@ -36,13 +36,13 @@ internal class ShadowedCallablesFilter {
      */
     context(KaSession)
     fun excludeFromCompletion(
-        callable: KtCallableSignature<*>,
+        callable: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         symbolOrigin: CompletionSymbolOrigin,
         isAlreadyImported: Boolean,
         typeArgumentsAreRequired: Boolean,
     ): FilterResult {
-        // there is no need to create simplified signature if `KtCallableSignature<*>` is already processed
+        // there is no need to create simplified signature if `KaCallableSignature<*>` is already processed
         if (callable in processedSignatures) return FilterResult(excludeFromCompletion = true, options)
         processedSignatures.add(callable)
 
@@ -63,7 +63,7 @@ internal class ShadowedCallablesFilter {
 
     context(KaSession)
     private fun processSignatureConsideringOptions(
-        callable: KtCallableSignature<*>,
+        callable: KaCallableSignature<*>,
         insertionOptions: CallableInsertionOptions,
         symbolOrigin: CompletionSymbolOrigin,
         typeArgumentsAreRequired: Boolean,
@@ -118,7 +118,7 @@ internal class ShadowedCallablesFilter {
 
     context(KaSession)
     private fun processSignature(
-        callable: KtCallableSignature<*>,
+        callable: KaCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
         considerContainer: Boolean,
         isVariableCall: Boolean,
@@ -229,7 +229,7 @@ private sealed class SimplifiedSignature {
     companion object {
         context(KaSession)
         fun create(
-            callableSignature: KtCallableSignature<*>,
+            callableSignature: KaCallableSignature<*>,
             considerContainer: Boolean,
             isVariableCall: Boolean,
             typeArgumentsAreRequired: Boolean

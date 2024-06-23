@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.lookups
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.types.Variance
 
 internal object TailTextProvider {
     context(KaSession)
-    fun getTailText(signature: KtCallableSignature<*>, options: CallableInsertionOptions): String = buildString {
+    fun getTailText(signature: KaCallableSignature<*>, options: CallableInsertionOptions): String = buildString {
         if (signature is KtFunctionLikeSignature<*>) {
             if (insertLambdaBraces(signature, options)) {
                 append(" {...} ")

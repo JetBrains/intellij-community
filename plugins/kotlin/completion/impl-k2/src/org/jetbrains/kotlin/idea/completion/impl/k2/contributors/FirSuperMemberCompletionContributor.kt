@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
@@ -39,13 +39,13 @@ internal class FirSuperMemberCompletionContributor(
 ) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(basicContext, priority) {
     private data class CallableInfo(
         private val _type: KtType,
-        private val _signature: KtCallableSignature<*>,
+        private val _signature: KaCallableSignature<*>,
         val scopeKind: KaScopeKind
     ) : KtLifetimeOwner {
         override val token: KtLifetimeToken
             get() = _signature.token
         val type: KtType get() = withValidityAssertion { _type }
-        val signature: KtCallableSignature<*> get() = withValidityAssertion { _signature }
+        val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
     }
 
     context(KaSession)
@@ -143,7 +143,7 @@ internal class FirSuperMemberCompletionContributor(
     }
 
     context(KaSession)
-    private fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy = when (signature) {
+    private fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy = when (signature) {
         is KtFunctionLikeSignature<*> -> CallableInsertionStrategy.AsCall
         else -> CallableInsertionStrategy.AsIdentifier
     }
@@ -223,7 +223,7 @@ internal class FirSuperMemberCompletionContributor(
     private fun wrapWithDisambiguationIfNeeded(
         insertionStrategy: CallableInsertionStrategy,
         superType: KtType,
-        callableSignature: KtCallableSignature<*>,
+        callableSignature: KaCallableSignature<*>,
         namesNeedDisambiguation: Set<Name>,
         superReceiver: KtSuperExpression
     ): CallableInsertionStrategy {

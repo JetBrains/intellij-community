@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.lookups
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
@@ -38,7 +38,7 @@ internal object TypeTextProvider {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getTypeTextForCallable(
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         treatAsFunctionCall: Boolean
     ): String? = when (signature) {
         is KtFunctionLikeSignature<*> -> signature.returnType.renderNonErrorOrUnsubstituted(signature.symbol.returnType)
