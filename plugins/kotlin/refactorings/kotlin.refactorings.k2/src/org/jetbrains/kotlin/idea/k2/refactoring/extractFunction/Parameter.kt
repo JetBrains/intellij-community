@@ -5,7 +5,7 @@ import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
@@ -67,7 +67,7 @@ internal class MutableParameter(
     context(KaSession)
     private fun allParameterTypeCandidates(): List<KtType> {
         val andPredicate = AndPredicate(typePredicates)
-        val typeSet = if (originalType is KtFlexibleType) {
+        val typeSet = if (originalType is KaFlexibleType) {
             val lower = originalType.lowerBound
             val upper = originalType.upperBound
             LinkedHashSet<KtType>().apply {
@@ -76,7 +76,7 @@ internal class MutableParameter(
             }
         } else linkedSetOf(originalType)
 
-        val addNullableTypes = originalType is KtFlexibleType &&
+        val addNullableTypes = originalType is KaFlexibleType &&
                 originalType.lowerBound.nullability != originalType.upperBound.nullability &&
                 typeSet.size > 1
         val superTypes = originalType.getAllSuperTypes().filter {

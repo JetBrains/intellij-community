@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KtDynamicType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -49,7 +49,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
             text(DefaultTypeClassIds.ANY.relativeClassName.asString())
         }
         is KaUsualClassType -> printNonErrorClassType(type)
-        is KtFlexibleType -> {
+        is KaFlexibleType -> {
             val lower = type.lowerBound
             val upper = type.upperBound
             markedNullable = lower.isMarkedNullable

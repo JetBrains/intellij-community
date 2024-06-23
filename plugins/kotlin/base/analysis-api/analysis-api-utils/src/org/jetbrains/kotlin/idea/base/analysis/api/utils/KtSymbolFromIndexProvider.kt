@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
@@ -284,7 +284,7 @@ class KtSymbolFromIndexProvider private constructor(
 
     context(KaSession)
     private fun findAllNamesForType(type: KtType): Set<String> = buildSet {
-        if (type is KtFlexibleType) {
+        if (type is KaFlexibleType) {
             return findAllNamesForType(type.lowerBound)
         }
         if (type !is KaClassType) return@buildSet

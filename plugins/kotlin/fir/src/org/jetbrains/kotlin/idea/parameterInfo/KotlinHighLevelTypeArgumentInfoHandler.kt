@@ -109,7 +109,7 @@ abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeAr
     @OptIn(KaExperimentalApi::class)
     private fun fetchTypeParameterInfo(parameter: KaTypeParameterSymbol): TypeParameterInfo {
         val upperBounds = parameter.upperBounds.map {
-            val isNullableAnyOrFlexibleAny = if (it is KtFlexibleType) {
+            val isNullableAnyOrFlexibleAny = if (it is KaFlexibleType) {
                 it.lowerBound.isAny && !it.lowerBound.isMarkedNullable && it.upperBound.isAny && it.upperBound.isMarkedNullable
             } else {
                 it.isAny && it.isMarkedNullable

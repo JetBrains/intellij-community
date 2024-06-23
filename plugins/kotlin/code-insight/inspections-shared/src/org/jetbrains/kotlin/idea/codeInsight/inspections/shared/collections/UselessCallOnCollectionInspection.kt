@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -82,7 +82,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             if (receiverTypeArgument is KtTypeArgumentWithVariance && receiverTypeArgument.variance == Variance.IN_VARIANCE) return
             val typeParameterDescriptor = resolvedCall.symbol.typeParameters.singleOrNull() ?: return
             val argumentType = resolvedCall.typeArgumentsMapping[typeParameterDescriptor] ?: return
-            if (receiverTypeArgumentType is KtFlexibleType || !receiverTypeArgumentType.isSubTypeOf(argumentType)) return
+            if (receiverTypeArgumentType is KaFlexibleType || !receiverTypeArgumentType.isSubTypeOf(argumentType)) return
         } else {
             // xxxNotNull
             if (receiverTypeArgumentType.canBeNull) return

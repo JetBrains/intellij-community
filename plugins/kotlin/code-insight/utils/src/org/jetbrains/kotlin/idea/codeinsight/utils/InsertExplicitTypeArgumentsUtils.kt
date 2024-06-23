@@ -29,7 +29,7 @@ fun getRenderedTypeArguments(element: KtCallElement): String? {
             /** Can't use definitely-non-nullable type as reified type argument */
             if (type is KaDefinitelyNotNullType && symbol.isReified) return null
 
-            if (type.containsErrorType() || !(type.isDenotable || type is KtFlexibleType)) return null
+            if (type.containsErrorType() || !(type.isDenotable || type is KaFlexibleType)) return null
             add(type.render(position = Variance.IN_VARIANCE))
         }
     }
@@ -56,7 +56,7 @@ private fun KtType.containsErrorType(): Boolean = when (this) {
 
     is KaClassType -> ownTypeArguments.any { it.type?.containsErrorType() == true }
     is KaDefinitelyNotNullType -> original.containsErrorType()
-    is KtFlexibleType -> lowerBound.containsErrorType() || upperBound.containsErrorType()
+    is KaFlexibleType -> lowerBound.containsErrorType() || upperBound.containsErrorType()
     is KtIntersectionType -> conjuncts.any { it.containsErrorType() }
     is KaTypeParameterType, is KaCapturedType, is KtDynamicType -> false
 }

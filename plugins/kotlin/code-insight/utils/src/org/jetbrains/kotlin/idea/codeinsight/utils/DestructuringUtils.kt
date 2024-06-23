@@ -6,7 +6,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
@@ -58,7 +58,7 @@ private fun getClassType(declaration: KtDestructuringDeclaration): KaClassType? 
 private fun toNonErrorClassType(type: KtType?): KaClassType? {
     return when (type) {
         is KaClassType -> type
-        is KtFlexibleType -> type.lowerBound as? KaClassType
+        is KaFlexibleType -> type.lowerBound as? KaClassType
         else -> null
     }
 }

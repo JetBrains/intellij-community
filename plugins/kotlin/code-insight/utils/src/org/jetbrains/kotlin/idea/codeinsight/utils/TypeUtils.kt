@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
@@ -37,7 +37,7 @@ fun KtType.isEnum(): Boolean {
 object KtFlexibleTypeAsUpperBoundRenderer : KaFlexibleTypeRenderer {
     override fun renderType(
         analysisSession: KaSession,
-        type: KtFlexibleType,
+        type: KaFlexibleType,
         typeRenderer: KtTypeRenderer,
         printer: PrettyPrinter
     ) {

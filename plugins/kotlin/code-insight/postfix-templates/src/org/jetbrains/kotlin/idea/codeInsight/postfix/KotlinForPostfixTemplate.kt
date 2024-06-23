@@ -152,7 +152,7 @@ private val ITERABLE_CLASS_IDS: Set<ClassId> = setOf(
 context(KaSession)
 internal fun canBeIterated(type: KtType, checkNullability: Boolean = true): Boolean {
     return when (type) {
-        is KtFlexibleType -> canBeIterated(type.lowerBoundIfFlexible())
+        is KaFlexibleType -> canBeIterated(type.lowerBoundIfFlexible())
         is KtIntersectionType -> type.conjuncts.all { canBeIterated(it) }
         is KaDefinitelyNotNullType -> canBeIterated(type.original, checkNullability = false)
         is KaTypeParameterType -> type.symbol.upperBounds.any { canBeIterated(it) }

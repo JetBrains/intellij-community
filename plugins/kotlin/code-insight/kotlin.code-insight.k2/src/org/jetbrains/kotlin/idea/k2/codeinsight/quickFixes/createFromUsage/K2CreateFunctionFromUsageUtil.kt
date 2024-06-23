@@ -210,7 +210,7 @@ object K2CreateFunctionFromUsageUtil {
         flexibleTypeRenderer = object : KaFlexibleTypeRenderer {
             override fun renderType(
                 analysisSession: KaSession,
-                type: KtFlexibleType,
+                type: KaFlexibleType,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
             ) {
@@ -284,7 +284,7 @@ object K2CreateFunctionFromUsageUtil {
                         && (type !is KaFunctionType || (accept(type.returnType, visited,predicate) && accept(type.receiverType, visited, predicate)))
             }
             is KaClassErrorType -> acceptTypeQualifiers(type.qualifiers, visited, predicate)
-            is KtFlexibleType -> accept(type.lowerBound, visited, predicate) && accept(type.upperBound, visited, predicate)
+            is KaFlexibleType -> accept(type.lowerBound, visited, predicate) && accept(type.upperBound, visited, predicate)
             is KaCapturedType -> accept(type.projection.type, visited, predicate)
             is KaDefinitelyNotNullType -> accept(type.original, visited, predicate)
             is KtIntersectionType -> type.conjuncts.all { accept(it, visited, predicate) }
