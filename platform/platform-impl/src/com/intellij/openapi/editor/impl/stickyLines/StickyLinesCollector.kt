@@ -39,7 +39,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
       return prevModStamp != currModStamp
     }
 
-    fun update(psiFile: PsiFile) {
+    internal fun update(psiFile: PsiFile) {
       val modStamp: Long = modStamp(psiFile)
       psiFile.putUserData(STICKY_LINES_MOD_STAMP_KEY, modStamp)
       LOG.trace { "updating modStamp=$modStamp for ${debugPsiFile(psiFile)}" }
@@ -110,6 +110,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
   fun applyLines(psiFile: PsiFile, lines: Collection<StickyLineInfo>) {
     ThreadingAssertions.assertEventDispatchThread()
 
+    ModStamp.update(psiFile)
     val stickyModel: StickyLinesModel = stickyLinesModel(psiFile) ?: return
     val linesToAdd: MutableSet<StickyLineInfo> = HashSet(lines)
     val outdatedLines: List<StickyLine> = mergeWithExistingLines(stickyModel, linesToAdd)

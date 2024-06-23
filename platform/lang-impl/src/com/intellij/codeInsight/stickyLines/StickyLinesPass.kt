@@ -21,7 +21,6 @@ internal class StickyLinesPass(
   override fun doCollectInformation(progress: ProgressIndicator) {
     FileDocumentManager.getInstance().getFile(document)?.let { vFile ->
       collectedLines = collector.collectLines(vFile, progress)
-      StickyLinesCollector.ModStamp.update(psiFile)
     }
   }
 
