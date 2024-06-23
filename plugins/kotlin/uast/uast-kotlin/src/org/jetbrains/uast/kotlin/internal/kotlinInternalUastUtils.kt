@@ -12,7 +12,7 @@ import com.intellij.psi.impl.compiled.SignatureParsing
 import com.intellij.psi.impl.compiled.StubBuildingVisitor
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -152,18 +152,18 @@ internal fun KotlinType.toPsiType(
         TypeApproximator(this.builtIns, languageVersionSettings).approximateDeclarationType(this, true)
     val typeMappingMode =
         when (config.typeMappingMode) {
-            KtTypeMappingMode.VALUE_PARAMETER -> {
+            KaTypeMappingMode.VALUE_PARAMETER -> {
                 KotlinUastTypeMapper.typeSystem.getOptimalModeForValueParameter(
                     approximatedType,
                 ).mapTypeAliases(TypeMappingMode.GENERIC_ARGUMENT_UAST)
             }
-            KtTypeMappingMode.RETURN_TYPE -> {
+            KaTypeMappingMode.RETURN_TYPE -> {
                 KotlinUastTypeMapper.typeSystem.getOptimalModeForReturnType(
                     approximatedType,
                     isAnnotationMethod = context.containingClass()?.isAnnotation() == true,
                 ).mapTypeAliases(TypeMappingMode.GENERIC_ARGUMENT_UAST)
             }
-            KtTypeMappingMode.GENERIC_ARGUMENT -> TypeMappingMode.GENERIC_ARGUMENT_UAST
+            KaTypeMappingMode.GENERIC_ARGUMENT -> TypeMappingMode.GENERIC_ARGUMENT_UAST
             else -> TypeMappingMode.DEFAULT_UAST
         }
     KotlinUastTypeMapper.mapType(approximatedType, signatureWriter, typeMappingMode)

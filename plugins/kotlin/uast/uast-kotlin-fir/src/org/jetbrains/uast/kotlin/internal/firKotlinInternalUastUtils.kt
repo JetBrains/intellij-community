@@ -169,7 +169,7 @@ private fun toPsiMethodForDeserialized(
                 context,
                 PsiTypeConversionConfiguration(
                     TypeOwnerKind.DECLARATION,
-                    typeMappingMode = KtTypeMappingMode.VALUE_PARAMETER,
+                    typeMappingMode = KaTypeMappingMode.VALUE_PARAMETER,
                 )
             )
 
@@ -182,7 +182,7 @@ private fun toPsiMethodForDeserialized(
             context,
             PsiTypeConversionConfiguration(
                 TypeOwnerKind.DECLARATION,
-                typeMappingMode = KtTypeMappingMode.RETURN_TYPE,
+                typeMappingMode = KaTypeMappingMode.RETURN_TYPE,
             )
         )
 

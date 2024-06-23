@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.descriptors.Modality
@@ -139,7 +139,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 val lambdaImplicitReceiverType = anonymousFunctionSymbol.receiverParameter!!.type.asPsiType(
                     ktLambdaExpression,
                     allowErrorTypes = false,
-                    KtTypeMappingMode.DEFAULT_UAST,
+                    KaTypeMappingMode.DEFAULT_UAST,
                     isAnnotationMethod = false
                 ) ?: UastErrorType
                 parameters.add(
@@ -162,7 +162,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 val psiType = p.returnType.asPsiType(
                     ktLambdaExpression,
                     allowErrorTypes = false,
-                    KtTypeMappingMode.DEFAULT_UAST,
+                    KaTypeMappingMode.DEFAULT_UAST,
                     isAnnotationMethod = false
                 ) ?: UastErrorType
                 KotlinUParameter(

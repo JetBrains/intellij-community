@@ -6,7 +6,7 @@ import com.intellij.lang.Language
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -211,7 +211,7 @@ fun convertUnitToVoidIfNeeded(
 class PsiTypeConversionConfiguration(
     val typeOwnerKind: TypeOwnerKind,
     val isBoxed: Boolean = false,
-    val typeMappingMode: KtTypeMappingMode = KtTypeMappingMode.DEFAULT_UAST,
+    val typeMappingMode: KaTypeMappingMode = KaTypeMappingMode.DEFAULT_UAST,
 ) {
     companion object {
         fun create(
@@ -226,12 +226,12 @@ class PsiTypeConversionConfiguration(
             )
         }
 
-        private fun KtElement.ktTypeMappingMode(isBoxed: Boolean, isForFake: Boolean): KtTypeMappingMode {
+        private fun KtElement.ktTypeMappingMode(isBoxed: Boolean, isForFake: Boolean): KaTypeMappingMode {
             return when {
-                isForFake && this is KtParameter -> KtTypeMappingMode.VALUE_PARAMETER
-                isForFake && this is KtCallableDeclaration -> KtTypeMappingMode.RETURN_TYPE
-                isBoxed -> KtTypeMappingMode.GENERIC_ARGUMENT
-                else -> KtTypeMappingMode.DEFAULT_UAST
+                isForFake && this is KtParameter -> KaTypeMappingMode.VALUE_PARAMETER
+                isForFake && this is KtCallableDeclaration -> KaTypeMappingMode.RETURN_TYPE
+                isBoxed -> KaTypeMappingMode.GENERIC_ARGUMENT
+                else -> KaTypeMappingMode.DEFAULT_UAST
             }
         }
     }
