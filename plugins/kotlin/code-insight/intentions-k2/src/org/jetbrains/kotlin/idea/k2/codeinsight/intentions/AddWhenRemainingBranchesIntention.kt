@@ -20,7 +20,7 @@ internal class AddWhenRemainingBranchesIntention :
 
     context(KaSession)
     override fun prepareContext(element: KtWhenExpression): AddRemainingWhenBranchesUtils.Context? {
-        val whenMissingCases = element.getMissingCases().takeIf {
+        val whenMissingCases = element.computeMissingCases().takeIf {
             it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
         } ?: return null
         return AddRemainingWhenBranchesUtils.Context(whenMissingCases, enumToStarImport = null)

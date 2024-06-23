@@ -107,7 +107,7 @@ internal class UseExpressionBodyInspection :
                         return null
                     }
                     val resultingWhens = statement.resultingWhens()
-                    if (resultingWhens.any { it.elseExpression == null && it.getMissingCases().isNotEmpty() }) {
+                    if (resultingWhens.any { it.elseExpression == null && it.computeMissingCases().isNotEmpty() }) {
                         return null
                     }
                 }

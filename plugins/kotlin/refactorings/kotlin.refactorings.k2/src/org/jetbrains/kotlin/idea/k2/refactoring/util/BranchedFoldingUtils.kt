@@ -360,7 +360,7 @@ object BranchedFoldingUtils {
      */
     context(KaSession)
     private fun KtWhenExpression.hasMissingCases(): Boolean =
-        !KtPsiUtil.checkWhenExpressionHasSingleElse(this) && getMissingCases().isNotEmpty()
+        !KtPsiUtil.checkWhenExpressionHasSingleElse(this) && computeMissingCases().isNotEmpty()
 
     context(KaSession)
     private fun getFoldableReturns(branches: List<KtExpression?>): List<KtReturnExpression>? =

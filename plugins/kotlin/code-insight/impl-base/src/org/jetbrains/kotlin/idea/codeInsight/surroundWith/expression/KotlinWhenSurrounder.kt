@@ -38,7 +38,7 @@ class KotlinWhenSurrounder : KotlinExpressionSurrounder() {
 
         val remainingBranches = allowAnalysisOnEdt {
             analyze(whenExpression) {
-                whenExpression.getMissingCases().takeIf {
+                whenExpression.computeMissingCases().takeIf {
                     it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
                 }
             }

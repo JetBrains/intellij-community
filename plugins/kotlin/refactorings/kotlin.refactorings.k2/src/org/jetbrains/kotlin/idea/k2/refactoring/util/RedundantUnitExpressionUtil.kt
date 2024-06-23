@@ -95,7 +95,7 @@ private fun KtExpression.canBeUsedAsValue(): Boolean {
             if (elseExpression is KtIfExpression) elseExpression.canBeUsedAsValue() else elseExpression != null
         }
         is KtWhenExpression ->
-            entries.lastOrNull()?.elseKeyword != null || getMissingCases().isEmpty()
+            entries.lastOrNull()?.elseKeyword != null || computeMissingCases().isEmpty()
         else ->
             true
     }
