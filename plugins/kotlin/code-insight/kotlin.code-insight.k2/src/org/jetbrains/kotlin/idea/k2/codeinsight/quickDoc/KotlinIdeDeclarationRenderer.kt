@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtDecla
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParametersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableReturnTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableReturnTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableSignatureRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtSingleTypeParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesCallArgumentsRenderer
@@ -713,8 +713,8 @@ internal class KotlinIdeDeclarationRenderer(
     }
 
     @KaExperimentalApi
-    fun createReturnTypeRenderer(): KtCallableReturnTypeRenderer {
-        return object : KtCallableReturnTypeRenderer {
+    fun createReturnTypeRenderer(): KaCallableReturnTypeRenderer {
+        return object : KaCallableReturnTypeRenderer {
             override fun renderReturnType(
                 analysisSession: KaSession,
                 symbol: KaCallableSymbol,
