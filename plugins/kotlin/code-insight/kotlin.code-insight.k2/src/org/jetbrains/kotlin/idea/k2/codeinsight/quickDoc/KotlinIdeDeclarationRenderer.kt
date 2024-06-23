@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQua
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeNameRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeParameterTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtUsualClassTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaUsualClassTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
@@ -357,8 +357,8 @@ internal class KotlinIdeDeclarationRenderer(
     }
 
     @KaExperimentalApi
-    fun createUsualClassTypeRenderer(): KtUsualClassTypeRenderer {
-        return object : KtUsualClassTypeRenderer {
+    fun createUsualClassTypeRenderer(): KaUsualClassTypeRenderer {
+        return object : KaUsualClassTypeRenderer {
             override fun renderType(
                 analysisSession: KaSession,
                 type: KaUsualClassType,
