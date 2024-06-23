@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
-class KtResolveExtensionProviderForTests : KtResolveExtensionProvider() {
+class KtResolveExtensionProviderForTests : KaResolveExtensionProvider() {
     override fun provideExtensionsFor(module: KaModule): List<KtResolveExtension> {
         return when (module) {
             is KaSourceModule -> {
