@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtDynamicType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
@@ -85,7 +85,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
                 }
             )
         }
-        is KtIntersectionType -> {
+        is KaIntersectionType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtIntersectionTypeRenderer.AS_INTERSECTION
             val iterator = type.conjuncts.iterator()
             while (iterator.hasNext()) {

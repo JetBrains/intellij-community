@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.isExtensionCall
 import org.jetbrains.kotlin.idea.completion.reference
@@ -192,7 +192,7 @@ internal object CallableMetadataProvider {
 
     context(KaSession)
     private fun KtType.flatten(): List<KtType> = when (this) {
-        is KtIntersectionType -> conjuncts.flatMap { it.flatten() }
+        is KaIntersectionType -> conjuncts.flatMap { it.flatten() }
         else -> listOf(this)
     }
 

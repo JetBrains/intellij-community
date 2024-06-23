@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
@@ -164,7 +164,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
     if (typeToCheck is KaErrorType) {
         return false
     }
-    if (typeToCheck is KtIntersectionType) {
+    if (typeToCheck is KaIntersectionType) {
         return false
     }
     if (typeToCheck is KaDefinitelyNotNullType) {

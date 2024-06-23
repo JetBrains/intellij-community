@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -287,7 +287,7 @@ object K2CreateFunctionFromUsageUtil {
             is KaFlexibleType -> accept(type.lowerBound, visited, predicate) && accept(type.upperBound, visited, predicate)
             is KaCapturedType -> accept(type.projection.type, visited, predicate)
             is KaDefinitelyNotNullType -> accept(type.original, visited, predicate)
-            is KtIntersectionType -> type.conjuncts.all { accept(it, visited, predicate) }
+            is KaIntersectionType -> type.conjuncts.all { accept(it, visited, predicate) }
             else -> true
         }
     }

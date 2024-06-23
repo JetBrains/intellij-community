@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -103,7 +103,7 @@ private fun KtType.toDfTypeNotNullable(): DfType {
         }
 
         is KaTypeParameterType -> symbol.upperBounds.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
-        is KtIntersectionType -> conjuncts.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
+        is KaIntersectionType -> conjuncts.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
         else -> DfType.TOP
     }
 }

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.descriptors.Modality
@@ -59,7 +59,7 @@ internal class FirSuperMemberCompletionContributor(
         val superType = superReceiver.getKtType() ?: return
 
         val (nonExtensionMembers: Iterable<CallableInfo>, namesNeedDisambiguation: Set<Name>) =
-            if (superType !is KtIntersectionType) {
+            if (superType !is KaIntersectionType) {
                 getNonExtensionsMemberSymbols(superType, visibilityChecker, sessionParameters).asIterable() to emptySet()
             } else {
                 getSymbolsAndNamesNeedDisambiguation(superType.conjuncts, visibilityChecker, sessionParameters)
