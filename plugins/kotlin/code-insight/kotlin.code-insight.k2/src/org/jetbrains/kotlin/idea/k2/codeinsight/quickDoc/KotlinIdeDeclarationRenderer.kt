@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaRendererTypeApp
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaRendererBodyMemberScopeProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererModalityModifierProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
@@ -78,7 +78,7 @@ internal class KotlinIdeDeclarationRenderer(
     }
 
     @KaExperimentalApi
-    internal val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+    internal val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
         nameRenderer = createNameRenderer()
         superTypesArgumentRenderer = KaSuperTypesCallArgumentsRenderer.NO_ARGS
         valueParametersRenderer = createValueParametersRenderer()

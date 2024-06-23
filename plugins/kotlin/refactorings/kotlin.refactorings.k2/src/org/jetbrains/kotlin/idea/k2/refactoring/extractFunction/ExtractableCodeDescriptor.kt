@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ControlFlow
@@ -57,7 +57,7 @@ data class ExtractableCodeDescriptor(
             if (annotationClassIds.isEmpty()) return ""
             val container = extractionData.commonParent.getStrictParentOfType<KtNamedFunction>() ?: return ""
             return analyze(container) {
-                val filteredRenderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.annotationRenderer.with {
+                val filteredRenderer = KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.annotationRenderer.with {
                     annotationFilter = annotationFilter.and(object : KaRendererAnnotationsFilter {
                         override fun filter(
                             analysisSession: KaSession,

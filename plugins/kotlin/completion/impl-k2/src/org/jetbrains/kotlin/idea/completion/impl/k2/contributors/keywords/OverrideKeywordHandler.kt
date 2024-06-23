@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -179,7 +179,7 @@ internal class OverrideKeywordHandler(
     companion object {
         @KaExperimentalApi
         private val renderingOptionsForLookupElementRendering =
-            KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
                 annotationRenderer = annotationRenderer.with {
                     annotationFilter = KaRendererAnnotationsFilter.NONE
                 }

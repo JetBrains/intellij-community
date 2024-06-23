@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -94,7 +94,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
     }
 
     @KaExperimentalApi
-    private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+    private val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
         returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
         valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY
         keywordsRenderer = keywordsRenderer.with {
