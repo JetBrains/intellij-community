@@ -301,7 +301,7 @@ internal object CallableMetadataProvider {
 
     context(KaSession)
     private fun isExtensionCallOnTypeParameterReceiver(symbol: KaCallableSymbol): Boolean {
-        val originalSymbol = symbol.unwrapFakeOverrides
+        val originalSymbol = symbol.fakeOverrideOriginal
         val receiverParameterType = originalSymbol.receiverType as? KaTypeParameterType ?: return false
         val parameterTypeOwner = receiverParameterType.symbol.containingSymbol ?: return false
         return parameterTypeOwner == originalSymbol

@@ -219,7 +219,7 @@ fun generateMember(
     }
 
     if (copyDoc) {
-        val kDoc = when (val originalOverriddenPsi = symbol.unwrapFakeOverrides.psi) {
+        val kDoc = when (val originalOverriddenPsi = symbol.fakeOverrideOriginal.psi) {
             is KtDeclaration -> findDocComment(originalOverriddenPsi)
 
             is PsiDocCommentOwner -> {

@@ -197,7 +197,7 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
         // `KtMemberScope` because the latter does not guarantee members are traversed in the original order. For example the
         // FIR implementation groups overloaded functions together.
         outer@ for ((selectedSymbol, generatedPsi) in newMemberSymbolsAndGeneratedPsi) {
-            val superSymbol = selectedSymbol.unwrapFakeOverrides
+            val superSymbol = selectedSymbol.fakeOverrideOriginal
             val superPsi = superSymbol.psi
             if (superPsi == null) {
                 // This normally should not happen, but we just try to play safe here.

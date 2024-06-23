@@ -118,7 +118,7 @@ internal class OverrideKeywordHandler(
         val icon = RowIcon(baseIcon, additionalIcon)
         val isSuspendFunction = (memberSymbol as? KaNamedFunctionSymbol)?.isSuspend == true
 
-        val containingSymbol = memberSymbol.unwrapFakeOverrides.originalContainingClassForOverride
+        val containingSymbol = memberSymbol.fakeOverrideOriginal.originalContainingClassForOverride
         val baseClassName = containingSymbol?.name?.asString()
         val baseClassIcon = member.memberInfo.containingSymbolIcon
 

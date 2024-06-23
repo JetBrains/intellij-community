@@ -133,7 +133,7 @@ internal fun toPsiMethod(
             when {
                 psi.isLocal ->
                     handleLocalOrSynthetic(psi)
-                functionSymbol.unwrapFakeOverrides.origin == KaSymbolOrigin.LIBRARY ->
+                functionSymbol.fakeOverrideOriginal.origin == KaSymbolOrigin.LIBRARY ->
                     // PSI to regular libraries should be handled by [DecompiledPsiDeclarationProvider]
                     // That is, this one is a deserialized declaration (in Lint/UAST IDE).
                     toPsiMethodForDeserialized(functionSymbol, context, psi)
@@ -390,7 +390,7 @@ internal tailrec fun psiForUast(symbol: KaSymbol): PsiElement? {
 
     if (symbol is KaCallableSymbol) {
         if (symbol.origin == KaSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KaSymbolOrigin.SUBSTITUTION_OVERRIDE) {
-            val originalSymbol = symbol.unwrapFakeOverrides
+            val originalSymbol = symbol.fakeOverrideOriginal
             if (originalSymbol !== symbol) {
                 return psiForUast(originalSymbol)
             }
