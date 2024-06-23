@@ -61,7 +61,7 @@ class MayBeConstantInspection : MayBeConstantInspectionBase() {
 
     context(KaSession)
     private fun KtProperty.hasPrimitiveOrStringType(): Boolean {
-        val type = this.getReturnKtType()
+        val type = this.returnType
         return type.isPrimitive || type.isString
     }
 

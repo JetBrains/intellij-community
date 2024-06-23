@@ -40,7 +40,7 @@ object ConvertToBlockBodyUtils {
 
         val body = declaration.bodyExpression ?: return null
 
-        val returnType = declaration.getReturnKtType().approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
+        val returnType = declaration.returnType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
         if (!isErrorReturnTypeAllowed && returnType is KaErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) {
             return null
         }

@@ -122,7 +122,7 @@ class KotlinIntroducePropertyHandler(
             engine.run(editor, extractionData) {
                 val property = it.declaration as KtProperty
                 val descriptor = it.config.descriptor
-                val exprType = allowAnalysisOnEdt { analyze (property) { CallableReturnTypeUpdaterUtils.TypeInfo.createByKtTypes(property.getReturnKtType()) } }
+                val exprType = allowAnalysisOnEdt { analyze (property) { CallableReturnTypeUpdaterUtils.TypeInfo.createByKtTypes(property.returnType) } }
 
                 editor.caretModel.moveToOffset(property.textOffset)
                 editor.selectionModel.removeSelection()

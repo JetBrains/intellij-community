@@ -193,7 +193,7 @@ object ChangeSignatureFixFactory {
                     if (i < parameters.size) {
                         usedNames.add(parameters[i].name!!)
                         val argumentType = getKtType(expression)
-                        val parameterType = parameters[i].getReturnKtType()
+                        val parameterType = parameters[i].returnType
                         if (argumentType != null && !argumentType.isSubTypeOf(parameterType)) {
                             changeInfo.newParameters[i + if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0].setType(
                                 argumentType.render(position = Variance.IN_VARIANCE)

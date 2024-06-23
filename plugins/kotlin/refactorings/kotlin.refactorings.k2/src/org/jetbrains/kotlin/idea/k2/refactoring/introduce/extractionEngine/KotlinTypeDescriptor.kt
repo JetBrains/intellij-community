@@ -74,7 +74,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
     }
 
     override fun returnType(ktNamedDeclaration: KtNamedDeclaration): KaType? =
-        analyze(data.commonParent) { ktNamedDeclaration.getReturnKtType() }
+        analyze(data.commonParent) { ktNamedDeclaration.returnType }
 
     @OptIn(KaExperimentalApi::class)
     override fun renderForMessage(ktNamedDeclaration: KtNamedDeclaration): String {

@@ -132,7 +132,7 @@ private fun KtCallableDeclaration.isCollectionLikeOf(classPsiElement: PsiNamedEl
             return false
         }
 
-        return getReturnKtType().isCollectionLikeOf(classPsiElement)
+        return returnType.isCollectionLikeOf(classPsiElement)
     }
 }
 

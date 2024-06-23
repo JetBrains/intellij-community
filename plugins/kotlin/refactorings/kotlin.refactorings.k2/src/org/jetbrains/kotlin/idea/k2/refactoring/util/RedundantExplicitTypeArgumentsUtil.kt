@@ -130,22 +130,22 @@ private fun findExpectedType(callExpression: KtCallExpression): KaType? {
         when (val parent = element.parent) {
             is KtNamedFunction -> {
                 if (element != parent.bodyExpression || !parent.hasDeclaredReturnType()) return null
-                if (!parent.hasBlockBody()) return parent.getReturnKtType()
+                if (!parent.hasBlockBody()) return parent.returnType
                 val returnedExpression = parent.singleReturnExpressionOrNull?.returnedExpression
 
                 return if (returnedExpression != null && extractReturnExpressions(returnedExpression).contains(callExpression)) {
-                    parent.getReturnKtType()
+                    parent.returnType
                 } else {
                     null
                 }
             }
 
             is KtVariableDeclaration -> {
-                return if (element == parent.initializer && parent.typeReference != null) parent.getReturnKtType() else null
+                return if (element == parent.initializer && parent.typeReference != null) parent.returnType else null
             }
 
             is KtParameter -> {
-                return if (element == parent.defaultValue) parent.getReturnKtType() else null
+                return if (element == parent.defaultValue) parent.returnType else null
             }
 
             is KtPropertyAccessor -> {
@@ -153,7 +153,7 @@ private fun findExpectedType(callExpression: KtCallExpression): KaType? {
                 return when {
                     element != parent.bodyExpression || parent.hasBlockBody() -> null
                     property.typeReference == null -> null
-                    else -> parent.getReturnKtType()
+                    else -> parent.returnType
                 }
             }
 

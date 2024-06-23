@@ -299,7 +299,7 @@ internal fun specifyNullTypeExplicitly(codeToInline: MutableCodeToInline, origin
     if (mainExpression?.isNull() == true) {
         val useSiteKtElement = originalDeclaration
         val nullCast = analyze(useSiteKtElement) {
-            "null as ${useSiteKtElement.getReturnKtType().render(position = Variance.OUT_VARIANCE)}"
+            "null as ${useSiteKtElement.returnType.render(position = Variance.OUT_VARIANCE)}"
         }
 
         codeToInline.addPreCommitAction(mainExpression) {

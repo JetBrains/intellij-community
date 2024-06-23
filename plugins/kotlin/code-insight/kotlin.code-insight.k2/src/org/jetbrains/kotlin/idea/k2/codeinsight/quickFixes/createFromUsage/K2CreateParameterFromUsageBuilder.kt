@@ -101,12 +101,12 @@ object K2CreateParameterFromUsageBuilder {
         context(KaSession)
         private fun getExpectedType(expression: KtExpression): KaType {
             if (expression is KtDestructuringDeclarationEntry) {
-                val type = expression.getReturnKtType()
+                val type = expression.returnType
                 return if (type is KaErrorType) builtinTypes.ANY else type
             }
             val physicalExpression = expression.substringContextOrThis
             val type = if (physicalExpression is KtProperty && physicalExpression.isLocal) {
-                physicalExpression.getReturnKtType()
+                physicalExpression.returnType
             } else {
                 (expression.extractableSubstringInfo as? K2ExtractableSubstringInfo)?.guessLiteralType() ?: physicalExpression.expressionType
             }
@@ -118,7 +118,7 @@ object K2CreateParameterFromUsageBuilder {
             val right = binaryExpression?.right
             right?.expressionType?.let { return it }
             right?.expectedType?.let { return it }
-            (expression.parent as? KtDeclaration)?.getReturnKtType()?.let { return it }
+            (expression.parent as? KtDeclaration)?.returnType?.let { return it }
             return builtinTypes.ANY
         }
 

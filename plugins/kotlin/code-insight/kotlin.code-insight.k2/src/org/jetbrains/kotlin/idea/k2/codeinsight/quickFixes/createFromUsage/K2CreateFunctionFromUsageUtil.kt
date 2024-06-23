@@ -87,7 +87,7 @@ object K2CreateFunctionFromUsageUtil {
                 parent is KtPropertyDelegate -> {
                     val variable = parent.parent as KtProperty
                     val delegateClassName = if (variable.isVar) "ReadWriteProperty" else "ReadOnlyProperty"
-                    val ktType = variable.getReturnKtType()
+                    val ktType = variable.returnType
                     val symbol = variable.symbol as? KaCallableSymbol
                     val parameterType = symbol?.receiverType ?: (variable.symbol
                         .containingSymbol as? KaNamedClassOrObjectSymbol)?.buildSelfClassType() ?: builtinTypes.nullableAny

@@ -63,7 +63,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                     return false
                 }
 
-                if (configuration.checkResultType && !function.getReturnKtType().isUnit) {
+                if (configuration.checkResultType && !function.returnType.isUnit) {
                     return false
                 }
 

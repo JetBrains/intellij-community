@@ -122,7 +122,7 @@ private fun createVariableDeclaration(property: KtProperty, generateDefaultIniti
         @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             analyze(property) {
-                val propertyType = property.getReturnKtType()
+                val propertyType = property.returnType
 
                 var defaultInitializer: String? = null
                 if (generateDefaultInitializers && property.isVar) {

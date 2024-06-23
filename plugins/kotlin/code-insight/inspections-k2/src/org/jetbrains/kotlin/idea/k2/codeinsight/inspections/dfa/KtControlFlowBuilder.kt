@@ -888,7 +888,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processExpression(subjectExpression)
             val subjectVariable = expr.subjectVariable
             if (subjectVariable != null) {
-                kotlinType = subjectVariable.getReturnKtType()
+                kotlinType = subjectVariable.returnType
                 dfVar = factory.varFactory.createVariableValue(subjectVariable.getVariableSymbol().variableDescriptor())
             } else {
                 kotlinType = subjectExpression.getKotlinType()
@@ -1008,7 +1008,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
         override fun constraints(): MutableList<TypeConstraint> {
             val parameter = clause.catchParameter ?: return mutableListOf()
-            return mutableListOf(analyze(clause) { TypeConstraint.fromDfType(parameter.getReturnKtType().toDfType()) })
+            return mutableListOf(analyze(clause) { TypeConstraint.fromDfType(parameter.returnType.toDfType()) })
         }
     }
 
@@ -1093,7 +1093,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 return@inlinedBlock
             }
             val parameterVar = factory.varFactory.createVariableValue(parameter.getParameterSymbol().variableDescriptor())
-            val parameterType = parameter.getReturnKtType()
+            val parameterType = parameter.returnType
             val pushLoopCondition = processForRange(expr, parameterVar, parameterType)
             val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
             val endOffset = DeferredOffset()
@@ -1322,7 +1322,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             return
         }
         val dfaVariable = factory.varFactory.createVariableValue(variable.getVariableSymbol().variableDescriptor())
-        if (variable.isLocal && !variable.isVar && variable.getReturnKtType().isBoolean) {
+        if (variable.isLocal && !variable.isVar && variable.returnType.isBoolean) {
             // Boolean true/false constant: do not track; might be used as a feature knob or explanatory variable
             if (initializer.node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT) {
                 pushUnknown()
@@ -1330,7 +1330,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
         processExpression(initializer)
-        addImplicitConversion(initializer, variable.getReturnKtType())
+        addImplicitConversion(initializer, variable.returnType)
         addInstruction(JvmAssignmentInstruction(KotlinExpressionAnchor(variable), dfaVariable))
     }
 

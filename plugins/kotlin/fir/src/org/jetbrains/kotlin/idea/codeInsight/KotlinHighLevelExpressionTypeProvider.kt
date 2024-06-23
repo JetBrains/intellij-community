@@ -21,7 +21,7 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
     @OptIn(KaExperimentalApi::class)
     override fun getInformationHint(element: KtExpression): String = analyze(element) {
         val ktType = if (element is KtDeclaration) {
-            element.getReturnKtType()
+            element.returnType
         } else {
             element.expressionType ?: return KotlinBundle.message("type.provider.unknown.type")
         }

@@ -103,7 +103,7 @@ internal class ConvertLambdaToReferenceIntention :
 
         if (element.parentValueArgument() as? KtLambdaArgument == null) {
             val renderTypeForProperty = if (parent is KtProperty && parent.typeReference == null) {
-                val propertyType = parent.getReturnKtType()
+                val propertyType = parent.returnType
                 val symbol = element.singleStatementOrNull()?.resolveToCall()?.singleFunctionCallOrNull()?.symbol as? KaNamedFunctionSymbol
                 if (symbol != null && symbol.overloadedFunctions(element).size > 1) {
                     propertyType.render(position = Variance.IN_VARIANCE)

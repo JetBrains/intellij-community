@@ -109,7 +109,7 @@ class KotlinIntroduceConstantHandler(
                     val property = extractResult.declaration as KtProperty
                     val descriptor = extractResult.config.descriptor
                     val exprType =
-                        allowAnalysisOnEdt { analyze(property) { CallableReturnTypeUpdaterUtils.TypeInfo.createByKtTypes(property.getReturnKtType()) } }
+                        allowAnalysisOnEdt { analyze(property) { CallableReturnTypeUpdaterUtils.TypeInfo.createByKtTypes(property.returnType) } }
 
                     val introducer = object : KotlinInplacePropertyIntroducer(
                         property = property,

@@ -39,7 +39,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
         val result = mutableListOf<LookupElement>()
 
         for (parent in expression.parentsWithSelf.filterIsInstance<KtDeclarationWithBody>()) {
-            val returnType = parent.getReturnKtType()
+            val returnType = parent.returnType
             if (parent is KtFunctionLiteral) {
                 val (label, call) = parent.findLabelAndCall()
                 if (label != null) {

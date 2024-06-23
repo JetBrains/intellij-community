@@ -57,7 +57,7 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
             if (isConstructorCall) return
 
             // can be KtClass or PsiClass
-            property.getReturnKtType().withNullability(KaTypeNullability.UNKNOWN).expandedSymbol?.psi ?: return
+            property.returnType.withNullability(KaTypeNullability.UNKNOWN).expandedSymbol?.psi ?: return
           }
         }
 
@@ -134,7 +134,7 @@ private class KtWrapInSupplierQuickFix(ktProperty: KtProperty) : WrapInSupplierQ
       @OptIn(KaAllowAnalysisFromWriteAction::class)
       allowAnalysisFromWriteAction {
         analyze(element) {
-          val returnType = element.getReturnKtType().lowerBoundIfFlexible()
+          val returnType = element.returnType.lowerBoundIfFlexible()
           (returnType as? KaClassType)?.classId
         }
       }

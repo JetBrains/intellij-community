@@ -13,7 +13,7 @@ object AddLateInitFactory {
         val property: KtProperty = diagnostic.psi
         if (!property.isVar) return@IntentionBased emptyList()
 
-        val type = property.getReturnKtType()
+        val type = property.returnType
 
         if (type.isPrimitive || type.canBeNull) return@IntentionBased emptyList()
 

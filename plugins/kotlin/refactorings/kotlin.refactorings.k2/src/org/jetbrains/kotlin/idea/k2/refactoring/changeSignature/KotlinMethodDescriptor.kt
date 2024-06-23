@@ -25,7 +25,7 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
     @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     internal val oldReturnType: String = allowAnalysisOnEdt {
         analyze(callable) {
-            (callable as? KtCallableDeclaration)?.getReturnKtType()?.render(position = Variance.INVARIANT) ?: ""
+            (callable as? KtCallableDeclaration)?.returnType?.render(position = Variance.INVARIANT) ?: ""
         }
     }
 
@@ -71,7 +71,7 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
                 (callable as? KtCallableDeclaration)
                     ?.valueParameters?.forEach { p ->
                         val parameterInfo = KotlinParameterInfo(
-                            params.size, KotlinTypeInfo(p.getReturnKtType(), callable),
+                            params.size, KotlinTypeInfo(p.returnType, callable),
                             p.name ?: "",
                             p.valOrVarKeyword.toValVar(),
                             p.defaultValue, p.defaultValue != null, p.defaultValue, callable

@@ -275,7 +275,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         analyze(targetClass) {
             fun KtNamedDeclaration.genVariableHashCode(parenthesesNeeded: Boolean): String {
                 val ref = name ?: return "0"
-                val type = getReturnKtType()
+                val type = returnType
                 val isNullable = type.isMarkedNullable
 
                 var text = when {

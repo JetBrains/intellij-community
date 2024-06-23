@@ -188,7 +188,7 @@ object ChangeTypeQuickFixFactories {
 
     context(KaSession)
     private fun registerVariableTypeFixes(declaration: KtProperty, type: KaType): List<KotlinQuickFixAction<KtExpression>> {
-        val expectedType = declaration.getReturnKtType()
+        val expectedType = declaration.returnType
         val expression = declaration.initializer
         return buildList {
             add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(declaration.returnType(type))))

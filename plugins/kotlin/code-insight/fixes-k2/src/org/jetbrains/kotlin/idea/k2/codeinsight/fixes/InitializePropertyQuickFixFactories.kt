@@ -91,7 +91,7 @@ object InitializePropertyQuickFixFactories {
 
         return buildList {
             val elementContext = ElementContext(
-                initializerText = element.getReturnKtType().defaultInitializer ?: "TODO()",
+                initializerText = element.returnType.defaultInitializer ?: "TODO()",
             )
             add(InitializePropertyModCommandAction(element, elementContext))
 

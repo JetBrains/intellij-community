@@ -97,7 +97,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 @OptIn(KaAllowAnalysisFromWriteAction::class)
                 allowAnalysisFromWriteAction {
                     analyze(property) {
-                        val propertyRenderedType = property.getReturnKtType().render(position = Variance.INVARIANT)
+                        val propertyRenderedType = property.returnType.render(position = Variance.INVARIANT)
                         if (propertyRenderedType == expressionRenderedType) {
                             renderedTypeArgumentsIfMightBeNeeded = null
                         } else if (!areTypeArgumentsNeededForCorrectTypeInference(initializer)) {

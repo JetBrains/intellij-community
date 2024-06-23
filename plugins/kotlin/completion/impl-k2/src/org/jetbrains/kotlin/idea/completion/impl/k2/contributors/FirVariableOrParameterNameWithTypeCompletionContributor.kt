@@ -101,7 +101,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
             val name = parameter.name
             if (name == null || variableOrParameterInOriginal == parameter || !prefixMatcher.isStartMatch(name)) return@mapNotNull null
 
-            val type = parameter.getReturnKtType()
+            val type = parameter.returnType
             if (typeIsVisible(type, visibilityChecker, availableTypeParameters)) {
 
                 val typeLookupElement = lookupElementFactory.createTypeLookupElement(type) ?: return@mapNotNull null

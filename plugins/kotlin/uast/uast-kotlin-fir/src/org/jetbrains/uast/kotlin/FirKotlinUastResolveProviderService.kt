@@ -641,7 +641,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType? {
         analyzeForUast(ktDeclaration) {
-            val ktType = ktDeclaration.getReturnKtType()
+            val ktType = ktDeclaration.returnType
             return toPsiType(
                 ktType,
                 source,
@@ -660,7 +660,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         isForFake: Boolean,
     ): PsiType? {
         analyzeForUast(ktDeclaration) {
-            val ktType = ktDeclaration.getReturnKtType()
+            val ktType = ktDeclaration.returnType
             return toPsiType(
                 ktType,
                 containingLightDeclaration,
@@ -765,13 +765,13 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 // getter: its return type should be the same as property
                 // setter: it's always `void`, and its (implicit) setter parameter is callable.
                 analyzeForUast(psiElement) {
-                    typeConsumer(psiElement.getReturnKtType())
+                    typeConsumer(psiElement.returnType)
                 }
             }
 
             is KtDestructuringDeclaration -> {
                 analyzeForUast(psiElement) {
-                    typeConsumer(psiElement.getReturnKtType())
+                    typeConsumer(psiElement.returnType)
                 }
             }
 

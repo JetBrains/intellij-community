@@ -45,7 +45,7 @@ internal class CanBePrimaryConstructorPropertyInspection :
         val initializer = element.initializer ?: return null
         val paramSymbol = initializer.mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return null
         if (element.nameAsName != paramSymbol.name) return null
-        val propertyType = element.getReturnKtType()
+        val propertyType = element.returnType
         val isMergeableType = if (paramSymbol.isVararg) {
             propertyType.arrayElementType?.isEqualTo(paramSymbol.returnType) == true
         } else {

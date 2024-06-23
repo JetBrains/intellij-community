@@ -19,7 +19,7 @@ class KotlinGotoValVarTypeHandler: GotoDeclarationHandlerBase() {
         if ((elementType == KtTokens.VAL_KEYWORD || elementType == KtTokens.VAR_KEYWORD)) {
             val property = sourceElement?.parent as? KtProperty ?: return null
             return analyze(property) {
-                val ktType = property.getReturnKtType()
+                val ktType = property.returnType
                 when (ktType) {
                     is KaTypeParameterType -> ktType.symbol.psi
                     else -> ktType.upperBoundIfFlexible().expandedSymbol?.psi

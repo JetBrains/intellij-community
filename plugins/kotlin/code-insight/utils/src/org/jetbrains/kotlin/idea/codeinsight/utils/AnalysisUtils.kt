@@ -37,7 +37,7 @@ fun KtDeclaration.isFinalizeMethod(): Boolean {
     val function = this as? KtNamedFunction ?: return false
     return function.name == "finalize"
             && function.valueParameters.isEmpty()
-            && function.getReturnKtType().isUnit
+            && function.returnType.isUnit
 }
 
 context(KaSession)

@@ -315,7 +315,7 @@ class CodeInliner(
                     expression.putCopyableUserData(USER_CODE_KEY, Unit)
                     return Argument(expression, expression.expressionType, isNamed = single.isNamed())
                 }
-                val parameterType = parameter.getReturnKtType()
+                val parameterType = parameter.returnType
                 val elementType = parameterType.arrayElementType ?: return null
                 val expression = psiFactory.buildExpression {
                     appendFixedText(arrayOfFunctionName(elementType))

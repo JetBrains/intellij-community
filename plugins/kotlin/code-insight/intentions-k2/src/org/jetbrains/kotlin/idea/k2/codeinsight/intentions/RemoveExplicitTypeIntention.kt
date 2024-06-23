@@ -55,7 +55,7 @@ internal class RemoveExplicitTypeIntention :
     context(KaSession)
     override fun prepareContext(element: KtDeclaration): Unit? = when {
         element is KtParameter -> true
-        element is KtNamedFunction && element.hasBlockBody() -> element.getReturnKtType().isUnit
+        element is KtNamedFunction && element.hasBlockBody() -> element.returnType.isUnit
         element is KtCallableDeclaration && publicReturnTypeShouldBePresentInApiMode(element) -> false
         else -> !element.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze()
     }.asUnit
@@ -86,7 +86,7 @@ internal class RemoveExplicitTypeIntention :
     private fun KtDeclaration.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze(): Boolean {
         val typeReference = typeReference ?: return false
         val initializer = getInitializerOrGetterInitializer() ?: return true
-        val explicitType = getReturnKtType()
+        val explicitType = returnType
 
         // The initializer may require an explicit type, but an error type is definitely not it. The intention makes a conscious decision to
         // allow the user to quickly remove completely erroneous explicit types.

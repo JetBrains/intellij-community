@@ -218,7 +218,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                                                     })
                                         }
 
-                                        declaration.getReturnKtType().containsClassType(classPointer.element)
+                                        declaration.returnType.containsClassType(classPointer.element)
                                     }
                                 }
                             }

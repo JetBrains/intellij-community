@@ -110,7 +110,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         expression: KtExpression
     ): KaType? {
         val type = if (physicalExpression is KtProperty && physicalExpression.isLocal) {
-            physicalExpression.getReturnKtType()
+            physicalExpression.returnType
         } else {
             (expression.extractableSubstringInfo as? K2ExtractableSubstringInfo)?.guessLiteralType() ?: physicalExpression.expressionType
         }

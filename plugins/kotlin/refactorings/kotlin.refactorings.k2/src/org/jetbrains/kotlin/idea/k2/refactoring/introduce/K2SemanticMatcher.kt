@@ -843,7 +843,7 @@ object K2SemanticMatcher {
         targetDeclaration: KtCallableDeclaration,
         patternDeclaration: KtCallableDeclaration,
         context: MatchingContext,
-    ): Boolean = context.areTypesEqualOrAssociated(targetDeclaration.getReturnKtType(), patternDeclaration.getReturnKtType())
+    ): Boolean = context.areTypesEqualOrAssociated(targetDeclaration.returnType, patternDeclaration.returnType)
 
     context(KaSession)
     private fun areReceiverParametersMatchingByResolve(

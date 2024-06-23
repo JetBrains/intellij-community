@@ -67,7 +67,7 @@ fun prepareData(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
 
     if (typeReference != null) {
         val checkedType = typeReference.getKtType()
-        val variableType = variableDeclaration.getReturnKtType()
+        val variableType = variableDeclaration.returnType
         if (!checkedType.isPossiblySubTypeOf(variableType)) return null
     }
 

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 class FunctionNameInspection : AbstractFunctionNameInspection() {
     override fun KtNamedFunction.isFactoryFunctionByAnalyze(): Boolean = analyze(this) {
         val functionName = name ?: return false
-        val returnType = getReturnKtType()
+        val returnType = returnType
 
         return returnType.hasShortName(functionName)
                 || returnType.getAllSuperTypes().any { it.hasShortName(functionName) }

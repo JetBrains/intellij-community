@@ -141,7 +141,7 @@ object CallableReturnTypeUpdaterUtils {
     @OptIn(KaExperimentalApi::class)
     @ApiStatus.Internal
     fun <T> calculateAllTypes(declaration: KtCallableDeclaration, allTypesConsumer: (KaType, Sequence<KaType>, Boolean) -> T?): T? {
-        val declarationType = declaration.getReturnKtType()
+        val declarationType = declaration.returnType
         val overriddenTypes = (declaration.symbol as? KaCallableSymbol)?.directlyOverriddenSymbols
             ?.map { it.returnType }
             ?.distinct()

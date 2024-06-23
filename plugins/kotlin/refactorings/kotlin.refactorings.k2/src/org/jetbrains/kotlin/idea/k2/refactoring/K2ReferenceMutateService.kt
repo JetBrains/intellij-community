@@ -140,7 +140,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         if (isExtensionDeclaration()) return true
         return if (this is KtProperty) {
             analyze(this) {
-                val returnType = getReturnKtType()
+                val returnType = returnType
                 returnType is KaFunctionType && returnType.receiverType != null
             }
         } else false
