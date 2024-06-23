@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.references.KtReference
  * See KT-34281 for more details.
  */
 context(KaSession)
-internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
+internal fun getStaticScopes(reference: KtReference): List<KaScopeWithKind> {
     val scopeIndex = CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX
 
     return reference.resolveToSymbols().mapNotNull { symbol ->
@@ -31,10 +31,10 @@ internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
                     symbol.staticMemberScope
                 }
 
-                KtScopeWithKind(scope, KaScopeKind.StaticMemberScope(scopeIndex), token)
+                KaScopeWithKind(scope, KaScopeKind.StaticMemberScope(scopeIndex), token)
             }
 
-            is KaPackageSymbol -> KtScopeWithKind(symbol.packageScope, KaScopeKind.PackageMemberScope(scopeIndex), token)
+            is KaPackageSymbol -> KaScopeWithKind(symbol.packageScope, KaScopeKind.PackageMemberScope(scopeIndex), token)
             else -> null
         }
     }
