@@ -21,7 +21,7 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
         allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(expression) {
-                    val scope = file.scopeContext(expression).getCompositeScope()
+                    val scope = file.scopeContext(expression).compositeScope()
                     return scope.getClassifierSymbols()
                         .filterIsInstance<KaNamedClassOrObjectSymbol>()
                         .filter { shouldSuggest(it) }

@@ -77,7 +77,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         lookupNamesAdded: MutableSet<String>,
         scopeContext: KaScopeContext
     ) {
-        val typeParametersScope = scopeContext.getCompositeScope { it is KaScopeKind.TypeParameterScope }
+        val typeParametersScope = scopeContext.compositeScope { it is KaScopeKind.TypeParameterScope }
         val availableTypeParameters = getAvailableTypeParameters(typeParametersScope).toSet()
 
         val variableOrParameterInOriginal = getOriginalElementOfSelf(variableOrParameter, basicContext.originalKtFile)

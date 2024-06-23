@@ -91,7 +91,7 @@ internal object SurroundWithNullCheckFixFactory {
 
         val referenceSymbol = nullableExpression.mainReference.resolveToSymbol() as? KaNamedSymbol ?: return emptyList()
         val file = expressionTarget.containingKtFile
-        val scope = file.scopeContext(expressionTarget).getCompositeScope()
+        val scope = file.scopeContext(expressionTarget).compositeScope()
 
         val callableSymbol = scope.getCallableSymbols(referenceSymbol.name).firstOrNull() ?: return emptyList()
         if (referenceSymbol != callableSymbol) return emptyList()
