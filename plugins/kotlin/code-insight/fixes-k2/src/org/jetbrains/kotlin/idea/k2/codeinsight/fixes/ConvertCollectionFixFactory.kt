@@ -5,7 +5,7 @@ import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.types.KaNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -26,8 +26,8 @@ internal object ConvertCollectionFixFactory {
         val expectedCollectionType = getCollectionType(expectedType) ?: return null
         if (expressionCollectionType == expectedCollectionType) return null
 
-        val expressionTypeArg = (expressionType as? KaNonErrorClassType)?.typeArguments?.singleOrNull()?.type ?: return null
-        val expectedTypeArg = (expectedType as? KaNonErrorClassType)?.typeArguments?.singleOrNull()?.type ?: return null
+        val expressionTypeArg = (expressionType as? KaClassType)?.typeArguments?.singleOrNull()?.type ?: return null
+        val expectedTypeArg = (expectedType as? KaClassType)?.typeArguments?.singleOrNull()?.type ?: return null
 
         if (!expressionTypeArg.isSubTypeOf(expectedTypeArg)) return null
 

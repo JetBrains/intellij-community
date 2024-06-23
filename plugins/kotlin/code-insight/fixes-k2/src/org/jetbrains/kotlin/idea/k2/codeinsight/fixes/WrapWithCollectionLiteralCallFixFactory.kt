@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.types.KaNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
@@ -25,7 +25,7 @@ internal object WrapWithCollectionLiteralCallFixFactory {
         val collectionType = ConvertCollectionFixFactory.getCollectionType(expectedType) ?: return emptyList()
 
         val expectedArgumentType =
-            (expectedType as? KaNonErrorClassType)
+            (expectedType as? KaClassType)
                 ?.typeArguments?.singleOrNull()
                 ?.takeIf { (it as? KtTypeArgumentWithVariance)?.variance != Variance.IN_VARIANCE }
                 ?.type

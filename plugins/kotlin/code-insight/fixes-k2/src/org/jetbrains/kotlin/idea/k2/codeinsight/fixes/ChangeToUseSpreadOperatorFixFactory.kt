@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
-import org.jetbrains.kotlin.analysis.api.types.KaNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
@@ -54,7 +54,7 @@ private fun KaType.unwrap(): KaType {
 context(KaSession)
 private fun substituteTypeParameterTypesWithStarTypeProjections(type: KaType): KaType? {
     return when (type) {
-        is KaNonErrorClassType -> buildClassType(type.symbol) {
+        is KaClassType -> buildClassType(type.symbol) {
             type.typeArguments.mapNotNull { it.type }.forEach {
                 if (it is KaTypeParameterType) {
                     argument(KaStarTypeProjection(token))
