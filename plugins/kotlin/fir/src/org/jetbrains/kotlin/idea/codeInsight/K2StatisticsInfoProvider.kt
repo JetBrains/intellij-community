@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableSignatureRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -39,7 +39,7 @@ object K2StatisticsInfoProvider {
                 analysisSession: KaSession,
                 symbol: KaCallableSymbol,
                 keyword: KtKeywordToken?,
-                declarationRenderer: KtDeclarationRenderer,
+                declarationRenderer: KaDeclarationRenderer,
                 printer: PrettyPrinter
             ) {
                 return when (symbol) {

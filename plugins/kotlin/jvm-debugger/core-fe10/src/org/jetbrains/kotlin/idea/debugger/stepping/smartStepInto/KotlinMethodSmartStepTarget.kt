@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtModifierListRenderer
@@ -128,7 +128,7 @@ private val NO_CALLABLE_RECEIVER = object : KaCallableReceiverRenderer {
     override fun renderReceiver(
         analysisSession: KaSession,
         symbol: KaReceiverParameterSymbol,
-        declarationRenderer: KtDeclarationRenderer,
+        declarationRenderer: KaDeclarationRenderer,
         printer: PrettyPrinter
     ) {}
 }

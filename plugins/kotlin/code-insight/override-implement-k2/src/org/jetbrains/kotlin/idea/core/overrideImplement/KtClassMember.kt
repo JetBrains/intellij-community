@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererOtherModifiersProvider
@@ -260,7 +260,7 @@ context(KaSession)
 private fun generateConstructorParameter(
     project: Project,
     symbol: KaCallableSymbol,
-    renderer: KtDeclarationRenderer,
+    renderer: KaDeclarationRenderer,
 ): KtCallableDeclaration {
     return KtPsiFactory(project).createParameter(symbol.render(renderer))
 }
@@ -270,7 +270,7 @@ context(KaSession)
 private fun generateFunction(
     project: Project,
     symbol: KaNamedFunctionSymbol,
-    renderer: KtDeclarationRenderer,
+    renderer: KaDeclarationRenderer,
     bodyType: BodyType,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType
@@ -293,7 +293,7 @@ context(KaSession)
 private fun generateProperty(
     project: Project,
     symbol: KaPropertySymbol,
-    renderer: KtDeclarationRenderer,
+    renderer: KaDeclarationRenderer,
     bodyType: BodyType,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType

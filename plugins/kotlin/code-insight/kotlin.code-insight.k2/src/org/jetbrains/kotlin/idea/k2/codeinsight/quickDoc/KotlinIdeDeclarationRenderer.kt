@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaA
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaRendererTypeApproximator
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaRendererBodyMemberScopeProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
@@ -106,7 +106,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderSymbol(
                 analysisSession: KaSession,
                 symbol: KaValueParameterSymbol,
-                declarationRenderer: KtDeclarationRenderer,
+                declarationRenderer: KaDeclarationRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
                 highlight(" = ") { asOperationSign }.separated(
@@ -449,7 +449,7 @@ internal class KotlinIdeDeclarationRenderer(
                 analysisSession: KaSession,
                 symbol: KaCallableSymbol,
                 keyword: KtKeywordToken?,
-                declarationRenderer: KtDeclarationRenderer,
+                declarationRenderer: KaDeclarationRenderer,
                 printer: PrettyPrinter
             ) = with(analysisSession) {
                 printer {
@@ -529,7 +529,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderSymbol(
                 analysisSession: KaSession,
                 symbol: KaTypeParameterSymbol,
-                declarationRenderer: KtDeclarationRenderer,
+                declarationRenderer: KaDeclarationRenderer,
                 printer: PrettyPrinter
             ) {
                 printer.append(highlight("<".escape()) { asOperationSign })
@@ -562,7 +562,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderTypeParameters(
                 analysisSession: KaSession,
                 symbol: KaDeclarationSymbol,
-                declarationRenderer: KtDeclarationRenderer,
+                declarationRenderer: KaDeclarationRenderer,
                 printer: PrettyPrinter
             ) {
                 val typeParameters = symbol.typeParameters
@@ -591,7 +591,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderWhereClause(
                 analysisSession: KaSession,
                 symbol: KaDeclarationSymbol,
-                declarationRenderer: KtDeclarationRenderer,
+                declarationRenderer: KaDeclarationRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
                 val allBounds = symbol.typeParameters.filter {
@@ -634,7 +634,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderValueParameters(
                 analysisSession: KaSession,
                 symbol: KaCallableSymbol,
-                declarationRenderer: KtDeclarationRenderer,
+                declarationRenderer: KaDeclarationRenderer,
                 printer: PrettyPrinter
             ) {
                 val valueParameters = when (symbol) {
@@ -661,7 +661,7 @@ internal class KotlinIdeDeclarationRenderer(
                 analysisSession: KaSession,
                 name: Name,
                 symbol: KaNamedSymbol?,
-                declarationRenderer: KtDeclarationRenderer,
+                declarationRenderer: KaDeclarationRenderer,
                 printer: PrettyPrinter
             ): Unit = with(analysisSession) {
                 if (symbol is KaClassSymbol && symbol.classKind == KaClassKind.COMPANION_OBJECT && symbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) {
@@ -718,7 +718,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderReturnType(
                 analysisSession: KaSession,
                 symbol: KaCallableSymbol,
-                declarationRenderer: KtDeclarationRenderer,
+                declarationRenderer: KaDeclarationRenderer,
                 printer: PrettyPrinter
             ) {
                 if (symbol is KaConstructorSymbol) return
