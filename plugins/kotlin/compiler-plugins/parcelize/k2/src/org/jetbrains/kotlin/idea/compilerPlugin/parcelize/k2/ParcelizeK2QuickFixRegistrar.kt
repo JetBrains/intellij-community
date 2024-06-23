@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnostic0
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtCompilerPluginDiagnostic1
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnostic1
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.diagnostics.AbstractKtDiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
@@ -61,7 +61,7 @@ class ParcelizeK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         )
 
         registerFactory(
-            createApplicatorForFactory<KtCompilerPluginDiagnostic1>(KtErrorsParcelize.CLASS_SHOULD_BE_PARCELIZE) { diagnostic ->
+            createApplicatorForFactory<KaCompilerPluginDiagnostic1>(KtErrorsParcelize.CLASS_SHOULD_BE_PARCELIZE) { diagnostic ->
                 val parameterSymbol = diagnostic.parameter1 as? KaClassSymbol
                 val parameterPsi = parameterSymbol?.psi as? KtClassOrObject
                 if (parameterPsi != null) {
@@ -90,7 +90,7 @@ private fun KtQuickFixesListBuilder.registerQuickFixForDiagnosticFactory(
     quickFixFactory: QuickFixesPsiBasedFactory<*>
 ) {
     registerFactory(
-        createApplicatorForFactory<KtCompilerPluginDiagnostic1>(diagnosticFactory) {
+        createApplicatorForFactory<KaCompilerPluginDiagnostic1>(diagnosticFactory) {
             quickFixFactory.createQuickFix(it.psi)
         }
     )
