@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaModifierListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParameterRendererFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaTypeParameterRendererFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableReceiverRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
@@ -61,7 +61,7 @@ class KotlinMethodSmartStepTarget(
                 functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
             }
             returnTypeFilter = NO_RETURN_TYPE
-            typeParametersFilter = KtTypeParameterRendererFilter { _, _ -> false }
+            typeParametersFilter = KaTypeParameterRendererFilter { _, _ -> false }
             constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
             valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY
             callableReceiverRenderer = NO_CALLABLE_RECEIVER
