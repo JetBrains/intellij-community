@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererModalityModifierProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererOtherModifiersProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderAnnotationsModifiersAndContextReceivers
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaCallableParameterRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaDeclarationNameRenderer
@@ -258,7 +258,7 @@ internal class KotlinIdeDeclarationRenderer(
 
         fun KaDeclarationSymbol.isInlineClassOrObject(): Boolean = this is KaNamedClassOrObjectSymbol && isInline
 
-        val valueModifierRenderer = object : KtRendererOtherModifiersProvider {
+        val valueModifierRenderer = object : KaRendererOtherModifiersProvider {
             override fun getOtherModifiers(analysisSession: KaSession, symbol: KaDeclarationSymbol): List<KtModifierKeywordToken> {
                 if (symbol.isInlineClassOrObject()) {
                     (symbol.psi as? KtClass)?.let { klass ->

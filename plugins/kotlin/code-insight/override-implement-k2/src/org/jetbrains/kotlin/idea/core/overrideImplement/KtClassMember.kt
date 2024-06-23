@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererOtherModifiersProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossibleMultiplatformSymbol
@@ -135,8 +135,8 @@ fun generateMember(
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
 
             val containingSymbol = targetClass?.symbol as? KaClassSymbol
-            otherModifiersProvider = object : KtRendererOtherModifiersProvider {
-                //copy from KtRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
+            otherModifiersProvider = object : KaRendererOtherModifiersProvider {
+                //copy from KaRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
                 override fun getOtherModifiers(
                     analysisSession: KaSession,
                     s: KaDeclarationSymbol
