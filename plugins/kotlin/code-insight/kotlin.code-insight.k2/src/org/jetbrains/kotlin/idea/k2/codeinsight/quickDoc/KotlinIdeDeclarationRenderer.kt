@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSupe
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeNameRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeNameRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeParameterTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtUsualClassTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -403,8 +403,8 @@ internal class KotlinIdeDeclarationRenderer(
     }
 
     @KaExperimentalApi
-    fun createTypeNameRenderer(): KtTypeNameRenderer {
-        return object : KtTypeNameRenderer {
+    fun createTypeNameRenderer(): KaTypeNameRenderer {
+        return object : KaTypeNameRenderer {
             override fun renderName(
                 analysisSession: KaSession,
                 name: Name,
