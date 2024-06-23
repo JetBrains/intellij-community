@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnT
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtModifierListRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaModifierListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParameterRendererFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableReceiverRenderer
@@ -134,7 +134,7 @@ private val NO_CALLABLE_RECEIVER = object : KaCallableReceiverRenderer {
 }
 
 @KaExperimentalApi
-private val NO_MODIFIER_LIST = object : KtModifierListRenderer {
+private val NO_MODIFIER_LIST = object : KaModifierListRenderer {
     override fun renderModifiers(
         analysisSession: KaSession,
         symbol: KaDeclarationSymbol,
