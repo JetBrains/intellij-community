@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -56,7 +56,7 @@ internal class KotlinChangeSignatureDialog(
         return allowAnalysisOnEdt {
             analyze(typeRef) {
                 val ktType = typeRef.getKtType()
-                return ktType !is KtErrorType
+                return ktType !is KaErrorType
             }
         }
     }

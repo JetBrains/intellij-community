@@ -7,7 +7,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -79,7 +79,7 @@ fun prepareData(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
     }
 
     val type = calculateType(variableDeclaration, element, initializer)?.let { type ->
-        if (type is KtErrorType) null
+        if (type is KaErrorType) null
         else type.render(position = Variance.OUT_VARIANCE)
     }
 

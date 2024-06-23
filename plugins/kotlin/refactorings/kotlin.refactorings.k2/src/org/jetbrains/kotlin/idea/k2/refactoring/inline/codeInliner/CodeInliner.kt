@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -286,7 +286,7 @@ class CodeInliner(
             elementType.isByte -> "kotlin.byteArrayOf"
             elementType.isDouble -> "kotlin.doubleArrayOf"
             elementType.isFloat -> "kotlin.floatArrayOf"
-            elementType is KtErrorType -> "kotlin.arrayOf"
+            elementType is KaErrorType -> "kotlin.arrayOf"
             else -> "kotlin.arrayOf<" + elementType.render(position = Variance.INVARIANT) + ">"
         }
     }

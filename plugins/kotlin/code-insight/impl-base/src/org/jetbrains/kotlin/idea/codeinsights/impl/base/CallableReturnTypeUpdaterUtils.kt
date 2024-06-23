@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -235,7 +235,7 @@ object CallableReturnTypeUpdaterUtils {
             @OptIn(KaExperimentalApi::class)
             private fun createTypeByKtType(ktType: KtType): Type = Type(
                 isUnit = ktType.isUnit,
-                isError = ktType is KtErrorType,
+                isError = ktType is KaErrorType,
                 longTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE),
                 shortTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),
             )

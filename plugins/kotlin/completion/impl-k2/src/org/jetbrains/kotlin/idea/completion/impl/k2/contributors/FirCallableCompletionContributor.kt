@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossibleMultiplatformSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForExplicitReceiverExpression
@@ -311,7 +311,7 @@ internal open class FirCallableCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
-        val receiverType = explicitReceiver.getKtType().takeUnless { it is KtErrorType } ?: return@sequence
+        val receiverType = explicitReceiver.getKtType().takeUnless { it is KaErrorType } ?: return@sequence
         val callablesWithMetadata = collectDotCompletionForCallableReceiver(
             listOf(receiverType),
             visibilityChecker,

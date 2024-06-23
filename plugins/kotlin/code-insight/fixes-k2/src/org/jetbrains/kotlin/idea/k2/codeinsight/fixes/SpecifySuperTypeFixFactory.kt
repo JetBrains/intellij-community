@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.toMutableSmartList
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -95,7 +95,7 @@ object SpecifySuperTypeFixFactory {
         if (candidates.isEmpty()) return@IntentionBased emptyList()
         val superTypes = candidates.mapNotNull { superType ->
             when (superType) {
-                is KtErrorType -> null
+                is KaErrorType -> null
                 is KtNonErrorClassType ->
                     TypeStringWithoutArgs(superType.classId.asSingleFqName().render(), superType.classId.shortClassName.render())
 

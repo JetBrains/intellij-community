@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
@@ -277,7 +277,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 append(": ")
             }
 
-            val returnType = parameter.returnType.takeUnless { it is KtErrorType } ?: parameter.symbol.returnType
+            val returnType = parameter.returnType.takeUnless { it is KaErrorType } ?: parameter.symbol.returnType
             append(returnType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
 
             parameter.symbol.defaultValue?.let { defaultValue ->

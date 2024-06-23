@@ -8,7 +8,7 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
@@ -44,7 +44,7 @@ internal class LambdaToAnonymousFunctionIntention :
     context(KaSession)
     override fun prepareContext(element: KtLambdaExpression): LambdaToFunctionContext? {
         val declarationSymbol = element.functionLiteral.symbol as? KaAnonymousFunctionSymbol ?: return null
-        if (declarationSymbol.valueParameters.any { it.returnType is KtErrorType }) return null
+        if (declarationSymbol.valueParameters.any { it.returnType is KaErrorType }) return null
 
         // anonymous suspend functions are forbidden in Kotlin
         if ((element.functionLiteral.getKtType() as? KtFunctionalType)?.isSuspend == true) return null

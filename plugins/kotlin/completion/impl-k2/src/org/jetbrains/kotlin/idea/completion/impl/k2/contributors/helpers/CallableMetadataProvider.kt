@@ -183,7 +183,7 @@ internal object CallableMetadataProvider {
 
         val actualImplicitReceiverTypes = context.implicitReceiver.map { it.type }
         return (actualExplicitReceiverTypes ?: actualImplicitReceiverTypes)
-            .filterNot { it is KtErrorType }
+            .filterNot { it is KaErrorType }
             .map { it.flatten() }
     }
 

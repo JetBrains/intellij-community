@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
@@ -542,7 +542,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, isBoxed: Boolean): PsiType? {
         analyzeForUast(ktTypeReference) {
             val ktType = ktTypeReference.getKtType()
-            if (ktType is KtErrorType) return null
+            if (ktType is KaErrorType) return null
             return toPsiType(
                 ktType,
                 source,
@@ -555,7 +555,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun resolveToType(ktTypeReference: KtTypeReference, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
         analyzeForUast(ktTypeReference) {
             val ktType = ktTypeReference.getKtType()
-            if (ktType is KtErrorType) return null
+            if (ktType is KaErrorType) return null
             return toPsiType(
                 ktType,
                 containingLightDeclaration,
@@ -714,7 +714,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         val sourcePsi = uLambdaExpression.sourcePsi
         analyzeForUast(sourcePsi) {
             val samType = sourcePsi.expectedType
-                ?.takeIf { it !is KtErrorType && it.isFunctionalInterfaceType }
+                ?.takeIf { it !is KaErrorType && it.isFunctionalInterfaceType }
                 ?.lowerBoundIfFlexible()
                 ?: return null
             return toPsiType(samType, uLambdaExpression, sourcePsi, PsiTypeConversionConfiguration.create(sourcePsi))

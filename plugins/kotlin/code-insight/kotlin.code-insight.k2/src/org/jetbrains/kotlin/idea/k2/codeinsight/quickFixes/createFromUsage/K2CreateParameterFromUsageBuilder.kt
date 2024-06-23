@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
@@ -102,7 +102,7 @@ object K2CreateParameterFromUsageBuilder {
         private fun getExpectedType(expression: KtExpression): KtType {
             if (expression is KtDestructuringDeclarationEntry) {
                 val type = expression.getReturnKtType()
-                return if (type is KtErrorType) builtinTypes.ANY else type
+                return if (type is KaErrorType) builtinTypes.ANY else type
             }
             val physicalExpression = expression.substringContextOrThis
             val type = if (physicalExpression is KtProperty && physicalExpression.isLocal) {

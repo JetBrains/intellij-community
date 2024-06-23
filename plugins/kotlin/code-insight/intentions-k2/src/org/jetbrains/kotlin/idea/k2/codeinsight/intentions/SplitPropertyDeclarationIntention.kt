@@ -8,7 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -40,7 +40,7 @@ internal class SplitPropertyDeclarationIntention :
     @OptIn(KaExperimentalApi::class)
     override fun prepareContext(element: KtProperty): Context? {
         val ktType = element.initializer?.getKtType() ?: return null
-        return Context(if (ktType is KtErrorType) null else ktType.render(position = Variance.OUT_VARIANCE))
+        return Context(if (ktType is KaErrorType) null else ktType.render(position = Variance.OUT_VARIANCE))
     }
 
     override fun invoke(

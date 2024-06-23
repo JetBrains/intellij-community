@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo.executeListener
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -317,7 +317,7 @@ class ImportQuickFix(
 
             val implicitReceiverTypes = containingKtFile.getScopeContextForPosition(position).implicitReceivers.map { it.type }
             // don't import callable on the fly as it might be unresolved because of an erroneous implicit receiver
-            val doNotImportCallablesOnFly = implicitReceiverTypes.any { it is KtErrorType }
+            val doNotImportCallablesOnFly = implicitReceiverTypes.any { it is KaErrorType }
 
             val sortedImportVariants = sortedImportCandidateSymbolsWithPriorities
                 .map { (symbol, priority) ->

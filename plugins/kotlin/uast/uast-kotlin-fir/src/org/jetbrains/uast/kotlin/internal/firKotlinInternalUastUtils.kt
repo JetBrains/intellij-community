@@ -334,7 +334,7 @@ internal fun receiverType(
     val ktType = ktCall.partiallyAppliedSymbol.signature.receiverType
         ?: ktCall.partiallyAppliedSymbol.extensionReceiver?.type
         ?: ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
-    if (ktType == null || ktType is KtErrorType) return null
+    if (ktType == null || ktType is KaErrorType) return null
     return toPsiType(
         ktType,
         source,
@@ -366,7 +366,7 @@ internal fun isInheritedGenericType(ktType: KtType?): Boolean {
 context(KaSession)
 internal fun nullability(ktType: KtType?): KaTypeNullability? {
     if (ktType == null) return null
-    if (ktType is KtErrorType) return null
+    if (ktType is KaErrorType) return null
     return if (ktType.fullyExpandedType.canBeNull)
         KaTypeNullability.NULLABLE
     else

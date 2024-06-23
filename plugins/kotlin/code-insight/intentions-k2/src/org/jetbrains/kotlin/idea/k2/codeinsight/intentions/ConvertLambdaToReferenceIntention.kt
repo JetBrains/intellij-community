@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -380,7 +380,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     if (explicitReceiver != null && explicitReceiverSymbol is KaValueParameterSymbol && lambdaParameterAsExplicitReceiver) {
         val receiverType = explicitReceiverSymbol.returnType
         // No exotic receiver types
-        if (receiverType is KtTypeParameter || receiverType is KtErrorType || receiverType is KtDynamicType || receiverType is KtFunctionalType) return false
+        if (receiverType is KtTypeParameter || receiverType is KaErrorType || receiverType is KtDynamicType || receiverType is KtFunctionalType) return false
     }
 
     return true

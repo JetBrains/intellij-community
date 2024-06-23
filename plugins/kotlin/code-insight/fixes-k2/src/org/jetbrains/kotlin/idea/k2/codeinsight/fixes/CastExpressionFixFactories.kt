@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -118,7 +118,7 @@ object CastExpressionFixFactories {
         element: PsiElement,
     ): List<CastExpressionModCommandAction> {
         // `null` related issue should not be handled by a cast fix.
-        if (isDueToNullability || expectedType is KtErrorType) return emptyList()
+        if (isDueToNullability || expectedType is KaErrorType) return emptyList()
 
         if (element is KtExpression) {
             val actualExpressionType = element.getKtType()

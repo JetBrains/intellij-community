@@ -324,8 +324,8 @@ object K2CreateFunctionFromUsageUtil {
                     else if (owner is KtCallableDeclaration) false
                     else PsiTreeUtil.isAncestor(owner, call, false)
                 } else {
-                    // KtErrorType means this type is unresolved in the context of container
-                    ktLeaf !is KtErrorType
+                    // KaErrorType means this type is unresolved in the context of container
+                    ktLeaf !is KaErrorType
                 }
             }
     }

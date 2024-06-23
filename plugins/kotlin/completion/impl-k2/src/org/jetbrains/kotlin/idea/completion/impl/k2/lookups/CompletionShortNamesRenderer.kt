@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.types.Variance
@@ -62,6 +62,6 @@ internal fun KtType.renderNonErrorOrUnsubstituted(
     unsubstituted: KtType,
     renderer: KtTypeRenderer = CompletionShortNamesRenderer.rendererVerbose
 ): String {
-    val typeToRender = this.takeUnless { it is KtErrorType } ?: unsubstituted
+    val typeToRender = this.takeUnless { it is KaErrorType } ?: unsubstituted
     return typeToRender.render(renderer, position = Variance.INVARIANT)
 }

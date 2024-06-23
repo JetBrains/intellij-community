@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -40,7 +40,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
         }
 
     override fun KtType.isError(): Boolean {
-        return this is KtErrorType
+        return this is KaErrorType
     }
 
     override val booleanType: KtType = analyze(data.commonParent) { builtinTypes.BOOLEAN }
@@ -161,7 +161,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
             if (!isResolvableInScope(it, scope, typeParameters)) return false
         }
     }
-    if (typeToCheck is KtErrorType) {
+    if (typeToCheck is KaErrorType) {
         return false
     }
     if (typeToCheck is KtIntersectionType) {

@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KtCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KtDynamicType
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
@@ -119,7 +119,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtDynamicTypeRenderer.AS_DYNAMIC_WORD
             text(KtTokens.DYNAMIC_KEYWORD.value)
         }
-        is KtErrorType -> {
+        is KaErrorType -> {
             // error types should not be printed
         }
     }

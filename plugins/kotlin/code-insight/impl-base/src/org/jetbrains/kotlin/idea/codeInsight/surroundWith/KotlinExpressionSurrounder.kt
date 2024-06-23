@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -32,7 +32,7 @@ abstract class KotlinExpressionSurrounder : ModCommandSurrounder() {
         allowAnalysisOnEdt {
             return analyze(expression) {
                 val type = expression.getKtType()
-                if (type == null || type is KtErrorType || type.isUnit && isApplicableToStatements) {
+                if (type == null || type is KaErrorType || type.isUnit && isApplicableToStatements) {
                     false
                 } else {
                     isApplicableToStatements || expression.isUsedAsExpression

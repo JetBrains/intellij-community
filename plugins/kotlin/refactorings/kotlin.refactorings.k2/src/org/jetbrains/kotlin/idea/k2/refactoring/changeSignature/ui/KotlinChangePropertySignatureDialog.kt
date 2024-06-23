@@ -7,7 +7,7 @@ import com.intellij.psi.PsiCodeFragment
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -60,7 +60,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
         val typeRef = getContentElement() ?: return false
         analyze(typeRef) {
             val ktType = typeRef.getKtType()
-            return ktType !is KtErrorType
+            return ktType !is KaErrorType
         }
     }
 

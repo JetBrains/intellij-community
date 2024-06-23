@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
@@ -284,7 +284,7 @@ private fun isMultilineLocalProperty(element: PsiElement): Boolean {
 context(KaSession)
 private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalProperty: Boolean): KtType? =
     calculateAllTypes<KtType>(element) { declarationType, allTypes, cannotBeNull ->
-        if (declarationType is KtErrorType) return@calculateAllTypes null
+        if (declarationType is KaErrorType) return@calculateAllTypes null
 
         if (declarationType.isUnit && multilineLocalProperty) {
             return@calculateAllTypes null

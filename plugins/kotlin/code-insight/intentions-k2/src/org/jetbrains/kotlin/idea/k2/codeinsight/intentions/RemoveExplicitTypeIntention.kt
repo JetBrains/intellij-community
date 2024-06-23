@@ -7,7 +7,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -94,7 +94,7 @@ internal class RemoveExplicitTypeIntention :
         // The situation is more fuzzy with errors in type arguments. Here, it makes sense not to remove the type, but rather to fix it. And
         // with a little bit of type information, the intention has a better chance of deciding whether the initializer needs that explicit
         // type. So we don't check the `explicitType` for nested errors.
-        if (explicitType is KtErrorType) return false
+        if (explicitType is KaErrorType) return false
 
         if (!isInitializerTypeContextIndependent(initializer, typeReference)) return true
 

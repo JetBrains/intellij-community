@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.conflicts.filterCandidates
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
@@ -50,7 +50,7 @@ fun checkClassNameShadowing(
             val shortNameFragment = createTypeFragment(newName)
             val hasConflict = analyze(shortNameFragment) {
                 val typeByShortName = shortNameFragment.getContentElement()?.getKtType()
-                typeByShortName != null && typeByShortName !is KtErrorType
+                typeByShortName != null && typeByShortName !is KaErrorType
             }
 
             if (hasConflict) {
