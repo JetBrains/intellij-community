@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -98,13 +98,13 @@ internal object SpecifyOverrideExplicitlyFixFactory {
         returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
         valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY
         keywordsRenderer = keywordsRenderer.with {
-            keywordFilter = KtRendererKeywordFilter.without(
+            keywordFilter = KaRendererKeywordFilter.without(
                 KtTokens.FUN_KEYWORD
             )
         }
         modifiersRenderer = modifiersRenderer.with {
             keywordsRenderer = keywordsRenderer.with {
-                keywordFilter = KtRendererKeywordFilter.without(
+                keywordFilter = KaRendererKeywordFilter.without(
                     KtTokens.OVERRIDE_KEYWORD,
                 )
             }
