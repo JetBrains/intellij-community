@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
+import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -49,7 +49,7 @@ private fun getAssociatedClass(symbol: KaSymbol): KaClassSymbol? {
 
 context(KaSession)
 private fun getImplicitReceiverInfoOfClass(
-    implicitReceivers: List<KtImplicitReceiver>, associatedClass: KaClassSymbol
+    implicitReceivers: List<KaImplicitReceiver>, associatedClass: KaClassSymbol
 ): ImplicitReceiverInfo? {
     // We can't use "this" with label if the label is already taken
     val alreadyReservedLabels = mutableListOf<Name>()
@@ -73,7 +73,7 @@ private fun getImplicitReceiverInfoOfClass(
 }
 
 context(KaSession)
-private fun getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<KaClassSymbol, Name?>? {
+private fun getImplicitReceiverClassAndTag(receiver: KaImplicitReceiver): Pair<KaClassSymbol, Name?>? {
     val associatedClass = receiver.type.expandedSymbol ?: return null
     val associatedTag: Name? = when (val receiverSymbol = receiver.ownerSymbol) {
         is KaClassSymbol -> receiverSymbol.name

@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
+import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -43,7 +43,7 @@ internal class WeighingContext private constructor(
     val explicitReceiver: KtElement?,
     private val positionInFakeCompletionFile: PsiElement,
     private val myExpectedType: KtType?,
-    private val myImplicitReceivers: List<KtImplicitReceiver>,
+    private val myImplicitReceivers: List<KaImplicitReceiver>,
     val contextualSymbolsCache: ContextualSymbolsCache,
     val importableFqNameClassifier: ImportableFqNameClassifier,
     private val mySymbolsToSkip: Set<KaSymbol>,
@@ -77,7 +77,7 @@ internal class WeighingContext private constructor(
         }
 
     /** All implicit receivers in the current resolution context. The receiver declared in the inner most scope appears first. */
-    val implicitReceiver: List<KtImplicitReceiver>
+    val implicitReceiver: List<KaImplicitReceiver>
         get() = withValidityAssertion {
             myImplicitReceivers
         }
@@ -99,7 +99,7 @@ internal class WeighingContext private constructor(
             basicContext: FirBasicCompletionContext,
             receiver: KtElement?,
             expectedType: KtType?,
-            implicitReceivers: List<KtImplicitReceiver>,
+            implicitReceivers: List<KaImplicitReceiver>,
             positionInFakeCompletionFile: PsiElement,
             symbolsToSkip: Set<KaSymbol> = emptySet(),
         ): WeighingContext {

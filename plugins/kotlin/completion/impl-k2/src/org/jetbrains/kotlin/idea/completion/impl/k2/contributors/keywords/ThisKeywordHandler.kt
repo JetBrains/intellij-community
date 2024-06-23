@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
+import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
@@ -67,7 +67,7 @@ internal class ThisKeywordHandler(
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun createThisLookupElement(receiver: KtImplicitReceiver, labelName: Name?): LookupElement {
+    private fun createThisLookupElement(receiver: KaImplicitReceiver, labelName: Name?): LookupElement {
         return createKeywordElement(KtTokens.THIS_KEYWORD.value, labelName.labelNameToTail(), lookupObject = KeywordLookupObject())
             .withTypeText(receiver.type.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT))
     }
