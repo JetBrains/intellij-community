@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtAnnotationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationArgumentsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationListRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KtAnnotationQualifierRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaRendererTypeApproximator
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
@@ -215,7 +215,7 @@ internal class KotlinIdeDeclarationRenderer(
                 }
             }
         }
-        annotationsQualifiedNameRenderer = object : KtAnnotationQualifierRenderer {
+        annotationsQualifiedNameRenderer = object : KaAnnotationQualifierRenderer {
             override fun renderQualifier(
                 analysisSession: KaSession,
                 annotation: KaAnnotation,
