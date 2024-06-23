@@ -80,7 +80,7 @@ class ActionMenuItem internal constructor(action: AnAction,
           screenMenuItemPeer.setState(isToggled)
         }
         SwingUtilities.invokeLater(Runnable {
-          if (actionRef.getAction().isEnabledInModalContext || this.context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
+          if (presentation.isEnabledInModalContext || this.context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
             (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(
               Runnable { performAction(0) })
           }

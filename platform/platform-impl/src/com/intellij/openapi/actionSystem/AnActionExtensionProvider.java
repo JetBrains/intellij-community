@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
  * Allows overriding AnAction behavior in some context, not affecting the other contexts.
  * <p>
  * Note, that various flags cannot be overridden. Ex:
- * {@link AnAction#isEnabledInModalContext()}
  * {@link AnAction#isDumbAware()}
  *
  * @see ExtendableAction

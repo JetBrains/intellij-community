@@ -79,6 +79,7 @@ public final class Presentation implements Cloneable {
   private static final int IS_DISABLE_GROUP_IF_EMPTY = 0x80;
   private static final int IS_APPLICATION_SCOPE = 0x100;
   private static final int IS_PREFER_INJECTED_PSI = 0x200;
+  private static final int IS_ENABLED_IN_MODAL_CONTEXT = 0x400;
   private static final int IS_TEMPLATE = 0x1000;
 
   private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY;
@@ -478,6 +479,21 @@ public final class Presentation implements Cloneable {
     myFlags = BitUtil.set(myFlags, IS_PREFER_INJECTED_PSI, preferInjectedPsi);
   }
 
+  /** @see Presentation#setEnabledInModalContext(boolean) */
+  @ApiStatus.Internal
+  public boolean isEnabledInModalContext() {
+    return BitUtil.isSet(myFlags, IS_ENABLED_IN_MODAL_CONTEXT);
+  }
+
+  /**
+   * For an action presentation sets whether the action can be performed in the modal context.
+   * The default is {@code false}.
+   */
+  @ApiStatus.Internal
+  public void setEnabledInModalContext(boolean enabledInModalContext) {
+    myFlags = BitUtil.set(myFlags, IS_ENABLED_IN_MODAL_CONTEXT, enabledInModalContext);
+  }
+
   /**
    * Template presentations must be returned by {@link AnAction#getTemplatePresentation()} only.
    * Template presentations assert that their enabled and visible flags are never updated
@@ -696,6 +712,7 @@ public final class Presentation implements Cloneable {
       else if (mask == IS_DISABLE_GROUP_IF_EMPTY) sb.append("disable_group_if_empty");
       else if (mask == IS_APPLICATION_SCOPE) sb.append("application_scope");
       else if (mask == IS_PREFER_INJECTED_PSI) sb.append("prefer_injected_psi");
+      else if (mask == IS_ENABLED_IN_MODAL_CONTEXT) sb.append("enabled_in_modal_context");
       else sb.append(Long.toHexString(mask));
     }
     sb.append("]");

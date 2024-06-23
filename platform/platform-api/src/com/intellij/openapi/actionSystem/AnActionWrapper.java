@@ -9,7 +9,6 @@ public class AnActionWrapper extends AnAction implements ActionWithDelegate<AnAc
   public AnActionWrapper(@NotNull AnAction action) {
     myDelegate = action;
     copyFrom(action);
-    setEnabledInModalContext(action.isEnabledInModalContext());
   }
 
   @Override

@@ -62,9 +62,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   public static final Key<List<AnAction>> ACTIONS_KEY = Key.create("AnAction.shortcutSet");
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
 
-  private Presentation templatePresentation;
+  private Presentation myTemplatePresentation;
   private @NotNull ShortcutSet myShortcutSet = CustomShortcutSet.EMPTY;
-  private boolean myEnabledInModalContext;
 
   private boolean myIsDefaultIcon = true;
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
@@ -270,11 +269,11 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   public final boolean isEnabledInModalContext() {
-    return myEnabledInModalContext;
+    return getTemplatePresentation().isEnabledInModalContext();
   }
 
   protected final void setEnabledInModalContext(boolean enabledInModalContext) {
-    myEnabledInModalContext = enabledInModalContext;
+    getTemplatePresentation().setEnabledInModalContext(enabledInModalContext);
   }
 
   /**
@@ -346,11 +345,11 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * a new presentation of the action is needed.
    */
   public final @NotNull Presentation getTemplatePresentation() {
-    Presentation presentation = templatePresentation;
+    Presentation presentation = myTemplatePresentation;
     if (presentation == null) {
       presentation = createTemplatePresentation();
       LOG.assertTrue(presentation.isTemplate(), "Not a template presentation");
-      templatePresentation = presentation;
+      myTemplatePresentation = presentation;
     }
     return presentation;
   }

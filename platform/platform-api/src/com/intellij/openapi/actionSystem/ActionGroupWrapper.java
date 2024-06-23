@@ -12,7 +12,6 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   public ActionGroupWrapper(@NotNull ActionGroup action) {
     myDelegate = action;
     copyFrom(action);
-    setEnabledInModalContext(action.isEnabledInModalContext());
   }
 
   @Override
