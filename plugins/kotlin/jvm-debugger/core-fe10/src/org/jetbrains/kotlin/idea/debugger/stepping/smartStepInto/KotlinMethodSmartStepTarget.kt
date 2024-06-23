@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KtDecla
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtModifierListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParameterRendererFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableReceiverRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableReceiverRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
@@ -124,7 +124,7 @@ private val NO_RETURN_TYPE = object : KaCallableReturnTypeFilter {
 }
 
 @KaExperimentalApi
-private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
+private val NO_CALLABLE_RECEIVER = object : KaCallableReceiverRenderer {
     override fun renderReceiver(
         analysisSession: KaSession,
         symbol: KaReceiverParameterSymbol,
