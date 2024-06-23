@@ -195,7 +195,7 @@ private fun toPsiMethodForDeserialized(
                 constructors.filter { it.parameterList.parameters.size == functionSymbol.valueParameters.size }
             else {
                 val jvmName = when (functionSymbol) {
-                    is KtPropertyGetterSymbol -> {
+                    is KaPropertyGetterSymbol -> {
                         functionSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets = setOf(PROPERTY_GETTER, null))
                     }
                     is KtPropertySetterSymbol -> {
