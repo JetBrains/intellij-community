@@ -61,7 +61,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
 
     private fun analyzeFile(file: KtFile): MutableMap<TextRange, MutableList<HighlightInfo.Builder>> {
         analyze(file) {
-            val analysis = file.collectDiagnosticsForFile(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            val analysis = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             val diagnostics = analysis
                 .filterOutCodeFragmentVisibilityErrors(file)
                 .flatMap { diagnostic -> diagnostic.textRanges.map { range -> Pair(range, diagnostic) } }

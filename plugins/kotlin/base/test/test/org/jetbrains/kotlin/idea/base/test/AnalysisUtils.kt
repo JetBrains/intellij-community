@@ -22,7 +22,7 @@ fun ensureFilesResolved(vararg files: KtFile) {
         runReadAction {
             for (file in files) {
                 analyze(file) {
-                    file.collectDiagnosticsForFile(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                 }
             }
         }

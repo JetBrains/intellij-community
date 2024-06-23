@@ -22,7 +22,7 @@ class KotlinInBlockModificationsContractsTest : KotlinLightCodeInsightFixtureTes
         get() = KotlinPluginMode.K2
 
     context(KaSession)
-    private fun KtFile.diagnostics() = collectDiagnosticsForFile(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+    private fun KtFile.diagnostics() = collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
 
     fun `test isolated`() {
         doTest(

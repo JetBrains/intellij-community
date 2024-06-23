@@ -21,7 +21,7 @@ internal class KotlinGoodCodeRedVisitor : GoodCodeRedVisitor {
         super.visitFile(file)
         try {
           analyze(file as KtFile) {
-            val diagnostics = file.collectDiagnosticsForFile(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            val diagnostics = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             for (diagnostic in diagnostics) {
               if (diagnostic.severity == KaSeverity.ERROR) {
                 holder.registerProblem(diagnostic.psi, diagnostic.defaultMessage)
