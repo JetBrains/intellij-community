@@ -1,15 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.navbar.frontend.compatibility
+package com.intellij.platform.navbar.frontend.actions
 
 import com.intellij.ide.CopyPasteDelegator
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.DataSnapshot
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.actionSystem.UiDataRule
+import com.intellij.openapi.actionSystem.*
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.compatibility.extensionData
 import javax.swing.JComponent

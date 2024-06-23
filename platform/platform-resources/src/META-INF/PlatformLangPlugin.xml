@@ -175,5 +175,4 @@
   <xi:include href="/META-INF/ExternalSystemDependencyUpdater.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="intellij.platform.navbar.frontend.xml"/>
 </idea-plugin>

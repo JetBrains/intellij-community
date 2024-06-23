@@ -75,7 +75,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
 
   "intellij.platform.runtime.product",
   "intellij.platform.bootstrap",
-  "intellij.platform.navbar.frontend",
+  "intellij.platform.navbar",
 
   "intellij.relaxng",
   "intellij.json",
