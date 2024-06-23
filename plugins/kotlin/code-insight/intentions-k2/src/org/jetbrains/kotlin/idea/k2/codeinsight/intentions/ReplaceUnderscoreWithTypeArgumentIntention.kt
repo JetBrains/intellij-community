@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -35,7 +35,7 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
     @OptIn(KaExperimentalApi::class)
     override fun prepareContext(element: KtTypeProjection): Context? {
         val newType = element.resolveType() ?: return null
-        if (newType is KtTypeErrorType) return null
+        if (newType is KaErrorType) return null
 
         // Any of Variance is fine for this case
         val renderedNewType = newType.render(position = Variance.OUT_VARIANCE)

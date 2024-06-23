@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.psi.*
@@ -37,7 +37,7 @@ private val errorIgnoringRenderer: KtTypeRenderer = KtTypeRendererForSource.WITH
     errorTypeRenderer = object : KtTypeErrorTypeRenderer {
         override fun renderType(
             analysisSession: KaSession,
-            type: KtTypeErrorType,
+            type: KaErrorType,
             typeRenderer: KtTypeRenderer,
             printer: PrettyPrinter
         ) {
