@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableSignatureRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaSingleTypeParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesCallArgumentsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeNameRenderer
@@ -285,7 +285,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderType(
                 analysisSession: KaSession,
                 type: KaFunctionType,
-                typeRenderer: KtTypeRenderer,
+                typeRenderer: KaTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
                 if (type.isReflectType) {
@@ -344,7 +344,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderType(
                 analysisSession: KaSession,
                 type: KaTypeParameterType,
-                typeRenderer: KtTypeRenderer,
+                typeRenderer: KaTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
                 " ".separated({ typeRenderer.annotationsRenderer.renderAnnotations(analysisSession, type, printer) }, {
@@ -364,7 +364,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderType(
                 analysisSession: KaSession,
                 type: KaUsualClassType,
-                typeRenderer: KtTypeRenderer,
+                typeRenderer: KaTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
                 " ".separated(
@@ -387,7 +387,7 @@ internal class KotlinIdeDeclarationRenderer(
                 analysisSession: KaSession,
                 type: KaType,
                 qualifiers: List<KaClassTypeQualifier>,
-                typeRenderer: KtTypeRenderer,
+                typeRenderer: KaTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
                 printCollection(qualifiers, separator = highlight(".") { asDot }) { qualifier ->
@@ -409,7 +409,7 @@ internal class KotlinIdeDeclarationRenderer(
                 analysisSession: KaSession,
                 name: Name,
                 owner: KaType,
-                typeRenderer: KtTypeRenderer,
+                typeRenderer: KaTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = with(analysisSession) {
                 if (owner is KaClassType) {

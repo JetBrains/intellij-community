@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.lookups
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -60,7 +60,7 @@ context(KaSession)
 @KaExperimentalApi
 internal fun KaType.renderNonErrorOrUnsubstituted(
     unsubstituted: KaType,
-    renderer: KtTypeRenderer = CompletionShortNamesRenderer.rendererVerbose
+    renderer: KaTypeRenderer = CompletionShortNamesRenderer.rendererVerbose
 ): String {
     val typeToRender = this.takeUnless { it is KaErrorType } ?: unsubstituted
     return typeToRender.render(renderer, position = Variance.INVARIANT)

@@ -6,7 +6,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -38,7 +38,7 @@ object KtFlexibleTypeAsUpperBoundRenderer : KaFlexibleTypeRenderer {
     override fun renderType(
         analysisSession: KaSession,
         type: KaFlexibleType,
-        typeRenderer: KtTypeRenderer,
+        typeRenderer: KaTypeRenderer,
         printer: PrettyPrinter
     ) {
         typeRenderer.renderType(analysisSession, type.upperBound, printer)

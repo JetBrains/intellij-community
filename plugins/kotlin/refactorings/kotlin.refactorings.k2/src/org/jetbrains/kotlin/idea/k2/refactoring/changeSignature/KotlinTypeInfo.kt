@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaErrorTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -33,12 +33,12 @@ data class KotlinTypeInfo(var text: String?, val context: KtElement) {
 
 @KaExperimentalApi
 @OptIn(KaAnalysisNonPublicApi::class)
-private val errorIgnoringRenderer: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+private val errorIgnoringRenderer: KaTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
     errorTypeRenderer = object : KaErrorTypeRenderer {
         override fun renderType(
             analysisSession: KaSession,
             type: KaErrorType,
-            typeRenderer: KtTypeRenderer,
+            typeRenderer: KaTypeRenderer,
             printer: PrettyPrinter
         ) {
             type.presentableText?.let {

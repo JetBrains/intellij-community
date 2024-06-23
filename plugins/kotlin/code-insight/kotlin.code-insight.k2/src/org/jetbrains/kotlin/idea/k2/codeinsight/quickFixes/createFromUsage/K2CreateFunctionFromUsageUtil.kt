@@ -18,7 +18,7 @@ import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaDefinitelyNotNullTypeRenderer
@@ -205,13 +205,13 @@ object K2CreateFunctionFromUsageUtil {
     private val NAME_SUGGESTER = KotlinNameSuggester()
 
     @KaExperimentalApi
-    val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+    val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KaTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
         // Without this, it will render `kotlin.String!` for `kotlin.String`, which causes a syntax error.
         flexibleTypeRenderer = object : KaFlexibleTypeRenderer {
             override fun renderType(
                 analysisSession: KaSession,
                 type: KaFlexibleType,
-                typeRenderer: KtTypeRenderer,
+                typeRenderer: KaTypeRenderer,
                 printer: PrettyPrinter
             ) {
                 typeRenderer.renderType(analysisSession, type.lowerBound, printer)
@@ -222,7 +222,7 @@ object K2CreateFunctionFromUsageUtil {
             override fun renderType(
                 analysisSession: KaSession,
                 type: KaDefinitelyNotNullType,
-                typeRenderer: KtTypeRenderer,
+                typeRenderer: KaTypeRenderer,
                 printer: PrettyPrinter
             ) {
                 typeRenderer.renderType(analysisSession, type.original, printer)

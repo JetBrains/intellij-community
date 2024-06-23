@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 context(KaSession)
 @ApiStatus.Internal
 internal fun PresentationTreeBuilder.printKtType(type: KaType) {
-    // See org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer.renderType
+    // See org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer.renderType
     type.abbreviatedType?.let { abbreviatedType ->
         printKtType(abbreviatedType)
         return
