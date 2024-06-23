@@ -843,7 +843,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
-    private fun PrettyPrinter.renderNamedConstantValueList(list: Collection<KtNamedAnnotationValue>) {
+    private fun PrettyPrinter.renderNamedConstantValueList(list: Collection<KaNamedAnnotationValue>) {
         printCollection(list, ", ") { namedValue ->
             append(highlight(namedValue.name.renderName()) { asParameter } )
             append(highlight(" = ") { asOperationSign } )
