@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.backend.NavBarItem
-import com.intellij.platform.navbar.compatibility.extensionData
+import com.intellij.platform.navbar.impl.extensionData
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement

@@ -4,7 +4,7 @@ package com.intellij.platform.navbar.frontend.actions
 import com.intellij.ide.CopyPasteDelegator
 import com.intellij.openapi.actionSystem.*
 import com.intellij.platform.navbar.NavBarVmItem
-import com.intellij.platform.navbar.compatibility.extensionData
+import com.intellij.platform.navbar.impl.extensionData
 import javax.swing.JComponent
 
 internal class NavBarUiDataRule : UiDataRule {
