@@ -5,8 +5,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -71,7 +71,7 @@ internal object InsertDelegationCallFixFactory {
 
                 // If the new delegation call does not contain errors and there is no cycle in the delegation call chain,
                 // do not move the caret.
-                if (resolvedCall is KtSuccessCallInfo && element.valueParameters.any { !it.hasDefaultValue() }) return
+                if (resolvedCall is KaSuccessCallInfo && element.valueParameters.any { !it.hasDefaultValue() }) return
             }
             val leftParOffset = newDelegationCall.valueArgumentList!!.leftParenthesis!!.textOffset
             updater.moveCaretTo(leftParOffset + 1)
