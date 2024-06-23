@@ -8,7 +8,7 @@ import com.intellij.psi.impl.light.LightParameterListBuilder
 import com.intellij.psi.impl.light.LightReferenceListBuilder
 import com.intellij.psi.impl.light.LightTypeParameterBuilder
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.classes.toLightAnnotation
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
@@ -156,16 +156,16 @@ internal abstract class UastFakeDescriptorLightMethodBase<T : CallableMemberDesc
         return original is FunctionDescriptor && _returnType == PsiTypes.voidType()
     }
 
-    override fun computeNullability(): KtTypeNullability? {
+    override fun computeNullability(): KaTypeNullability? {
         if (isSuspendFunction()) {
             // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
-            return KtTypeNullability.NULLABLE
+            return KaTypeNullability.NULLABLE
         }
         return when (original.returnType?.nullability()) {
             null -> null
-            TypeNullability.NOT_NULL -> KtTypeNullability.NON_NULLABLE
-            TypeNullability.NULLABLE -> KtTypeNullability.NULLABLE
-            else -> KtTypeNullability.UNKNOWN
+            TypeNullability.NOT_NULL -> KaTypeNullability.NON_NULLABLE
+            TypeNullability.NULLABLE -> KaTypeNullability.NULLABLE
+            else -> KaTypeNullability.UNKNOWN
         }
     }
 

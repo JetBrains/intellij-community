@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createByKtTypes
@@ -158,9 +158,9 @@ object CallableReturnTypeUpdaterUtils {
             .distinct()
             .let { types ->
                 when {
-                    cannotBeNull -> types.map { it.withNullability(KtTypeNullability.NON_NULLABLE) }.distinct()
+                    cannotBeNull -> types.map { it.withNullability(KaTypeNullability.NON_NULLABLE) }.distinct()
                     declarationType.hasFlexibleNullability -> types.flatMap { type ->
-                        listOf(type.withNullability(KtTypeNullability.NON_NULLABLE), type.withNullability(KtTypeNullability.NULLABLE))
+                        listOf(type.withNullability(KaTypeNullability.NON_NULLABLE), type.withNullability(KaTypeNullability.NULLABLE))
                     }
 
                     else -> types
@@ -178,7 +178,7 @@ object CallableReturnTypeUpdaterUtils {
             }
 
             val approximatedDefaultType = declarationType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true).let {
-                if (cannotBeNull) it.withNullability(KtTypeNullability.NON_NULLABLE)
+                if (cannotBeNull) it.withNullability(KaTypeNullability.NON_NULLABLE)
                 else it
             }
             createByKtTypes(

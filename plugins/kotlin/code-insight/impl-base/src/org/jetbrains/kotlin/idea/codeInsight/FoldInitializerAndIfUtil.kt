@@ -8,7 +8,7 @@ import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
@@ -147,7 +147,7 @@ private fun calculateType(
 
     // for val with explicit type, change it to non-nullable
     !declaration.isVar && declaration.typeReference != null ->
-        initializer.getKtType()?.withNullability(KtTypeNullability.NON_NULLABLE)
+        initializer.getKtType()?.withNullability(KaTypeNullability.NON_NULLABLE)
 
     else -> null
 }

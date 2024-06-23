@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -727,7 +727,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun nullability(psiElement: PsiElement): KtTypeNullability? {
+    override fun nullability(psiElement: PsiElement): KaTypeNullability? {
         return getTargetType(psiElement, null) { ktType ->
             nullability(ktType)
         }

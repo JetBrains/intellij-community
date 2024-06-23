@@ -199,7 +199,7 @@ internal object CallableMetadataProvider {
     context(KaSession)
     private fun KtExpression.getTypeWithCorrectedNullability(): KtType? {
         val isSafeCall = parent is KtSafeQualifiedExpression
-        return getKtType()?.applyIf(isSafeCall) { withNullability(KtTypeNullability.NON_NULLABLE) }
+        return getKtType()?.applyIf(isSafeCall) { withNullability(KaTypeNullability.NON_NULLABLE) }
     }
 
     context(KaSession)

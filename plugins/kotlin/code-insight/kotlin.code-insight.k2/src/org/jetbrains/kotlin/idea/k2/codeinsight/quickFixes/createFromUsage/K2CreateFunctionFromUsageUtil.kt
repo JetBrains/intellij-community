@@ -257,19 +257,19 @@ object K2CreateFunctionFromUsageUtil {
     fun ExpectedType.toKtTypeWithNullability(useSitePosition: PsiElement): KtType? {
         val nullability = if (this is ExpectedTypeWithNullability) this.nullability else null
         val ktTypeNullability = when (nullability) {
-            Nullability.NOT_NULL -> KtTypeNullability.NON_NULLABLE
-            Nullability.NULLABLE -> KtTypeNullability.NULLABLE
-            Nullability.UNKNOWN -> KtTypeNullability.UNKNOWN
+            Nullability.NOT_NULL -> KaTypeNullability.NON_NULLABLE
+            Nullability.NULLABLE -> KaTypeNullability.NULLABLE
+            Nullability.UNKNOWN -> KaTypeNullability.UNKNOWN
             null -> null
         }
         return theType.toKtType(useSitePosition)?.let { if (ktTypeNullability == null) it else it.withNullability(ktTypeNullability) }
     }
 
-    fun KtTypeNullability.toNullability() : Nullability {
+    fun KaTypeNullability.toNullability() : Nullability {
         return when (this) {
-            KtTypeNullability.NON_NULLABLE -> Nullability.NOT_NULL
-            KtTypeNullability.NULLABLE -> Nullability.NULLABLE
-            KtTypeNullability.UNKNOWN -> Nullability.UNKNOWN
+            KaTypeNullability.NON_NULLABLE -> Nullability.NOT_NULL
+            KaTypeNullability.NULLABLE -> Nullability.NULLABLE
+            KaTypeNullability.UNKNOWN -> Nullability.UNKNOWN
         }
     }
 

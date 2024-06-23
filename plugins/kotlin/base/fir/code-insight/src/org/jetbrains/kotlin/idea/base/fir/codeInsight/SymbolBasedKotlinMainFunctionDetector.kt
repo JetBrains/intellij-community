@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getJvmName
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
@@ -96,11 +96,11 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
     private fun buildMainParameterType(): KtType {
         return buildClassType(StandardClassIds.Array) {
             val argumentType = buildClassType(StandardClassIds.String) {
-                nullability = KtTypeNullability.NON_NULLABLE
+                nullability = KaTypeNullability.NON_NULLABLE
             }
 
             argument(argumentType, Variance.OUT_VARIANCE)
-            nullability = KtTypeNullability.NULLABLE
+            nullability = KaTypeNullability.NULLABLE
         }
     }
 

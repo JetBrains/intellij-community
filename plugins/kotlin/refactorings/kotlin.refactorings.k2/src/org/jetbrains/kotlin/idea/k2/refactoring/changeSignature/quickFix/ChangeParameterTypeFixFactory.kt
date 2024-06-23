@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -33,7 +33,7 @@ object ChangeParameterTypeFixFactory {
     }
 
     val nullForNotNullTypeFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
-       createTypeMismatchFixes(diagnostic.psi, diagnostic.expectedType.withNullability(KtTypeNullability.NULLABLE))
+       createTypeMismatchFixes(diagnostic.psi, diagnostic.expectedType.withNullability(KaTypeNullability.NULLABLE))
     }
 
     context(KaSession)

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
@@ -147,7 +147,7 @@ object ChangeTypeQuickFixFactories {
             val declaration = returnExpr.getReturnTargetSymbol()?.psi as? KtCallableDeclaration
                 ?: return@IntentionBased emptyList()
 
-            val withNullability = diagnostic.expectedType.withNullability(KtTypeNullability.NULLABLE)
+            val withNullability = diagnostic.expectedType.withNullability(KaTypeNullability.NULLABLE)
             listOf(UpdateTypeQuickFix(declaration, TargetType.ENCLOSING_DECLARATION, createTypeInfo(declaration.returnType(withNullability))))
         }
 
@@ -172,7 +172,7 @@ object ChangeTypeQuickFixFactories {
                 return@IntentionBased emptyList()
             }
             val actualType = getActualType(diagnostic.actualType)
-            val type = if (declaration.initializer?.isNull() == true) actualType.withNullability(KtTypeNullability.NULLABLE) else actualType
+            val type = if (declaration.initializer?.isNull() == true) actualType.withNullability(KaTypeNullability.NULLABLE) else actualType
             registerVariableTypeFixes(declaration, type)
         }
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.uast.UastLazyPart
@@ -42,7 +42,7 @@ abstract class UastFakeLightMethodBase(
 
     protected abstract fun isSuspendFunction(): Boolean
     protected abstract fun isUnitFunction(): Boolean
-    protected abstract fun computeNullability(): KtTypeNullability?
+    protected abstract fun computeNullability(): KaTypeNullability?
     protected abstract fun computeAnnotations(annotations: SmartSet<PsiAnnotation>)
 
     private val _annotations: Array<PsiAnnotation>
@@ -52,7 +52,7 @@ abstract class UastFakeLightMethodBase(
             // Do not annotate Unit function (except for suspend function)
             if (!isUnitFunction() || isSuspendFunction()) {
                 val nullability = computeNullability()
-                if (nullability != null && nullability != KtTypeNullability.UNKNOWN) {
+                if (nullability != null && nullability != KaTypeNullability.UNKNOWN) {
                     annotations.add(
                         UastFakeLightNullabilityAnnotation(nullability, this)
                     )

@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
@@ -57,7 +57,7 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
             if (isConstructorCall) return
 
             // can be KtClass or PsiClass
-            property.getReturnKtType().withNullability(KtTypeNullability.UNKNOWN).expandedSymbol?.psi ?: return
+            property.getReturnKtType().withNullability(KaTypeNullability.UNKNOWN).expandedSymbol?.psi ?: return
           }
         }
 

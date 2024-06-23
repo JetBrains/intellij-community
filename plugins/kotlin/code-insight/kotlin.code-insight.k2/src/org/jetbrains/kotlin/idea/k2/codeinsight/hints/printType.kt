@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
@@ -57,7 +57,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
                 text("(")
                 printClassId((lower as KtNonErrorClassType).classId, "Mutable")
                 text(")")
-                printKtType(upper.withNullability(KtTypeNullability.NON_NULLABLE))
+                printKtType(upper.withNullability(KaTypeNullability.NON_NULLABLE))
             } else {
                 if (isNullabilityFlexibleType(lower, upper)) {
                     printKtType(lower)
@@ -190,7 +190,7 @@ private fun isMutabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
 
 
 private fun isNullabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
-    if (lower.nullability == KtTypeNullability.NON_NULLABLE && upper.nullability == KtTypeNullability.NULLABLE) {
+    if (lower.nullability == KaTypeNullability.NON_NULLABLE && upper.nullability == KaTypeNullability.NULLABLE) {
         if (lower is KtTypeParameterType && upper is KtTypeParameterType && lower.symbol == upper.symbol) {
             return true
         }
@@ -204,7 +204,7 @@ private fun isNullabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
 private fun isNonNullableFlexibleType(lower: KtType, upper: KtType): Boolean {
     if (lower is KtNonErrorClassType && upper is KtNonErrorClassType &&
         lower.classId == upper.classId &&
-        lower.nullability == KtTypeNullability.NON_NULLABLE &&
+        lower.nullability == KaTypeNullability.NON_NULLABLE &&
         upper.nullability == lower.nullability &&
         isSimilarTypes(lower, upper)
     ) {

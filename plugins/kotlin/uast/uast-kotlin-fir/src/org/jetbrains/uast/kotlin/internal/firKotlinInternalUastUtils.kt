@@ -360,17 +360,17 @@ internal fun isInheritedGenericType(ktType: KtType?): Boolean {
         // explicitly nullable, e.g., T?
         !ktType.isMarkedNullable &&
         // non-null upper bound, e.g., T : Any
-        nullability(ktType) != KtTypeNullability.NON_NULLABLE
+        nullability(ktType) != KaTypeNullability.NON_NULLABLE
 }
 
 context(KaSession)
-internal fun nullability(ktType: KtType?): KtTypeNullability? {
+internal fun nullability(ktType: KtType?): KaTypeNullability? {
     if (ktType == null) return null
     if (ktType is KtErrorType) return null
     return if (ktType.fullyExpandedType.canBeNull)
-        KtTypeNullability.NULLABLE
+        KaTypeNullability.NULLABLE
     else
-        KtTypeNullability.NON_NULLABLE
+        KaTypeNullability.NON_NULLABLE
 }
 
 context(KaSession)

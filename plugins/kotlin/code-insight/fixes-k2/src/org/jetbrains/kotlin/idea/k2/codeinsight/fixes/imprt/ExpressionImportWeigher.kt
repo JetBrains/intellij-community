@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinAutoImportCallableWeigher
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
@@ -64,7 +64,7 @@ interface ExpressionImportWeigher {
                 val explicitType = receiverExpression.getKtType()
                 // use non-nullable type if safe call is used i.e `val value: T? = ...; value?.smth()
                 val correctedExplicitType = explicitType?.applyIf(receiverExpression.parent is KtSafeQualifiedExpression) {
-                    withNullability(KtTypeNullability.NON_NULLABLE)
+                    withNullability(KaTypeNullability.NON_NULLABLE)
                 }
                 listOfNotNull(correctedExplicitType)
             } else {
@@ -107,7 +107,7 @@ internal abstract class AbstractExpressionImportWeigher : ExpressionImportWeighe
             adjustedType = presentType
             2
         } else {
-            adjustedType = presentType.applyIf(presentType.nullability.isNullable) { withNullability(KtTypeNullability.NON_NULLABLE) }
+            adjustedType = presentType.applyIf(presentType.nullability.isNullable) { withNullability(KaTypeNullability.NON_NULLABLE) }
             // no reason to make `typeFromImport` not nullable as `T` is a subtype of `T?`
             0
         }

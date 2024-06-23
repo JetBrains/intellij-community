@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.collectTypeParametersOnWhichReturnTypeDepends
 import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.returnTypeOfCallDependsOnTypeParameters
@@ -119,7 +119,7 @@ private fun buildType(type: KtType, typeArgumentsMapping: Map<KaTypeParameterSym
 context(KaSession)
 private fun isApplicableType(type: KtType, expectedType: KtType): Boolean {
     return type.isEqualTo(expectedType) ||
-            (expectedType.isMarkedNullable && type.withNullability(KtTypeNullability.NULLABLE).isEqualTo(expectedType))
+            (expectedType.isMarkedNullable && type.withNullability(KaTypeNullability.NULLABLE).isEqualTo(expectedType))
 }
 
 context(KaSession)

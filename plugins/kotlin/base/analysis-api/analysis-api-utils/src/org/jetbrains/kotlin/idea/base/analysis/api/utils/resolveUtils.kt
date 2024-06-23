@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -130,7 +130,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 
     val explicitReceiverType = explicitReceiver.getKtType() ?: error("Receiver should have a KtType")
     val adjustedType = if (isSafeCall) {
-        explicitReceiverType.withNullability(KtTypeNullability.NON_NULLABLE)
+        explicitReceiverType.withNullability(KaTypeNullability.NON_NULLABLE)
     } else {
         explicitReceiverType
     }

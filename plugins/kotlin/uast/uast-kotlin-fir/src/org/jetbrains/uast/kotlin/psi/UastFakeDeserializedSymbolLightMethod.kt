@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -59,7 +59,7 @@ internal class UastFakeDeserializedSymbolLightMethod(
             }
         }
 
-    override fun computeNullability(): KtTypeNullability? {
+    override fun computeNullability(): KaTypeNullability? {
         return analyzeForUast(context) {
             val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast null
             functionSymbol.psi?.let { psi ->
@@ -71,7 +71,7 @@ internal class UastFakeDeserializedSymbolLightMethod(
             }
             if (functionSymbol.isSuspend) {
                 // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
-                return@analyzeForUast KtTypeNullability.NULLABLE
+                return@analyzeForUast KaTypeNullability.NULLABLE
             }
             functionSymbol.returnType.nullability
         }

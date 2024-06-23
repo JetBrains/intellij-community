@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
@@ -263,7 +263,7 @@ class KtSymbolFromIndexProvider private constructor(
 
     context(KaSession)
     private fun Sequence<KaCallableSymbol>.filterExtensionsByReceiverTypes(receiverTypes: List<KtType>): Sequence<KaCallableSymbol> {
-        val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(KtTypeNullability.NON_NULLABLE) }
+        val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(KaTypeNullability.NON_NULLABLE) }
 
         return filter { symbol ->
             if (!symbol.isExtension) return@filter false

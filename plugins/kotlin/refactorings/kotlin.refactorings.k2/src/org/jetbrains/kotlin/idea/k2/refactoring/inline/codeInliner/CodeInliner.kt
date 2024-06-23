@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -117,7 +117,7 @@ class CodeInliner(
             receiver?.let {
                 analyze(it) {
                     val type = it.getKtType()
-                    type to (type?.nullability == KtTypeNullability.NULLABLE)
+                    type to (type?.nullability == KaTypeNullability.NULLABLE)
                 }
             }
 
@@ -138,7 +138,7 @@ class CodeInliner(
                     }
                     receiver = psiFactory.createExpression(thisText)
                     val type = receiverValue.type
-                    receiverType = type to (type.nullability == KtTypeNullability.NULLABLE)
+                    receiverType = type to (type.nullability == KaTypeNullability.NULLABLE)
                 }
             }
         }

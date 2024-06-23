@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.isResolvableInScope
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ControlFlow
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IMutableParameter
@@ -85,7 +85,7 @@ internal class MutableParameter(
 
         for (superType in superTypes) {
             if (addNullableTypes) {
-                typeSet.add(superType.withNullability(KtTypeNullability.NULLABLE))
+                typeSet.add(superType.withNullability(KaTypeNullability.NULLABLE))
             }
             typeSet.add(superType)
         }

@@ -3,7 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.builtins.createFunctionType
@@ -530,12 +530,12 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                 returnType.nullability() != TypeNullability.NOT_NULL
     }
 
-    override fun nullability(psiElement: PsiElement): KtTypeNullability? {
+    override fun nullability(psiElement: PsiElement): KaTypeNullability? {
         return getTargetType(psiElement)?.nullability()?.let {
             when (it) {
-                TypeNullability.NOT_NULL -> KtTypeNullability.NON_NULLABLE
-                TypeNullability.NULLABLE -> KtTypeNullability.NULLABLE
-                TypeNullability.FLEXIBLE -> KtTypeNullability.UNKNOWN
+                TypeNullability.NOT_NULL -> KaTypeNullability.NON_NULLABLE
+                TypeNullability.NULLABLE -> KaTypeNullability.NULLABLE
+                TypeNullability.FLEXIBLE -> KaTypeNullability.UNKNOWN
             }
         }
     }

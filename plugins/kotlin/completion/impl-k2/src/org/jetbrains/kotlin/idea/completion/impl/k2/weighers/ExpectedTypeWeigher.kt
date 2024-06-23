@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
@@ -34,7 +34,7 @@ internal object ExpectedTypeWeigher {
             lookupElement.`object` is NamedArgumentLookupObject -> MatchesExpectedType.MATCHES
             lookupElement.`object` is KeywordLookupObject && expectedType != null -> {
                 val actualType = when (lookupElement.lookupString) {
-                    KtTokens.NULL_KEYWORD.value -> buildClassType(DefaultTypeClassIds.NOTHING).withNullability(KtTypeNullability.NULLABLE)
+                    KtTokens.NULL_KEYWORD.value -> buildClassType(DefaultTypeClassIds.NOTHING).withNullability(KaTypeNullability.NULLABLE)
 
                     KtTokens.TRUE_KEYWORD.value,
                     KtTokens.FALSE_KEYWORD.value -> buildClassType(DefaultTypeClassIds.BOOLEAN)
@@ -80,7 +80,7 @@ internal object ExpectedTypeWeigher {
             context(KaSession)
             fun matches(actualType: KtType, expectedType: KtType): MatchesExpectedType = when {
                 actualType isPossiblySubTypeOf expectedType -> MATCHES
-                actualType.withNullability(KtTypeNullability.NON_NULLABLE) isPossiblySubTypeOf expectedType -> MATCHES_WITHOUT_NULLABILITY
+                actualType.withNullability(KaTypeNullability.NON_NULLABLE) isPossiblySubTypeOf expectedType -> MATCHES_WITHOUT_NULLABILITY
                 else -> NOT_MATCHES
             }
         }

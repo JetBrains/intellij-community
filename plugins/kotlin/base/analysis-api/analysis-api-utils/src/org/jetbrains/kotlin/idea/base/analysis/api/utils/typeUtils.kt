@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 
 /**
@@ -29,7 +29,7 @@ infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
 }
 
 context(KaSession)
-private fun buildClassTypeWithStarProjections(symbol: KaClassSymbol, nullability: KtTypeNullability): KtType =
+private fun buildClassTypeWithStarProjections(symbol: KaClassSymbol, nullability: KaTypeNullability): KtType =
     buildClassType(symbol) {
         repeat(symbol.typeParameters.size) {
             argument(KtStarTypeProjection(token))

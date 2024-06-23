@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -232,5 +232,5 @@ private fun KtExpression.hasDoubleOrFloatType(): Boolean {
 
 context(KaSession)
 private fun KtExpression.hasUnknownNullabilityType(): Boolean {
-    return this.getKtType()?.nullability == KtTypeNullability.UNKNOWN
+    return this.getKtType()?.nullability == KaTypeNullability.UNKNOWN
 }

@@ -7,14 +7,14 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.types.Variance
 
-class ExpectedExpressionMatcher(val types: List<KtType>? = null, val nullability: KtTypeNullability? = null) {
+class ExpectedExpressionMatcher(val types: List<KtType>? = null, val nullability: KaTypeNullability? = null) {
 
     context(KaSession)
     fun match(candidateType: KtType): Boolean {
@@ -148,7 +148,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
 
         if (otherOperand != null) {
             if (otherOperand.isNull()) {
-                return ExpectedExpressionMatcher(nullability = KtTypeNullability.NULLABLE)
+                return ExpectedExpressionMatcher(nullability = KaTypeNullability.NULLABLE)
             }
         }
 
@@ -163,7 +163,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
         if (target == ifExpression.condition) {
             return ExpectedExpressionMatcher(
                 types = listOf(buildClassType(DefaultTypeClassIds.BOOLEAN)),
-                nullability = KtTypeNullability.NON_NULLABLE
+                nullability = KaTypeNullability.NON_NULLABLE
             )
         }
 

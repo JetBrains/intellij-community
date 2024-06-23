@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
@@ -30,7 +30,7 @@ fun getParameterNames(expression: KtExpression): List<String>? {
 
 context(KaSession)
 private fun getParameterNames(type: KtNonErrorClassType): List<String>? {
-    if (type.nullability != KtTypeNullability.NON_NULLABLE) return null
+    if (type.nullability != KaTypeNullability.NON_NULLABLE) return null
     val classSymbol = type.expandedSymbol
 
     return if (classSymbol is KaNamedClassOrObjectSymbol && classSymbol.isData) {

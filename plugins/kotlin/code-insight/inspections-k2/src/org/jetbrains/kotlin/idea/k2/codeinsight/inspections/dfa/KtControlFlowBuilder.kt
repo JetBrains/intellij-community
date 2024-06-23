@@ -378,7 +378,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val result = if (kotlinType.isMarkedNullable) kotlinType.toDfType()
         else {
             // makeNullable to convert primitive to boxed
-            val dfType = kotlinType.withNullability(KtTypeNullability.NULLABLE).toDfType().meet(DfTypes.NOT_NULL_OBJECT)
+            val dfType = kotlinType.withNullability(KaTypeNullability.NULLABLE).toDfType().meet(DfTypes.NOT_NULL_OBJECT)
             if (dfType is DfReferenceType) dfType.dropSpecialField() else dfType
         }
         return if (result is DfReferenceType)
@@ -1380,7 +1380,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val offset = DeferredOffset()
         if (expr is KtSafeQualifiedExpression) {
             val receiverType = receiver.getKotlinType()
-            addImplicitConversion(receiverType, receiverType?.withNullability(KtTypeNullability.NULLABLE))
+            addImplicitConversion(receiverType, receiverType?.withNullability(KaTypeNullability.NULLABLE))
             addInstruction(DupInstruction())
             addInstruction(ConditionalGotoInstruction(offset, DfTypes.NULL))
         }
@@ -1536,7 +1536,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 // qualifier is on stack
                 val receiverType = receiver?.getKotlinType()
                 val argType =
-                    if (expr.parent is KtSafeQualifiedExpression) receiverType?.withNullability(KtTypeNullability.NON_NULLABLE) else receiverType
+                    if (expr.parent is KtSafeQualifiedExpression) receiverType?.withNullability(KaTypeNullability.NON_NULLABLE) else receiverType
                 addImplicitConversion(receiver, argType)
                 addInstruction(JvmAssignmentInstruction(null, parameter))
                 val functionLiteral = lambda.functionLiteral
@@ -1856,7 +1856,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (actualDfType !is DfPrimitiveType && expectedDfType is DfPrimitiveType) {
             addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
         } else if (expectedDfType !is DfPrimitiveType && actualDfType is DfPrimitiveType) {
-            val dfType = actualType.withNullability(KtTypeNullability.NULLABLE).toDfType().meet(DfTypes.NOT_NULL_OBJECT)
+            val dfType = actualType.withNullability(KaTypeNullability.NULLABLE).toDfType().meet(DfTypes.NOT_NULL_OBJECT)
             addInstruction(WrapDerivedVariableInstruction(expectedType.toDfType().meet(dfType), SpecialField.UNBOX))
         }
         if (actualDfType is DfPrimitiveType && expectedDfType is DfPrimitiveType) {
@@ -1871,8 +1871,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(KaSession)
     private fun balanceType(leftType: KtType?, rightType: KtType?, forceEqualityByContent: Boolean): KtType? = when {
         leftType == null || rightType == null -> null
-        leftType.isNothing && leftType.isMarkedNullable -> rightType.withNullability(KtTypeNullability.NULLABLE)
-        rightType.isNothing && rightType.isMarkedNullable -> leftType.withNullability(KtTypeNullability.NULLABLE)
+        leftType.isNothing && leftType.isMarkedNullable -> rightType.withNullability(KaTypeNullability.NULLABLE)
+        rightType.isNothing && rightType.isMarkedNullable -> leftType.withNullability(KaTypeNullability.NULLABLE)
         !forceEqualityByContent -> balanceType(leftType, rightType)
         leftType.isSubTypeOf(rightType) -> rightType
         rightType.isSubTypeOf(leftType) -> leftType
@@ -1884,10 +1884,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (left == null || right == null) return null
         if (left == right) return left
         if (left.canBeNull() && !right.canBeNull()) {
-            return balanceType(left.withNullability(KtTypeNullability.NON_NULLABLE), right)
+            return balanceType(left.withNullability(KaTypeNullability.NON_NULLABLE), right)
         }
         if (!left.canBeNull() && right.canBeNull()) {
-            return balanceType(left, right.withNullability(KtTypeNullability.NON_NULLABLE))
+            return balanceType(left, right.withNullability(KaTypeNullability.NON_NULLABLE))
         }
         if (left.isDouble) return left
         if (right.isDouble) return right

@@ -293,7 +293,7 @@ internal class KotlinIdeDeclarationRenderer(
                         { typeRenderer.annotationsRenderer.renderAnnotations(analysisSession, type, printer) },
                         {
                             typeRenderer.classIdRenderer.renderClassTypeQualifier(analysisSession, type, type.qualifiers, typeRenderer, printer)
-                            if (type.nullability == KtTypeNullability.NULLABLE) {
+                            if (type.nullability == KaTypeNullability.NULLABLE) {
                                 append(highlight("?") { asNullityMarker })
                             }
                         },
@@ -306,7 +306,7 @@ internal class KotlinIdeDeclarationRenderer(
                 }
 
                 if (annotationsRendered) printer.append(" ")
-                if (annotationsRendered || type.nullability == KtTypeNullability.NULLABLE) append(highlight("(") { asParentheses })
+                if (annotationsRendered || type.nullability == KaTypeNullability.NULLABLE) append(highlight("(") { asParentheses })
                 " ".separated(
                     {
                         if (type.isSuspend) {
@@ -332,8 +332,8 @@ internal class KotlinIdeDeclarationRenderer(
                         typeRenderer.renderType(analysisSession, type.returnType, printer)
                     },
                 )
-                if (annotationsRendered || type.nullability == KtTypeNullability.NULLABLE) printer.append(highlight(")") { asParentheses })
-                if (type.nullability == KtTypeNullability.NULLABLE) printer.append(highlight("?") { asNullityMarker })
+                if (annotationsRendered || type.nullability == KaTypeNullability.NULLABLE) printer.append(highlight(")") { asParentheses })
+                if (type.nullability == KaTypeNullability.NULLABLE) printer.append(highlight("?") { asNullityMarker })
             }
         }
     }
@@ -349,7 +349,7 @@ internal class KotlinIdeDeclarationRenderer(
             ): Unit = printer {
                 " ".separated({ typeRenderer.annotationsRenderer.renderAnnotations(analysisSession, type, printer) }, {
                     typeRenderer.typeNameRenderer.renderName(analysisSession, type.name, type, typeRenderer, printer)
-                    if (type.nullability == KtTypeNullability.NULLABLE) {
+                    if (type.nullability == KaTypeNullability.NULLABLE) {
                         printer.append(highlight("?") { asNullityMarker })
                     }
                 })
@@ -371,7 +371,7 @@ internal class KotlinIdeDeclarationRenderer(
                     { typeRenderer.annotationsRenderer.renderAnnotations(analysisSession, type, printer) },
                     {
                         typeRenderer.classIdRenderer.renderClassTypeQualifier(analysisSession, type, type.qualifiers, typeRenderer, printer)
-                        if (type.nullability == KtTypeNullability.NULLABLE) {
+                        if (type.nullability == KaTypeNullability.NULLABLE) {
                             append(highlight("?") { asNullityMarker })
                         }
                     },

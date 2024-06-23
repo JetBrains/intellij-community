@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -220,7 +220,7 @@ object BranchedFoldingUtils {
         // Check if they satisfy the third and fourth of condition 3.
         val rightTypeOfSecond = second.right?.getKtType() ?: return false
         if (!leftType.canBeNull && rightTypeOfSecond.canBeNull) return false
-        val nonNullableRightTypeOfSecond = rightTypeOfSecond.withNullability(KtTypeNullability.NON_NULLABLE)
+        val nonNullableRightTypeOfSecond = rightTypeOfSecond.withNullability(KaTypeNullability.NON_NULLABLE)
         return nonNullableRightTypeOfFirst.isEqualTo(nonNullableRightTypeOfSecond) ||
                 (first.operationToken == KtTokens.EQ && nonNullableRightTypeOfSecond.isSubTypeOf(leftType))
     }

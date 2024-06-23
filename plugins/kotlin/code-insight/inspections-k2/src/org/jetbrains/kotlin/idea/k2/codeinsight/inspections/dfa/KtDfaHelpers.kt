@@ -33,7 +33,7 @@ context(KaSession)
 internal fun KtType?.toDfType(): DfType {
     if (this == null) return DfType.TOP
     if (canBeNull()) {
-        var notNullableType = this.withNullability(KtTypeNullability.NON_NULLABLE).toDfTypeNotNullable()
+        var notNullableType = this.withNullability(KaTypeNullability.NON_NULLABLE).toDfTypeNotNullable()
         if (notNullableType is DfPrimitiveType) {
             val cls = (this as? KtNonErrorClassType)?.expandedSymbol
             val boxedType = if (cls != null) {
@@ -142,7 +142,7 @@ internal fun KtType.getJvmAwareArrayElementType(): KtType? {
     if (!isArrayOrPrimitiveArray) return null
     val type = arrayElementType ?: return null
     if (this.isClassTypeWithClassId(StandardClassIds.Array) && type.isPrimitive) {
-        return type.withNullability(KtTypeNullability.NULLABLE)
+        return type.withNullability(KaTypeNullability.NULLABLE)
     }
     return type
 }
