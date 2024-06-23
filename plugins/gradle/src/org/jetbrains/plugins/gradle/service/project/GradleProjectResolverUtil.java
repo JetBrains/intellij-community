@@ -29,10 +29,7 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.idea.IdeaModule;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
 import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssue;
@@ -255,42 +252,75 @@ public final class GradleProjectResolverUtil {
     return GradleUtil.getConfigPath(gradleModule.getGradleProject(), rootProjectPath);
   }
 
-  @NotNull
-  public static String getModuleId(@NotNull ProjectResolverContext resolverCtx, @NotNull IdeaModule gradleModule) {
-    ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
+  public static @NotNull String getModuleId(
+    @NotNull ProjectResolverContext context,
+    @NotNull IdeaModule gradleModule
+  ) {
+    ExternalProject externalProject = getExternalProject(context, gradleModule);
+    return getModuleId(context, externalProject);
+  }
+
+  public static @NotNull String getModuleId(
+    @NotNull ProjectResolverContext context,
+    @NotNull IdeaModule gradleModule,
+    @NotNull ExternalSourceSet sourceSet
+  ) {
+    ExternalProject externalProject = getExternalProject(context, gradleModule);
+    return getModuleId(context, externalProject, sourceSet);
+  }
+
+  private static @NotNull ExternalProject getExternalProject(
+    @NotNull ProjectResolverContext context,
+    @NotNull IdeaModule gradleModule
+  ) {
+    ExternalProject externalProject = context.getProjectModel(gradleModule, ExternalProject.class);
     if (externalProject == null) {
       throw new IllegalStateException(
-        "Missing " + ExternalProject.class.getSimpleName() + " for " + gradleModule.getGradleProject().getPath()
+        "Missing " + ExternalProject.class.getSimpleName() + " for " + gradleModule.getProjectIdentifier().getProjectPath()
       );
     }
-    if (!StringUtil.isEmpty(resolverCtx.getBuildSrcGroup())) {
-      return resolverCtx.getBuildSrcGroup() + ":" + getModuleId(externalProject);
+    return externalProject;
+  }
+
+  public static @NotNull String getModuleId(
+    @NotNull ProjectResolverContext context,
+    @NotNull ExternalProject externalProject,
+    @NotNull ExternalSourceSet sourceSet
+  ) {
+    String mainModuleId = getModuleId(context, externalProject);
+    return mainModuleId + ":" + sourceSet.getName();
+  }
+
+  public static @NotNull String getModuleId(
+    @NotNull ProjectResolverContext context,
+    @NotNull ExternalProject externalProject
+  ) {
+    if (!StringUtil.isEmpty(context.getBuildSrcGroup())) {
+      return context.getBuildSrcGroup() + ":" + getModuleId(externalProject);
     }
     return getModuleId(externalProject);
   }
 
-
-  @NotNull
-  public static String getModuleId(String gradlePath, String moduleName) {
-    return StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath) ? moduleName : gradlePath;
+  private static @NotNull String getModuleId(
+    @NotNull ExternalProject externalProject
+  ) {
+    String moduleName = externalProject.getName();
+    String gradlePath = externalProject.getIdentityPath();
+    if (StringUtil.isEmpty(gradlePath)) {
+      return moduleName;
+    }
+    if (":".equals(gradlePath)) {
+      return moduleName;
+    }
+    return gradlePath;
   }
 
-  @NotNull
-  public static String getModuleId(@NotNull ExternalProject externalProject) {
-    return getModuleId(externalProject.getIdentityPath(), externalProject.getName());
-  }
-
-  @NotNull
-  public static String getModuleId(@NotNull ExternalProject externalProject, @NotNull ExternalSourceSet sourceSet) {
+  @TestOnly
+  public static @NotNull String getModuleId(
+    @NotNull ExternalProject externalProject,
+    @NotNull ExternalSourceSet sourceSet
+  ) {
     String mainModuleId = getModuleId(externalProject);
-    return mainModuleId + ":" + sourceSet.getName();
-  }
-
-  @NotNull
-  public static String getModuleId(@NotNull ProjectResolverContext resolverCtx,
-                                   @NotNull IdeaModule gradleModule,
-                                   @NotNull ExternalSourceSet sourceSet) {
-    String mainModuleId = getModuleId(resolverCtx, gradleModule);
     return mainModuleId + ":" + sourceSet.getName();
   }
 
