@@ -8,7 +8,7 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -33,7 +33,7 @@ internal class SpecifyTypeExplicitlyIntention:
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun skip(element: KtCallableDeclaration): Boolean =
-        element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        element.getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             .any { diagnostic ->
                 diagnostic is KaFirDiagnostic.AmbiguousAnonymousTypeInferred
                         || diagnostic is KaFirDiagnostic.PropertyWithNoTypeNoInitializer

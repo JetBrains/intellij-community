@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtFile
@@ -22,7 +22,7 @@ fun ensureFilesResolved(vararg files: KtFile) {
         runReadAction {
             for (file in files) {
                 analyze(file) {
-                    file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    file.collectDiagnosticsForFile(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                 }
             }
         }

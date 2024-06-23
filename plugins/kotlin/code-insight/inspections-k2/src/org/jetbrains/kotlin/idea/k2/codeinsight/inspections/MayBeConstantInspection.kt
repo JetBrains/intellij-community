@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
@@ -73,7 +73,7 @@ class MayBeConstantInspection : MayBeConstantInspectionBase() {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KtExpression.usesNonConstValAsConstant(): Boolean {
-        val diagnostics = getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        val diagnostics = getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         return diagnostics.find { it is KaFirDiagnostic.NonConstValUsedInConstantExpression } != null
     }
 

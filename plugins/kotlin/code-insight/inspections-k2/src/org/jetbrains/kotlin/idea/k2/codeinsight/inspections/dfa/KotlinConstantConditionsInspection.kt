@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
@@ -431,7 +431,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         @OptIn(KaExperimentalApi::class)
         private fun isCompilationWarning(anchor: KtElement): Boolean {
             val hasWarning = analyze(anchor) {
-                anchor.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                anchor.getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                     .any { diagnostic -> diagnostic.factoryName in REPEATING_COMPILATION_WARNINGS }
             }
             if (hasWarning) return true

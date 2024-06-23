@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -117,7 +117,7 @@ internal class IfThenToSafeAccessInspection :
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun conditionIsSenseless(data: IfThenTransformationData): Boolean = data.condition
-        .getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        .getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         .map { it.diagnosticClass }
         .any { it == KaFirDiagnostic.SenselessComparison::class || it == KaFirDiagnostic.UselessIsCheck::class }
 }

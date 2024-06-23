@@ -11,7 +11,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.components.KaDataFlowExitPointSnapshot
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -235,7 +235,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         val illegalSuspendInside = analyzeCopy(generatedDeclaration, KaDanglingFileResolutionMode.PREFER_SELF) {
             generatedDeclaration.descendantsOfType<KtExpression>()
                 .flatMap {
-                    it.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    it.getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                         .map { it.diagnosticClass }
                 }
                 .any { it == KaFirDiagnostic.IllegalSuspendFunctionCall::class || it == KaFirDiagnostic.IllegalSuspendPropertyAccess::class }
@@ -374,7 +374,7 @@ private fun ExtractableCodeDescriptor.validateTempResult(
         val resolveResult = currentRefExpr.resolveResult as? ResolveResult<PsiNamedElement, KtSimpleNameExpression> ?: return
         if (currentRefExpr.parent is KtThisExpression) return
 
-        val diagnostics = currentRefExpr.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        val diagnostics = currentRefExpr.getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
 
         val currentDescriptor = currentRefExpr.mainReference.resolve()
         if (currentDescriptor is KtParameter && currentDescriptor.parent == valueParameterList) return
@@ -417,7 +417,7 @@ private fun ExtractableCodeDescriptor.validateTempResult(
         object : KtTreeVisitorVoid() {
             override fun visitUserType(userType: KtUserType) {
                 val refExpr = userType.referenceExpression ?: return
-                val diagnostics = refExpr.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                val diagnostics = refExpr.getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                 diagnostics.firstOrNull { it.diagnosticClass == KaFirDiagnostic.InvisibleReference::class }?.let {
                     val declaration = refExpr.mainReference.resolve() as? PsiNamedElement ?: return
                     conflicts.putValue(declaration, getDeclarationMessage(declaration, "0.will.become.invisible.after.extraction"))

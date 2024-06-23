@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -377,7 +377,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         if (call.typeArgumentList != null) return false
         val callee = call.calleeExpression ?: return false
         val diagnostics = analyzeInModalWindow(callee, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            callee.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            callee.getDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         }
         return (diagnostics.any { diagnostic -> diagnostic is KaFirDiagnostic.NewInferenceNoInformationForParameter })
     }

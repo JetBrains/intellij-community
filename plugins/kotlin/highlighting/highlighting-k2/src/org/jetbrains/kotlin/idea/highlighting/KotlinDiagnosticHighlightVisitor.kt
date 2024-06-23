@@ -18,7 +18,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
@@ -61,7 +61,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
 
     private fun analyzeFile(file: KtFile): MutableMap<TextRange, MutableList<HighlightInfo.Builder>> {
         analyze(file) {
-            val analysis = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            val analysis = file.collectDiagnosticsForFile(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             val diagnostics = analysis
                 .filterOutCodeFragmentVisibilityErrors(file)
                 .flatMap { diagnostic -> diagnostic.textRanges.map { range -> Pair(range, diagnostic) } }
