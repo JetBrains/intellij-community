@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -210,7 +211,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                                             return this is KaClassType && (clazz.isEquivalentTo(symbol.psi) ||
                                                     typeArguments.any { arg ->
                                                         when (arg) {
-                                                            is KtStarTypeProjection -> false
+                                                            is KaStarTypeProjection -> false
                                                             is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
                                                         }
                                                     })

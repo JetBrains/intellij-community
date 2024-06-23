@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
@@ -13,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -146,7 +146,7 @@ private fun KaNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFr
                 if (typeArgument != null) {
                     argument(typeArgument)
                 } else {
-                    argument(KtStarTypeProjection(token))
+                    argument(KaStarTypeProjection(token))
                 }
             }
         }

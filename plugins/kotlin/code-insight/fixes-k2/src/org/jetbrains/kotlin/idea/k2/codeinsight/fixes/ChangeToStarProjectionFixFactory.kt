@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.psi.typeArguments
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -67,7 +67,7 @@ internal object ChangeToStarProjectionFixFactory {
                     null
             }
             val typeArguments = (type as? KaClassType)?.typeArguments
-            if (typeArguments?.any { it !is KtStarTypeProjection && it.type !is KaTypeParameterType } == true) return null
+            if (typeArguments?.any { it !is KaStarTypeProjection && it.type !is KaTypeParameterType } == true) return null
         }
 
         return if (typeElement.typeArgumentsAsTypes.isEmpty()) null

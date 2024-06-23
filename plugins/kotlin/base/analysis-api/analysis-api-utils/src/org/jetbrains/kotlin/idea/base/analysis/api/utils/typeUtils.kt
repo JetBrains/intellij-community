@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
@@ -32,6 +32,6 @@ context(KaSession)
 private fun buildClassTypeWithStarProjections(symbol: KaClassSymbol, nullability: KaTypeNullability): KaType =
     buildClassType(symbol) {
         repeat(symbol.typeParameters.size) {
-            argument(KtStarTypeProjection(token))
+            argument(KaStarTypeProjection(token))
         }
     }.withNullability(nullability)
