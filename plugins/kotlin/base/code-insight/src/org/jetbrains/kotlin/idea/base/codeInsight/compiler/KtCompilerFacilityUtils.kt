@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
-import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
+import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.psi.KtFile
@@ -28,7 +28,7 @@ interface KotlinCompilerIdeAllowedErrorFilter : (KtDiagnostic) -> Boolean {
 fun KaSession.compileToDirectory(
     file: KtFile,
     configuration: CompilerConfiguration,
-    target: KtCompilerTarget,
+    target: KaCompilerTarget,
     allowedErrorFilter: (KtDiagnostic) -> Boolean,
     destination: File
 ): KaCompilationResult {
@@ -48,7 +48,7 @@ fun KaSession.compileToDirectory(
 fun KaSession.compileToJar(
     file: KtFile,
     configuration: CompilerConfiguration,
-    target: KtCompilerTarget,
+    target: KaCompilerTarget,
     allowedErrorFilter: (KtDiagnostic) -> Boolean,
     destination: File
 ): KaCompilationResult {
