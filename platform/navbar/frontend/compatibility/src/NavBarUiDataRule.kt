@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataRule
+import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.compatibility.extensionData
 import javax.swing.JComponent
 
@@ -17,6 +18,8 @@ internal class NavBarUiDataRule : UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val project = snapshot[CommonDataKeys.PROJECT] ?: return
     val source = snapshot[PlatformCoreDataKeys.CONTEXT_COMPONENT] as? JComponent ?: return
+    val selection = snapshot[NavBarVmItem.SELECTED_ITEMS] ?: return
+    if (selection.isEmpty()) return
 
     val delegator = CopyPasteDelegator(project, source)
     sink[PlatformDataKeys.CUT_PROVIDER] = delegator.cutProvider

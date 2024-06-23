@@ -5,7 +5,8 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.NavBarShowPopup
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -53,9 +54,7 @@ class NewNavBarPanel(
   val project: Project,
   val isFloating: Boolean,
   private val installPopupHandler: Boolean = true,
-) : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)),
-    PopupOwner,
-    DataProvider {
+) : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)), PopupOwner, UiDataProvider {
 
   private val myItemComponents: ArrayList<NavBarItemComponent> = ArrayList()
 
@@ -220,15 +219,14 @@ class NewNavBarPanel(
     return popupList?.get()
   }
 
-  override fun getData(dataId: String): Any? = when (dataId) {
-    NAV_BAR_ACTION_HANDLER.name -> object : NavBarActionHandlerImpl(vm) {
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[SELECTED_ITEMS] = vm.selection()
+    sink[NAV_BAR_ACTION_HANDLER] = object : NavBarActionHandlerImpl(vm) {
       override fun isNodePopupSpeedSearchActive(): Boolean {
         val list = popupList?.get()
         return list != null && SpeedSearchSupply.getSupply(list) != null
       }
     }
-    SELECTED_ITEMS.name -> vm.selection()
-    else -> null
   }
 
   override fun getAccessibleContext(): AccessibleContext {
