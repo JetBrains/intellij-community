@@ -70,7 +70,6 @@ import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-@OptIn(KtAnalysisNonPublicApi::class)
 internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData) :
     AbstractExtractionDataAnalyzer<KtType, MutableParameter>(extractionData) {
 
