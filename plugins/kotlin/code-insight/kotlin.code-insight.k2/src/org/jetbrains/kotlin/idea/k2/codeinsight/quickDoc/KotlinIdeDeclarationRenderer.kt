@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtAnnotationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationArgumentsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KtAnnotationListRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KtAnnotationQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaRendererTypeApproximator
@@ -167,7 +167,7 @@ internal class KotlinIdeDeclarationRenderer(
 
     @KaExperimentalApi
     private fun KtAnnotationRenderer.annotationRenderer(): KtAnnotationRenderer = with {
-        annotationListRenderer = object : KtAnnotationListRenderer {
+        annotationListRenderer = object : KaAnnotationListRenderer {
             override fun renderAnnotations(
                 analysisSession: KaSession,
                 owner: KaAnnotated,
