@@ -198,7 +198,7 @@ private fun toPsiMethodForDeserialized(
                     is KaPropertyGetterSymbol -> {
                         functionSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets = setOf(PROPERTY_GETTER, null))
                     }
-                    is KtPropertySetterSymbol -> {
+                    is KaPropertySetterSymbol -> {
                         functionSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets = setOf(PROPERTY_SETTER, null))
                     }
                     else -> {
