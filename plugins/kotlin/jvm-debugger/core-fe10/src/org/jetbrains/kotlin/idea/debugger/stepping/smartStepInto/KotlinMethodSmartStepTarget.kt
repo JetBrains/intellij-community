@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KtDeclarationModifiersRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtModifierListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParameterRendererFilter
@@ -138,7 +138,7 @@ private val NO_MODIFIER_LIST = object : KtModifierListRenderer {
     override fun renderModifiers(
         analysisSession: KaSession,
         symbol: KaDeclarationSymbol,
-        declarationModifiersRenderer: KtDeclarationModifiersRenderer,
+        declarationModifiersRenderer: KaDeclarationModifiersRenderer,
         printer: PrettyPrinter
     ) {}
 
