@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnT
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaRendererTypeApproximator
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaRendererBodyMemberScopeProvider
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererModalityModifierProvider
@@ -89,7 +89,7 @@ internal class KotlinIdeDeclarationRenderer(
         returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
         propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
         bodyMemberScopeProvider = KaRendererBodyMemberScopeProvider.NONE
-        parameterDefaultValueRenderer = object : KtParameterDefaultValueRenderer {
+        parameterDefaultValueRenderer = object : KaParameterDefaultValueRenderer {
             override fun renderDefaultValue(analysisSession: KaSession, symbol: KaValueParameterSymbol, printer: PrettyPrinter) {
                 val defaultValue = with(analysisSession) { symbol.defaultValue }
                 if (defaultValue != null) {
