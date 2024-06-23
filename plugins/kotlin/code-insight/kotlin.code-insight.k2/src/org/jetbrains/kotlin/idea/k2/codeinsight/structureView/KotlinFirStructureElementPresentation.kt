@@ -13,7 +13,7 @@ import com.intellij.util.PsiIconUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
@@ -56,7 +56,7 @@ internal class KotlinFirStructureElementPresentation(
 
             superTypesFilter = KaSuperTypesFilter.NONE
             typeParametersRenderer = KaTypeParametersRenderer.NO_TYPE_PARAMETERS
-            keywordsRenderer = KtKeywordsRenderer.AS_WORD.with {
+            keywordsRenderer = KaKeywordsRenderer.AS_WORD.with {
                 keywordFilter = KaRendererKeywordFilter.onlyWith(
                     KtTokens.CONSTRUCTOR_KEYWORD,
                     KtTokens.OBJECT_KEYWORD,

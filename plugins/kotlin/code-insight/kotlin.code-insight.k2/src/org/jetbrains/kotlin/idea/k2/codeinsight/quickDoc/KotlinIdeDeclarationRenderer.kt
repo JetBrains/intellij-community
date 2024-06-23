@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaAnnotationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationArgumentsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationListRenderer
@@ -149,13 +149,13 @@ internal class KotlinIdeDeclarationRenderer(
     }
 
     @KaExperimentalApi
-    private fun KtKeywordsRenderer.keywordsRenderer(): KtKeywordsRenderer = with {
+    private fun KaKeywordsRenderer.keywordsRenderer(): KaKeywordsRenderer = with {
         keywordRenderer = object : KaKeywordRenderer {
             override fun renderKeyword(
                 analysisSession: KaSession,
                 keyword: KtKeywordToken,
                 owner: KaAnnotated,
-                keywordsRenderer: KtKeywordsRenderer,
+                keywordsRenderer: KaKeywordsRenderer,
                 printer: PrettyPrinter
             ) {
                 if (keywordFilter.filter(analysisSession, keyword, owner)) {

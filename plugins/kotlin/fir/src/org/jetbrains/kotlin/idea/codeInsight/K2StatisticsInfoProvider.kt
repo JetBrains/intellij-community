@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.psi.statistics.StatisticsInfo
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
@@ -26,7 +26,7 @@ object K2StatisticsInfoProvider {
     @KaExperimentalApi
     private val renderer = KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
         annotationRenderer = annotationRenderer.with { annotationFilter = KaRendererAnnotationsFilter.NONE }
-        modifiersRenderer = modifiersRenderer.with { keywordsRenderer = KtKeywordsRenderer.NONE }
+        modifiersRenderer = modifiersRenderer.with { keywordsRenderer = KaKeywordsRenderer.NONE }
 
         returnTypeFilter = object : KaCallableReturnTypeFilter {
             override fun shouldRenderReturnType(analysisSession: KaSession, type: KtType, symbol: KaCallableSymbol): Boolean {

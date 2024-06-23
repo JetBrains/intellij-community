@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.memberInfo
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
@@ -18,7 +18,7 @@ class K2MemberInfoSupport : KotlinMemberInfoSupport {
     @KaExperimentalApi
     private val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
         annotationRenderer = annotationRenderer.with {
-            keywordsRenderer = KtKeywordsRenderer.NONE
+            keywordsRenderer = KaKeywordsRenderer.NONE
             annotationFilter = KaRendererAnnotationsFilter.NONE
             superTypesFilter = KaSuperTypesFilter.NONE
             propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
