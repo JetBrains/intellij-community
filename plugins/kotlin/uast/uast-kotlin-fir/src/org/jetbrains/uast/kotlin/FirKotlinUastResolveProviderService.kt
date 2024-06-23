@@ -502,7 +502,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                             else -> {}
                         }
                     } else {
-                        val ktType = resolvedTargetElement.getKtType()
+                        val ktType = resolvedTargetElement.type
                         toPsiClass(
                             ktType,
                             ktExpression.toUElement(),
@@ -541,7 +541,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, isBoxed: Boolean): PsiType? {
         analyzeForUast(ktTypeReference) {
-            val ktType = ktTypeReference.getKtType()
+            val ktType = ktTypeReference.type
             if (ktType is KaErrorType) return null
             return toPsiType(
                 ktType,
@@ -554,7 +554,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun resolveToType(ktTypeReference: KtTypeReference, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
         analyzeForUast(ktTypeReference) {
-            val ktType = ktTypeReference.getKtType()
+            val ktType = ktTypeReference.type
             if (ktType is KaErrorType) return null
             return toPsiType(
                 ktType,
@@ -747,7 +747,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         return when (psiElement) {
             is KtTypeReference -> {
                 analyzeForUast(psiElement) {
-                    typeConsumer(psiElement.getKtType())
+                    typeConsumer(psiElement.type)
                 }
             }
 

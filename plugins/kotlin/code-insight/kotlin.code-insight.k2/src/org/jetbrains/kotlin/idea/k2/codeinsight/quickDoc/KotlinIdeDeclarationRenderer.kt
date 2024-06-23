@@ -69,7 +69,7 @@ internal class KotlinIdeDeclarationRenderer(
     @OptIn(KaExperimentalApi::class)
     internal fun renderFunctionTypeParameter(parameter: KtParameter): String? = prettyPrint {
         parameter.nameAsName?.let { name -> withSuffix(highlight(": ") { asColon }) { append(highlight(name.renderName()) { asParameter }) } }
-        parameter.typeReference?.getKtType()?.let { type ->
+        parameter.typeReference?.type?.let { type ->
             renderer.typeRenderer.renderType(analysisSession, type, this)
         }
 

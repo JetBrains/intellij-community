@@ -168,7 +168,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
         return allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(codeFragment) {
-                    val ktType = codeFragment.getContentElement()?.getKtType()!!
+                    val ktType = codeFragment.getContentElement()?.type!!
                     if (unitToVoid && ktType.isUnit) PsiTypes.voidType() else ktType.asPsiType(originalFunction, true)!!
                 }
             }

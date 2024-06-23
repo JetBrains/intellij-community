@@ -47,7 +47,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                         ?: function.valueParameters[0].typeReference
                         ?: return false
 
-                    val parameterType = parameterTypeReference.getKtType()
+                    val parameterType = parameterTypeReference.type
                     if (!parameterType.isResolvedClassType() || !parameterType.isSubTypeOf(buildMainParameterType())) {
                         return false
                     }

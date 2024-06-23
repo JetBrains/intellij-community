@@ -32,7 +32,7 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
     @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     internal val oldReceiverType: String? = allowAnalysisOnEdt {
         analyze(callable) {
-            (callable as? KtCallableDeclaration)?.receiverTypeReference?.getKtType()?.render(position = Variance.INVARIANT)
+            (callable as? KtCallableDeclaration)?.receiverTypeReference?.type?.render(position = Variance.INVARIANT)
         }
     }
 
@@ -40,7 +40,7 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
     override var receiver: KotlinParameterInfo? = (callable as? KtCallableDeclaration)?.receiverTypeReference?.let {
         allowAnalysisOnEdt {
             analyze(callable) {
-                val ktType = it.getKtType()
+                val ktType = it.type
                 val nameValidator = KotlinDeclarationNameValidator(
                     callable,
                     true,

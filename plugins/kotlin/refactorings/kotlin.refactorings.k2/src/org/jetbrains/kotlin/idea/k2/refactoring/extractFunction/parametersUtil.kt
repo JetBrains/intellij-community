@@ -181,7 +181,7 @@ internal fun ExtractionData.inferParametersInfo(
         }
     }
 
-    for (typeToCheck in info.typeParameters.flatMap { it.collectReferencedTypes() }.map { it.getKtType() }) {
+    for (typeToCheck in info.typeParameters.flatMap { it.collectReferencedTypes() }.map { it.type }) {
         typeToCheck.processTypeIfExtractable(
             info.typeParameters,
             info.nonDenotableTypes,
@@ -434,7 +434,7 @@ private fun createOriginalType(
         }
 
     org.jetbrains.kotlin.psi.KtPsiFactory(originalDeclaration.project).createTypeCodeFragment(typeString, originalDeclaration)
-        .getContentElement()?.getKtType()
+        .getContentElement()?.type
 } else {
     parameterExpression?.expressionType ?: receiverToExtract?.type
 }) ?: builtinTypes.NULLABLE_ANY

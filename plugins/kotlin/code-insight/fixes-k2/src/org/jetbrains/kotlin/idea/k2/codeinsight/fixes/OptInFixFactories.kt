@@ -99,7 +99,7 @@ private object OptInGeneralUtils : OptInGeneralUtilsBase() {
         analyze(this) {
             return superTypeListEntries.any {
                 val typeReference = it.typeReference
-                val resolvedClass = typeReference?.getKtType()?.expandedSymbol ?: return false
+                val resolvedClass = typeReference?.type?.expandedSymbol ?: return false
                 val classAnnotation = resolvedClass.annotations[OptInNames.SUBCLASS_OPT_IN_REQUIRED_CLASS_ID].firstOrNull()
                 classAnnotation != null && findMarkerClassId(classAnnotation)?.asSingleFqName() == annotationFqName
             }

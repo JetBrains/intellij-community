@@ -69,7 +69,7 @@ internal object KotlinChangeSignatureUsageSearcher {
     internal fun findReceiverReferences(ktCallableDeclaration: KtCallableDeclaration, result: MutableList<in UsageInfo>, changeInfo: KotlinChangeInfo) {
         analyze(ktCallableDeclaration) {
             val originalReceiverInfo = changeInfo.oldReceiverInfo
-            val originalReceiverType = ktCallableDeclaration.receiverTypeReference?.getKtType()
+            val originalReceiverType = ktCallableDeclaration.receiverTypeReference?.type
             ktCallableDeclaration.accept(object : KtTreeVisitorVoid() {
 
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {

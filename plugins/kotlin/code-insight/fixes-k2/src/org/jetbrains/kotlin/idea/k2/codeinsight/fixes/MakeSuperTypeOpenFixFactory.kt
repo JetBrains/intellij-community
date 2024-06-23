@@ -28,7 +28,7 @@ object MakeSuperTypeOpenFixFactory {
         val typeRef = diagnostic.psi as? KtTypeReference
             ?: return emptyList()
 
-        val superType = typeRef.getKtType().expandedSymbol?.psiSafe<KtClassOrObject>()
+        val superType = typeRef.type.expandedSymbol?.psiSafe<KtClassOrObject>()
             ?: return emptyList()
 
         if (!superType.canRefactorElement())

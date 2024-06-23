@@ -34,7 +34,7 @@ internal fun render(type: KaType, context: KtElement): String {
 internal fun getKtType(fragment: KtTypeCodeFragment): KaType? {
     return allowAnalysisOnEdt {
         analyze(fragment) {
-            fragment.getContentElement()?.getKtType()
+            fragment.getContentElement()?.type
         }
     }
 }
@@ -55,7 +55,7 @@ internal fun validate(
             newVisibility,
             newReceiverInfo,
             newParameterInfos,
-            returnCodeFragment.getContentElement()?.getKtType()
+            returnCodeFragment.getContentElement()?.type
         )
 
         newDescriptor.validate()
@@ -79,7 +79,7 @@ internal fun getSignaturePreview(
             newVisibility,
             newReceiverInfo,
             newParameterInfos,
-            returnCodeFragment.getContentElement()?.getKtType()
+            returnCodeFragment.getContentElement()?.type
         )
 
         Generator.getSignaturePreview(ExtractionGeneratorConfiguration(newDescriptor, ExtractionGeneratorOptions.DEFAULT))

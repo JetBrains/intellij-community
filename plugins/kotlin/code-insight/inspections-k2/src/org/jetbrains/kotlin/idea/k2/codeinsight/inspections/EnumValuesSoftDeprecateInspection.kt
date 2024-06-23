@@ -59,7 +59,7 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
     context(KaSession)
     private fun isElementAnnotatedWithOptIn(element: PsiElement, annotationClassId: ClassId): Boolean {
         return element is org.jetbrains.kotlin.psi.KtAnnotated && element.annotationEntries.any { entry ->
-            val ktType = entry.typeReference?.getKtType()
+            val ktType = entry.typeReference?.type
             if (true == ktType?.isClassType(OptInNames.OPT_IN_CLASS_ID)) {
                 entry.valueArguments.any { valueArgument ->
                     val expression = valueArgument.getArgumentExpression()

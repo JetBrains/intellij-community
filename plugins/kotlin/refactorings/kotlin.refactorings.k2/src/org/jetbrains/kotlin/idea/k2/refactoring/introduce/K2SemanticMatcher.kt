@@ -890,7 +890,7 @@ object K2SemanticMatcher {
         targetTypeReference: KtTypeReference,
         patternTypeReference: KtTypeReference,
         context: MatchingContext
-    ): Boolean = context.areTypesEqualOrAssociated(targetTypeReference.getKtType(), patternTypeReference.getKtType())
+    ): Boolean = context.areTypesEqualOrAssociated(targetTypeReference.type, patternTypeReference.type)
 
     context(KaSession)
     private fun KtFunction.getFunctionLikeSymbol(): KaFunctionSymbol = getSymbolOfType<KaFunctionSymbol>()

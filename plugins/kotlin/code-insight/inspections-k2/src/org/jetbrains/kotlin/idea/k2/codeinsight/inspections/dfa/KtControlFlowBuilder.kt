@@ -362,7 +362,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val transfer = trapTracker.maybeTransferValue("kotlin.ClassCastException")
             addInstruction(EnsureInstruction(KotlinCastProblem(operand, expr), RelationType.IS, type, transfer))
             if (typeReference != null) {
-                val castType = typeReference.getKtType()
+                val castType = typeReference.type
                 if (castType.toDfType() is DfPrimitiveType) {
                     addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                 }
@@ -373,7 +373,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(KaSession)
     private fun getTypeCheckDfType(typeReference: KtTypeReference?): DfType {
         if (typeReference == null) return DfType.TOP
-        val kotlinType = typeReference.getKtType()
+        val kotlinType = typeReference.type
         if (kotlinType is KaErrorType || kotlinType is KaTypeParameterType) return DfType.TOP
         val result = if (kotlinType.isMarkedNullable) kotlinType.toDfType()
         else {

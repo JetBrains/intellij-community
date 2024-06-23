@@ -302,7 +302,7 @@ class KotlinNameSuggester(
                     type.parameters.forEach { process(it.typeReference?.typeElement) }
                     val returnType = type.returnTypeReference
                     if (returnType != null) {
-                        if (returnType.getKtType().isBoolean) {
+                        if (returnType.type.isBoolean) {
                             add("predicate")
                         } else {
                             add("to")

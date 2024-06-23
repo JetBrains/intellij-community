@@ -55,7 +55,7 @@ internal class KotlinChangeSignatureDialog(
         val typeRef = getContentElement() ?: return false
         return allowAnalysisOnEdt {
             analyze(typeRef) {
-                val ktType = typeRef.getKtType()
+                val ktType = typeRef.type
                 return ktType !is KaErrorType
             }
         }
@@ -88,7 +88,7 @@ internal class KotlinChangeSignatureDialog(
             val contentElement = psiFactory.createTypeCodeFragment(resultParameterInfo.typeText, typeContext).getContentElement()
             val presentableText = if (resultParameterInfo.typeText.isNotEmpty() && contentElement != null) {
                 analyzeInModalWindow(contentElement, KotlinBundle.message("fix.change.signature.prepare")) {
-                    contentElement.getKtType().getPresentableText()
+                    contentElement.type.getPresentableText()
                 }
             } else {
                 resultParameterInfo.typeText
@@ -279,7 +279,7 @@ internal fun KtTypeCodeFragment.getCanonicalText(forPreview: Boolean): String {
     val contextElement = getContentElement()
     if (contextElement != null && !forPreview) {
         analyze(contextElement) {
-            return contextElement.getKtType().render(position = Variance.INVARIANT)
+            return contextElement.type.render(position = Variance.INVARIANT)
         }
     } else {
         return text

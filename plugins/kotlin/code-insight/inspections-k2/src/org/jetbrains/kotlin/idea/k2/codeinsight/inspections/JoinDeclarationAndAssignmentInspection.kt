@@ -74,7 +74,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         val initializer = assignment.right ?: return null
 
         val initializerType = initializer.expressionType
-        val propertyType = element.typeReference?.getKtType()
+        val propertyType = element.typeReference?.type
 
         if (initializer.hasReference(element)) return null
         if (initializer.dependsOnNextSiblingsOfProperty(element)) return null

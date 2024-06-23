@@ -79,7 +79,7 @@ internal fun KtPsiFactory.createType(
                     }
 
                     val ktSubstitutor = createSubstitutor(inheritedCallable, baseFunction)
-                    val ktType = createTypeCodeFragment(typeText, baseFunction).getContentElement()?.getKtType()
+                    val ktType = createTypeCodeFragment(typeText, baseFunction).getContentElement()?.type
                     if (ktType != null) {
                         val type = ktSubstitutor?.substitute(ktType) ?: ktType
                         val substitutedType = type.render(position = variance)

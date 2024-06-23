@@ -11,7 +11,7 @@ internal object TypeOfAnnotationMemberFixFactory {
   val typeOfAnnotationMemberFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InvalidTypeOfAnnotationMember ->
     val typeReference = diagnostic.psi
 
-    val arrayElementType = typeReference.getKtType().arrayElementType ?: return@ModCommandBased emptyList()
+    val arrayElementType = typeReference.type.arrayElementType ?: return@ModCommandBased emptyList()
     if (!arrayElementType.isPrimitive) return@ModCommandBased emptyList()
 
     val classId = (arrayElementType as KaClassType).classId

@@ -85,7 +85,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
 
         context(KaSession)
         override fun KtTypeReference.hasSuperClass(superTypeClassId: ClassId): Boolean =
-            getKtType().hasSuperTypeClassId(superTypeClassId)
+            type.hasSuperTypeClassId(superTypeClassId)
 
         context(KaSession)
         override fun KtCallExpression.resolveToConstructedClass(): KtClassOrObject? =

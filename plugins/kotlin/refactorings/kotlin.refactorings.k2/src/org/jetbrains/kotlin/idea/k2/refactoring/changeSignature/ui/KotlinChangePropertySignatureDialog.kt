@@ -46,7 +46,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
     override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         val receiverPresentableType =
             analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {
-                (m.method as? KtCallableDeclaration)?.receiverTypeReference?.getKtType()?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                (m.method as? KtCallableDeclaration)?.receiverTypeReference?.type?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
             }
         return kotlinPsiFactory.createTypeCodeFragment(receiverPresentableType ?: "", m.method)
     }
@@ -59,7 +59,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
         if (this !is KtTypeCodeFragment) return false
         val typeRef = getContentElement() ?: return false
         analyze(typeRef) {
-            val ktType = typeRef.getKtType()
+            val ktType = typeRef.type
             return ktType !is KaErrorType
         }
     }

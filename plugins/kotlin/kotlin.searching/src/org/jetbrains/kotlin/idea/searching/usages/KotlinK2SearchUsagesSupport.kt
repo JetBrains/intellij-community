@@ -146,7 +146,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
                 if (!declaration.canBeAnalysed()) return@any false
 
-                val candidateReceiverType = candidateDeclaration.receiverTypeReference?.getKtType()
+                val candidateReceiverType = candidateDeclaration.receiverTypeReference?.type
                 val declarationSymbol = declaration.symbol as? KaCallableSymbol ?: return@any false
                 val receiverType = declarationSymbol.receiverType
 

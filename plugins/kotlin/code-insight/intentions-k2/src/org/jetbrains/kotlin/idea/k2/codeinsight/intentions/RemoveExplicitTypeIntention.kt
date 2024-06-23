@@ -122,7 +122,7 @@ internal class RemoveExplicitTypeIntention :
         is KtConstantExpression -> {
             val classId = initializer.getClassId()
             val let = classId?.let { buildClassType(it) }
-            val superType = typeReference.getKtType()
+            val superType = typeReference.type
             val subTypeOf = let?.isSubTypeOf(superType)
             subTypeOf == true
         }

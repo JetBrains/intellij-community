@@ -92,7 +92,7 @@ sealed interface MovePropertyToConstructorInfo {
             if (useSiteTarget != null) return text
             val typeReference = typeReference ?: return text
 
-            val applicableTargets = typeReference.getKtType().expandedSymbol?.annotationApplicableTargets ?: return text
+            val applicableTargets = typeReference.type.expandedSymbol?.annotationApplicableTargets ?: return text
 
             fun AnnotationUseSiteTarget.textWithMe() = "@$renderName:${typeReference.text}${valueArgumentList?.text.orEmpty()}"
 

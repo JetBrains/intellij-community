@@ -141,7 +141,7 @@ context(KaSession)
 private fun KaNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KaType =
     buildClassType(this) {
         if (expression is KtCallExpression) {
-            val typeArgumentTypes = expression.typeArguments.map { it.typeReference?.getKtType() }
+            val typeArgumentTypes = expression.typeArguments.map { it.typeReference?.type }
             for (typeArgument in typeArgumentTypes) {
                 if (typeArgument != null) {
                     argument(typeArgument)
