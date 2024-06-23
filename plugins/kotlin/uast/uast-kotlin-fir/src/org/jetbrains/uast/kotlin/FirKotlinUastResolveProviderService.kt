@@ -714,7 +714,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         val sourcePsi = uLambdaExpression.sourcePsi
         analyzeForUast(sourcePsi) {
             val samType = sourcePsi.expectedType
-                ?.takeIf { it !is KaErrorType && it.isFunctionalInterfaceType }
+                ?.takeIf { it !is KaErrorType && it.isFunctionalInterface }
                 ?.lowerBoundIfFlexible()
                 ?: return null
             return toPsiType(samType, uLambdaExpression, sourcePsi, PsiTypeConversionConfiguration.create(sourcePsi))

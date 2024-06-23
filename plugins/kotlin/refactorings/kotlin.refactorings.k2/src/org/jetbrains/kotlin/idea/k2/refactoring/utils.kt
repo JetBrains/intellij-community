@@ -136,7 +136,7 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean =
         val resolveCall = callee.resolveToCall() ?: return false
         val call = resolveCall.successfulFunctionCallOrNull()
 
-        fun KaType.isFunctionalType(): Boolean = this is KaTypeParameterType || isSuspendFunctionType || isFunctionType || isFunctionalInterfaceType
+        fun KaType.isFunctionalType(): Boolean = this is KaTypeParameterType || isSuspendFunctionType || isFunctionType || isFunctionalInterface
 
         if (call == null) {
             val paramType = resolveCall.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.returnType

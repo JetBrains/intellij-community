@@ -109,7 +109,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         analyze(callableReferenceExpression) {
 
             val expectedType = callableReferenceExpression.singleExpression()?.expectedType
-            if (expectedType?.isFunctionType != true && expectedType?.isFunctionalInterfaceType != true) return
+            if (expectedType?.isFunctionType != true && expectedType?.isFunctionalInterface != true) return
 
             val symbol = mainReferenceOfCallableReference.resolveToSymbol() ?: return
 

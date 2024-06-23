@@ -234,7 +234,7 @@ class SmartStepTargetVisitor(
         argumentSymbol: KaValueParameterSymbol,
     ): KotlinLambdaInfo? {
         val callerMethodOrdinal = countExistingMethodCalls(declaration)
-        return if (argumentSymbol.returnType.isFunctionalInterfaceType) {
+        return if (argumentSymbol.returnType.isFunctionalInterface) {
             val samClassSymbol = argumentSymbol.returnType.expandedSymbol ?: return null
             val scope = samClassSymbol.memberScope
             val funMethodSymbol = scope.getCallableSymbols()
