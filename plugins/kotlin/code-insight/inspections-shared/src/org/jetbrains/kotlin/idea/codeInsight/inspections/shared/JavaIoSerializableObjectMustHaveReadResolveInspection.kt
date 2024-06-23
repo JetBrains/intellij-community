@@ -62,7 +62,7 @@ private fun KtObjectDeclaration.doesImplementSerializable(): Boolean = analyze(t
     true == (this@doesImplementSerializable.symbol as? KaClassSymbol)
         ?.let(::buildClassType)
         ?.getAllSuperTypes()
-        ?.any { it.isClassTypeWithClassId(ClassId.fromString(JAVA_IO_SERIALIZABLE_CLASS_ID)) }
+        ?.any { it.isClassType(ClassId.fromString(JAVA_IO_SERIALIZABLE_CLASS_ID)) }
 }
 
 private fun KtObjectDeclaration.doesImplementReadResolve(): Boolean = analyze(this) {

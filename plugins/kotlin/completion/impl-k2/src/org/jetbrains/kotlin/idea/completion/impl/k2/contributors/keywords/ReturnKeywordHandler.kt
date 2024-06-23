@@ -95,12 +95,12 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
         }
 
         fun emptyListShouldBeSuggested(): Boolean =
-            returnType.isClassTypeWithClassId(StandardClassIds.Collection)
-                    || returnType.isClassTypeWithClassId(StandardClassIds.List)
-                    || returnType.isClassTypeWithClassId(StandardClassIds.Iterable)
+            returnType.isClassType(StandardClassIds.Collection)
+                    || returnType.isClassType(StandardClassIds.List)
+                    || returnType.isClassType(StandardClassIds.Iterable)
 
         when {
-            returnType.isClassTypeWithClassId(StandardClassIds.Boolean) -> {
+            returnType.isClassType(StandardClassIds.Boolean) -> {
                 add(ExpressionTarget("true", addToLookupElementTail = false))
                 add(ExpressionTarget("false", addToLookupElementTail = false))
             }
@@ -109,7 +109,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
                 add(ExpressionTarget("emptyList()", addToLookupElementTail = true))
             }
 
-            returnType.isClassTypeWithClassId(StandardClassIds.Set) -> {
+            returnType.isClassType(StandardClassIds.Set) -> {
                 add(ExpressionTarget("emptySet()", addToLookupElementTail = true))
             }
         }

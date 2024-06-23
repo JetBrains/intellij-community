@@ -60,7 +60,7 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
     private fun isElementAnnotatedWithOptIn(element: PsiElement, annotationClassId: ClassId): Boolean {
         return element is org.jetbrains.kotlin.psi.KtAnnotated && element.annotationEntries.any { entry ->
             val ktType = entry.typeReference?.getKtType()
-            if (true == ktType?.isClassTypeWithClassId(OptInNames.OPT_IN_CLASS_ID)) {
+            if (true == ktType?.isClassType(OptInNames.OPT_IN_CLASS_ID)) {
                 entry.valueArguments.any { valueArgument ->
                     val expression = valueArgument.getArgumentExpression()
                     expression != null && isClassLiteralExpressionOfClass(expression, annotationClassId)
@@ -72,6 +72,6 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
     context(KaSession)
     private fun isClassLiteralExpressionOfClass(expression: KtExpression, classId: ClassId): Boolean {
         val receiverExpression = (expression as? KtClassLiteralExpression)?.receiverExpression as? KtNameReferenceExpression
-      return true == receiverExpression?.expressionType?.isClassTypeWithClassId(classId)
+      return true == receiverExpression?.expressionType?.isClassType(classId)
     }
 }

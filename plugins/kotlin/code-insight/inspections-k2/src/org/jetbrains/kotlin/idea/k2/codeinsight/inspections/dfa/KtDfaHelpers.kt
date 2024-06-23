@@ -141,7 +141,7 @@ context(KaSession)
 internal fun KaType.getJvmAwareArrayElementType(): KaType? {
     if (!isArrayOrPrimitiveArray) return null
     val type = arrayElementType ?: return null
-    if (this.isClassTypeWithClassId(StandardClassIds.Array) && type.isPrimitive) {
+    if (this.isClassType(StandardClassIds.Array) && type.isPrimitive) {
         return type.withNullability(KaTypeNullability.NULLABLE)
     }
     return type

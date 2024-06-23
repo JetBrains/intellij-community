@@ -70,7 +70,7 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
                 (type is KaClassType) && (
                         type.classId in DefaultTypeClassIds.PRIMITIVES ||
                                 type.getAllSuperTypes(true).any {
-                                    val classTypeWithClassId = it.isClassTypeWithClassId(StandardClassIds.Comparable)
+                                    val classTypeWithClassId = it.isClassType(StandardClassIds.Comparable)
                                     classTypeWithClassId
                                 })
             }

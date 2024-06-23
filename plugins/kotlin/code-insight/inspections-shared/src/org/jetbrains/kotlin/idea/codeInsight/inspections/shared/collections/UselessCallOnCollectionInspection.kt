@@ -136,5 +136,5 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     }
 
     context(KaSession)
-    private fun KaType.isList() = this.fullyExpandedType.isClassTypeWithClassId(ClassId.topLevel(StandardNames.FqNames.list))
+    private fun KaType.isList() = this.fullyExpandedType.isClassType(ClassId.topLevel(StandardNames.FqNames.list))
 }
