@@ -28,9 +28,11 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_E
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.model.GradleSourceSetModel
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncProjectConfigurator.project
@@ -38,6 +40,7 @@ import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleBuil
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleProjectEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleSourceSetEntitySource
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 import kotlin.io.path.exists
 
@@ -85,6 +88,7 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
         val projectRootUrl = projectRootPath.toVirtualFileUrl(virtualFileUrlManager)
         val projectEntitySource = GradleProjectEntitySource(buildEntitySource, projectRootUrl)
 
+        val externalProject = context.getProjectModel(projectModel, ExternalProject::class.java) ?: continue
         val sourceSetModel = context.getProjectModel(projectModel, GradleSourceSetModel::class.java) ?: continue
         val projectModuleEntity = moduleEntities.singleOrNull { isProjectModuleEntity(it, projectEntitySource) } ?: continue
 
@@ -93,7 +97,7 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
           val sourceSetEntitySource = GradleSourceSetEntitySource(projectEntitySource, sourceSet.name)
 
           val contentRoots = resolveContentRoots(virtualFileUrlManager, projectModel, sourceSet, contentRootWeightMap)
-          val sourceRootData = GradleSourceRootData(sourceSet, projectModuleEntity, sourceSetEntitySource, contentRoots)
+          val sourceRootData = GradleSourceRootData(externalProject, sourceSet, projectModuleEntity, sourceSetEntitySource, contentRoots)
 
           if (moduleEntities.any { isConflictedModuleEntity(it, sourceRootData) }) {
             continue
@@ -111,7 +115,7 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
 
       checkCanceled()
 
-      configureSourceRoot(storage, virtualFileUrlManager, sourceRootData)
+      configureSourceRoot(context, storage, virtualFileUrlManager, sourceRootData)
     }
   }
 
@@ -146,11 +150,13 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
   }
 
   private fun configureSourceRoot(
+    context: ProjectResolverContext,
     storage: MutableEntityStorage,
     virtualFileUrlManager: VirtualFileUrlManager,
     sourceRootData: GradleSourceRootData,
   ) {
     val moduleEntity = addModuleEntity(storage, sourceRootData)
+    addExModuleOptionsEntity(context, storage, moduleEntity, sourceRootData)
     val contentRootEntities = addContentRootEntities(storage, sourceRootData, moduleEntity)
     addSourceRootEntities(storage, virtualFileUrlManager, sourceRootData, contentRootEntities)
   }
@@ -173,6 +179,32 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
     )
     storage addEntity moduleEntity
     return moduleEntity
+  }
+
+  private fun addExModuleOptionsEntity(
+    context: ProjectResolverContext,
+    storage: MutableEntityStorage,
+    moduleEntity: ModuleEntity.Builder,
+    sourceRootData: GradleSourceRootData,
+  ) {
+    val externalProject = sourceRootData.externalProject
+    val sourceSet = sourceRootData.sourceSet
+    val entitySource = sourceRootData.entitySource
+
+    storage addEntity ExternalSystemModuleOptionsEntity(
+      entitySource = entitySource
+    ) {
+      module = moduleEntity
+
+      externalSystem = GradleConstants.SYSTEM_ID.id
+      linkedProjectId = getModuleId(context, externalProject, sourceSet)
+      linkedProjectPath = externalProject.projectDir.path
+      rootProjectPath = context.projectPath
+
+      externalSystemModuleGroup = externalProject.group
+      externalSystemModuleVersion = externalProject.version
+      externalSystemModuleType = GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY
+    }
   }
 
   private fun addContentRootEntities(
@@ -393,6 +425,7 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
   }
 
   private class GradleSourceRootData(
+    val externalProject: ExternalProject,
     val sourceSet: ExternalSourceSet,
     val projectModuleEntity: ModuleEntity,
     val entitySource: GradleSourceSetEntitySource,
