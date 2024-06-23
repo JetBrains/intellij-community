@@ -396,6 +396,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     checkVirtualMachineVersion(vm);
     myVirtualMachineProxy = new VirtualMachineProxyImpl(this, vm);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      Alarm alarm = new Alarm(myDisposable);
+      alarm.addRequest(() -> myDebuggerManagerThread.schedule(PrioritizedTask.Priority.HIGH, () -> {
+        logError("Long debugger test execution");
+      }), 3*60*1000);
+    }
   }
 
   private void stopConnecting() {
