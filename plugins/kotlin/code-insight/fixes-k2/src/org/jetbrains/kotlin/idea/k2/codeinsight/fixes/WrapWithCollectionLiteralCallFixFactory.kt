@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -27,7 +27,7 @@ internal object WrapWithCollectionLiteralCallFixFactory {
         val expectedArgumentType =
             (expectedType as? KaClassType)
                 ?.typeArguments?.singleOrNull()
-                ?.takeIf { (it as? KtTypeArgumentWithVariance)?.variance != Variance.IN_VARIANCE }
+                ?.takeIf { (it as? KaTypeArgumentWithVariance)?.variance != Variance.IN_VARIANCE }
                 ?.type
                 ?: return emptyList()
 

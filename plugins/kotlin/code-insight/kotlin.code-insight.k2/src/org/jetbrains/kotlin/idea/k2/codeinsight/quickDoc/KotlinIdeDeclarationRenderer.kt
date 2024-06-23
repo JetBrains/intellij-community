@@ -5,7 +5,6 @@ import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
@@ -781,7 +780,7 @@ internal class KotlinIdeDeclarationRenderer(
                     printCollection(type.typeArguments, ", ", prefix = "<", postfix = ">") { typeProjection ->
                         when (typeProjection) {
                             is KaStarTypeProjection -> append('*')
-                            is KtTypeArgumentWithVariance -> renderType(typeProjection.type)
+                            is KaTypeArgumentWithVariance -> renderType(typeProjection.type)
                         }
                     }
                 }

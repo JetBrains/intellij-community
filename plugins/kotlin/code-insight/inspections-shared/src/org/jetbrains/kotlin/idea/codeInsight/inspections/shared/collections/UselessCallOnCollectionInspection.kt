@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.ClassId
@@ -79,7 +79,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         val resolvedCall = expression.resolveToCall()?.singleFunctionCallOrNull() ?: return
         val callableName = resolvedCall.symbol.callableId?.callableName?.asString() ?: return
         if (callableName == "filterIsInstance") {
-            if (receiverTypeArgument is KtTypeArgumentWithVariance && receiverTypeArgument.variance == Variance.IN_VARIANCE) return
+            if (receiverTypeArgument is KaTypeArgumentWithVariance && receiverTypeArgument.variance == Variance.IN_VARIANCE) return
             val typeParameterDescriptor = resolvedCall.symbol.typeParameters.singleOrNull() ?: return
             val argumentType = resolvedCall.typeArgumentsMapping[typeParameterDescriptor] ?: return
             if (receiverTypeArgumentType is KaFlexibleType || !receiverTypeArgumentType.isSubTypeOf(argumentType)) return

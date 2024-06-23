@@ -9,7 +9,6 @@ import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
@@ -21,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
@@ -161,7 +161,7 @@ private fun PresentationTreeBuilder.printProjection(projection: KaTypeProjection
         is KaStarTypeProjection -> {
             text("*".asOptional(optionalProjection))
         }
-        is KtTypeArgumentWithVariance -> {
+        is KaTypeArgumentWithVariance -> {
             projection.variance.label.takeIf { it.isNotEmpty() }?.let {
                 text("${it.asOptional(optionalProjection)} ")
             }

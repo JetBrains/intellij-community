@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
@@ -212,7 +213,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                                                     typeArguments.any { arg ->
                                                         when (arg) {
                                                             is KaStarTypeProjection -> false
-                                                            is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
+                                                            is KaTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
                                                         }
                                                     })
                                         }
