@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtAnnotationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaAnnotationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationArgumentsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KaAnnotationQualifierRenderer
@@ -166,12 +166,12 @@ internal class KotlinIdeDeclarationRenderer(
     }
 
     @KaExperimentalApi
-    private fun KtAnnotationRenderer.annotationRenderer(): KtAnnotationRenderer = with {
+    private fun KaAnnotationRenderer.annotationRenderer(): KaAnnotationRenderer = with {
         annotationListRenderer = object : KaAnnotationListRenderer {
             override fun renderAnnotations(
                 analysisSession: KaSession,
                 owner: KaAnnotated,
-                annotationRenderer: KtAnnotationRenderer,
+                annotationRenderer: KaAnnotationRenderer,
                 printer: PrettyPrinter
             ) {
                 val backingFieldAnnotations = (owner as? KaPropertySymbol)?.backingFieldSymbol?.annotations
@@ -201,7 +201,7 @@ internal class KotlinIdeDeclarationRenderer(
                 analysisSession: KaSession,
                 annotation: KaAnnotation,
                 owner: KaAnnotated,
-                annotationRenderer: KtAnnotationRenderer,
+                annotationRenderer: KaAnnotationRenderer,
                 printer: PrettyPrinter
             ) {
                 if (annotation !is KaAnnotation) return
@@ -220,7 +220,7 @@ internal class KotlinIdeDeclarationRenderer(
                 analysisSession: KaSession,
                 annotation: KaAnnotation,
                 owner: KaAnnotated,
-                annotationRenderer: KtAnnotationRenderer,
+                annotationRenderer: KaAnnotationRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
                 val classId = annotation.classId
