@@ -75,7 +75,7 @@ internal fun KtPsiFactory.createType(
                         val targetType =
                             substitutor?.substitute(JavaPsiFacade.getElementFactory(baseFunction.project).createTypeFromText(typeText, baseFunction))
 
-                        return createType(targetType?.asKtType(inheritedCallable)?.render(position = variance) ?: typeText)
+                        return createType(targetType?.asKaType(inheritedCallable)?.render(position = variance) ?: typeText)
                     }
 
                     val ktSubstitutor = createSubstitutor(inheritedCallable, baseFunction)

@@ -237,7 +237,7 @@ object K2CreateFunctionFromUsageUtil {
     private fun JvmType.toKtType(useSitePosition: PsiElement): KaType? = when (this) {
         is PsiType -> if (isValid) {
             try {
-                asKtType(useSitePosition)
+                asKaType(useSitePosition)
             } catch (e: Throwable) {
                 if (e is ControlFlowException) throw e
 
