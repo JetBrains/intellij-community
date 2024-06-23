@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.liveTemplates.macro.AbstractAnonymousSuperMacro

@@ -7,7 +7,7 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.psi.NavigatablePsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 class KotlinFirInheritedMembersNodeProvider : InheritedMembersNodeProvider<TreeElement>() {
@@ -22,7 +22,7 @@ class KotlinFirInheritedMembersNodeProvider : InheritedMembersNodeProvider<TreeE
             val descriptor = ktClassOrObject.symbol as? KaClassSymbol ?: return listOf()
 
             for (memberSymbol in descriptor.memberScope.getAllSymbols()) {
-                if (memberSymbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE) continue
+                if (memberSymbol.origin == KaSymbolOrigin.INTERSECTION_OVERRIDE) continue
                 if (memberSymbol is KaClassSymbol) continue
                 val psi = memberSymbol.psi
                 if (psi is NavigatablePsiElement) {

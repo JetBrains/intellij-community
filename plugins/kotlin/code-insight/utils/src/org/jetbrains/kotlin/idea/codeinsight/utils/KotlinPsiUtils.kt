@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
@@ -356,7 +356,7 @@ context(KaSession)
 fun KtExpression.isSynthesizedFunction(): Boolean {
     val symbol =
         resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
-    return symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
+    return symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
 context(KaSession)

@@ -164,7 +164,7 @@ private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression)
 private fun KaDeclarationSymbol.isEnum(): Boolean = safeAs<KaClassSymbol>()?.classKind == KaClassKind.ENUM_CLASS
 
 private fun KaCallableSymbol.isEnumSyntheticMethodCall(target: KaNamedClassOrObjectSymbol): Boolean =
-    target.isEnum() && origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED && callableId?.callableName in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
+    target.isEnum() && origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED && callableId?.callableName in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
 
 private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KaNamedClassOrObjectSymbol): Boolean =
     target.isEnum() && canBeReferenceToBuiltInEnumFunction()

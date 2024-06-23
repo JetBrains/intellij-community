@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade.AnalysisMode
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -131,7 +131,7 @@ internal class IdeFe10AnalysisFacade(private val project: Project) : Fe10Analysi
         return kotlinCacheService.getResolutionFacade(files)
     }
 
-    override fun getOrigin(file: VirtualFile): KtSymbolOrigin {
-        return KtSymbolOrigin.SOURCE
+    override fun getOrigin(file: VirtualFile): KaSymbolOrigin {
+        return KaSymbolOrigin.SOURCE
     }
 }

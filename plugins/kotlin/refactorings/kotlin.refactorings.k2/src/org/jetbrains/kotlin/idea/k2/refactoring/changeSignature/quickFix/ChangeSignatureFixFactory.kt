@@ -345,8 +345,8 @@ object ChangeSignatureFixFactory {
         if (symbol !is KaParameterSymbol) return emptyList()
         val containingSymbol = symbol.containingSymbol as? KaFunctionSymbol ?: return emptyList()
         if (containingSymbol is KaNamedFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
-            containingSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED ||
-            containingSymbol.origin == KtSymbolOrigin.LIBRARY
+            containingSymbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED ||
+            containingSymbol.origin == KaSymbolOrigin.LIBRARY
         ) return emptyList()
 
         val name = (symbol as? KaNamedSymbol)?.name?.asString() ?: return emptyList()

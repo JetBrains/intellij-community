@@ -86,7 +86,7 @@ internal fun toPsiMethod(
 ): PsiMethod? {
     // `inline` w/ `reified` type param from binary dependency,
     // which we can't find source PSI, so fake it
-    if (functionSymbol.origin == KtSymbolOrigin.LIBRARY &&
+    if (functionSymbol.origin == KaSymbolOrigin.LIBRARY &&
         (functionSymbol as? KaNamedFunctionSymbol)?.isInline == true &&
         functionSymbol.typeParameters.any { it.isReified }
     ) {
@@ -133,7 +133,7 @@ internal fun toPsiMethod(
             when {
                 psi.isLocal ->
                     handleLocalOrSynthetic(psi)
-                functionSymbol.unwrapFakeOverrides.origin == KtSymbolOrigin.LIBRARY ->
+                functionSymbol.unwrapFakeOverrides.origin == KaSymbolOrigin.LIBRARY ->
                     // PSI to regular libraries should be handled by [DecompiledPsiDeclarationProvider]
                     // That is, this one is a deserialized declaration (in Lint/UAST IDE).
                     toPsiMethodForDeserialized(functionSymbol, context, psi)
@@ -383,13 +383,13 @@ internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
  */
 context(KaSession)
 internal tailrec fun psiForUast(symbol: KaSymbol): PsiElement? {
-    if (symbol.origin == KtSymbolOrigin.LIBRARY) {
+    if (symbol.origin == KaSymbolOrigin.LIBRARY) {
         val psiProvider = FirKotlinUastLibraryPsiProviderService.getInstance()
         return with(psiProvider) { provide(symbol) }
     }
 
     if (symbol is KaCallableSymbol) {
-        if (symbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KtSymbolOrigin.SUBSTITUTION_OVERRIDE) {
+        if (symbol.origin == KaSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KaSymbolOrigin.SUBSTITUTION_OVERRIDE) {
             val originalSymbol = symbol.unwrapFakeOverrides
             if (originalSymbol !== symbol) {
                 return psiForUast(originalSymbol)

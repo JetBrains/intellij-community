@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classif
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
@@ -167,7 +167,7 @@ internal class KotlinFirStructureElementPresentation(
 
         analyze(ktElement) {
             val symbol = pointer.restoreSymbol()
-            if (symbol is KaCallableSymbol && symbol.origin == KtSymbolOrigin.SUBSTITUTION_OVERRIDE) {
+            if (symbol is KaCallableSymbol && symbol.origin == KaSymbolOrigin.SUBSTITUTION_OVERRIDE) {
                 val containerPsi = symbol.psi?.parent
                 if (containerPsi is PsiNamedElement) {
                     containerPsi.name?.let { 

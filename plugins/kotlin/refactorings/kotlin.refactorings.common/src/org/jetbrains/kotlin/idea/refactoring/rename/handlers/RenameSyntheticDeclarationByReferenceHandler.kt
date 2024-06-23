@@ -5,13 +5,13 @@ import com.intellij.openapi.util.NlsContexts.DialogMessage
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 internal class RenameSyntheticDeclarationByReferenceHandler : AbstractForbidRenamingSymbolByReferenceHandler() {
     context(KaSession)
     override fun shouldForbidRenaming(symbol: KaSymbol): Boolean {
-        return symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED && !(symbol is KaConstructorSymbol && symbol.isPrimary)
+        return symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED && !(symbol is KaConstructorSymbol && symbol.isPrimary)
     }
 
     override fun getErrorMessage(): @DialogMessage String {
