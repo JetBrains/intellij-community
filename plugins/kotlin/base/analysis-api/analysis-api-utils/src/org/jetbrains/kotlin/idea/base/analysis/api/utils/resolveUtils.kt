@@ -7,14 +7,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.resolution.KtCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
@@ -34,7 +28,7 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
 context(KaSession)
 @OptIn(KaAnalysisApiInternals::class)
-fun collectCallCandidates(callElement: KtElement): List<KtCallCandidateInfo> {
+fun collectCallCandidates(callElement: KtElement): List<KaCallCandidateInfo> {
     val (candidates, explicitReceiver) = when (callElement) {
         is KtCallElement -> {
             val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression
@@ -53,7 +47,7 @@ fun collectCallCandidates(callElement: KtElement): List<KtCallCandidateInfo> {
 
 context(KaSession)
 private fun filterCandidate(
-    candidateInfo: KtCallCandidateInfo,
+    candidateInfo: KaCallCandidateInfo,
     callElement: KtElement,
     fileSymbol: KaFileSymbol,
     explicitReceiver: KtExpression?
