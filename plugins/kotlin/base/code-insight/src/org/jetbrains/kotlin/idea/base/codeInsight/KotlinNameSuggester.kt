@@ -165,7 +165,7 @@ class KotlinNameSuggester(
      */
     context(KaSession)
     private fun suggestNamesByType(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
-        val type = expression.getKtType() ?: return emptySequence()
+        val type = expression.expressionType ?: return emptySequence()
         return suggestTypeNames(type).map { name -> suggestNameByName(name, validator) }
     }
 

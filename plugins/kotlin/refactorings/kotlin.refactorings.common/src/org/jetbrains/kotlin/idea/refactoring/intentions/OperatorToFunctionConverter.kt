@@ -145,7 +145,7 @@ object OperatorToFunctionConverter {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             analyze(expression) {
-                expression.getKtType()?.isMarkedNullable
+                expression.expressionType?.isMarkedNullable
             }
         }
     }

@@ -224,7 +224,7 @@ object K2CreateFunctionFromUsageBuilder {
      */
     context (KaSession)
     private fun KtExpression.getTypeOfAbstractSuperClass(): KaType? {
-        val type = getKtType() ?: return null
+        val type = expressionType ?: return null
         if (type.hasAbstractDeclaration()) return type
         return type.getAllSuperTypes().firstOrNull { it.hasAbstractDeclaration() }
     }

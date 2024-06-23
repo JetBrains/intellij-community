@@ -69,7 +69,7 @@ private fun getArrayFunctionName(element: PsiElement): String {
                         return "kotlin.arrayOf"
                     }
 
-                    val elementType = element.getKtType()
+                    val elementType = element.expressionType
                     if (elementType != null && elementType is KaClassType && !elementType.isMarkedNullable) {
                         val functionName = PRIMITIVES_TO_ARRAYS[elementType.classId]
                         if (functionName != null) {

@@ -38,7 +38,7 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
 
     context(KaSession)
     override fun prepareContext(element: KtPrefixExpression): Unit? =
-        element.getKtType()
+        element.expressionType
             ?.isBoolean
             ?.asUnit
 

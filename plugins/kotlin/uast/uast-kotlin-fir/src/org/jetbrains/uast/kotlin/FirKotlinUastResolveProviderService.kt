@@ -594,8 +594,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun getCommonSupertype(left: KtExpression, right: KtExpression, uExpression: UExpression): PsiType? {
         val ktElement = uExpression.sourcePsi as? KtExpression ?: return null
         analyzeForUast(ktElement) {
-            val leftType = left.getKtType() ?: return null
-            val rightType = right.getKtType() ?: return null
+            val leftType = left.expressionType ?: return null
+            val rightType = right.expressionType ?: return null
             val commonSuperType = commonSuperType(listOf(leftType, rightType)) ?: return null
             return toPsiType(
                 commonSuperType,
@@ -617,7 +617,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return null
 
         analyzeForUast(ktExpression) {
-            val ktType = ktExpression.getKtType() ?: return null
+            val ktType = ktExpression.expressionType ?: return null
             // Again, Analysis API returns [Unit] for statements, so we need to filter out
             // some cases that are not actually expression's return type.
             if (ktType.isUnit) {

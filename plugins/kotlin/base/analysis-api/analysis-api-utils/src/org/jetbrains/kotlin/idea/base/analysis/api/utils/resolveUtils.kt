@@ -128,7 +128,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 
     val isSafeCall = explicitReceiver.parent is KtSafeQualifiedExpression
 
-    val explicitReceiverType = explicitReceiver.getKtType() ?: error("Receiver should have a KaType")
+    val explicitReceiverType = explicitReceiver.expressionType ?: error("Receiver should have a KaType")
     val adjustedType = if (isSafeCall) {
         explicitReceiverType.withNullability(KaTypeNullability.NON_NULLABLE)
     } else {

@@ -203,7 +203,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             val substringInfo = expression.extractableSubstringInfo as? K2ExtractableSubstringInfo
             val physicalExpression = expression.substringContextOrThis
 
-            val expressionType = substringInfo?.guessLiteralType() ?: physicalExpression.getKtType()
+            val expressionType = substringInfo?.guessLiteralType() ?: physicalExpression.expressionType
             if (expressionType != null && expressionType.isUnit) return@analyzeInModalWindow null
             (expressionType ?: builtinTypes.ANY).render(position = Variance.INVARIANT)
         } ?: return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.expression.has.unit.type"))

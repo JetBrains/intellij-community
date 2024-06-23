@@ -7,9 +7,7 @@ import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -31,7 +29,7 @@ abstract class KotlinExpressionSurrounder : ModCommandSurrounder() {
     protected open fun isApplicable(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {
             return analyze(expression) {
-                val type = expression.getKtType()
+                val type = expression.expressionType
                 if (type == null || type is KaErrorType || type.isUnit && isApplicableToStatements) {
                     false
                 } else {

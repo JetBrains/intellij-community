@@ -225,7 +225,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                     append('\n')
 
                     variablesForEquals.forEach {
-                        val variableType = it.getKtType() ?: return@forEach
+                        val variableType = it.expressionType ?: return@forEach
                         val isNullableType = variableType.isMarkedNullable
                         val isArray = variableType.isArrayOrPrimitiveArray
                         val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()

@@ -91,7 +91,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
                 refExprParent !is KtCallableReferenceExpression && refExprParent !is KtCallExpression && symbol is KaFunctionSymbol -> false
 
                 receiver != null -> {
-                    val actualReceiverType = receiver.getKtType() ?: return false
+                    val actualReceiverType = receiver.expressionType ?: return false
                     val expectedReceiverType = getReceiverType(symbol) ?: return false
 
                     // FIXME: this check does not work with generic types (i.e. List<String> and List<T>)

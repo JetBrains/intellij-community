@@ -49,7 +49,7 @@ fun checkClassNameShadowing(
 
             val shortNameFragment = createTypeFragment(newName)
             val hasConflict = analyze(shortNameFragment) {
-                val typeByShortName = shortNameFragment.getContentElement()?.getKtType()
+                val typeByShortName = shortNameFragment.getContentElement()?.expressionType
                 typeByShortName != null && typeByShortName !is KaErrorType
             }
 

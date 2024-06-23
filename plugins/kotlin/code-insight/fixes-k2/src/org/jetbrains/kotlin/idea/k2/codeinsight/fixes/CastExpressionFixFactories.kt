@@ -73,8 +73,8 @@ object CastExpressionFixFactories {
     }
 
     val smartcastImpossible = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.SmartcastImpossible ->
-        val actualType = diagnostic.subject.getKtType()
-            ?: return@ModCommandBased emptyList()
+        val actualType = diagnostic.subject.expressionType
+             ?: return@ModCommandBased emptyList()
         createFixes(diagnostic.isCastToNotNull, actualType, diagnostic.desiredType, diagnostic.psi)
     }
 
@@ -121,7 +121,7 @@ object CastExpressionFixFactories {
         if (isDueToNullability || expectedType is KaErrorType) return emptyList()
 
         if (element is KtExpression) {
-            val actualExpressionType = element.getKtType()
+            val actualExpressionType = element.expressionType
             if (actualExpressionType != null && !actualExpressionType.isEqualTo(actualType)) {
                 //don't suggest cast for nested generic argument incompatibilities
                 return emptyList()

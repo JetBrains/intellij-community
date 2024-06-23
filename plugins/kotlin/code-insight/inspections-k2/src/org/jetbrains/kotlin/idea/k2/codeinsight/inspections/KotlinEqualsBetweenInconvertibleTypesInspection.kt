@@ -36,7 +36,7 @@ internal class KotlinEqualsBetweenInconvertibleTypesInspection : AbstractKotlinI
 
     context(KaSession)
     private fun KtExpression.getTypeIfComparable(): KaType? {
-        val type = getKtType()?.withNullability(KaTypeNullability.NON_NULLABLE)
+        val type = expressionType?.withNullability(KaTypeNullability.NON_NULLABLE)
         return type?.takeIf { it.isPrimitive || it.isString || it.isEnum() }
     }
 }

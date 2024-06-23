@@ -34,7 +34,7 @@ class KtCallChainHintsProvider : AbstractKtInlayHintsProvider() {
                     .drop(1) // Except last to avoid builder.build() which has obvious type
                     .filter { (it.nextSibling as? PsiWhiteSpace)?.textContains('\n') == true }
                     .map {
-                        val ktType = it.getKtType()
+                        val ktType = it.expressionType
                         it to ktType
                     }
                     .takeWhile { (_, type) -> (type != null).also { if (!it) someTypeIsUnknown = true } }

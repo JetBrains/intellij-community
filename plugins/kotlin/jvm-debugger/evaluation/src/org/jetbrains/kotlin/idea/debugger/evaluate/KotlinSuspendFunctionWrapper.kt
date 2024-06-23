@@ -80,7 +80,7 @@ internal class KotlinSuspendFunctionWrapper(
             from.parentsOfType<KtNamedFunction>().any {
                 (it.symbol as? KaNamedFunctionSymbol)?.isSuspend ?: false
             } || from.parentsOfType<KtLambdaExpression>().any {
-                (it.getKtType() as? KaFunctionType)?.isSuspend ?: false
+              (it.expressionType as? KaFunctionType)?.isSuspend ?: false
             }
         }
     }

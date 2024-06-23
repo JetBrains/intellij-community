@@ -39,7 +39,7 @@ internal class SplitPropertyDeclarationIntention :
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun prepareContext(element: KtProperty): Context? {
-        val ktType = element.initializer?.getKtType() ?: return null
+        val ktType = element.initializer?.expressionType ?: return null
         return Context(if (ktType is KaErrorType) null else ktType.render(position = Variance.OUT_VARIANCE))
     }
 

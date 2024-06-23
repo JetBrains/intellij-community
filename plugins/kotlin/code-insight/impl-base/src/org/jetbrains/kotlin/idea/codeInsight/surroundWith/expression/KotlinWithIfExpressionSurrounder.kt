@@ -5,11 +5,8 @@ package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinTryFinallySurrounder.moveCaretToBlockCenter
@@ -21,7 +18,7 @@ class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpression
     override fun isApplicable(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {
             return super.isApplicable(expression) && analyze(expression) {
-                expression.getKtType()?.isBoolean == true
+              expression.expressionType?.isBoolean == true
             }
         }
     }

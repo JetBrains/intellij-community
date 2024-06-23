@@ -22,7 +22,7 @@ class FirKotlinUastAnalysisPlugin : UastAnalysisPlugin {
                     when {
                         psiExpression.isDefinitelyNotNull -> UNullability.NOT_NULL
                         psiExpression.isDefinitelyNull -> UNullability.NULL
-                        psiExpression.getKtType()?.isMarkedNullable == true -> UNullability.NULLABLE
+                        psiExpression.expressionType?.isMarkedNullable == true -> UNullability.NULLABLE
                         else -> UNullability.UNKNOWN
                     }
                 }

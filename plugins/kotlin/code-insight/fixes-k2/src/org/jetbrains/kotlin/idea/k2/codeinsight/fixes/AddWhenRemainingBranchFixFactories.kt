@@ -32,7 +32,7 @@ object AddWhenRemainingBranchFixFactories {
                 )
             )
 
-            val baseClassSymbol = subjectExpression.getKtType()?.expandedSymbol ?: return@buildList
+          val baseClassSymbol = subjectExpression.expressionType?.expandedSymbol ?: return@buildList
             val enumToStarImport = baseClassSymbol.classId
             if (baseClassSymbol.classKind == KaClassKind.ENUM_CLASS && enumToStarImport != null) {
                 add(

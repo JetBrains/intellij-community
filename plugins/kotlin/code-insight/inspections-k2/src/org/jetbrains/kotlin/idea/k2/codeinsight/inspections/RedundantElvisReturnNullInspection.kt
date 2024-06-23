@@ -63,7 +63,7 @@ internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBa
     context(KaSession)
     override fun prepareContext(element: KtBinaryExpression): Unit? =
         element.left
-            ?.getKtType()
+            ?.expressionType
             ?.isMarkedNullable
             ?.asUnit
 

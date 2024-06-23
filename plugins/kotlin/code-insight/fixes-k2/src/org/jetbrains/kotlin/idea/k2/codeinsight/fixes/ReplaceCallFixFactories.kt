@@ -40,6 +40,7 @@ object ReplaceCallFixFactories {
                     // in FE1.0 does so.
                     listOf(ReplaceImplicitReceiverCallFix(target, shouldHaveNotNullType))
                 }
+
                 is KtArrayAccessExpression -> listOf(ReplaceInfixOrOperatorCallFix(target, shouldHaveNotNullType))
                 else -> emptyList()
             }
@@ -69,7 +70,7 @@ object ReplaceCallFixFactories {
                 ?: return@IntentionBased emptyList()
             val left = target.left
             if (operationToken in KtTokens.AUGMENTED_ASSIGNMENTS && left is KtArrayAccessExpression) {
-                val type = left.arrayExpression?.getKtType()
+                val type = left.arrayExpression?.expressionType
                     ?: return@IntentionBased emptyList()
                 val argumentType = (type as? KaClassType)?.typeArguments?.firstOrNull()
                 if (type.isMap() && argumentType?.type?.isMarkedNullable != true) {

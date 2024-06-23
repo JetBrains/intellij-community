@@ -134,7 +134,7 @@ internal fun KtExpression.getKotlinType(): KaType? {
             }
         }
     }
-    return getKtType()
+    return expressionType
 }
 
 context(KaSession)
@@ -202,7 +202,7 @@ internal fun KaType.canBeNull() = isMarkedNullable || hasFlexibleNullability
 
 context(KaSession)
 internal fun getConstant(expr: KtConstantExpression): DfType {
-    val type = expr.getKtType()
+    val type = expr.expressionType
     val constant: KaConstantValue? = if (type == null) null else expr.evaluate()
     return when (constant) {
         is KaConstantValue.NullValue -> DfTypes.NULL

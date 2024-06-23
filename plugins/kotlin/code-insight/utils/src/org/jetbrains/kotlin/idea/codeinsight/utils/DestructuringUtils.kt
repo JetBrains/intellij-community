@@ -23,7 +23,7 @@ fun getParameterNames(declaration: KtDestructuringDeclaration): List<String>? {
 
 fun getParameterNames(expression: KtExpression): List<String>? {
     return analyze(expression) {
-        val type = toNonErrorClassType(expression.getKtType()) ?: return null
+        val type = toNonErrorClassType(expression.expressionType) ?: return null
         getParameterNames(type)
     }
 }
@@ -47,7 +47,7 @@ context(KaSession)
 private fun getClassType(declaration: KtDestructuringDeclaration): KaClassType? {
     val initializer = declaration.initializer
     val type = if (initializer != null) {
-        initializer.getKtType()
+        initializer.expressionType
     } else {
         val parentAsParameter = declaration.parent as? KtParameter
         parentAsParameter?.getParameterSymbol()?.returnType

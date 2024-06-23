@@ -152,14 +152,14 @@ object K2CreateFunctionFromUsageUtil {
     private fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
         //is KaCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
         is KaClassLikeSymbol -> symbol // When the receiver is an object
-        else -> getKtType()?.expandedSymbol
+        else -> expressionType?.expandedSymbol
     }?.psi
 
     context (KaSession)
     internal fun ValueArgument.getExpectedParameterInfo(defaultParameterName: ()->String): ExpectedParameter {
         val parameterNameAsString = getArgumentName()?.asName?.asString()
         val argumentExpression = getArgumentExpression()
-        val expectedArgumentType = argumentExpression?.getKtType()
+        val expectedArgumentType = argumentExpression?.expressionType
         val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it) }
         val jvmParameterType = expectedArgumentType?.convertToJvmType(argumentExpression)
         val expectedType = if (jvmParameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType(expectedArgumentType, jvmParameterType)

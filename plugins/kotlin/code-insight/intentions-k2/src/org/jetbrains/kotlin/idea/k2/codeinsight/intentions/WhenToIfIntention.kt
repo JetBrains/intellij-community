@@ -66,7 +66,7 @@ internal class WhenToIfIntention :
         if (element.hasNoElseButUsedAsExpression()) return null
 
         val subject = element.subjectExpression
-        val isNullableSubject = subject?.getKtType()?.isMarkedNullable == true
+        val isNullableSubject = subject?.expressionType?.isMarkedNullable == true
 
         /**
          * When we generate conditions of the if/else-if expressions, we have to use the subject of [element].

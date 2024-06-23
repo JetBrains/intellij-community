@@ -47,7 +47,7 @@ internal class LambdaToAnonymousFunctionIntention :
         if (declarationSymbol.valueParameters.any { it.returnType is KaErrorType }) return null
 
         // anonymous suspend functions are forbidden in Kotlin
-        if ((element.functionLiteral.getKtType() as? KaFunctionType)?.isSuspend == true) return null
+        if ((element.functionLiteral.expressionType as? KaFunctionType)?.isSuspend == true) return null
 
         val signature = LambdaToAnonymousFunctionUtil.prepareFunctionText(element) ?: return null
         val parent = element.functionLiteral.parent

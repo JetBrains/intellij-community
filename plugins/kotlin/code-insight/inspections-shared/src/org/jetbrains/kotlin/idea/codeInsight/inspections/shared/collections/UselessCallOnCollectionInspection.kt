@@ -55,15 +55,15 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             val targetExpression = returnExpression.targetSymbol?.psi?.parent
             if (targetExpression == expression) {
                 labelledReturnReturnsNullable = labelledReturnReturnsNullable ||
-                        returnExpression.returnedExpression?.getKtType()?.canBeNull == true
+                        returnExpression.returnedExpression?.expressionType?.canBeNull == true
             }
         }
-        return !labelledReturnReturnsNullable && expression.bodyExpression?.getKtType()?.canBeNull == false
+        return !labelledReturnReturnsNullable && expression.bodyExpression?.expressionType?.canBeNull == false
     }
 
     context(KaSession)
     private fun KtExpression.isMethodReferenceReturningNotNull(): Boolean {
-        val type = getKtType() as? KaFunctionType ?: return false
+        val type = expressionType as? KaFunctionType ?: return false
         return !type.returnType.canBeNull
     }
 
@@ -73,7 +73,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         calleeExpression: KtExpression,
         conversion: Conversion
     ) {
-        val receiverType = expression.receiverExpression.getKtType() as? KaClassType ?: return
+        val receiverType = expression.receiverExpression.expressionType as? KaClassType ?: return
         val receiverTypeArgument = receiverType.typeArguments.singleOrNull() ?: return
         val receiverTypeArgumentType = receiverTypeArgument.type ?: return
         val resolvedCall = expression.resolveToCall()?.singleFunctionCallOrNull() ?: return

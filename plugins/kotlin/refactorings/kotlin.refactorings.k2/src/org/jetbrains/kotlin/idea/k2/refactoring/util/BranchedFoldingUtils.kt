@@ -145,7 +145,7 @@ object BranchedFoldingUtils {
             }
 
             is KtCallExpression -> {
-                e.getKtType()?.isNothing ?: false
+                e.expressionType?.isNothing ?: false
             }
 
             is KtBreakExpression, is KtContinueExpression, is KtThrowExpression, is KtReturnExpression -> true
@@ -156,8 +156,8 @@ object BranchedFoldingUtils {
         // Check if all assignment have right expressions that match each other.
         if (!collectAssignmentsAndCheck(expression)) return emptySet()
         val firstAssignment = assignments.firstOrNull { it.right?.isNull() != true } ?: assignments.firstOrNull() ?: return emptySet()
-        val leftType = firstAssignment.left?.getKtType() ?: return emptySet()
-        val rightType = firstAssignment.right?.getKtType() ?: return emptySet()
+        val leftType = firstAssignment.left?.expressionType ?: return emptySet()
+        val rightType = firstAssignment.right?.expressionType ?: return emptySet()
         val firstOperation = firstAssignment.operationReference.mainReference.resolve()
         if (assignments.any { assignment -> !checkAssignmentsMatch(firstAssignment, assignment, firstOperation, leftType, rightType) }) {
             return emptySet()
@@ -218,7 +218,7 @@ object BranchedFoldingUtils {
         if (firstOperation != null && firstOperation == second.operationReference.mainReference.resolve()) return true
 
         // Check if they satisfy the third and fourth of condition 3.
-        val rightTypeOfSecond = second.right?.getKtType() ?: return false
+        val rightTypeOfSecond = second.right?.expressionType ?: return false
         if (!leftType.canBeNull && rightTypeOfSecond.canBeNull) return false
         val nonNullableRightTypeOfSecond = rightTypeOfSecond.withNullability(KaTypeNullability.NON_NULLABLE)
         return nonNullableRightTypeOfFirst.isEqualTo(nonNullableRightTypeOfSecond) ||
@@ -349,7 +349,7 @@ object BranchedFoldingUtils {
                 getFoldableReturnsFromBranches(expression.tryBlockAndCatchBodies())
         }
         is KtCallExpression -> {
-            if (expression.getKtType()?.isNothing == true) FoldableReturns(emptyList(), true) else FoldableReturns.NotFoldable
+            if (expression.expressionType?.isNothing == true) FoldableReturns(emptyList(), true) else FoldableReturns.NotFoldable
         }
         is KtBreakExpression, is KtContinueExpression, is KtThrowExpression -> FoldableReturns(emptyList(), true)
         else -> FoldableReturns.NotFoldable
@@ -402,7 +402,7 @@ object BranchedFoldingUtils {
                 getFoldableReturns(expression.tryBlockAndCatchBodies())
         }
         is KtCallExpression -> {
-            if (expression.getKtType()?.isNothing == true) emptyList() else null
+            if (expression.expressionType?.isNothing == true) emptyList() else null
         }
         is KtBreakExpression, is KtContinueExpression, is KtThrowExpression -> emptyList()
         else -> null

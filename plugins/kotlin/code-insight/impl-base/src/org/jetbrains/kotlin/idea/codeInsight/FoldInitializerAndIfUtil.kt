@@ -72,7 +72,7 @@ fun prepareData(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
     }
 
 
-    if (statement.getKtType()?.isNothing != true) return null
+    if (statement.expressionType?.isNothing != true) return null
 
     if (ReferencesSearch.search(variableDeclaration, LocalSearchScope(statement)).findFirst() != null) {
         return null
@@ -135,19 +135,19 @@ private fun calculateType(
 
             val isUsedAsNotNullable = ReferencesSearch.search(declaration, LocalSearchScope(declaration.parent)).any {
                 if (it.element.startOffset <= ifEndOffset) return@any false
-                !(it.element.safeAs<KtExpression>()?.getKtType()?.isMarkedNullable ?: return@any false)
+                !(it.element.safeAs<KtExpression>()?.expressionType?.isMarkedNullable ?: return@any false)
             }
 
-            if (isUsedAsNotNullable) null else initializer.getKtType()
+            if (isUsedAsNotNullable) null else initializer.expressionType
 
         } else {
-            initializer.getKtType()
+            initializer.expressionType
         }
     }
 
     // for val with explicit type, change it to non-nullable
     !declaration.isVar && declaration.typeReference != null ->
-        initializer.getKtType()?.withNullability(KaTypeNullability.NON_NULLABLE)
+        initializer.expressionType?.withNullability(KaTypeNullability.NON_NULLABLE)
 
     else -> null
 }

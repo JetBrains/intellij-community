@@ -37,7 +37,7 @@ internal class RemoveSingleExpressionStringTemplateInspection :
     context(KaSession)
     override fun prepareContext(element: KtStringTemplateExpression): Context? {
         val expression = element.singleExpressionOrNull() ?: return null
-        val type = expression.getKtType()
+        val type = expression.expressionType
         return Context(type?.isString == true && !type.isMarkedNullable)
     }
 

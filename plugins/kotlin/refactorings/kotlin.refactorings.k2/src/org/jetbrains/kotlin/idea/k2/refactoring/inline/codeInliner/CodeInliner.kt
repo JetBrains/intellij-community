@@ -116,7 +116,7 @@ class CodeInliner(
         var receiverType =
             receiver?.let {
                 analyze(it) {
-                    val type = it.getKtType()
+                    val type = it.expressionType
                     type to (type?.nullability == KaTypeNullability.NULLABLE)
                 }
             }
@@ -300,7 +300,7 @@ class CodeInliner(
                 ?.getQualifiedExpressionForSelectorOrThis()
                 ?.getAssignmentByLHS()
                 ?.right ?: return null
-            return Argument(expr, analyze(call) { expr.getKtType() })
+            return Argument(expr, analyze(call) { expr.expressionType })
         }
 
         val expressions = mapping?.entries?.filter { (_, value) ->
@@ -313,7 +313,7 @@ class CodeInliner(
                 if (single?.getSpreadElement() != null) {
                     val expression = expressions.first()
                     expression.putCopyableUserData(USER_CODE_KEY, Unit)
-                    return Argument(expression, expression.getKtType(), isNamed = single.isNamed())
+                    return Argument(expression, expression.expressionType, isNamed = single.isNamed())
                 }
                 val parameterType = parameter.getReturnKtType()
                 val elementType = parameterType.arrayElementType ?: return null
@@ -332,7 +332,7 @@ class CodeInliner(
                     }
                     appendFixedText(")")
                 }
-                Argument(expression, expression.getKtType())
+                Argument(expression, expression.expressionType)
             }
         } else {
             val expression = expressions.firstOrNull() ?: parameter.defaultValue ?: return null
@@ -345,7 +345,7 @@ class CodeInliner(
                 }
 
                 analyze(call) {
-                    if ((expression.getKtType() as? KaFunctionType)?.hasReceiver == true) {
+                    if ((expression.expressionType as? KaFunctionType)?.hasReceiver == true) {
                         //expand to function only for types with an extension
                         LambdaToAnonymousFunctionUtil.prepareFunctionText(expression)
                     } else {
@@ -366,7 +366,7 @@ class CodeInliner(
                 }
             }
 
-            return Argument(resultExpression, analyze(call) { resultExpression.getKtType() }, isNamed = isNamed, expressions.isEmpty())
+            return Argument(resultExpression, analyze(call) { resultExpression.expressionType }, isNamed = isNamed, expressions.isEmpty())
         }
     }
 

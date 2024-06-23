@@ -34,7 +34,7 @@ internal class DslHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnaly
     private fun highlightCall(element: KtCallExpression): HighlightInfo.Builder? {
         val calleeExpression = element.calleeExpression ?: return null
         val lambdaExpression = element.lambdaArguments.singleOrNull()?.getLambdaExpression() ?: return null
-        val receiverType = (lambdaExpression.getKtType() as? KaFunctionType)?.receiverType ?: return null
+        val receiverType = (lambdaExpression.expressionType as? KaFunctionType)?.receiverType ?: return null
         val dslAnnotation = getDslAnnotation(receiverType) ?: return null
 
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())

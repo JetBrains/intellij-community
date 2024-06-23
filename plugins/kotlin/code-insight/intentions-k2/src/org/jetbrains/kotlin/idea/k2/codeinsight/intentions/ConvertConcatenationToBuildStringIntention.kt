@@ -24,10 +24,10 @@ internal class ConvertConcatenationToBuildStringIntention :
     context(KaSession)
     override fun prepareContext(element: KtBinaryExpression): Unit? {
         val parent = element.parent
-        val isApplicable = element.getKtType()?.isString == true
+        val isApplicable = element.expressionType?.isString == true
                 && (parent !is KtBinaryExpression
                 || parent.operationToken != KtTokens.PLUS
-                || parent.getKtType()?.isString == false)
+                || parent.expressionType?.isString == false)
         return isApplicable.asUnit
     }
 

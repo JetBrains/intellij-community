@@ -51,7 +51,7 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
             if (prev.isUnitLiteral()) return true
             if (prev is KtDeclaration && isDynamicCall(parent)) return false
             analyze(prev) {
-                val ktType = prev.getKtType()
+                val ktType = prev.expressionType
                 if (ktType != null) {
                     return ktType.isUnit && !ktType.isMarkedNullable && prev.canBeUsedAsValue()
                 }

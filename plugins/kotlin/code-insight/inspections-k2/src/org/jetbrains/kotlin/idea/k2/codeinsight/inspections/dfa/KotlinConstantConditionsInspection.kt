@@ -323,7 +323,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         val expression = entry.expression ?: return false
         return analyze(expression) {
             val missingCases = whenExpr.computeMissingCases()
-            missingCases.isEmpty() && expression.getKtType()?.isNothing == true
+            missingCases.isEmpty() && expression.expressionType?.isNothing == true
         }
     }
 
@@ -554,13 +554,13 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 // Could be caused by code like return x?.let { return ... } ?: true
                 // While inner "return" is redundant, the "always true" warning is confusing
                 // probably separate inspection could report extra "return"
-                val ktType = expression.left?.getKtType()
+                val ktType = expression.left?.expressionType
                 if (ktType != null && ktType.isNothing && ktType.isMarkedNullable) {
                     return true
                 }
             }
             if (isAlsoChain(expression) || isLetConstant(expression) || isUpdateChain(expression)) return true
-            val kotlinType = expression.getKtType() ?: return false
+            val kotlinType = expression.expressionType ?: return false
             when (value) {
                 ConstantValue.TRUE -> {
                     //if (isUselessIsCheck(expression)) return true
@@ -674,7 +674,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         context(KaSession)
         private fun isAndOrConditionWithNothingOperand(expression: KtExpression, token: KtSingleValueToken): Boolean {
             if (expression !is KtBinaryExpression || expression.operationToken != token) return false
-            val type = expression.right?.getKtType()
+            val type = expression.right?.expressionType
             return type != null && type.isNothing
         }
     }

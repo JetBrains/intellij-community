@@ -37,12 +37,12 @@ class KotlinExprTypePredicate(
                     if (symbol is KaNamedClassOrObjectSymbol) {
                         symbol.buildSelfClassType()
                     } else {
-                        node.getKtType()
+                        node.expressionType
                     }
 
                 }
                 node is KtStringTemplateEntry && node !is KtSimpleNameStringTemplateEntry -> null
-                node is KtSimpleNameStringTemplateEntry -> node.expression?.getKtType()
+                node is KtSimpleNameStringTemplateEntry -> node.expression?.expressionType
                 else -> null
             } ?: return false
             val searchedTypeNames = if (regex) listOf() else search.split('|')

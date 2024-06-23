@@ -46,7 +46,7 @@ fun isStringPlusExpressionWithoutNewLineInOperands(expression: KtBinaryExpressio
 
     if (!expression.containNoNewLine()) return false
 
-    if (expression.getKtType()?.isString != true) return false
+    if (expression.expressionType?.isString != true) return false
     val plusOperation = expression.operationReference.mainReference.resolveToSymbol() as? KaCallableSymbol
     val classContainingPlus = plusOperation?.containingSymbol as? KaNamedClassOrObjectSymbol
     return if (classContainingPlus != null) {

@@ -7,7 +7,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.util.elementType
-import org.jetbrains.kotlin.analysis.api.fir.symbols.KtPackage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler.getCandidateContainers
@@ -24,7 +23,6 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
 internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project) : KotlinIntroduceVariableService {
@@ -88,7 +86,7 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
 
     override fun hasUnitType(element: KtExpression): Boolean {
         return analyzeInModalWindow(element, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            val expressionType = element.getKtType()
+            val expressionType = element.expressionType
             expressionType == null || expressionType.isUnit
         }
     }

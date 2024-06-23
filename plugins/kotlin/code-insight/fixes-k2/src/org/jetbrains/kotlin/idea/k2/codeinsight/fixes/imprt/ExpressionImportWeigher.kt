@@ -47,8 +47,8 @@ interface ExpressionImportWeigher {
                         OperatorExpressionImportWeigher(
                             token,
                             operatorName,
-                            parent.left?.getKtType(),
-                            parent.right?.getKtType(),
+                            parent.left?.expressionType,
+                            parent.right?.expressionType,
                         )
                     } else OperatorExpressionImportWeigher(token, operatorName)
                 }
@@ -61,7 +61,7 @@ interface ExpressionImportWeigher {
             val receiverExpression = element.getParentOfType<KtQualifiedExpression>(false)?.receiverExpression
 
             return if (receiverExpression != null) {
-                val explicitType = receiverExpression.getKtType()
+                val explicitType = receiverExpression.expressionType
                 // use non-nullable type if safe call is used i.e `val value: T? = ...; value?.smth()
                 val correctedExplicitType = explicitType?.applyIf(receiverExpression.parent is KtSafeQualifiedExpression) {
                     withNullability(KaTypeNullability.NON_NULLABLE)
@@ -78,7 +78,7 @@ interface ExpressionImportWeigher {
             val valueArgumentList = callExpression?.valueArgumentList ?: return emptyList()
 
             val valueArguments = valueArgumentList.arguments
-            return valueArguments.map { it.getArgumentExpression()?.getKtType() }
+            return valueArguments.map { it.getArgumentExpression()?.expressionType }
         }
 
         object Empty : ExpressionImportWeigher {

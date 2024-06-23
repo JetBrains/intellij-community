@@ -260,7 +260,7 @@ object ChangeSignatureFixFactory {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun getKtType(argumentExpression: KtExpression?): KaType? {
-        var ktType = argumentExpression?.getKtType()
+        var ktType = argumentExpression?.expressionType
         val typeKind = ktType?.functionTypeKind
         when (typeKind) {
             FunctionTypeKind.KFunction -> typeKind.nonReflectKind()
@@ -290,7 +290,7 @@ object ChangeSignatureFixFactory {
                 val expressionText = expression.text
                 with(KotlinNameSuggester()) {
                     if (isSpecialName(expressionText)) {
-                        val ktType = expression.getKtType()
+                        val ktType = expression.expressionType
                         if (ktType != null) {
                             return suggestTypeNames(ktType).map { typeName ->
                                 suggestNameByName(typeName, validator)
@@ -322,7 +322,7 @@ object ChangeSignatureFixFactory {
         val valueArguments = callElement.valueArguments
         val idx = valueArguments.indexOf(valueArgument)
         val hasTypeMismatch = idx > 0 && valueArguments.take(idx).zip(ktCallableSymbol.valueParameters).any { (arg, s) ->
-            (arg as? KtValueArgument)?.getArgumentExpression()?.getKtType()?.isSubTypeOf(s.returnType) != true
+            (arg as? KtValueArgument)?.getArgumentExpression()?.expressionType?.isSubTypeOf(s.returnType) != true
         }
 
         val input = Input(

@@ -29,7 +29,7 @@ object NegatedBinaryExpressionSimplificationUtils {
             allowAnalysisFromWriteAction {
                 analyze(expression) {
                     fun KaType?.isFloatingPoint() = this != null && (isFloat || isDouble)
-                    return !expression.left?.getKtType().isFloatingPoint() && !expression.right?.getKtType().isFloatingPoint()
+                    return !expression.left?.expressionType.isFloatingPoint() && !expression.right?.expressionType.isFloatingPoint()
                 }
             }
         }

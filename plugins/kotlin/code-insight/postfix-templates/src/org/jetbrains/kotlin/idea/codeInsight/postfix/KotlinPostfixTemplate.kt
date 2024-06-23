@@ -69,7 +69,7 @@ internal class ExpressionTypeFilter(val predicate: KaSession.(KaType) -> Boolean
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(expression) {
-                    val type = expression.getKtType()
+                    val type = expression.expressionType
                     return type != null && predicate(type)
                 }
             }

@@ -66,7 +66,7 @@ internal class ConvertToForEachFunctionCallIntention :
             if (symbol.callableId?.asSingleFqName() !in withIndexedFunctionFqNames) return null
         }
 
-        return loopRange.getKtType()
+        return loopRange.expressionType
             ?.isLoopRangeType()
             ?.asUnit
     }

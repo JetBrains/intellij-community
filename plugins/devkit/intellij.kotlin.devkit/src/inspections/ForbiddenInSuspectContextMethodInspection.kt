@@ -86,7 +86,7 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
 
       override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
         analyze(lambdaExpression) {
-          val type = lambdaExpression.getKtType()
+          val type = lambdaExpression.expressionType
           if (type?.isSuspendFunctionType == true && !isSuspensionRestricted(type)) {
             lambdaExpression.bodyExpression?.accept(blockingContextCallsVisitor)
             return

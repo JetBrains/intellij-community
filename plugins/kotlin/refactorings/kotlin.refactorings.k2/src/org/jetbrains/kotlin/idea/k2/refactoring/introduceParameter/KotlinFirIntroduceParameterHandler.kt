@@ -112,7 +112,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         val type = if (physicalExpression is KtProperty && physicalExpression.isLocal) {
             physicalExpression.getReturnKtType()
         } else {
-            (expression.extractableSubstringInfo as? K2ExtractableSubstringInfo)?.guessLiteralType() ?: physicalExpression.getKtType()
+            (expression.extractableSubstringInfo as? K2ExtractableSubstringInfo)?.guessLiteralType() ?: physicalExpression.expressionType
         }
         return approximateWithResolvableType(type, physicalExpression)
     }

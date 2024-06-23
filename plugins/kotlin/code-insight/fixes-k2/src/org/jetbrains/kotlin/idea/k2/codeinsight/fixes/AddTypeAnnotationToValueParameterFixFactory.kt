@@ -35,7 +35,7 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
 
     context(KaSession)
     private fun getTypeName(element: KtParameter, defaultValue: KtExpression): String? {
-        val type = defaultValue.getKtType() ?: return null
+        val type = defaultValue.expressionType ?: return null
 
         if (type.isArrayOrPrimitiveArray) {
             if (element.hasModifier(KtTokens.VARARG_KEYWORD)) {

@@ -38,7 +38,7 @@ class K2ExtractableSubstringInfo(
 
         if (value == null) return stringType
 
-        return expr.getKtType() ?: stringType
+        return expr.expressionType ?: stringType
     }
 
     override val isString: Boolean = isStr ?: analyze(startEntry) { guessLiteralType().isString }

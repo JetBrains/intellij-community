@@ -45,7 +45,7 @@ object ConvertToBlockBodyUtils {
             return null
         }
 
-        val bodyType = body.getKtType() ?: return null
+        val bodyType = body.expressionType ?: return null
 
         return ConvertToBlockBodyContext(
             returnTypeIsUnit = returnType.isUnit,

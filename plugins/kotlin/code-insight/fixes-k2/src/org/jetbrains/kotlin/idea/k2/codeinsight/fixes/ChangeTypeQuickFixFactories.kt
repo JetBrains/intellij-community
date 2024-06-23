@@ -111,7 +111,7 @@ object ChangeTypeQuickFixFactories {
         val property = this as? KtProperty
         val returnTypes = buildList {
             addAll(returnedExpressions.mapNotNull { returnExpr ->
-                (property?.getPropertyInitializerType() ?: returnExpr.getKtType())?.let { getActualType(it) }
+                (property?.getPropertyInitializerType() ?: returnExpr.expressionType)?.let { getActualType(it) }
             })
             if (!candidateType.isUnit) {
                 add(candidateType)
@@ -125,7 +125,7 @@ object ChangeTypeQuickFixFactories {
         val initializer = initializer
         return if (typeReference != null && initializer != null) {
             //copy property initializer to calculate initializer's type without property's declared type
-            KtPsiFactory(project).createExpressionCodeFragment(initializer.text, this).getContentElement()?.getKtType()
+            KtPsiFactory(project).createExpressionCodeFragment(initializer.text, this).getContentElement()?.expressionType
         } else null
     }
 
@@ -229,7 +229,7 @@ object ChangeTypeQuickFixFactories {
             buildList {
                 add(UpdateTypeQuickFix(entryWithWrongType, TargetType.VARIABLE, createTypeInfo(diagnostic.destructingType)))
 
-                val classSymbol = (diagnostic.psi.getKtType() as? KaClassType)?.symbol as? KaSymbolWithMembers ?: return@buildList
+                val classSymbol = (diagnostic.psi.expressionType as? KaClassType)?.symbol as? KaSymbolWithMembers ?: return@buildList
                 val componentFunction = classSymbol.memberScope
                     .getCallableSymbols(diagnostic.componentFunctionName)
                     .firstOrNull()?.psi as? KtCallableDeclaration

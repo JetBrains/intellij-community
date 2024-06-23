@@ -72,6 +72,6 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
     context(KaSession)
     private fun isClassLiteralExpressionOfClass(expression: KtExpression, classId: ClassId): Boolean {
         val receiverExpression = (expression as? KtClassLiteralExpression)?.receiverExpression as? KtNameReferenceExpression
-        return true == receiverExpression?.getKtType()?.isClassTypeWithClassId(classId)
+      return true == receiverExpression?.expressionType?.isClassTypeWithClassId(classId)
     }
 }

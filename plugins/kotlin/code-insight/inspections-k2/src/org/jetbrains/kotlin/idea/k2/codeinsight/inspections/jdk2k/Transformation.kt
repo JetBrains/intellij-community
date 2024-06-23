@@ -79,7 +79,7 @@ object ToExtensionFunctionWithNonNullableReceiver : Transformation {
         callExpression
             .valueArguments.firstOrNull()
             ?.getArgumentExpression()
-            ?.getKtType()
+            ?.expressionType
             ?.isMarkedNullable == false
 }
 
@@ -99,7 +99,7 @@ object ToExtensionFunctionWithNullableReceiverForMutableCollection : Transformat
         ToExtensionFunctionWithNonNullableReceiver.isApplicableByPsi(callExpression)
 
     context(KaSession) override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
-        callExpression.valueArguments.firstOrNull()?.getArgumentExpression()?.getKtType()?.isMutableListOrSubtype() == true
+        callExpression.valueArguments.firstOrNull()?.getArgumentExpression()?.expressionType?.isMutableListOrSubtype() == true
 
     context(KaSession)
     private fun KaType?.isMutableList(): Boolean =

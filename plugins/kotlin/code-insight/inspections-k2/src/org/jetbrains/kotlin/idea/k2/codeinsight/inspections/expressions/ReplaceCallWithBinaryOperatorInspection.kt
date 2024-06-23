@@ -147,7 +147,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
     private fun KtQualifiedExpression.isReceiverExpressionWithValue(): Boolean {
         val receiver = receiverExpression
         if (receiver is KtSuperExpression) return false
-        return receiver.getKtType() != null
+        return receiver.expressionType != null
     }
 
     context(KaSession)
@@ -219,18 +219,18 @@ private fun KtExpression.isAnyEquals(): Boolean {
  */
 context(KaSession)
 private fun areRelatedBySubtyping(first: KtExpression, second: KtExpression): Boolean {
-    val firstType = first.getKtType() ?: return false
-    val secondType = second.getKtType() ?: return false
+    val firstType = first.expressionType ?: return false
+    val secondType = second.expressionType ?: return false
     return firstType.isSubTypeOf(secondType) || secondType.isSubTypeOf(firstType)
 }
 
 context(KaSession)
 private fun KtExpression.hasDoubleOrFloatType(): Boolean {
-    val type = getKtType() ?: return false
+    val type = expressionType ?: return false
     return type.isSubTypeOf(builtinTypes.DOUBLE) || type.isSubTypeOf(builtinTypes.FLOAT)
 }
 
 context(KaSession)
 private fun KtExpression.hasUnknownNullabilityType(): Boolean {
-    return this.getKtType()?.nullability == KaTypeNullability.UNKNOWN
+    return expressionType?.nullability == KaTypeNullability.UNKNOWN
 }

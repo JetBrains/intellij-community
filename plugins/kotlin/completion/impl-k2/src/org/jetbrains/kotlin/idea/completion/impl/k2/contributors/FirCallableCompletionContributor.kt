@@ -10,7 +10,6 @@ import com.intellij.util.applyIf
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
@@ -310,7 +309,7 @@ internal open class FirCallableCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
-        val receiverType = explicitReceiver.getKtType().takeUnless { it is KaErrorType } ?: return@sequence
+        val receiverType = explicitReceiver.expressionType.takeUnless { it is KaErrorType } ?: return@sequence
         val callablesWithMetadata = collectDotCompletionForCallableReceiver(
             listOf(receiverType),
             visibilityChecker,

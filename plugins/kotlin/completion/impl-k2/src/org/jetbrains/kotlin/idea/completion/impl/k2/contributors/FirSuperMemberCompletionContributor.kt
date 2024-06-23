@@ -56,7 +56,7 @@ internal class FirSuperMemberCompletionContributor(
     ) = with(positionContext) {
         val superReceiver = positionContext.superExpression
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
-        val superType = superReceiver.getKtType() ?: return
+        val superType = superReceiver.expressionType ?: return
 
         val (nonExtensionMembers: Iterable<CallableInfo>, namesNeedDisambiguation: Set<Name>) =
             if (superType !is KaIntersectionType) {

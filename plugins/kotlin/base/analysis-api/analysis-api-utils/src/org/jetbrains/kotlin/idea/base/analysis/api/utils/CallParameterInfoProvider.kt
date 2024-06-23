@@ -33,7 +33,7 @@ object CallParameterInfoProvider {
         val argumentExpressionsBeforeCurrent = getArgumentOrIndexExpressions(sourceElement).take(currentArgumentIndex).filterNotNull()
         for (argumentExpression in argumentExpressionsBeforeCurrent) {
             val parameterForArgument = argumentMapping[argumentExpression] ?: continue
-            val argumentType = argumentExpression.getKtType() ?: error("Argument should have a KaType")
+            val argumentType = argumentExpression.expressionType ?: error("Argument should have a KaType")
             if (argumentType.isNotSubTypeOf(parameterForArgument.returnType, subtypingErrorTypePolicy)) {
                 return true
             }

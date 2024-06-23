@@ -74,7 +74,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(element) {
-                    val type = element.getKtType()
+                    val type = element.expressionType
                     if (type is KaClassType) {
                         val klass = type.symbol
                         if (klass is KaNamedClassOrObjectSymbol) {

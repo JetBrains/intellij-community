@@ -72,7 +72,7 @@ internal class UseExpressionBodyInspection :
     context(KaSession)
     override fun prepareContext(element: KtDeclarationWithBody): Context? {
         val valueStatement = element.findValueStatement() ?: return null
-        val requireType = valueStatement.getKtType()?.isNothing == true
+        val requireType = valueStatement.expressionType?.isNothing == true
         return when {
             valueStatement !is KtReturnExpression -> Context(KotlinBundle.message("block.body"), INFORMATION)
             valueStatement.returnedExpression is KtWhenExpression -> Context(KotlinBundle.message("return.when"), INFORMATION)
@@ -99,7 +99,7 @@ internal class UseExpressionBodyInspection :
             else -> { // assignment does not have value
                 if (statement is KtBinaryExpression && statement.operationToken in KtTokens.ALL_ASSIGNMENTS) return null
 
-                val expressionType = statement.getKtType() ?: return null
+                val expressionType = statement.expressionType ?: return null
                 val isUnit = expressionType.isUnit
                 if (!isUnit && !expressionType.isNothing) return null
                 if (isUnit) {

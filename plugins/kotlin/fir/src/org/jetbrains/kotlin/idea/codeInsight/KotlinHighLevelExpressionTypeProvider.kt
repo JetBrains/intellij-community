@@ -23,7 +23,7 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
         val ktType = if (element is KtDeclaration) {
             element.getReturnKtType()
         } else {
-            element.getKtType() ?: return KotlinBundle.message("type.provider.unknown.type")
+            element.expressionType ?: return KotlinBundle.message("type.provider.unknown.type")
         }
         @NlsSafe
         val rendered = ktType.render(renderer = KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)

@@ -60,7 +60,7 @@ private fun getValuesInExpression(expr: KtExpression): Map<KaSymbol, KaType> {
         .forEach { e ->
             val symbol = e.mainReference.resolveToSymbol()
             if (symbol != null) {
-                val type = e.getKtType()
+                val type = e.expressionType
                 if (type != null) {
                     map[symbol] = type
                 }

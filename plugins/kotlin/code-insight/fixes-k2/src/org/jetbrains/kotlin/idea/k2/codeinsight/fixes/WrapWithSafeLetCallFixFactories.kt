@@ -306,7 +306,7 @@ object WrapWithSafeLetCallFixFactories {
                     }
                     parent.operationToken == KtTokens.EQ -> {
                         // The binary expression is a variable assignment
-                        parent.left?.getKtType()?.isMarkedNullable ?: true
+                        parent.left?.expressionType?.isMarkedNullable ?: true
                     }
                     // The binary expression is some unrecognized constructs so we stop here.
                     else -> true

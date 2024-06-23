@@ -52,7 +52,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
                 return elvisMatcher
             }
 
-            val leftType = elvisExpression.left?.getKtType()
+            val leftType = elvisExpression.left?.expressionType
             if (leftType != null) {
                 return ExpectedExpressionMatcher(types = listOf(leftType))
             }

@@ -151,7 +151,7 @@ object SimplifyBooleanWithConstantsUtils {
 
     private fun hasBooleanType(expression: KtExpression): Boolean {
         return analyze(expression) {
-            val ktType = expression.getKtType()
+            val ktType = expression.expressionType
             ktType?.isBoolean == true
         }
     }

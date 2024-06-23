@@ -94,7 +94,7 @@ object AddExclExclCallFixFactories {
     val iteratorOnNullableFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.IteratorOnNullable ->
         val expression = diagnostic.psi as? KtExpression
             ?: return@IntentionBased emptyList()
-        val type = expression.getKtType()
+        val type = expression.expressionType
             ?: return@IntentionBased emptyList()
         if (!type.canBeNull)
             return@IntentionBased emptyList()

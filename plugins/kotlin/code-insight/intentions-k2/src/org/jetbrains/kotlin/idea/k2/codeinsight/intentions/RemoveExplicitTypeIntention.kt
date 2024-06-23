@@ -98,7 +98,7 @@ internal class RemoveExplicitTypeIntention :
 
         if (!isInitializerTypeContextIndependent(initializer, typeReference)) return true
 
-        val initializerType = initializer.getKtType() ?: return true
+        val initializerType = initializer.expressionType ?: return true
         val typeCanBeRemoved = if (isVar) {
             initializerType.isEqualTo(explicitType)
         } else {
