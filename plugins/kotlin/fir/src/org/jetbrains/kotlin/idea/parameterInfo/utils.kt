@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KtApplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KtCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -30,4 +30,4 @@ internal data class CandidateWithMapping(
     val argumentMapping: LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
     val isApplicableBestCandidate: Boolean,
     override val token: KaLifetimeToken,
-) : KtLifetimeOwner
+) : KaLifetimeOwner

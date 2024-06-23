@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.checkers
 
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 internal data class ApplicableExtension(
     private val _signature: KaCallableSignature<*>,
     val insertionOptions: CallableInsertionOptions,
-): KtLifetimeOwner {
+): KaLifetimeOwner {
     override val token: KaLifetimeToken get() = _signature.token
     val signature: KaCallableSignature<*> = withValidityAssertion { _signature }
 }

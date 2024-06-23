@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
@@ -43,7 +43,7 @@ internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
 internal data class KaClassifierSymbolWithContainingScopeKind(
     private val _symbol: KaClassifierSymbol,
     val scopeKind: KaScopeKind
-) : KtLifetimeOwner {
+) : KaLifetimeOwner {
     override val token: KaLifetimeToken
         get() = _symbol.token
     val symbol: KaClassifierSymbol get() = withValidityAssertion { _symbol }
@@ -52,7 +52,7 @@ internal data class KaClassifierSymbolWithContainingScopeKind(
 internal data class KtCallableSignatureWithContainingScopeKind(
     private val _signature: KaCallableSignature<*>,
     val scopeKind: KaScopeKind
-) : KtLifetimeOwner {
+) : KaLifetimeOwner {
     override val token: KaLifetimeToken
         get() = _signature.token
     val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
@@ -61,7 +61,7 @@ internal data class KtCallableSignatureWithContainingScopeKind(
 internal data class KtSymbolWithOrigin(
     private val _symbol: KaSymbol,
     val origin: CompletionSymbolOrigin,
-) : KtLifetimeOwner {
+) : KaLifetimeOwner {
     override val token: KaLifetimeToken
         get() = _symbol.token
     val symbol: KaSymbol get() = withValidityAssertion { _symbol }

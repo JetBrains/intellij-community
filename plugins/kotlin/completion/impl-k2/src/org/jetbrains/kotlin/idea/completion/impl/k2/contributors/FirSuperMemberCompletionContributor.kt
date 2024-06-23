@@ -6,7 +6,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
@@ -41,7 +41,7 @@ internal class FirSuperMemberCompletionContributor(
         private val _type: KtType,
         private val _signature: KaCallableSignature<*>,
         val scopeKind: KaScopeKind
-    ) : KtLifetimeOwner {
+    ) : KaLifetimeOwner {
         override val token: KaLifetimeToken
             get() = _signature.token
         val type: KtType get() = withValidityAssertion { _type }

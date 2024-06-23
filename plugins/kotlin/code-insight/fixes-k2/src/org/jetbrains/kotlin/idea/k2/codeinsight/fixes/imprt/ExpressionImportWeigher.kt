@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 import com.intellij.psi.PsiElement
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -126,7 +126,7 @@ internal class CallExpressionImportWeigher(
     private val element: KtNameReferenceExpression,
     private val presentReceiverTypes: List<KtType>,
     private val valueArgumentTypes: List<KtType?>,
-) : AbstractExpressionImportWeigher(), KtLifetimeOwner {
+) : AbstractExpressionImportWeigher(), KaLifetimeOwner {
 
     context(KaSession)
     override fun ownWeigh(symbol: KaDeclarationSymbol): Int = withValidityAssertion {
@@ -213,7 +213,7 @@ internal class OperatorExpressionImportWeigher(
     private val operatorName: Name?,
     private val leftOperandType: KtType? = null,
     private val rightOperandType: KtType? = null,
-) : AbstractExpressionImportWeigher(), KtLifetimeOwner {
+) : AbstractExpressionImportWeigher(), KaLifetimeOwner {
 
     context(KaSession)
     override fun weigh(symbol: KaDeclarationSymbol): Int {

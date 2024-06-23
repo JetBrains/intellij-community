@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
@@ -118,7 +118,7 @@ internal open class FirCallableCompletionContributor(
         private val _explicitReceiverTypeHint: KtType?,
         val options: CallableInsertionOptions,
         val symbolOrigin: CompletionSymbolOrigin,
-    ) : KtLifetimeOwner {
+    ) : KaLifetimeOwner {
         override val token: KaLifetimeToken
             get() = _signature.token
         val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
