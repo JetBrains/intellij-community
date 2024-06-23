@@ -420,6 +420,10 @@ def sparse_tensor_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, f
         pass
 
 
+def dataset_to_thrift_struct(dataset, name, roffset, coffset, rows, cols, format):
+    return dataframe_to_thrift_struct(dataset.to_pandas(), name, roffset, coffset, rows, cols, format)
+
+
 def array_to_meta_thrift_struct(array, name, format):
     type = array.dtype.kind
     slice = name
@@ -621,6 +625,7 @@ TYPE_TO_THRIFT_STRUCT_CONVERTERS = {
     "Tensor": tensor_to_thrift_struct,
     "DataFrame": dataframe_to_thrift_struct,
     "Series": dataframe_to_thrift_struct,
+    "Dataset": dataset_to_thrift_struct,
     "GeoDataFrame": dataframe_to_thrift_struct,
     "GeoSeries": dataframe_to_thrift_struct
 }

@@ -774,6 +774,9 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     xml += array_data_to_xml(rows, cols, formatted_row_elements, format)
     return xml
 
+def dataset_to_xml(dataset, name, roffset, coffset, rows, cols, format):
+    return dataframe_to_xml(dataset.to_pandas(), name, roffset, coffset, rows, cols, format)
+
 
 def array_data_to_xml(rows, cols, get_row, format):
     xml = "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
@@ -820,7 +823,8 @@ TYPE_TO_XML_CONVERTERS = {
     "EagerTensor": tensor_to_xml,
     "ResourceVariable": tensor_to_xml,
     "SparseTensor": sparse_tensor_to_xml,
-    "Tensor": tensor_to_xml
+    "Tensor": tensor_to_xml,
+    "Dataset": dataset_to_xml
 }
 
 

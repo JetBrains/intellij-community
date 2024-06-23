@@ -84,5 +84,7 @@ def __get_table_provider(output):
             type_qualified_name.endswith('DataFrame')
             or type_qualified_name.endswith('Series')):
         import _pydevd_bundle.tables.pydevd_polars as table_provider
+    elif type_qualified_name == 'datasets.arrow_dataset.Dataset':
+        import _pydevd_bundle.tables.pydevd_dataset as table_provider
 
     return table_provider

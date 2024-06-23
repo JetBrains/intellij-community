@@ -42,7 +42,8 @@ public class PyDebugValue extends XNamedValue {
     DATA_FRAME, DATA_FRAME,
     SERIES, SERIES,
     "GeoDataFrame", DATA_FRAME,
-    "GeoSeries", SERIES
+    "GeoSeries", SERIES,
+    "Dataset", DATA_FRAME
   );
   private static final int MAX_ITEMS_TO_HANDLE = 100;
   public static final int MAX_VALUE = 256;

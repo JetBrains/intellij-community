@@ -21,6 +21,7 @@ enum class NotebookOutputKeyType {
   POLARS_SERIES,
   PYSPARK_TABLE,
   R_MARKDOWN,
+  HF_DATASET,
   SVG,
   SWING_COMPONENT,
   TEST,

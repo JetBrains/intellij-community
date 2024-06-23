@@ -25,6 +25,7 @@ public abstract class DataViewStrategy {
       ArrayViewStrategy.createInstanceForTensor(),
       DataFrameViewStrategy.createInstanceForDataFrame(),
       DataFrameViewStrategy.createInstanceForGeoDataFrame(),
+      DataFrameViewStrategy.createInstanceForDataset(),
       SeriesViewStrategy.createInstanceForSeries(),
       SeriesViewStrategy.createInstanceForGeoSeries()
     );

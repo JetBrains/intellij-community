@@ -24,6 +24,10 @@ public class DataFrameViewStrategy extends DataViewStrategy {
     return new DataFrameViewStrategy("GeoDataFrame");
   }
 
+  public static @NotNull DataFrameViewStrategy createInstanceForDataset() {
+    return new DataFrameViewStrategy("Dataset");
+  }
+
   protected DataFrameViewStrategy(final @NotNull String typeName) {
     this.myTypeName = typeName;
   }
