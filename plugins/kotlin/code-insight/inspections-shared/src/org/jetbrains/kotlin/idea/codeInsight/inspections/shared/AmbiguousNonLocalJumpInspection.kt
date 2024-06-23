@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractCallsInPlaceContractEffectDeclaration
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -79,7 +79,7 @@ private fun doesCauseAmbiguityForUnlabeledNonLocalBreakOrContinue(callExpr: KtCa
                     ?.takeIf(KaNamedFunctionSymbol::isInline)
                     ?.contractEffects
                     ?.none {
-                        it is KtContractCallsInPlaceContractEffectDeclaration &&
+                        it is KaContractCallsInPlaceContractEffectDeclaration &&
                                 (it.valueParameterReference.parameterSymbol as? KaValueParameterSymbol)?.name == lambdaParameterName &&
                                 it.occurrencesRange in setOf(AT_MOST_ONCE, EXACTLY_ONCE)
                     }
