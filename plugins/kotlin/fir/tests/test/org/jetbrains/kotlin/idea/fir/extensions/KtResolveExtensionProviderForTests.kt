@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 class KtResolveExtensionProviderForTests : KaResolveExtensionProvider() {
-    override fun provideExtensionsFor(module: KaModule): List<KtResolveExtension> {
+    override fun provideExtensionsFor(module: KaModule): List<KaResolveExtension> {
         return when (module) {
             is KaSourceModule -> {
                 val ideaModule = module.ideaModule
@@ -38,7 +38,7 @@ class KtResolveExtensionProviderForTests : KaResolveExtensionProvider() {
     }
 }
 
-private class ExtensionForTests(private val xmlFile: XmlFile) : KtResolveExtension() {
+private class ExtensionForTests(private val xmlFile: XmlFile) : KaResolveExtension() {
     private val packageName by lazy {
         xmlFile.rootTag?.findFirstSubTag("package")?.value?.text?.let(::FqName)
     }
