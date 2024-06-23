@@ -150,6 +150,7 @@ interface InlineCompletionSuggestionUpdateManager {
       return Changed(variant.copy(elements = truncated))
     }
 
+    @ApiStatus.Experimental
     override fun onInsertNextWord(event: InlineCompletionEvent.InsertNextWord, variant: InlineCompletionVariant.Snapshot): UpdateResult {
       if (!variant.isActive) {
         // Update of the current variant must invalidate all other variants, hard to maintain all the variants.
@@ -161,6 +162,7 @@ interface InlineCompletionSuggestionUpdateManager {
       return Changed(variant.copy(elements = newElements))
     }
 
+    @ApiStatus.Experimental
     override fun onInsertNextLine(event: InlineCompletionEvent.InsertNextLine, variant: InlineCompletionVariant.Snapshot): UpdateResult {
       // TODO merge two methods
       if (!variant.isActive) {

@@ -1152,6 +1152,10 @@ com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEve
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - a:getEvent():com.intellij.codeInsight.lookup.LookupEvent
 - toRequest():com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+*f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextLine
+- com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+*f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextWord
+- com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupCancelled
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
 - <init>(com.intellij.codeInsight.lookup.LookupEvent):V
@@ -1583,6 +1587,8 @@ com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 - onCustomEvent(com.intellij.codeInsight.inline.completion.InlineCompletionEvent,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 - onDirectCall(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$DirectCall,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 - onDocumentChange(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$DocumentChange,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
+- *:onInsertNextLine(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextLine,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
+- *:onInsertNextWord(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextWord,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 - onLookupEvent(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 - update(com.intellij.codeInsight.inline.completion.InlineCompletionEvent,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 c:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$Default
@@ -1590,6 +1596,8 @@ c:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggesti
 - sf:Companion:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$Default$Companion
 - <init>():V
 - onDocumentChange(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$DocumentChange,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
+- *:onInsertNextLine(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextLine,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
+- *:onInsertNextWord(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextWord,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 f:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$Default$Companion
 com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 f:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult$Changed

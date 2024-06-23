@@ -1231,6 +1231,8 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:ACTION_HIPPIE_BACKWARD_COMPLETION:java.lang.String
 - sf:ACTION_HIPPIE_COMPLETION:java.lang.String
 - sf:ACTION_INSERT_INLINE_COMPLETION:java.lang.String
+- sf:ACTION_INSERT_INLINE_COMPLETION_LINE:java.lang.String
+- sf:ACTION_INSERT_INLINE_COMPLETION_WORD:java.lang.String
 - sf:ACTION_INSPECT_CODE:java.lang.String
 - sf:ACTION_KEYMAP_REFERENCE:java.lang.String
 - sf:ACTION_LOOKUP_DOWN:java.lang.String

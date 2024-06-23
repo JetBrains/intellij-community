@@ -97,6 +97,7 @@ class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), 
 }
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 class InsertInlineCompletionWordAction : EditorAction(Handler()), HintManagerImpl.ActionToIgnore {
   private class Handler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
@@ -114,6 +115,7 @@ class InsertInlineCompletionWordAction : EditorAction(Handler()), HintManagerImp
 }
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 class InsertInlineCompletionLineAction : EditorAction(Handler()), HintManagerImpl.ActionToIgnore {
   private class Handler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
