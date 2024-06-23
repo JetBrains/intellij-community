@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
@@ -112,4 +112,4 @@ private fun getSuperTypeQualifierRange(typeReference: KtTypeReference): TextRang
 
 context(KaSession)
 internal fun KaCallableSymbol.isExtensionCall(isFunctionalVariableCall: Boolean): Boolean =
-    isExtension || isFunctionalVariableCall && (returnType as? KtFunctionalType)?.hasReceiver == true
+    isExtension || isFunctionalVariableCall && (returnType as? KaFunctionType)?.hasReceiver == true

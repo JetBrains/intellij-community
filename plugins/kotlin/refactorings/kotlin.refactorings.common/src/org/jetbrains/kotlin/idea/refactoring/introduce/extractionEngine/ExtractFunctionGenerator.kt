@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
@@ -649,7 +649,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
             val presentation = typeDescriptor.renderType(returnType, isReceiver = false, Variance.OUT_VARIANCE)
             if (typeDescriptor.unitType == returnType ||
                 with(typeDescriptor) { returnType.isError() } ||
-                extractionTarget == ExtractionTarget.PROPERTY_WITH_INITIALIZER && returnType !is KtFunctionalType) {
+                extractionTarget == ExtractionTarget.PROPERTY_WITH_INITIALIZER && returnType !is KaFunctionType) {
                 noReturnType()
             } else {
                 returnType(presentation)

@@ -9,7 +9,7 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.psi.KtElement
@@ -80,7 +80,7 @@ internal class KotlinSuspendFunctionWrapper(
             from.parentsOfType<KtNamedFunction>().any {
                 (it.symbol as? KaNamedFunctionSymbol)?.isSuspend ?: false
             } || from.parentsOfType<KtLambdaExpression>().any {
-                (it.getKtType() as? KtFunctionalType)?.isSuspend ?: false
+                (it.getKtType() as? KaFunctionType)?.isSuspend ?: false
             }
         }
     }

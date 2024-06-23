@@ -132,7 +132,7 @@ object FunctionInsertionHelper {
                         .forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType = false) }
                 }
 
-                is KtFunctionalType -> {
+                is KaFunctionType -> {
                     val typesToProcess = if (onlyCollectReturnTypeOfFunctionalType) {
                         // do not rely on inference from input of functional type - use only return type of functional type
                         listOf(type.returnType)

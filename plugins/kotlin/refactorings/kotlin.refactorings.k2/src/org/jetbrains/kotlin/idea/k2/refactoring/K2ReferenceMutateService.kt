@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
@@ -141,7 +141,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return if (this is KtProperty) {
             analyze(this) {
                 val returnType = getReturnKtType()
-                returnType is KtFunctionalType && returnType.receiverType != null
+                returnType is KaFunctionType && returnType.receiverType != null
             }
         } else false
     }

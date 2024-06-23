@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KtDynamicType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -95,7 +95,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
                 }
             }
         }
-        is KtFunctionalType -> {
+        is KaFunctionType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
             type.receiverType?.let {
                 printKtType(it)

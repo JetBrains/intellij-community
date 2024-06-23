@@ -97,7 +97,7 @@ object K2CreateFunctionFromUsageUtil {
                     }
                 }
                 parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == this && parent.parent is KtValueArgument -> {
-                    (parent.expectedType as? KtFunctionalType)?.returnType
+                    (parent.expectedType as? KaFunctionType)?.returnType
                 }
                 else -> null
             }
@@ -281,7 +281,7 @@ object K2CreateFunctionFromUsageUtil {
         return when (type) {
             is KaClassType -> {
                 acceptTypeQualifiers(type.qualifiers, visited, predicate)
-                        && (type !is KtFunctionalType || (accept(type.returnType, visited,predicate) && accept(type.receiverType, visited, predicate)))
+                        && (type !is KaFunctionType || (accept(type.returnType, visited,predicate) && accept(type.receiverType, visited, predicate)))
             }
             is KtClassErrorType -> acceptTypeQualifiers(type.qualifiers, visited, predicate)
             is KtFlexibleType -> accept(type.lowerBound, visited, predicate) && accept(type.upperBound, visited, predicate)

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
 import org.jetbrains.kotlin.idea.completion.lookups.renderNonErrorOrUnsubstituted
 import org.jetbrains.kotlin.types.Variance
@@ -46,7 +46,7 @@ internal object TypeTextProvider {
         is KaVariableSignature<*> -> {
             val type = signature.returnType
             val typeToRender = when {
-                treatAsFunctionCall && type is KtFunctionalType -> type.returnType
+                treatAsFunctionCall && type is KaFunctionType -> type.returnType
                 else -> type
             }
 

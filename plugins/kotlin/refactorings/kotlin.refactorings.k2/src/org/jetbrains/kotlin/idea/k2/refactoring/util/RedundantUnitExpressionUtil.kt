@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KtDynamicType
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.previousStatement
@@ -83,7 +83,7 @@ private fun KtFunctionLiteral.findLambdaReturnType(): KtType? {
     analyze(this) {
         val functionCallOrNull = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
         val variableLikeSignature = functionCallOrNull.argumentMapping[valueArgument.getArgumentExpression()] ?: return null
-        return (variableLikeSignature.returnType as? KtFunctionalType)?.returnType
+        return (variableLikeSignature.returnType as? KaFunctionType)?.returnType
     }
 }
 

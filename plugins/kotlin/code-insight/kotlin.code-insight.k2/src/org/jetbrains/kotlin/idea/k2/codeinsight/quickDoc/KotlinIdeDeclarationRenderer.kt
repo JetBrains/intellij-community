@@ -284,7 +284,7 @@ internal class KotlinIdeDeclarationRenderer(
         return object : KaFunctionalTypeRenderer {
             override fun renderType(
                 analysisSession: KaSession,
-                type: KtFunctionalType,
+                type: KaFunctionType,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {

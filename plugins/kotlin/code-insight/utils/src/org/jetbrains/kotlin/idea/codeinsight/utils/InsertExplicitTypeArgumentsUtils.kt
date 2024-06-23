@@ -47,7 +47,7 @@ fun addTypeArguments(element: KtCallElement, context: String, project: Project) 
 context(KaSession)
 private fun KtType.containsErrorType(): Boolean = when (this) {
     is KaErrorType -> true
-    is KtFunctionalType -> {
+    is KaFunctionType -> {
         (receiverType?.containsErrorType() == true)
                 || returnType.containsErrorType()
                 || parameterTypes.any { it.containsErrorType() }

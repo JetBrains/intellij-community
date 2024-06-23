@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
@@ -284,7 +284,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
             }
         }
 
-        is KtFunctionalType -> {
+        is KaFunctionType -> {
             val typesInside = listOfNotNull(type.receiverType) + type.returnType + type.parameterTypes
 
             typesInside.all { typeIsVisible(it, visibilityChecker, availableTypeParameters) }

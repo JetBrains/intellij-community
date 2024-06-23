@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
@@ -267,7 +267,7 @@ object ChangeSignatureFixFactory {
             FunctionTypeKind.KSuspendFunction -> typeKind.nonReflectKind()
             else -> null
         }?.let {
-            val functionalType = ktType as KtFunctionalType
+            val functionalType = ktType as KaFunctionType
             return buildClassType(it.numberedClassId((functionalType).arity)) {
                 functionalType.parameterTypes.forEach { arg ->
                     argument(arg)
@@ -384,7 +384,7 @@ object ChangeSignatureFixFactory {
 
         if (newParametersCnt <= 0 && element !is KtLambdaExpression) return emptyList()
 
-        val expectedParameterTypes = (expectedType as? KtFunctionalType)
+        val expectedParameterTypes = (expectedType as? KaFunctionType)
             ?.let { it.parameterTypes + it.returnType }
             ?.map {
                 ParameterInfo(

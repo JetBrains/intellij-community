@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.canBeUsedInImport
@@ -183,7 +183,7 @@ sealed class K2MoveRenameUsageInfo(
                     if (callable?.isExtension == true) return true
                     if (callable is KaPropertySymbol) {
                         val returnType = callable.returnType
-                        returnType is KtFunctionalType && returnType.receiverType != null
+                        returnType is KaFunctionType && returnType.receiverType != null
                     } else false
                 }
             }

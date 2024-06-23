@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
@@ -118,7 +118,7 @@ class KotlinParameterInfo(
                 allowAnalysisOnEdt {
                     analyze(inheritedCallable) {
                         val expectedType = inheritedCallable.expectedType
-                        return expectedType == null || expectedType is KtFunctionalType
+                        return expectedType == null || expectedType is KaFunctionType
                     }
                 }
             }

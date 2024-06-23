@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
@@ -74,7 +74,7 @@ object CreateKotlinCallableActionTextBuilder {
             }
             return if (request.isExtension && receiverSymbol is KaCallableSymbol) {
                 val receiverType = receiverSymbol.returnType
-                (if (receiverType is KtFunctionalType) "($receiverTypeText)." else "$receiverTypeText.") to receiverTypeText
+                (if (receiverType is KaFunctionType) "($receiverTypeText)." else "$receiverTypeText.") to receiverTypeText
             } else {
                 (receiverTypeText + if (receiverSymbol is KaClassLikeSymbol && !(receiverSymbol is KaClassSymbol && receiverSymbol.classKind == KaClassKind.OBJECT)) ".Companion." else ".") to receiverTypeText
             }

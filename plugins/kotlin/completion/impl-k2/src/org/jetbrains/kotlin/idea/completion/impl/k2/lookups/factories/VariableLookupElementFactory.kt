@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.lookups.*
@@ -54,7 +54,7 @@ internal class VariableLookupElementFactory {
 
         return when (insertionStrategy) {
             CallableInsertionStrategy.AsCall -> {
-                val functionalType = signature.returnType as KtFunctionalType
+                val functionalType = signature.returnType as KaFunctionType
                 val lookupObject = FunctionCallLookupObject(
                     name,
                     options,

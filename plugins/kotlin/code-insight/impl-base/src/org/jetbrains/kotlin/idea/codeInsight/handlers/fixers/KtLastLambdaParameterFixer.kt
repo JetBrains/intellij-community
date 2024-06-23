@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.codeInsight.handlers.KotlinSmartEnterHandler
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -27,7 +27,7 @@ class KtLastLambdaParameterFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSma
                     val functionCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return
                     val valueParameters = functionCall.symbol.valueParameters
                     if (functionCall.argumentMapping.size != valueParameters.size - 1) return
-                    valueParameters.lastOrNull()?.returnType is KtFunctionalType
+                    valueParameters.lastOrNull()?.returnType is KaFunctionType
                 }
             }
         }

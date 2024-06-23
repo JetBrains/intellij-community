@@ -57,7 +57,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
@@ -478,7 +478,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
         val isUnitReturnType = analyze(function) {
             val functionalType = function.getFunctionalType()
-            (functionalType as? KtFunctionalType)?.returnType?.isUnit == true
+            (functionalType as? KaFunctionType)?.returnType?.isUnit == true
         }
         if (!isUnitReturnType) {
             // We always must specify return explicitly

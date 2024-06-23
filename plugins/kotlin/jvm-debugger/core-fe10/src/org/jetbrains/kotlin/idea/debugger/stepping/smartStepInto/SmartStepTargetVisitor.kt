@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isInlineOnly
@@ -247,7 +247,7 @@ class SmartStepTargetVisitor(
                 isSam = true, isSamSuspendMethod = funMethodSymbol.isSuspend, methodName = funMethodSymbol.name.asString()
             )
         } else {
-            val isNameMangledInBytecode = (argumentSymbol.returnType as? KtFunctionalType)?.parameterTypes
+            val isNameMangledInBytecode = (argumentSymbol.returnType as? KaFunctionType)?.parameterTypes
                 ?.any { it.expandedSymbol?.isInlineClass() == true } == true
             KotlinLambdaInfo(
                 methodSymbol, argumentSymbol, callerMethodOrdinal,

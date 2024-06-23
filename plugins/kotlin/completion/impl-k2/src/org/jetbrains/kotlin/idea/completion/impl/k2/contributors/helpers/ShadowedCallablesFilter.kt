@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
@@ -175,7 +175,7 @@ internal class ShadowedCallablesFilter {
                     val insertionStrategy = applicableExtension.insertionOptions.insertionStrategy
                     val receiverType = when {
                         signature is KaVariableSignature<*> && insertionStrategy is CallableInsertionStrategy.AsCall ->
-                            (signature.returnType as? KtFunctionalType)?.receiverType
+                            (signature.returnType as? KaFunctionType)?.receiverType
 
                         else -> signature.receiverType
                     }
@@ -264,7 +264,7 @@ private sealed class SimplifiedSignature {
                     containerFqName,
                     requiredTypeArgumentsCount = 0,
                     lazy(LazyThreadSafetyMode.NONE) {
-                        val functionalType = signature.returnType as? KtFunctionalType ?: error("Unexpected ${signature.returnType::class}")
+                        val functionalType = signature.returnType as? KaFunctionType ?: error("Unexpected ${signature.returnType::class}")
                         functionalType.parameterTypes
                     },
                     varargValueParameterIndices = emptyList(),

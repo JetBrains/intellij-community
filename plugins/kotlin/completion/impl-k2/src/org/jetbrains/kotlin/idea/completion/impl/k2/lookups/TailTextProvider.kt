@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionImplK2Bundle
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
@@ -37,7 +37,7 @@ internal object TailTextProvider {
     }
 
     context(KaSession)
-    fun getTailTextForVariableCall(functionalType: KtFunctionalType, signature: KaVariableSignature<*>): String = buildString {
+    fun getTailTextForVariableCall(functionalType: KaFunctionType, signature: KaVariableSignature<*>): String = buildString {
         if (insertLambdaBraces(functionalType)) {
             append(" {...} ")
         }
@@ -110,12 +110,12 @@ internal object TailTextProvider {
         if (lambdaBracesAreDisabledByInsertionStrategy) return false
 
         val singleParam = symbol.valueParameters.singleOrNull()
-        return singleParam != null && !singleParam.symbol.hasDefaultValue && singleParam.returnType is KtFunctionalType
+        return singleParam != null && !singleParam.symbol.hasDefaultValue && singleParam.returnType is KaFunctionType
     }
 
     context(KaSession)
-    fun insertLambdaBraces(symbol: KtFunctionalType): Boolean {
+    fun insertLambdaBraces(symbol: KaFunctionType): Boolean {
         val singleParam = symbol.parameterTypes.singleOrNull()
-        return singleParam != null && singleParam is KtFunctionalType
+        return singleParam != null && singleParam is KaFunctionType
     }
 }

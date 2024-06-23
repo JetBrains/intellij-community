@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -40,7 +40,7 @@ private fun getAssociatedClass(symbol: KaSymbol): KaClassSymbol? {
         is KaNamedFunctionSymbol, is KaPropertySymbol ->
             if (symbol.isExtension) symbol.receiverType?.expandedSymbol else symbol.containingSymbol as? KaClassSymbol
         is KaVariableSymbol -> {
-            val variableType = symbol.returnType as? KtFunctionalType
+            val variableType = symbol.returnType as? KaFunctionType
             variableType?.receiverType?.expandedSymbol
         }
         else -> null

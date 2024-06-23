@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.asJava.accessorNameByPropertyName
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -225,7 +225,7 @@ private fun areSameSignatures(candidateSymbol: KaFunctionSymbol, symbol: KaFunct
 context(KaSession)
 private fun areSameSignatures(candidateSymbol: KaPropertySymbol, symbol: KaFunctionSymbol) : Boolean {
     val type = candidateSymbol.returnType
-    if (type is KtFunctionalType &&
+    if (type is KaFunctionType &&
         areSameSignatures(type.receiverType, symbol.receiverType, type.parameterTypes, symbol.valueParameters.map { it.returnType }, candidateSymbol.contextReceivers, symbol.contextReceivers)) {
         return true
     }

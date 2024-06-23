@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
@@ -43,7 +43,7 @@ class TypeLookupElementFactory {
                 element.withTailText(tailText)
             }
 
-            is KtFunctionalType -> element.withIcon(KotlinIcons.LAMBDA)
+            is KaFunctionType -> element.withIcon(KotlinIcons.LAMBDA)
 
             else -> null
         }

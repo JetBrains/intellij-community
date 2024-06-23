@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.k2.refactoring.util.ConvertReferenceToLambdaUtil
@@ -258,7 +258,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                     getThisQualifier(value) to (originalSymbolReceiverType != null && value.type.isEqualTo(originalSymbolReceiverType) ||
                                                 originalSymbolDispatchType != null && value.type.isEqualTo(originalSymbolDispatchType))
                 } else {
-                    val functionalType = (partiallyAppliedSymbol?.symbol as? KaVariableSymbol)?.returnType as? KtFunctionalType
+                    val functionalType = (partiallyAppliedSymbol?.symbol as? KaVariableSymbol)?.returnType as? KaFunctionType
                     val receiverType = functionalType?.receiverType
                     if (receiverType == null) {
                         null to true

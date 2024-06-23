@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -82,7 +82,7 @@ class KtVariableDescriptor(
 
         context(KaSession)
         fun getLambdaReceiver(factory: DfaValueFactory, lambda: KtLambdaExpression): DfaVariableValue? {
-            val receiverType = (lambda.functionLiteral.getFunctionalType() as? KtFunctionalType)?.receiverType ?: return null
+            val receiverType = (lambda.functionLiteral.getFunctionalType() as? KaFunctionType)?.receiverType ?: return null
             val descriptor = KtLambdaThisVariableDescriptor(lambda.functionLiteral, receiverType.toDfType())
             return factory.varFactory.createVariableValue(descriptor)
         }

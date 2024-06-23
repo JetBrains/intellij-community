@@ -170,8 +170,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 val valueParameters = candidateSignature.valueParameters.let { if (isArraySetCall) it.dropLast(1) else it }
 
                 // TODO: When resolvedCall is KtFunctionalTypeVariableCall, the candidate is FunctionN.invoke() and parameter names are "p1", "p2", etc.
-                // We need to get the type of the target variable, and retrieve the parameter names from the type (KtFunctionalType).
-                // The names need to be added to KtFunctionalType (currently only types are there) and populated in KtSymbolByFirBuilder.TypeBuilder.
+                // We need to get the type of the target variable, and retrieve the parameter names from the type (KaFunctionType).
+                // The names need to be added to KaFunctionType (currently only types are there) and populated in KtSymbolByFirBuilder.TypeBuilder.
 
                 val parameterToIndex = buildMap {
                     valueParameters.forEachIndexed { index, parameter -> put(parameter, index) }

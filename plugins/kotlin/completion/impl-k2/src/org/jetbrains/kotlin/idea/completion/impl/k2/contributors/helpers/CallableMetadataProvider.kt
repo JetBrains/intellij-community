@@ -144,7 +144,7 @@ internal object CallableMetadataProvider {
     ): CallableMetadata? {
         val flattenedActualReceiverTypes = getFlattenedActualReceiverTypes(context)
         val expectedExtensionReceiverType = if (isFunctionalVariableCall) {
-            (signature.returnType as? KtFunctionalType)?.receiverType
+            (signature.returnType as? KaFunctionType)?.receiverType
         } else {
             // if extension has type parameters, `KtExtensionApplicabilityResult.substitutor` may contain captured types
             signature.receiverType?.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = false)

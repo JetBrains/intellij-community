@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -38,7 +38,7 @@ object ConvertReferenceToLambdaUtil {
         val callGrandParent = valueArgumentParent?.parent?.parent as? KtCallExpression
         val resolvedCall = callGrandParent?.resolveToCall()?.successfulFunctionCallOrNull()
         val matchingParameterType = resolvedCall?.argumentMapping?.get(element)?.returnType
-        val matchingParameterIsExtension = matchingParameterType is KtFunctionalType && matchingParameterType.receiverType != null
+        val matchingParameterIsExtension = matchingParameterType is KaFunctionType && matchingParameterType.receiverType != null
 
         val receiverExpression = element.receiverExpression
         val receiverType = element.getReceiverKtType()

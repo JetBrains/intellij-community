@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
@@ -345,7 +345,7 @@ class CodeInliner(
                 }
 
                 analyze(call) {
-                    if ((expression.getKtType() as? KtFunctionalType)?.hasReceiver == true) {
+                    if ((expression.getKtType() as? KaFunctionType)?.hasReceiver == true) {
                         //expand to function only for types with an extension
                         LambdaToAnonymousFunctionUtil.prepareFunctionText(expression)
                     } else {

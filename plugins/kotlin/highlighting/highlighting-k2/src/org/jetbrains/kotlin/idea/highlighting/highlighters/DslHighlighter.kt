@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.annotationClassIds
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
@@ -34,7 +34,7 @@ internal class DslHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnaly
     private fun highlightCall(element: KtCallExpression): HighlightInfo.Builder? {
         val calleeExpression = element.calleeExpression ?: return null
         val lambdaExpression = element.lambdaArguments.singleOrNull()?.getLambdaExpression() ?: return null
-        val receiverType = (lambdaExpression.getKtType() as? KtFunctionalType)?.receiverType ?: return null
+        val receiverType = (lambdaExpression.getKtType() as? KaFunctionType)?.receiverType ?: return null
         val dslAnnotation = getDslAnnotation(receiverType) ?: return null
 
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())

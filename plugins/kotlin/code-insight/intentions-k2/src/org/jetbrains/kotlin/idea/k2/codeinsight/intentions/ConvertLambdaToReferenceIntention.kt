@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -380,7 +380,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     if (explicitReceiver != null && explicitReceiverSymbol is KaValueParameterSymbol && lambdaParameterAsExplicitReceiver) {
         val receiverType = explicitReceiverSymbol.returnType
         // No exotic receiver types
-        if (receiverType is KtTypeParameter || receiverType is KaErrorType || receiverType is KtDynamicType || receiverType is KtFunctionalType) return false
+        if (receiverType is KtTypeParameter || receiverType is KaErrorType || receiverType is KtDynamicType || receiverType is KaFunctionType) return false
     }
 
     return true
@@ -392,7 +392,7 @@ private fun KtExpression.isObject(): Boolean {
 }
 
 private fun isExtensionFunctionType(type: KtType): Boolean {
-    val functionalType = type as? KtFunctionalType ?: return false
+    val functionalType = type as? KaFunctionType ?: return false
     return functionalType.hasReceiver
 }
 

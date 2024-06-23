@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -63,7 +63,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
 
     context(KaSession)
     private fun KtExpression.isMethodReferenceReturningNotNull(): Boolean {
-        val type = getKtType() as? KtFunctionalType ?: return false
+        val type = getKtType() as? KaFunctionType ?: return false
         return !type.returnType.canBeNull
     }
 
