@@ -73,7 +73,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
             }
         }
         is KaTypeParameterType -> {
-            // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeParameterTypeRenderer.AS_SOURCE
+            // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeParameterTypeRenderer.AS_SOURCE
             val symbol = type.symbol
             text(
                 type.name.asString(),
