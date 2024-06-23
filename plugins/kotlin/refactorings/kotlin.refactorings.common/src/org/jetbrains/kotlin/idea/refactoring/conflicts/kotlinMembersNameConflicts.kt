@@ -10,7 +10,7 @@ import com.intellij.usageView.UsageViewUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
-import org.jetbrains.kotlin.analysis.api.scopes.KtScope
+import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithKind
@@ -49,7 +49,7 @@ fun checkRedeclarationConflicts(declaration: KtNamedDeclaration, newName: String
 }
 
 context(KaSession)
-fun KtScope.findSiblingsByName(
+fun KaScope.findSiblingsByName(
     symbol: KaDeclarationSymbol,
     newName: Name,
     containingSymbol: KaDeclarationSymbol? = symbol.containingSymbol
@@ -321,7 +321,7 @@ fun registerRetargetJobOnPotentialCandidates(
         val declarationSymbol = declaration.symbol
 
         val nameAsName = Name.identifier(name)
-        fun KtScope.processScope(containingSymbol: KaDeclarationSymbol?) {
+        fun KaScope.processScope(containingSymbol: KaDeclarationSymbol?) {
             findSiblingsByName(declarationSymbol, nameAsName, containingSymbol).filter { filterCandidate(it) }.forEach(retargetJob)
         }
 

@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.scopes.KtScope
+import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -466,7 +466,7 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     private fun collectSuitableExtensions(
-        scope: KtScope,
+        scope: KaScope,
         receiverTypes: List<KtType>,
         hasSuitableExtensionReceiver: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
@@ -626,7 +626,7 @@ internal open class FirCallableCompletionContributor(
         annotations.any { it.classId == StandardClassIds.Annotations.IntrinsicConstEvaluation }
 
     context(KaSession)
-    protected fun KaNamedClassOrObjectSymbol.staticScope(withCompanionScope: Boolean = true): KtScope = buildList {
+    protected fun KaNamedClassOrObjectSymbol.staticScope(withCompanionScope: Boolean = true): KaScope = buildList {
         if (withCompanionScope) {
             addIfNotNull(companionObject?.memberScope)
         }
