@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
-import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
+import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
@@ -169,7 +169,7 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun completeWithoutReceiver(
-        scopeContext: KtScopeContext,
+        scopeContext: KaScopeContext,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
@@ -241,7 +241,7 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     protected open fun collectDotCompletion(
-        scopeContext: KtScopeContext,
+        scopeContext: KaScopeContext,
         explicitReceiver: KtElement,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
@@ -305,7 +305,7 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     protected fun collectDotCompletionForCallableReceiver(
-        scopeContext: KtScopeContext,
+        scopeContext: KaScopeContext,
         explicitReceiver: KtExpression,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
@@ -341,7 +341,7 @@ internal open class FirCallableCompletionContributor(
     protected fun collectDotCompletionForCallableReceiver(
         typesOfPossibleReceiver: List<KtType>,
         visibilityChecker: CompletionVisibilityChecker,
-        scopeContext: KtScopeContext,
+        scopeContext: KaScopeContext,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         sessionParameters: FirCompletionSessionParameters,
         explicitReceiverTypeHint: KtType? = null
@@ -450,7 +450,7 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     private fun collectSuitableExtensions(
-        scopeContext: KtScopeContext,
+        scopeContext: KaScopeContext,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
@@ -677,7 +677,7 @@ internal class FirCallableReferenceCompletionContributor(
 
     context(KaSession)
     override fun collectDotCompletion(
-        scopeContext: KtScopeContext,
+        scopeContext: KaScopeContext,
         explicitReceiver: KtElement,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
@@ -769,7 +769,7 @@ internal class FirKDocCallableCompletionContributor(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun collectDotCompletion(
-        scopeContext: KtScopeContext,
+        scopeContext: KaScopeContext,
         explicitReceiver: KtElement,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,

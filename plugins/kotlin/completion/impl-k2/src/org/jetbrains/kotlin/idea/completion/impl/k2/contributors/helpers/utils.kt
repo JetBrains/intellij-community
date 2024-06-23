@@ -6,7 +6,7 @@ import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
+import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -42,7 +42,7 @@ internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
 
 context(KaSession)
 internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
-    scopeContext: KtScopeContext,
+    scopeContext: KaScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
@@ -76,7 +76,7 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
 
 context(KaSession)
 internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
-    scopeContext: KtScopeContext,
+    scopeContext: KaScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
+import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -75,7 +75,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
         lookupNamesAdded: MutableSet<String>,
-        scopeContext: KtScopeContext
+        scopeContext: KaScopeContext
     ) {
         val typeParametersScope = scopeContext.getCompositeScope { it is KaScopeKind.TypeParameterScope }
         val availableTypeParameters = getAvailableTypeParameters(typeParametersScope).toSet()
@@ -130,7 +130,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
         lookupNamesAdded: MutableSet<String>,
-        scopeContext: KtScopeContext,
+        scopeContext: KaScopeContext,
         weighingContext: WeighingContext
     ) {
         for (scopeWithKind in scopeContext.scopes) {
