@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeErrorTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
+import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -83,7 +83,7 @@ internal fun KtPsiFactory.createType(
                     if (ktType != null) {
                         val type = ktSubstitutor?.substitute(ktType) ?: ktType
                         val substitutedType = type.render(position = variance)
-                        if (isReceiver && type is KtDefinitelyNotNullType) {
+                        if (isReceiver && type is KaDefinitelyNotNullType) {
                             return createType("($substitutedType)")
                         }
                         return createType(substitutedType)

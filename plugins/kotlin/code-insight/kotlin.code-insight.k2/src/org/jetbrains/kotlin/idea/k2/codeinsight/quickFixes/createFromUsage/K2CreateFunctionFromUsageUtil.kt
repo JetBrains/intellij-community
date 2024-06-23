@@ -221,7 +221,7 @@ object K2CreateFunctionFromUsageUtil {
         definitelyNotNullTypeRenderer = object : KaDefinitelyNotNullTypeRenderer {
             override fun renderType(
                 analysisSession: KaSession,
-                type: KtDefinitelyNotNullType,
+                type: KaDefinitelyNotNullType,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
             ) {
@@ -286,7 +286,7 @@ object K2CreateFunctionFromUsageUtil {
             is KaClassErrorType -> acceptTypeQualifiers(type.qualifiers, visited, predicate)
             is KtFlexibleType -> accept(type.lowerBound, visited, predicate) && accept(type.upperBound, visited, predicate)
             is KaCapturedType -> accept(type.projection.type, visited, predicate)
-            is KtDefinitelyNotNullType -> accept(type.original, visited, predicate)
+            is KaDefinitelyNotNullType -> accept(type.original, visited, predicate)
             is KtIntersectionType -> type.conjuncts.all { accept(it, visited, predicate) }
             else -> true
         }
