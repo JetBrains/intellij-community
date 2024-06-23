@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.lookups
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
@@ -41,7 +41,7 @@ internal object TypeTextProvider {
         signature: KaCallableSignature<*>,
         treatAsFunctionCall: Boolean
     ): String? = when (signature) {
-        is KtFunctionLikeSignature<*> -> signature.returnType.renderNonErrorOrUnsubstituted(signature.symbol.returnType)
+        is KaFunctionSignature<*> -> signature.returnType.renderNonErrorOrUnsubstituted(signature.symbol.returnType)
 
         is KaVariableSignature<*> -> {
             val type = signature.returnType

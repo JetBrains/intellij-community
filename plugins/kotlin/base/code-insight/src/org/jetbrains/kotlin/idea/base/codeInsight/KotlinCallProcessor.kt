@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -58,7 +58,7 @@ class FunctionCallTarget(
     override val caller: KtElement,
     override val call: KaCall,
     override val partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>
-) : TypedCallTarget<KaFunctionSymbol, KtFunctionLikeSignature<KaFunctionSymbol>> {
+) : TypedCallTarget<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>> {
     override val symbol: KaFunctionSymbol
         get() = partiallyAppliedSymbol.symbol
 }

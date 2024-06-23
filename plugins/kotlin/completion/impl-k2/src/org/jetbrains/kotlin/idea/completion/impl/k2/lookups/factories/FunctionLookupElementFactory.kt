@@ -11,7 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -36,7 +36,7 @@ internal class FunctionLookupElementFactory {
     context(KaSession)
     fun createLookup(
         name: Name,
-        signature: KtFunctionLikeSignature<*>,
+        signature: KaFunctionSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KtType? = null,
     ): LookupElementBuilder {

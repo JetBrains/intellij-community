@@ -6,7 +6,7 @@ package org.jetbrains.kotlin.idea.completion.lookups
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.types.Variance
 internal object TailTextProvider {
     context(KaSession)
     fun getTailText(signature: KaCallableSignature<*>, options: CallableInsertionOptions): String = buildString {
-        if (signature is KtFunctionLikeSignature<*>) {
+        if (signature is KaFunctionSignature<*>) {
             if (insertLambdaBraces(signature, options)) {
                 append(" {...} ")
             }
@@ -98,7 +98,7 @@ internal object TailTextProvider {
         if (isRoot) "<root>" else asString()
 
     context(KaSession)
-    fun insertLambdaBraces(symbol: KtFunctionLikeSignature<*>, options: CallableInsertionOptions): Boolean {
+    fun insertLambdaBraces(symbol: KaFunctionSignature<*>, options: CallableInsertionOptions): Boolean {
         val lambdaBracesAreDisabledByInsertionStrategy = when (options.insertionStrategy) {
             is CallableInsertionStrategy.AsCall,
             is CallableInsertionStrategy.WithSuperDisambiguation -> false

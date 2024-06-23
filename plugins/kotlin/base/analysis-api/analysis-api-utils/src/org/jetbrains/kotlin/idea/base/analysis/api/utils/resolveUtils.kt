@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
@@ -67,7 +67,7 @@ private fun filterCandidate(
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 fun filterCandidateByReceiverTypeAndVisibility(
-    signature: KtFunctionLikeSignature<KaFunctionSymbol>,
+    signature: KaFunctionSignature<KaFunctionSymbol>,
     callElement: KtElement,
     fileSymbol: KaFileSymbol,
     explicitReceiver: KtExpression?,

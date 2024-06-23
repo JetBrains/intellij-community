@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
@@ -144,7 +144,7 @@ internal class FirSuperMemberCompletionContributor(
 
     context(KaSession)
     private fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy = when (signature) {
-        is KtFunctionLikeSignature<*> -> CallableInsertionStrategy.AsCall
+        is KaFunctionSignature<*> -> CallableInsertionStrategy.AsCall
         else -> CallableInsertionStrategy.AsIdentifier
     }
 
@@ -189,7 +189,7 @@ internal class FirSuperMemberCompletionContributor(
         for (callableInfo in nonExtensionMembers) {
             val signature = callableInfo.signature
             val matchedContainingFunction = superFunctionToContainingFunction[callableInfo.signature.symbol] ?: continue
-            if (signature !is KtFunctionLikeSignature<*>) continue
+            if (signature !is KaFunctionSignature<*>) continue
             if (signature.valueParameters.isEmpty()) continue
             val args = matchedContainingFunction.valueParameters.mapNotNull {
                 val name = it.name ?: return@mapNotNull null

@@ -6,7 +6,7 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -48,7 +48,7 @@ object CallParameterInfoProvider {
     context(KaSession)
     fun mapArgumentsToParameterIndices(
         sourceElement: KtElement,
-        signature: KtFunctionLikeSignature<*>,
+        signature: KaFunctionSignature<*>,
         argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>
     ): Map<KtExpression, Int> {
         val isArraySetCall = isArraySetCall(sourceElement, signature)
@@ -69,7 +69,7 @@ object CallParameterInfoProvider {
      * ```
      */
     context(KaSession)
-    fun isArraySetCall(sourceElement: KtElement, signature: KtFunctionLikeSignature<*>): Boolean {
+    fun isArraySetCall(sourceElement: KtElement, signature: KaFunctionSignature<*>): Boolean {
         val callableId = signature.symbol.callableId ?: return false
         val isSet = callableId.callableName == OperatorNameConventions.SET
         return isSet && sourceElement is KtArrayAccessExpression
@@ -91,7 +91,7 @@ object CallParameterInfoProvider {
     context(KaSession)
     fun firstArgumentInNamedMode(
         sourceCallElement: KtCallElement,
-        signature: KtFunctionLikeSignature<*>,
+        signature: KaFunctionSignature<*>,
         argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
         languageVersionSettings: LanguageVersionSettings
     ): KtValueArgument? {
@@ -121,7 +121,7 @@ object CallParameterInfoProvider {
      */
     context(KaSession)
     private fun mapParametersToIndices(
-        signature: KtFunctionLikeSignature<*>,
+        signature: KaFunctionSignature<*>,
         isArraySetCall: Boolean
     ): Map<KaVariableSignature<KaValueParameterSymbol>, Int> {
         val valueParameters = signature.valueParameters.let { if (isArraySetCall) it.dropLast(1) else it }
@@ -134,7 +134,7 @@ object CallParameterInfoProvider {
      */
     context(KaSession)
     fun isJavaArgumentWithNonDefaultName(
-        signature: KtFunctionLikeSignature<*>,
+        signature: KaFunctionSignature<*>,
         argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
         currentArgument: KtValueArgument,
     ): Boolean {

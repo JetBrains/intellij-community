@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -60,7 +60,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
         val fileSymbol = callElement.containingKtFile.getFileSymbol()
         val symbols = callElement.collectCallCandidatesOld()
             .mapNotNull { (it.candidate as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.signature }
-            .filterIsInstance<KtFunctionLikeSignature<*>>()
+            .filterIsInstance<KaFunctionSignature<*>>()
             .filter { candidate ->
                 // We use the `LENIENT` error type policy to permit candidates even when there are partially specified type arguments (e.g.,
                 // `foo<>` for `foo<A, B>`), as the specified type arguments may directly affect a candidate's receiver type.

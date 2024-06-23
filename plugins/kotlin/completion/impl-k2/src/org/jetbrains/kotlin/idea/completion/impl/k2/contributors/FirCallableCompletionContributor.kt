@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossibleMultiplatformSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
@@ -70,7 +70,7 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     protected open fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
         when (signature) {
-            is KtFunctionLikeSignature<*> -> CallableInsertionStrategy.AsCall
+            is KaFunctionSignature<*> -> CallableInsertionStrategy.AsCall
             else -> CallableInsertionStrategy.AsIdentifier
         }
 

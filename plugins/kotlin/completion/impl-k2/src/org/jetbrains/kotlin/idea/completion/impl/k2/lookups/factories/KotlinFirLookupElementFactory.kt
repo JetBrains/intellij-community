@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -64,7 +64,7 @@ class KotlinFirLookupElementFactory {
         expectedType: KtType? = null,
     ): LookupElementBuilder {
         return when (signature) {
-            is KtFunctionLikeSignature<*> -> functionLookupElementFactory.createLookup(name, signature, options, expectedType)
+            is KaFunctionSignature<*> -> functionLookupElementFactory.createLookup(name, signature, options, expectedType)
             is KaVariableSignature<*> -> variableLookupElementFactory.createLookup(signature, options)
         }
     }

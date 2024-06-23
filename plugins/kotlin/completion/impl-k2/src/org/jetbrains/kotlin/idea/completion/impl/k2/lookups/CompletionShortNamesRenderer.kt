@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.types.Variance
 
 internal object CompletionShortNamesRenderer {
     context(KaSession)
-    fun renderFunctionParameters(function: KtFunctionLikeSignature<*>): String {
+    fun renderFunctionParameters(function: KaFunctionSignature<*>): String {
         return function.valueParameters.joinToString(", ", "(", ")") { renderFunctionParameter(it) }
     }
 

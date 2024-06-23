@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
@@ -241,7 +241,7 @@ private sealed class SimplifiedSignature {
 
             return when (callableSignature) {
                 is KaVariableSignature<*> -> createSimplifiedSignature(callableSignature, isVariableCall, containerFqName)
-                is KtFunctionLikeSignature<*> -> FunctionLikeSimplifiedSignature(
+                is KaFunctionSignature<*> -> FunctionLikeSimplifiedSignature(
                     symbol.name,
                     containerFqName,
                     requiredTypeArgumentsCount = if (typeArgumentsAreRequired) callableSignature.symbol.typeParameters.size else 0,
