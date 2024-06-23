@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.descriptors.components.STUB_UNBOUND_IR_SYMBOLS
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
@@ -327,7 +327,7 @@ class KotlinBytecodeToolWindow(
                         writer.append("// ================\n")
                         for (error in diagnostics) {
                             writer.append("// Error")
-                            if (error is KtDiagnosticWithPsi<*>) {
+                            if (error is KaDiagnosticWithPsi<*>) {
                                 writer.append(" at ")
                                 writer.append(error.psi.containingFile.name)
                                 error.textRanges.joinTo(writer)

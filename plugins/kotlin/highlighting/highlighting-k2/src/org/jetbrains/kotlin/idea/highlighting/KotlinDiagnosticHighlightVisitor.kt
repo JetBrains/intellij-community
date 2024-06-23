@@ -68,7 +68,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
                 .groupByTo(HashMap(), { it.first }, { convertToBuilder(file, it.first, it.second) })
 
             KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
-                analysis.asSequence().filter { it.severity == KaSeverity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName), file
+                analysis.asSequence().filter { it.severity == KaSeverity.ERROR }.mapNotNull(KaDiagnosticWithPsi<*>::factoryName), file
             )
             return diagnostics
         }
@@ -83,7 +83,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     }
 
     context(KaSession)
-    private fun convertToBuilder(file: KtFile, range: TextRange, diagnostic: KtDiagnosticWithPsi<*>) : HighlightInfo.Builder{
+    private fun convertToBuilder(file: KtFile, range: TextRange, diagnostic: KaDiagnosticWithPsi<*>) : HighlightInfo.Builder{
         val isWarning = diagnostic.severity == KaSeverity.WARNING
         val psiElement = diagnostic.psi
         val factoryName = diagnostic.factoryName
@@ -136,7 +136,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
 
 
     context(KaSession)
-    private fun KtDiagnosticWithPsi<*>.getHighlightInfoType(): HighlightInfoType {
+    private fun KaDiagnosticWithPsi<*>.getHighlightInfoType(): HighlightInfoType {
        return when {
             isUnresolvedDiagnostic() -> HighlightInfoType.WRONG_REF
             isDeprecatedDiagnostic() -> HighlightInfoType.DEPRECATED
@@ -149,7 +149,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     }
 
     context(KaSession)
-    private fun KtDiagnosticWithPsi<*>.isUnresolvedDiagnostic() = when (this) {
+    private fun KaDiagnosticWithPsi<*>.isUnresolvedDiagnostic() = when (this) {
         is KaFirDiagnostic.UnresolvedReference -> true
         is KaFirDiagnostic.UnresolvedLabel -> true
         is KaFirDiagnostic.UnresolvedReferenceWrongReceiver -> true
@@ -159,7 +159,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     }
 
     context(KaSession)
-    private fun KtDiagnosticWithPsi<*>.isDeprecatedDiagnostic() = when (this) {
+    private fun KaDiagnosticWithPsi<*>.isDeprecatedDiagnostic() = when (this) {
         is KaFirDiagnostic.Deprecation -> true
         else -> false
     }

@@ -5,20 +5,20 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import kotlin.reflect.KClass
 
 class KotlinQuickFixesList @ForKtQuickFixesListBuilder constructor(
-    private val quickFixes: Map<KClass<out KtDiagnosticWithPsi<*>>, List<KotlinQuickFixFactory<*>>>
+    private val quickFixes: Map<KClass<out KaDiagnosticWithPsi<*>>, List<KotlinQuickFixFactory<*>>>
 ) {
     context(KaSession)
-    fun getQuickFixesFor(diagnostic: KtDiagnosticWithPsi<*>): List<IntentionAction> {
+    fun getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> {
         val factories = quickFixes[diagnostic.diagnosticClass]
             ?: return emptyList()
 
         return factories.asSequence()
-            .map { @Suppress("UNCHECKED_CAST") (it as KotlinQuickFixFactory<KtDiagnosticWithPsi<*>>) }
+            .map { @Suppress("UNCHECKED_CAST") (it as KotlinQuickFixFactory<KaDiagnosticWithPsi<*>>) }
             .flatMap { it.createQuickFixes(diagnostic) }
             .map { it.asIntention() }
             .toList()
@@ -41,11 +41,11 @@ class KotlinQuickFixesList @ForKtQuickFixesListBuilder constructor(
 class KtQuickFixesListBuilder private constructor() {
 
     private val quickFixes = LinkedHashMap<
-            KClass<out KtDiagnosticWithPsi<*>>,
-            MutableList<KotlinQuickFixFactory<out KtDiagnosticWithPsi<*>>>,
+            KClass<out KaDiagnosticWithPsi<*>>,
+            MutableList<KotlinQuickFixFactory<out KaDiagnosticWithPsi<*>>>,
             >()
 
-    fun <DIAGNOSTIC_PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PSI>> registerPsiQuickFixes(
+    fun <DIAGNOSTIC_PSI : PsiElement, DIAGNOSTIC : KaDiagnosticWithPsi<DIAGNOSTIC_PSI>> registerPsiQuickFixes(
         diagnosticClass: KClass<DIAGNOSTIC>,
         vararg factories: QuickFixesPsiBasedFactory<in DIAGNOSTIC_PSI>,
     ) {
@@ -56,13 +56,13 @@ class KtQuickFixesListBuilder private constructor() {
         }
     }
 
-    inline fun <reified DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerFactory(
+    inline fun <reified DIAGNOSTIC : KaDiagnosticWithPsi<*>> registerFactory(
         factory: KotlinQuickFixFactory<DIAGNOSTIC>,
     ) {
         registerFactory(DIAGNOSTIC::class, factory)
     }
 
-    fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerFactory(
+    fun <DIAGNOSTIC : KaDiagnosticWithPsi<*>> registerFactory(
         diagnosticClass: KClass<DIAGNOSTIC>,
         factory: KotlinQuickFixFactory<DIAGNOSTIC>,
     ) {

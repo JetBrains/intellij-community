@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
 
 @Suppress("LightServiceMigrationCode")
@@ -20,12 +20,12 @@ class KotlinQuickFixService {
     private val importOnTheFlyList = KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allImportOnTheFlyQuickFixList())
 
     context(KaSession)
-    fun getQuickFixesFor(diagnostic: KtDiagnosticWithPsi<*>): List<IntentionAction> {
+    fun getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> {
         return list.getQuickFixesFor(diagnostic)
     }
 
     context(KaSession)
-    fun getImportQuickFixesFor(diagnostic: KtDiagnosticWithPsi<*>): List<KotlinImportQuickFixAction<*>> {
+    fun getImportQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<KotlinImportQuickFixAction<*>> {
         return importOnTheFlyList.getQuickFixesFor(diagnostic).filterIsInstance<KotlinImportQuickFixAction<*>>()
     }
 }
