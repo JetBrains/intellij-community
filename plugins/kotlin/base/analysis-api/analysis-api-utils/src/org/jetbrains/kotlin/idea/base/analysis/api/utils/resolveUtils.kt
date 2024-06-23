@@ -122,7 +122,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 
         if (receiverSymbol is KaNamedClassOrObjectSymbol && explicitReceiver.parent is KtCallableReferenceExpression) {
             val receiverSymbolType = receiverSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(explicitReceiver)
-            return listOfNotNull(receiverSymbolType, receiverSymbol.companionObject?.buildSelfClassType())
+            return listOfNotNull(receiverSymbolType, receiverSymbol.companionObject?.defaultType)
         }
     }
 

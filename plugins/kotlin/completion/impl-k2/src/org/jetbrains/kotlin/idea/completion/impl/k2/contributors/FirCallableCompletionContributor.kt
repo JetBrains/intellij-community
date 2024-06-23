@@ -784,7 +784,7 @@ internal class FirKDocCallableCompletionContributor(
                 }
 
                 is KaNamedClassOrObjectSymbol -> buildList {
-                    val type = parentSymbol.buildSelfClassType()
+                    val type = parentSymbol.defaultType
 
                     type.scope?.declarationScope?.let { typeScope ->
                         val typeScopeKind = KaScopeKind.TypeScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)

@@ -259,7 +259,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     private fun getContainingClassType(symbol: KaCallableSymbol): KaType? {
         val containingSymbol = symbol.containingSymbol ?: return null
         val classSymbol = containingSymbol as? KaNamedClassOrObjectSymbol ?: return null
-        return classSymbol.buildSelfClassType()
+        return classSymbol.defaultType
     }
 
     override fun forceResolveReferences(file: KtFile, elements: List<KtElement>) {
