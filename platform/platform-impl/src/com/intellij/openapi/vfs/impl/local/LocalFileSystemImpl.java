@@ -26,9 +26,8 @@ import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.*;
 
 import java.io.IOException;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -40,6 +39,9 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private static final Logger WATCH_ROOTS_LOG = Logger.getInstance("#com.intellij.openapi.vfs.WatchRoots");
   private static final int STATUS_UPDATE_PERIOD = 1000;
 
+  private static final FileAttributes UNC_ROOT_ATTRIBUTES =
+    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.INSENSITIVE);
+
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
   private final WatchRootsManager myWatchRootsManager;
@@ -48,6 +50,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private final ThreadLocal<Pair<VirtualFile, Map<String, FileAttributes>>> myFileAttributesCache = new ThreadLocal<>();
   private final DiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>> myChildrenAttrGetter =
     new DiskQueryRelay<>(pair -> listWithAttributes(pair.first, pair.second));
+  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(LocalFileSystemImpl::readAttributes);
 
   protected LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
@@ -288,7 +291,11 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    Pair<VirtualFile, Map<String, FileAttributes>> cache = myFileAttributesCache.get();
+    if (SystemInfo.isWindows && file.getParent() == null && file.getPath().startsWith("//")) {
+      return UNC_ROOT_ATTRIBUTES;
+    }
+
+    var cache = myFileAttributesCache.get();
     if (cache != null) {
       if (!cache.first.equals(file.getParent())) {
         LOG.error("unordered access to " + file + " outside " + cache.first);
@@ -298,7 +305,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
       }
     }
 
-    return super.getAttributes(file);
+    return myAttributeGetter.accessDiskWithCheckCanceled(file);
   }
 
   private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir, @Nullable Set<String> filter) {
@@ -307,8 +314,8 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
       PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), filter, (file, result) -> {
         try {
-          var attrs = copyWithCustomTimestamp(file, FileAttributes.fromNio(file, result.get()));
-          list.put(file.getFileName().toString(), attrs);
+          var attributes = amendAttributes(file, FileAttributes.fromNio(file, result.get()));
+          list.put(file.getFileName().toString(), attributes);
         }
         catch (Exception e) { LOG.debug(e); }
         return true;
@@ -321,14 +328,24 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return Map.of();
   }
 
-  private static FileAttributes copyWithCustomTimestamp(Path file, FileAttributes attributes) {
-    for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
-      Long custom = provider.getTimestamp(file);
-      if (custom != null) {
-        return attributes.withTimeStamp(custom);
+  private static @Nullable FileAttributes readAttributes(VirtualFile file) {
+    try {
+      var nioFile = Path.of(toIoPath(file));
+      var nioAttributes = Files.readAttributes(nioFile, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+      return amendAttributes(nioFile, FileAttributes.fromNio(nioFile, nioAttributes));
+    }
+    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
+    catch (IOException | RuntimeException e) { LOG.warn(e); }
+    return null;
+  }
+
+  private static FileAttributes amendAttributes(Path file, FileAttributes attributes) {
+    for (var provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
+      var customTS = provider.getTimestamp(file);
+      if (customTS != null) {
+        return attributes.withTimeStamp(customTS);
       }
     }
-
     return attributes;
   }
 

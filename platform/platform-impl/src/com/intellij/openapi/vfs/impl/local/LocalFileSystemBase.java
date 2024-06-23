@@ -42,9 +42,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
-  private static final FileAttributes UNC_ROOT_ATTRIBUTES =
-    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.INSENSITIVE);
-
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
 
   public LocalFileSystemBase() { }
@@ -97,31 +94,31 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public long getLength(@NotNull VirtualFile file) {
-    FileAttributes attributes = getAttributes(file);
+    var attributes = getAttributes(file);
     return attributes != null ? attributes.length : DEFAULT_LENGTH;
   }
 
   @Override
   public long getTimeStamp(@NotNull VirtualFile file) {
-    FileAttributes attributes = getAttributes(file);
+    var attributes = getAttributes(file);
     return attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
   }
 
   @Override
   public boolean isDirectory(@NotNull VirtualFile file) {
-    FileAttributes attributes = getAttributes(file);
+    var attributes = getAttributes(file);
     return attributes != null && attributes.isDirectory();
   }
 
   @Override
   public boolean isWritable(@NotNull VirtualFile file) {
-    FileAttributes attributes = getAttributes(file);
+    var attributes = getAttributes(file);
     return attributes != null && attributes.isWritable();
   }
 
   @Override
   public boolean isSymLink(@NotNull VirtualFile file) {
-    FileAttributes attributes = getAttributes(file);
+    var attributes = getAttributes(file);
     return attributes != null && attributes.isSymLink();
   }
 
@@ -559,12 +556,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    return SystemInfo.isWindows && file.getParent() == null && file.getPath().startsWith("//")
-           ? UNC_ROOT_ATTRIBUTES
-           : myAttrGetter.accessDiskWithCheckCanceled(file);
+    var pathStr = FileUtilRt.toSystemDependentName(file.getPath());
+    if (pathStr.length() == 2 && pathStr.charAt(1) == ':') pathStr += '\\';
+    return FileSystemUtil.getAttributes(pathStr);
   }
 
-  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(LocalFileSystemBase::getAttributesWithCustomTimestamp);
   private final DiskQueryRelay<Path, String[]> myNioChildrenGetter = new DiskQueryRelay<>(LocalFileSystemBase::listPathChildren);
   private final DiskQueryRelay<ContentRequest, byte[]> myNioContentGetter = new DiskQueryRelay<>(request -> {
     Path path = request.path();
@@ -606,26 +602,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public void cleanupForNextTest() {
     FileDocumentManager.getInstance().saveAllDocuments();
     PersistentFS.getInstance().clearIdCache();
-  }
-
-  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(VirtualFile file) {
-    var pathStr = FileUtilRt.toSystemDependentName(file.getPath());
-    if (pathStr.length() == 2 && pathStr.charAt(1) == ':') pathStr += '\\';
-    var attributes = FileSystemUtil.getAttributes(pathStr);
-    return copyWithCustomTimestamp(file, attributes);
-  }
-
-  private static @Nullable FileAttributes copyWithCustomTimestamp(VirtualFile file, @Nullable FileAttributes attributes) {
-    if (attributes != null) {
-      for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
-        Long custom = provider.getTimestamp(file);
-        if (custom != null) {
-          return attributes.withTimeStamp(custom);
-        }
-      }
-    }
-
-    return attributes;
   }
 
   private static String[] listPathChildren(Path dir) {
