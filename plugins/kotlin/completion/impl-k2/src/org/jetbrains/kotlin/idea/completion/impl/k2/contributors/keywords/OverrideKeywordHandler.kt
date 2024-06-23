@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
@@ -86,7 +86,7 @@ internal class OverrideKeywordHandler(
     ): Boolean = when (declaration) {
         is KtFunction -> symbolToOverride is KaNamedFunctionSymbol
         is KtValVarKeywordOwner -> {
-            if (symbolToOverride !is KtVariableSymbol) {
+            if (symbolToOverride !is KaVariableSymbol) {
                 false
             } else {
                 // val cannot override var

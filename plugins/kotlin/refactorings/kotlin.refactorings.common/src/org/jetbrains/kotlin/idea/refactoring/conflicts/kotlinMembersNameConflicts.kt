@@ -157,7 +157,7 @@ fun checkDeclarationNewNameConflicts(
                     if (it.name != newName.asString()) return@mapNotNull null
                     val isAccepted = when (symbol) {
                         is KaClassSymbol -> it is KtClassOrObject
-                        is KtVariableSymbol -> it is KtProperty
+                        is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol -> it is KtProperty
                         is KaFunctionSymbol -> it is KtNamedFunction
                         else -> false
                     }
@@ -334,7 +334,7 @@ fun registerRetargetJobOnPotentialCandidates(
                 if (it.name != name) return@mapNotNull null
                 val isAccepted = when (declarationSymbol) {
                     is KaClassSymbol -> it is KtClassOrObject
-                    is KtVariableSymbol -> it is KtProperty
+                    is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol -> it is KtProperty
                     is KaFunctionSymbol -> it is KtNamedFunction
                     else -> false
                 }

@@ -55,7 +55,10 @@ class KtVariableDescriptor(
 
     override fun canBeCapturedInClosure(): Boolean = analyze(module) {
         val symbol = pointer.restoreSymbol() ?: return@analyze false
-        return@analyze symbol is KtVariableSymbol && symbol.isVal
+        when (symbol) {
+            is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol -> symbol.isVal
+            else -> false
+        }
     }
 
     override fun getDfType(qualifier: DfaVariableValue?): DfType = type

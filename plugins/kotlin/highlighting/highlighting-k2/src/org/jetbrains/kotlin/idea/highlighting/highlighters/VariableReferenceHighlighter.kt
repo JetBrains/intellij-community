@@ -55,7 +55,7 @@ internal class VariableReferenceHighlighter(holder: HighlightInfoHolder) : Kotli
         }
     }
 
-    private fun KtVariableSymbol.getHighlightingForMutableVar(expression: KtSimpleNameExpression): HighlightInfo.Builder? {
+    private fun KaVariableSymbol.getHighlightingForMutableVar(expression: KtSimpleNameExpression): HighlightInfo.Builder? {
         return if (isVal) {
             null
         } else {

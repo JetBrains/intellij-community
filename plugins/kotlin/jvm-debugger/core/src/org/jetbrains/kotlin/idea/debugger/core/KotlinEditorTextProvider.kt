@@ -177,7 +177,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
         return when (symbol) {
             is KaClassSymbol -> symbol.classKind.isObject
             is KaFunctionSymbol -> allowMethodCalls
-            is KtVariableSymbol, is KaValueParameterSymbol, is KaEnumEntrySymbol -> true
+            is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol, is KaValueParameterSymbol, is KaEnumEntrySymbol -> true
             else -> false
         }
     }
