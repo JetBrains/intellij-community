@@ -93,8 +93,8 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
         }
     }
 
-    override fun createNavigationTargetsProvider(): KtResolveExtensionNavigationTargetsProvider {
-        return object : KtResolveExtensionNavigationTargetsProvider() {
+    override fun createNavigationTargetsProvider(): KaResolveExtensionNavigationTargetsProvider {
+        return object : KaResolveExtensionNavigationTargetsProvider() {
             override fun KaSession.getNavigationTargets(element: KtElement): Collection<PsiElement> =
                 element.parentsWithSelf
                     .filterIsInstance<KtDeclaration>()
