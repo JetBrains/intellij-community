@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +21,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
+import com.intellij.util.lang.JavaVersion;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -63,16 +65,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   protected static @NotNull String toIoPath(@NotNull VirtualFile file) {
-    String path = file.getPath();
+    var path = file.getPath();
     if (path.length() == 2 && SystemInfo.isWindows && OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
       // makes 'C:' resolve to a root directory of the drive C:, not the current directory on that drive
       path += '/';
     }
     return path;
-  }
-
-  private static @NotNull File convertToIOFile(@NotNull VirtualFile file) {
-    return new File(toIoPath(file));
   }
 
   @Override
@@ -520,56 +518,35 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
+  @ReviseWhenPortedToJDK("21")
   public @NotNull String getCanonicallyCasedName(@NotNull VirtualFile file) {
     var parent = file.getParent();
     if (parent == null || parent.isCaseSensitive()) {
       return super.getCanonicallyCasedName(file);
     }
 
-    String originalFileName = file.getName();
-    long t = LOG.isTraceEnabled() ? System.nanoTime() : 0;
+    var originalFileName = file.getName();
+    var t = LOG.isTraceEnabled() ? System.nanoTime() : 0;
     try {
-      File ioFile = convertToIOFile(file);
-
-      File canonicalFile = ioFile.getCanonicalFile();
-      String canonicalFileName = canonicalFile.getName();
-      if (!SystemInfo.isUnix) {
-        return canonicalFileName;
+      var nioFile = convertToNioFileAndCheck(file, false);
+      if (SystemInfo.isWindows || JavaVersion.current().isAtLeast(21)) {
+        return nioFile.toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString();
       }
-
-      // linux & mac support symbolic links
-      // unfortunately canonical file resolves symlinks
-      // so its name may differ from name of origin file
-      //
-      // Here FS is case-sensitive, so let's check that original and
-      // canonical file names are equal if we ignore name case
-      if (canonicalFileName.compareToIgnoreCase(originalFileName) == 0) {
-        // p.s. this should cover most cases related to not symbolic links
-        return canonicalFileName;
-      }
-
-      // Ok, names are not equal. Let's try to find corresponding file name
-      // among original file parent directory
-      File parentFile = ioFile.getParentFile();
+      var parentFile = nioFile.getParent();
       if (parentFile != null) {
-        // I hope ls works fast on Unix
-        String[] canonicalFileNames = parentFile.list();
+        var canonicalFileNames = parentFile.toFile().list();
         if (canonicalFileNames != null) {
-          for (String name : canonicalFileNames) {
-            // if names are equals
+          for (var name : canonicalFileNames) {
             if (name.compareToIgnoreCase(originalFileName) == 0) {
               return name;
             }
           }
         }
       }
-      // No luck. So ein mist!
-      // Ok, garbage in, garbage out. We may return original or canonical name
-      // no difference. Let's return canonical name just to preserve previous
-      // behaviour of this code.
-      return canonicalFileName;
+      return originalFileName;
     }
     catch (IOException | InvalidPathException e) {
+      LOG.trace(e);
       return originalFileName;
     }
     finally {
