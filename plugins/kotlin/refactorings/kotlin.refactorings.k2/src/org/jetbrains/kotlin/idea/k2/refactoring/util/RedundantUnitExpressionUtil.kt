@@ -72,7 +72,7 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
 private fun isDynamicCall(parent: KtBlockExpression): Boolean = parent.getStrictParentOfType<KtFunctionLiteral>()?.findLambdaReturnType() is KaDynamicType
 
 private fun KtReturnExpression.expectedReturnType(): KaType? = analyze(this) {
-    getReturnTargetSymbol()?.let {
+    targetSymbol?.let {
         (it.psi as? KtFunctionLiteral)?.findLambdaReturnType() ?: it.returnType
     }
 }

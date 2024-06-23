@@ -52,7 +52,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         if (expression !is KtLambdaExpression) return false
         var labelledReturnReturnsNullable = false
         expression.bodyExpression?.forEachDescendantOfType<KtReturnExpression> { returnExpression ->
-            val targetExpression = returnExpression.getReturnTargetSymbol()?.psi?.parent
+            val targetExpression = returnExpression.targetSymbol?.psi?.parent
             if (targetExpression == expression) {
                 labelledReturnReturnsNullable = labelledReturnReturnsNullable ||
                         returnExpression.returnedExpression?.getKtType()?.canBeNull == true

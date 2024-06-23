@@ -97,7 +97,7 @@ object ChangeTypeQuickFixFactories {
         val returnedExpressions = if (functionOrGetter != null) {
             val declarationSymbol = functionOrGetter.symbol
             functionOrGetter
-                .collectDescendantsOfType<KtReturnExpression> { it.getReturnTargetSymbol() == declarationSymbol }
+                .collectDescendantsOfType<KtReturnExpression> { it.targetSymbol == declarationSymbol }
                 .mapNotNull { it.returnedExpression }
                 .plus(initializers)
         } else {
@@ -144,7 +144,7 @@ object ChangeTypeQuickFixFactories {
         KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
             val returnExpr = diagnostic.psi.parentOfType<KtReturnExpression>()
                 ?: return@IntentionBased emptyList()
-            val declaration = returnExpr.getReturnTargetSymbol()?.psi as? KtCallableDeclaration
+            val declaration = returnExpr.targetSymbol?.psi as? KtCallableDeclaration
                 ?: return@IntentionBased emptyList()
 
             val withNullability = diagnostic.expectedType.withNullability(KaTypeNullability.NULLABLE)

@@ -796,7 +796,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val returnedExpression = expr.returnedExpression
         processExpression(returnedExpression)
         val targetFunction = when {
-          expr.labeledExpression != null -> expr.getReturnTargetSymbol()?.psi as? KtFunctionLiteral
+          expr.labeledExpression != null -> expr.targetSymbol?.psi as? KtFunctionLiteral
           else -> findEffectiveTargetSymbol(expr)
         }
         if (targetFunction != null && PsiTreeUtil.isAncestor(context, targetFunction, true)) {

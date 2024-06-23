@@ -18,7 +18,7 @@ internal class RedundantReturnLabelInspection : AbstractKotlinInspection() {
             val function = returnExpression.getParentOfType<KtNamedFunction>(true, KtLambdaExpression::class.java) ?: return
 
             if (function.name == null &&
-                analyze(returnExpression) { returnExpression.getReturnTargetSymbol() != function.symbol }
+                analyze(returnExpression) { returnExpression.targetSymbol != function.symbol }
             ) return
 
             val labelName = label.getReferencedName()

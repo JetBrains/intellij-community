@@ -45,7 +45,7 @@ object LambdaToAnonymousFunctionUtil {
         val functionLiteralInCopy = PsiTreeUtil.findSameElementInCopy(functionLiteral, fileCopy)
 
         bodyExpressionCopy.collectDescendantsOfType<KtReturnExpression>().forEach {
-            val targetDescriptor = it.getReturnTargetSymbol()
+            val targetDescriptor = it.targetSymbol
             if (targetDescriptor?.psi == functionLiteralInCopy) {
                 it.labeledExpression?.delete()
             }

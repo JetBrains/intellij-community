@@ -832,8 +832,8 @@ object K2SemanticMatcher {
         patternExpression: KtReturnExpression,
         context: MatchingContext,
     ): Boolean {
-        val targetReturnTargetSymbol = targetExpression.getReturnTargetSymbol() as? KaFunctionSymbol ?: return false
-        val patternReturnTargetSymbol = patternExpression.getReturnTargetSymbol() as? KaFunctionSymbol ?: return false
+        val targetReturnTargetSymbol = targetExpression.targetSymbol as? KaFunctionSymbol ?: return false
+        val patternReturnTargetSymbol = patternExpression.targetSymbol as? KaFunctionSymbol ?: return false
 
         return context.areBlockBodyOwnersEqualOrAssociated(targetReturnTargetSymbol, patternReturnTargetSymbol)
     }

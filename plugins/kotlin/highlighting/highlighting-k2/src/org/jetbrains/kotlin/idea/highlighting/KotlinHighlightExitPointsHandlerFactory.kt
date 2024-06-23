@@ -16,7 +16,7 @@ class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPoints
     override fun getRelevantReturnDeclaration(returnExpression: KtReturnExpression): KtDeclarationWithBody? {
         val psi = allowAnalysisOnEdt {
             analyze(returnExpression) {
-                returnExpression.getReturnTargetSymbol()?.psi
+                returnExpression.targetSymbol?.psi
             }
         }
         return psi as? KtDeclarationWithBody

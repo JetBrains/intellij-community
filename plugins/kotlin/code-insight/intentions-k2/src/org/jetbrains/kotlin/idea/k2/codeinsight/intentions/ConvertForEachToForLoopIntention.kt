@@ -99,7 +99,7 @@ internal class ConvertForEachToForLoopIntention
         val functionLiteralSymbol = lambda.functionLiteral.symbol
         return buildList {
             lambdaBody.forEachDescendantOfType<KtReturnExpression> { returnExpression ->
-                if (returnExpression.getReturnTargetSymbol() == functionLiteralSymbol) {
+                if (returnExpression.targetSymbol == functionLiteralSymbol) {
                     add(returnExpression.createSmartPointer())
                 }
             }
