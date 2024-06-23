@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 /**
- * Origin of [KtSymbol] used in completion suggestion
+ * Origin of [KaSymbol] used in completion suggestion
  */
 internal sealed class CompletionSymbolOrigin {
     class Scope(val kind: KaScopeKind) : CompletionSymbolOrigin()
