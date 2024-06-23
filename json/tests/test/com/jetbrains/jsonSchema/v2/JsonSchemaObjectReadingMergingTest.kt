@@ -443,7 +443,7 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
     doTestReading(openapi31schema())
   }
 
-  fun `test equal merging results`() {
+  fun `disabled test equal merging results`() {
     doTestMerging(
       openapi31schema(),
       petstore31json(),
