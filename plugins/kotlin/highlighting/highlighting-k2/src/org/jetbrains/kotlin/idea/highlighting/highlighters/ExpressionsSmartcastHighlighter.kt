@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.highlighting.highlighters
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiverSmartCastKind
+import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiverSmartCastKind
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
@@ -19,8 +19,8 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
     private fun highlightExpression(expression: KtExpression) {
         expression.implicitReceiverSmartCasts.forEach {
             val receiverName = when (it.kind) {
-                KtImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")
-                KtImplicitReceiverSmartCastKind.DISPATCH -> KotlinBaseHighlightingBundle.message("implicit.receiver")
+                KaImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")
+                KaImplicitReceiverSmartCastKind.DISPATCH -> KotlinBaseHighlightingBundle.message("implicit.receiver")
             }
 
             val builder = HighlightingFactory.highlightName(
