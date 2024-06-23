@@ -562,5 +562,6 @@
     <extensionPoint name="cefDelegate" interface="com.intellij.ui.jcef.CefDelegate"/>
 
     <extensionPoint name="proxySettingsOverrideProvider" interface="com.intellij.util.net.ProxySettingsOverrideProvider" dynamic="true"/>
+    <extensionPoint name="navbarLeftSide" dynamic="true" interface="com.intellij.ide.navigationToolbar.NavBarLeftSideExtension"/>
   </extensionPoints>
 </idea-plugin>

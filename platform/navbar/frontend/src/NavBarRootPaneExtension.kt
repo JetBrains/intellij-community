@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.frontend
 
+import com.intellij.ide.navigationToolbar.NavBarLeftSideExtension
 import com.intellij.ide.ui.NavBarLocation
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings

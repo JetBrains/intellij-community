@@ -1,7 +1,4 @@
 <idea-plugin package="com.intellij.platform.navbar.frontend">
-  <extensionPoints>
-    <extensionPoint name="navbarLeftSide" dynamic="true" interface="com.intellij.platform.navbar.frontend.NavBarLeftSideExtension"/>
-  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlDynamicPlugin -->
     <ideRootPaneNorth implementation="com.intellij.platform.navbar.frontend.NavBarRootPaneExtension"/>
