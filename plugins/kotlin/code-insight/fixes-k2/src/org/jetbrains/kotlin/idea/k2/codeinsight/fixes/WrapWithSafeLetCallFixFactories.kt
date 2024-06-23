@@ -180,7 +180,7 @@ object WrapWithSafeLetCallFixFactories {
         val calleeExpression = callExpression.calleeExpression
         val calleeName = calleeExpression?.text?.let(Name::identifierIfValid) ?: return null
         val callSite = callExpression.parent as? KtQualifiedExpression ?: callExpression
-        val functionalVariableSymbol = (calleeExpression.resolveCallOld()?.singleCallOrNull<KaSimpleVariableAccessCall>())?.symbol ?: return false
+        val functionalVariableSymbol = (calleeExpression.resolveToCall()?.singleCallOrNull<KaSimpleVariableAccessCall>())?.symbol ?: return false
         val localScope = callExpression.containingKtFile.getScopeContextForPosition(callSite).getCompositeScope()
         // If no symbol in the local scope contains the called symbol, then the symbol must be a member symbol.
 

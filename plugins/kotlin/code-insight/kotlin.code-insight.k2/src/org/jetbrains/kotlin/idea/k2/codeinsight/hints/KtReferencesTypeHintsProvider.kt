@@ -361,7 +361,7 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
 context(KaSession)
 private fun isConstructorCall(initializer: KtExpression?): Boolean {
     val callExpression = initializer as? KtCallExpression ?: return false
-    val resolveCall = initializer.resolveCallOld() ?: return false
+    val resolveCall = initializer.resolveToCall() ?: return false
     val functionCall = resolveCall.singleFunctionCallOrNull()
     if (functionCall?.symbol is KaSamConstructorSymbol) {
         return true
