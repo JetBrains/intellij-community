@@ -1,120 +1,73 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ui.search;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.ui.search
 
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 
-import java.util.Objects;
+open class OptionDescription @JvmOverloads constructor(
+  private val _option: @Nls String?,
+  val configurableId: @NonNls String?,
+  val hit: @NlsSafe String?,
+  val path: @NlsSafe String?,
+  val groupName: @Nls String? = null
+) : Comparable<OptionDescription> {
+  constructor(hit: @NlsSafe String?) : this(option = null, hit = hit, path = null)
 
-public class OptionDescription implements Comparable<OptionDescription> {
-  private final @Nls String myOption;
-  private final @NlsSafe String myHit;
-  private final @NlsSafe String myPath;
-  private final @NonNls String myConfigurableId;
-  private final @Nls String myGroupName;
+  constructor(option: @Nls String?, hit: @NlsSafe String?, path: @NlsSafe String?) : this(option, null, hit, path)
 
-  public OptionDescription(@NlsSafe String hit) {
-    this(null, hit, null);
+  open val value: @NlsSafe String?
+    get() = null
+
+  open val option: @Nls String?
+    get() = _option
+
+  open fun hasExternalEditor(): Boolean = false
+
+  open fun invokeInternalEditor() {
   }
 
-  public OptionDescription(@Nls String option, @NlsSafe String hit, @NlsSafe String path) {
-    this(option, null, hit, path);
+  override fun toString(): String = hit ?: ""
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+
+    val that = other as OptionDescription
+
+    if (configurableId != that.configurableId) return false
+    if (hit != that.hit) return false
+    if (option != that.option) return false
+    if (path != that.path) return false
+
+    return true
   }
 
-  public OptionDescription(@Nls String option, @NonNls String configurableId, @NlsSafe String hit, @NlsSafe String path) {
-    this(option, configurableId, hit, path, null);
+  override fun hashCode(): Int {
+    var result = option?.hashCode() ?: 0
+    result = 31 * result + (hit?.hashCode() ?: 0)
+    result = 31 * result + (path?.hashCode() ?: 0)
+    result = 31 * result + (configurableId?.hashCode() ?: 0)
+    return result
   }
 
-  public OptionDescription(@Nls String option,
-                           @NonNls String configurableId,
-                           @NlsSafe String hit,
-                           @NlsSafe String path,
-                           @Nls String groupName) {
-    myOption = option;
-    myHit = hit;
-    myPath = path;
-    myConfigurableId = configurableId;
-    myGroupName = groupName;
-  }
+  override fun compareTo(other: OptionDescription): Int {
+    val hit1 = hit ?: ""
+    val hit2 = other.hit ?: ""
+    val diff = hit1.compareTo(hit2)
+    if (diff != 0) return diff
 
-  public @Nls String getOption() {
-    return myOption;
-  }
-
-  public final @NlsSafe @Nullable String getHit() {
-    return myHit;
-  }
-
-  public final @Nullable String getPath() {
-    return myPath;
-  }
-
-  public final @NonNls String getConfigurableId() {
-    return myConfigurableId;
-  }
-
-  public final @Nls String getGroupName() {
-    return myGroupName;
-  }
-
-  public @NlsSafe String getValue() {
-    return null;
-  }
-
-  public boolean hasExternalEditor() {
-    return false;
-  }
-
-  public void invokeInternalEditor() {
-  }
-
-  public final String toString() {
-    return myHit;
-  }
-
-  public final boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    final OptionDescription that = (OptionDescription)o;
-
-    if (!Objects.equals(myConfigurableId, that.myConfigurableId)) return false;
-    if (!Objects.equals(myHit, that.myHit)) return false;
-    if (!Objects.equals(myOption, that.myOption)) return false;
-    if (!Objects.equals(myPath, that.myPath)) return false;
-
-    return true;
-  }
-
-  public final int hashCode() {
-    int result;
-    result = myOption != null ? myOption.hashCode() : 0;
-    result = 31 * result + (myHit != null ? myHit.hashCode() : 0);
-    result = 31 * result + (myPath != null ? myPath.hashCode() : 0);
-    result = 31 * result + (myConfigurableId != null ? myConfigurableId.hashCode() : 0);
-    return result;
-  }
-
-  @Override
-  public final int compareTo(final OptionDescription o) {
-    String hit1 = StringUtil.notNullize(myHit);
-    String hit2 = StringUtil.notNullize(o.getHit());
-    int diff = hit1.compareTo(hit2);
-    if (diff != 0) return diff;
-
-    String option1 = myOption;
-    String option2 = o.getOption();
+    val option1 = option
+    val option2 = other.option
     if (option1 != null && option2 != null) {
-      return option1.compareTo(option2);
+      return option1.compareTo(option2)
     }
     else if (option1 != null || option2 != null) {
-      return option1 == null ? 1 : -1; // nulls go last
+      // nulls go last
+      return if (option1 == null) 1 else -1
     }
     else {
-      return 0;
+      return 0
     }
   }
 }
