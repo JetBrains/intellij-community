@@ -1,18 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.ide.IdeBundle
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType
 import com.intellij.openapi.project.DumbModeStatisticsCollector.logProcessFinished
-import com.intellij.openapi.project.MergingTaskQueue.QueuedTask
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.indexing.IndexingBundle
-import com.intellij.util.io.storage.HeavyProcessLatch
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -47,12 +44,6 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
     finally {
       logProcessFinished(childActivity, if (taskCompletedNormally) IndexingFinishType.FINISHED else IndexingFinishType.TERMINATED)
       DumbModeProgressTitle.getInstance(project).removeDumbModeProgress(visibleIndicator)
-    }
-  }
-
-  override fun runSingleTask(task: QueuedTask<DumbModeTask>, activity: StructuredIdeActivity?) {
-    HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Indexing, IdeBundle.message("progress.performing.indexing.tasks")) {
-      super.runSingleTask(task, activity)
     }
   }
 
