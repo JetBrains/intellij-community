@@ -49,8 +49,10 @@ abstract class AbstractMavenStaticSyncTest : MavenMultiVersionImportingTestCase(
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {
     val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
     try {
-      MavenProjectStaticImporter.getInstance(project)
+      val result = MavenProjectStaticImporter.getInstance(project)
         .syncStatic(files, null, mavenImporterSettings, mavenGeneralSettings, true, SimpleStructureProjectVisitor(), activity, true)
+      projectsManager.initForTests()
+      projectsManager.projectsTree.updater().copyFrom(result.projectTree)
     }
     finally {
       activity.finished()

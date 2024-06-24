@@ -5,6 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -595,8 +596,8 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                 </parent>
                 """.trimIndent())
 
-    val projects = projectsManager.projects
-    assertEmpty(projects)
+    val projects = projectsManager.projects.map { it.mavenId.displayString }
+    UsefulTestCase.assertSameElements(projects, "group:parent:1")
   }
 
   @Test
@@ -773,4 +774,60 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                        "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
                        "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
   }
+
+  @Test
+  fun testReimportProjectsIfModulesDeclaredInDefaultProfile() = runBlocking {
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        """)
+    createModulePom("m2", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m2</artifactId>
+        """)
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                        <module>m1</module>
+                        <module>m2</module>
+                    </modules>
+                    """.trimIndent())
+    assertModules("project", "m1", "m2")
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                        <module>m1</module>
+                    </modules>
+                    <profiles>
+                      <profile>
+                        <id>myprofile</id>
+                        <activation>
+                          <property>
+                            <name>!someVarName</name>
+                          </property>
+                        </activation>
+                        <modules>
+                          <module>m2</module>
+                        </modules>
+                      </profile>
+                  </profiles>
+                    """.trimIndent())
+    assertModules("project", "m1", "m2")
+  }
+
 }
