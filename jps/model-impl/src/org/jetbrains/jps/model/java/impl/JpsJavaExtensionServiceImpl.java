@@ -60,12 +60,19 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
 
   @Override
   public JpsJavaDependencyExtension getDependencyExtension(@NotNull JpsDependencyElement dependency) {
+    JpsModule module = dependency.getContainingModule();
+    if (module.getProject() instanceof JpsJavaAwareProject) {
+      return ((JpsJavaAwareProject)module.getProject()).getJavaDependencyExtension(dependency);
+    }
     return dependency.getContainer().getChild(JpsJavaDependencyExtensionRole.INSTANCE);
   }
 
   @Override
   @Nullable
   public JpsJavaModuleExtension getModuleExtension(@NotNull JpsModule module) {
+    if (module.getProject() instanceof JpsJavaAwareProject) {
+      return ((JpsJavaAwareProject)module.getProject()).getJavaModuleExtension(module);
+    }
     return module.getContainer().getChild(JavaModuleExtensionRole.INSTANCE);
   }
 
