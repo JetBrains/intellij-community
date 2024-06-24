@@ -31,6 +31,7 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.util.ReflectionUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -424,7 +425,7 @@ private fun processConfigurables(
     }
     else {
       SearchUtil.processComponent(configurable, configurableOptions, configurable.createComponent(), i18n)
-      val unwrapped = SearchUtil.unwrapConfigurable(configurable)
+      val unwrapped = unwrapConfigurable(configurable)
       if (unwrapped is CompositeConfigurable<*>) {
         unwrapped.disposeUIResources()
         val children = unwrapped.configurables
@@ -433,7 +434,7 @@ private fun processConfigurables(
           options.put(SearchableConfigurableAdapter(configurable, child), childConfigurableOptions)
 
           if (child is SearchableConfigurable) {
-            SearchUtil.processUILabel(child.displayName, childConfigurableOptions, null, i18n)
+            SearchUtil.processUILabel(title = child.displayName, configurableOptions = childConfigurableOptions, path = null, i18n = i18n)
           }
           val component = child.createComponent()
           if (component != null) {
@@ -472,4 +473,25 @@ private class SearchableConfigurableAdapter(
   }
 
   override fun toString(): String = displayName
+}
+
+private const val DEBUGGER_CONFIGURABLE_CLASS = "com.intellij.xdebugger.impl.settings.DebuggerConfigurable"
+
+private fun unwrapConfigurable(configurable: Configurable): Configurable {
+  @Suppress("NAME_SHADOWING")
+  var configurable = configurable
+  if (configurable is ConfigurableWrapper) {
+    val wrapped = configurable.configurable
+    if (wrapped is SearchableConfigurable) {
+      configurable = wrapped
+    }
+  }
+  if (DEBUGGER_CONFIGURABLE_CLASS == configurable.javaClass.name) {
+    val clazz = ReflectionUtil.forName(DEBUGGER_CONFIGURABLE_CLASS)
+    val rootConfigurable = ReflectionUtil.getField(clazz, configurable, Configurable::class.java, "myRootConfigurable")
+    if (rootConfigurable != null) {
+      return rootConfigurable
+    }
+  }
+  return configurable
 }

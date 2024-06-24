@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
@@ -15,7 +14,6 @@ import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
 import com.intellij.ui.TabbedPaneWrapper.TabbedPaneHolder
 import com.intellij.util.IntPair
-import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap
@@ -40,30 +38,10 @@ object SearchUtil {
   @Internal
   val SEARCH_SKIP_COMPONENT_KEY: Key<Boolean> = Key.create("SEARCH_SKIP_COMPONENT_KEY")
 
-  private const val DEBUGGER_CONFIGURABLE_CLASS = "com.intellij.xdebugger.impl.settings.DebuggerConfigurable"
   private val HTML_PATTERN: Pattern = Pattern.compile("<[^<>]*>")
 
   const val HIGHLIGHT_WITH_BORDER: String = "searchUtil.highlightWithBorder"
   private const val STYLE_END = "</style>"
-
-  fun unwrapConfigurable(configurable: Configurable): Configurable {
-    @Suppress("NAME_SHADOWING")
-    var configurable = configurable
-    if (configurable is ConfigurableWrapper) {
-      val wrapped = configurable.configurable
-      if (wrapped is SearchableConfigurable) {
-        configurable = wrapped
-      }
-    }
-    if (DEBUGGER_CONFIGURABLE_CLASS == configurable.javaClass.name) {
-      val clazz = ReflectionUtil.forName(DEBUGGER_CONFIGURABLE_CLASS)
-      val rootConfigurable = ReflectionUtil.getField(clazz, configurable, Configurable::class.java, "myRootConfigurable")
-      if (rootConfigurable != null) {
-        return rootConfigurable
-      }
-    }
-    return configurable
-  }
 
   @JvmStatic
   fun processComponent(
@@ -229,8 +207,8 @@ object SearchUtil {
     SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemming(title, words, emptySet())
     title = title.replace(BundleBase.MNEMONIC_STRING, "")
     title = getNonWordPattern(i18n).matcher(title).replaceAll(" ")
-    for (option in words) {
-      configurableOptions.add(OptionDescription(option, title, path))
+    for (word in words) {
+      configurableOptions.add(OptionDescription(word, title, path))
     }
   }
 
