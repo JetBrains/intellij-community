@@ -22,7 +22,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PlatformNioHelper;
-import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.*;
 
 import java.io.IOException;
@@ -265,24 +264,19 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   @ApiStatus.Internal
-  public String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
+  public final String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
     return listWithCaching(dir, null);
   }
 
   @ApiStatus.Internal
-  public String @NotNull [] listWithCaching(@NotNull VirtualFile dir, @Nullable Set<String> filter) {
-    if ((SystemInfo.isWindows || SystemInfo.isMac && CpuArch.isArm64()) && getClass() == LocalFileSystemImpl.class) {
-      Pair<VirtualFile, Map<String, FileAttributes>> cache = myFileAttributesCache.get();
-      if (cache != null) {
-        LOG.error("unordered access to " + dir + " without cleaning after " + cache.first);
-      }
-      Map<String, FileAttributes> result = myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, filter));
-      myFileAttributesCache.set(new Pair<>(dir, result));
-      return ArrayUtil.toStringArray(result.keySet());
+  public final String @NotNull [] listWithCaching(@NotNull VirtualFile dir, @Nullable Set<String> filter) {
+    var cache = myFileAttributesCache.get();
+    if (cache != null) {
+      LOG.error("unordered access to " + dir + " without cleaning after " + cache.first);
     }
-    else {
-      return list(dir);
-    }
+    var result = myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, filter));
+    myFileAttributesCache.set(new Pair<>(dir, result));
+    return ArrayUtil.toStringArray(result.keySet());
   }
 
   @ApiStatus.Internal

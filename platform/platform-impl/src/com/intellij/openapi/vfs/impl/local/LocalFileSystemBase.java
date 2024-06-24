@@ -30,6 +30,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -558,9 +559,14 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    var pathStr = FileUtilRt.toSystemDependentName(file.getPath());
-    if (pathStr.length() == 2 && pathStr.charAt(1) == ':') pathStr += '\\';
-    return FileSystemUtil.getAttributes(pathStr);
+    try {
+      var nioFile = Path.of(toIoPath(file));
+      var nioAttributes = Files.readAttributes(nioFile, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+      return FileAttributes.fromNio(nioFile, nioAttributes);
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   private final DiskQueryRelay<Path, String[]> myNioChildrenGetter = new DiskQueryRelay<>(LocalFileSystemBase::listPathChildren);
