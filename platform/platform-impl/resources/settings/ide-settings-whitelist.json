@@ -91,6 +91,7 @@
     "com.intellij:app:GeneralSettings.searchInBackground",
     "com.intellij:app:HttpConfigurable.*",
     "com.intellij:app:JsonEditorOptions.*",
+    "com.intellij:app:MemoryViewSettings.*",
     "com.intellij:app:ProjectViewSharedSettings.abbreviatePackages",
     "com.intellij:app:ProjectViewSharedSettings.compactDirectories",
     "com.intellij:app:ProjectViewSharedSettings.flattenModules",
