@@ -26,8 +26,6 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultTreeModel
@@ -63,31 +61,39 @@ object CodeReviewChangeListComponentFactory {
     }
     tree.rebuildTree()
 
-    cs.launch {
-      // magic with selection to skip selection reset after update
-      val selectionListener = TreeSelectionListener {
-        vm.updateSelectedChangesFromTree(tree)
-      }
+    val selectionListener = TreeSelectionListener {
+      vm.updateSelectedChangesFromTree(tree)
+    }
+    tree.addTreeSelectionListener(selectionListener)
 
-      vm.selectionRequests.collectLatest {
-        tree.removeTreeSelectionListener(selectionListener)
-        when (it) {
-          is CodeReviewChangeListViewModel.SelectionRequest.All -> {
-            tree.invokeAfterRefresh {
-              TreeUtil.selectFirstNode(tree)
-              tree.addTreeSelectionListener(selectionListener)
-            }
-          }
-          is CodeReviewChangeListViewModel.SelectionRequest.OneChange -> {
-            tree.invokeAfterRefresh {
-              tree.setSelectedChanges(listOf(it.change))
-              tree.addTreeSelectionListener(selectionListener)
-            }
-          }
-        }
+    cs.launchNow {
+      vm.selectionRequests.collect {
+        tree.handleSelectionRequest(selectionListener, it)
       }
     }
     return tree
+  }
+
+  private fun AsyncChangesTree.handleSelectionRequest(
+    selectionListener: TreeSelectionListener,
+    request: CodeReviewChangeListViewModel.SelectionRequest,
+  ) {
+    // skip selection reset after update to avoid loop
+    removeTreeSelectionListener(selectionListener)
+    when (request) {
+      is CodeReviewChangeListViewModel.SelectionRequest.All -> {
+        invokeAfterRefresh {
+          TreeUtil.selectFirstNode(this)
+          addTreeSelectionListener(selectionListener)
+        }
+      }
+      is CodeReviewChangeListViewModel.SelectionRequest.OneChange -> {
+        invokeAfterRefresh {
+          setSelectedChanges(listOf(request.change))
+          addTreeSelectionListener(selectionListener)
+        }
+      }
+    }
   }
 
   private fun CoroutineScope.createTree(vm: CodeReviewChangeListViewModel, treeModel: AsyncChangesTreeModel) =
