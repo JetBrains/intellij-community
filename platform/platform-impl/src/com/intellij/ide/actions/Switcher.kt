@@ -97,7 +97,7 @@ object Switcher : BaseSwitcherAction(null) {
                       val title: @Nls String,
                       event: InputEvent?,
                       onlyEditedFiles: Boolean?,
-                      forward: Boolean) : BorderLayoutPanel(), DataProvider, QuickSearchComponent, Disposable {
+                      forward: Boolean) : BorderLayoutPanel(), UiDataProvider, QuickSearchComponent, Disposable {
     val popup: JBPopup?
     val activity = SHOWN_TIME_ACTIVITY.started(project)
     var navigationData: SwitcherLogger.NavigationData? = null
@@ -124,21 +124,14 @@ object Switcher : BaseSwitcherAction(null) {
     private val speedSearch: SwitcherSpeedSearch?
     private var hint: JBPopup? = null
 
-    override fun getData(dataId: @NonNls String): Any? {
-      when {
-        CommonDataKeys.PROJECT.`is`(dataId) -> return project
-        PlatformCoreDataKeys.SELECTED_ITEM.`is`(dataId) -> {
-          return if (files.isSelectionEmpty) null else files.selectedValuesList.singleOrNull()?.file
-        }
-        PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId) -> {
-          return if (speedSearch?.isPopupActive == true) speedSearch.enteredPrefix else null
-        }
-        CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> {
-          if (files.isSelectionEmpty) return null
-          val array = files.selectedValuesList.map(SwitcherVirtualFile::file).toTypedArray()
-          return if (array.isNotEmpty()) array else null
-        }
-        else -> return null
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[CommonDataKeys.PROJECT] = project
+      sink[PlatformCoreDataKeys.SELECTED_ITEM] = if (files.isSelectionEmpty) null else files.selectedValuesList.singleOrNull()?.file
+      sink[PlatformDataKeys.SPEED_SEARCH_TEXT] = if (speedSearch?.isPopupActive == true) speedSearch.enteredPrefix else null
+      sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = run {
+        if (files.isSelectionEmpty) return@run null
+        val array = files.selectedValuesList.map(SwitcherVirtualFile::file).toTypedArray()
+        if (array.isNotEmpty()) array else null
       }
     }
 

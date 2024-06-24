@@ -19,7 +19,12 @@ public final class SimpleDataContext extends CustomizedDataContext {
     super(Objects.requireNonNullElseGet(parent, () -> IdeUiService.getInstance()
             .createUiDataContext(PlatformCoreDataKeys.CONTEXT_COMPONENT
                                    .getData((DataProvider)dataId -> getData(dataId, map)))),
-          dataId -> getData(dataId, map), false);
+          (EdtNoGetDataProvider)sink -> {
+            for (String dataId : map.keySet()) {
+              sink.set(DataKey.create(dataId),
+                       Objects.requireNonNullElse(map.get(dataId), EXPLICIT_NULL));
+            }
+          }, false);
   }
 
   private static @Nullable Object getData(@NotNull String dataId, @NotNull Map<String, Object> map) {

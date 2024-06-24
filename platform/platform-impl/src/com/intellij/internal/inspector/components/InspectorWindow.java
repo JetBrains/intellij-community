@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
@@ -106,61 +105,6 @@ public final class InspectorWindow extends JDialog implements Disposable {
         updateHighlighting();
       }
     };
-    DataProvider provider = dataId -> {
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        return new Navigatable() {
-          final String selectedClassName = findSelectedClassName();
-
-          @Override
-          public void navigate(boolean requestFocus) {
-            if (selectedClassName != null) {
-              UiInspectorUtil.openClassByFqn(myProject, selectedClassName, requestFocus);
-            }
-          }
-
-          @Override
-          public boolean canNavigate() {
-            return selectedClassName != null;
-          }
-
-          @Override
-          public boolean canNavigateToSource() {
-            return canNavigate();
-          }
-
-          private String findSelectedClassName() {
-            if (myHierarchyTree.hasFocus()) {
-              if (!myComponents.isEmpty()) {
-                return myComponents.get(0).getClass().getName();
-              }
-              else {
-                TreePath path = myHierarchyTree.getSelectionPath();
-                if (path != null) {
-                  Object obj = path.getLastPathComponent();
-                  if (obj instanceof HierarchyTree.ComponentNode) {
-                    Component comp = ((HierarchyTree.ComponentNode)obj).getComponent();
-                    if (comp != null) {
-                      return comp.getClass().getName();
-                    }
-                  }
-                }
-              }
-            }
-            else if (myInspectorTable.getTable().hasFocus()) {
-              int row = myInspectorTable.getTable().getSelectedRow();
-              String value = myInspectorTable.getCellTextValue(row, 1);
-              // remove hashcode, properties description, take first from enumeration
-              String[] parts = value.split("[@,\\[]");
-              return parts[0];
-            }
-            return null;
-          }
-        };
-      }
-      return null;
-    };
-    DataManager.registerDataProvider(getRootPane(), provider);
-
     Splitter splitPane = new JBSplitter(false, "UiInspector.splitter.proportion", 0.5f);
     splitPane.setSecondComponent(myWrapperPanel);
     splitPane.setFirstComponent(new JBScrollPane(myHierarchyTree));
@@ -238,6 +182,13 @@ public final class InspectorWindow extends JDialog implements Disposable {
     });
     updateHighlighting();
     getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "CLOSE");
+  }
+
+  @Override
+  protected JRootPane createRootPane() {
+    JRootPane rp = new MyRootPane();
+    rp.setOpaque(true);
+    return rp;
   }
 
   public static String getDimensionServiceKey() {
@@ -405,6 +356,58 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
       g2d.setComposite(old);
       g2d.setColor(oldColor);
+    }
+  }
+
+  private String findSelectedClassName() {
+    if (myHierarchyTree.hasFocus()) {
+      if (!myComponents.isEmpty()) {
+        return myComponents.get(0).getClass().getName();
+      }
+      else {
+        TreePath path = myHierarchyTree.getSelectionPath();
+        if (path != null) {
+          Object obj = path.getLastPathComponent();
+          if (obj instanceof HierarchyTree.ComponentNode) {
+            Component comp = ((HierarchyTree.ComponentNode)obj).getComponent();
+            if (comp != null) {
+              return comp.getClass().getName();
+            }
+          }
+        }
+      }
+    }
+    else if (myInspectorTable.getTable().hasFocus()) {
+      int row = myInspectorTable.getTable().getSelectedRow();
+      String value = myInspectorTable.getCellTextValue(row, 1);
+      // remove hashcode, properties description, take first from enumeration
+      String[] parts = value.split("[@,\\[]");
+      return parts[0];
+    }
+    return null;
+  }
+
+  private class MyRootPane extends JRootPane implements UiDataProvider {
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      String selectedClassName = findSelectedClassName();
+      if (selectedClassName == null) return;
+      sink.set(CommonDataKeys.NAVIGATABLE, new Navigatable() {
+        @Override
+        public void navigate(boolean requestFocus) {
+          UiInspectorUtil.openClassByFqn(myProject, selectedClassName, requestFocus);
+        }
+
+        @Override
+        public boolean canNavigate() {
+          return true;
+        }
+
+        @Override
+        public boolean canNavigateToSource() {
+          return true;
+        }
+      });
     }
   }
 

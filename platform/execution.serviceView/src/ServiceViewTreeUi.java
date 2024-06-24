@@ -4,8 +4,9 @@ package com.intellij.platform.execution.serviceView;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.execution.services.ServiceViewUIUtils;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -52,14 +53,7 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
     myContentPanel.setContent(mySplitter);
 
-    myMasterPanel = new JPanel(new BorderLayout());
-    DataManager.registerDataProvider(myMasterPanel, dataId -> {
-      if (ServiceViewActionUtils.IS_FROM_TREE_KEY.is(dataId)) {
-        return true;
-      }
-      return null;
-    });
-
+    myMasterPanel = new MyPanel();
     mySplitter.setFirstComponent(myMasterPanel);
 
     myDetailsPanel = new JPanel(new BorderLayout());
@@ -248,4 +242,12 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     }
   }
 
+  private static class MyPanel extends JPanel implements UiDataProvider {
+    MyPanel() { super(new BorderLayout()); }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(ServiceViewActionUtils.IS_FROM_TREE_KEY, true);
+    }
+  }
 }

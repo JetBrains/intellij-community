@@ -60,7 +60,7 @@ import static com.intellij.util.ArrayUtil.getFirstElement;
 import static com.intellij.util.OpenSourceUtil.navigate;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
-public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider, ProblemsViewTab {
+public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, UiCompatibleDataProvider, ProblemsViewTab {
   private final ClientProjectSession mySession;
   volatile boolean myDisposed;
   private final String myId;
@@ -270,40 +270,35 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
-    if (PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER.is(dataId)) return shouldHideExpandCollapseActionsIfThereIsNoTreeExpander();
-    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-      // this code allows performing Editor's Undo action from the Problems View
-      Editor editor = getPreview();
-      if (editor != null) return TextEditorProvider.getInstance().getTextEditor(editor);
-      Node node = getSelectedNode();
-      VirtualFile file = node == null ? null : node.getVirtualFile();
-      return file == null ? null : getFirstElement(FileEditorManager.getInstance(mySession.getProject()).getEditors(file));
-    }
-    Node node = getSelectedNode();
-    if (node != null) {
-      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) return node;
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return node.getVirtualFile();
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        VirtualFile file = node.getVirtualFile();
-        return file == null ? null : new VirtualFile[]{file};
-      }
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowId -> getSlowData(slowId, node);
-      }
-    }
-    return null;
-  }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.PROJECT, getProject());
+    sink.set(PlatformDataKeys.TREE_EXPANDER, getTreeExpander());
+    sink.set(PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, shouldHideExpandCollapseActionsIfThereIsNoTreeExpander());
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Node node) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    Node node = getSelectedNode();
+    // this code allows performing Editor's Undo action from the Problems View
+    Editor editor = getPreview();
+    if (editor != null) {
+      sink.set(PlatformCoreDataKeys.FILE_EDITOR,
+               TextEditorProvider.getInstance().getTextEditor(editor));
+    }
+    else {
+      VirtualFile file = node == null ? null : node.getVirtualFile();
+      sink.set(PlatformCoreDataKeys.FILE_EDITOR,
+               file == null ? null : getFirstElement(FileEditorManager.getInstance(mySession.getProject()).getEditors(file)));
+    }
+    if (node == null) return;
+    VirtualFile file = node.getVirtualFile();
+
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEM, node);
+    sink.set(CommonDataKeys.VIRTUAL_FILE, node.getVirtualFile());
+    sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, file == null ? null : new VirtualFile[]{file});
+
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> node.getNavigatable());
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
       Navigatable navigatable = node.getNavigatable();
       return navigatable == null ? null : new Navigatable[]{navigatable};
-    }
-    return null;
+    });
   }
 
   protected void updateToolWindowContent() {

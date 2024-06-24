@@ -66,7 +66,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
   rerunAction: Runnable? = null,
   private val state: MessageViewState = MessageViewState(),
   errorViewStructure: ErrorViewStructure? = null,
-) : JPanel(), DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider, Disposable {
+) : JPanel(), UiCompatibleDataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider, Disposable {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   class MessageViewState {
@@ -241,22 +241,13 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
   val emptyText: StatusText
     get() = myTree.emptyText
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
-      CommonDataKeys.NAVIGATABLE.`is`(dataId) -> {
-        val selectedMessageElement = selectedNavigatableElement
-        selectedMessageElement?.navigatable
-      }
-      PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> helpId
-      PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
-      PlatformDataKeys.EXPORTER_TO_TEXT_FILE.`is`(dataId) -> exporterToTextFile
-      ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.`is`(dataId) -> {
-        val selectedMessageElement = selectedErrorTreeElement
-        selectedMessageElement?.data
-      }
-      else -> null
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.COPY_PROVIDER] = this
+    sink[CommonDataKeys.NAVIGATABLE] = selectedNavigatableElement?.navigatable
+    sink[PlatformCoreDataKeys.HELP_ID] = helpId
+    sink[PlatformDataKeys.TREE_EXPANDER] = treeExpander
+    sink[PlatformDataKeys.EXPORTER_TO_TEXT_FILE] = exporterToTextFile
+    sink[ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY] = selectedErrorTreeElement?.data
   }
 
   open fun selectFirstMessage() {

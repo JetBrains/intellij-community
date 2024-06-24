@@ -269,16 +269,18 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
   @ApiStatus.Internal
   public void setDataContext(@NotNull DataContext dataContext) {
-    myDataContext = CustomizedDataContext.create(IdeUiService.getInstance().createAsyncDataContext(dataContext), dataId -> {
-      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
-        Module module = null;
-        if (myRunnerAndConfigurationSettings != null &&
-            myRunnerAndConfigurationSettings.getConfiguration() instanceof ModuleBasedConfiguration<?, ?> configuration) {
-          module = configuration.getConfigurationModule().getModule();
-        }
-        return module == null ? CustomizedDataContext.EXPLICIT_NULL : module;
+    myDataContext = CustomizedDataContext.withSnapshot(IdeUiService.getInstance().createAsyncDataContext(dataContext), sink -> {
+      Module module = null;
+      if (myRunnerAndConfigurationSettings != null &&
+          myRunnerAndConfigurationSettings.getConfiguration() instanceof ModuleBasedConfiguration<?, ?> configuration) {
+        module = configuration.getConfigurationModule().getModule();
       }
-      return null;
+      if (module != null) {
+        sink.set(PlatformCoreDataKeys.MODULE, module);
+      }
+      else {
+        sink.setNull(PlatformCoreDataKeys.MODULE);
+      }
     });
   }
 

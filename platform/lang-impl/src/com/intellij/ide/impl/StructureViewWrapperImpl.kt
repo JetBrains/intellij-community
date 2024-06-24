@@ -56,7 +56,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Container
@@ -489,13 +488,10 @@ class StructureViewWrapperImpl(private val project: Project,
       return toolWindow != null && toolWindow.isVisible
     }
 
-  private inner class ContentPanel : JPanel(BorderLayout()), DataProvider {
-    override fun getData(dataId: @NonNls String): Any? {
-      if (WRAPPER_DATA_KEY.`is`(dataId)) return this@StructureViewWrapperImpl
-      return if (QuickActionProvider.KEY.`is`(dataId)) {
-        if (myStructureView is QuickActionProvider) myStructureView else null
-      }
-      else null
+  private inner class ContentPanel : JPanel(BorderLayout()), UiDataProvider {
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[WRAPPER_DATA_KEY] = this@StructureViewWrapperImpl
+      sink[QuickActionProvider.KEY] = myStructureView as? QuickActionProvider
     }
   }
 

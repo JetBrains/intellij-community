@@ -263,20 +263,15 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       return;
     }
 
-    tabs = new JBRunnerTabs(myProject, this);
-    tabs.getComponent().setOpaque(false);
-    tabs.setDataProvider(dataId -> {
-      if (CONTENT_KEY.is(dataId)) {
+    tabs = new JBRunnerTabs(myProject, this) {
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
         TabInfo info = tabs.getTargetInfo();
-        if (info != null) {
-          return getGridFor(info).getData(dataId);
-        }
+        sink.set(CONTENT_KEY, info == null ? null : getGridFor(info).getContents().toArray(new Content[0]));
+        sink.set(CONTEXT_KEY, RunnerContentUi.this);
       }
-      else if (CONTEXT_KEY.is(dataId)) {
-        return this;
-      }
-      return null;
-    });
+    };
+    tabs.getComponent().setOpaque(false);
     tabs.getPresentation()
       .setTabLabelActionsAutoHide(false).setInnerInsets(JBInsets.emptyInsets())
       .setToDrawBorderIfTabsHidden(false).setTabDraggingEnabled(isMoveToGridActionEnabled()).setUiDecorator(null);

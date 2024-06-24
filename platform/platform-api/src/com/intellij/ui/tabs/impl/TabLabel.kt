@@ -45,7 +45,7 @@ import kotlin.math.min
 open class TabLabel @Internal constructor(
   @JvmField @Internal protected val tabs: JBTabsImpl,
   val info: TabInfo,
-) : JPanel(/* isDoubleBuffered = */ false), Accessible, DataProvider {
+) : JPanel(/* isDoubleBuffered = */ false), Accessible, UiCompatibleDataProvider {
   // if this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
   @JvmField
   protected val label: SimpleColoredComponent
@@ -695,7 +695,9 @@ open class TabLabel @Internal constructor(
     return super.getToolTipText(event)
   }
 
-  final override fun getData(dataId: String): Any? = (info.component as? DataProvider)?.getData(dataId)
+  final override fun uiDataSnapshot(sink: DataSink) {
+    DataSink.uiDataSnapshot(sink, info.component)
+  }
 
   enum class ActionsPosition {
     RIGHT, LEFT, NONE
