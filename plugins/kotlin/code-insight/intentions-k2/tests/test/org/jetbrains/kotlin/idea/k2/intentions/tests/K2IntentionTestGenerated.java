@@ -7445,7 +7445,590 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertToScope")
+    public abstract static class ConvertToScope extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertToScope/convertToAlso")
+        public static class ConvertToAlso extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("callExpression.kt")
+            public void testCallExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/callExpression.kt");
+            }
+
+            @TestMetadata("callExpression2.kt")
+            public void testCallExpression2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/callExpression2.kt");
+            }
+
+            @TestMetadata("callExpression3.kt")
+            public void testCallExpression3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/callExpression3.kt");
+            }
+
+            @TestMetadata("callExpression4.kt")
+            public void testCallExpression4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/callExpression4.kt");
+            }
+
+            @TestMetadata("callExpression5.kt")
+            public void testCallExpression5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/callExpression5.kt");
+            }
+
+            @TestMetadata("itParameter.kt")
+            public void testItParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/itParameter.kt");
+            }
+
+            @TestMetadata("itParameter2.kt")
+            public void testItParameter2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/itParameter2.kt");
+            }
+
+            @TestMetadata("methodChain.kt")
+            public void testMethodChain() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/methodChain.kt");
+            }
+
+            @TestMetadata("methodChainWithItParameter.kt")
+            public void testMethodChainWithItParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/methodChainWithItParameter.kt");
+            }
+
+            @TestMetadata("methodChainWithThisParameter.kt")
+            public void testMethodChainWithThisParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/methodChainWithThisParameter.kt");
+            }
+
+            @TestMetadata("normal.kt")
+            public void testNormal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/normal.kt");
+            }
+
+            @TestMetadata("normal2.kt")
+            public void testNormal2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/normal2.kt");
+            }
+
+            @TestMetadata("normal3.kt")
+            public void testNormal3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/normal3.kt");
+            }
+
+            @TestMetadata("normal4.kt")
+            public void testNormal4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/normal4.kt");
+            }
+
+            @TestMetadata("onProperty.kt")
+            public void testOnProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/onProperty.kt");
+            }
+
+            @TestMetadata("singleCall.kt")
+            public void testSingleCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/singleCall.kt");
+            }
+
+            @TestMetadata("untilItParameter.kt")
+            public void testUntilItParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/untilItParameter.kt");
+            }
+
+            @TestMetadata("var.kt")
+            public void testVar() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/var.kt");
+            }
+
+            @TestMetadata("withCommentAndSpaces.kt")
+            public void testWithCommentAndSpaces() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/withCommentAndSpaces.kt");
+            }
+
+            @TestMetadata("withDifficultRenaming.kt")
+            public void testWithDifficultRenaming() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/withDifficultRenaming.kt");
+            }
+
+            @TestMetadata("withNotSimpleInitializer.kt")
+            public void testWithNotSimpleInitializer() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/withNotSimpleInitializer.kt");
+            }
+
+            @TestMetadata("withNotSimpleInitializer2.kt")
+            public void testWithNotSimpleInitializer2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToAlso/withNotSimpleInitializer2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertToScope/convertToApply")
+        public static class ConvertToApply extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("binaryExpression.kt")
+            public void testBinaryExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/binaryExpression.kt");
+            }
+
+            @TestMetadata("binaryExpression2.kt")
+            public void testBinaryExpression2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/binaryExpression2.kt");
+            }
+
+            @TestMetadata("binaryExpression3.kt")
+            public void testBinaryExpression3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/binaryExpression3.kt");
+            }
+
+            @TestMetadata("binaryExpression4.kt")
+            public void testBinaryExpression4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/binaryExpression4.kt");
+            }
+
+            @TestMetadata("binaryExpression5.kt")
+            public void testBinaryExpression5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/binaryExpression5.kt");
+            }
+
+            @TestMetadata("callExpression.kt")
+            public void testCallExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/callExpression.kt");
+            }
+
+            @TestMetadata("callExpression2.kt")
+            public void testCallExpression2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/callExpression2.kt");
+            }
+
+            @TestMetadata("callExpression3.kt")
+            public void testCallExpression3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/callExpression3.kt");
+            }
+
+            @TestMetadata("callExpression4.kt")
+            public void testCallExpression4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/callExpression4.kt");
+            }
+
+            @TestMetadata("callExpression5.kt")
+            public void testCallExpression5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/callExpression5.kt");
+            }
+
+            @TestMetadata("methodChain.kt")
+            public void testMethodChain() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/methodChain.kt");
+            }
+
+            @TestMetadata("methodChainWithItParameter.kt")
+            public void testMethodChainWithItParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/methodChainWithItParameter.kt");
+            }
+
+            @TestMetadata("methodChainWithThisParameter.kt")
+            public void testMethodChainWithThisParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/methodChainWithThisParameter.kt");
+            }
+
+            @TestMetadata("normal.kt")
+            public void testNormal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/normal.kt");
+            }
+
+            @TestMetadata("normal2.kt")
+            public void testNormal2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/normal2.kt");
+            }
+
+            @TestMetadata("normal3.kt")
+            public void testNormal3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/normal3.kt");
+            }
+
+            @TestMetadata("normal4.kt")
+            public void testNormal4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/normal4.kt");
+            }
+
+            @TestMetadata("onProperty.kt")
+            public void testOnProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/onProperty.kt");
+            }
+
+            @TestMetadata("singleCall.kt")
+            public void testSingleCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/singleCall.kt");
+            }
+
+            @TestMetadata("thisParameter.kt")
+            public void testThisParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/thisParameter.kt");
+            }
+
+            @TestMetadata("thisParameter2.kt")
+            public void testThisParameter2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/thisParameter2.kt");
+            }
+
+            @TestMetadata("untilThisParameter.kt")
+            public void testUntilThisParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/untilThisParameter.kt");
+            }
+
+            @TestMetadata("var.kt")
+            public void testVar() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/var.kt");
+            }
+
+            @TestMetadata("withCommentAndSpaces.kt")
+            public void testWithCommentAndSpaces() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/withCommentAndSpaces.kt");
+            }
+
+            @TestMetadata("withDifficultRenaming.kt")
+            public void testWithDifficultRenaming() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/withDifficultRenaming.kt");
+            }
+
+            @TestMetadata("withNotSimpleInitializer.kt")
+            public void testWithNotSimpleInitializer() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/withNotSimpleInitializer.kt");
+            }
+
+            @TestMetadata("withNotSimpleInitializer2.kt")
+            public void testWithNotSimpleInitializer2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/withNotSimpleInitializer2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertToScope/convertToRun")
+        public static class ConvertToRun extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("binaryExpression.kt")
+            public void testBinaryExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/binaryExpression.kt");
+            }
+
+            @TestMetadata("binaryExpression2.kt")
+            public void testBinaryExpression2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/binaryExpression2.kt");
+            }
+
+            @TestMetadata("binaryExpression3.kt")
+            public void testBinaryExpression3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/binaryExpression3.kt");
+            }
+
+            @TestMetadata("callExpression.kt")
+            public void testCallExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/callExpression.kt");
+            }
+
+            @TestMetadata("callExpression2.kt")
+            public void testCallExpression2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/callExpression2.kt");
+            }
+
+            @TestMetadata("chainCallExpression.kt")
+            public void testChainCallExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/chainCallExpression.kt");
+            }
+
+            @TestMetadata("insideLambdaExpression.kt")
+            public void testInsideLambdaExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/insideLambdaExpression.kt");
+            }
+
+            @TestMetadata("itReceiver.kt")
+            public void testItReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/itReceiver.kt");
+            }
+
+            @TestMetadata("javaMethod.kt")
+            public void testJavaMethod() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/javaMethod.kt");
+            }
+
+            @TestMetadata("javaStaticMethod.kt")
+            public void testJavaStaticMethod() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/javaStaticMethod.kt");
+            }
+
+            @TestMetadata("methodChain.kt")
+            public void testMethodChain() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/methodChain.kt");
+            }
+
+            @TestMetadata("methodChainWithItParameter.kt")
+            public void testMethodChainWithItParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/methodChainWithItParameter.kt");
+            }
+
+            @TestMetadata("methodChainWithThisParameter.kt")
+            public void testMethodChainWithThisParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/methodChainWithThisParameter.kt");
+            }
+
+            @TestMetadata("nestedClass.kt")
+            public void testNestedClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/nestedClass.kt");
+            }
+
+            @TestMetadata("nestedObject.kt")
+            public void testNestedObject() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/nestedObject.kt");
+            }
+
+            @TestMetadata("normal.kt")
+            public void testNormal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/normal.kt");
+            }
+
+            @TestMetadata("normal2.kt")
+            public void testNormal2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/normal2.kt");
+            }
+
+            @TestMetadata("normal3.kt")
+            public void testNormal3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/normal3.kt");
+            }
+
+            @TestMetadata("normal4.kt")
+            public void testNormal4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/normal4.kt");
+            }
+
+            @TestMetadata("normal5.kt")
+            public void testNormal5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/normal5.kt");
+            }
+
+            @TestMetadata("onProperty.kt")
+            public void testOnProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/onProperty.kt");
+            }
+
+            @TestMetadata("package.kt")
+            public void testPackage() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/package.kt");
+            }
+
+            @TestMetadata("singleCall.kt")
+            public void testSingleCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/singleCall.kt");
+            }
+
+            @TestMetadata("thisParameter.kt")
+            public void testThisParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/thisParameter.kt");
+            }
+
+            @TestMetadata("thisReceiver.kt")
+            public void testThisReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/thisReceiver.kt");
+            }
+
+            @TestMetadata("untilThisParameter.kt")
+            public void testUntilThisParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/untilThisParameter.kt");
+            }
+
+            @TestMetadata("withCommentAndSpaces.kt")
+            public void testWithCommentAndSpaces() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/withCommentAndSpaces.kt");
+            }
+
+            @TestMetadata("withDifficultRenaming.kt")
+            public void testWithDifficultRenaming() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/withDifficultRenaming.kt");
+            }
+
+            @TestMetadata("withNotSimpleInitializer.kt")
+            public void testWithNotSimpleInitializer() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/withNotSimpleInitializer.kt");
+            }
+
+            @TestMetadata("withNotSimpleInitializer2.kt")
+            public void testWithNotSimpleInitializer2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/withNotSimpleInitializer2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertToScope/convertToWith")
+        public static class ConvertToWith extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("callExpression.kt")
+            public void testCallExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/callExpression.kt");
+            }
+
+            @TestMetadata("callExpression2.kt")
+            public void testCallExpression2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/callExpression2.kt");
+            }
+
+            @TestMetadata("itReceiver.kt")
+            public void testItReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/itReceiver.kt");
+            }
+
+            @TestMetadata("javaMethod.kt")
+            public void testJavaMethod() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/javaMethod.kt");
+            }
+
+            @TestMetadata("javaStaticMethod.kt")
+            public void testJavaStaticMethod() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/javaStaticMethod.kt");
+            }
+
+            @TestMetadata("methodChain.kt")
+            public void testMethodChain() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/methodChain.kt");
+            }
+
+            @TestMetadata("methodChainWithItParameter.kt")
+            public void testMethodChainWithItParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/methodChainWithItParameter.kt");
+            }
+
+            @TestMetadata("methodChainWithThisParameter.kt")
+            public void testMethodChainWithThisParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/methodChainWithThisParameter.kt");
+            }
+
+            @TestMetadata("nestedClass.kt")
+            public void testNestedClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/nestedClass.kt");
+            }
+
+            @TestMetadata("nestedObject.kt")
+            public void testNestedObject() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/nestedObject.kt");
+            }
+
+            @TestMetadata("normal.kt")
+            public void testNormal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/normal.kt");
+            }
+
+            @TestMetadata("normal2.kt")
+            public void testNormal2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/normal2.kt");
+            }
+
+            @TestMetadata("normal3.kt")
+            public void testNormal3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/normal3.kt");
+            }
+
+            @TestMetadata("normal4.kt")
+            public void testNormal4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/normal4.kt");
+            }
+
+            @TestMetadata("normal5.kt")
+            public void testNormal5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/normal5.kt");
+            }
+
+            @TestMetadata("onProperty.kt")
+            public void testOnProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/onProperty.kt");
+            }
+
+            @TestMetadata("package.kt")
+            public void testPackage() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/package.kt");
+            }
+
+            @TestMetadata("parameterExpression.kt")
+            public void testParameterExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/parameterExpression.kt");
+            }
+
+            @TestMetadata("singleCall.kt")
+            public void testSingleCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/singleCall.kt");
+            }
+
+            @TestMetadata("thisParameter.kt")
+            public void testThisParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/thisParameter.kt");
+            }
+
+            @TestMetadata("thisReceiver.kt")
+            public void testThisReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/thisReceiver.kt");
+            }
+
+            @TestMetadata("untilThisParameter.kt")
+            public void testUntilThisParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/untilThisParameter.kt");
+            }
+
+            @TestMetadata("withCommentAndSpaces.kt")
+            public void testWithCommentAndSpaces() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/withCommentAndSpaces.kt");
+            }
+
+            @TestMetadata("withDifficultRenaming.kt")
+            public void testWithDifficultRenaming() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/withDifficultRenaming.kt");
+            }
+
+            @TestMetadata("withNotSimpleInitializer.kt")
+            public void testWithNotSimpleInitializer() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/withNotSimpleInitializer.kt");
+            }
+
+            @TestMetadata("withNotSimpleInitializer2.kt")
+            public void testWithNotSimpleInitializer2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/withNotSimpleInitializer2.kt");
+            }
+        }
+    }
 
 
 

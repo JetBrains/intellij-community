@@ -183,18 +183,6 @@ val FunctionDescriptor.isOperatorOrCompatible: Boolean
         return isOperator
     }
 
-internal fun Sequence<PsiElement>.lastWithPersistedElementOrNull(elementShouldPersist: KtExpression): PsiElement? {
-    var lastElement: PsiElement? = null
-    var checked = false
-
-    for (element in this) {
-        checked = checked || (element === elementShouldPersist)
-        lastElement = element
-    }
-
-    return if (checked) lastElement else null
-}
-
 fun KotlinType.reflectToRegularFunctionType(): KotlinType {
     val isTypeAnnotatedWithExtensionFunctionType = annotations.findAnnotation(StandardNames.FqNames.extensionFunctionType) != null
     val parameterCount = if (isTypeAnnotatedWithExtensionFunctionType) arguments.size - 2 else arguments.size - 1

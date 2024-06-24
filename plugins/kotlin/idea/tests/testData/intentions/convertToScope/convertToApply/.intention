@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.intentions.ConvertToApplyIntention
+org.jetbrains.kotlin.idea.codeInsight.intentions.shared.ConvertToApplyIntention

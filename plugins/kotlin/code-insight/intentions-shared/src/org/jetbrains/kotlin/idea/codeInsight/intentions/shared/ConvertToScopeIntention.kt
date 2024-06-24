@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.intentions
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
@@ -12,14 +15,28 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.intentions.ConvertToScopeIntention.ScopeFunction.*
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
@@ -27,8 +44,8 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) : SelfTargetingIntention<KtExpression>(
-    KtExpression::class.java,
-    KotlinBundle.lazyMessage("convert.to.0", scopeFunction.functionName)
+  KtExpression::class.java,
+  KotlinBundle.lazyMessage("convert.to.0", scopeFunction.functionName)
 ) {
     enum class ScopeFunction(val functionName: String, val isParameterScope: Boolean) {
         ALSO(functionName = "also", isParameterScope = true),
@@ -40,13 +57,13 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
     }
 
     private data class RefactoringTargetAndItsValueExpression(
-        val targetElement: PsiElement,
-        val targetElementValue: PsiElement
+      val targetElement: PsiElement,
+      val targetElementValue: PsiElement
     )
 
     private data class ScopedFunctionCallAndBlock(
-        val scopeFunctionCall: KtExpression,
-        val block: KtBlockExpression
+      val scopeFunctionCall: KtExpression,
+      val block: KtBlockExpression
     )
 
     override fun isApplicableTo(element: KtExpression, caretOffset: Int) = tryApplyTo(element, dryRun = true)
@@ -54,7 +71,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
     override fun applyTo(element: KtExpression, editor: Editor?) {
         if (!tryApplyTo(element, dryRun = false)) {
             val message = RefactoringBundle.getCannotRefactorMessage(
-                JavaRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", text)
+              JavaRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", text)
             )
             CommonRefactoringUtil.showErrorHint(element.project, editor, message, text, null)
         }
@@ -114,7 +131,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
 
     private fun removeRedundantThisQualifiers(block: KtBlockExpression) {
         val thisDotSomethingExpressions = block.collectDescendantsOfType<KtDotQualifiedExpression> {
-            it.receiverExpression is KtThisExpression && it.selectorExpression !== null
+          it.receiverExpression is KtThisExpression && it.selectorExpression !== null
         }
 
         thisDotSomethingExpressions.forEach { thisDotSomethingExpression ->
@@ -125,22 +142,22 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
     }
 
     private fun tryGetFirstElementToRefactoring(
-        expressionToApply: KtExpression,
-        firstTarget: PsiElement,
-        lastTarget: PsiElement,
-        referenceElement: PsiElement
+      expressionToApply: KtExpression,
+      firstTarget: PsiElement,
+      lastTarget: PsiElement,
+      referenceElement: PsiElement
     ): RefactoringTargetAndItsValueExpression? {
         val property = expressionToApply.prevProperty()
 
         val propertyOrFirst = when (scopeFunction) {
-            ALSO, APPLY -> property
-            RUN, WITH -> firstTarget
+            ScopeFunction.ALSO, ScopeFunction.APPLY -> property
+            ScopeFunction.RUN, ScopeFunction.WITH -> firstTarget
         } ?: return null
 
         val isCorrectFirstOrProperty = when (scopeFunction) {
-            ALSO, APPLY -> propertyOrFirst is KtProperty && propertyOrFirst.name !== null && propertyOrFirst.initializer !== null
-            RUN -> propertyOrFirst is KtDotQualifiedExpression
-            WITH -> propertyOrFirst is KtDotQualifiedExpression
+            ScopeFunction.ALSO, ScopeFunction.APPLY -> propertyOrFirst is KtProperty && propertyOrFirst.name !== null && propertyOrFirst.initializer !== null
+            ScopeFunction.RUN -> propertyOrFirst is KtDotQualifiedExpression
+            ScopeFunction.WITH -> propertyOrFirst is KtDotQualifiedExpression
         }
 
         if (!isCorrectFirstOrProperty) return null
@@ -160,7 +177,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         }
 
         val searchParameters = KotlinReferencesSearchParameters(
-            element, element.useScope(), ignoreAccessScope = false
+          element, element.useScope(), ignoreAccessScope = false
         )
 
         val range = PsiTreeUtil.getElementsOfRange(firstTarget, lastTarget)
@@ -177,12 +194,12 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
 
     private fun KtExpression.tryExtractReferenceName(): Pair<PsiElement, String>? {
         return when (scopeFunction) {
-            ALSO, APPLY -> {
+            ScopeFunction.ALSO, ScopeFunction.APPLY -> {
                 val property = prevProperty()
                 val name = property?.name
                 if (name !== null) property to name else null
             }
-            RUN, WITH -> {
+            ScopeFunction.RUN, ScopeFunction.WITH -> {
                 val receiver = safeAs<KtDotQualifiedExpression>()?.getLeftMostReceiverExpression() as? KtNameReferenceExpression
                 val declaration = receiver?.mainReference?.resolve()?.takeUnless { it is PsiPackage } ?: return null
                 val selector = receiver.getQualifiedExpressionForReceiver()?.selectorExpression
@@ -195,7 +212,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
 
     private fun KtExpression.collectTargetElementsRange(referenceName: String, greedy: Boolean): Pair<PsiElement, PsiElement>? {
         return when (scopeFunction) {
-            ALSO, APPLY -> {
+            ScopeFunction.ALSO, ScopeFunction.APPLY -> {
                 val firstTarget = this as? KtProperty ?: this.prevProperty() ?: this
 
                 val lastTargetSequence = firstTarget.collectTargetElements(referenceName, forward = true)
@@ -209,7 +226,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
 
                 if (lastTarget !== null) firstTarget to lastTarget else null
             }
-            RUN, WITH -> {
+            ScopeFunction.RUN, ScopeFunction.WITH -> {
 
                 val firstTarget = collectTargetElements(referenceName, forward = false).lastOrNull() ?: this
 
@@ -267,7 +284,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
     private fun createScopeFunctionCall(factory: KtPsiFactory, element: PsiElement): ScopedFunctionCallAndBlock? {
         val scopeFunctionName = scopeFunction.functionName
         val (scopeFunctionCall, callExpression) = when (scopeFunction) {
-            ALSO, APPLY -> {
+            ScopeFunction.ALSO, ScopeFunction.APPLY -> {
                 if (element !is KtProperty) return null
                 val propertyName = element.name ?: return null
                 val initializer = element.initializer ?: return null
@@ -286,7 +303,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
                 val callExpression = (property.initializer as? KtDotQualifiedExpression)?.callExpression ?: return null
                 property to callExpression
             }
-            RUN -> {
+            ScopeFunction.RUN -> {
                 if (element !is KtDotQualifiedExpression) return null
                 val scopeFunctionCall = factory.createExpressionByPattern(
                     "$0.$scopeFunctionName {}",
@@ -295,7 +312,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
                 val callExpression = scopeFunctionCall.callExpression ?: return null
                 scopeFunctionCall to callExpression
             }
-            WITH -> {
+            ScopeFunction.WITH -> {
                 if (element !is KtDotQualifiedExpression) return null
 
                 val scopeFunctionCall = factory.createExpressionByPattern(
@@ -316,10 +333,19 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
     }
 }
 
-class ConvertToAlsoIntention : ConvertToScopeIntention(ALSO)
+private fun Sequence<PsiElement>.lastWithPersistedElementOrNull(elementShouldPersist: KtExpression): PsiElement? {
+    var lastElement: PsiElement? = null
+    var checked = false
 
-class ConvertToApplyIntention : ConvertToScopeIntention(APPLY)
+    for (element in this) {
+        checked = checked || (element === elementShouldPersist)
+        lastElement = element
+    }
 
-class ConvertToRunIntention : ConvertToScopeIntention(RUN)
+    return if (checked) lastElement else null
+}
 
-class ConvertToWithIntention : ConvertToScopeIntention(WITH)
+class ConvertToAlsoIntention : ConvertToScopeIntention(ScopeFunction.ALSO)
+class ConvertToApplyIntention : ConvertToScopeIntention(ScopeFunction.APPLY)
+class ConvertToRunIntention : ConvertToScopeIntention(ScopeFunction.RUN)
+class ConvertToWithIntention : ConvertToScopeIntention(ScopeFunction.WITH)
