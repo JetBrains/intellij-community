@@ -1,13 +1,13 @@
 class Test {
     fun useSamUpper(acceptor: SamAcceptor<out Number?>) {
-        acceptor.acceptSam({ p: Int -> })
+        acceptor.acceptSam({ p -> })
     }
 
     fun useSamLower(acceptor: SamAcceptor<in Number?>) {
-        acceptor.acceptSam({ p: Int -> })
+        acceptor.acceptSam({ p -> })
     }
 
     fun useSam(acceptor: SamAcceptor<*>) {
-        acceptor.acceptSam({ p: Int -> })
+        acceptor.acceptSam({ p -> })
     }
 }

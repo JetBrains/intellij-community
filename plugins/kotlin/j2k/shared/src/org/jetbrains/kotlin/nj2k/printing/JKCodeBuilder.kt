@@ -278,6 +278,15 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
         }
 
         override fun visitParameterRaw(parameter: JKParameter) {
+            renderParameter(parameter)
+        }
+
+        private fun renderParameter(parameter: JKParameter, renderType: Boolean = true) {
+            if (parameter is JKKtDestructuringDeclaration) {
+                visitDestructuringDeclarationRaw(parameter)
+                return
+            }
+
             renderModifiersList(parameter)
             parameter.annotationList.accept(this)
             if (parameter.isVarArgs) {
@@ -290,7 +299,7 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
                 printer.printWithSurroundingSpaces("val")
             }
 
-            renderVariableDeclarationNameAndType(parameter)
+            renderVariableDeclarationNameAndType(parameter, renderType)
             if (parameter.initializer !is JKStubExpression) {
                 printer.printWithSurroundingSpaces("=")
                 parameter.initializer.accept(this)
@@ -307,9 +316,9 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
             renderVariableDeclarationNameAndType(destructuringDeclarationEntry)
         }
 
-        private fun renderVariableDeclarationNameAndType(variable: JKVariable) {
+        private fun renderVariableDeclarationNameAndType(variable: JKVariable, renderType: Boolean = true) {
             variable.name.accept(this)
-            if (variable.type.isPresent() && variable.type.type !is JKContextType) {
+            if (renderType && variable.type.isPresent() && variable.type.type !is JKContextType) {
                 printer.print(": ")
                 variable.type.accept(this)
             }
@@ -540,7 +549,15 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
         override fun visitCallExpressionRaw(callExpression: JKCallExpression) {
             printer.renderSymbol(callExpression.identifier, callExpression)
             if (callExpression.identifier.isAnnotationMethod()) return
-            callExpression.typeArgumentList.accept(this)
+
+            val methodName = callExpression.identifier.fqName
+            if (isK1Mode() ||
+                (methodName != "java.util.stream.Stream.collect" && !methodName.startsWith("java.util.stream.Collectors"))) {
+                // Type arguments for Stream.collect calls cannot be explicitly specified in Kotlin.
+                // This is a K2 counterpart to the K1 `RemoveJavaStreamsCollectCallTypeArgumentsProcessing`.
+                callExpression.typeArgumentList.accept(this)
+            }
+
             callExpression.arguments.accept(this)
         }
 
@@ -807,7 +824,8 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
         override fun visitLambdaExpressionRaw(lambdaExpression: JKLambdaExpression) {
             if (lambdaExpression.functionalType.isPresent()) {
                 // print SAM constructor
-                printer.renderType(lambdaExpression.functionalType.type, lambdaExpression)
+                val renderTypeParameters = isK1Mode()
+                printer.renderType(lambdaExpression.functionalType.type, lambdaExpression, renderTypeParameters)
                 printer.print(" ")
             }
 
@@ -819,7 +837,14 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
                 val isMultiStatement = lambdaExpression.statement.statements.size > 1
                 if (isMultiStatement) printer.println()
 
-                printer.renderList(lambdaExpression.parameters) { it.accept(this) }
+                for ((i, parameter) in lambdaExpression.parameters.withIndex()) {
+                    printLeftNonCodeElements(parameter)
+                    val renderType = isK1Mode()
+                    renderParameter(parameter, renderType)
+                    if (i < lambdaExpression.parameters.lastIndex) printer.print(", ")
+                    printRightNonCodeElements(parameter)
+                }
+
                 if (lambdaExpression.parameters.isNotEmpty()) {
                     printer.printWithSurroundingSpaces("->")
                 }

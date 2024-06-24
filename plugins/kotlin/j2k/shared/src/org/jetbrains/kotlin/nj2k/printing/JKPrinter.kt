@@ -113,7 +113,7 @@ class JKPrinter(
         this@JKPrinter.print(elementInfoStorage.getOrCreateInferenceLabelForElement(this).render())
     }
 
-    fun renderType(type: JKType, owner: JKTreeElement? = null) {
+    fun renderType(type: JKType, owner: JKTreeElement? = null, renderTypeParameters: Boolean = true) {
         if (type is JKNoType) return
 
         if (type is JKCapturedType) {
@@ -155,7 +155,7 @@ class JKPrinter(
             else -> this.print("Unit /* TODO: ${type::class} */")
         }
 
-        if (type is JKParametrizedType && type.parameters.isNotEmpty()) {
+        if (type is JKParametrizedType && type.parameters.isNotEmpty() && renderTypeParameters) {
             par(ParenthesisKind.ANGLE) {
                 renderList(type.parameters, renderElement = { renderType(it) })
             }
