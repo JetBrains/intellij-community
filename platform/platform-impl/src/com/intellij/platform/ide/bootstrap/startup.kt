@@ -222,7 +222,7 @@ fun CoroutineScope.startApplication(
 
     if (!PluginAutoUpdateRepository.shouldSkipAutoUpdate()) {
       span("plugin auto update") {
-          PluginAutoUpdateRepository.applyPluginUpdates(logDeferred)
+          PluginAutoUpdater.applyPluginUpdates(logDeferred)
       }
     }
 
