@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificatio
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationListener
 
-internal class FirIdeKotlinModificationTrackerFactory(private val project: Project) : KotlinModificationTrackerFactory(), Disposable {
+internal class FirIdeKotlinModificationTrackerFactory(private val project: Project) : KotlinModificationTrackerFactory, Disposable {
     /**
      * A project-wide out-of-block modification tracker for Kotlin sources which will be incremented on global PSI tree changes, on any
      * module out-of-block modification, and by tests.

@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.platform.wasm.isWasm
 
-internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScopeProvider() {
+internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScopeProvider {
     override fun getResolutionScope(module: KaModule): GlobalSearchScope {
         return when (module) {
             is KaSourceModule -> {

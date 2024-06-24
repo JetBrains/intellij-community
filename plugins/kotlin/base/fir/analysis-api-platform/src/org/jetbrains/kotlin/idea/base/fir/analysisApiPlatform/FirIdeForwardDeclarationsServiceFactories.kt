@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KtNativeKlibLibraryModule
  *
  * @see [org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileGenerator]
  */
-internal class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclarationProviderFactory() {
+internal class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclarationProviderFactory {
     override fun createDeclarationProvider(module: KaModule): KotlinDeclarationProvider? {
         if (module !is KtNativeKlibLibraryModuleByModuleInfo) return null
 
@@ -32,7 +32,7 @@ internal class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclaratio
  *
  * @see [org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileGenerator]
  */
-internal class FirIdeForwardDeclarationPackageProviderFactory : KotlinForwardDeclarationsPackageProviderFactory() {
+internal class FirIdeForwardDeclarationPackageProviderFactory : KotlinForwardDeclarationsPackageProviderFactory {
     override fun createPackageProvider(module: KaModule): KotlinPackageProvider? {
         if (module !is KtNativeKlibLibraryModuleByModuleInfo) return null
 
