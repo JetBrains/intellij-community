@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.impl.ui.*
 import com.intellij.xdebugger.ui.TextValueVisualizer
@@ -156,6 +157,8 @@ internal object VisualizedTextPopup {
       assert(tabs.isNotEmpty())
 
       val panel = JBTabbedPane()
+      panel.tabComponentInsets = JBUI.emptyInsets()
+
       for (tab in tabs) {
         val component = try {
           tab.createComponent(project)
