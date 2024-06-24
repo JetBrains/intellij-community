@@ -34,16 +34,22 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)",
 
             /* Gradle DSL especially annoying hints */
+            "org.gradle.api.Project.property(propertyName)",
             "org.gradle.api.Project.hasProperty(propertyName)",
             "org.gradle.api.Project.findProperty(propertyName)",
             "org.gradle.api.Project.file(path)",
             "org.gradle.api.Project.uri(path)",
             "jvmArgs(arguments)",
             "org.gradle.kotlin.dsl.DependencyHandlerScope.*(notation)",
+            "org.gradle.kotlin.dsl.PluginDependenciesSpecScope.alias(notation)",
             "org.gradle.kotlin.dsl.*(dependencyNotation)",
+            "org.gradle.api.tasks.util.*include(includes)",
+            "org.gradle.api.tasks.util.*exclude(excludes)",
             "org.gradle.kotlin.dsl.kotlin(module)",
             "org.gradle.kotlin.dsl.kotlin(module,version)",
-            "org.gradle.kotlin.dsl.project(path,configuration)"
+            "org.gradle.kotlin.dsl.project(path,configuration)",
+            "org.gradle.api.provider.Property.set(value)",
+            "org.gradle.api.plugins.ObjectConfigurationAction.plugin(pluginId)",
         ).mapNotNull { MatcherConstructor.createMatcher(it) }
 
     override fun collectFromElement(
