@@ -977,6 +977,7 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.DynamicPluginsUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.openapi.updateSettings.impl.PluginAutoUpdateFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ui.EditorNotificationUsagesCollector"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.UpdateInfoStatsCollector"/>

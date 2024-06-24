@@ -191,11 +191,7 @@ object PluginAutoUpdater {
   /**
    * @return not null if plugin auto update was triggered
    */
-  fun consumePluginAutoUpdateResult(): Result<PluginAutoUpdateStatistics>? {
-    val result = pluginAutoUpdateResult
-    pluginAutoUpdateResult = null
-    return result
-  }
+  fun getPluginAutoUpdateResult(): Result<PluginAutoUpdateStatistics>? = pluginAutoUpdateResult
 
   data class PluginAutoUpdateStatistics(
     val updatesPrepared: Int,
