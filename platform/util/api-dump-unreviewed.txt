@@ -1414,11 +1414,9 @@ f:com.intellij.openapi.util.io.FileFilters
 f:com.intellij.openapi.util.io.FileSystemUtil
 - s:getAttributes(java.io.File):com.intellij.openapi.util.io.FileAttributes
 - s:getAttributes(java.lang.String):com.intellij.openapi.util.io.FileAttributes
-- s:isCaseToggleable(java.lang.String):Z
 - s:isSymLink(java.io.File):Z
 - s:isSymLink(java.lang.String):Z
 - s:lastModified(java.io.File):J
-- s:readParentCaseSensitivity(java.io.File):com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
 - s:resolveSymLink(java.io.File):java.lang.String
 - s:resolveSymLink(java.lang.String):java.lang.String
 c:com.intellij.openapi.util.io.FileUtil
