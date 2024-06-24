@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit;
 
 import com.intellij.ui.IconManager;
@@ -11,6 +11,9 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class DevKitIcons {
+  private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, DevKitIcons.class.getClassLoader(), cacheKey, flags);
+  }
   private static @NotNull Icon load(@NotNull String path, @NotNull String expUIPath, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, DevKitIcons.class.getClassLoader(), cacheKey, flags);
   }
@@ -23,6 +26,7 @@ public final class DevKitIcons {
     /** 12x12 */ public static final @NotNull Icon Properties = load("icons/gutter/properties.svg", "icons/expui/gutter/properties@14x14.svg", -818710709, 2);
   }
 
+  /** 16x16 */ public static final @NotNull Icon PluginV2 = load("icons/expui/pluginV2.svg", 1719825147, 2);
   /** 16x16 */ public static final @NotNull Icon RemoteMapping = load("icons/remoteMapping.svg", "icons/expui/remoteMapping.svg", 1371307852, 2);
   /** 16x16 */ public static final @NotNull Icon Sdk_closed = load("icons/sdk_closed.svg", "icons/expui/sdkClosed.svg", -1355048140, 2);
 }
