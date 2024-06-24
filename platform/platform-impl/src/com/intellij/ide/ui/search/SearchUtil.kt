@@ -18,6 +18,7 @@ import com.intellij.ui.TabbedPaneWrapper.TabbedPaneHolder
 import com.intellij.util.IntPair
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Component
@@ -51,12 +52,18 @@ object SearchUtil {
     i18n: Boolean,
   ) {
     if (component != null) {
-      processUiLabel(title = configurable.displayName, configurableOptions = configurableOptions, path = null, i18n = i18n)
-      collectSearchItemsForComponent(component = component, configurableOptions = configurableOptions, path = null, i18n = i18n)
+      processUiLabel(title = configurable.displayName, configurableOptions = configurableOptions, path = null, i18n = i18n, rawList = null)
+      collectSearchItemsForComponent(
+        component = component,
+        configurableOptions = configurableOptions,
+        path = null,
+        i18n = i18n,
+        rawList = null,
+      )
     }
   }
 
-  @JvmStatic
+  @Internal
   fun lightOptions(configurable: SearchableConfigurable, component: JComponent, option: String?) {
     if (!traverseComponentsTree(configurable = configurable, rootComponent = component, option = option, force = true)) {
       traverseComponentsTree(configurable = configurable, rootComponent = component, option = option, force = false)
@@ -512,7 +519,17 @@ private fun highlightComponent(rootComponent: JComponent, searchString: String) 
 private val HTML_PATTERN: Pattern = Pattern.compile("<[^<>]*>")
 
 @Internal
-fun processUiLabel(title: String, configurableOptions: MutableSet<OptionDescription>, path: String?, i18n: Boolean) {
+fun processUiLabel(
+  title: String,
+  configurableOptions: MutableSet<OptionDescription>?,
+  path: String?,
+  i18n: Boolean,
+  rawList: MutableSet<SearchableOptionEntry>?,
+) {
+  if (title.isBlank()) {
+    return
+  }
+
   @Suppress("NAME_SHADOWING")
   var title = title
   val headStart = title.indexOf("<head>")
@@ -522,13 +539,21 @@ fun processUiLabel(title: String, configurableOptions: MutableSet<OptionDescript
   }
 
   title = HTML_PATTERN.matcher(title).replaceAll(" ")
+  if (title.isBlank()) {
+    return
+  }
 
-  val words = HashSet<String>()
-  SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemmingAndStopWords(title, words)
-  title = title.replace(BundleBase.MNEMONIC_STRING, "")
-  title = getNonWordPattern(i18n).matcher(title).replaceAll(" ")
-  for (word in words) {
-    configurableOptions.add(OptionDescription(word, title, path))
+  if (configurableOptions == null) {
+    rawList!!.add(SearchableOptionEntry(hit = title, path = path))
+  }
+  else {
+    val words = HashSet<String>()
+    SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemmingAndStopWords(title, words)
+    title = title.replace(BundleBase.MNEMONIC_STRING, "")
+    title = getNonWordPattern(i18n).matcher(title).replaceAll(" ")
+    for (word in words) {
+      configurableOptions.add(OptionDescription(option = word, hit = title, path = path))
+    }
   }
 }
 
@@ -540,7 +565,8 @@ private fun getNonWordPattern(i18n: Boolean): Pattern {
 @Internal
 fun collectSearchItemsForComponent(
   component: JComponent,
-  configurableOptions: MutableSet<OptionDescription>,
+  configurableOptions: MutableSet<OptionDescription>?,
+  rawList: MutableSet<SearchableOptionEntry>?,
   path: String?,
   i18n: Boolean,
 ) {
@@ -550,38 +576,43 @@ fun collectSearchItemsForComponent(
 
   ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY)?.let { additional ->
     for (each in additional) {
-      processUiLabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
+      processUiLabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n, rawList = rawList)
     }
   }
 
   val border = component.border
   if (border is TitledBorder) {
-    val title = border.title
-    if (title != null) {
-      processUiLabel(title = title, configurableOptions = configurableOptions, path = path, i18n = i18n)
+    border.title?.let {
+      processUiLabel(title = it, configurableOptions = configurableOptions, path = path, i18n = i18n, rawList = rawList)
     }
   }
 
   val label = getLabelsFromComponent(component)
   if (!label.isEmpty()) {
     for (each in label) {
-      processUiLabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
+      processUiLabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n, rawList = rawList)
     }
   }
   else if (component is JComboBox<*>) {
     val labels = getItemsFromComboBox(component)
     for (each in labels) {
-      processUiLabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
+      processUiLabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n, rawList = rawList)
     }
   }
   else if (component is JTabbedPane) {
     val tabCount = component.tabCount
     for (i in 0 until tabCount) {
       val title = if (path == null) component.getTitleAt(i) else path + '.' + component.getTitleAt(i)
-      processUiLabel(title, configurableOptions, title, i18n)
+      processUiLabel(title = title, configurableOptions = configurableOptions, path = title, i18n = i18n, rawList = rawList)
       val tabComponent = component.getComponentAt(i)
       if (tabComponent is JComponent) {
-        collectSearchItemsForComponent(tabComponent, configurableOptions, title, i18n)
+        collectSearchItemsForComponent(
+          component = tabComponent,
+          configurableOptions = configurableOptions,
+          path = title,
+          i18n = i18n,
+          rawList = rawList,
+        )
       }
     }
   }
@@ -591,9 +622,15 @@ fun collectSearchItemsForComponent(
     for (i in 0 until tabCount) {
       val tabTitle = tabbedPane.getTitleAt(i)
       val title = if (path == null) tabTitle else "$path.$tabTitle"
-      processUiLabel(title = title, configurableOptions = configurableOptions, path = title, i18n = i18n)
+      processUiLabel(title = title, configurableOptions = configurableOptions, path = title, i18n = i18n, rawList = rawList)
       tabbedPane.getComponentAt(i)?.let {
-        collectSearchItemsForComponent(component = it, configurableOptions = configurableOptions, path = title, i18n = i18n)
+        collectSearchItemsForComponent(
+          component = it,
+          configurableOptions = configurableOptions,
+          path = title,
+          i18n = i18n,
+          rawList = rawList,
+        )
       }
     }
   }
@@ -601,7 +638,13 @@ fun collectSearchItemsForComponent(
     component.components?.let { components ->
       for (child in components) {
         if (child is JComponent) {
-          collectSearchItemsForComponent(component = child, configurableOptions = configurableOptions, path = path, i18n = i18n)
+          collectSearchItemsForComponent(
+            component = child,
+            configurableOptions = configurableOptions,
+            path = path,
+            i18n = i18n,
+            rawList = rawList,
+          )
         }
       }
     }
@@ -664,4 +707,39 @@ private fun getItemsFromComboBox(comboBox: JComboBox<*>): List<String> {
     result.addAll(getLabelsFromComponent(labelComponent))
   }
   return result
+}
+
+@Serializable
+@Internal
+data class SearchableOptionEntry (
+  @JvmField val hit: String,
+  @JvmField val path: String? = null,
+) : Comparable<SearchableOptionEntry> {
+  init {
+    if (hit.isBlank()) {
+      LOG.error("SearchableOptionEntry with empty hit")
+    }
+  }
+
+  override fun compareTo(other: SearchableOptionEntry): Int {
+    val pathComparison = (path ?: "").compareTo(other.path ?: "")
+    return if (pathComparison == 0) hit.compareTo(other.hit) else pathComparison
+  }
+}
+
+@Internal
+fun collectSearchItemsForComponentWithLabel(
+  configurable: SearchableConfigurable,
+  configurableOptions: MutableSet<SearchableOptionEntry>,
+  component: JComponent,
+  i18n: Boolean,
+) {
+  processUiLabel(title = configurable.displayName, configurableOptions = null, rawList = configurableOptions, path = null, i18n = i18n)
+  collectSearchItemsForComponent(
+    component = component,
+    configurableOptions = null,
+    path = null,
+    i18n = i18n,
+    rawList = configurableOptions,
+  )
 }

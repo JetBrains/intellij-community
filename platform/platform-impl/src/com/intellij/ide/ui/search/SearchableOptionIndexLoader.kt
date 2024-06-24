@@ -32,12 +32,14 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
   val storage: MutableMap<CharSequence, LongArray> = CollectionFactory.createCharSequenceMap(20, 0.9f, true)
   @JvmField val identifierTable: IndexedCharsInterner = IndexedCharsInterner()
 
-  override fun addOptions(text: String,
-                          path: String?,
-                          hit: String?,
-                          configurableId: String,
-                          configurableDisplayName: String?,
-                          applyStemming: Boolean) {
+  override fun addOptions(
+    text: String,
+    path: String?,
+    hit: String?,
+    configurableId: String,
+    configurableDisplayName: String?,
+    applyStemming: Boolean,
+  ) {
     cache.clear()
     if (applyStemming) {
       SearchableOptionsRegistrarImpl.collectProcessedWords(text, cache, stopWords)
@@ -49,14 +51,8 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
   }
 
   fun computeHighlightOptionToSynonym(): Map<Pair<String, String>, MutableSet<String>> {
-    processSearchableOptions(this)
+    processSearchableOptions(processor = this)
     return loadSynonyms()
-  }
-
-  internal fun putOptionsWithHelpId(configurable: ConfigurableEntry) {
-    for (entry in configurable.entries) {
-      putOptionWithHelpId(words = entry.words, id = configurable.id, groupName = configurable.name, hit = entry.hit, path = entry.path)
-    }
   }
 
   private fun loadSynonyms(): Map<Pair<String, String>, MutableSet<String>> {
@@ -89,7 +85,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
     return result
   }
 
-  private fun putOptionWithHelpId(words: Collection<String>, id: String, groupName: String?, hit: String?, path: String?) {
+  internal fun putOptionWithHelpId(words: Iterable<String>, id: String, groupName: String?, hit: String?, path: String?) {
     for (word in words) {
       if (stopWords.contains(word)) {
         return
@@ -100,26 +96,17 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
         return
       }
 
-      var configs = storage.get(word)
+      val configs = storage.get(word)
       val packed = SearchableOptionsRegistrarImpl.pack(id, hit, path, groupName, identifierTable)
       if (configs == null) {
-        configs = longArrayOf(packed)
+        storage.put(word, longArrayOf(packed))
       }
       else if (configs.indexOf(packed) == -1) {
-        configs = ArrayUtil.append(configs, packed)
+        storage.put(word, ArrayUtil.append(configs, packed))
       }
-      storage.put(word, configs!!)
     }
   }
 }
-
-@Serializable
-@Internal
-data class SearchableOptionEntry(
-  @JvmField val hit: String?,
-  @JvmField val words: List<String>,
-  @JvmField val path: String? = null,
-)
 
 @Serializable
 @Internal
@@ -131,7 +118,6 @@ data class ConfigurableEntry(
 
 private val LOCATION_EP_NAME = ExtensionPointName<AdditionalLocationProvider>("com.intellij.search.additionalOptionsLocation")
 
-@OptIn(ExperimentalSerializationApi::class)
 private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
   val names = SearchableOptionsRegistrar.getSearchableOptionsNames()
 
@@ -145,11 +131,16 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
 
     val classifier = if (module.moduleName == null) "p-${module.pluginId.idString}" else "m-${module.moduleName}"
 
-    names.forEach { name ->
-      classLoader.getResourceAsBytes("$classifier-$name.json", false)?.let { data ->
+    for (name in names) {
+      val data = classLoader.getResourceAsBytes("$classifier-$name.json", false)
+      if (data != null) {
         try {
-          decodeFromJsonFormat(data, serializer).forEach {
-            processor.putOptionsWithHelpId(it)
+          for (item in decodeFromJsonFormat(data, serializer)) {
+            for (entry in item.entries) {
+              processor.putOptionWithHelpId(words = Iterable {
+                SearchableOptionsRegistrarImpl.splitToWordsWithoutStemmingAndStopWords(entry.hit).iterator()
+              }, id = item.id, groupName = item.name, hit = entry.hit, path = entry.path)
+            }
           }
         }
         catch (e: CancellationException) {
@@ -159,7 +150,7 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
           throw RuntimeException("Can't parse searchable options $name for plugin ${module.pluginId}", e)
         }
         // if the data is found in JSON format, there's no need to search in XML
-        return@forEach
+        continue
       }
 
       val xmlName = "$name.xml"
@@ -178,26 +169,26 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
   }
 
   // process additional locations
-  names.forEach { name ->
+  for (name in names) {
     val xmlName = "$name.xml"
     LOCATION_EP_NAME.forEachExtensionSafe { provider ->
       val additionalLocation = provider.additionalLocation ?: return@forEachExtensionSafe
       if (Files.isDirectory(additionalLocation)) {
         Files.list(additionalLocation).use { stream ->
           stream.forEach { file ->
-              val fileName = file.fileName.toString()
-              try {
-                if (fileName.endsWith(xmlName)) {
-                  readInXml(root = readXmlAsModel(file), processor = processor)
-                }
-              }
-              catch (e: CancellationException) {
-                throw e
-              }
-              catch (e: Throwable) {
-                throw RuntimeException("Can't parse searchable options $name", e)
+            val fileName = file.fileName.toString()
+            try {
+              if (fileName.endsWith(xmlName)) {
+                readInXml(root = readXmlAsModel(file), processor = processor)
               }
             }
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (e: Throwable) {
+              throw RuntimeException("Can't parse searchable options $name", e)
+            }
+          }
         }
       }
     }
@@ -213,17 +204,18 @@ fun decodeFromJsonFormat(data: ByteArray, serializer: KSerializer<ConfigurableEn
 
 private fun readInXml(root: XmlElement, processor: MySearchableOptionProcessor) {
   for (configurable in root.children("configurable")) {
-    val entry = ConfigurableEntry(
-      id = configurable.getAttributeValue("id") ?: continue,
-      name = configurable.getAttributeValue("configurable_name") ?: continue,
-      entries = configurable.children("option").mapNotNullTo(ArrayList()) { optionElement ->
-        SearchableOptionEntry(
-          hit = optionElement.getAttributeValue("hit") ?: return@mapNotNullTo null,
-          words = listOfNotNull(optionElement.getAttributeValue("name")),
-          path = optionElement.getAttributeValue("path"),
-        )
-      },
-    )
-    processor.putOptionsWithHelpId(entry)
+    val id = configurable.getAttributeValue("id") ?: continue
+    val name = configurable.getAttributeValue("configurable_name") ?: continue
+
+    for (optionElement in configurable.children("option")) {
+      val text = optionElement.getAttributeValue("hit") ?: continue
+      processor.putOptionWithHelpId(
+        words = listOfNotNull(optionElement.getAttributeValue("name")),
+        id = id,
+        groupName = name,
+        hit = text,
+        path = optionElement.getAttributeValue("path"),
+      )
+    }
   }
 }

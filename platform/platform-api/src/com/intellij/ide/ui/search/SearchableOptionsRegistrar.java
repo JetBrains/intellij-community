@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
-public abstract class SearchableOptionsRegistrar{
+public abstract class SearchableOptionsRegistrar {
   public static final @NlsSafe String SETTINGS_GROUP_SEPARATOR = " | ";
   public static final String SEARCHABLE_OPTIONS_XML_NAME = "searchableOptions";
 
