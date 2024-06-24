@@ -106,6 +106,7 @@
     "com.intellij:app:ProjectViewSharedSettings.showScratchesAndConsoles",
     "com.intellij:app:ProjectViewSharedSettings.showVisibilityIcons",
     "com.intellij:app:ProjectViewSharedSettings.sortKey",
+    "com.intellij:app:RsyncSettings.*",
     "com.intellij:app:UsageViewSettings.compact_middle_directories",
     "com.intellij:app:UsageViewSettings.is_filter_duplicated_line",
     "com.intellij:app:UsageViewSettings.flatten_modules",
