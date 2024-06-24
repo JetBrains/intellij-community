@@ -136,16 +136,11 @@ internal class LabeledListPanelHandle<T : Any>(cs: CoroutineScope,
 
   private fun <T> LabeledListPanelViewModel<T>.getSelectableItemsBatchFlow(): Flow<Result<List<T>>> {
     val current = items.value
-    val currentSet = current.toSet()
     return flow {
       if (current.isNotEmpty()) {
         emit(Result.success(current))
       }
-      selectableItems.mapNotNull { it.result }.first().map { list ->
-        list.filter { !currentSet.contains(it) }
-      }.let {
-        emit(it)
-      }
+      selectableItems.mapNotNull { it.result }.first().let { emit(it) }
     }
   }
 }
