@@ -9,6 +9,6 @@ import java.nio.file.Path
 
 class SimpleStructureProjectVisitor : MavenStructureProjectVisitor {
 
-  override fun map(allProjects: ArrayList<MavenProject>) {
+  override fun map(allProjects: List<MavenProject>) {
   }
 }
