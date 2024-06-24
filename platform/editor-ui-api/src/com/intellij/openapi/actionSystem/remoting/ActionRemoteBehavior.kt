@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 enum class ActionRemoteBehavior {
   /**
    * The action works only on a thin client
-    */
+   */
   FrontendOnly,
 
   /**
@@ -47,38 +47,41 @@ enum class ActionRemoteBehavior {
 @ApiStatus.Internal
 @ApiStatus.Experimental
 interface ActionRemoteBehaviorSpecification {
-  fun getBehavior(useDeclaredBehaviour: Boolean = false): ActionRemoteBehavior = getBehavior()
   fun getBehavior(): ActionRemoteBehavior
 
   interface Frontend : ActionRemoteBehaviorSpecification {
-    override fun getBehavior(useDeclaredBehaviour: Boolean): ActionRemoteBehavior = ActionRemoteBehavior.FrontendOnly
-    override fun getBehavior(): ActionRemoteBehavior = getBehavior(useDeclaredBehaviour = false)
+    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendOnly
   }
 
   interface FrontendThenBackend : ActionRemoteBehaviorSpecification {
-    override fun getBehavior(useDeclaredBehaviour: Boolean): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
-    override fun getBehavior(): ActionRemoteBehavior = getBehavior(useDeclaredBehaviour = false)
+    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
   }
 
   interface BackendOnly : ActionRemoteBehaviorSpecification {
-    override fun getBehavior(useDeclaredBehaviour: Boolean): ActionRemoteBehavior {
-      if (!useDeclaredBehaviour && (PlatformUtils.isRider() || PlatformUtils.isCLion())) return ActionRemoteBehavior.FrontendThenBackend
-      return ActionRemoteBehavior.BackendOnly
-    }
-    override fun getBehavior(): ActionRemoteBehavior = getBehavior(useDeclaredBehaviour = false)
+    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
   }
 
   interface Duplicated : ActionRemoteBehaviorSpecification {
-    override fun getBehavior(useDeclaredBehaviour: Boolean): ActionRemoteBehavior = ActionRemoteBehavior.Duplicated
-    override fun getBehavior(): ActionRemoteBehavior = getBehavior(useDeclaredBehaviour = false)
+    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.Duplicated
   }
 
   interface Disabled : ActionRemoteBehaviorSpecification {
-    override fun getBehavior(useDeclaredBehaviour: Boolean): ActionRemoteBehavior {
-      if (!useDeclaredBehaviour && (PlatformUtils.isRider() || PlatformUtils.isCLion())) return ActionRemoteBehavior.FrontendThenBackend
-      return ActionRemoteBehavior.Disabled
+    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.Disabled
+  }
+
+
+  companion object {
+    fun ActionRemoteBehaviorSpecification.getActionBehavior(useDeclaredBehaviour: Boolean = false): ActionRemoteBehavior {
+      val declaredBehavior = getBehavior()
+      if (useDeclaredBehaviour) return declaredBehavior
+      if (!(PlatformUtils.isRider() || PlatformUtils.isCLion())) return declaredBehavior
+
+      return when (declaredBehavior) {
+        ActionRemoteBehavior.BackendOnly -> ActionRemoteBehavior.FrontendThenBackend
+        ActionRemoteBehavior.Disabled -> ActionRemoteBehavior.FrontendThenBackend
+        else -> declaredBehavior
+      }
     }
-    override fun getBehavior(): ActionRemoteBehavior = getBehavior(useDeclaredBehaviour = false)
   }
 }
 
