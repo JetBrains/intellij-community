@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix
 import org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix.CollectionType
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtProperty
 
 internal object ConvertCollectionFixFactory {
     internal fun getCollectionType(type: KaType, acceptNullableTypes: Boolean = false): CollectionType? {
@@ -29,7 +30,7 @@ internal object ConvertCollectionFixFactory {
         val expressionTypeArg = (expressionType as? KaClassType)?.typeArguments?.singleOrNull()?.type ?: return null
         val expectedTypeArg = (expectedType as? KaClassType)?.typeArguments?.singleOrNull()?.type ?: return null
 
-        if (!expressionTypeArg.isSubTypeOf(expectedTypeArg)) return null
+        if (!expressionTypeArg.isSubtypeOf(expectedTypeArg)) return null
 
         return expectedCollectionType.specializeFor(expressionCollectionType)
     }
@@ -59,7 +60,8 @@ internal object ConvertCollectionFixFactory {
     }
 
     val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
-        createIfAvailable(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
+        val initializer = (diagnostic.psi as? KtProperty)?.initializer ?: return@ModCommandBased emptyList()
+        createIfAvailable(initializer, diagnostic.expectedType, diagnostic.actualType)
     }
 
     val assignmentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->

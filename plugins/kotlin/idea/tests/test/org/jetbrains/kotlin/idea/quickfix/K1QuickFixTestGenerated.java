@@ -17721,6 +17721,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/convertCollection/arrayToSequence.kt");
             }
 
+            @TestMetadata("assignment.kt")
+            public void testAssignment() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/assignment.kt");
+            }
+
+            @TestMetadata("initializer.kt")
+            public void testInitializer() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/initializer.kt");
+            }
+
             @TestMetadata("iterableToArray.kt")
             public void testIterableToArray() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/iterableToArray.kt");
@@ -18925,9 +18935,19 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("assignment.kt")
+            public void testAssignment() throws Exception {
+                runTest("testData/quickfix/typeMismatch/wrapWithCollectionLiteral/assignment.kt");
+            }
+
             @TestMetadata("inAnnotation.kt")
             public void testInAnnotation() throws Exception {
                 runTest("testData/quickfix/typeMismatch/wrapWithCollectionLiteral/inAnnotation.kt");
+            }
+
+            @TestMetadata("initializer.kt")
+            public void testInitializer() throws Exception {
+                runTest("testData/quickfix/typeMismatch/wrapWithCollectionLiteral/initializer.kt");
             }
 
             @TestMetadata("noMutableList.kt")

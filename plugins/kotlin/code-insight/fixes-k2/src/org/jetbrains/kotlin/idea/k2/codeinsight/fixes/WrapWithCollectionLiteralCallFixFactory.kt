@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
@@ -35,7 +36,7 @@ internal object WrapWithCollectionLiteralCallFixFactory {
 
         val isNullExpression = expression.isNullExpression()
         val literalFunctionName = collectionType.literalFunctionName
-        if ((actualType.isSubTypeOf(expectedArgumentType) || isNullExpression) && literalFunctionName != null) {
+        if ((actualType.isSubtypeOf(expectedArgumentType) || isNullExpression) && literalFunctionName != null) {
             result += WrapWithCollectionLiteralCallFix(expression, literalFunctionName, wrapInitialElement = true)
         }
 
@@ -64,11 +65,16 @@ internal object WrapWithCollectionLiteralCallFixFactory {
         createIfAvailable(diagnostic.psi, diagnostic.typeA, diagnostic.typeB)
     }
 
+    val assignmentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
+        createIfAvailable(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
+    }
+
     val nullForNonNullType = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
         createIfAvailable(diagnostic.psi, diagnostic.expectedType, diagnostic.expectedType.withNullability(KaTypeNullability.NULLABLE))
     }
 
     val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
-        createIfAvailable(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
+        val initializer = (diagnostic.psi as? KtProperty)?.initializer ?: return@ModCommandBased emptyList()
+        createIfAvailable(initializer, diagnostic.expectedType, diagnostic.actualType)
     }
 }

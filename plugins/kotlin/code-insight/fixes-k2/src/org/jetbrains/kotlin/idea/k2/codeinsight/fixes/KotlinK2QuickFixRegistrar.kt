@@ -323,6 +323,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(WrapWithCollectionLiteralCallFixFactory.typeMismatch)
         registerFactory(WrapWithCollectionLiteralCallFixFactory.argumentTypeMismatch)
         registerFactory(WrapWithCollectionLiteralCallFixFactory.incompatibleTypes)
+        registerFactory(WrapWithCollectionLiteralCallFixFactory.assignmentTypeMismatch)
         registerFactory(WrapWithCollectionLiteralCallFixFactory.nullForNonNullType)
         registerFactory(WrapWithCollectionLiteralCallFixFactory.returnTypeMismatch)
         registerFactory(WrapWithCollectionLiteralCallFixFactory.initializerTypeMismatch)

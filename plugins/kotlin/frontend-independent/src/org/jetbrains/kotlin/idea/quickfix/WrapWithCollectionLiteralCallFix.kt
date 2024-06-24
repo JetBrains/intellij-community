@@ -19,7 +19,7 @@ class WrapWithCollectionLiteralCallFix(
 ) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, Unit>(element, Unit)  {
     override fun getFamilyName(): String = KotlinBundle.message("wrap.with.collection.literal.call")
 
-    override fun getPresentation(context: ActionContext, element: KtExpression): Presentation? {
+    override fun getPresentation(context: ActionContext, element: KtExpression): Presentation {
         val text = if (wrapInitialElement) {
             KotlinBundle.message("wrap.element.with.0.call", functionName)
         } else {

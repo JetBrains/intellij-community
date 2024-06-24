@@ -1935,6 +1935,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/arrayToSequence.kt");
         }
 
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/assignment.kt");
+        }
+
+        @TestMetadata("initializer.kt")
+        public void testInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/initializer.kt");
+        }
+
         @TestMetadata("iterableToArray.kt")
         public void testIterableToArray() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/iterableToArray.kt");
@@ -1984,9 +1994,19 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/wrapWithCollectionLiteral/assignment.kt");
+        }
+
         @TestMetadata("inAnnotation.kt")
         public void testInAnnotation() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/wrapWithCollectionLiteral/inAnnotation.kt");
+        }
+
+        @TestMetadata("initializer.kt")
+        public void testInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/wrapWithCollectionLiteral/initializer.kt");
         }
 
         @TestMetadata("noMutableList.kt")
