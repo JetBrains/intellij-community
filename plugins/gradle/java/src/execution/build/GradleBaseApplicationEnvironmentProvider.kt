@@ -1,14 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.execution.CantRunException
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.configurations.JavaRunConfigurationModule
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -17,20 +15,15 @@ import com.intellij.execution.util.ExecutionErrorDialog
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
-import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiJavaModule
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
@@ -118,7 +111,6 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
   private fun GradleInitScriptParametersBuilder.withJavaConfiguration(project: Project, runProfile: JavaRunConfigurationBase) = apply {
     if (getEffectiveConfiguration(runProfile, project) != null) {
-      withJavaModuleName(null)
       withJavaExePath(GradleServerEnvironmentSetup.targetJavaExecutablePathMappingKey)
     }
     else {
@@ -127,9 +119,6 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
       val javaExePath = type.getVMExecutablePath(jdk)
                         ?: throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
-      val javaModuleName = findJavaModuleName(jdk, runProfile.configurationModule, runProfile.runClass!!)
-
-      withJavaModuleName(javaModuleName)
       withJavaExePath(FileUtil.toSystemIndependentName(javaExePath))
     }
   }
@@ -159,17 +148,6 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
         result.append(prefix).append(" '").append(escaped).append("'\n")
       }
       return result.toString()
-    }
-
-    private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: String): String? {
-      return if (JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9)) {
-        runReadAction {
-          DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule?, RuntimeException> {
-            JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass))
-          }?.name
-        } ?: return null
-      }
-      else null
     }
   }
 
