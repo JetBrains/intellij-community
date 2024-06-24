@@ -31,6 +31,8 @@ sealed interface IjentFsError {
   sealed interface Other : IjentFsError
 
   sealed interface DoesNotExist : IjentFsError
+  sealed interface AlreadyExists : IjentFsError
+  sealed interface AlreadyDeleted : IjentFsError
   sealed interface PermissionDenied : IjentFsError
   sealed interface NotDirectory : IjentFsError
   sealed interface NotFile : IjentFsError
@@ -51,9 +53,10 @@ sealed class IjentFsIOException(
       is IjentFsError.NotDirectory -> "Not a directory"
       is IjentFsError.NotFile -> "Not a file"
       is IjentFsError.PermissionDenied -> "Permission denied"
+      is IjentFsError.AlreadyDeleted -> "Already deleted"
+      is IjentFsError.AlreadyExists -> "File with this name already exists"
       is IjentFsError.Other -> "Unexpected rare error"
-      is IjentFileSystemPosixApi.CreateDirectoryException.DirAlreadyExists -> "Directory with this name already exists"
-      is IjentFileSystemPosixApi.CreateDirectoryException.FileAlreadyExists -> "File with this name already exists"
+      is IjentFileSystemApi.DeleteException.DirNotEmpty -> "Directory is not empty"
     }
     return if (additionalMessage.isEmpty()) "$prefix: $where" else "$prefix: $where ($additionalMessage)"
   }

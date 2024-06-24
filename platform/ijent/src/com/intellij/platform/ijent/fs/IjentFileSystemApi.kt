@@ -134,6 +134,20 @@ sealed interface IjentFileSystemApi {
   enum class FileWriterCreationMode {
     ALLOW_CREATE, ONLY_CREATE, ONLY_OPEN_EXISTING,
   }
+
+  @Throws(DeleteException::class)
+  suspend fun deleteDirectory(path: IjentPath.Absolute, removeContent: Boolean)
+
+  sealed class DeleteException(
+    where: IjentPath.Absolute,
+    additionalMessage: @NlsSafe String,
+  ) : IjentFsIOException(where, additionalMessage) {
+    class DirAlreadyDeleted(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.AlreadyDeleted
+    class DirNotEmpty(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage)
+    class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.PermissionDenied
+    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+      : DeleteException(where, additionalMessage), IjentFsError.Other
+  }
 }
 
 sealed interface IjentOpenedFile {
@@ -247,8 +261,8 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
     where: IjentPath.Absolute,
     additionalMessage: @NlsSafe String,
   ) : IjentFsIOException(where, additionalMessage) {
-    class DirAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage)
-    class FileAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage)
+    class DirAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.AlreadyExists
+    class FileAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.AlreadyExists
     class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.PermissionDenied
     class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.Other
   }

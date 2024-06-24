@@ -153,10 +153,16 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun createDirectory(dir: Path, vararg attrs: FileAttribute<*>?) {
     ensureIjentNioPath(dir)
+    val path = dir.ijentPath
+    try {
+      ensurePathIsAbsolute(path)
+    } catch (e : IllegalArgumentException) {
+      throw IOException(e)
+    }
     try {
       dir.nioFs.fsBlocking {
         when (val fsApi = dir.nioFs.ijent.fs) {
-          is IjentFileSystemPosixApi -> fsApi.createDirectory(dir.ijentPath as IjentPath.Absolute, emptyList())
+          is IjentFileSystemPosixApi -> fsApi.createDirectory(path, emptyList())
           is IjentFileSystemWindowsApi -> TODO()
         }
       }
@@ -169,7 +175,16 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun delete(path: Path) {
-    TODO("Not yet implemented")
+    ensureIjentNioPath(path)
+    path.nioFs.fsBlocking {
+      try {
+        path.nioFs.ijent.fs.deleteDirectory(path.ijentPath as IjentPath.Absolute, false)
+      } catch (e : IjentFileSystemApi.DeleteException.DirNotEmpty) {
+        val exception = DirectoryNotEmptyException(path.toString())
+        exception.addSuppressed(e)
+        throw exception
+      }
+    }
   }
 
   override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
@@ -301,10 +316,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun createLink(link: Path?, existing: Path?) {
-    TODO("Not yet implemented")
-  }
-
-  override fun deleteIfExists(path: Path?): Boolean {
     TODO("Not yet implemented")
   }
 

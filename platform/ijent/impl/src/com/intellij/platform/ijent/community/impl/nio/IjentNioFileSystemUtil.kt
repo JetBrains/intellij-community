@@ -43,12 +43,13 @@ internal fun IjentFsError.throwFileSystemException(): Nothing {
     is IjentFsError.DoesNotExist, is IjentFsError.NotFile -> NoSuchFileException(where.toString(), null, message.nullize())
     is IjentFsError.PermissionDenied -> AccessDeniedException(where.toString(), null, message.nullize())
     is IjentFsError.NotDirectory -> NotDirectoryException(where.toString())
-    is IjentFsError.FileNotOpened -> throw IOException("File is not opened")
+    is IjentFsError.AlreadyDeleted -> NoSuchFileException(where.toString())
+    is IjentFsError.AlreadyExists -> FileAlreadyExistsException(where.toString())
+    is IjentFsError.FileNotOpened -> IOException("File is not opened")
     is IjentOpenedFile.SeekError.InvalidValue -> TODO()
     is IjentFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
     is IjentOpenedFile.Reader.ReadError.InvalidValue -> TODO()
-    is IjentFileSystemPosixApi.CreateDirectoryException.DirAlreadyExists -> throw FileAlreadyExistsException(where.toString())
-    is IjentFileSystemPosixApi.CreateDirectoryException.FileAlreadyExists -> throw FileAlreadyExistsException(where.toString())
+    is IjentFileSystemApi.DeleteException.DirNotEmpty -> DirectoryNotEmptyException(where.toString())
   }
 }
 
