@@ -346,6 +346,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
                                         PsiClass @NotNull [] classes,
                                         @NotNull Condition<? super String> nameCondition) {
     for (PsiClass aClass : classes) {
+      if (aClass instanceof PsiImplicitClass) continue;
       String name = aClass.getName();
       if (name != null && nameCondition.value(name)) {
         try {

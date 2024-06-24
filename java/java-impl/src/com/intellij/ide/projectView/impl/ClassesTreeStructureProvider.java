@@ -86,7 +86,7 @@ public final class ClassesTreeStructureProvider implements SelectableTreeStructu
   }
 
   private static boolean isClassForTreeNode(VirtualFile file, PsiClass psiClass) {
-    if (psiClass == null || psiClass instanceof SyntheticElement) return false;
+    if (psiClass == null || psiClass instanceof SyntheticElement || psiClass instanceof PsiImplicitClass) return false;
     if (file == null || file.getNameWithoutExtension().equals(psiClass.getName())) return true;
     TemplateManager templateManager = TemplateManager.getInstance(psiClass.getProject());
     return ContainerUtil.exists(EditorFactory.getInstance().getAllEditors(), editor -> templateManager.getActiveTemplate(editor) != null);
