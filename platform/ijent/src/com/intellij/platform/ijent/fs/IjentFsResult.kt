@@ -51,6 +51,8 @@ sealed class IjentFsIOException(
       is IjentFsError.NotFile -> "Not a file"
       is IjentFsError.PermissionDenied -> "Permission denied"
       is IjentFsError.Other -> "Unexpected rare error"
+      is IjentFileSystemPosixApi.CreateDirectoryException.DirAlreadyExists -> "Directory with this name already exists"
+      is IjentFileSystemPosixApi.CreateDirectoryException.FileAlreadyExists -> "File with this name already exists"
     }
     return if (additionalMessage.isEmpty()) "$prefix: $where" else "$prefix: $where ($additionalMessage)"
   }

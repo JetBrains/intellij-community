@@ -45,6 +45,8 @@ internal fun IjentFsError.throwFileSystemException(): Nothing {
     is IjentOpenedFile.SeekError.InvalidValue -> TODO()
     is IjentFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
     is IjentOpenedFile.Reader.ReadError.InvalidValue -> TODO()
+    is IjentFileSystemPosixApi.CreateDirectoryException.DirAlreadyExists -> throw FileAlreadyExistsException(where.toString())
+    is IjentFileSystemPosixApi.CreateDirectoryException.FileAlreadyExists -> throw FileAlreadyExistsException(where.toString())
   }
 }
 

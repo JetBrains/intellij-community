@@ -150,7 +150,13 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun createDirectory(dir: Path, vararg attrs: FileAttribute<*>?) {
-    TODO("Not yet implemented")
+    ensureIjentNioPath(dir)
+    dir.nioFs.fsBlocking {
+      when (val fsApi = dir.nioFs.ijent.fs) {
+        is IjentFileSystemPosixApi -> fsApi.createDirectory(dir.ijentPath as IjentPath.Absolute, emptyList())
+        is IjentFileSystemWindowsApi -> TODO()
+      }
+    }
   }
 
   override fun delete(path: Path) {

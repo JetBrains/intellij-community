@@ -231,6 +231,24 @@ sealed interface IjentOpenedFile {
 }
 
 interface IjentFileSystemPosixApi : IjentFileSystemApi {
+
+  enum class CreateDirAttributePosix {
+    // todo
+  }
+
+  @kotlin.jvm.Throws(CreateDirectoryException::class)
+  suspend fun createDirectory(path: IjentPath.Absolute, attributes: List<CreateDirAttributePosix>)
+
+  sealed class CreateDirectoryException(
+    where: IjentPath.Absolute,
+    additionalMessage: @NlsSafe String,
+  ) : IjentFsIOException(where, additionalMessage) {
+    class DirAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage)
+    class FileAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage)
+    class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.PermissionDenied
+    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.Other
+  }
+
   override suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
     resolveSymlinks: Boolean,
