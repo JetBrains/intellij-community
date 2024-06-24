@@ -116,8 +116,9 @@ sealed interface IjentFileSystemApi {
    */
   suspend fun fileWriter(
     path: IjentPath.Absolute,
-    append: Boolean = false,
-    creationMode: FileWriterCreationMode = FileWriterCreationMode.ALLOW_CREATE,
+    append: Boolean,
+    truncateExisting: Boolean,
+    creationMode: FileWriterCreationMode,
   ): IjentFsResult<
     IjentOpenedFile.Writer,
     FileWriterError>

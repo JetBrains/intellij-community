@@ -105,6 +105,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
           fs,
           path.ijentPath,
           append = APPEND in options,
+          truncate = TRUNCATE_EXISTING in options,
           creationMode = when {
             CREATE_NEW in options -> IjentFileSystemApi.FileWriterCreationMode.ONLY_CREATE
             CREATE in options -> IjentFileSystemApi.FileWriterCreationMode.ALLOW_CREATE

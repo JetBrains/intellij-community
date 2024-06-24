@@ -29,12 +29,13 @@ internal class IjentNioFileChannel private constructor(
       nioFs: IjentNioFileSystem,
       path: IjentPath.Absolute,
       append: Boolean,
+      truncate: Boolean,
       creationMode: IjentFileSystemApi.FileWriterCreationMode,
     ): IjentNioFileChannel {
 
       return IjentNioFileChannel(
         nioFs,
-        nioFs.ijent.fs.fileWriter(path, append = append, creationMode = creationMode).getOrThrowFileSystemException(),
+        nioFs.ijent.fs.fileWriter(path, append = append, truncateExisting = truncate, creationMode = creationMode).getOrThrowFileSystemException(),
         AtomicLong(0)
       )
     }
