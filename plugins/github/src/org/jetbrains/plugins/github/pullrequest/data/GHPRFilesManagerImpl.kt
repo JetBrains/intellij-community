@@ -4,11 +4,16 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.collaboration.util.CodeReviewFilesUtil
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFileBase
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.addIfNotNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHNewPRDiffVirtualFile
@@ -42,14 +47,21 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     }
   }
 
-  override fun createAndOpenDiffFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
-    diffFiles.getOrPut(pullRequest) {
-      GHPRDiffVirtualFile(id, project, repository, pullRequest)
+  override fun createAndOpenDiffFile(pullRequest: GHPRIdentifier?, requestFocus: Boolean) {
+    if (pullRequest == null) {
+      createOrGetNewPRDiffFile()
+    }
+    else {
+      diffFiles.getOrPut(pullRequest) {
+        GHPRDiffVirtualFile(id, project, repository, pullRequest)
+      }.also {
+        GHPRStatisticsCollector.logDiffOpened(project)
+      }
     }.let {
       DiffEditorTabFilesManager.getInstance(project).showDiffFile(it, requestFocus)
-      GHPRStatisticsCollector.logDiffOpened(project)
     }
   }
+
 
   override fun findTimelineFile(pullRequest: GHPRIdentifier): GHPRTimelineVirtualFile? = files[pullRequest]
 
@@ -58,6 +70,16 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   override fun updateTimelineFilePresentation(details: GHPullRequestShort) {
     findTimelineFile(details.prId)?.let {
       FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(it)
+    }
+  }
+
+  override suspend fun closeNewPrFile() {
+    val file = newPRDiffFile.get() ?: return
+    withContext(Dispatchers.EDT) {
+      val fileManager = serviceAsync<FileEditorManager>()
+      writeAction {
+        CodeReviewFilesUtil.closeFilesSafely(fileManager, listOf(file))
+      }
     }
   }
 

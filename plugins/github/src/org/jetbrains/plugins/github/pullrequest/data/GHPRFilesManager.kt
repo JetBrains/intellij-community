@@ -17,7 +17,7 @@ internal interface GHPRFilesManager : Disposable {
   fun createAndOpenTimelineFile(pullRequest: GHPRIdentifier, requestFocus: Boolean)
 
   @RequiresEdt
-  fun createAndOpenDiffFile(pullRequest: GHPRIdentifier, requestFocus: Boolean)
+  fun createAndOpenDiffFile(pullRequest: GHPRIdentifier?, requestFocus: Boolean)
 
   @RequiresEdt
   fun findTimelineFile(pullRequest: GHPRIdentifier): GHPRTimelineVirtualFile?
@@ -27,4 +27,6 @@ internal interface GHPRFilesManager : Disposable {
 
   @RequiresEdt
   fun updateTimelineFilePresentation(details: GHPullRequestShort)
+
+  suspend fun closeNewPrFile()
 }

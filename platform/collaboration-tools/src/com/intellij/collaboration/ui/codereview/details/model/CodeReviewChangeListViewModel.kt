@@ -1,13 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details.model
 
+import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel.SelectionRequest
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
@@ -85,6 +88,7 @@ abstract class CodeReviewChangeListViewModelBase(
 
   private val _changesSelection = MutableStateFlow<ChangesSelection?>(null)
   override val changesSelection: StateFlow<ChangesSelection?> = _changesSelection.asStateFlow()
+  private val selectionMulticaster = EventDispatcher.create(SimpleEventListener::class.java)
 
   protected val selectedCommit: String? = changeList.commitSha
 
@@ -99,6 +103,7 @@ abstract class CodeReviewChangeListViewModelBase(
         _selectionRequests.tryEmit(SelectionRequest.All)
       }
       else {
+        if (!changeList.changes.contains(change)) return
         val currentSelection = _changesSelection.value
         if (currentSelection == null || currentSelection !is ChangesSelection.Fuzzy || !currentSelection.changes.contains(change)) {
           _changesSelection.value = ChangesSelection.Precise(changeList.changes, change)
@@ -116,9 +121,25 @@ abstract class CodeReviewChangeListViewModelBase(
     if (!stateGuard.tryLock()) return
     try {
       _changesSelection.value = selection
+      selectionMulticaster.multicaster.eventOccurred()
     }
     finally {
       stateGuard.unlock()
+    }
+  }
+
+  /**
+   * Listener invoked SYNCHRONOUSLY when selection is changed
+   */
+  suspend fun handleSelection(listener: (ChangesSelection?) -> Unit): Nothing {
+    val simpleListener = SimpleEventListener { listener(changesSelection.value) }
+    try {
+      selectionMulticaster.addListener(simpleListener)
+      listener(changesSelection.value)
+      awaitCancellation()
+    }
+    finally {
+      selectionMulticaster.removeListener(simpleListener)
     }
   }
 }

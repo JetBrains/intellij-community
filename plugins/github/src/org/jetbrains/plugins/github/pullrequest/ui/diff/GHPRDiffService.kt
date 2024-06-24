@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.diff
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ImmutableToolbarLabelAction
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
+import com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
 import com.intellij.collaboration.util.KeyValuePair
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
@@ -17,10 +18,7 @@ import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -53,6 +51,16 @@ internal class GHPRDiffService(private val project: Project, parentCs: Coroutine
                             GHPRDiffReviewThreadsReloadAction(),
                             ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit"))))
   }
+
+  fun createDiffRequestProcessor(repository: GHRepositoryCoordinates): DiffRequestProcessor {
+    val vm = findDiffVm(project, repository)
+    return base.createDiffRequestProcessor(vm) { emptyList() }
+  }
+
+  fun createCombinedDiffProcessor(repository: GHRepositoryCoordinates): CombinedDiffComponentProcessor {
+    val vm = findDiffVm(project, repository)
+    return base.createCombinedDiffModel(vm) { emptyList() }
+  }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -64,6 +72,14 @@ private fun findDiffVm(project: Project, repository: GHRepositoryCoordinates, pu
     else {
       flowOf(null)
     }
+  } ?: flowOf(null)
+
+private fun findDiffVm(project: Project, repository: GHRepositoryCoordinates): Flow<ComputedDiffViewModel?> =
+  project.serviceIfCreated<GHPRToolWindowViewModel>()?.projectVm?.map {
+    if (it?.repository == repository) {
+      it.getCreateVmOrNull()?.diffVm
+    }
+    else null
   } ?: flowOf(null)
 
 private fun GHPRToolWindowProjectViewModel.getDiffViewModelFlow(pullRequest: GHPRIdentifier): Flow<GHPRDiffViewModel> = channelFlow {

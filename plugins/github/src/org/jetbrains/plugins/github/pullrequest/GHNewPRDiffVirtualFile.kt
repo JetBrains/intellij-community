@@ -2,12 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
+import com.intellij.collaboration.ui.codereview.CodeReviewAdvancedSettings
 import com.intellij.diff.impl.DiffEditorViewer
+import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
+import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffService
 
 internal data class GHNewPRDiffVirtualFile(private val fileManagerId: String,
                                            private val project: Project,
@@ -23,7 +27,14 @@ internal data class GHNewPRDiffVirtualFile(private val fileManagerId: String,
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
   override fun createViewer(project: Project): DiffEditorViewer {
-    TODO("Not implemented yet")
+    val processor = if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
+      project.service<GHPRDiffService>().createCombinedDiffProcessor(repository)
+    }
+    else {
+      project.service<GHPRDiffService>().createDiffRequestProcessor(repository)
+    }
+    processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CodeReviewAdvancedSettings.CodeReviewCombinedDiffToggle)
+    return processor
   }
 }
 

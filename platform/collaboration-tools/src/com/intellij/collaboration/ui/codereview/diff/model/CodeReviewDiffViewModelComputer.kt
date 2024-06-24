@@ -34,6 +34,11 @@ class CodeReviewDiffViewModelComputer<D> @ApiStatus.Experimental constructor(
     changesRequests.emit(selection)
   }
 
+  @ApiStatus.Internal
+  fun tryShowChanges(selection: ChangesSelection) {
+    changesRequests.tryEmit(selection)
+  }
+
   val diffVm: Flow<ComputedResult<DiffProducersViewModel?>> =
     dataLoadingFlow.mapNotNull { it.result }.distinctUntilChanged().mapScoped { result ->
       result.fold(
