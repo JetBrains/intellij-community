@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
+
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.CharBuffer;
 
-/**
- * @author Eugene Zhuravlev
- */
+@ApiStatus.Internal
 public abstract class LineOutputWriter extends Writer {
   private final LineParser myLineParser = new LineParser();
 

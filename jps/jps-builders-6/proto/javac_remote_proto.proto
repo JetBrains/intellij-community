@@ -2,7 +2,7 @@ syntax = "proto2";
 
 package org.jetbrains.javac;
 
-option java_package = "org.jetbrains.jps.javac";
+option java_package = "org.jetbrains.jps.javac.rpc";
 option optimize_for = LITE_RUNTIME;
 
 message Message {

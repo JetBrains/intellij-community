@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.javac.Iterators.Function;
@@ -44,10 +45,12 @@ public final class APIWrappers {
     return null;
   }
 
+  @ApiStatus.Internal
   public static <T extends FileObject> DiagnosticOutputConsumer newDiagnosticListenerWrapper(ProcessingContext procContext, final DiagnosticOutputConsumer delegate) {
     return wrap(DiagnosticOutputConsumer.class, new DiagnosticListenerWrapper<T>(procContext, delegate));
   }
 
+  @ApiStatus.Internal
   public static class ProcessingContext {
     private final JpsJavacFileManager myFileManager;
     private Iterable<Processor> myAllProcessors = Collections.emptyList();
@@ -81,7 +84,7 @@ public final class APIWrappers {
       myLastProcName = getProcessorName(proc);
     }
 
-    public Iterable<Processor> wrapProcessors(Iterable<? extends Processor> processors) {
+    Iterable<Processor> wrapProcessors(Iterable<? extends Processor> processors) {
       return myAllProcessors = Iterators.map(processors, new Function<Processor, Processor>() {
         @Override
         public Processor fun(Processor processor) {
@@ -123,7 +126,7 @@ public final class APIWrappers {
     }
   }
 
-  public interface WrapperDelegateAccessor<T> {
+  interface WrapperDelegateAccessor<T> {
     T getWrapperDelegate();
   }
 
@@ -351,6 +354,7 @@ public final class APIWrappers {
     return wrap(ifaceClass, wrapper, DynamicWrapper.class, wrapper.getWrapperDelegate());
   }
 
+  @ApiStatus.Internal
   @NotNull
   public static <T> T wrap(@NotNull Class<T> ifaceClass, @NotNull final Object wrapper, @NotNull final Class<?> parentToStopSearchAt, @NotNull final T delegateTo) {
     return ifaceClass.cast(Proxy.newProxyInstance(APIWrappers.class.getClassLoader(), new Class<?>[]{ifaceClass, WrapperDelegateAccessor.class}, new InvocationHandler() {
@@ -449,7 +453,7 @@ public final class APIWrappers {
     }
   }
 
-  public static String getUnwrapCodeSuggestion(Class<?> ifaceClass, String objVarName) {
+  private static String getUnwrapCodeSuggestion(Class<?> ifaceClass, String objVarName) {
     return ifaceClass.getSimpleName() + " unwrapped" + objVarName + " = " + "jbUnwrap(" + ifaceClass.getSimpleName() + ".class, " + objVarName + ");" +
       "\n\n\t\twhere\n\n" +
       "private static <T> T jbUnwrap(Class<? extends T> iface, T wrapper) {\n" +

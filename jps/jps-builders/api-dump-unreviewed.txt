@@ -2694,18 +2694,6 @@ f:org.jetbrains.jps.cache.statistics.SystemOpsStatistic
 - getConnectionSpeedBytesPerSec():J
 - getDecompressionSpeedBytesPesSec():J
 - getDeletionSpeedBytesPerSec():J
-org.jetbrains.jps.client.ProtobufResponseHandler
-- a:handleMessage(com.google.protobuf.MessageLite):Z
-- a:sessionTerminated():V
-f:org.jetbrains.jps.client.SimpleProtobufClient
-- <init>(com.google.protobuf.MessageLite,java.util.concurrent.Executor,org.jetbrains.jps.client.UUIDGetter):V
-- checkConnected():V
-- connect(java.lang.String,I):Z
-- disconnect():V
-- isConnected():Z
-- sendMessage(java.util.UUID,com.google.protobuf.MessageLite,org.jetbrains.jps.client.ProtobufResponseHandler,org.jetbrains.jps.api.RequestFuture$CancelAction):org.jetbrains.jps.api.RequestFuture
-org.jetbrains.jps.client.UUIDGetter
-- a:getSessionUUID(org.jetbrains.jps.javac.JavacRemoteProto$Message):java.util.UUID
 f:org.jetbrains.jps.cmdline.BuildMain
 - <init>():V
 - s:main(java.lang.String[]):V

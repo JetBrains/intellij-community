@@ -31,6 +31,7 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
+import org.jetbrains.jps.javac.rpc.JavacRemoteProto;
 
 import javax.tools.Diagnostic;
 import java.io.File;

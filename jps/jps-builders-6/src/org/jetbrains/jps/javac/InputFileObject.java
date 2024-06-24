@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -8,7 +8,7 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 import java.io.*;
 
-public final class InputFileObject extends JpsFileObject {
+final class InputFileObject extends JpsFileObject {
   private final File myFile;
   private final String myEncoding;
   private final ValueSupplier<File, RuntimeException> myAbsFile;
