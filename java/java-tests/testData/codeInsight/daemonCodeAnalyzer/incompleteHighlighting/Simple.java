@@ -132,6 +132,10 @@ public class Simple {
     Clss.Inner[] result = (Clss.Inner[]) cls.<info descr="Not resolved until the project is fully loaded">toArray</info>(12);
   }
   
+  void testConcat(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
+    System.out.println("hello " + cls.<info descr="Not resolved until the project is fully loaded">getSomething</info>() + "!!!");
+  }
+  
   static class Clss implements <info descr="Not resolved until the project is fully loaded">MyInterface</info> {
     void run() {
       <info descr="Not resolved until the project is fully loaded">foo</info>(<info descr="Not resolved until the project is fully loaded">bar</info>);
