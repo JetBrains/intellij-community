@@ -109,13 +109,10 @@ private class RasterizedImageDataLoader(override val path: String,
     get() = classLoaderRef.get()?.getResource(path)
 
   override fun patch(transform: IconTransform): ImageDataLoader? {
-    if (!NewUiValue.isEnabled()) {
-      return null
-    }
     val classLoader = classLoaderRef.get() ?: return null
     val patched = transform.patchPath(path = path, classLoader = classLoader)
     if (patched == null) {
-      if (expUIPath != null) {
+      if (expUIPath != null && NewUiValue.isEnabled()) {
         return PatchedRasterizedImageDataLoader(path = expUIPath, classLoaderRef = classLoaderRef, flags = flags)
       }
       return null
