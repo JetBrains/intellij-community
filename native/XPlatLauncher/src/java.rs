@@ -22,12 +22,6 @@ use {
                                CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished}
 };
 
-#[cfg(target_os = "windows")]
-use {
-    std::os::windows::ffi::OsStrExt,
-    windows::Win32::System::LibraryLoader
-};
-
 #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
 use std::ffi::{c_char, CStr, c_int};
 
@@ -177,7 +171,7 @@ fn reset_signal_handler(signal: c_int) -> Result<()> {
 fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv<'static>> {
     let libjvm_path = jre_home.join(JVM_LIB_REL_PATH);
     debug!("[JVM] Loading {libjvm_path:?}");
-    let libjvm = load_libjvm(jre_home, &libjvm_path)?;
+    let libjvm = load_libjvm(&libjvm_path)?;
 
     debug!("[JVM] Looking for 'JNI_CreateJavaVM' symbol");
     let create_jvm_call: CreateJvmCall<'_> = unsafe { libjvm.get(b"JNI_CreateJavaVM\0")? };
@@ -212,27 +206,13 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
 }
 
 #[cfg(target_os = "windows")]
-fn load_libjvm(jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Library> {
-    let flags = LibraryLoader::LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LibraryLoader::LOAD_LIBRARY_SEARCH_USER_DIRS;
-    unsafe { LibraryLoader::SetDefaultDllDirectories(flags) }
-        .context("Failed to prepare 'jvm.dll' dependencies search path")?;
-
-    let jre_bin_dir = jre_home.join("bin");
-    debug!("[JVM] Adding {:?} to the DLL search path, so that 'jvm.dll' can find its dependencies", jre_bin_dir);
-    let jre_bin_dir_chars = jre_bin_dir.as_os_str().encode_wide().chain([0u16]).collect::<Vec<u16>>();
-    let jre_bin_dir_str = windows::core::PCWSTR::from_raw(jre_bin_dir_chars.as_ptr());
-    let jre_bin_dir_cookie = unsafe { LibraryLoader::AddDllDirectory(jre_bin_dir_str) };
-    if jre_bin_dir_cookie.is_null() {
-        return Err(Error::from(std::io::Error::last_os_error()))
-            .context(format!("Failed to add '{}' to 'jvm.dll' dependencies search path", jre_bin_dir.display()));
-    }
-
+fn load_libjvm(libjvm_path: &Path) -> Result<libloading::Library> {
     unsafe { libloading::Library::new(libjvm_path) }
         .context("Failed to load 'jvm.dll'")
 }
 
 #[cfg(target_family = "unix")]
-fn load_libjvm(_jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Library> {
+fn load_libjvm(libjvm_path: &Path) -> Result<libloading::Library> {
     let path_ref = Some(libjvm_path.as_os_str());
     let flags = libloading::os::unix::RTLD_LAZY;
     unsafe { libloading::os::unix::Library::open(path_ref, flags).map(From::from) }
