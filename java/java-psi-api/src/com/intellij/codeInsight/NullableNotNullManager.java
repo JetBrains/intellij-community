@@ -89,9 +89,17 @@ public abstract class NullableNotNullManager {
       }
 
       PsiModifierList modifierList = target.getModifierList();
+      PsiType usedType = null;
+      if(target instanceof PsiVariable){
+        usedType = ((PsiVariable)target).getType();
+      }
+      else if (target instanceof PsiMethod) {
+        usedType = ((PsiMethod)target).getReturnType();
+      }
       // type annotations are part of target's type and should not to be copied explicitly to avoid duplication
       if (modifierList != null &&
-          !AnnotationTargetUtil.isStrictlyTypeUseAnnotation(modifierList, annotation) &&
+          (!AnnotationTargetUtil.isStrictlyTypeUseAnnotation(modifierList, annotation) ||
+           (usedType != null && !usedType.hasAnnotation(qualifiedName))) &&
           !modifierList.hasAnnotation(qualifiedName)) {
         return modifierList.addAnnotation(qualifiedName);
       }

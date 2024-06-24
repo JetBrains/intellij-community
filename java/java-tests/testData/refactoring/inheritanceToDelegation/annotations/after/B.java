@@ -4,8 +4,7 @@ import org.jetbrains.annotations.Nullable;
 class B {
     public final A myDelegate = new A();
 
-    @Nullable
-    public Object methodFromA(@NotNull String s) {
+    public @Nullable Object methodFromA(@NotNull String s) {
         return myDelegate.methodFromA(s);
     }
 }
