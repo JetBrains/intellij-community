@@ -684,9 +684,12 @@
       "tabAlert.svg": "nodes/tabAlert.svg"
     },
     "objectBrowser": {
+      "abbreviatePackageNames.svg": "objectBrowser/abbreviatePackageNames.svg",
       "compactEmptyPackages.svg": "objectBrowser/compactEmptyPackages.svg",
       "flattenModules.svg": "objectBrowser/flattenModules.svg",
       "flattenPackages.svg": "objectBrowser/flattenPackages.svg",
+      "showLibraryContents.svg": "objectBrowser/showLibraryContents.svg",
+      "showMembers.svg": "objectBrowser/showMembers.svg",
       "sortAlphabetically.svg": "objectBrowser/sorted.svg",
       "sortByType.svg": "objectBrowser/sortByType.svg",
       "sortByUsage.svg": "objectBrowser/sortedByUsage.svg",

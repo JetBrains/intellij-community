@@ -1038,12 +1038,12 @@ public class AllIcons {
   }
 
   public static final class ObjectBrowser {
-    /** 16x16 */ public static final @NotNull Icon AbbreviatePackageNames = load("objectBrowser/abbreviatePackageNames.svg", -2101913433, 2);
+    /** 16x16 */ public static final @NotNull Icon AbbreviatePackageNames = load("objectBrowser/abbreviatePackageNames.svg", "expui/", -2101913433, 2);
     /** 16x16 */ public static final @NotNull Icon CompactEmptyPackages = load("objectBrowser/compactEmptyPackages.svg", "expui/", 1381890836, 2);
     /** 16x16 */ public static final @NotNull Icon FlattenModules = load("objectBrowser/flattenModules.svg", "expui/", 995079473, 2);
     /** 16x16 */ public static final @NotNull Icon FlattenPackages = load("objectBrowser/flattenPackages.svg", "expui/", 1534482841, 2);
-    /** 16x16 */ public static final @NotNull Icon ShowLibraryContents = load("objectBrowser/showLibraryContents.svg", -194817890, 2);
-    /** 16x16 */ public static final @NotNull Icon ShowMembers = load("objectBrowser/showMembers.svg", 1639707486, 0);
+    /** 16x16 */ public static final @NotNull Icon ShowLibraryContents = load("objectBrowser/showLibraryContents.svg", "expui/", -194817890, 2);
+    /** 16x16 */ public static final @NotNull Icon ShowMembers = load("objectBrowser/showMembers.svg", "expui/", 1639707486, 0);
     /** 16x16 */ public static final @NotNull Icon SortByType = load("objectBrowser/sortByType.svg", "expui/", 46592963, 2);
     /** 16x16 */ public static final @NotNull Icon Sorted = load("objectBrowser/sorted.svg", "expui/objectBrowser/sortAlphabetically.svg", -103346577, 2);
     /** 16x16 */ public static final @NotNull Icon SortedByUsage = load("objectBrowser/sortedByUsage.svg", "expui/objectBrowser/sortByUsage.svg", 918667062, 2);
