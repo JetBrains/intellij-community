@@ -109,7 +109,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
                 } finally {
                   // Scanning may throw exception (or error).
                   // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
-                  project.service<PerProjectIndexingQueue>().flushNow(task.task.indexingReason)
+                  val indexingScheduled = project.service<PerProjectIndexingQueue>().flushNow(task.task.indexingReason)
+                  if (!indexingScheduled) {
+                    modCount.incrementAndGet()
+                  }
                 }
               }
             }
@@ -139,7 +142,6 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           // We don't care about finishing scanning without a write action. This looks harmless at the moment
           isRunning.value = false
           startedOrStoppedEvent.getAndUpdate(Int::inc)
-          modCount.incrementAndGet()
         }
       }
     }

@@ -152,18 +152,20 @@ class PerProjectIndexingQueue(private val project: Project) {
   @Volatile
   private var allowFlushing: Boolean = true
 
-  fun flushNow(reason: String) {
+  fun flushNow(reason: String): Boolean {
     if (!allowFlushing) {
       LOG.info("Flushing is not allowed at the moment")
-      return
+      return false
     }
     val snapshot = getAndResetQueuedFiles()
-    if (snapshot.size > 0) {
+    return if (snapshot.size > 0) {
       // note that DumbModeWhileScanningTrigger will not finish dumb mode until scanning is finished
       UnindexedFilesIndexer(project, snapshot, reason).queue(project)
+      true
     }
     else {
       LOG.info("Finished for " + project.name + ". No files to index with loading content.")
+      false
     }
   }
 
