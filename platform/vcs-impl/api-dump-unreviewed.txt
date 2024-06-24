@@ -9326,6 +9326,7 @@ f:com.intellij.vcs.console.VcsConsoleView
 - sf:CONSOLE_PLACE:com.intellij.execution.ui.ConsoleViewPlace
 - sf:Companion:com.intellij.vcs.console.VcsConsoleView$Companion
 - <init>(com.intellij.openapi.project.Project):V
+- createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
 - getPlace():com.intellij.execution.ui.ConsoleViewPlace
 f:com.intellij.vcs.console.VcsConsoleView$Companion
 a:com.intellij.vcs.editor.ComplexPathVirtualFileSystem

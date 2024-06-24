@@ -4,7 +4,11 @@ package com.intellij.vcs.console
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.execution.ui.ConsoleViewPlace
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction
+import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -18,6 +22,12 @@ class VcsConsoleView(project: Project) : ConsoleViewImpl(project, true) {
   }
 
   override fun getPlace(): ConsoleViewPlace = CONSOLE_PLACE
+
+  override fun createConsoleActions(): Array<AnAction> {
+    val switchSoftWrapsAction = ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE)
+    val scrollToTheEndToolbarAction = ScrollToTheEndToolbarAction(editor)
+    return arrayOf(switchSoftWrapsAction, scrollToTheEndToolbarAction, clearThisConsoleAction())
+  }
 
   override fun updateFoldings(startLine: Int, endLine: Int) {
     super.updateFoldings(startLine, endLine)

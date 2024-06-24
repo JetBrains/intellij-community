@@ -1420,7 +1420,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     consoleActions.add(switchSoftWrapsAction);
     consoleActions.add(autoScrollToTheEndAction);
     consoleActions.add(ActionManager.getInstance().getAction("Print"));
-    consoleActions.add(new ClearThisConsoleAction(this));
+    consoleActions.add(clearThisConsoleAction());
     consoleActions.addAll(customActions);
     List<ConsoleActionsPostProcessor> postProcessors = ConsoleActionsPostProcessor.EP_NAME.getExtensionList();
     AnAction[] result = consoleActions.toArray(AnAction.EMPTY_ARRAY);
@@ -1428,6 +1428,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       result = postProcessor.postProcess(this, result);
     }
     return result;
+  }
+
+  @NotNull
+  protected final AnAction clearThisConsoleAction() {
+    return new ClearThisConsoleAction(this);
   }
 
   @Override
