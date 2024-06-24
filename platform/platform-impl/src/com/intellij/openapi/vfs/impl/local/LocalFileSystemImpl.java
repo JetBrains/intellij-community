@@ -9,7 +9,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -50,6 +52,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   private final ThreadLocal<Pair<VirtualFile, Map<String, FileAttributes>>> myFileAttributesCache = new ThreadLocal<>();
   private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(LocalFileSystemImpl::listChildren);
+  private final DiskQueryRelay<VirtualFile, Object> myContentGetter = new DiskQueryRelay<>(LocalFileSystemImpl::readContent);
   private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(LocalFileSystemImpl::readAttributes);
   private final DiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>> myChildrenAttrGetter =
     new DiskQueryRelay<>(pair -> listWithAttributes(pair.first, pair.second));
@@ -270,6 +273,19 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return myChildrenGetter.accessDiskWithCheckCanceled(file);
   }
 
+  @Override
+  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
+    if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening FIFO files
+      throw new NoSuchFileException(file.getPath(), null, "Not a file");
+    }
+    var len = file.getLength();
+    if (FileUtilRt.isTooLarge(len)) throw new FileTooBigException(file.getPath());
+    if (len < 0 || len > Integer.MAX_VALUE) throw new IOException("Invalid file length: " + len + ", " + file);
+    var result = myContentGetter.accessDiskWithCheckCanceled(file);
+    if (result instanceof IOException e) throw e;
+    return (byte[])result;
+  }
+
   @ApiStatus.Internal
   public final String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
     return listWithCaching(dir, null);
@@ -339,6 +355,16 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
     return Map.of();
+  }
+
+  private static Object readContent(VirtualFile file) {
+    try {
+      var nioFile = Path.of(toIoPath(file));
+      return Files.readAllBytes(nioFile);
+    }
+    catch (IOException e) {
+      return e;
+    }
   }
 
   private static @Nullable FileAttributes readAttributes(VirtualFile file) {

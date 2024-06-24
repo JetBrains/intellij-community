@@ -17,7 +17,9 @@ import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.util.*;
+import com.intellij.util.PathUtilRt;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
@@ -32,7 +34,6 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /** @deprecated do not use directly, access via {@link LocalFileSystem#getInstance} */
@@ -343,41 +344,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    Path path = convertToNioFileAndCheck(file, true);
-    long l = file.getLength();
-    if (FileUtilRt.isTooLarge(l)) throw new FileTooBigException(file.getPath());
-    int length = (int)l;
-    if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
-    return loadFileContent(path, length);
-  }
-
-  protected byte @NotNull [] loadFileContent(@NotNull Path path, int length) throws IOException {
-    if (0 == length) return new byte[0];
-    try {
-      return myNioContentGetter.accessDiskWithCheckCanceled(new ContentRequest(path, length));
-    }
-    catch (RuntimeException e) {
-      Throwable cause = ExceptionUtil.getRootCause(e);
-      if (cause instanceof IOException) {
-        throw (IOException)cause;
-      }
-      throw e;
-    }
-  }
-
-  private static byte @NotNull [] loadBytes(@NotNull InputStream stream, int length) throws IOException {
-    byte[] bytes = ArrayUtil.newByteArray(length);
-    int count = 0;
-    while (count < length) {
-      int n = stream.read(bytes, count, length - count);
-      if (n <= 0) break;
-      count += n;
-    }
-    if (count < length) {
-      // this may happen with encrypted files, see IDEA-143773
-      return Arrays.copyOf(bytes, count);
-    }
-    return bytes;
+    var nioFile = convertToNioFileAndCheck(file, true);
+    var len = file.getLength();
+    if (FileUtilRt.isTooLarge(len)) throw new FileTooBigException(file.getPath());
+    if (len < 0) throw new IOException("Invalid file length: " + len + ", " + file);
+    return Files.readAllBytes(nioFile);
   }
 
   @Override
@@ -568,21 +539,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       return null;
     }
   }
-
-  private final DiskQueryRelay<ContentRequest, byte[]> myNioContentGetter = new DiskQueryRelay<>(request -> {
-    Path path = request.path();
-    int length = request.length();
-    try (InputStream stream = Files.newInputStream(path)) {
-      // io_util.c#readBytes allocates custom native stack buffer for io operation with malloc if io request > 8K
-      // so let's do buffered requests with buffer size 8192 that will use stack allocated buffer
-      return loadBytes(length <= 8192 ? stream : new BufferedInputStream(stream), length);
-    }
-    catch (IOException ex) {
-      throw new RuntimeException(ex);
-    }
-  });
-
-  private record ContentRequest(Path path, int length) { }
 
   @Override
   public void refresh(boolean asynchronous) {
