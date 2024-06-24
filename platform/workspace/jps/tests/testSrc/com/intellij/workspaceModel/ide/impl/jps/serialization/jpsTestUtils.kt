@@ -28,7 +28,6 @@ import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -45,13 +44,11 @@ import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
-import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.function.Supplier
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -259,17 +256,6 @@ fun JpsProjectSerializersImpl.checkConsistency(configLocation: JpsProjectConfigL
 
 internal fun File.asConfigLocation(virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation = toConfigLocation(toPath(),
                                                                                                                            virtualFileManager)
-
-internal fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation {
-  if (FileUtil.extensionEquals(file.fileName.toString(), "ipr")) {
-    val iprFile = file.toVirtualFileUrl(virtualFileManager)
-    return JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
-  }
-  else {
-    val projectDir = file.toVirtualFileUrl(virtualFileManager)
-    return JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
-  }
-}
 
 internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectConfigLocation) : JpsFileContentWriter {
   private val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()

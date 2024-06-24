@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
+import com.intellij.platform.workspace.jps.serialization.impl.toConfigLocation
 import org.junit.*
 
 class ReplaceBySourceTest {
