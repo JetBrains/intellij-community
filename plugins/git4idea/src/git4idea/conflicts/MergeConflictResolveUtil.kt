@@ -209,7 +209,7 @@ object MergeConflictResolveUtil {
 
 fun updateMergeConflictEditorNotifications(project: Project) {
   if (project.isDisposed) return
-  val provider: MergeConflictResolveUtil.NotificationProvider =
-    EditorNotificationProvider.EP_NAME.findExtension(MergeConflictResolveUtil.NotificationProvider::class.java, project) ?: return
-  EditorNotifications.getInstance(project).updateNotifications(provider)
+  //val provider: MergeConflictResolveUtil.NotificationProvider =
+  //  EditorNotificationProvider.EP_NAME.findExtension(MergeConflictResolveUtil.NotificationProvider::class.java, project) ?: return
+  EditorNotifications.getInstance(project).updateAllNotifications()
 }
