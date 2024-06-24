@@ -10,10 +10,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtilCore;
@@ -23,10 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class JavaTestFinder implements TestFinder {
   @Override
@@ -45,7 +44,10 @@ public class JavaTestFinder implements TestFinder {
 
     List<Pair<? extends PsiNamedElement, Integer>> classesWithWeights = new ArrayList<>();
     for (Pair<String, Integer> eachNameWithWeight : TestFinderHelper.collectPossibleClassNamesWithWeights(klass.getName())) {
-      for (PsiClass eachClass : cache.getClassesByName(eachNameWithWeight.first, scope)) {
+      List<PsiClass> explicitClasses = Arrays.asList(cache.getClassesByName(eachNameWithWeight.first, scope));
+      Collection<PsiImplicitClass> implicitClasses =
+        JavaImplicitClassIndex.getInstance().getElements(eachNameWithWeight.first, klass.getProject(), scope);
+      for (PsiClass eachClass : ContainerUtil.concat(explicitClasses, implicitClasses)) {
         if (isTestSubjectClass(eachClass)) {
           classesWithWeights.add(Pair.create(eachClass, eachNameWithWeight.second));
         }
