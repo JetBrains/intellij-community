@@ -170,6 +170,24 @@
       "remove@14x14.svg": "diff/remove.svg",
       "revert@14x14.svg": "diff/revert.svg"
     },
+    "duplicates": {
+      "sendToTheLeft.svg": [
+        "sendToTheLeft.png",
+        "sendToTheLeft@2x.png"
+      ],
+      "sendToTheLeftGrayed.svg": [
+        "sendToTheLeftGrayed.png",
+        "sendToTheLeftGrayed@2x.png"
+      ],
+      "sendToTheRight.svg": [
+        "sendToTheRight.png",
+        "sendToTheRight@2x.png"
+      ],
+      "sendToTheRightGrayed.svg": [
+        "sendToTheRightGrayed.png",
+        "sendToTheRightGrayed@2x.png"
+      ]
+    },
     "codeInsight": {
       "inlayGlobe.svg": "actions/inlayGlobe.svg",
       "inlaySecuredShield.svg": "actions/inlaySecuredShield.svg",

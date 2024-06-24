@@ -414,10 +414,10 @@ public class AllIcons {
   }
 
   public static final class Duplicates {
-    /** 16x16 */ public static final @NotNull Icon SendToTheLeft = load("duplicates/sendToTheLeft.png", 0, 1);
-    /** 16x16 */ public static final @NotNull Icon SendToTheLeftGrayed = load("duplicates/sendToTheLeftGrayed.png", 0, 7);
-    /** 16x16 */ public static final @NotNull Icon SendToTheRight = load("duplicates/sendToTheRight.png", 0, 1);
-    /** 16x16 */ public static final @NotNull Icon SendToTheRightGrayed = load("duplicates/sendToTheRightGrayed.png", 0, 7);
+    /** 16x16 */ public static final @NotNull Icon SendToTheLeft = load("duplicates/sendToTheLeft.png", "expui/duplicates/sendToTheLeft.svg", 0, 1);
+    /** 16x16 */ public static final @NotNull Icon SendToTheLeftGrayed = load("duplicates/sendToTheLeftGrayed.png", "expui/duplicates/sendToTheLeftGrayed.svg", 0, 7);
+    /** 16x16 */ public static final @NotNull Icon SendToTheRight = load("duplicates/sendToTheRight.png", "expui/duplicates/sendToTheRight.svg", 0, 1);
+    /** 16x16 */ public static final @NotNull Icon SendToTheRightGrayed = load("duplicates/sendToTheRightGrayed.png", "expui/duplicates/sendToTheRightGrayed.svg", 0, 7);
   }
 
   /** 16x16 */ public static final @NotNull Icon Empty = load("expui/empty.svg", -1490989631, 0);
@@ -1305,6 +1305,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon MeetNewUi = load("expui/toolwindow/meetNewUi.svg", -215928280, 2);
     /** 16x16 */ public static final @NotNull Icon Repositories = load("expui/toolwindow/repositories.svg", 974555029, 2);
     /** 16x16 */ public static final @NotNull Icon Task = load("expui/toolwindow/task.svg", -1024942290, 2);
+    /** 16x16 */ public static final @NotNull Icon ToolWindowDuplicates = load("expui/toolwindow/toolWindowDuplicates.svg", 282855334, 2);
     /** 16x16 */ public static final @NotNull Icon ToolWindowInternal = load("expui/toolwindow/toolWindowInternal.svg", -743960037, 2);
   }
 
