@@ -6009,22 +6009,6 @@ f:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEd
 f:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserGroupAction
 - com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction
 - <init>():V
-f:com.intellij.ide.browsers.actions.WebPreviewFileEditor
-- com.intellij.openapi.util.UserDataHolderBase
-- com.intellij.openapi.fileEditor.FileEditor
-- sf:WEB_PREVIEW_RELOAD_TOOLTIP_ID:java.lang.String
-- <init>(com.intellij.openapi.project.Project,com.intellij.ide.browsers.actions.WebPreviewVirtualFile):V
-- addPropertyChangeListener(java.beans.PropertyChangeListener):V
-- dispose():V
-- getComponent():javax.swing.JComponent
-- getFile():com.intellij.openapi.vfs.VirtualFile
-- getName():java.lang.String
-- getPreferredFocusedComponent():javax.swing.JComponent
-- isModified():Z
-- s:isPreviewOpened():Z
-- isValid():Z
-- removePropertyChangeListener(java.beans.PropertyChangeListener):V
-- setState(com.intellij.openapi.fileEditor.FileEditorState):V
 f:com.intellij.ide.browsers.actions.WebPreviewFileType
 - com.intellij.openapi.fileTypes.ex.FakeFileType
 - sf:INSTANCE:com.intellij.ide.browsers.actions.WebPreviewFileType
