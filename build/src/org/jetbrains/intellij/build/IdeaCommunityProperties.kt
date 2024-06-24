@@ -2,8 +2,7 @@
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
-import org.jetbrains.intellij.build.BuildOptions.Companion.IJENT_WSL_FILE_SYSTEM_VMOPTIONS
+import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
@@ -115,7 +114,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       icoPathForEAP = "${communityHomeDir}/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
       installerImagesPath = "${communityHomeDir}/build/conf/ideaCE/win/images"
       fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
-      additionalWindowsVmOptions = IJENT_WSL_FILE_SYSTEM_VMOPTIONS.toPersistentList()
     }
 
     override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties) = "IntelliJ IDEA Community Edition"
