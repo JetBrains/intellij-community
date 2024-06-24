@@ -97,4 +97,9 @@ class CorePosixFilteringFileSystemProvider
   public void createSymbolicLink(Path link, Path target, FileAttribute<?>... attrs) throws IOException {
     super.createSymbolicLink(link, target, filterAttrs(attrs));
   }
+
+  @Override
+  public String toString() {
+    return String.format("%s(%s)", getClass().getName(), myFileSystemProvider);
+  }
 }
