@@ -21,11 +21,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -43,11 +40,6 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor implemen
         if (!isTestClass(psiClass)) return null;
         String url = "java:suite://" + ClassUtil.getJVMClassName(psiClass);
         TestStateStorage.Record state = TestStateStorage.getInstance(e.getProject()).getState(url);
-        if (isGradleConfiguration(psiClass)) {
-          List<PsiMethod> testMethods =
-            ContainerUtil.filter(psiClass.getAllMethods(), method -> TestFrameworks.getInstance().isTestMethod(method));
-          if (ContainerUtil.all(testMethods, method -> isIgnoredForGradleConfiguration(psiClass, method))) return null;
-        }
         return getInfo(state, true, PsiMethodUtil.findMainInClass(psiClass) != null ? 1 : 0);
       }
       if (element instanceof PsiMethod psiMethod) {
