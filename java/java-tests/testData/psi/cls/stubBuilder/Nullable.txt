@@ -3,7 +3,7 @@ PsiJavaFileStub [org.jetbrains.annotations]
     PsiModifierListStub[mask=1025]
       PsiAnnotationStub[@java.lang.annotation.Documented]
       PsiAnnotationStub[@java.lang.annotation.Retention(value=java.lang.annotation.RetentionPolicy.CLASS)]
-      PsiAnnotationStub[@java.lang.annotation.Target(value={java.lang.annotation.ElementType.METHOD,java.lang.annotation.ElementType.FIELD,java.lang.annotation.ElementType.PARAMETER,java.lang.annotation.ElementType.LOCAL_VARIABLE})]
+      PsiAnnotationStub[@java.lang.annotation.Target(value={java.lang.annotation.ElementType.METHOD,java.lang.annotation.ElementType.FIELD,java.lang.annotation.ElementType.PARAMETER,java.lang.annotation.ElementType.LOCAL_VARIABLE,java.lang.annotation.ElementType.TYPE_USE})]
     PsiTypeParameterListStub
     PsiRefListStub[EXTENDS_LIST:]
     PsiRefListStub[IMPLEMENTS_LIST:]

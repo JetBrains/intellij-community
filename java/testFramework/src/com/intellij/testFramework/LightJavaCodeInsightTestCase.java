@@ -98,8 +98,6 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
       @Override
       protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
         if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-          //DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
-
           DefaultLightProjectDescriptor.addJetBrainsAnnotationsJava8AndHigher(model);
         }
         else {

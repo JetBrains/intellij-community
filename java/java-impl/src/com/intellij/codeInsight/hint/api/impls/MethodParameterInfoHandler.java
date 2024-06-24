@@ -110,7 +110,7 @@ public final class MethodParameterInfoHandler
     PsiMethod method = argumentList.getParent() instanceof PsiCall call ? call.resolveMethod() : null;
     CandidateWithPresentation[] items = ContainerUtil.map2Array(candidates, CandidateWithPresentation.class,
       c -> new CandidateWithPresentation(c,
-                                         MethodPresentation.from((PsiMethod)c.getElement(), 
+                                         MethodPresentation.from((PsiMethod)c.getElement(),
                                                     getCandidateInfoSubstitutor(c, method != null && c.getElement() == method))));
     context.setItemsToShow(items);
     return argumentList;
@@ -794,7 +794,9 @@ public final class MethodParameterInfoHandler
           String qualifiedName = annotation.getQualifiedName();
           if (NON_DOCUMENTED_JETBRAINS_ANNOTATIONS.contains(qualifiedName)) continue;
         }
-        if (resolved instanceof PsiClass cls && !AnnotationUtil.isInferredAnnotation(annotation) &&
+        if (resolved instanceof PsiClass cls &&
+            !AnnotationUtil.isInferredAnnotation(annotation) &&
+            !AnnotationUtil.isExternalAnnotation(annotation) &&
             (!JavaDocInfoGenerator.isDocumentedAnnotationType(cls) ||
              AnnotationTargetUtil.findAnnotationTarget(cls, PsiAnnotation.TargetType.TYPE_USE) != null)) {
           continue;
@@ -872,7 +874,7 @@ public final class MethodParameterInfoHandler
   public static @NotNull PsiMethod getMethodFromCandidate(@NotNull Object object) {
     return ((CandidateWithPresentation)object).getMethod();
   }
-  
+
   public static @Nullable PsiMethod tryGetMethodFromCandidate(@NotNull Object object) {
     return object instanceof CandidateWithPresentation cwp ? cwp.getMethod() : null;
   }
