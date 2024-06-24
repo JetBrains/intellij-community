@@ -159,7 +159,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       if (path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) != '/') {
         path = path.substring(1);  // hack around `new File(path).toURI().toURL().getFile()`
       }
-
       try {
         path = FileUtil.resolveShortWindowsName(path);
       }
@@ -169,7 +168,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     try {
-      Path file = Path.of(path);
+      var file = Path.of(path);
       if (!file.isAbsolute() && !(SystemInfo.isWindows && path.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path))) {
         path = file.toAbsolutePath().toString();
       }
@@ -342,7 +341,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
-    Path path = convertToNioFileAndCheck(file, true);
+    var path = convertToNioFileAndCheck(file, true);
     return new BufferedInputStream(Files.newInputStream(path));
   }
 
@@ -357,10 +356,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
-    Path path = convertToNioFileAndCheck(file, false);
-    OutputStream stream = !SafeWriteRequestor.shouldUseSafeWrite(requestor) ? Files.newOutputStream(path) :
-                          requestor instanceof LargeFileWriteRequestor ? new PreemptiveSafeFileOutputStream(path) :
-                          new SafeFileOutputStream(path);
+    var path = convertToNioFileAndCheck(file, false);
+    var stream = !SafeWriteRequestor.shouldUseSafeWrite(requestor) ? Files.newOutputStream(path) :
+                 requestor instanceof LargeFileWriteRequestor ? new PreemptiveSafeFileOutputStream(path) :
+                 new SafeFileOutputStream(path);
     return new BufferedOutputStream(stream) {
       @Override
       public void close() throws IOException {
@@ -554,7 +553,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (file.getParent() == null) {
       return true;  // assume roots always have children
     }
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(file.getPath()))) {
+    try (var stream = Files.newDirectoryStream(Paths.get(file.getPath()))) {
       return stream.iterator().hasNext();  // make sure to not load all children
     }
     catch (DirectoryIteratorException e) {
