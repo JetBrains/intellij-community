@@ -27,11 +27,6 @@ abstract class JpsRootElementBase<E extends JpsRootElementBase<E>> extends JpsCo
     myModel = model;
   }
 
-  protected JpsRootElementBase(JpsCompositeElementBase<E> original, JpsModel model) {
-    super(original);
-    myModel = model;
-  }
-
   @NotNull
   @Override
   public JpsModel getModel() {

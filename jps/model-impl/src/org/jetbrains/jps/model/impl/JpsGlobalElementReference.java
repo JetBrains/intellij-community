@@ -22,7 +22,7 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.ex.JpsElementReferenceBase;
 
 @ApiStatus.Internal
-final class JpsGlobalElementReference extends JpsElementReferenceBase<JpsGlobalElementReference, JpsGlobal> {
+public final class JpsGlobalElementReference extends JpsElementReferenceBase<JpsGlobalElementReference, JpsGlobal> {
   @Override
   public JpsGlobal resolve() {
     final JpsModel model = getModel();
