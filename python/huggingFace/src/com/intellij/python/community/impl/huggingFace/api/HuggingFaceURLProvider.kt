@@ -76,6 +76,8 @@ object HuggingFaceURLProvider {
     return URL("$baseURL/api/models?$allParameters")
   }
 
+  fun fetchApiDataForModel(modelId: String) = URL("$baseURL/api/models/$modelId")
+
   fun fetchApiDataUrl(
     entityKind: HuggingFaceEntityKind,
     limit: Int = HuggingFaceConstants.HF_API_FETCH_PAGE_SIZE,
