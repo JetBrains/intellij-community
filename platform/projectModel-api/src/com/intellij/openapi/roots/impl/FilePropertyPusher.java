@@ -76,6 +76,7 @@ public interface FilePropertyPusher<T> {
   /**
    * After property was pushed it can be retrieved at any time using {@link FilePropertyKey#getPersistentValue(VirtualFile)}
    */
+  @ApiStatus.Internal
   default @NotNull FilePropertyKey<T> getFilePropertyKey() {
     return new InMemoryFilePropertyKeyImpl<>(getFileDataKey());
   }
