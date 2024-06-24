@@ -8060,7 +8060,44 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/replaceItWithExplicitFunctionLiteralParam")
+    public static class ReplaceItWithExplicitFunctionLiteralParam extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("applicable.kt")
+        public void testApplicable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceItWithExplicitFunctionLiteralParam/applicable.kt");
+        }
+
+        @TestMetadata("applicable_nestedFunctionLiterals.kt")
+        public void testApplicable_nestedFunctionLiterals() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceItWithExplicitFunctionLiteralParam/applicable_nestedFunctionLiterals.kt");
+        }
+
+        @TestMetadata("applicable_nestedFunctionWithIt.kt")
+        public void testApplicable_nestedFunctionWithIt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceItWithExplicitFunctionLiteralParam/applicable_nestedFunctionWithIt.kt");
+        }
+
+        @TestMetadata("notApplicable_localVariableIt.kt")
+        public void testNotApplicable_localVariableIt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceItWithExplicitFunctionLiteralParam/notApplicable_localVariableIt.kt");
+        }
+
+        @TestMetadata("notApplicable_parameterExplicitlyNamedIt.kt")
+        public void testNotApplicable_parameterExplicitlyNamedIt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceItWithExplicitFunctionLiteralParam/notApplicable_parameterExplicitlyNamedIt.kt");
+        }
+    }
 
 
 

@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.intentions
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -13,7 +12,7 @@ import org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameKotlinImplici
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 class ReplaceItWithExplicitFunctionLiteralParamIntention : SelfTargetingOffsetIndependentIntention<KtNameReferenceExpression>(
-    KtNameReferenceExpression::class.java, KotlinBundle.lazyMessage("replace.it.with.explicit.parameter")
+  KtNameReferenceExpression::class.java, KotlinBundle.lazyMessage("replace.it.with.explicit.parameter")
 ) {
     override fun isApplicableTo(element: KtNameReferenceExpression) = element.isReferenceToImplicitLambdaParameter()
 
@@ -27,10 +26,10 @@ class ReplaceItWithExplicitFunctionLiteralParamIntention : SelfTargetingOffsetIn
         val ktFile = element.containingKtFile
 
         val dataContext = DataContext { id ->
-            when {
-                CommonDataKeys.PSI_ELEMENT.`is`(id) -> element
-                else -> null
-            }
+          when {
+            CommonDataKeys.PSI_ELEMENT.`is`(id) -> element
+            else -> null
+          }
         }
         RenameKotlinImplicitLambdaParameter().invoke(ktFile.project, editor, ktFile, dataContext)
     }
