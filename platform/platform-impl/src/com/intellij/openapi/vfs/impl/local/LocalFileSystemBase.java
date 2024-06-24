@@ -22,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.util.lang.JavaVersion;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,10 +131,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public String @NotNull [] list(@NotNull VirtualFile file) {
-    Path path = getNioPath(file);
-    String[] names = path == null ? null : myNioChildrenGetter.accessDiskWithCheckCanceled(path);
-    return names == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : names;
+  public String @NotNull [] list(@NotNull VirtualFile dir) {
+    var nioFile = Path.of(toIoPath(dir));
+    return NioFiles.list(nioFile).stream()
+      .map(NioFiles::getFileName)
+      .toArray(String[]::new);
   }
 
   @Override
@@ -569,7 +569,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  private final DiskQueryRelay<Path, String[]> myNioChildrenGetter = new DiskQueryRelay<>(LocalFileSystemBase::listPathChildren);
   private final DiskQueryRelay<ContentRequest, byte[]> myNioContentGetter = new DiskQueryRelay<>(request -> {
     Path path = request.path();
     int length = request.length();
@@ -610,14 +609,5 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public void cleanupForNextTest() {
     FileDocumentManager.getInstance().saveAllDocuments();
     PersistentFS.getInstance().clearIdCache();
-  }
-
-  private static String[] listPathChildren(Path dir) {
-    try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
-      return StreamEx.of(dirStream.iterator()).map(it -> it.getFileName().toString()).toArray(String[]::new);
-    }
-    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
-    catch (IOException | RuntimeException e) { LOG.warn(e); }
-    return null;
   }
 }

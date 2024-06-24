@@ -29,6 +29,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.StreamSupport;
 
 import static java.util.Objects.requireNonNullElse;
 
@@ -48,9 +49,10 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private volatile boolean myDisposed;
 
   private final ThreadLocal<Pair<VirtualFile, Map<String, FileAttributes>>> myFileAttributesCache = new ThreadLocal<>();
+  private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(LocalFileSystemImpl::listChildren);
+  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(LocalFileSystemImpl::readAttributes);
   private final DiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>> myChildrenAttrGetter =
     new DiskQueryRelay<>(pair -> listWithAttributes(pair.first, pair.second));
-  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(LocalFileSystemImpl::readAttributes);
 
   protected LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
@@ -263,6 +265,11 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
                           : StringUtil.equal(name, symlinkTarget, SystemInfo.isFileSystemCaseSensitive);
   }
 
+  @Override
+  public String @NotNull [] list(@NotNull VirtualFile file) {
+    return myChildrenGetter.accessDiskWithCheckCanceled(file);
+  }
+
   @ApiStatus.Internal
   public final String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
     return listWithCaching(dir, null);
@@ -301,6 +308,17 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     }
 
     return myAttributeGetter.accessDiskWithCheckCanceled(file);
+  }
+
+  private static String[] listChildren(VirtualFile dir) {
+    try (var dirStream = Files.newDirectoryStream(Path.of(toIoPath(dir)))) {
+      return StreamSupport.stream(dirStream.spliterator(), false)
+        .map(it -> it.getFileName().toString())
+        .toArray(String[]::new);
+    }
+    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
+    catch (IOException | RuntimeException e) { LOG.warn(e); }
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir, @Nullable Set<String> filter) {
