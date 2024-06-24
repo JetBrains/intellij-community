@@ -153,6 +153,7 @@
     "com.jetbrains.php:app:PhpSmartKeysConfiguration.removePhpTagsWhilePastingByDefault",
     "com.jetbrains.php:app:PhpSmartKeysConfiguration.replaceUnnecessaryDoubleQuotes",
     "com.jetbrains.php:app:PhpSmartKeysConfiguration.smartFunctionParametersCompletion",
+    "com.jetbrains.twig:app:TwigSmartKeysConfiguration.*",
     "org.intellij.plugins.markdown:app:MarkdownCodeInsightSettings.adjustListIndentation",
     "org.intellij.plugins.markdown:app:MarkdownCodeInsightSettings.enableFileDrop",
     "org.intellij.plugins.markdown:app:MarkdownCodeInsightSettings.insertHtmlLineBreakInsideTables",
