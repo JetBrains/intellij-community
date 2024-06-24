@@ -907,8 +907,7 @@ public final class HighlightMethodUtil {
       PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
 
       if (className != null) {
-        if (qualifierExpression == null &&
-            IncompleteModelUtil.isIncompleteModel(file) &&
+        if (IncompleteModelUtil.isIncompleteModel(file) &&
             IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
           return HighlightUtil.getPendingReferenceHighlightInfo(elementToHighlight);
         }

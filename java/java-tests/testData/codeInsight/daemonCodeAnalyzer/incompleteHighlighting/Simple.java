@@ -121,9 +121,18 @@ public class Simple {
   void overloaded(int x) {}
   void overloaded(boolean x) {}
   
+  void useInner() {
+    Clss.Inner cls = new Clss.Inner();
+    Clss.Inner[] result = (Clss.Inner[]) cls.<info descr="Not resolved until the project is fully loaded">toArray</info>(12);
+  }
+  
   static class Clss implements <info descr="Not resolved until the project is fully loaded">MyInterface</info> {
     void run() {
       <info descr="Not resolved until the project is fully loaded">foo</info>(<info descr="Not resolved until the project is fully loaded">bar</info>);
+    }
+    
+    static class Inner extends <info descr="Not resolved until the project is fully loaded">Cls</info> {
+      
     }
   }
 }
