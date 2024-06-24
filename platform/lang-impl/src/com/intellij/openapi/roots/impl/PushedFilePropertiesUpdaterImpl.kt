@@ -171,6 +171,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     FilePropertyPusher.EP_NAME.forEachExtensionSafe { pusher: FilePropertyPusher<*> ->
       pusher.initExtra(myProject)
     }
+    IndexableFileScanner.EP_NAME.extensionList //ensure the list of extensions is initialized in a background thread
   }
 
   private fun createRecursivePushTask(event: VFileEvent, pushers: List<FilePropertyPusher<*>>): Runnable? {
