@@ -11,6 +11,10 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * Provides an implementation which takes data from the workspace model instead of reading its directly from the configuration files.
+ * Currently, it's disabled by default.
+ */
 public interface JpsSerializationViaWorkspaceModel {
   boolean IS_ENABLED = SystemProperties.getBooleanProperty("intellij.jps.use.workspace.model", false);
   
