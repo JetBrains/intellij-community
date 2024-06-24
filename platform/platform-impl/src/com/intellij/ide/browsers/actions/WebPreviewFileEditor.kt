@@ -7,7 +7,6 @@ import com.intellij.ide.browsers.ReloadMode
 import com.intellij.ide.browsers.WebBrowserManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.options.Configurable
@@ -26,36 +25,37 @@ import org.jetbrains.ide.BuiltInServerBundle
 import java.awt.Color
 import java.awt.Point
 import java.beans.PropertyChangeListener
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 
 private const val WEB_PREVIEW_RELOAD_TOOLTIP_ID: String = "web.preview.reload.on.save"
 
 @Internal
-class WebPreviewFileEditor(project: Project, file: WebPreviewVirtualFile) : UserDataHolderBase(), FileEditor {
+class WebPreviewFileEditor internal constructor(file: WebPreviewVirtualFile) : UserDataHolderBase(), FileEditor {
   private val file = file.originalFile
   private val panel: JCEFHtmlPanel
   private val url = file.previewUrl.toExternalForm()
+
+  @Deprecated("Use {@link #WebPreviewFileEditor(WebPreviewVirtualFile)}", level = DeprecationLevel.ERROR)
+  constructor(project: Project, file: WebPreviewVirtualFile) : this(file)
 
   init {
     panel = object : JCEFHtmlPanel(url) {
       override fun getBackgroundColor(): Color = Color.WHITE
     }
-    reloadPage()
-    previewsOpened++
-    showPreviewTooltip()
   }
 
   companion object {
-    private var previewsOpened = 0
+    private val previewsOpened = AtomicInteger()
 
     val isPreviewOpened: Boolean
-      get() = previewsOpened > 0
+      get() = previewsOpened.get() > 0
   }
 
-  private fun reloadPage() {
-    FileDocumentManager.getInstance().saveAllDocuments()
-    ApplicationManager.getApplication().saveAll()
+  internal fun reloadPage() {
     panel.loadURL(url)
+    previewsOpened.incrementAndGet()
+    showPreviewTooltip()
   }
 
   private fun showPreviewTooltip() {
@@ -113,7 +113,7 @@ class WebPreviewFileEditor(project: Project, file: WebPreviewVirtualFile) : User
   }
 
   override fun dispose() {
-    previewsOpened--
+    previewsOpened.decrementAndGet()
     Disposer.dispose(panel)
   }
 }
