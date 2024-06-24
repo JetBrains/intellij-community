@@ -766,7 +766,7 @@ public class AllIcons {
       /** 18x14 */ public static final @NotNull Icon TopRight = load("ide/shadow/topRight.svg", -1876858180, 0);
     }
 
-    /** 16x16 */ public static final @NotNull Icon SharedScope = load("expui/ide/sharedScope.svg", -72320148, 2);
+    /** 16x16 */ public static final @NotNull Icon SharedScope = load("expui/ide/sharedScope.svg", 1730249074, 2);
     /** 7x10 */ public static final @NotNull Icon Statusbar_arrows = load("ide/statusbar_arrows.svg", -1346411249, 2);
     /** 16x16 */ public static final @NotNull Icon UpDown = load("ide/upDown.svg", 1037605312, 2);
   }
