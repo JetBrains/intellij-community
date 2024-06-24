@@ -668,6 +668,7 @@ f:com.intellij.icons.AllIcons$Ide
 - sf:Rating4:javax.swing.Icon
 - sf:Readonly:javax.swing.Icon
 - sf:Readwrite:javax.swing.Icon
+- sf:SharedScope:javax.swing.Icon
 - sf:Statusbar_arrows:javax.swing.Icon
 - sf:UpDown:javax.swing.Icon
 - <init>():V
@@ -1221,6 +1222,7 @@ f:com.intellij.icons.AllIcons$Toolwindow
 - sf:MeetNewUi:javax.swing.Icon
 - sf:Repositories:javax.swing.Icon
 - sf:Task:javax.swing.Icon
+- sf:ToolWindowDuplicates:javax.swing.Icon
 - sf:ToolWindowInternal:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Toolwindows
