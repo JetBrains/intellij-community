@@ -1,6 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
-
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -25,9 +24,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
+@Suppress("RemoveRedundantQualifierName")
 private val PLATFORM_API_MODULES = java.util.List.of(
   "intellij.platform.analysis",
   "intellij.platform.builtInServer",
+  "intellij.platform.credentialStore",
   "intellij.platform.diff",
   "intellij.platform.editor",
   "intellij.platform.externalSystem",
@@ -48,6 +49,7 @@ private val PLATFORM_API_MODULES = java.util.List.of(
 /**
  * List of modules which are included in lib/app.jar in all IntelliJ based IDEs.
  */
+@Suppress("RemoveRedundantQualifierName")
 private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.analysis.impl",
   "intellij.platform.diff.impl",
@@ -91,6 +93,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.sqlite",
 )
 
+@Suppress("RemoveRedundantQualifierName")
 internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
   "jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
 )
@@ -494,6 +497,7 @@ private suspend fun processAndGetProductPluginContentModules(
 }
 
 // todo implement correct processing
+@Suppress("RemoveRedundantQualifierName")
 private val excludedPaths = java.util.Set.of(
   "/META-INF/ultimate.xml",
   "/META-INF/RdServer.xml",
@@ -581,7 +585,7 @@ private fun collectAndEmbedProductModules(root: Element, xIncludePathResolver: X
     val moduleName = moduleElement.getAttributeValue("name") ?: continue
     val relativeOutFile = "modules/$moduleName.jar"
     result.add(ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES))
-    PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
+    PRODUCT_MODULE_IMPL_COMPOSITION[moduleName]?.let {
       it.mapTo(result) { subModuleName ->
         ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES)
       }
@@ -597,6 +601,7 @@ private fun collectAndEmbedProductModules(root: Element, xIncludePathResolver: X
 // Previously, it was specified in PLATFORM_IMPLEMENTATION_MODULES/PLATFORM_API_MODULES.
 // Once the shape of the extracted module becomes fully discernible,
 // we can consider ways to improve `pluginAuto` and eliminate the need for an explicit declaration here.
+@Suppress("RemoveRedundantQualifierName")
 private val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
   "intellij.platform.vcs.log.impl", listOf(
     "intellij.platform.vcs.log.graph.impl",
