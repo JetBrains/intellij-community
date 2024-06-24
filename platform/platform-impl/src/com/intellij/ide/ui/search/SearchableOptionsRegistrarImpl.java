@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @SuppressWarnings("Duplicates")
 @ApiStatus.Internal
@@ -502,6 +503,11 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   @ApiStatus.Internal
   public static void collectProcessedWordsWithoutStemmingAndStopWords(@NotNull String text, @NotNull Set<? super String> result) {
     Collections.addAll(result, WORD_SEPARATOR_CHARS.split(text.toLowerCase(Locale.ENGLISH)));
+  }
+
+  @ApiStatus.Internal
+  public static Stream<String> splitToWordsWithoutStemmingAndStopWords(@NotNull String text) {
+    return WORD_SEPARATOR_CHARS.splitAsStream(text.toLowerCase(Locale.ENGLISH));
   }
 
   @Override

@@ -10187,16 +10187,9 @@ f:com.intellij.ide.ui.search.SearchUtil
 - f:expandGroup(com.intellij.openapi.options.ConfigurableGroup):java.util.List
 - sf:findKeys(java.lang.String,java.util.Set):java.util.List
 - sf:isComponentHighlighted(java.lang.String,java.lang.String,Z,com.intellij.openapi.options.SearchableConfigurable):Z
-- sf:lightOptions(com.intellij.openapi.options.SearchableConfigurable,javax.swing.JComponent,java.lang.String):V
 - sf:markup(java.lang.String,java.lang.String):java.lang.String
 - sf:markup(java.lang.String,java.lang.String,java.awt.Color,java.awt.Color):java.lang.String
 - sf:processComponent(com.intellij.openapi.options.SearchableConfigurable,java.util.Set,javax.swing.JComponent,Z):V
-com.intellij.ide.ui.search.TraverseUIHelper
-- sf:helperExtensionPoint:com.intellij.openapi.extensions.ExtensionPointName
-- afterConfigurable(com.intellij.openapi.options.SearchableConfigurable,java.util.Set):V
-- afterResultsAreSaved():V
-- beforeConfigurable(com.intellij.openapi.options.SearchableConfigurable,java.util.Set):V
-- beforeStart():V
 f:com.intellij.ide.ui.text.DateTimeFormatConfigurable
 - com.intellij.openapi.options.BoundSearchableConfigurable
 - com.intellij.openapi.options.Configurable$NoScroll

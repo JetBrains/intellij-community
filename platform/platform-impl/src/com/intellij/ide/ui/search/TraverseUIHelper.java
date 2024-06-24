@@ -3,10 +3,12 @@ package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.SearchableConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+@ApiStatus.Internal
 public interface TraverseUIHelper {
   ExtensionPointName<TraverseUIHelper> helperExtensionPoint = new ExtensionPointName<>("com.intellij.search.traverseUiHelper");
 
@@ -23,10 +25,10 @@ public interface TraverseUIHelper {
   /**
    * Invoked before indexing a SearchableConfigurable
    */
-  default void beforeConfigurable(@NotNull SearchableConfigurable configurable, @NotNull Set<OptionDescription> options) {}
+  default void beforeConfigurable(@NotNull SearchableConfigurable configurable, @NotNull Set<SearchableOptionEntry> options) {}
 
   /**
    * Invoked after indexing a SearchableConfigurable
    */
-  default void afterConfigurable(@NotNull SearchableConfigurable configurable, @NotNull Set<OptionDescription> options) {}
+  default void afterConfigurable(@NotNull SearchableConfigurable configurable, @NotNull Set<SearchableOptionEntry> options) {}
 }
