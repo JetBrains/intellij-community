@@ -2,7 +2,6 @@ package com.intellij.searchEverywhereMl.ranking.core.model
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 
 class SearchEverywhereModelProvider {
@@ -12,12 +11,29 @@ class SearchEverywhereModelProvider {
 
   internal fun getModel(tabId: String): SearchEverywhereRankingModel {
     return cache.get(tabId) {
-      val isExactMatchExperiment = SearchEverywhereTabWithMlRanking.findById(tabId)?.let { tab ->
-        SearchEverywhereMlExperiment().getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.EXACT_MATCH_PRIORITIZATION
-      } ?: false
-      val loader = SearchEverywhereMLRankingModelLoader.getForTab(tabId)
-      val model = if (isExactMatchExperiment) ExactMatchSearchEverywhereRankingModel(loader.loadModel()) else SimpleSearchEverywhereRankingModel(loader.loadModel())
-      return@get model
+      if (isTabWithExactMatchIssue(tabId))
+        return@get getRankingModelForExactMatchIssue(tabId)
+      else
+        return@get getRankingModel(tabId)
     }
+  }
+
+  /**
+   * We have tabs that suffer from exact match issue, where the exactly matched result does not appear at the top,
+   * we have introduced additional logic to address that issue.
+   */
+  private fun isTabWithExactMatchIssue(tabId: String): Boolean {
+    val tab = SearchEverywhereTabWithMlRanking.findById(tabId)
+    return tab == SearchEverywhereTabWithMlRanking.CLASSES || tab == SearchEverywhereTabWithMlRanking.FILES
+  }
+
+  private fun getRankingModelForExactMatchIssue(tabId: String): SearchEverywhereRankingModel {
+    val loader = SearchEverywhereMLRankingModelLoader.getForTab(tabId)
+    return ExactMatchSearchEverywhereRankingModel(loader.loadModel())
+  }
+
+  private fun getRankingModel(tabId: String): SearchEverywhereRankingModel {
+    val loader = SearchEverywhereMLRankingModelLoader.getForTab(tabId)
+    return SimpleSearchEverywhereRankingModel(loader.loadModel())
   }
 }
