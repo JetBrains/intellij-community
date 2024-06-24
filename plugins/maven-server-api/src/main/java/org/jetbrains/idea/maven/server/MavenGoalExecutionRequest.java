@@ -6,27 +6,39 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
 public final class MavenGoalExecutionRequest implements Serializable {
   @NotNull private final File file;
   @NotNull private final MavenExplicitProfiles profiles;
+  private final List<String> selectedProjects;
   @NotNull private final Properties userProperties;
 
   public MavenGoalExecutionRequest(@NotNull File file, @NotNull MavenExplicitProfiles profiles)  {
-    this(file, profiles, new Properties());
+    this(file, profiles, Collections.emptyList(), new Properties());
   }
 
-  public MavenGoalExecutionRequest(@NotNull File file, @NotNull MavenExplicitProfiles profiles, @NotNull Properties userProperties) {
+  public MavenGoalExecutionRequest(
+    @NotNull File file,
+    @NotNull MavenExplicitProfiles profiles,
+    @NotNull List<@NotNull String> selectedProjects,
+    @NotNull Properties userProperties) {
     this.file = file;
     this.profiles = profiles;
+    this.selectedProjects = selectedProjects;
     this.userProperties = userProperties;
   }
 
   public File file() { return file; }
 
   public MavenExplicitProfiles profiles() { return profiles; }
+
+  public @NotNull List<@NotNull String> selectedProjects() {
+    return selectedProjects;
+  }
 
   public @NotNull Properties userProperties() {
     return userProperties;
@@ -39,18 +51,20 @@ public final class MavenGoalExecutionRequest implements Serializable {
     MavenGoalExecutionRequest that = (MavenGoalExecutionRequest)obj;
     return Objects.equals(this.file, that.file) &&
            Objects.equals(this.profiles, that.profiles) &&
+           Objects.equals(this.selectedProjects, that.selectedProjects) &&
            Objects.equals(this.userProperties, that.userProperties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(file, profiles);
+    return Objects.hash(file, profiles, selectedProjects, userProperties);
   }
 
   @Override
   public String toString() {
     return "MavenExecutionRequest[" +
-           "file=" + file + ", " +
-           "profiles=" + profiles + ']';
+           "file=" + file +
+           ", profiles=" + profiles +
+           ", selectedProjects=" + selectedProjects + ']';
   }
 }

@@ -834,6 +834,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     Properties userProperties = request.userProperties();
     mavenExecutionRequest.setUserProperties(userProperties);
 
+    List<String> selectedProjects = request.selectedProjects();
+    if (!selectedProjects.isEmpty()) {
+      mavenExecutionRequest.setSelectedProjects(selectedProjects);
+    }
+
     Maven maven = getComponent(Maven.class);
     MavenExecutionResult executionResult = maven.execute(mavenExecutionRequest);
 

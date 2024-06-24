@@ -1178,6 +1178,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     Properties userProperties = request.userProperties();
     mavenExecutionRequest.setUserProperties(userProperties);
 
+    List<String> selectedProjects = request.selectedProjects();
+    if (!selectedProjects.isEmpty()) {
+      mavenExecutionRequest.setSelectedProjects(selectedProjects);
+    }
+
     MavenExecutionResult executionResult = safeExecute(mavenExecutionRequest, getComponent(Maven.class));
 
     Maven3ExecutionResult result =
