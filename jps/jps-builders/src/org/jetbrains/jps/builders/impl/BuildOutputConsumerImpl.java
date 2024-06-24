@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -18,9 +19,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
-/**
-* @author Eugene Zhuravlev
-*/
+@ApiStatus.Internal
 public final class BuildOutputConsumerImpl implements BuildOutputConsumer {
   private static final Logger LOG = Logger.getInstance(BuildOutputConsumerImpl.class);
   private final BuildTarget<?> myTarget;

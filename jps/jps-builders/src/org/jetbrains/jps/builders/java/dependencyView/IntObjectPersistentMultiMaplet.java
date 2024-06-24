@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -16,14 +16,14 @@ import java.util.Collections;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
-public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
+final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   private static final Collection<?> NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 256;
   private final PersistentHashMap<Integer, Collection<V>> map;
   private final DataExternalizer<V> valueExternalizer;
   private final LoadingCache<Integer, Collection<V>> cache;
 
-  public IntObjectPersistentMultiMaplet(final File file,
+  IntObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<Integer> keyExternalizer,
                                         final DataExternalizer<V> valueExternalizer,
                                         final Supplier<? extends Collection<V>> collectionFactory) throws IOException {

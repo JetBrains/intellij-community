@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -14,13 +14,13 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import java.io.*;
 import java.util.function.ObjIntConsumer;
 
-public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
+final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static final IntSet NULL_COLLECTION = IntSets.emptySet();
   private static final int CACHE_SIZE = 256;
   private final PersistentHashMap<Integer, IntSet> map;
   private final LoadingCache<Integer, IntSet> cache;
 
-  public IntIntPersistentMultiMaplet(@NotNull File file, final KeyDescriptor<Integer> keyExternalizer) throws IOException {
+  IntIntPersistentMultiMaplet(@NotNull File file, final KeyDescriptor<Integer> keyExternalizer) throws IOException {
     map = new PersistentHashMap<>(file.toPath(), keyExternalizer, new IntSetExternalizer());
     cache = Caffeine.newBuilder().maximumSize(CACHE_SIZE).build(key -> {
       try {

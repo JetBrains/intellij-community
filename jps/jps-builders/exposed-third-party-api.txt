@@ -9,10 +9,5 @@ com/google/protobuf/Internal$EnumVerifier
 com/google/protobuf/MessageLiteOrBuilder
 com/google/protobuf/Parser
 com/intellij/compiler/instrumentation/InstrumentationClassFinder
-io/netty/channel/Channel
-it/unimi/dsi/fastutil/Hash$Strategy
-it/unimi/dsi/fastutil/ints/IntSet
-javax/tools/JavaCompiler
-org/apache/http/HttpEntity
 org/jetbrains/org/objectweb/asm/ClassReader
 org/jetbrains/org/objectweb/asm/ClassWriter

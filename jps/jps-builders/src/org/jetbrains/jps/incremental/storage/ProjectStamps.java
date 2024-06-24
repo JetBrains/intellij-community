@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +27,7 @@ public final class ProjectStamps {
                        BuildTargetsState targetsState,
                        PathRelativizerService relativizer) throws IOException {
     myStampsStorage = PORTABLE_CACHES
-                      ? new FileStampStorage(dataStorageRoot, relativizer, targetsState)
+                      ? new HashStampStorage(dataStorageRoot, relativizer, targetsState)
                       : new FileTimestampStorage(dataStorageRoot, targetsState);
   }
 

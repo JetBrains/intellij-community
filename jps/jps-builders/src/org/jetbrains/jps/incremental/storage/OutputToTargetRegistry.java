@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,9 +16,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, IntSet> {
   private final PathRelativizerService myRelativizer;
 
@@ -113,6 +110,6 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     if (ProjectStamps.PORTABLE_CACHES) {
       return StringUtil.isEmpty(relativePath) ? 0 : FileUtil.toCanonicalPath(relativePath).hashCode();
     }
-    return FileUtil.pathHashCode(relativePath);
+    return FileUtil.pathHashCode(relativePath); // todo: better hash function?
   }
 }

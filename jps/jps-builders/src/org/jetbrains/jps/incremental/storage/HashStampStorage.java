@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.ArrayUtil;
@@ -13,18 +13,17 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import static org.jetbrains.jps.incremental.storage.FileStampStorage.FileStamp;
-import static org.jetbrains.jps.incremental.storage.FileStampStorage.HashStampPerTarget;
-import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timestamp;
+import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.FileTimestamp;
+import static org.jetbrains.jps.incremental.storage.HashStampStorage.HashStampPerTarget;
 import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.getFileHash;
 
-public final class FileStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements StampsStorage<FileStamp> {
+final class HashStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements StampsStorage<HashStampStorage.HashStamp> {
   private final FileTimestampStorage myTimestampStorage;
   private final PathRelativizerService myRelativizer;
   private final BuildTargetsState myTargetsState;
   private final File myFileStampRoot;
 
-  public FileStampStorage(File dataStorageRoot, PathRelativizerService relativizer, BuildTargetsState targetsState) throws IOException {
+  HashStampStorage(File dataStorageRoot, PathRelativizerService relativizer, BuildTargetsState targetsState) throws IOException {
     super(new File(calcStorageRoot(dataStorageRoot), "data"), PathStringDescriptor.INSTANCE, new StateExternalizer());
     myTimestampStorage = new FileTimestampStorage(dataStorageRoot, targetsState);
     myFileStampRoot = calcStorageRoot(dataStorageRoot);
@@ -46,14 +45,14 @@ public final class FileStampStorage extends AbstractStateStorage<String, HashSta
   }
 
   @Override
-  public void saveStamp(File file, BuildTarget<?> buildTarget, FileStamp stamp) throws IOException {
-    myTimestampStorage.saveStamp(file, buildTarget, Timestamp.fromLong(stamp.myTimestamp));
+  public void saveStamp(File file, BuildTarget<?> buildTarget, HashStamp stamp) throws IOException {
+    myTimestampStorage.saveStamp(file, buildTarget, FileTimestamp.fromLong(stamp.myTimestamp));
     int targetId = myTargetsState.getBuildTargetId(buildTarget);
     String path = relativePath(file);
     update(path, updateFilesStamp(getState(path), targetId, stamp));
   }
 
-  private static HashStampPerTarget @NotNull [] updateFilesStamp(HashStampPerTarget[] oldState, final int targetId, FileStamp stamp) {
+  private static HashStampPerTarget @NotNull [] updateFilesStamp(HashStampPerTarget[] oldState, final int targetId, HashStamp stamp) {
     final HashStampPerTarget newItem = new HashStampPerTarget(targetId, stamp.myHash);
     if (oldState == null) {
       return new HashStampPerTarget[]{newItem};
@@ -90,18 +89,18 @@ public final class FileStampStorage extends AbstractStateStorage<String, HashSta
   }
 
   @Override
-  public FileStamp getPreviousStamp(File file, BuildTarget<?> target) throws IOException {
-    Timestamp previousTimestamp = myTimestampStorage.getPreviousStamp(file, target);
+  public HashStamp getPreviousStamp(File file, BuildTarget<?> target) throws IOException {
+    FileTimestamp previousTimestamp = myTimestampStorage.getPreviousStamp(file, target);
     HashStampPerTarget[] state = getState(relativePath(file));
     if (state != null) {
       int targetId = myTargetsState.getBuildTargetId(target);
       for (HashStampPerTarget filesStampPerTarget : state) {
         if (filesStampPerTarget.targetId == targetId) {
-          return new FileStamp(filesStampPerTarget.hash, previousTimestamp.asLong());
+          return new HashStamp(filesStampPerTarget.hash, previousTimestamp.asLong());
         }
       }
     }
-    return FileStamp.EMPTY;
+    return HashStamp.EMPTY;
   }
 
   public Long getStoredFileHash(File file, BuildTarget<?> target) throws IOException {
@@ -115,16 +114,16 @@ public final class FileStampStorage extends AbstractStateStorage<String, HashSta
   }
 
   @Override
-  public FileStamp getCurrentStamp(File file) throws IOException {
-    Timestamp currentTimestamp = myTimestampStorage.getCurrentStamp(file);
-    return new FileStamp(getFileHash(file), currentTimestamp.asLong());
+  public HashStamp getCurrentStamp(File file) throws IOException {
+    FileTimestamp currentTimestamp = myTimestampStorage.getCurrentStamp(file);
+    return new HashStamp(getFileHash(file), currentTimestamp.asLong());
   }
 
   @Override
   public boolean isDirtyStamp(@NotNull Stamp stamp, File file) throws IOException {
-    if (!(stamp instanceof FileStamp)) return true;
-    FileStamp filesStamp = (FileStamp)stamp;
-    if (!myTimestampStorage.isDirtyStamp(Timestamp.fromLong(filesStamp.myTimestamp), file)) return false;
+    if (!(stamp instanceof HashStamp)) return true;
+    HashStamp filesStamp = (HashStamp)stamp;
+    if (!myTimestampStorage.isDirtyStamp(FileTimestamp.fromLong(filesStamp.myTimestamp), file)) return false;
     Long hash = filesStamp.myHash;
     if (hash == null) return true;
     return hash != getFileHash(file);
@@ -132,9 +131,9 @@ public final class FileStampStorage extends AbstractStateStorage<String, HashSta
 
   @Override
   public boolean isDirtyStamp(Stamp stamp, File file, @NotNull BasicFileAttributes attrs) throws IOException {
-    if (!(stamp instanceof FileStamp)) return true;
-    FileStamp filesStamp = (FileStamp)stamp;
-    if (!myTimestampStorage.isDirtyStamp(Timestamp.fromLong(filesStamp.myTimestamp), file, attrs)) return false;
+    if (!(stamp instanceof HashStamp)) return true;
+    HashStamp filesStamp = (HashStamp)stamp;
+    if (!myTimestampStorage.isDirtyStamp(FileTimestamp.fromLong(filesStamp.myTimestamp), file, attrs)) return false;
     Long hash = filesStamp.myHash;
     if (hash == null) return true;
     return hash != getFileHash(file);
@@ -173,20 +172,20 @@ public final class FileStampStorage extends AbstractStateStorage<String, HashSta
     }
   }
 
-  static final class FileStamp implements StampsStorage.Stamp {
-    static FileStamp EMPTY = new FileStamp(null, -1L);
+  static final class HashStamp implements StampsStorage.Stamp {
+    static HashStamp EMPTY = new HashStamp(null, -1L);
 
     private final Long myHash;
     private final long myTimestamp;
 
-    private FileStamp(Long hash, long timestamp) {
+    private HashStamp(Long hash, long timestamp) {
       myHash = hash;
       myTimestamp = timestamp;
     }
 
     @Override
     public String toString() {
-      return "FileStamp{" +
+      return "HashStamp{" +
              "myHash=" + myHash +
              ", myTimestamp=" + myTimestamp +
              '}';

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.ArrayUtil;
@@ -13,17 +13,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timestamp;
+import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.FileTimestamp;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.TimestampPerTarget;
 
-/**
- * @author Eugene Zhuravlev
- */
-public final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<Timestamp> {
+final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<FileTimestamp> {
   private final BuildTargetsState myTargetsState;
   private final File myTimestampsRoot;
 
-  public FileTimestampStorage(File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
+  FileTimestampStorage(File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
     super(new File(calcStorageRoot(dataStorageRoot), "data"), new FileKeyDescriptor(), new StateExternalizer());
     myTimestampsRoot = calcStorageRoot(dataStorageRoot);
     myTargetsState = targetsState;
@@ -39,40 +36,40 @@ public final class FileTimestampStorage extends AbstractStateStorage<File, Times
   }
 
   @Override
-  public Timestamp getPreviousStamp(File file, BuildTarget<?> target) throws IOException {
+  public FileTimestamp getPreviousStamp(File file, BuildTarget<?> target) throws IOException {
     final TimestampPerTarget[] state = getState(file);
     if (state != null) {
       int targetId = myTargetsState.getBuildTargetId(target);
       for (TimestampPerTarget timestampPerTarget : state) {
         if (timestampPerTarget.targetId == targetId) {
-          return Timestamp.fromLong(timestampPerTarget.timestamp);
+          return FileTimestamp.fromLong(timestampPerTarget.timestamp);
         }
       }
     }
-    return Timestamp.MINUS_ONE;
+    return FileTimestamp.MINUS_ONE;
   }
 
   @Override
-  public Timestamp getCurrentStamp(File file) {
-    return Timestamp.fromLong(FSOperations.lastModified(file));
+  public FileTimestamp getCurrentStamp(File file) {
+    return FileTimestamp.fromLong(FSOperations.lastModified(file));
   }
 
   @Override
   public boolean isDirtyStamp(@NotNull Stamp stamp, File file) {
-    if (!(stamp instanceof Timestamp)) return true;
-    return ((Timestamp) stamp).myTimestamp != FSOperations.lastModified(file);
+    if (!(stamp instanceof FileTimestamp)) return true;
+    return ((FileTimestamp) stamp).myTimestamp != FSOperations.lastModified(file);
   }
 
   @Override
   public boolean isDirtyStamp(Stamp stamp, File file, @NotNull BasicFileAttributes attrs) {
-    if (!(stamp instanceof Timestamp)) return true;
-    Timestamp timestamp = (Timestamp) stamp;
+    if (!(stamp instanceof FileTimestamp)) return true;
+    FileTimestamp timestamp = (FileTimestamp) stamp;
     // for symlinks the attr structure reflects the symlink's timestamp and not symlink's target timestamp
     return attrs.isRegularFile() ? attrs.lastModifiedTime().toMillis() != timestamp.myTimestamp : isDirtyStamp(timestamp, file);
   }
 
   @Override
-  public void saveStamp(File file, BuildTarget<?> buildTarget, Timestamp stamp) throws IOException {
+  public void saveStamp(File file, BuildTarget<?> buildTarget, FileTimestamp stamp) throws IOException {
     int targetId = myTargetsState.getBuildTargetId(buildTarget);
     update(file, updateTimestamp(getState(file), targetId, stamp.asLong()));
   }
@@ -145,11 +142,11 @@ public final class FileTimestampStorage extends AbstractStateStorage<File, Times
     }
   }
 
-  static final class Timestamp implements StampsStorage.Stamp {
-    static final Timestamp MINUS_ONE = new Timestamp(-1L);
+  static final class FileTimestamp implements StampsStorage.Stamp {
+    static final FileTimestamp MINUS_ONE = new FileTimestamp(-1L);
     private final long myTimestamp;
 
-    Timestamp(long timestamp) {
+    FileTimestamp(long timestamp) {
       myTimestamp = timestamp;
     }
 
@@ -157,8 +154,8 @@ public final class FileTimestampStorage extends AbstractStateStorage<File, Times
       return myTimestamp;
     }
 
-    static Timestamp fromLong(long l) {
-      return new Timestamp(l);
+    static FileTimestamp fromLong(long l) {
+      return new FileTimestamp(l);
     }
 
     @Override

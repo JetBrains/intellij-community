@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.google.gson.Gson;
@@ -19,7 +19,6 @@ import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuildListener;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.CompileContextImpl;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
@@ -54,7 +53,7 @@ import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.getString
  *
  * <p>The output of the work is the file "sources_state" in the data storage root folder. To avoid problems with
  * handling by other plugins or systems the output is in JSON format. This report produces only if
- * {@link ProjectStamps#PORTABLE_CACHES} flag enabled and try to reuse the data calculated by {@link FileStampStorage}</p>
+ * {@link ProjectStamps#PORTABLE_CACHES} flag enabled and try to reuse the data calculated by {@link HashStampStorage}</p>
  *
  * <b>This is class can be changed or removed in future</b>
  */
@@ -72,13 +71,13 @@ public final class BuildTargetSourcesState implements BuildListener {
   private final BuildTargetIndex myBuildTargetIndex;
   private final BuildRootIndex myBuildRootIndex;
   private final ProjectStamps myProjectStamps;
-  private final CompileContextImpl myContext;
+  private final CompileContext myContext;
   private final String myOutputFolderPath;
   private final File myTargetStateStorage;
   private final Type myTokenType;
   private final Gson gson;
 
-  public BuildTargetSourcesState(@NotNull CompileContextImpl context) {
+  public BuildTargetSourcesState(@NotNull CompileContext context) {
     gson = new Gson();
     myContext = context;
     myCalculatedHashes = new ConcurrentHashMap<>();
@@ -297,8 +296,8 @@ public final class BuildTargetSourcesState implements BuildListener {
 
   private @NotNull Optional<Long> getFileHash(@NotNull BuildTarget<?> target, @NotNull File file, @NotNull File rootPath) throws IOException {
     StampsStorage<? extends StampsStorage.Stamp> storage = myProjectStamps.getStampStorage();
-    assert storage instanceof FileStampStorage;
-    FileStampStorage fileStampStorage = (FileStampStorage)storage;
+    assert storage instanceof HashStampStorage;
+    HashStampStorage fileStampStorage = (HashStampStorage)storage;
     Long fileHash = fileStampStorage.getStoredFileHash(file, target);
     if (fileHash == null) {
       return Optional.empty();

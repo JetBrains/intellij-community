@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -256,10 +256,12 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     for (File file : enumerator.classes().getRoots()) {
       String path = relativizer.toRelative(file.getAbsolutePath());
 
-      Integer contentHash = getContentHash(file);
+      int contentHash = getContentHash(file);
       if (logBuilder != null) {
         logBuilder.append(path);
-        if (contentHash != 0) logBuilder.append(": ").append(contentHash);
+        if (contentHash != 0) {
+          logBuilder.append(": ").append(contentHash);
+        }
         logBuilder.append("\n");
       }
       fingerprint = 31 * fingerprint + pathHashCode(path) + contentHash;
@@ -267,10 +269,12 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     return fingerprint;
   }
 
-  private static Integer getContentHash(File file) {
+  private static int getContentHash(File file) {
     if (ProjectStamps.TRACK_LIBRARY_CONTENT) {
       try {
-        if (!file.isFile() || !file.getName().endsWith(".jar")) return 0;
+        if (!file.isFile() || !file.getName().endsWith(".jar")) {
+          return 0;
+        }
 
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         FileInputStream inputStream = new FileInputStream(file);
@@ -292,9 +296,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
         throw new RuntimeException(e);
       }
     }
-    else {
-      return 0;
-    }
+    return 0;
   }
 
   private static int pathHashCode(@NotNull String path) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -25,6 +25,7 @@ import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
 import kotlinx.metadata.jvm.JvmMetadataUtil;
 import net.n3.nanoxml.IXMLBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
@@ -47,9 +48,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * @author Eugene Zhuravlev
- */
+@ApiStatus.Internal
 public final class ClasspathBootstrap {
   private static final Logger LOG = Logger.getInstance(ClasspathBootstrap.class);
 

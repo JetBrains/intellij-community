@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.TargetOutputIndex;
@@ -12,6 +13,7 @@ import org.jetbrains.jps.incremental.CompileContext;
 import java.io.File;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class TargetOutputIndexImpl implements TargetOutputIndex {
   private final Map<File, List<BuildTarget<?>>> myOutputToTargets;
 

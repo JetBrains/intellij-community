@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.PersistentHashMapValueStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -130,6 +131,7 @@ public final class BuildDataManager {
     return new SourceToOutputMappingWrapper(map, myTargetsState.getBuildTargetId(target));
   }
 
+  @ApiStatus.Internal
   public SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(BuildTargetType<?> targetType, String targetId) throws IOException {
     return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
   }
@@ -143,6 +145,7 @@ public final class BuildDataManager {
     return mySrcToFormMap;
   }
 
+  @ApiStatus.Internal
   public Mappings getMappings() {
     return myMappings;
   }
