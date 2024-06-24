@@ -152,6 +152,11 @@ class AddModuleDependencyFix extends OrderEntryFix {
                                         getModuleName(myCurrentModule))));
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return true;
+  }
+
   private void addDependencyOnModule(@NotNull Project project, Editor editor, @NotNull Module module) {
     Couple<Module> circularModules = CircularModuleDependenciesDetector.addingDependencyFormsCircularity(myCurrentModule, module);
     if (circularModules == null || showCircularWarning(project, circularModules, module)) {
