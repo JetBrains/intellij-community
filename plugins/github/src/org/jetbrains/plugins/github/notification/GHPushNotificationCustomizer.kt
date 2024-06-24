@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.notification
 
 import com.intellij.dvcs.push.VcsPushOptionValue
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -33,11 +32,6 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 private val LOG = logger<GHPushNotificationCustomizer>()
 
 internal class GHPushNotificationCustomizer(private val project: Project) : GitPushNotificationCustomizer {
-  private val settings: GithubPullRequestsProjectUISettings = GithubPullRequestsProjectUISettings.getInstance(project)
-  private val projectsManager: GHHostedRepositoriesManager = project.service<GHHostedRepositoriesManager>()
-  private val defaultAccountHolder: GithubProjectDefaultAccountHolder = project.service<GithubProjectDefaultAccountHolder>()
-  private val accountManager: GHAccountManager = service<GHAccountManager>()
-
   override suspend fun getActions(
     repository: GitRepository,
     pushResult: GitPushRepoResult,
@@ -63,7 +57,9 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
     return listOf(GHPRCreatePullRequestNotificationAction(project, projectMapping, account))
   }
 
-  private fun findRepoAndAccount(targetRepository: GitRepository, pushResult: GitPushRepoResult): RepoAndAccount<GHGitRepositoryMapping, GithubAccount>? {
+  private suspend fun findRepoAndAccount(targetRepository: GitRepository, pushResult: GitPushRepoResult): RepoAndAccount<GHGitRepositoryMapping, GithubAccount>? {
+    val settings = project.serviceAsync<GithubPullRequestsProjectUISettings>()
+    val projectsManager = project.serviceAsync<GHHostedRepositoriesManager>()
     val (url, account) = settings.selectedUrlAndAccount ?: return null
     val projectMapping = projectsManager.knownRepositories.find { mapping: GHGitRepositoryMapping ->
       mapping.remote.url == url
@@ -72,6 +68,8 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
     AccountUtil.selectPersistedRepoAndAccount(targetRepository, pushResult, projectMapping to account)?.let {
       return it
     }
+    val accountManager = serviceAsync<GHAccountManager>()
+    val defaultAccountHolder = project.serviceAsync<GithubProjectDefaultAccountHolder>()
     AccountUtil.selectSingleAccount(projectsManager, accountManager, targetRepository, pushResult, defaultAccountHolder.account)?.let {
       return it
     }
@@ -80,6 +78,7 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
   }
 
   private suspend fun doesReviewExist(pushResult: GitPushRepoResult, projectMapping: GHGitRepositoryMapping, account: GithubAccount): Boolean {
+    val accountManager: GHAccountManager = serviceAsync<GHAccountManager>()
     val token = accountManager.findCredentials(account) ?: return false
     val executor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
     val prBranch = getReviewBranch(executor, pushResult, projectMapping, account) ?: return false
