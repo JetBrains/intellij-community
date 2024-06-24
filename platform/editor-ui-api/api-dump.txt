@@ -2181,7 +2181,6 @@ com.intellij.openapi.editor.colors.EditorColors
 - sf:FOLDED_TEXT_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:FOLDED_TEXT_BORDER_COLOR:com.intellij.openapi.editor.colors.ColorKey
 - sf:GUTTER_BACKGROUND:com.intellij.openapi.editor.colors.ColorKey
-- sf:HIGHLIGHT_SELECTED_TEXT_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:IDENTIFIER_UNDER_CARET_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:IGNORED_ADDED_LINES_BORDER_COLOR:com.intellij.openapi.editor.colors.ColorKey
 - sf:IGNORED_DELETED_LINES_BORDER_COLOR:com.intellij.openapi.editor.colors.ColorKey

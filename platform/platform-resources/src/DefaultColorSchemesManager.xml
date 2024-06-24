@@ -684,15 +684,6 @@
         </value>
       </option>
 
-      <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="e4e4ff" deuteranopia="D9E6FF" protanopia="D9E6FF"/>
-          <option name="ERROR_STRIPE_COLOR" value="baa8ff" deuteranopia="acb0bf" protanopia="acb0bf"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
       <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
@@ -2363,13 +2354,6 @@
         <value>
           <option name="FOREGROUND" value="287bde" />
           <option name="EFFECT_COLOR" value="287bde" />
-          <option name="EFFECT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
-        <value>
-          <option name="BACKGROUND" value="344134" deuteranopia="32394c" protanopia="32394c"/>
-          <option name="ERROR_STRIPE_COLOR" value="036b13" deuteranopia="4b6f99" protanopia="4b6f99"/>
           <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>

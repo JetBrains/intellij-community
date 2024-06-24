@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
@@ -14,6 +13,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -65,7 +65,9 @@ public final class IdentifierHighlighterPass {
   IdentifierHighlighterPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull TextRange visibleRange) {
     myFile = file;
     myEditor = editor;
-    myCaretOffset = myEditor.getCaretModel().getOffset();
+    CaretModel model = myEditor.getCaretModel();
+    boolean highlightSelectionOccurrences = editor.getSettings().isHighlightSelectionOccurrences();
+    myCaretOffset = (highlightSelectionOccurrences && model.getPrimaryCaret().hasSelection()) ? -1 : model.getOffset();
     myVisibleRange = new ProperTextRange(visibleRange);
   }
 
@@ -212,6 +214,7 @@ public final class IdentifierHighlighterPass {
   }
 
   private @NotNull Collection<@NotNull Symbol> getTargetSymbols() {
+    if (myCaretOffset < 0) return Collections.emptyList();
     try {
       Collection<Symbol> fromHostFile = targetSymbols(myFile, myCaretOffset);
       if (!fromHostFile.isEmpty()) {

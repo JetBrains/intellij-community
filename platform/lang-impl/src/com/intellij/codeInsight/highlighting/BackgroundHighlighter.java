@@ -47,10 +47,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Listens for editor events and starts brace/identifier highlighting in the background
@@ -206,19 +203,16 @@ final class BackgroundHighlighter {
     findModel.setStringToFind(toFind);
     int threshold = Registry.intValue("editor.highlight.selected.text.max.occurrences.threshold", 50);
     ReadAction.nonBlocking(() -> {
-        int offset = 0;
-        FindResult result = findManager.findString(sequence, offset, findModel, null);
+        FindResult result = findManager.findString(sequence, 0, findModel, null);
         List<FindResult> results = new ArrayList<>();
         int count = 0;
         while (result.isStringFound() && count < LivePreviewController.MATCHES_LIMIT) {
           count++;
           if (count > threshold) {
-            results.clear();
-            return results;
+            return Collections.<FindResult>emptyList();
           }
           results.add(result);
-          offset = result.getEndOffset();
-          result = findManager.findString(sequence, offset, findModel);
+          result = findManager.findString(sequence, result.getEndOffset(), findModel);
         }
         return results;
       })
@@ -235,7 +229,7 @@ final class BackgroundHighlighter {
           int startOffset = result.getStartOffset();
           int endOffset = result.getEndOffset();
           if (startOffset == start && endOffset == end) continue;
-          highlighters.add(markupModel.addRangeHighlighter(EditorColors.HIGHLIGHT_SELECTED_TEXT_ATTRIBUTES, startOffset, endOffset,
+          highlighters.add(markupModel.addRangeHighlighter(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES, startOffset, endOffset,
                                                            HighlightManagerImpl.OCCURRENCE_LAYER, HighlighterTargetArea.EXACT_RANGE));
         }
         editor.putUserData(SELECTION_HIGHLIGHTS, highlighters);
@@ -354,4 +348,3 @@ final class BackgroundHighlighter {
 
   private static final class HighlightSelectionKey {}
 }
-

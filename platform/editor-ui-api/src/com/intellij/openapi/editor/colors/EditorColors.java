@@ -56,7 +56,6 @@ public interface EditorColors {
   TextAttributesKey WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES =
     TextAttributesKey.createTextAttributesKey("WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES");
   TextAttributesKey TEXT_SEARCH_RESULT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TEXT_SEARCH_RESULT_ATTRIBUTES");
-  TextAttributesKey HIGHLIGHT_SELECTED_TEXT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("HIGHLIGHT_SELECTED_TEXT_ATTRIBUTES");
 
   TextAttributesKey FOLDED_TEXT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("FOLDED_TEXT_ATTRIBUTES");
   ColorKey FOLDED_TEXT_BORDER_COLOR = ColorKey.createColorKey("FOLDED_TEXT_BORDER_COLOR");
