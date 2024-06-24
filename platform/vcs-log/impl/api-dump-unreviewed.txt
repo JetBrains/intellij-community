@@ -1195,6 +1195,7 @@ f:com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 - javax.swing.JPanel
 - sf:Companion:com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel$Companion
 - sf:EXTERNAL_BORDER:I
+- sf:INFO_PANEL_MIN_HEIGHT:I
 - sf:INTERNAL_BORDER:I
 - sf:LAYOUT_MIN_WIDTH:I
 - sf:SIDE_BORDER:I
