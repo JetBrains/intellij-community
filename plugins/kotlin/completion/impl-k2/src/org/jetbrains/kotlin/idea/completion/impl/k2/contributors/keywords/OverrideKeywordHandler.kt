@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.contributors.keywords
 
@@ -16,10 +16,10 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
@@ -113,7 +113,7 @@ internal class OverrideKeywordHandler(
 
         val text = getSymbolTextForLookupElement(memberSymbol)
         val baseIcon = getBaseIcon(memberSymbol)
-        val isImplement = (memberSymbol as? KaSymbolWithModality)?.modality == Modality.ABSTRACT
+        val isImplement = (memberSymbol as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT
         val additionalIcon = if (isImplement) AllIcons.Gutter.ImplementingMethod else AllIcons.Gutter.OverridingMethod
         val icon = RowIcon(baseIcon, additionalIcon)
         val isSuspendFunction = (memberSymbol as? KaNamedFunctionSymbol)?.isSuspend == true

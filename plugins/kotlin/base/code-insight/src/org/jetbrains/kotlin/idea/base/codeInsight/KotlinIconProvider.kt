@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.psi.PsiElement
@@ -24,7 +24,7 @@ object KotlinIconProvider {
         }
 
         if (symbol is KaNamedFunctionSymbol) {
-            val isAbstract = symbol.modality == Modality.ABSTRACT
+            val isAbstract = symbol.modality == KaSymbolModality.ABSTRACT
 
             return when {
                 symbol.isExtension -> {
@@ -38,7 +38,7 @@ object KotlinIconProvider {
         }
 
         if (symbol is KaClassSymbol) {
-            val isAbstract = (symbol as? KaNamedClassOrObjectSymbol)?.modality == Modality.ABSTRACT
+            val isAbstract = (symbol as? KaNamedClassOrObjectSymbol)?.modality == KaSymbolModality.ABSTRACT
 
             return when (symbol.classKind) {
                 KaClassKind.CLASS -> if (isAbstract) KotlinIcons.ABSTRACT_CLASS else KotlinIcons.CLASS

@@ -3,13 +3,14 @@ package org.jetbrains.kotlin.idea.completion.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
@@ -63,6 +64,7 @@ internal open class FirKDocParameterNameContributor(
     private fun getParametersForKDoc(
         ownerDeclarationSymbol: KaDeclarationSymbol
     ): Sequence<KtSymbolWithOrigin> = sequence {
+        @OptIn(KaExperimentalApi::class)
         yieldAll(ownerDeclarationSymbol.typeParameters)
 
         val valueParameters = when (ownerDeclarationSymbol) {
@@ -77,7 +79,7 @@ internal open class FirKDocParameterNameContributor(
         }
         yieldAll(valueParameters)
     }.map { symbol ->
-        val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKind.LocalScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
+        val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKinds.LocalScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
         KtSymbolWithOrigin(symbol, symbolOrigin)
     }
 

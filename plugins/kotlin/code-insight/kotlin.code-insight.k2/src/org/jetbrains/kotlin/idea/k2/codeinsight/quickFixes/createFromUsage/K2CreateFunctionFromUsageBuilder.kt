@@ -7,6 +7,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -196,6 +197,7 @@ object K2CreateFunctionFromUsageBuilder {
      * Returns the type of the class containing this [KtSimpleNameExpression] if the class is abstract. Otherwise, returns null.
      */
     context (KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun KtSimpleNameExpression.getAbstractTypeOfContainingClass(): KaType? {
         val containingClass = getStrictParentOfType<KtClassOrObject>() as? KtClass ?: return null
         if (containingClass is KtEnumEntry || containingClass.isAnnotation()) return null
@@ -203,7 +205,7 @@ object K2CreateFunctionFromUsageBuilder {
         val classSymbol = containingClass.symbol as? KaClassSymbol ?: return null
         val classType = buildClassType(classSymbol) {
             for (typeParameter in containingClass.typeParameters) {
-                argument(KaStarTypeProjection(token))
+                argument(buildStarTypeProjection())
             }
         }
         if (containingClass.modifierList.hasAbstractModifier() || classSymbol.classKind == KaClassKind.INTERFACE) return classType

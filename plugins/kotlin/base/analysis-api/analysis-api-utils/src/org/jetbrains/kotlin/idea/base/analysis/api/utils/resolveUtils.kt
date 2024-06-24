@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
-import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -138,6 +137,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun KaNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KaType =
     buildClassType(this) {
         if (expression is KtCallExpression) {
@@ -146,7 +146,7 @@ private fun KaNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFr
                 if (typeArgument != null) {
                     argument(typeArgument)
                 } else {
-                    argument(KaStarTypeProjection(token))
+                    argument(buildStarTypeProjection())
                 }
             }
         }

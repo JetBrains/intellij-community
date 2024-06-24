@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
@@ -8,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -52,12 +52,13 @@ private fun KaType.unwrap(): KaType {
  * For instance, given Pair<T, Pair<Int, U>>, the function returns Pair<*, Pair<Int, *>>.
  */
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun substituteTypeParameterTypesWithStarTypeProjections(type: KaType): KaType? {
     return when (type) {
         is KaClassType -> buildClassType(type.symbol) {
             type.typeArguments.mapNotNull { it.type }.forEach {
                 if (it is KaTypeParameterType) {
-                    argument(KaStarTypeProjection(token))
+                    argument(buildStarTypeProjection())
                 } else {
                     substituteTypeParameterTypesWithStarTypeProjections(it)?.let { type ->
                         argument(type)

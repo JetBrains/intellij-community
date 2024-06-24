@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
@@ -9,6 +10,8 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
@@ -99,9 +102,9 @@ private fun retainNonOverridableMembers(
 }
 
 private val KaCallableSymbol.isOverridable: Boolean
-    get() = (this as? KaSymbolWithModality)?.modality != Modality.FINAL &&
-            (this as? KaSymbolWithVisibility)?.visibility != Visibilities.Private &&
+    get() = (this as? KaSymbolWithModality)?.modality != KaSymbolModality.FINAL &&
+            (this as? KaSymbolWithVisibility)?.visibility !=  KaSymbolVisibility.PRIVATE &&
             (this.getSymbolContainingMemberDeclarations() as? KaNamedClassOrObjectSymbol)?.isFinalClass != true
 
 private val KaNamedClassOrObjectSymbol.isFinalClass: Boolean
-    get() = modality == Modality.FINAL && classKind != KaClassKind.ENUM_CLASS
+    get() = modality == KaSymbolModality.FINAL && classKind != KaClassKind.ENUM_CLASS

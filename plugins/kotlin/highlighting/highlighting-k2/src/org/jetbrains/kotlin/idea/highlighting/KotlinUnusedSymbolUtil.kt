@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
@@ -16,6 +16,7 @@ import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -121,10 +122,11 @@ object KotlinUnusedSymbolUtil {
   }
 
   context(KaSession)
+  @OptIn(KaExperimentalApi::class)
   fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
       val symbol = declaration.symbol
       if (declaration.languageVersionSettings.getFlag(
-          AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && (symbol as? KaSymbolWithVisibility)?.visibility?.isPublicAPI == true) {
+          AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && (symbol as? KaSymbolWithVisibility)?.compilerVisibility?.isPublicAPI == true) {
           return null
       }
       if (symbol is KaNamedFunctionSymbol && symbol.isOperator) return null
@@ -658,7 +660,7 @@ object KotlinUnusedSymbolUtil {
       val ownerClass = declaration.containingClassOrObject as? KtClass ?: return false
       if (!ownerClass.isInheritable()) return false
       val callableSymbol = symbol as? KaCallableSymbol ?: return false
-      if ((callableSymbol as? KaSymbolWithModality)?.modality == Modality.ABSTRACT) return false
+      if ((callableSymbol as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT) return false
       return ownerClass.findAllInheritors(useScope).any { element: PsiElement ->
           when (element) {
               is KtClassOrObject -> {

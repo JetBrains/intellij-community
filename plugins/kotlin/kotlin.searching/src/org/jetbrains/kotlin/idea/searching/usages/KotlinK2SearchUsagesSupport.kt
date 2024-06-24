@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.searching.usages
 
@@ -353,8 +353,8 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         }
         val symbol = declarationSymbol as? KaSymbolWithModality ?: return@analyze false
         when (symbol.modality) {
-            Modality.OPEN, Modality.SEALED, Modality.ABSTRACT -> true
-            Modality.FINAL -> false
+            KaSymbolModality.OPEN, KaSymbolModality.SEALED, KaSymbolModality.ABSTRACT -> true
+            KaSymbolModality.FINAL -> false
         }
     }
 

@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -33,16 +34,16 @@ internal class AddOpenModifierIntention :
         // The intention's applicability cannot solely depend on the PSI because compiler plugins may introduce modality different from
         // explicit syntax and language defaults.
         val elementSymbol = element.symbol as? KaSymbolWithModality ?: return null
-        if (elementSymbol.modality == Modality.OPEN || elementSymbol.modality == Modality.ABSTRACT) {
+        if (elementSymbol.modality == KaSymbolModality.OPEN || elementSymbol.modality == KaSymbolModality.ABSTRACT) {
             return null
         }
 
         val owner = element.containingClassOrObject ?: return null
         val ownerSymbol = owner.symbol as? KaSymbolWithModality ?: return null
         val isApplicable = (owner.hasModifier(KtTokens.ENUM_KEYWORD)
-                || ownerSymbol.modality == Modality.OPEN
-                || ownerSymbol.modality == Modality.ABSTRACT
-                || ownerSymbol.modality == Modality.SEALED)
+                || ownerSymbol.modality == KaSymbolModality.OPEN
+                || ownerSymbol.modality == KaSymbolModality.ABSTRACT
+                || ownerSymbol.modality == KaSymbolModality.SEALED)
         return isApplicable.asUnit
     }
 

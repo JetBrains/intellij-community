@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.codeInsight.CallTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallTargetProcessor
@@ -41,7 +41,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
 
             analyze(function) {
                 val functionSymbol = function.getFunctionLikeSymbol() as? KaNamedFunctionSymbol ?: return
-                if (functionSymbol.modality == Modality.OPEN) return
+                if (functionSymbol.modality == KaSymbolModality.OPEN) return
 
                 if (function.hasSuspendOrUnresolvedCall()) return
 

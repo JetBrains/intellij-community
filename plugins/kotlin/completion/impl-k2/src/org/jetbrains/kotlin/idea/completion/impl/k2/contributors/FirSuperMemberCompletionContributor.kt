@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -83,7 +84,7 @@ internal class FirSuperMemberCompletionContributor(
                 val symbol = callableInfo.signature.symbol
 
                 // Abstract symbol does not participate completion.
-                if (symbol !is KaSymbolWithModality || symbol.modality == Modality.ABSTRACT) continue
+                if (symbol !is KaSymbolWithModality || symbol.modality == KaSymbolModality.ABSTRACT) continue
 
                 // Unlike typical diamond cases, calls to method of `Any` always do not need extra qualification.
                 if (symbol.callableId?.classId == StandardClassIds.Any) {

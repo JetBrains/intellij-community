@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
@@ -21,6 +21,7 @@ import com.intellij.util.Function
 import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.asJava.toFakeLightClass
@@ -112,8 +113,8 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
             }
             val allOverriddenSymbols = callableSymbol.allOverriddenSymbols.toList()
             if (allOverriddenSymbols.isEmpty()) return
-            val implements = callableSymbol is KaSymbolWithModality && callableSymbol.modality != Modality.ABSTRACT &&
-                    allOverriddenSymbols.all { it is KaSymbolWithModality && it.modality == Modality.ABSTRACT }
+            val implements = callableSymbol is KaSymbolWithModality && callableSymbol.modality != KaSymbolModality.ABSTRACT &&
+                    allOverriddenSymbols.all { it is KaSymbolWithModality && it.modality == KaSymbolModality.ABSTRACT }
             val gutter = if (implements) KotlinLineMarkerOptions.implementingOption else KotlinLineMarkerOptions.overridingOption
             if (!gutter.isEnabled) return
             val anchor = declaration.nameIdentifier ?: declaration
@@ -270,11 +271,11 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
             }
             val allOverriddenSymbols = callableSymbol.directlyOverriddenSymbols.toList()
             if (allOverriddenSymbols.isEmpty()) return ""
-            val isAbstract = callableSymbol is KaSymbolWithModality && callableSymbol.modality == Modality.ABSTRACT
+            val isAbstract = callableSymbol is KaSymbolWithModality && callableSymbol.modality == KaSymbolModality.ABSTRACT
             val abstracts = hashSetOf<PsiElement>()
             val supers = allOverriddenSymbols.mapNotNull {
                 val superFunction = it.psi
-                if (superFunction != null && it is KaSymbolWithModality && it.modality == Modality.ABSTRACT) {
+                if (superFunction != null && it is KaSymbolWithModality && it.modality == KaSymbolModality.ABSTRACT) {
                     abstracts.add(superFunction)
                 }
                 superFunction
