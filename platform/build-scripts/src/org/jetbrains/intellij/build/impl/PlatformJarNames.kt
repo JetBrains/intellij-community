@@ -51,4 +51,11 @@ object PlatformJarNames {
    * production classpath. 
    */
   const val TEST_FRAMEWORK_JAR: String = "testFramework.jar"
+
+  /**
+   * The custom filesystem implementations for:
+   * * Fleet and FSD
+   * * IJent on WSL
+   */
+  const val PLATFORM_CORE_NIO_FS: String = "nio-fs.jar"
 }
