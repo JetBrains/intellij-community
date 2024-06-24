@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 class GitTagHolder(val repository: GitRepository) {
 
@@ -27,7 +26,7 @@ class GitTagHolder(val repository: GitRepository) {
   private val repositoryFiles = repository.repositoryFiles
 
   private var tagsWithHashes: Map<GitTag, Hash> = mapOf()
-  private var hashToTagCache: MutableMap<String, GitTag> = ConcurrentHashMap()
+  private var hashToTagCache: Map<String, GitTag> = mapOf()
 
   private val updateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private var isEnabled = false
@@ -58,33 +57,34 @@ class GitTagHolder(val repository: GitRepository) {
 
   private suspend fun updateState() {
     if (isEnabled) {
-      tagsWithHashes = loadTagsForRepo()
+      val tags = loadTagsForRepo()
+      tagsWithHashes = tags.first
+      hashToTagCache = tags.second
       BackgroundTaskUtil.syncPublisher(repository.project, GIT_TAGS_LOADED).tagsLoaded(repository)
     }
     else {
       tagsWithHashes = emptyMap()
-      hashToTagCache = ConcurrentHashMap()
+      hashToTagCache = emptyMap()
     }
   }
 
-  private suspend fun loadTagsForRepo(): MutableMap<GitTag, Hash> {
+  private suspend fun loadTagsForRepo(): Pair<MutableMap<GitTag, Hash>, Map<String, GitTag>> {
     isLoadingFlow.emit(true)
     val tags = mutableMapOf<GitTag, Hash>()
-    val cache = ConcurrentHashMap<String, GitTag>()
+    val cache = mutableMapOf<String, GitTag>()
     try {
       readPackedTags(repositoryFiles.packedRefsPath, tags, cache)
       GitRefUtil.readFromRefsFiles(repositoryFiles.refsTagsFile,
                                    GitTag.REFS_TAGS_PREFIX,
                                    repositoryFiles) { tag, hash -> putValue(tag, hash, tags, cache) }
-      hashToTagCache = cache
     }
     finally {
       isLoadingFlow.emit(false)
     }
-    return tags
+    return tags to cache
   }
 
-  private fun readPackedTags(myPackedRefsFile: File, tags: MutableMap<GitTag, Hash>, cache: ConcurrentHashMap<String, GitTag>) {
+  private fun readPackedTags(myPackedRefsFile: File, tags: MutableMap<GitTag, Hash>, cache: MutableMap<String, GitTag>) {
     if (!myPackedRefsFile.exists()) {
       return
     }
