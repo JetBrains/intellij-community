@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.project.preimport
 import org.jetbrains.idea.maven.project.MavenProject
 
 interface MavenStructureProjectVisitor {
-  fun map(allProjects: ArrayList<MavenProject>) {
+  fun map(allProjects: List<MavenProject>) {
     TODO("Not yet implemented")
   }
 }
