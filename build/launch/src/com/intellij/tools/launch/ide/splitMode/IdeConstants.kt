@@ -14,7 +14,7 @@ internal object IdeConstants {
   /**
    * See `com.jetbrains.rdct.testFramework.launch.ProcessLauncher.GATEWAY_PLUGIN_MODULE`
    */
-  const val INTELLIJ_CWM_GUEST_MAIN_MODULE = "intellij.cwm.guest.main"
+  const val INTELLIJ_CWM_GUEST_MAIN_MODULE = "intellij.platform.frontend.split.main"
   const val INTELLIJ_IDEA_ULTIMATE_MAIN_MODULE = "intellij.idea.ultimate.main"
   const val GATEWAY_PLUGIN_MODULE = "intellij.gateway.plugin"
 

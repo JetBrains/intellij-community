@@ -65,7 +65,7 @@ internal suspend fun computeModuleSourcesByContent(
 ) {
   for (moduleName in helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule), jarPackager.moduleOutputPatcher)) {
     // CWM plugin is overcomplicated without any valid reason - it must be refactored
-    if (moduleName == "intellij.cwm.plugin.driver" || !addedModules.add(moduleName)) {
+    if (moduleName == "intellij.driver.backend.split" || !addedModules.add(moduleName)) {
       continue
     }
 

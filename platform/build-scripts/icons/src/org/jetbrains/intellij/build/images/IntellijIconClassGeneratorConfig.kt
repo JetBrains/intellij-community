@@ -26,6 +26,10 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.lang.css",
         iconDirectory = "icons/css",
       )
+      "intellij.platform.split" -> IntellijIconClassGeneratorModuleConfig(
+        className = "CwmCommonIcons",
+        packageName = "com.intellij.cwm.common.icons",
+      )
       "intellij.properties.psi" -> IntellijIconClassGeneratorModuleConfig(
         className = "PropertiesIcons",
         packageName = "com.intellij.lang.properties",

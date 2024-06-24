@@ -548,7 +548,7 @@ class PluginModelValidator(sourceModules: List<Module>) {
     }
 
     val pluginFileName = when (moduleName) {
-      "intellij.cwm.host" -> "pluginBase.xml"
+      "intellij.platform.backend.split" -> "pluginBase.xml"
       "intellij.idea.community.customization" -> "IdeaPlugin.xml"
       else -> "plugin.xml"
     }
