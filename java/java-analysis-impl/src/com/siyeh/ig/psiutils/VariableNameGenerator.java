@@ -5,8 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +18,6 @@ import java.util.*;
  * It's recommended to have at least one {@link #byName(String...)} call with at least one non-null candidate as the last resort.
  */
 public final class VariableNameGenerator {
-  private final static int MAX_ITERATIONS = 10;
 
   private final @NotNull JavaCodeStyleManager myManager;
   private final @NotNull PsiElement myContext;
@@ -97,11 +95,11 @@ public final class VariableNameGenerator {
   }
 
   /**
-   * @param names which generator tries not to use
-   * Because of performance reason, there is no guarantee that some of these names will not be reused
+   * @param names which generator will not use
    * @return this generator
    */
-  public VariableNameGenerator skipNames(List<String> names) {
+  @Contract("_->this")
+  public VariableNameGenerator skipNames(@NotNull Collection<@NotNull String> names) {
     skipNames.addAll(names);
     return this;
   }
@@ -116,30 +114,13 @@ public final class VariableNameGenerator {
     String suffixed = null;
     @NonNls final Set<String> candidates = this.candidates.isEmpty() ? Collections.singleton("v") : this.candidates;
     for (String candidate : candidates) {
-      String name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward);
-      if (name.equals(candidate)){
-        suffixed = name;
-        break;
-      }
+      String name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward, skipNames);
+      if (name.equals(candidate)) return name;
       if (suffixed == null) {
         suffixed = name;
       }
     }
-    return generateWithSkipped(lookForward, suffixed);
-  }
-
-  private String generateWithSkipped(boolean lookForward, String originalName) {
-    if (!skipNames.contains(originalName)) return originalName;
-    String newName = originalName;
-    int i = 0;
-    while (true) {
-      i++;
-      if (i > MAX_ITERATIONS) break;
-      newName = UniqueNameGenerator.generateUniqueNameOneBased(newName, name -> !skipNames.contains(name));
-      newName = myManager.suggestUniqueVariableName(newName, myContext, lookForward);
-      if (!skipNames.contains(newName)) return newName;
-    }
-    return newName;
+    return suffixed;
   }
 
   @NotNull
@@ -152,13 +133,13 @@ public final class VariableNameGenerator {
       if (myContext instanceof PsiNameIdentifierOwner owner && candidate.equals(owner.getName())) {
         name = candidate;
       } else {
-        name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward);
+        name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward, skipNames);
       }
       if (name.equals(candidate)) result.add(name);
       else suffixed.add(name);
     }
     result.addAll(suffixed);
 
-    return ContainerUtil.map(result, name -> generateWithSkipped(lookForward, name));
+    return result;
   }
 }

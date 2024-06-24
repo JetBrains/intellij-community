@@ -1041,14 +1041,20 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public @NotNull String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, boolean lookForward) {
-    Predicate<PsiVariable> canBeReused =
-      v -> place instanceof PsiParameter && !PsiTreeUtil.isAncestor(((PsiParameter)place).getDeclarationScope(), v, false);
-    return suggestUniqueVariableName(baseName, place, lookForward, false, canBeReused);
+    return suggestUniqueVariableName(baseName, place, lookForward, Set.of());
   }
 
   @Override
+  public @NotNull String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, boolean lookForward, @NotNull Set<String> skipNames) {
+    Predicate<PsiVariable> canBeReused =
+      v -> place instanceof PsiParameter && !PsiTreeUtil.isAncestor(((PsiParameter)place).getDeclarationScope(), v, false);
+    return suggestUniqueVariableName(baseName, place, lookForward, false, canBeReused, v -> !skipNames.contains(v));
+  }
+
+
+  @Override
   public @NotNull String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<? super PsiVariable> canBeReused) {
-    return suggestUniqueVariableName(baseName, place, true, false, canBeReused);
+    return suggestUniqueVariableName(baseName, place, true, false, canBeReused, null);
   }
 
   @Override
@@ -1068,7 +1074,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
       String unique = suggestUniqueVariableName(name, place, lookForward);
       if (!unique.equals(name)) {
-        String withShadowing = suggestUniqueVariableName(name, place, lookForward, place instanceof PsiParameter, v -> false);
+        String withShadowing = suggestUniqueVariableName(name, place, lookForward, place instanceof PsiParameter, v -> false, null);
         if (withShadowing.equals(name)) {
           uniqueNames.add(name);
         }
@@ -1088,10 +1094,12 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
                                                            PsiElement place,
                                                            boolean lookForward,
                                                            boolean allowShadowing,
-                                                           Predicate<? super PsiVariable> canBeReused) {
+                                                           Predicate<? super PsiVariable> canBeReused,
+                                                           @Nullable Predicate<String> additionalValidator) {
     PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
     return UniqueNameGenerator.generateUniqueNameOneBased(
-      baseName, name -> !hasConflictingVariable(place, name, allowShadowing) &&
+      baseName, name -> (additionalValidator == null || additionalValidator.test(name)) &&
+                        !hasConflictingVariable(place, name, allowShadowing) &&
                         (!lookForward || !hasConflictingVariableAfterwards(scope, name, canBeReused)));
   }
 

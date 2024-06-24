@@ -174,8 +174,7 @@ public final class JavaPatternCompletionUtil {
         String name = new VariableNameGenerator(context, VariableKind.LOCAL_VARIABLE)
           .byName(component.getName())
           .skipNames(names)
-          .generateAll(true)
-          .get(0);
+          .generate(true);
         names.add(name);
       }
       List<PsiType> types = findTypes(deconstructionPattern, record);

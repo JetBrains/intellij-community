@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
@@ -87,13 +88,22 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
 
   @Override
   public @NotNull String suggestUniqueVariableName(@NotNull @NonNls String baseName, PsiElement place, boolean lookForward) {
-    return suggestUniqueVariableName(baseName, place, lookForward, v -> false);
+    return suggestUniqueVariableName(baseName, place, lookForward, v -> false, null);
+  }
+
+  @Override
+  public @NotNull String suggestUniqueVariableName(@NotNull String baseName,
+                                                   PsiElement place,
+                                                   boolean lookForward,
+                                                   @NotNull Set<String> skipNames) {
+    return suggestUniqueVariableName(baseName, place, lookForward, v -> false, v -> !skipNames.contains(v));
   }
 
   private static @NotNull String suggestUniqueVariableName(@NotNull @NonNls String baseName,
                                                            PsiElement place,
                                                            boolean lookForward,
-                                                           Predicate<? super PsiVariable> canBeReused) {
+                                                           Predicate<? super PsiVariable> canBeReused,
+                                                           @Nullable Predicate<String> additionalValidator) {
     int index = 0;
     PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
     NextName:
@@ -103,6 +113,9 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
         name += index;
       }
       index++;
+      if (additionalValidator != null && !additionalValidator.test(name)) {
+        continue;
+      }
       if (PsiUtil.isVariableNameUnique(name, place)) {
         if (lookForward) {
           final String name1 = name;
@@ -140,7 +153,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
 
   @Override
   public @NotNull String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<? super PsiVariable> canBeReused) {
-    return suggestUniqueVariableName(baseName, place, true, canBeReused);
+    return suggestUniqueVariableName(baseName, place, true, canBeReused, null);
   }
 
   @Override
