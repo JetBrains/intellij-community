@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -130,7 +130,9 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
   }
 
   public void testDisabledTestClassWithGradleConfiguration() {
-    doTestWithDisabledAnnotation(new MockGradleRunConfiguration(myFixture.getProject(), "DisabledMethodTest"), 0, """
+    // For classes we always show the run line marker, even when no tests are runnable
+    // This is because calculating whether to show the line marker here is complex and it not showing up at all might be confusing for users
+    doTestWithDisabledAnnotation(new MockGradleRunConfiguration(myFixture.getProject(), "DisabledMethodTest"), 1, """
       import org.junit.jupiter.api.Disabled;
       import org.junit.jupiter.api.Test;
       
