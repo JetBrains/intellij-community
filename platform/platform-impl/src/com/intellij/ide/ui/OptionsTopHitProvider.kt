@@ -117,8 +117,9 @@ private fun consumeTopHitsForApplicableProvider(
     TopHitCache.getInstance(project = project)
   }
   for (option in cache.getCachedOptions(provider = provider, project = project, pluginDescriptor = null)) {
-    if (matcher.matches(option.option)) {
-      collector.accept(option)
+    val optionValue = option.option ?: continue
+    if (matcher.matches(optionValue)) {
+      collector.accept(optionValue)
     }
   }
 }

@@ -107,7 +107,7 @@ private fun addOptions(
     is PluginManagerConfigurable -> {
       val optionDescriptions = TreeSet<OptionDescription>()
       wordsToOptionDescriptors(optionPaths = setOf(IdeBundle.message("plugin.manager.repositories")), path = null, result = optionDescriptions)
-      configurableEntry.entries.add(SearchableOptionEntry(words = optionDescriptions.map { it.option.trim() }, hit = IdeBundle.message("plugin.manager.repositories")))
+      configurableEntry.entries.add(SearchableOptionEntry(words = optionDescriptions.mapNotNull { it.option?.trim() }, hit = IdeBundle.message("plugin.manager.repositories")))
     }
     is AllFileTemplatesConfigurable -> {
       for ((key, value) in processFileTemplates()) {
