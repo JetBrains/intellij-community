@@ -4,17 +4,15 @@ package com.intellij.formatting.commandLine
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ArgumentsException
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ShowUsageException
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationStarter
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSettingsLoader
+import com.intellij.util.application
 import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
-import kotlin.system.exitProcess
 
 private val LOG = Logger.getInstance(FormatterStarter::class.java)
 
@@ -33,11 +31,13 @@ internal class FormatterStarter : ApplicationStarter {
     }
     catch (e: ShowUsageException) {
       messageOutput.info(usageInfo)
-      exitProcess(0)
+      exit(0)
+      return
     }
     catch (e: ArgumentsException) {
       messageOutput.error("ERROR: ${e.message}\n")
-      exitProcess(1)
+      exit(1)
+      return
     }
 
     try {
@@ -45,16 +45,18 @@ internal class FormatterStarter : ApplicationStarter {
         it.processFiles()
         it.printReport()
         if (!it.isResultSuccessful()) {
-          exitProcess(1)
+          exit(1)
+          return
         }
       }
     }
     catch (e: IOException) {
       messageOutput.error("ERROR: ${e.localizedMessage}\n")
-      exitProcess(1)
+      exit(1)
+      return
     }
 
-    (ApplicationManager.getApplication() as ApplicationEx).exit(true, true)
+    exit(0)
   }
 
 }
@@ -154,4 +156,8 @@ private class Skipper(private var skip: Boolean = false) {
       action()
     }
   }
+}
+
+private fun exit(code: Int) {
+  application.exit(true, true, false, code)
 }
