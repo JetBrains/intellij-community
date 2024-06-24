@@ -131,8 +131,8 @@ fun readSettings(settingsFile: File): CodeStyleSettings? {
 
 private fun readSettings(settingsPath: String): CodeStyleSettings? = readSettings(File(settingsPath))
 
-private val appInfo: String =
-  ApplicationInfo.getInstance()
+private val appInfo: String
+  get() = ApplicationInfo.getInstance()
     .let { "${it.fullApplicationName}, build ${it.build.asString()}" }
 
 sealed class CodeStyleProcessorBuildException : RuntimeException {
