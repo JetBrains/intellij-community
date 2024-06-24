@@ -1,143 +1,145 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ui.search;
+package com.intellij.ide.ui.search
 
-import com.intellij.BundleBase;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.ui.*;
-import com.intellij.util.CollectConsumer;
-import com.intellij.util.IntPair;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SmartList;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
-import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.BundleBase
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurableGroup
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.Strings
+import com.intellij.ui.*
+import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
+import com.intellij.ui.TabbedPaneWrapper.TabbedPaneHolder
+import com.intellij.util.IntPair
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.SmartList
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
+import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.Color
+import java.awt.Component
+import java.util.function.Function
+import java.util.regex.Pattern
+import javax.swing.*
+import javax.swing.border.TitledBorder
+import javax.swing.plaf.basic.BasicComboPopup
+import javax.swing.text.BadLocationException
+import javax.swing.text.View
 
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
-import javax.swing.plaf.basic.BasicComboPopup;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.View;
-import java.awt.*;
-import java.util.List;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+private val LOG = logger<SearchUtil>()
 
-public final class SearchUtil {
-  public static final Key<List<@Nls String>> ADDITIONAL_SEARCH_LABELS_KEY = Key.create("ADDITIONAL_SEARCH_LABELS");
-  public static final Key<Boolean> SEARCH_SKIP_COMPONENT_KEY = Key.create("SEARCH_SKIP_COMPONENT_KEY");
+object SearchUtil {
+  @JvmField
+  @Internal
+  val ADDITIONAL_SEARCH_LABELS_KEY: Key<List<String>> = Key.create("ADDITIONAL_SEARCH_LABELS")
+  @JvmField
+  @Internal
+  val SEARCH_SKIP_COMPONENT_KEY: Key<Boolean> = Key.create("SEARCH_SKIP_COMPONENT_KEY")
 
-  private static final String DEBUGGER_CONFIGURABLE_CLASS = "com.intellij.xdebugger.impl.settings.DebuggerConfigurable";
-  private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
-  private static final Pattern QUOTED = Pattern.compile("\"([^\"]+)\"");
+  private const val DEBUGGER_CONFIGURABLE_CLASS = "com.intellij.xdebugger.impl.settings.DebuggerConfigurable"
+  private val HTML_PATTERN: Pattern = Pattern.compile("<[^<>]*>")
 
-  public static final String HIGHLIGHT_WITH_BORDER = "searchUtil.highlightWithBorder";
-  private static final String STYLE_END = "</style>";
+  const val HIGHLIGHT_WITH_BORDER: String = "searchUtil.highlightWithBorder"
+  private const val STYLE_END = "</style>"
 
-  private static final Logger LOGGER = Logger.getInstance(SearchUtil.class);
-
-  private SearchUtil() { }
-
-  static @NotNull Configurable unwrapConfigurable(@NotNull Configurable configurable) {
-    if (configurable instanceof ConfigurableWrapper) {
-      final UnnamedConfigurable wrapped = ((ConfigurableWrapper)configurable).getConfigurable();
-      if (wrapped instanceof SearchableConfigurable) {
-        configurable = (Configurable)wrapped;
+  fun unwrapConfigurable(configurable: Configurable): Configurable {
+    @Suppress("NAME_SHADOWING")
+    var configurable = configurable
+    if (configurable is ConfigurableWrapper) {
+      val wrapped = configurable.configurable
+      if (wrapped is SearchableConfigurable) {
+        configurable = wrapped
       }
     }
-    if (DEBUGGER_CONFIGURABLE_CLASS.equals(configurable.getClass().getName())) {
-      Class<?> clazz = ReflectionUtil.forName(DEBUGGER_CONFIGURABLE_CLASS);
-      Configurable rootConfigurable = ReflectionUtil.getField(clazz, configurable, Configurable.class, "myRootConfigurable");
+    if (DEBUGGER_CONFIGURABLE_CLASS == configurable.javaClass.name) {
+      val clazz = ReflectionUtil.forName(DEBUGGER_CONFIGURABLE_CLASS)
+      val rootConfigurable = ReflectionUtil.getField(clazz, configurable, Configurable::class.java, "myRootConfigurable")
       if (rootConfigurable != null) {
-        return rootConfigurable;
+        return rootConfigurable
       }
     }
-    return configurable;
+    return configurable
   }
 
-  static void processComponent(SearchableConfigurable configurable, Set<OptionDescription> configurableOptions, JComponent component, boolean i18n) {
+  @JvmStatic
+  fun processComponent(
+    configurable: SearchableConfigurable,
+    configurableOptions: MutableSet<OptionDescription>,
+    component: JComponent?,
+    i18n: Boolean
+  ) {
     if (component != null) {
-      processUILabel(configurable.getDisplayName(), configurableOptions, null, i18n);
-      processComponent(component, configurableOptions, null, i18n);
+      processUILabel(title = configurable.displayName, configurableOptions = configurableOptions, path = null, i18n = i18n)
+      processComponent(component = component, configurableOptions = configurableOptions, path = null, i18n = i18n)
     }
   }
 
-  static void processComponent(JComponent component, Set<OptionDescription> configurableOptions, String path, boolean i18n) {
-    if (Boolean.TRUE.equals(ClientProperty.get(component, SEARCH_SKIP_COMPONENT_KEY))) {
-      return;
+  @JvmStatic
+  fun processComponent(component: JComponent, configurableOptions: MutableSet<OptionDescription>, path: String?, i18n: Boolean) {
+    if (ClientProperty.get(component, SEARCH_SKIP_COMPONENT_KEY) == true) {
+      return
     }
-    List<String> additional = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY);
+
+    val additional = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY)
     if (additional != null) {
-      for (String each : additional) {
-        processUILabel(each, configurableOptions, path, i18n);
+      for (each in additional) {
+        processUILabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
       }
     }
-    final Border border = component.getBorder();
-    if (border instanceof TitledBorder titledBorder) {
-      final String title = titledBorder.getTitle();
+
+    val border = component.border
+    if (border is TitledBorder) {
+      val title = border.title
       if (title != null) {
-        processUILabel(title, configurableOptions, path, i18n);
+        processUILabel(title = title, configurableOptions = configurableOptions, path = path, i18n = i18n)
       }
     }
-    List<String> label = getLabelsFromComponent(component);
+    val label = getLabelsFromComponent(component)
     if (!label.isEmpty()) {
-      for (String each : label) {
-        processUILabel(each, configurableOptions, path,  i18n);
+      for (each in label) {
+        processUILabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
       }
     }
-    else if (component instanceof JComboBox) {
-      List<String> labels = getItemsFromComboBox((JComboBox<?>)component);
-      for (String each : labels) {
-        processUILabel(each, configurableOptions, path, i18n);
+    else if (component is JComboBox<*>) {
+      val labels = getItemsFromComboBox(component)
+      for (each in labels) {
+        processUILabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
       }
     }
-    else if (component instanceof JTabbedPane tabbedPane) {
-      final int tabCount = tabbedPane.getTabCount();
-      for (int i = 0; i < tabCount; i++) {
-        final String title = path != null ? path + '.' + tabbedPane.getTitleAt(i) : tabbedPane.getTitleAt(i);
-        processUILabel(title, configurableOptions, title, i18n);
-        final Component tabComponent = tabbedPane.getComponentAt(i);
-        if (tabComponent instanceof JComponent) {
-          processComponent((JComponent)tabComponent, configurableOptions, title, i18n);
+    else if (component is JTabbedPane) {
+      val tabCount = component.tabCount
+      for (i in 0 until tabCount) {
+        val title = if (path == null) component.getTitleAt(i) else path + '.' + component.getTitleAt(i)
+        processUILabel(title, configurableOptions, title, i18n)
+        val tabComponent = component.getComponentAt(i)
+        if (tabComponent is JComponent) {
+          processComponent(tabComponent, configurableOptions, title, i18n)
         }
       }
     }
-    else if (component instanceof TabbedPaneWrapper.TabbedPaneHolder) {
-      final TabbedPaneWrapper tabbedPane = ((TabbedPaneWrapper.TabbedPaneHolder)component).getTabbedPaneWrapper();
-      final int tabCount = tabbedPane.getTabCount();
-      for (int i = 0; i < tabCount; i++) {
-        String tabTitle = tabbedPane.getTitleAt(i);
-        final String title = path != null ? path + '.' + tabTitle : tabTitle;
-        processUILabel(title, configurableOptions, title, i18n);
-        final JComponent tabComponent = tabbedPane.getComponentAt(i);
+    else if (component is TabbedPaneHolder) {
+      val tabbedPane = component.tabbedPaneWrapper
+      val tabCount = tabbedPane.tabCount
+      for (i in 0 until tabCount) {
+        val tabTitle = tabbedPane.getTitleAt(i)
+        val title = if (path == null) tabTitle else "$path.$tabTitle"
+        processUILabel(title, configurableOptions, title, i18n)
+        val tabComponent = tabbedPane.getComponentAt(i)
         if (tabComponent != null) {
-          processComponent(tabComponent, configurableOptions, title, i18n);
+          processComponent(tabComponent, configurableOptions, title, i18n)
         }
       }
     }
     else {
-      final Component[] components = component.getComponents();
+      val components = component.components
       if (components != null) {
-        for (Component child : components) {
-          if (child instanceof JComponent) {
-            processComponent((JComponent)child, configurableOptions, path, i18n);
+        for (child in components) {
+          if (child is JComponent) {
+            processComponent(component = child, configurableOptions = configurableOptions, path = path, i18n = i18n)
           }
         }
       }
@@ -147,516 +149,543 @@ public final class SearchUtil {
   /**
    * This method tries to extract a user-visible text (as opposed to an HTML markup string) from a Swing text component.
    */
-  private static @Nullable String getLabelFromTextView(@NotNull JComponent component) {
-    Object view = component.getClientProperty("html");
-    if (!(view instanceof View)) return null;
-    Document document = ((View)view).getDocument();
-    if (document == null) return null;
-    int length = document.getLength();
+  private fun getLabelFromTextView(component: JComponent): String? {
+    val view = component.getClientProperty("html")
+    if (view !is View) return null
+    val document = view.document ?: return null
+    val length = document.length
     try {
-      return document.getText(0, length);
+      return document.getText(0, length)
     }
-    catch (BadLocationException e) {
-      LOGGER.error(e);
-      return null;
+    catch (e: BadLocationException) {
+      LOG.error(e)
+      return null
     }
   }
 
-  private static String getLabelFromComponent(@NotNull JLabel label) {
-    String text = getLabelFromTextView(label);
-    return text == null ? label.getText() : text;
-  }
+  private fun getLabelFromComponent(label: JLabel): String = getLabelFromTextView(label) ?: label.text
 
-  private static String getLabelFromComponent(@NotNull AbstractButton button) {
-    String text = getLabelFromTextView(button);
-    if (text == null) text = button.getText();
-    return text;
-  }
+  private fun getLabelFromComponent(button: AbstractButton): String? = getLabelFromTextView(button) ?: button.text
 
-  private static List<String> getLabelsFromComponent(@Nullable Component component) {
-    String label = null;
-    if (component instanceof JLabel) {
-      label = getLabelFromComponent((JLabel)component);
+  private fun getLabelsFromComponent(component: Component?): List<String> {
+    var label: String? = null
+    when (component) {
+      is JLabel -> label = getLabelFromComponent(component)
+      is JCheckBox -> label = getLabelFromComponent(component)
+      is JRadioButton -> label = getLabelFromComponent(component)
+      is JButton -> label = getLabelFromComponent(component)
     }
-    else if (component instanceof JCheckBox) {
-      label = getLabelFromComponent((JCheckBox)component);
-    }
-    else if (component instanceof JRadioButton) {
-      label = getLabelFromComponent((JRadioButton)component);
-    }
-    else if (component instanceof JButton) {
-      label = getLabelFromComponent((JButton)component);
-    }
-    label = Strings.nullize(label, true);
+    label = Strings.nullize(label, true)
 
-    List<String> labels = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY);
+    val labels = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY)
     if (labels != null) {
-      List<String> al = new ArrayList<>(labels);
+      val al = ArrayList<String>(labels)
       if (label != null) {
-        al.add(label);
+        al.add(label)
       }
-      return al;
+      return al
     }
     if (label == null) {
-      return new SmartList<>();
+      return SmartList()
     }
 
-    return new SmartList<>(label);
+    return SmartList(label)
   }
 
-  private static @NotNull List<String> getItemsFromComboBox(@NotNull JComboBox<?> comboBox) {
-    @SuppressWarnings("unchecked")
-    ListCellRenderer<Object> renderer = (ListCellRenderer<Object>)comboBox.getRenderer();
+  private fun getItemsFromComboBox(comboBox: JComboBox<*>): List<String> {
+    @Suppress("UNCHECKED_CAST")
+    var renderer = comboBox.renderer as? ListCellRenderer<Any?>
     if (renderer == null) {
-      renderer = new DefaultListCellRenderer();
+      renderer = DefaultListCellRenderer()
     }
 
-    @SuppressWarnings("unchecked")
-    JList<?> jList = new BasicComboPopup((JComboBox<Object>)comboBox).getList();
+    @Suppress("UNCHECKED_CAST")
+    val jList = BasicComboPopup(comboBox as JComboBox<Any?>).list
 
-    List<String> result = new ArrayList<>();
+    val result = ArrayList<String>()
 
-    int count = comboBox.getItemCount();
-    for (int i = 0; i < count; i++) {
-      Object value = comboBox.getItemAt(i);
-      Component labelComponent = renderer.getListCellRendererComponent(jList, value, i, false, false);
-      List<String> label = getLabelsFromComponent(labelComponent);
-      result.addAll(label);
+    val count = comboBox.itemCount
+    for (i in 0 until count) {
+      val value = comboBox.getItemAt(i)!!
+      val labelComponent = renderer.getListCellRendererComponent(jList, value, i, false, false)
+      val label = getLabelsFromComponent(labelComponent)
+      result.addAll(label)
     }
 
-    return result;
+    return result
   }
 
-  static void processUILabel(String title, Set<OptionDescription> configurableOptions, String path, boolean i18n) {
-    int headStart = title.indexOf("<head>");
-    int headEnd = headStart >= 0 ? title.indexOf("</head>") : -1;
+  fun processUILabel(title: String, configurableOptions: MutableSet<OptionDescription>, path: String?, i18n: Boolean) {
+    @Suppress("NAME_SHADOWING")
+    var title = title
+    val headStart = title.indexOf("<head>")
+    val headEnd = if (headStart >= 0) title.indexOf("</head>") else -1
     if (headEnd > headStart) {
-      title = title.substring(0, headStart) + title.substring(headEnd + "</head>".length());
+      title = title.substring(0, headStart) + title.substring(headEnd + "</head>".length)
     }
 
-    title = HTML_PATTERN.matcher(title).replaceAll(" ");
-    Set<String> words = new HashSet<>();
-    SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemming(title, words, Collections.emptySet());
-    title = title.replace(BundleBase.MNEMONIC_STRING, "");
-    title = getNonWordPattern(i18n).matcher(title).replaceAll(" ");
-    for (@NlsSafe String option : words) {
-      configurableOptions.add(new OptionDescription(option, title, path));
-    }
-  }
-
-  private static @NotNull Pattern getNonWordPattern(boolean i18n) {
-    return Pattern.compile("[" + (i18n ? "^\\pL" : "\\W") + "&&[^\\p{Punct}\\p{Blank}]]");
-  }
-
-
-  public static void lightOptions(SearchableConfigurable configurable, JComponent component, String option) {
-    if (!traverseComponentsTree(configurable, component, option, true)) {
-      traverseComponentsTree(configurable, component, option, false);
+    title = HTML_PATTERN.matcher(title).replaceAll(" ")
+    val words = HashSet<String>()
+    SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemming(title, words, emptySet())
+    title = title.replace(BundleBase.MNEMONIC_STRING, "")
+    title = getNonWordPattern(i18n).matcher(title).replaceAll(" ")
+    for (option in words) {
+      configurableOptions.add(OptionDescription(option, title, path))
     }
   }
 
-  private static int getSelection(String tabIdx, int tabCount, Function<? super Integer, String> titleGetter) {
-    SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    for (int i = 0; i < tabCount; i++) {
-      final Set<String> pathWords = searchableOptionsRegistrar.getProcessedWords(tabIdx);
-      final String title = titleGetter.apply(i);
+  private fun getNonWordPattern(i18n: Boolean): Pattern {
+    @Suppress("RegExpSimplifiable")
+    return Pattern.compile("[" + (if (i18n) "^\\pL" else "\\W") + "&&[^\\p{Punct}\\p{Blank}]]")
+  }
+
+  @JvmStatic
+  fun lightOptions(configurable: SearchableConfigurable, component: JComponent, option: String?) {
+    if (!traverseComponentsTree(configurable = configurable, rootComponent = component, option = option, force = true)) {
+      traverseComponentsTree(configurable = configurable, rootComponent = component, option = option, force = false)
+    }
+  }
+
+  private fun getSelection(tabIdx: String, tabCount: Int, titleGetter: Function<in Int, String>): Int {
+    val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
+    for (i in 0 until tabCount) {
+      val pathWords = searchableOptionsRegistrar.getProcessedWords(tabIdx)
+      val title = titleGetter.apply(i)
       if (!pathWords.isEmpty()) {
-        final Set<String> titleWords = searchableOptionsRegistrar.getProcessedWords(title);
-        pathWords.removeAll(titleWords);
+        val titleWords = searchableOptionsRegistrar.getProcessedWords(title)
+        pathWords.removeAll(titleWords)
         if (pathWords.isEmpty()) {
-          return i;
+          return i
         }
       }
-      else if (tabIdx.equalsIgnoreCase(title)) { //e.g., only stop words
-        return i;
+      else if (tabIdx.equals(title, ignoreCase = true)) { //e.g., only stop words
+        return i
       }
     }
-    return -1;
+    return -1
   }
 
+  private fun traverseComponentsTree(
+    configurable: SearchableConfigurable,
+    rootComponent: JComponent,
+    option: String?,
+    force: Boolean
+  ): Boolean {
+    rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, null)
 
-  private static boolean traverseComponentsTree(SearchableConfigurable configurable,
-                                                JComponent rootComponent,
-                                                String option,
-                                                boolean force) {
-    rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, null);
-
-    if (option == null || option.trim().isEmpty()) {
-      return false;
+    if (option == null || option.trim { it <= ' ' }.isEmpty()) {
+      return false
     }
-    List<String> label = getLabelsFromComponent(rootComponent);
+
+    val label = getLabelsFromComponent(rootComponent)
     if (!label.isEmpty()) {
-      for (String each : label) {
+      for (each in label) {
         if (isComponentHighlighted(each, option, force, configurable)) {
-          highlightComponent(rootComponent, option);
-          return true; // do not visit children of a highlighted component
+          highlightComponent(rootComponent, option)
+          return true // do not visit children of a highlighted component
         }
       }
     }
-    else if (rootComponent instanceof JComboBox) {
-      List<String> labels = getItemsFromComboBox(((JComboBox<?>)rootComponent));
-      //noinspection SSBasedInspection
-      if (labels.stream().anyMatch(t -> isComponentHighlighted(t, option, force, configurable))) {
-        highlightComponent(rootComponent, option);
+    else if (rootComponent is JComboBox<*>) {
+      val labels = getItemsFromComboBox(rootComponent)
+      if (labels.any { isComponentHighlighted(text = it, option = option, force = force, configurable = configurable) }) {
+        highlightComponent(rootComponent, option)
         // do not visit children of a highlighted component
-        return true;
+        return true
       }
     }
-    else if (rootComponent instanceof JTabbedPane tabbedPane) {
-
-      final Set<String> paths = SearchableOptionsRegistrar.getInstance().getInnerPaths(configurable, option);
-      for (String path : paths) {
-        if (path != null) {
-          final int index = getSelection(path, tabbedPane.getTabCount(), i -> tabbedPane.getTitleAt(i));
-          if (index > -1 && index < tabbedPane.getTabCount()) {
-            if (tabbedPane.getTabComponentAt(index) instanceof JComponent) {
-              highlightComponent((JComponent)tabbedPane.getTabComponentAt(index), option);
-            }
+    else if (rootComponent is JTabbedPane) {
+      val paths = SearchableOptionsRegistrar.getInstance().getInnerPaths(configurable, option)
+      for (path in paths) {
+        val index = getSelection(path, rootComponent.tabCount) { i: Int? ->
+          rootComponent.getTitleAt(i!!)
+        }
+        if (index > -1 && index < rootComponent.tabCount) {
+          if (rootComponent.getTabComponentAt(index) is JComponent) {
+            highlightComponent(rootComponent.getTabComponentAt(index) as JComponent, option)
           }
         }
       }
     }
-    else if (rootComponent instanceof TabbedPaneWrapper.TabbedPaneHolder) {
-      final TabbedPaneWrapper tabbedPaneWrapper = ((TabbedPaneWrapper.TabbedPaneHolder)rootComponent).getTabbedPaneWrapper();
-      final Set<String> paths = SearchableOptionsRegistrar.getInstance().getInnerPaths(configurable, option);
-      for (String path : paths) {
-        if (path != null) {
-          final int index = getSelection(path, tabbedPaneWrapper.getTabCount(), i -> tabbedPaneWrapper.getTitleAt(i));
-          if (index > -1 && index < tabbedPaneWrapper.getTabCount()) {
-            highlightComponent((JComponent)tabbedPaneWrapper.getTabComponentAt(index), option);
-          }
+    else if (rootComponent is TabbedPaneHolder) {
+      val tabbedPaneWrapper = rootComponent.tabbedPaneWrapper
+      val paths = SearchableOptionsRegistrar.getInstance().getInnerPaths(configurable, option)
+      for (path in paths) {
+        val index = getSelection(path, tabbedPaneWrapper.tabCount) { i: Int? ->
+          tabbedPaneWrapper.getTitleAt(i!!)
+        }
+        if (index > -1 && index < tabbedPaneWrapper.tabCount) {
+          highlightComponent(tabbedPaneWrapper.getTabComponentAt(index) as JComponent, option)
         }
       }
     }
 
-    Border border = rootComponent.getBorder();
-    if (border instanceof TitledBorder) {
-      String title = ((TitledBorder)border).getTitle();
-      if (isComponentHighlighted(title, option, force, configurable)) {
-        highlightComponent(rootComponent, option);
-        rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, Boolean.TRUE);
-        return true; // do not visit children of a highlighted component
+    val border = rootComponent.border
+    if (border is TitledBorder) {
+      val title = border.title
+      if (isComponentHighlighted(text = title, option = option, force = force, configurable = configurable)) {
+        highlightComponent(rootComponent, option)
+        rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, true)
+        // do not visit children of a highlighted component
+        return true
       }
     }
-    boolean highlight = false;
-    for (Component component : rootComponent.getComponents()) {
-      if (component instanceof JComponent && traverseComponentsTree(configurable, (JComponent)component, option, force)) {
-        highlight = true;
-      }
+    return rootComponent.components.any {
+      it is JComponent && traverseComponentsTree(configurable = configurable, rootComponent = it, option = option, force = force)
     }
-    return highlight;
   }
 
-  private static void highlightComponent(@NotNull JComponent rootComponent, @NotNull String searchString) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(ComponentHighlightingListener.TOPIC).highlight(rootComponent, searchString);
-  }
-
-  public static boolean isComponentHighlighted(String text, String option, boolean force, final SearchableConfigurable configurable) {
-    if (text == null || option == null || option.isEmpty()) {
-      return false;
+  @JvmStatic
+  fun isComponentHighlighted(text: String?, option: String?, force: Boolean, configurable: SearchableConfigurable?): Boolean {
+    if (text == null || option.isNullOrEmpty()) {
+      return false
     }
-    final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final Set<String> words = searchableOptionsRegistrar.getProcessedWords(option);
-    final Set<String> options = configurable != null ? searchableOptionsRegistrar.replaceSynonyms(words, configurable) : words;
+
+    val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
+    val words = searchableOptionsRegistrar.getProcessedWords(option)
+    val options = if (configurable == null) words else searchableOptionsRegistrar.replaceSynonyms(words, configurable)
     if (options.isEmpty()) {
-      return Strings.toLowerCase(text).contains(Strings.toLowerCase(option));
+      return text.lowercase().contains(Strings.toLowerCase(option))
     }
-    final Set<String> tokens = searchableOptionsRegistrar.getProcessedWords(text);
+
+    val tokens = searchableOptionsRegistrar.getProcessedWords(text)
     if (!force) {
-      options.retainAll(tokens);
-      final boolean highlight = !options.isEmpty();
-      return highlight || Strings.toLowerCase(text).contains(Strings.toLowerCase(option));
+      options.retainAll(tokens)
+      val highlight = !options.isEmpty()
+      return highlight || text.lowercase().contains(Strings.toLowerCase(option))
     }
     else {
-      options.removeAll(tokens);
-      return options.isEmpty();
+      options.removeAll(tokens)
+      return options.isEmpty()
     }
   }
 
-  public static String markup(@NotNull String textToMarkup, @Nullable String filter) {
-    return markup(textToMarkup, filter, new JBColor(Gray._50, Gray._0), JBColor.namedColor("SearchMatch.startBackground", ColorUtil.fromHex("1d5da7")));
+  @JvmStatic
+  fun markup(textToMarkup: String, filter: String?): String {
+    return markup(textToMarkup, filter, JBColor(Gray._50, Gray._0),
+                  JBColor.namedColor("SearchMatch.startBackground", ColorUtil.fromHex("1d5da7")))
   }
 
-  public static String markup(@NotNull String textToMarkup, @Nullable String filter, Color textColor, Color backgroundColor) {
-    if (filter == null || filter.isEmpty()) {
-      return textToMarkup;
+  @JvmStatic
+  fun markup(textToMarkup: String, filter: String?, textColor: Color, backgroundColor: Color): String {
+    @Suppress("NAME_SHADOWING")
+    var textToMarkup = textToMarkup
+    @Suppress("NAME_SHADOWING")
+    var filter = filter
+    if (filter.isNullOrEmpty()) {
+      return textToMarkup
     }
-    int bodyStart = textToMarkup.indexOf("<body>");
-    final int bodyEnd = textToMarkup.indexOf("</body>");
-    final String head;
-    final String foot;
+    var bodyStart = textToMarkup.indexOf("<body>")
+    val bodyEnd = textToMarkup.indexOf("</body>")
+    val head: String
+    val foot: String
     if (bodyStart >= 0) {
-      bodyStart += "<body>".length();
-      head = textToMarkup.substring(0, bodyStart);
-      if (bodyEnd >= 0) {
-        foot = textToMarkup.substring(bodyEnd);
+      bodyStart += "<body>".length
+      head = textToMarkup.substring(0, bodyStart)
+      foot = if (bodyEnd >= 0) {
+        textToMarkup.substring(bodyEnd)
       }
       else {
-        foot = "";
+        ""
       }
-      textToMarkup = textToMarkup.substring(bodyStart, bodyEnd);
+      textToMarkup = textToMarkup.substring(bodyStart, bodyEnd)
     }
     else {
-      foot = "";
-      head = "";
+      foot = ""
+      head = ""
     }
-    final Pattern insideHtmlTagPattern = Pattern.compile("[<[^<>]*>]*<[^<>]*");
-    final SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
-    final HashSet<String> quoted = new HashSet<>();
-    filter = processFilter(quoteStrictOccurrences(textToMarkup, filter), quoted);
-    final Set<String> options = registrar.getProcessedWords(filter);
-    final Set<String> words = registrar.getProcessedWords(textToMarkup);
-    for (String option : options) {
+    val insideHtmlTagPattern = Pattern.compile("[<[^<>]*>]*<[^<>]*")
+    val registrar = SearchableOptionsRegistrar.getInstance()
+    val quoted = HashSet<String>()
+    filter = processFilter(quoteStrictOccurrences(textToMarkup, filter), quoted)
+    val options = registrar.getProcessedWords(filter)
+    val words = registrar.getProcessedWords(textToMarkup)
+    for (option in options) {
       if (words.contains(option)) {
-        textToMarkup = markup(textToMarkup, insideHtmlTagPattern, option, textColor, backgroundColor);
+        textToMarkup = markup(textToMarkup, insideHtmlTagPattern, option, textColor, backgroundColor)
       }
     }
-    for (String stripped : quoted) {
+    for (stripped in quoted) {
       if (registrar.isStopWord(stripped)) {
-        continue;
+        continue
       }
-      textToMarkup = markup(textToMarkup, insideHtmlTagPattern, stripped, textColor, backgroundColor);
+      textToMarkup = markup(textToMarkup, insideHtmlTagPattern, stripped, textColor, backgroundColor)
     }
-    return head + textToMarkup + foot;
+    return head + textToMarkup + foot
   }
 
-  private static String quoteStrictOccurrences(final String textToMarkup, final String filter) {
-    StringBuilder cur = new StringBuilder();
-    final String s = Strings.toLowerCase(textToMarkup);
-    for (String part : filter.split(" ")) {
+  private fun quoteStrictOccurrences(textToMarkup: String, filter: String): String {
+    val cur = StringBuilder()
+    val s = textToMarkup.lowercase()
+    for (part in filter.split(' ').dropLastWhile { it.isEmpty() }) {
       if (s.contains(part)) {
-        cur.append("\"").append(part).append("\" ");
+        cur.append('"').append(part).append("\" ")
       }
       else {
-        cur.append(part).append(" ");
+        cur.append(part).append(' ')
       }
     }
-    return cur.toString();
+    return cur.toString()
   }
 
-  private static String markup(String textToMarkup, final Pattern insideHtmlTagPattern, final String option, Color textColor, Color backgroundColor) {
-    final int styleIdx = textToMarkup.indexOf("<style");
-    final int styleEndIdx = textToMarkup.indexOf("</style>");
+  private fun markup(
+    textToMarkup: String,
+    insideHtmlTagPattern: Pattern,
+    option: String,
+    textColor: Color,
+    backgroundColor: Color
+  ): String {
+    val styleIdx = textToMarkup.indexOf("<style")
+    val styleEndIdx = textToMarkup.indexOf("</style>")
     if (styleIdx < 0 || styleEndIdx < 0) {
-      return markupInText(textToMarkup, insideHtmlTagPattern, option, textColor, backgroundColor);
+      return markupInText(textToMarkup, insideHtmlTagPattern, option, textColor, backgroundColor)
     }
     return markup(textToMarkup.substring(0, styleIdx), insideHtmlTagPattern, option, textColor, backgroundColor) +
-           markup(textToMarkup.substring(styleEndIdx + STYLE_END.length()), insideHtmlTagPattern, option, textColor, backgroundColor);
+           markup(textToMarkup.substring(styleEndIdx + STYLE_END.length), insideHtmlTagPattern, option, textColor, backgroundColor)
   }
 
-  private static String markupInText(String textToMarkup, Pattern insideHtmlTagPattern, String option, Color textColor, Color backgroundColor) {
-    StringBuilder result = new StringBuilder();
-    int beg = 0;
-    int idx;
-    while ((idx = Strings.indexOfIgnoreCase(textToMarkup, option, beg)) != -1) {
-      final String prefix = textToMarkup.substring(beg, idx);
-      final String toMark = textToMarkup.substring(idx, idx + option.length());
+  private fun markupInText(
+    textToMarkup: String,
+    insideHtmlTagPattern: Pattern,
+    option: String,
+    textColor: Color,
+    backgroundColor: Color
+  ): String {
+    val result = StringBuilder()
+    var beg = 0
+    var idx: Int
+    while ((Strings.indexOfIgnoreCase(textToMarkup, option, beg).also { idx = it }) != -1) {
+      val prefix = textToMarkup.substring(beg, idx)
+      val toMark = textToMarkup.substring(idx, idx + option.length)
       if (insideHtmlTagPattern.matcher(prefix).matches()) {
-        final int lastIdx = textToMarkup.indexOf(">", idx);
-        result.append(prefix).append(textToMarkup, idx, lastIdx + 1);
-        beg = lastIdx + 1;
+        val lastIdx = textToMarkup.indexOf('>', idx)
+        result.append(prefix).append(textToMarkup, idx, lastIdx + 1)
+        beg = lastIdx + 1
       }
       else {
         result.append(prefix)
-          .append("<font color='#").append(ColorUtil.toHex(textColor)).append("' bgColor='#").append(ColorUtil.toHex(backgroundColor)).append("'>")
-          .append(toMark).append("</font>");
-        beg = idx + option.length();
+          .append("<font color='#").append(ColorUtil.toHex(textColor)).append("' bgColor='#").append(
+            ColorUtil.toHex(backgroundColor)).append("'>")
+          .append(toMark).append("</font>")
+        beg = idx + option.length
       }
     }
-    result.append(textToMarkup.substring(beg));
-    return result.toString();
+    result.append(textToMarkup.substring(beg))
+    return result.toString()
   }
 
-  public static void appendRangedFragments(String filter,
-                                             @NlsSafe String text,
-                                             IntPair[] matchingRanges,
-                                             @SimpleTextAttributes.StyleAttributeConstant int style,
-                                             final Color foreground,
-                                             final Color background,
-                                             final SimpleColoredComponent textRenderer){
-    if (matchingRanges.length == 0){
-      appendFragments(filter, text, style, foreground, background, textRenderer);
+  fun appendRangedFragments(
+    filter: String?,
+    text: @NlsSafe String,
+    matchingRanges: Array<IntPair>,
+    @StyleAttributeConstant style: Int,
+    foreground: Color?,
+    background: Color?,
+    textRenderer: SimpleColoredComponent
+  ) {
+    if (matchingRanges.isEmpty()) {
+      appendFragments(
+        filter = filter,
+        text = text,
+        style = style,
+        foreground = foreground,
+        background = background,
+        textRenderer = textRenderer,
+      )
     }
 
-    if (StringUtil.isEmpty(filter)){
-      textRenderer.setDynamicSearchMatchHighlighting(false);
-      textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
-      return;
+    if (filter.isNullOrEmpty()) {
+      textRenderer.setDynamicSearchMatchHighlighting(false)
+      textRenderer.append(text, SimpleTextAttributes(background, foreground, JBColor.RED, style))
+      return
     }
 
-    textRenderer.setDynamicSearchMatchHighlighting(true);
-    int index = 0;
-    for (IntPair range : matchingRanges){
-      @NlsSafe final String before = text.substring(index, range.first);
+    textRenderer.setDynamicSearchMatchHighlighting(true)
+    var index = 0
+    for (range in matchingRanges) {
+      val before: @NlsSafe String = text.substring(index, range.first)
       if (!before.isEmpty()) {
-        textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
+        textRenderer.append(before, SimpleTextAttributes(background, foreground, null, style))
       }
-      index = range.second;
-      textRenderer.append(text.substring(range.first, range.second), new SimpleTextAttributes(background,
-                                                                                             foreground, null,
-                                                                                             style |
-                                                                                             SimpleTextAttributes.STYLE_SEARCH_MATCH));
+      index = range.second
+      textRenderer.append(text.substring(range.first, range.second), SimpleTextAttributes(background,
+                                                                                          foreground, null,
+                                                                                          style or SimpleTextAttributes.STYLE_SEARCH_MATCH))
     }
-    @NlsSafe final String after = text.substring(index);
+    val after: @NlsSafe String = text.substring(index)
     if (!after.isEmpty()) {
-      textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
+      textRenderer.append(after, SimpleTextAttributes(background, foreground, null, style))
     }
   }
 
-  public static void appendFragments(String filter,
-                                     @NlsSafe String text,
-                                     @SimpleTextAttributes.StyleAttributeConstant int style,
-                                     final Color foreground,
-                                     final Color background,
-                                     final SimpleColoredComponent textRenderer) {
-    if (text == null) {
-      return;
-    }
-    if (filter == null || filter.isEmpty()) {
-      textRenderer.setDynamicSearchMatchHighlighting(false);
-      textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
+  @JvmStatic
+  fun appendFragments(
+    filter: String?,
+    text: @NlsSafe String?,
+    @StyleAttributeConstant style: Int,
+    foreground: Color?,
+    background: Color?,
+    textRenderer: SimpleColoredComponent
+  ) {
+    @Suppress("NAME_SHADOWING")
+    var filter = filter
+    @Suppress("NAME_SHADOWING")
+    var text = text ?: return
+
+    if (filter.isNullOrEmpty()) {
+      textRenderer.setDynamicSearchMatchHighlighting(false)
+      textRenderer.append(text, SimpleTextAttributes(background, foreground, JBColor.RED, style))
     }
     else {
-      textRenderer.setDynamicSearchMatchHighlighting(true);
+      textRenderer.setDynamicSearchMatchHighlighting(true)
       //markup
-      Set<String> quoted = new HashSet<>();
-      filter = processFilter(quoteStrictOccurrences(text, filter), quoted);
-      final Int2ObjectRBTreeMap<String> indexToString = new Int2ObjectRBTreeMap<>();
-      for (String stripped : quoted) {
-        int beg = 0;
-        int idx;
-        while ((idx = Strings.indexOfIgnoreCase(text, stripped, beg)) != -1) {
-          indexToString.put(idx, text.substring(idx, idx + stripped.length()));
-          beg = idx + stripped.length();
+      val quoted = HashSet<String>()
+      filter = processFilter(quoteStrictOccurrences(text, filter), quoted)
+      val indexToString = Int2ObjectRBTreeMap<String>()
+      for (stripped in quoted) {
+        var beg = 0
+        var idx: Int
+        while ((Strings.indexOfIgnoreCase(text, stripped, beg).also { idx = it }) != -1) {
+          indexToString.put(idx, text.substring(idx, idx + stripped.length))
+          beg = idx + stripped.length
         }
       }
 
-      final List<String> selectedWords = new ArrayList<>();
-      int pos = 0;
-      for (Int2ObjectMap.Entry<String> entry : Int2ObjectMaps.fastIterable(indexToString)) {
-        String stripped = entry.getValue();
-        int start = entry.getIntKey();
+      val selectedWords = ArrayList<String>()
+      var pos = 0
+      for (entry in Int2ObjectMaps.fastIterable(indexToString)) {
+        val stripped = entry.value
+        val start = entry.intKey
         if (pos > start) {
-          final String highlighted = selectedWords.get(selectedWords.size() - 1);
-          if (highlighted.length() < stripped.length()) {
-            selectedWords.remove(highlighted);
+          val highlighted = selectedWords[selectedWords.size - 1]
+          if (highlighted.length < stripped.length) {
+            selectedWords.remove(highlighted)
           }
           else {
-            continue;
+            continue
           }
         }
-        appendSelectedWords(text, selectedWords, pos, start, filter);
-        selectedWords.add(stripped);
-        pos = start + stripped.length();
-      }
-      appendSelectedWords(text, selectedWords, pos, text.length(), filter);
 
-      int idx = 0;
-      for (String word : selectedWords) {
-        text = text.substring(idx);
-        final @NlsSafe String before = text.substring(0, text.indexOf(word));
+        appendSelectedWords(text = text, selectedWords = selectedWords, pos = pos, end = start, filter = filter)
+        selectedWords.add(stripped)
+        pos = start + stripped.length
+      }
+      appendSelectedWords(text = text, selectedWords = selectedWords, pos = pos, end = text.length, filter = filter)
+
+      var idx = 0
+      for (word in selectedWords) {
+        text = text.substring(idx)
+        val before: @NlsSafe String = text.substring(0, text.indexOf(word))
         if (!before.isEmpty()) {
-          textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
+          textRenderer.append(before, SimpleTextAttributes(background, foreground, null, style))
         }
-        idx = text.indexOf(word) + word.length();
-        textRenderer.append(text.substring(idx - word.length(), idx), new SimpleTextAttributes(background,
-                                                                                               foreground, null,
-                                                                                               style |
-                                                                                               SimpleTextAttributes.STYLE_SEARCH_MATCH));
+        idx = text.indexOf(word) + word.length
+        textRenderer.append(text.substring(idx - word.length, idx), SimpleTextAttributes(background,
+                                                                                         foreground, null,
+                                                                                         style or SimpleTextAttributes.STYLE_SEARCH_MATCH))
       }
-      final @NlsSafe String after = text.substring(idx);
+      val after: @NlsSafe String = text.substring(idx)
       if (!after.isEmpty()) {
-        textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
+        textRenderer.append(after, SimpleTextAttributes(background, foreground, null, style))
       }
     }
   }
 
-  private static void appendSelectedWords(final String text,
-                                          final List<? super String> selectedWords,
-                                          final int pos,
-                                          int end,
-                                          final String filter) {
+  private fun appendSelectedWords(
+    text: String,
+    selectedWords: MutableList<in String>,
+    pos: Int,
+    end: Int,
+    filter: String,
+  ) {
     if (pos < end) {
-      final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
-      final String[] words = text.substring(pos, end).split("[^\\pL&&[^-]]+");
-      for (String word : words) {
-        if (filters.contains(PorterStemmerUtil.stem(Strings.toLowerCase(word)))) {
-          selectedWords.add(word);
+      val filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter)
+      val words = text.substring(pos, end).split("[^\\pL&&[^-]]+".toRegex()).dropLastWhile { it.isEmpty() }
+      for (word in words) {
+        if (filters.contains(PorterStemmerUtil.stem(word.lowercase()))) {
+          selectedWords.add(word)
         }
       }
     }
   }
 
-  public static @NotNull List<Set<String>> findKeys(String filter, Set<? super String> quoted) {
-    filter = processFilter(Strings.toLowerCase(filter), quoted);
-    List<Set<String>> keySetList = new ArrayList<>();
-    SearchableOptionsRegistrarImpl optionsRegistrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
-    for (String word : optionsRegistrar.getProcessedWords(filter)) {
-      final Set<OptionDescription> descriptions = optionsRegistrar.getAcceptableDescriptions(word);
-      Set<String> keySet = new HashSet<>();
-      if (descriptions != null) {
-        for (OptionDescription description : descriptions) {
-          keySet.add(description.getPath());
+  @JvmStatic
+  fun findKeys(filter: String?, quoted: MutableSet<String>): List<Set<String>> {
+    @Suppress("NAME_SHADOWING")
+    val filter = processFilter(filter = (filter ?: "").lowercase(), quoted = quoted)
+    val keySetList = ArrayList<Set<String>>()
+    val optionsRegistrar = SearchableOptionsRegistrar.getInstance() as SearchableOptionsRegistrarImpl
+    for (word in optionsRegistrar.getProcessedWords(filter)) {
+      val descriptions = optionsRegistrar.getAcceptableDescriptions(word) ?: continue
+      val keySet = HashSet<String>()
+      for (description in descriptions) {
+        description.path?.let {
+          keySet.add(it)
         }
       }
-      keySetList.add(keySet);
-    }
-    if (keySetList.isEmpty() && !Strings.isEmptyOrSpaces(filter)) {
-      keySetList.add(Collections.singleton(filter));
-    }
-    return keySetList;
-  }
-
-  private static String processFilter(String filter, Set<? super String> quoted) {
-    StringBuilder withoutQuoted = new StringBuilder();
-    int beg = 0;
-    final Matcher matcher = QUOTED.matcher(filter);
-    while (matcher.find()) {
-      final int start = matcher.start(1);
-      withoutQuoted.append(" ").append(filter, beg, start);
-      beg = matcher.end(1);
-      final String trimmed = filter.substring(start, beg).trim();
-      if (!trimmed.isEmpty()) {
-        quoted.add(trimmed);
-      }
-    }
-    return withoutQuoted + " " + filter.substring(beg);
-  }
-
-  public static @NotNull List<Configurable> expand(ConfigurableGroup @NotNull [] groups) {
-    List<Configurable> result = new ArrayList<>();
-    CollectConsumer<Configurable> consumer = new CollectConsumer<>(result);
-    for (ConfigurableGroup group : groups) {
-      processExpandedGroups(group, consumer);
-    }
-    return result;
-  }
-
-  public static @NotNull List<Configurable> expandGroup(@NotNull ConfigurableGroup group) {
-    List<Configurable> result = new ArrayList<>();
-    processExpandedGroups(group, new CollectConsumer<>(result));
-    return result;
-  }
-
-  public static void processExpandedGroups(@NotNull ConfigurableGroup group, @NotNull Consumer<? super Configurable> consumer) {
-    Configurable[] configurables = group.getConfigurables();
-    List<Configurable> result = new ArrayList<>();
-    Collections.addAll(result, configurables);
-    for (Configurable each : configurables) {
-      addChildren(each, result);
+      keySetList.add(keySet)
     }
 
-    for (Configurable configurable : result) {
-      consumer.accept(configurable);
+    if (keySetList.isEmpty() && filter.isNotBlank()) {
+      keySetList.add(setOf(filter))
     }
+    return keySetList
   }
 
-  private static void addChildren(@NotNull Configurable configurable, @NotNull List<? super Configurable> list) {
-    if (configurable instanceof Configurable.Composite) {
-      for (Configurable eachKid : ((Configurable.Composite)configurable).getConfigurables()) {
-        list.add(eachKid);
-        addChildren(eachKid, list);
-      }
+  @JvmStatic
+  fun expand(groups: Array<ConfigurableGroup>): List<Configurable> {
+    val result = ArrayList<Configurable>()
+    for (group in groups) {
+      processExpandedGroups(group, result)
+    }
+    return result
+  }
+
+  fun expandGroup(group: ConfigurableGroup): List<Configurable> {
+    val result = ArrayList<Configurable>()
+    processExpandedGroups(group = group, result)
+    return result
+  }
+}
+
+private val QUOTED: Pattern = Pattern.compile("\"([^\"]+)\"")
+
+private fun processFilter(filter: String, quoted: MutableSet<String>): String {
+  val withoutQuoted = StringBuilder()
+  var beg = 0
+  val matcher = QUOTED.matcher(filter)
+  while (matcher.find()) {
+    val start = matcher.start(1)
+    withoutQuoted.append(" ").append(filter, beg, start)
+    beg = matcher.end(1)
+    val trimmed = filter.substring(start, beg).trim { it <= ' ' }
+    if (!trimmed.isEmpty()) {
+      quoted.add(trimmed)
     }
   }
+  return withoutQuoted.toString() + " " + filter.substring(beg)
+}
+
+internal fun processExpandedGroups(group: ConfigurableGroup, result: MutableCollection<Configurable>) {
+  val configurables = group.configurables
+  for (configurable in configurables) {
+    result.add(configurable)
+  }
+
+  for (configurable in configurables) {
+    addChildren(configurable = configurable, result = result)
+  }
+}
+
+private fun addChildren(configurable: Configurable, result: MutableCollection<Configurable>) {
+  if (configurable is Configurable.Composite) {
+    for (kid in configurable.configurables) {
+      result.add(kid)
+      addChildren(configurable = kid, result = result)
+    }
+  }
+}
+
+private fun highlightComponent(rootComponent: JComponent, searchString: String) {
+  ApplicationManager.getApplication().messageBus.syncPublisher(ComponentHighlightingListener.TOPIC).highlight(rootComponent, searchString)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.diagnostic.PluginException;
@@ -321,7 +321,8 @@ public final class ActionsTreeUtil {
       if (component instanceof Group correctedGroup && Objects.equals(correctedGroup.getId(), groupId)) {
         group.setForceShowAsPopup(correctedGroup.isForceShowAsPopup());
       }
-      if (areEqual(path, actionUrl)) { //actual path is shorter when we use custom root
+      // the actual path is shorter when we use custom root
+      if (areEqual(path, actionUrl)) {
         AnAction componentAction = actionUrl.getComponentAction();
         if (componentAction != null) {
           if (actionUrl.getActionType() == ActionUrl.ADDED) {

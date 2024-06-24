@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Pair;
@@ -36,10 +35,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("Duplicates")
+@ApiStatus.Internal
 public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   private static final ExtensionPointName<SearchableOptionContributor> EP_NAME =
     new ExtensionPointName<>("com.intellij.search.optionContributor");
@@ -212,9 +211,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
     Set<Configurable> effectiveConfigurables = new LinkedHashSet<>();
     if (previouslyFiltered == null) {
-      Consumer<Configurable> consumer = new CollectConsumer<>(effectiveConfigurables);
       for (ConfigurableGroup group : groups) {
-        SearchUtil.processExpandedGroups(group, consumer);
+        SearchUtilKt.processExpandedGroups(group, effectiveConfigurables);
       }
     }
     else {
@@ -442,7 +440,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   }
 
   @Override
-  public @NotNull Set<String> getInnerPaths(SearchableConfigurable configurable, String option) {
+  public @NotNull Set<@NotNull String> getInnerPaths(SearchableConfigurable configurable, String option) {
     initialize();
     final Set<String> words = getProcessedWordsWithoutStemming(option);
     final Set<OptionDescription> path = getOptionDescriptionsByWords(configurable, words);
@@ -461,7 +459,10 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
             }
           }
           if (theBest) {
-            resultSet.add(description.getPath());
+            String p = description.getPath();
+            if (p != null) {
+              resultSet.add(p);
+            }
           }
         }
         theOnlyResult = description;

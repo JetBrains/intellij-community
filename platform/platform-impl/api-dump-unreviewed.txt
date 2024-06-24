@@ -10179,30 +10179,21 @@ com.intellij.ide.ui.search.NotABooleanOptionDescription
 f:com.intellij.ide.ui.search.PorterStemmerUtil
 - s:stem(java.lang.String):java.lang.String
 f:com.intellij.ide.ui.search.SearchUtil
-- sf:ADDITIONAL_SEARCH_LABELS_KEY:com.intellij.openapi.util.Key
 - sf:HIGHLIGHT_WITH_BORDER:java.lang.String
-- sf:SEARCH_SKIP_COMPONENT_KEY:com.intellij.openapi.util.Key
-- s:appendFragments(java.lang.String,java.lang.String,I,java.awt.Color,java.awt.Color,com.intellij.ui.SimpleColoredComponent):V
-- s:appendRangedFragments(java.lang.String,java.lang.String,com.intellij.util.IntPair[],I,java.awt.Color,java.awt.Color,com.intellij.ui.SimpleColoredComponent):V
-- s:expand(com.intellij.openapi.options.ConfigurableGroup[]):java.util.List
-- s:expandGroup(com.intellij.openapi.options.ConfigurableGroup):java.util.List
-- s:findKeys(java.lang.String,java.util.Set):java.util.List
-- s:isComponentHighlighted(java.lang.String,java.lang.String,Z,com.intellij.openapi.options.SearchableConfigurable):Z
-- s:lightOptions(com.intellij.openapi.options.SearchableConfigurable,javax.swing.JComponent,java.lang.String):V
-- s:markup(java.lang.String,java.lang.String):java.lang.String
-- s:markup(java.lang.String,java.lang.String,java.awt.Color,java.awt.Color):java.lang.String
-- s:processExpandedGroups(com.intellij.openapi.options.ConfigurableGroup,java.util.function.Consumer):V
-f:com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
-- com.intellij.ide.ui.search.SearchableOptionsRegistrar
-- <init>():V
-- getAcceptableDescriptions(java.lang.String):java.util.Set
-- getConfigurables(java.util.List,javax.swing.event.DocumentEvent$EventType,java.util.Set,java.lang.String,com.intellij.openapi.project.Project):com.intellij.ide.ui.search.ConfigurableHit
-- getInnerPaths(com.intellij.openapi.options.SearchableConfigurable,java.lang.String):java.util.Set
-- getProcessedWords(java.lang.String):java.util.Set
-- getProcessedWordsWithoutStemming(java.lang.String):java.util.Set
-- isInitialized():Z
-- isStopWord(java.lang.String):Z
-- replaceSynonyms(java.util.Set,com.intellij.openapi.options.SearchableConfigurable):java.util.Set
+- sf:INSTANCE:com.intellij.ide.ui.search.SearchUtil
+- sf:appendFragments(java.lang.String,java.lang.String,I,java.awt.Color,java.awt.Color,com.intellij.ui.SimpleColoredComponent):V
+- f:appendRangedFragments(java.lang.String,java.lang.String,com.intellij.util.IntPair[],I,java.awt.Color,java.awt.Color,com.intellij.ui.SimpleColoredComponent):V
+- sf:expand(com.intellij.openapi.options.ConfigurableGroup[]):java.util.List
+- f:expandGroup(com.intellij.openapi.options.ConfigurableGroup):java.util.List
+- sf:findKeys(java.lang.String,java.util.Set):java.util.List
+- sf:isComponentHighlighted(java.lang.String,java.lang.String,Z,com.intellij.openapi.options.SearchableConfigurable):Z
+- sf:lightOptions(com.intellij.openapi.options.SearchableConfigurable,javax.swing.JComponent,java.lang.String):V
+- sf:markup(java.lang.String,java.lang.String):java.lang.String
+- sf:markup(java.lang.String,java.lang.String,java.awt.Color,java.awt.Color):java.lang.String
+- sf:processComponent(com.intellij.openapi.options.SearchableConfigurable,java.util.Set,javax.swing.JComponent,Z):V
+- sf:processComponent(javax.swing.JComponent,java.util.Set,java.lang.String,Z):V
+- f:processUILabel(java.lang.String,java.util.Set,java.lang.String,Z):V
+- f:unwrapConfigurable(com.intellij.openapi.options.Configurable):com.intellij.openapi.options.Configurable
 com.intellij.ide.ui.search.TraverseUIHelper
 - sf:helperExtensionPoint:com.intellij.openapi.extensions.ExtensionPointName
 - afterConfigurable(com.intellij.openapi.options.SearchableConfigurable,java.util.Set):V

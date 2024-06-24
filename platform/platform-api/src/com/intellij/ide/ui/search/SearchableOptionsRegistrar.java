@@ -31,7 +31,7 @@ public abstract class SearchableOptionsRegistrar{
                                                             @NotNull String option,
                                                             @Nullable Project project);
 
-  public abstract @NotNull Set<String> getInnerPaths(SearchableConfigurable configurable, String option);
+  public abstract @NotNull Set<@NotNull String> getInnerPaths(SearchableConfigurable configurable, String option);
 
   /**
    * @deprecated Use {@link SearchableOptionContributor}
