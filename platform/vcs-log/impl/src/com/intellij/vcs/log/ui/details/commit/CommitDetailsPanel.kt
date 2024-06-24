@@ -45,6 +45,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     const val EXTERNAL_BORDER = 14
     const val LAYOUT_MIN_WIDTH = 40
     const val TOOLBAR_MIN_HEIGHT = 30
+    const val INFO_PANEL_MIN_HEIGHT = 17
   }
 
   private val statusesActionGroup = DefaultActionGroup()
@@ -82,7 +83,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
         addToCenter(hashAndAuthorPanel)
       }
 
-      val componentLayout = CC().minWidth("$LAYOUT_MIN_WIDTH").grow().push()
+      val componentLayout = CC().minWidth("$LAYOUT_MIN_WIDTH").minHeight("$INFO_PANEL_MIN_HEIGHT").grow().push()
       add(messagePanel, componentLayout)
       add(metadataPanel, componentLayout)
       add(branchesPanel, componentLayout)
