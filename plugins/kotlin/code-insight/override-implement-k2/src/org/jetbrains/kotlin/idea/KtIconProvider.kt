@@ -57,7 +57,7 @@ object KtIconProvider {
 
     context(KaSession)
     fun getBaseIcon(symbol: KaSymbol): Icon? {
-        val isAbstract = (symbol as? KaSymbolWithModality)?.modality == Modality.ABSTRACT
+        val isAbstract = (symbol as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT
         return when (symbol) {
             is KaPackageSymbol -> AllIcons.Nodes.Package
             is KaFunctionSymbol -> {
@@ -103,14 +103,15 @@ object KtIconProvider {
     }
 
     context(KaSession)
-    private fun getVisibilityIcon(symbol: KaSymbol): Icon? {
-        return when ((symbol as? KaSymbolWithVisibility)?.visibility?.normalize()) {
-            Visibilities.Public -> PlatformIcons.PUBLIC_ICON
-            Visibilities.Protected -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected)
-            Visibilities.Private, Visibilities.PrivateToThis -> IconManager.getInstance()
-                .getPlatformIcon(com.intellij.ui.PlatformIcons.Private)
-            Visibilities.Internal -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Local)
-            else -> null
-        }
+    private fun getVisibilityIcon(symbol: KaSymbol): Icon? = when ((symbol as? KaSymbolWithVisibility)?.visibility) {
+        KaSymbolVisibility.PUBLIC -> PlatformIcons.PUBLIC_ICON
+        KaSymbolVisibility.PROTECTED,
+        KaSymbolVisibility.PACKAGE_PROTECTED,
+        KaSymbolVisibility.PACKAGE_PRIVATE,
+            -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected)
+
+        KaSymbolVisibility.PRIVATE -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Private)
+        KaSymbolVisibility.INTERNAL -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Local)
+        else -> null
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -305,7 +306,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
 
             return analyzeInModalWindow(element as KtDeclaration, RefactoringBundle.message("detecting.possible.conflicts")) {
                 (element.symbol as? KaCallableSymbol)?.allOverriddenSymbols
-                    ?.filter { (it as? KaSymbolWithModality)?.modality == Modality.ABSTRACT }
+                    ?.filter { (it as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT }
                     ?.mapNotNull { it.psi }
                     ?.mapTo(ArrayList()) {
                         KotlinK2RefactoringsBundle.message(

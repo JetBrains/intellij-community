@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionImplK2Bundle
@@ -50,6 +51,7 @@ internal object TailTextProvider {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun getTailText(
         symbol: KaClassLikeSymbol,
         usePackageFqName: Boolean = false,

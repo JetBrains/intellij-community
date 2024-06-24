@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
+import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
@@ -31,10 +33,10 @@ internal fun getStaticScopes(reference: KtReference): List<KaScopeWithKind> {
                     symbol.staticMemberScope
                 }
 
-                KaScopeWithKind(scope, KaScopeKind.StaticMemberScope(scopeIndex), token)
+                KaScopeWithKindImpl(scope, KaScopeKinds.StaticMemberScope(scopeIndex))
             }
 
-            is KaPackageSymbol -> KaScopeWithKind(symbol.packageScope, KaScopeKind.PackageMemberScope(scopeIndex), token)
+            is KtPackageSymbol -> KaScopeWithKindImpl(symbol.packageScope, KaScopeKinds.PackageMemberScope(scopeIndex))
             else -> null
         }
     }

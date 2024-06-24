@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResu
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
-import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -286,7 +285,7 @@ internal open class FirCallableCompletionContributor(
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
         val packageScope = packageSymbol.packageScope
-        val packageScopeKind = KaScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+        val packageScopeKind = KaScopeKinds.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
 
         return packageScope
             .getCallableSymbols(scopeNameFilter)
@@ -410,7 +409,7 @@ internal open class FirCallableCompletionContributor(
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
         val staticScope = symbol.staticScope(withCompanionScope)
-        val staticScopeKind = KaScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+        val staticScopeKind = KaScopeKinds.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
 
         val nonExtensions = collectNonExtensionsFromScope(
             staticScope,
@@ -779,20 +778,20 @@ internal class FirKDocCallableCompletionContributor(
         val scopesWithKinds = resolvedSymbols.flatMap { parentSymbol ->
             when (parentSymbol) {
                 is KaPackageSymbol -> {
-                    val packageScopeKind = KaScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
-                    listOf(KaScopeWithKind(parentSymbol.packageScope, packageScopeKind, token))
+                    val packageScopeKind = KaScopeKinds.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+                    listOf(KaScopeWithKindImpl(parentSymbol.packageScope, packageScopeKind))
                 }
 
                 is KaNamedClassOrObjectSymbol -> buildList {
                     val type = parentSymbol.defaultType
 
                     type.scope?.declarationScope?.let { typeScope ->
-                        val typeScopeKind = KaScopeKind.TypeScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
-                        add(KaScopeWithKind(typeScope, typeScopeKind, token))
+                        val typeScopeKind = KaScopeKinds.TypeScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+                        add(KaScopeWithKindImpl(typeScope, typeScopeKind))
                     }
 
-                    val staticScopeKind = KaScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
-                    add(KaScopeWithKind(parentSymbol.staticScope(), staticScopeKind, token))
+                    val staticScopeKind = KaScopeKinds.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+                    add(KaScopeWithKindImpl(parentSymbol.staticScope(), staticScopeKind))
                 }
 
                 else -> emptyList()

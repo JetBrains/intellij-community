@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -71,12 +72,13 @@ context(KaSession)
 private fun KaDeclarationSymbol?.isInlineOrInsideInline(): Boolean = getInlineCallSiteVisibility() != null
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun KaDeclarationSymbol?.getInlineCallSiteVisibility(): Visibility? {
     var declaration: KaDeclarationSymbol? = this
     var result: Visibility? = null
     while (declaration != null) {
         if (declaration is KaNamedFunctionSymbol && declaration.isInline) {
-            val visibility = declaration.visibility
+            val visibility = declaration.compilerVisibility
             if (Visibilities.isPrivate(visibility)) {
                 return visibility
             }

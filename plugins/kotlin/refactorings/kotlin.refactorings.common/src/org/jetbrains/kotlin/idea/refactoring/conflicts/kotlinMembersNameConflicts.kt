@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.conflicts
 
 import com.intellij.psi.*
@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithKind
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUs
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findPropertyByName
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -59,7 +58,7 @@ fun KaScope.findSiblingsByName(
     }
     val callables = getCallableSymbols(newName).filter { callable ->
         symbol != callable &&
-                ((callable as? KaSymbolWithVisibility)?.visibility != Visibilities.Private || callable.containingSymbol == containingSymbol)
+                ((callable as? KaSymbolWithVisibility)?.visibility != KaSymbolVisibility.PRIVATE || callable.containingSymbol == containingSymbol)
     }
 
     val classifierSymbols = getClassifierSymbols(newName)
@@ -114,7 +113,8 @@ fun checkDeclarationNewNameConflicts(
         }
 
         if (symbol is KaTypeParameterSymbol) {
-            val typeParameters = (containingSymbol as? KaSymbolWithTypeParameters)?.typeParameters?.filter { it.name == newName }?.asSequence() ?: return emptySequence()
+            @OptIn(KaExperimentalApi::class)
+            val typeParameters = (containingSymbol as? KaDeclarationSymbol)?.typeParameters?.filter { it.name == newName }?.asSequence() ?: return emptySequence()
 
             val outerTypeParameters = generateSequence<KtClassOrObject>(declaration.getStrictParentOfType()) {
                 if (it is KtClass && it.isInner()) it.getStrictParentOfType() else null
@@ -142,7 +142,7 @@ fun checkDeclarationNewNameConflicts(
             }
 
             is KaPackageSymbol -> {
-                fun KaDeclarationSymbol.isTopLevelPrivate(): Boolean = (this as? KaSymbolWithVisibility)?.visibility == Visibilities.Private && (this as? KaSymbolWithKind)?.symbolKind == KaSymbolKind.TOP_LEVEL
+                fun KaDeclarationSymbol.isTopLevelPrivate(): Boolean = (this as? KaSymbolWithVisibility)?.visibility == KaSymbolVisibility.PRIVATE && (this as? KaSymbolWithKind)?.symbolKind == KaSymbolKind.TOP_LEVEL
 
                 fun isInSameFile(s1: KaDeclarationSymbol, s2: KaDeclarationSymbol): Boolean = s1.psi?.containingFile == s2.psi?.containingFile
 
@@ -218,11 +218,13 @@ fun registerAlreadyDeclaredConflict(candidateSymbol: KaDeclarationSymbol, result
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun areSameSignatures(candidateSymbol: KaFunctionSymbol, symbol: KaFunctionSymbol) : Boolean {
     return areSameSignatures(candidateSymbol.receiverType, symbol.receiverType, candidateSymbol.valueParameters.map { it.returnType }, symbol.valueParameters.map { it.returnType }, candidateSymbol.contextReceivers, symbol.contextReceivers)
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun areSameSignatures(candidateSymbol: KaPropertySymbol, symbol: KaFunctionSymbol) : Boolean {
     val type = candidateSymbol.returnType
     if (type is KaFunctionType &&
@@ -233,6 +235,7 @@ private fun areSameSignatures(candidateSymbol: KaPropertySymbol, symbol: KaFunct
 }
 
 context(KaSession)
+@KaExperimentalApi
 fun areSameSignatures(
     receiverType1: KaType?,
     receiverType2: KaType?,

@@ -1,16 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.filterCandidateByReceiverTypeAndVisibility
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -26,7 +24,7 @@ import org.jetbrains.kotlin.types.Variance
  */
 class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentInfoHandlerBase() {
     context(KaSession)
-    override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaSymbolWithTypeParameters>? {
+    override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaDeclarationSymbol>? {
         val typeReference = argumentList.parentOfType<KtTypeReference>() ?: return null
         return when (val ktType = typeReference.type) {
             is KaClassType -> listOfNotNull(ktType.expandedSymbol as? KaNamedClassOrObjectSymbol)
@@ -51,7 +49,7 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
  */
 class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentInfoHandlerBase() {
     context(KaSession)
-    override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaSymbolWithTypeParameters>? {
+    override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaDeclarationSymbol>? {
         val callElement = argumentList.parentOfType<KtCallElement>() ?: return null
         // A call element may not be syntactically complete (e.g., missing parentheses: `foo<>`). In that case, `callElement.resolveCallOld()`
         // will NOT return a KaCall because there is no FirFunctionCall there. We find the symbols using the callee name instead.
@@ -91,7 +89,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
 
 abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeArgumentInfoHandler() {
     context(KaSession)
-    protected abstract fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaSymbolWithTypeParameters>?
+    protected abstract fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaDeclarationSymbol>?
 
     override fun fetchCandidateInfos(argumentList: KtTypeArgumentList): List<CandidateInfo>? {
         analyze(argumentList) {
@@ -101,7 +99,8 @@ abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeAr
     }
 
     context(KaSession)
-    protected fun fetchCandidateInfo(parameterOwner: KaSymbolWithTypeParameters): CandidateInfo {
+    protected fun fetchCandidateInfo(parameterOwner: KaDeclarationSymbol): CandidateInfo {
+        @OptIn(KaExperimentalApi::class)
         return CandidateInfo(parameterOwner.typeParameters.map { fetchTypeParameterInfo(it) })
     }
 

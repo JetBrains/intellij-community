@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -259,7 +260,7 @@ fun KtNamedDeclaration.isMemberThatCanBeSkipped(): Boolean {
     analyze(this) {
         val symbol = symbol as? KaSymbolWithVisibility ?: return false
         val visibility = symbol.visibility
-        if (visibility == Visibilities.Public || visibility == Visibilities.Protected) return true
+        if (visibility == KaSymbolVisibility.PUBLIC || visibility == KaSymbolVisibility.PROTECTED) return true
     }
     return false
 }

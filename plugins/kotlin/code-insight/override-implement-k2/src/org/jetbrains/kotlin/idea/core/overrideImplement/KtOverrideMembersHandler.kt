@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
@@ -57,7 +57,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
                 val symbolsToProcess = if (intersectionSymbols.size <= 1) {
                     listOf(symbol)
                 } else {
-                    val nonAbstractMembers = intersectionSymbols.filter { (it as? KaSymbolWithModality)?.modality != Modality.ABSTRACT }
+                    val nonAbstractMembers = intersectionSymbols.filter { (it as? KaSymbolWithModality)?.modality != KaSymbolModality.ABSTRACT }
                     // If there are non-abstract members, we only want to show override for these non-abstract members. Otherwise, show any
                     // abstract member to override.
                     nonAbstractMembers.ifEmpty {
@@ -88,7 +88,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
                                 BodyType.Super
                             }
                         }
-                        (originalOverriddenSymbol as? KaSymbolWithModality)?.modality == Modality.ABSTRACT ->
+                        (originalOverriddenSymbol as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT ->
                             BodyType.FromTemplate
                         symbolsToProcess.size > 1 ->
                             BodyType.QualifiedSuper

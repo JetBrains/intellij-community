@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.descriptors.Modality
@@ -36,7 +37,7 @@ internal object AddDataModifierFixFactory {
             ?: return@ModCommandBased emptyList()
 
         val modality = classSymbol.modality
-        if (modality != Modality.FINAL || classSymbol.isInner) return@ModCommandBased emptyList()
+        if (modality != KaSymbolModality.FINAL || classSymbol.isInner) return@ModCommandBased emptyList()
         val constructors = classSymbol.declaredMemberScope.constructors
         val ctorParams = constructors.firstOrNull { it.isPrimary }?.valueParameters ?: return@ModCommandBased emptyList()
         if (ctorParams.isEmpty()) return@ModCommandBased emptyList()

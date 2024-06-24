@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaUsualClassTy
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
@@ -244,10 +245,10 @@ internal class KotlinIdeDeclarationRenderer(
         visibilityProvider = KaRendererVisibilityModifierProvider.WITH_IMPLICIT_VISIBILITY
         modalityProvider = KaRendererModalityModifierProvider.WITH_IMPLICIT_MODALITY.onlyIf { symbol ->
             when {
-                symbol is KaClassSymbol -> !(symbol.classKind == KaClassKind.INTERFACE && symbol.modality == Modality.ABSTRACT || symbol.classKind.isObject && symbol.modality == Modality.FINAL)
+                symbol is KaClassSymbol -> !(symbol.classKind == KaClassKind.INTERFACE && symbol.modality == KaSymbolModality.ABSTRACT || symbol.classKind.isObject && symbol.modality == KaSymbolModality.FINAL)
 
                 symbol is KaCallableSymbol -> {
-                    symbol.modality == Modality.OPEN || symbol.containingSymbol != null && symbol.modality == Modality.FINAL || symbol.modality == Modality.ABSTRACT
+                    symbol.modality == KaSymbolModality.OPEN || symbol.containingSymbol != null && symbol.modality == KaSymbolModality.FINAL || symbol.modality == KaSymbolModality.ABSTRACT
                 }
 
                 else -> false
@@ -459,7 +460,7 @@ internal class KotlinIdeDeclarationRenderer(
                             }
                         },
                         {
-                            if (callableSymbol is KaSymbolWithVisibility && callableSymbol.visibility == Visibilities.Local) {
+                            if (callableSymbol is KaSymbolWithVisibility && callableSymbol.visibility == KaSymbolVisibility.LOCAL) {
                                 printer.append(highlight("local") { asKeyword })
                             }
                         },

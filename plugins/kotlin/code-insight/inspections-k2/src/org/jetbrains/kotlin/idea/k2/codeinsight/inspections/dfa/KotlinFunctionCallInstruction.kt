@@ -17,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConditionalContractEffectDeclaration
@@ -74,6 +75,7 @@ class KotlinFunctionCallInstruction(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun processContracts(
         interpreter: DataFlowInterpreter,
         stateBefore: DfaMemoryState,
@@ -112,6 +114,7 @@ class KotlinFunctionCallInstruction(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun KaContractBooleanExpression.toCondition(
         factory: DfaValueFactory,
         callDescriptor: KaFunctionCall<*>,
@@ -149,6 +152,7 @@ class KotlinFunctionCallInstruction(
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun KaContractEffectDeclaration.toContractReturnValue(): ContractReturnValue? {
         return when (this) {
             is KaContractReturnsNotNullEffectDeclaration -> ContractReturnValue.returnNotNull()
