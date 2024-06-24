@@ -7,6 +7,7 @@ import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
@@ -16,7 +17,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.JBTabPainter;
-import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.*;
@@ -39,10 +39,9 @@ import java.util.Set;
 public final class GridCellImpl implements GridCell {
   private final GridImpl myContainer;
 
-  private final MutualMap<Content, TabInfo> myContents = new MutualMap<>(true);
   private final Set<Content> myMinimizedContents = new HashSet<>();
 
-  private final JBTabs myTabs;
+  private final GridCellTabs myTabs;
   private final GridImpl.Placeholder myPlaceholder;
   private final PlaceInGrid myPlaceInGrid;
 
@@ -57,20 +56,6 @@ public final class GridCellImpl implements GridCell {
     myPlaceholder = placeholder;
     myPlaceholder.setContentProvider(() -> getContents());
     myTabs = new GridCellTabs(context, container);
-    myTabs.setDataProvider(dataId -> {
-      if (ViewContext.CONTENT_KEY.is(dataId)) {
-        TabInfo target = myTabs.getTargetInfo();
-        Content content = target == null ? null : myContents.getKey(target);
-        if (content != null) {
-          return new Content[]{content};
-        }
-      }
-      else if (ViewContext.CONTEXT_KEY.is(dataId)) {
-        return myContext;
-      }
-
-      return null;
-    });
 
     myTabs.getPresentation().setSideComponentVertical(true)
       .setFocusCycle(false).setPaintFocus(true)
@@ -118,8 +103,8 @@ public final class GridCellImpl implements GridCell {
   }
 
   void add(final Content content) {
-    if (myContents.containsKey(content)) return;
-    myContents.put(content, null);
+    if (myTabs.myContents.containsKey(content)) return;
+    myTabs.myContents.put(content, null);
 
     revalidateCell(() -> myTabs.addTab(createTabInfoFor(content)));
 
@@ -127,10 +112,10 @@ public final class GridCellImpl implements GridCell {
   }
 
   void remove(Content content) {
-    if (!myContents.containsKey(content)) return;
+    if (!myTabs.myContents.containsKey(content)) return;
 
     final TabInfo info = getTabFor(content);
-    myContents.remove(content);
+    myTabs.myContents.remove(content);
 
     revalidateCell(() -> myTabs.removeTab(info));
 
@@ -138,7 +123,7 @@ public final class GridCellImpl implements GridCell {
   }
 
   private void revalidateCell(Runnable contentAction) {
-    if (myContents.size() == 0) {
+    if (myTabs.myContents.size() == 0) {
       myPlaceholder.removeAll();
       myTabs.removeAllTabs();
 
@@ -171,8 +156,8 @@ public final class GridCellImpl implements GridCell {
       .setPreferredFocusableComponent(content.getPreferredFocusableComponent())
       .setActionsContextComponent(content.getActionsContextComponent());
 
-    myContents.remove(content);
-    myContents.put(content, tabInfo);
+    myTabs.myContents.remove(content);
+    myTabs.myContents.put(content, tabInfo);
 
     ActionGroup group = (ActionGroup)myContext.getActionManager().getAction(RunnerContentUi.VIEW_TOOLBAR);
     tabInfo.setTabLabelActions(group, ViewContext.CELL_TOOLBAR_PLACE);
@@ -195,7 +180,7 @@ public final class GridCellImpl implements GridCell {
   }
 
   public ActionCallback select(final Content content, final boolean requestFocus) {
-    final TabInfo tabInfo = myContents.getValue(content);
+    final TabInfo tabInfo = myTabs.myContents.getValue(content);
     return tabInfo != null ? myTabs.select(tabInfo, requestFocus) : ActionCallback.DONE;
   }
 
@@ -253,11 +238,11 @@ public final class GridCellImpl implements GridCell {
 
   @Nullable
   TabInfo getTabFor(Content content) {
-    return myContents.getValue(content);
+    return myTabs.myContents.getValue(content);
   }
 
   private @NotNull Content getContentFor(TabInfo tab) {
-    return myContents.getKey(tab);
+    return myTabs.myContents.getKey(tab);
   }
 
   public void setToolbarHorizontal(final boolean horizontal) {
@@ -304,18 +289,18 @@ public final class GridCellImpl implements GridCell {
   }
 
   Content[] getContents() {
-    return myContents.getKeys().toArray(new Content[myContents.size()]);
+    return myTabs.myContents.getKeys().toArray(new Content[myTabs.myContents.size()]);
   }
 
   @Override
   public int getContentCount() {
-    return myContents.size();
+    return myTabs.myContents.size();
   }
 
   public void saveUiState() {
     saveProportions();
 
-    for (Content each : myContents.getKeys()) {
+    for (Content each : myTabs.myContents.getKeys()) {
       saveState(each, false);
     }
 
@@ -362,7 +347,7 @@ public final class GridCellImpl implements GridCell {
     ContentManager contentManager = myContext.getContentManager();
     if (contentManager.isDisposed()) return;
 
-    for (Content each : myContents.getKeys()) {
+    for (Content each : myTabs.myContents.getKeys()) {
       final TabInfo eachTab = getTabFor(each);
       boolean isSelected = eachTab != null && myTabs.getSelectedInfo() == eachTab;
       if (isSelected && isShowing) {
@@ -437,7 +422,8 @@ public final class GridCellImpl implements GridCell {
   }
 
   private static final class GridCellTabs extends SingleHeightTabs {
-    private final ViewContextEx myContext;
+    final ViewContextEx myContext;
+    final MutualMap<Content, TabInfo> myContents = new MutualMap<>(true);
 
     @Override
     protected @NotNull TabPainterAdapter createTabPainterAdapter() {
@@ -450,6 +436,15 @@ public final class GridCellImpl implements GridCell {
       myContext = context;
       JBRunnerTabsBase tabs = ((RunnerContentUi)myContext).tabs;
       ((JBTabsImpl)tabs).addNestedTabs(this, container);
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      TabInfo target = getTargetInfo();
+      Content content = target == null ? null : myContents.getKey(target);
+      sink.set(ViewContext.CONTENT_KEY, content == null ? null : new Content[]{content});
+      sink.set(ViewContext.CONTEXT_KEY, myContext);
     }
 
     @Override
