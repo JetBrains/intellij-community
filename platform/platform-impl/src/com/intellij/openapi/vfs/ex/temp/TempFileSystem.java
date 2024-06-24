@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 @ApiStatus.Internal
+@SuppressWarnings("removal")
 public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePointerCapableFileSystem, TempFileSystemMarker {
   private static final String TEMP_PROTOCOL = "temp";
 

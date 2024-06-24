@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Objects.requireNonNullElse;
 
 @ApiStatus.Internal
+@SuppressWarnings("removal")
 public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable, VirtualFilePointerCapableFileSystem {
   @SuppressWarnings("SSBasedInspection")
   private static final Logger WATCH_ROOTS_LOG = Logger.getInstance("#com.intellij.openapi.vfs.WatchRoots");

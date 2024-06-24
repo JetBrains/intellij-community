@@ -35,7 +35,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/** @deprecated do not use directly, access via {@link LocalFileSystem#getInstance} */
 @ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public abstract class LocalFileSystemBase extends LocalFileSystem {
   private static final ExtensionPointName<LocalFileOperationsHandler> FILE_OPERATIONS_HANDLER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.fileOperationsHandler");
