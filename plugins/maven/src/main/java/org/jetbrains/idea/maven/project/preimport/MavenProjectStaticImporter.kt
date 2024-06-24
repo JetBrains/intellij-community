@@ -44,14 +44,16 @@ import java.util.concurrent.ConcurrentHashMap
 class MavenProjectStaticImporter(val project: Project, val coroutineScope: CoroutineScope) {
   private val localRepo = MavenProjectsManager.getInstance(project).localRepository
 
-  suspend fun syncStatic(rootProjectFiles: List<VirtualFile>,
-                         optionalModelsProvider: IdeModifiableModelsProvider?,
-                         importingSettings: MavenImportingSettings,
-                         generalSettings: MavenGeneralSettings,
-                         reimportExistingFiles: Boolean,
-                         visitor: MavenStructureProjectVisitor,
-                         parentActivity: StructuredIdeActivity,
-                         commit: Boolean): PreimportResult {
+  suspend fun syncStatic(
+    rootProjectFiles: List<VirtualFile>,
+    optionalModelsProvider: IdeModifiableModelsProvider?,
+    importingSettings: MavenImportingSettings,
+    generalSettings: MavenGeneralSettings,
+    reimportExistingFiles: Boolean,
+    visitor: MavenStructureProjectVisitor,
+    parentActivity: StructuredIdeActivity,
+    commit: Boolean,
+  ): PreimportResult {
     val activity = PREIMPORT_ACTIVITY.startedWithParent(project, parentActivity)
     val statisticsData = StatisticsData(project, rootProjectFiles.size)
     try {
@@ -66,13 +68,13 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       val projectTree = MavenProjectsTree(project)
       val roots = ArrayList<MavenProject>()
       val mavenProjectMappings = HashMap<MavenProject, List<MavenProject>>()
-      val allProjects = ArrayList<MavenProject>()
+      val allProjects = forest.flatMap { it.projects() }.toList()
+      visitor.map(allProjects)
       val projectChanges = HashMap<MavenProject, MavenProjectChanges>()
       val existingTree = if (!commit) null else MavenProjectsManager.getInstance(project).let { if (it.isMavenizedProject) it.projectsTree else null }
 
       forest.forEach { tree ->
         mavenProjectMappings.putAll(tree.mavenProjectMappings())
-        allProjects.addAll(tree.projects())
         tree.root?.let(roots::add)
 
         if (existingTree == null || reimportExistingFiles) {
@@ -83,9 +85,14 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
             tree.projects().filter { existingTree.findProject(it.file) == null }.associateWith { MavenProjectChanges.ALL })
         }
       }
-      visitor.map(allProjects);
 
-      if (!commit) return PreimportResult.empty(project);
+      statisticsData.add(forest, allProjects)
+
+      if (!commit) return PreimportResult.empty(project)
+
+      if (existingTree != null && allProjects.all { existingTree.findProject(it.mavenId) != null }) {
+        return PreimportResult.empty(project)
+      }
 
 
       projectTree.updater()
@@ -106,7 +113,6 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
                                                                    parentActivity)
 
           importer.importProject()
-          statisticsData.add(forest, allProjects)
           return@blockingContext importer.createdModules()
 
         }
@@ -252,9 +258,11 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       })
   }
 
-  private fun CoroutineScope.interpolate(project: MavenProjectData,
-                                         tree: ProjectTree,
-                                         interpolatedCache: ConcurrentHashMap<VirtualFile, Deferred<MavenProjectData>>): Deferred<MavenProjectData> = async {
+  private fun CoroutineScope.interpolate(
+    project: MavenProjectData,
+    tree: ProjectTree,
+    interpolatedCache: ConcurrentHashMap<VirtualFile, Deferred<MavenProjectData>>,
+  ): Deferred<MavenProjectData> = async {
 
     val myDeferred = CompletableDeferred<MavenProjectData>()
     try {
@@ -326,8 +334,10 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
   }
 
-  private fun applyParentProperties(parentInterpolated: MavenProjectData,
-                                    project: MavenProjectData) {
+  private fun applyParentProperties(
+    parentInterpolated: MavenProjectData,
+    project: MavenProjectData,
+  ) {
 
     parentInterpolated.properties.forEach {
       project.properties.putIfAbsent(it.key, it.value)
@@ -406,10 +416,12 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
   }
 
 
-  private fun CoroutineScope.readRecursively(parentModel: Element,
-                                             aggregatorProjectFile: VirtualFile,
-                                             aggregatorProject: MavenProjectData,
-                                             tree: ProjectTree): Job = this.launch Read@{
+  private fun CoroutineScope.readRecursively(
+    parentModel: Element,
+    aggregatorProjectFile: VirtualFile,
+    aggregatorProject: MavenProjectData,
+    tree: ProjectTree,
+  ): Job = this.launch Read@{
     val modulesList = parentModel.getChildrenText("modules", "module")
     modulesList.forEach {
       this.launch {
@@ -549,9 +561,11 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       .map(Path::toString)
   }
 
-  private fun resolveKotlinPlugin(mavenProjectData: MavenProjectData,
-                                  sources: ArrayList<String>,
-                                  testSources: ArrayList<String>) {
+  private fun resolveKotlinPlugin(
+    mavenProjectData: MavenProjectData,
+    sources: ArrayList<String>,
+    testSources: ArrayList<String>,
+  ) {
     val kotlinPlugin = findPlugin(mavenProjectData, "org.jetbrains.kotlin", "kotlin-maven-plugin")
     if (kotlinPlugin != null) {
       sources.add("src/main/kotlin")
@@ -559,9 +573,11 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     }
   }
 
-  private fun resolveBuildHelperPlugin(mavenProjectData: MavenProjectData,
-                                       sources: ArrayList<String>,
-                                       testSources: ArrayList<String>) {
+  private fun resolveBuildHelperPlugin(
+    mavenProjectData: MavenProjectData,
+    sources: ArrayList<String>,
+    testSources: ArrayList<String>,
+  ) {
     val executions = findPlugin(mavenProjectData, "org.codehaus.mojo", "build-helper-maven-plugin")?.executions
     if (executions.isNullOrEmpty()) return
 
@@ -620,7 +636,7 @@ private class StatisticsData(val project: Project, val rootProjects: Int) {
   val modulesBefore = (WorkspaceModel.getInstance(project).currentSnapshot as ImmutableEntityStorageInstrumentation)
     .entityCount(ModuleEntity::class.java)
 
-  fun add(forest: List<ProjectTree>, allProjects: ArrayList<MavenProject>) {
+  fun add(forest: List<ProjectTree>, allProjects: List<MavenProject>) {
     val time = System.currentTimeMillis()
     try {
       linkedProject = forest.size
