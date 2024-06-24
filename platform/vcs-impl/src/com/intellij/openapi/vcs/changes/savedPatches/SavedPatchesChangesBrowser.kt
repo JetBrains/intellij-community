@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
@@ -122,45 +123,35 @@ class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLo
       .filterNotNull()
   }
 
-  override fun getData(dataId: String): Any? {
-    if (VcsDataKeys.CHANGES.`is`(dataId)) {
-      val selected = VcsTreeModelData.selected(myViewer).mapToChange().toList().toTypedArray()
-      if (selected.isNotEmpty()) return selected
-      return VcsTreeModelData.all(myViewer).mapToChange().toList().toTypedArray()
-    }
-    else if (VcsDataKeys.SELECTED_CHANGES.`is`(dataId) ||
-             VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.`is`(dataId)) {
-      return VcsTreeModelData.selected(myViewer).mapToChange().toList().toTypedArray()
-    }
-    else if (VcsDataKeys.CHANGES_SELECTION.`is`(dataId)) {
-      return VcsTreeModelData.getListSelectionOrAll(myViewer).map { (it as? SavedPatchesProvider.ChangeObject)?.asChange() }
-    }
-    else if (VcsDataKeys.CHANGE_LEAD_SELECTION.`is`(dataId)) {
-      return VcsTreeModelData.exactlySelected(myViewer).mapToChange().toList().toTypedArray()
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId)) {
-      return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
-        .map { it.filePath.virtualFile }
-        .filterNotNull()
-        .toList().toTypedArray()
-    }
-    else if (VcsDataKeys.FILE_PATHS.`is`(dataId)) {
-      return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
-        .map { it.filePath }
-    }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
-      val virtualFiles = VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
-        .map { it.filePath.virtualFile }
-        .filterNotNull()
-      return ChangesUtil.getNavigatableArray(myProject, virtualFiles)
-    }
-    else if (SavedPatchesUi.SAVED_PATCH_SELECTED_CHANGES.`is`(dataId)) {
-      return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
-    }
-    else if (SavedPatchesUi.SAVED_PATCH_CHANGES.`is`(dataId)) {
-      return VcsTreeModelData.all(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
-    }
-    return super.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    val selection = VcsTreeModelData.selected(myViewer)
+
+    val changes = selection.mapToChange().toList().toTypedArray()
+    sink[VcsDataKeys.CHANGES] =
+      if (changes.isNotEmpty()) changes
+      else VcsTreeModelData.all(myViewer).mapToChange().toList().toTypedArray()
+    sink[VcsDataKeys.SELECTED_CHANGES] = changes
+    sink[VcsDataKeys.SELECTED_CHANGES_IN_DETAILS] = changes
+    sink[VcsDataKeys.CHANGES_SELECTION] =
+      VcsTreeModelData.getListSelectionOrAll(myViewer)
+        .map { (it as? SavedPatchesProvider.ChangeObject)?.asChange() }
+    sink[VcsDataKeys.CHANGE_LEAD_SELECTION] =
+      VcsTreeModelData.exactlySelected(myViewer).mapToChange().toList().toTypedArray()
+
+    val changeObjects = selection.iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
+    sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = changeObjects
+      .map { it.filePath.virtualFile }
+      .filterNotNull()
+      .toList().toTypedArray()
+    sink[VcsDataKeys.FILE_PATHS] = changeObjects.map { it.filePath }
+    sink[CommonDataKeys.NAVIGATABLE_ARRAY] = changeObjects
+      .filterMap { it.filePath.virtualFile }
+      .let { ChangesUtil.getNavigatableArray(myProject, it) }
+    sink[SavedPatchesUi.SAVED_PATCH_SELECTED_CHANGES] = changeObjects
+
+    sink[SavedPatchesUi.SAVED_PATCH_CHANGES] = VcsTreeModelData.all(myViewer)
+      .iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
   }
 
   override fun dispose() {

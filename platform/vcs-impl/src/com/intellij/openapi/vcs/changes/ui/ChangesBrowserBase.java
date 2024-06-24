@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * Consider using {@link AsyncChangesBrowserBase} to avoid potentially-expensive tree building operations on EDT.
  */
-public abstract class ChangesBrowserBase extends JPanel implements DataProvider {
+public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleDataProvider {
   public static final DataKey<ChangesBrowserBase> DATA_KEY =
     DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase");
 
@@ -253,13 +253,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     return myViewer.getGrouping();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    return VcsTreeModelData.getDataOrSuper(myProject, myViewer, dataId, myViewer.getData(dataId));
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(DATA_KEY, this);
+    DataSink.uiDataSnapshot(sink, myViewer);
+    VcsTreeModelData.uiDataSnapshot(sink, myProject, myViewer);
   }
 
 

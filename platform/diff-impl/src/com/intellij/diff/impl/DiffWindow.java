@@ -16,7 +16,6 @@
 package com.intellij.diff.impl;
 
 import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.actions.impl.OpenInEditorAction;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.project.Project;
@@ -43,13 +42,8 @@ public class DiffWindow extends DiffWindowBase {
     }
 
     @Override
-    protected @Nullable Object getData(@NotNull String dataId) {
-      if (OpenInEditorAction.AFTER_NAVIGATE_CALLBACK.is(dataId)) {
-        return (Runnable)() -> {
-          DiffUtil.closeWindow(getWrapper().getWindow(), true, true);
-        };
-      }
-      return super.getData(dataId);
+    protected @NotNull Runnable createAfterNavigateCallback() {
+      return () -> DiffUtil.closeWindow(getWrapper().getWindow(), true, true);
     }
 
     @Override

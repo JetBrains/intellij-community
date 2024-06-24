@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.changes
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
@@ -36,7 +37,10 @@ class CodeReviewChangesTreeFactory(private val project: Project,
         }
       }
 
-      override fun getData(dataId: String) = VcsTreeModelData.getDataOrSuper(project, this, dataId, super.getData(dataId))
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        VcsTreeModelData.uiDataSnapshot(sink, project, this)
+      }
 
     }.apply {
       emptyText.text = emptyTextText

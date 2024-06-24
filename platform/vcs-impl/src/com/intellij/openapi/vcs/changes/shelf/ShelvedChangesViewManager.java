@@ -504,61 +504,50 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      if (SHELVED_CHANGES_TREE.is(dataId)) {
-        return this;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      sink.set(SHELVED_CHANGES_TREE, this);
+      sink.set(SHELVED_CHANGELIST_KEY, new ArrayList<>(
+        getSelectedLists(this, l -> !l.isRecycled() && !l.isDeleted())));
+      sink.set(SHELVED_RECYCLED_CHANGELIST_KEY, new ArrayList<>(
+        getSelectedLists(this, l -> l.isRecycled() && !l.isDeleted())));
+      sink.set(SHELVED_DELETED_CHANGELIST_KEY, new ArrayList<>(
+        getSelectedLists(this, l -> l.isDeleted())));
+      sink.set(SHELVED_CHANGE_KEY, VcsTreeModelData.selected(this).iterateUserObjects(ShelvedWrapper.class)
+        .map(s -> s.getShelvedChange())
+        .filterNotNull().toList());
+      sink.set(SHELVED_BINARY_FILE_KEY, VcsTreeModelData.selected(this).iterateUserObjects(ShelvedWrapper.class)
+        .map(s -> s.getBinaryFile())
+        .filterNotNull().toList());
+      if (!isEditing()) {
+        sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
       }
-      else if (SHELVED_CHANGELIST_KEY.is(dataId)) {
-        return new ArrayList<>(getSelectedLists(this, l -> !l.isRecycled() && !l.isDeleted()));
+      List<ShelvedWrapper> shelvedChanges = VcsTreeModelData.selected(this).userObjects(ShelvedWrapper.class);
+      if (!shelvedChanges.isEmpty()) {
+        sink.set(VcsDataKeys.CHANGES, map2Array(shelvedChanges, Change.class, s -> s.getChangeWithLocal(myProject)));
       }
-      else if (SHELVED_RECYCLED_CHANGELIST_KEY.is(dataId)) {
-        return new ArrayList<>(getSelectedLists(this, l -> l.isRecycled() && !l.isDeleted()));
-      }
-      else if (SHELVED_DELETED_CHANGELIST_KEY.is(dataId)) {
-        return new ArrayList<>(getSelectedLists(this, l -> l.isDeleted()));
-      }
-      else if (SHELVED_CHANGE_KEY.is(dataId)) {
-        return VcsTreeModelData.selected(this).iterateUserObjects(ShelvedWrapper.class)
-          .map(s -> s.getShelvedChange())
-          .filterNotNull().toList();
-      }
-      else if (SHELVED_BINARY_FILE_KEY.is(dataId)) {
-        return VcsTreeModelData.selected(this).iterateUserObjects(ShelvedWrapper.class)
-          .map(s -> s.getBinaryFile())
-          .filterNotNull().toList();
-      }
-      else if (VcsDataKeys.CHANGES.is(dataId)) {
-        List<ShelvedWrapper> shelvedChanges = VcsTreeModelData.selected(this).userObjects(ShelvedWrapper.class);
-        if (!shelvedChanges.isEmpty()) {
-          return map2Array(shelvedChanges, Change.class, s -> s.getChangeWithLocal(myProject));
-        }
-      }
-      else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId) && !isEditing()) {
-        return myDeleteProvider;
-      }
-      else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        List<ShelvedWrapper> shelvedChanges = VcsTreeModelData.selected(this).userObjects(ShelvedWrapper.class);
-        final ArrayDeque<Navigatable> navigatables = new ArrayDeque<>();
-        for (final ShelvedWrapper shelvedChange : shelvedChanges) {
-          if (shelvedChange.getBeforePath() != null && !FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {
-            final NavigatableAdapter navigatable = new NavigatableAdapter() {
-              @Override
-              public void navigate(boolean requestFocus) {
-                final VirtualFile vf = shelvedChange.getBeforeVFUnderProject(myProject);
-                if (vf != null) {
-                  navigate(myProject, vf, true);
-                }
+      sink.set(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatables(shelvedChanges)
+        .toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
+      sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
+    }
+
+    private @NotNull List<Navigatable> getNavigatables(@NotNull List<ShelvedWrapper> shelvedChanges) {
+      ArrayList<Navigatable> navigatables = new ArrayList<>();
+      for (ShelvedWrapper shelvedChange : shelvedChanges) {
+        if (shelvedChange.getBeforePath() != null && !FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {
+          NavigatableAdapter navigatable = new NavigatableAdapter() {
+            @Override
+            public void navigate(boolean requestFocus) {
+              VirtualFile vf = shelvedChange.getBeforeVFUnderProject(myProject);
+              if (vf != null) {
+                navigate(myProject, vf, true);
               }
-            };
-            navigatables.add(navigatable);
-          }
+            }
+          };
+          navigatables.add(navigatable);
         }
-        return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
-      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-        return HELP_ID;
-      }
-      return super.getData(dataId);
+      return navigatables;
     }
 
     public void invalidateDataAndRefresh(@Nullable Runnable onRefreshed) {
@@ -913,11 +902,9 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.is(dataId)) {
-        return myEditorDiffPreview;
-      }
-      return super.getData(dataId);
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      sink.set(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
     }
 
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {

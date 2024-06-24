@@ -1704,7 +1704,6 @@ f:com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel
 - addListener(com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel$Listener,com.intellij.openapi.Disposable):V
 - dispose():V
 - getActions(Z):java.util.List
-- getData(java.lang.String):java.lang.Object
 - isAllowExcludeFromCommit():Z
 - refreshChangesViewNodeAsync(com.intellij.openapi.vfs.VirtualFile):V
 - scheduleRefresh():V
@@ -1712,6 +1711,7 @@ f:com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel
 - selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - setBusy(Z):V
 - setGrouping(java.lang.String):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateCommitWorkflow():V
 - updateProgressText(java.lang.String,Z):V
 com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel$Listener
@@ -3043,8 +3043,8 @@ c:com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser
 - <init>(com.intellij.openapi.project.Project):V
 - p:createPopupMenuActions():java.util.List
 - p:createToolbarActions():java.util.List
-- getData(java.lang.String):java.lang.Object
 - setUseCase(com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserDialogPanel
 - javax.swing.JPanel
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.committed.CommittedChangesTableModel):V
@@ -4296,10 +4296,10 @@ f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser
 - dispose():V
 - f:getChanges():java.util.Collection
 - f:getCurrentPatchObject():com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$PatchObject
-- getData(java.lang.String):java.lang.Object
 - getDiffRequestProducer(java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 - f:getDiffWithLocalRequestProducer(java.lang.Object,Z):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 - f:selectPatchObject(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$PatchObject):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffPreviewHandler
 - com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
 - <init>(kotlin.jvm.functions.Function0):V
@@ -4930,7 +4930,7 @@ com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
 - a:preDecorate(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,Z):V
 a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - pf:myProject:com.intellij.openapi.project.Project
 - pf:myViewer:com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -4948,7 +4948,6 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 - p:createToolbarComponent():javax.swing.JComponent
 - p:createTreeList(com.intellij.openapi.project.Project,Z,Z):com.intellij.openapi.vcs.changes.ui.ChangesTree
 - p:createViewerBorder():javax.swing.border.Border
-- getData(java.lang.String):java.lang.Object
 - getDiffAction():com.intellij.openapi.actionSystem.AnAction
 - p:getDiffRequestProducer(java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 - getGrouping():com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
@@ -4970,6 +4969,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 - showDiff():V
 - s:showStandaloneDiff(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase):V
 - s:showStandaloneDiff(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase,com.intellij.openapi.ListSelection,com.intellij.util.NullableFunction):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateDiffContext(com.intellij.diff.chains.DiffRequestChain):V
 c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase$ShowStandaloneDiff
 - com.intellij.openapi.actionSystem.AnActionExtensionProvider
@@ -5916,7 +5916,7 @@ c:com.intellij.openapi.vcs.changes.ui.SelectFilesDialog$VirtualFileList
 - com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeImpl$VirtualFiles
 - <init>(com.intellij.openapi.project.Project,Z,Z,java.util.List):V
 - p:buildTreeModel(com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory,java.util.List):javax.swing.tree.DefaultTreeModel
-- getData(java.lang.String):java.lang.Object
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.openapi.vcs.changes.ui.SessionDialog
 - com.intellij.openapi.ui.DialogWrapper
 - sf:Companion:com.intellij.openapi.vcs.changes.ui.SessionDialog$Companion
@@ -6124,8 +6124,6 @@ a:com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - s:allUnderTag(javax.swing.JTree,java.lang.Object):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - s:exactlySelected(javax.swing.JTree):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - s:findTagNode(javax.swing.JTree,java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-- s:getData(com.intellij.openapi.project.Project,javax.swing.JTree,java.lang.String):java.lang.Object
-- s:getDataOrSuper(com.intellij.openapi.project.Project,javax.swing.JTree,java.lang.String,java.lang.Object):java.lang.Object
 - s:getListSelectionOrAll(javax.swing.JTree):com.intellij.openapi.ListSelection
 - s:included(com.intellij.openapi.vcs.changes.ui.ChangesTree):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - s:includedUnderTag(com.intellij.openapi.vcs.changes.ui.ChangesTree,java.lang.Object):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
@@ -6140,6 +6138,7 @@ a:com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - f:nodesStream():java.util.stream.Stream
 - s:selected(javax.swing.JTree):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - s:selectedUnderTag(javax.swing.JTree,java.lang.Object):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+- s:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.project.Project,javax.swing.JTree):V
 - f:userObjects():java.util.List
 - f:userObjects(java.lang.Class):java.util.List
 - f:userObjectsStream(java.lang.Class):java.util.stream.Stream
@@ -6207,12 +6206,12 @@ a:com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser
 - p:createCenterPanel():javax.swing.JComponent
 - dispose():V
 - filterChanges(java.util.List,Z):com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer$FilteredState
-- getData(java.lang.String):java.lang.Object
 - hasActiveChangesFilter():Z
 - p:onActiveChangesFilterChanges():V
 - ps:setFilteredChanges(com.intellij.openapi.vcs.changes.ui.TreeModelBuilder,com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer$FilteredState,com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator):V
 - ps:setFilteredOutChanges(com.intellij.openapi.vcs.changes.ui.TreeModelBuilder,java.util.Collection,com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator):V
 - ps:setPendingChanges(com.intellij.openapi.vcs.changes.ui.TreeModelBuilder,java.util.Collection,com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable

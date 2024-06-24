@@ -4,7 +4,6 @@ package git4idea.ui.branch.popup
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.*
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.Disposable
@@ -127,12 +126,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         .initBranchSyncPolicyIfNotInitialized()
     }
     installBranchSettingsListener()
-    DataManager.registerDataProvider(component, DataProvider { dataId ->
-      when {
-        POPUP_KEY.`is`(dataId) -> this
-        GitBranchActionsUtil.REPOSITORIES_KEY.`is`(dataId) -> treeStep.affectedRepositories
-        else -> null
-      }
+    setDataProvider(EdtNoGetDataProvider { sink ->
+      sink[POPUP_KEY] = this@GitBranchesTreePopup
+      sink[GitBranchActionsUtil.REPOSITORIES_KEY] = treeStep.repositories
     })
   }
 
@@ -387,16 +383,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     val toolbarGroup = DefaultActionGroup(GitBranchPopupFetchAction(javaClass), settingsGroup)
     return am.createActionToolbar(TOP_LEVEL_ACTION_PLACE, toolbarGroup, true)
       .apply {
-        targetComponent = component
+        targetComponent = content
         setReservePlaceAutoPopupIcon(false)
         component.isOpaque = false
-        DataManager.registerDataProvider(component, DataProvider { dataId ->
-          when {
-            POPUP_KEY.`is`(dataId) -> this@GitBranchesTreePopup
-            GitBranchActionsUtil.REPOSITORIES_KEY.`is`(dataId) -> treeStep.repositories
-            else -> null
-          }
-        })
       }
   }
 

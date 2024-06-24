@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui.browser;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -74,13 +75,10 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (ChangesFilterer.DATA_KEY.is(dataId)) {
-      return myChangesFilterer;
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(ChangesFilterer.DATA_KEY, myChangesFilterer);
   }
 
   @Override
