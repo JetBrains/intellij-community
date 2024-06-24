@@ -108,9 +108,9 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     }
   }
   private fun String.parameter(name: String): String? {
-    val paramArray = this.split(" ")
-    val keyIndex = paramArray.indexOf(name)
-    return if (keyIndex >= 0 && (keyIndex + 1) <= paramArray.size) paramArray[keyIndex + 1] else null
+    val splitParams = this.split(" ")
+    val keyIndex = splitParams.indexOf(name).takeIf { it >= 0 } ?: return null
+    return splitParams.getOrNull(keyIndex + 1)
   }
 
   private fun isWarmupMode(): Boolean {
