@@ -5,6 +5,7 @@
   "strategy": {
     "model": "",
     "mode": "",
+    "behaviour": "SELECT_ENTIRE_NODE_AND_CALL_FEATURE",
     "collectContextOnly": false,
     "userPrompts": {
       "METHOD": [
