@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.extensions.PluginId
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import org.jetbrains.annotations.ApiStatus
 
 interface SaveSession : StorageManagerFileWriteRequestor {
   suspend fun save(events: MutableList<VFileEvent>?)
@@ -23,4 +24,5 @@ interface SaveSessionProducer : StorageManagerFileWriteRequestor {
 /**
  * A marker interface to skip processing of this file change event.
  */
+@ApiStatus.Internal
 interface StorageManagerFileWriteRequestor

@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * The IntelliJ Platform allows for persisting component states (see {@link State} and {@link Storage}).
  * It is possible to specify which file should hold persisting data.
@@ -35,6 +37,7 @@ public final class StoragePathMacros {
 
   public static final String MODULE_FILE = "$MODULE_FILE$";
 
+  @ApiStatus.Internal
   public static final String PROJECT_DEFAULT_FILE = "project.default.xml";
 
   /**
@@ -42,6 +45,7 @@ public final class StoragePathMacros {
    */
   public static final String NON_ROAMABLE_FILE = "other.xml";
 
+  @ApiStatus.Internal
   public static final String APP_INTERNAL_STATE_DB = "app-internal-state.db";
 
   private StoragePathMacros() { }

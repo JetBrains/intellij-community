@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.libraries;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The CustomLibraryTable interface extends the LibraryTable interface and represents a custom library table.
@@ -12,6 +13,7 @@ import org.jdom.Element;
  * The direct usage of these methods has to be provided by the client, not by the platform,
  * so client's code is responsible for serialization of custom libraries to/from disk
  */
+@ApiStatus.Internal
 public interface CustomLibraryTable extends LibraryTable {
   void readExternal(final Element element) throws InvalidDataException;
   void writeExternal(final Element element) throws WriteExternalException;

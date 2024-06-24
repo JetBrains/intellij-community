@@ -100,5 +100,6 @@ abstract class ModuleGrouper {
   }
 }
 
+@ApiStatus.Internal
 fun isQualifiedModuleNamesEnabled(project: Project): Boolean = Registry.`is`("project.qualified.module.names") &&
                                                                !ModuleManager.getInstance(project).hasModuleGroups()

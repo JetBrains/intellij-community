@@ -6,11 +6,13 @@ import com.intellij.openapi.components.StateSplitterEx;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings("ClassExplicitlyAnnotation")
+@ApiStatus.Internal
 public class FileStorageAnnotation implements Storage {
   protected final String path;
 

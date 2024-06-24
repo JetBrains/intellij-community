@@ -3,6 +3,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,10 +26,12 @@ public class PersistentOrderRootType extends OrderRootType {
   /**
    * @return Element name used for storing roots of this type in JDK definitions.
    */
+  @ApiStatus.Internal
   public @Nullable String getSdkRootName() {
     return mySdkRootName;
   }
 
+  @ApiStatus.Internal
   public @Nullable String getOldSdkRootName() {
     return myOldSdkRootName;
   }
@@ -36,6 +39,7 @@ public class PersistentOrderRootType extends OrderRootType {
   /**
    * @return Element name used for storing roots of this type in module definitions.
    */
+  @ApiStatus.Internal
   public @Nullable String getModulePathsName() {
     return myModulePathsName;
   }

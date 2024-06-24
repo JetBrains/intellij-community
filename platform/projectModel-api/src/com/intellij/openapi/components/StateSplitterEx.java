@@ -7,11 +7,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class StateSplitterEx implements StateSplitter {
   @Override
   public abstract @NotNull List<Pair<Element, String>> splitState(@NotNull Element state);

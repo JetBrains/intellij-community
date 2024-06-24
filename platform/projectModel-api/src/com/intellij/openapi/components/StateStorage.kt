@@ -36,6 +36,7 @@ interface StateStorage {
   }
 }
 
+@Internal
 interface StateStorageChooserEx {
   enum class Resolution { DO, SKIP, CLEAR }
 

@@ -5,45 +5,23 @@ f:com.intellij.configurationStore.ComponentSerializationUtil
 - <init>():V
 - s:getStateClass(java.lang.Class):java.lang.Class
 - s:loadComponentState(com.intellij.openapi.components.PersistentStateComponent,org.jdom.Element):V
-c:com.intellij.configurationStore.FileStorageAnnotation
-- com.intellij.openapi.components.Storage
-- pf:path:java.lang.String
-- <init>(java.lang.String,Z):V
-- <init>(java.lang.String,Z,java.lang.Class):V
-- annotationType():java.lang.Class
-- deprecated():Z
-- exclusive():Z
-- exportable():Z
-- file():java.lang.String
-- roamingType():com.intellij.openapi.components.RoamingType
-- stateSplitter():java.lang.Class
-- storageClass():java.lang.Class
-- usePathMacroManager():Z
-- useSaveThreshold():com.intellij.util.ThreeState
-- value():java.lang.String
 @:com.intellij.configurationStore.Property
 - java.lang.annotation.Annotation
 - a:description():java.lang.String
 - a:externalName():java.lang.String
 - a:ignore():Z
 com.intellij.configurationStore.SaveSession
-- com.intellij.configurationStore.StorageManagerFileWriteRequestor
 - a:save(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 - a:saveBlocking():V
 com.intellij.configurationStore.SaveSessionProducer
-- com.intellij.configurationStore.StorageManagerFileWriteRequestor
 - a:createSaveSession():com.intellij.configurationStore.SaveSession
 - a:setState(java.lang.Object,java.lang.String,com.intellij.openapi.extensions.PluginId,java.lang.Object):V
 com.intellij.configurationStore.SettingsSavingComponentJavaAdapter
 - a:doSave():V
 - save(kotlin.coroutines.Continuation):java.lang.Object
 - bs:save$suspendImpl(com.intellij.configurationStore.SettingsSavingComponentJavaAdapter,kotlin.coroutines.Continuation):java.lang.Object
-com.intellij.configurationStore.StorageManagerFileWriteRequestor
 f:com.intellij.configurationStore.XmlSerializer
 - sf:deserialize(org.jdom.Element,java.lang.Class):java.lang.Object
-- sf:deserializeAndLoadState(com.intellij.openapi.components.PersistentStateComponent,org.jdom.Element):V
-- sf:deserializeAndLoadState(com.intellij.openapi.components.PersistentStateComponent,org.jdom.Element,java.lang.Class):V
-- bs:deserializeAndLoadState$default(com.intellij.openapi.components.PersistentStateComponent,org.jdom.Element,java.lang.Class,I,java.lang.Object):V
 - sf:deserializeInto(org.jdom.Element,java.lang.Object):V
 - sf:serialize(java.lang.Object):org.jdom.Element
 - sf:serialize(java.lang.Object,com.intellij.util.xmlb.SerializationFilter):org.jdom.Element
@@ -52,7 +30,6 @@ f:com.intellij.configurationStore.XmlSerializer
 - sf:serializeObjectInto(java.lang.Object,org.jdom.Element):V
 - sf:serializeObjectInto(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):V
 - bs:serializeObjectInto$default(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter,I,java.lang.Object):V
-- sf:serializeStateInto(com.intellij.openapi.components.PersistentStateComponent,org.jdom.Element):V
 f:com.intellij.ide.highlighter.ModuleFileType
 - com.intellij.openapi.fileTypes.InternalFileType
 - sf:DEFAULT_EXTENSION:java.lang.String
@@ -92,7 +69,6 @@ a:com.intellij.openapi.components.BaseState
 - getModificationCount():J
 - hashCode():I
 - pf:incrementModificationCount():V
-- f:isEqualToDefault():Z
 - pf:linkedMap():com.intellij.openapi.components.StoredPropertyBase
 - pf:list():com.intellij.openapi.components.StoredPropertyBase
 - pf:map():com.intellij.openapi.components.StoredPropertyBase
@@ -129,7 +105,7 @@ e:com.intellij.openapi.components.JsonSchemaType
 - s:valueOf(java.lang.String):com.intellij.openapi.components.JsonSchemaType
 - s:values():com.intellij.openapi.components.JsonSchemaType[]
 a:com.intellij.openapi.components.MainConfigurationStateSplitter
-- com.intellij.openapi.components.StateSplitterEx
+- com.intellij.openapi.components.StateSplitter
 - <init>():V
 - pa:getComponentStateFileName():java.lang.String
 - p:getSubStateFileName(org.jdom.Element):java.lang.String
@@ -198,43 +174,9 @@ a:com.intellij.openapi.components.State$NameGetter
 - java.util.function.Supplier
 - <init>():V
 - a:get():java.lang.String
-com.intellij.openapi.components.StatePropertyFactory
-- a:bool(Z):com.intellij.openapi.components.StoredPropertyBase
-- a:enum(java.lang.Enum,java.lang.Class):com.intellij.openapi.components.StoredPropertyBase
-- a:float(F,kotlin.jvm.functions.Function1):com.intellij.openapi.components.StoredPropertyBase
-- bs:float$default(com.intellij.openapi.components.StatePropertyFactory,F,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.components.StoredPropertyBase
-- a:int(I):com.intellij.openapi.components.StoredPropertyBase
-- a:list():com.intellij.openapi.components.StoredPropertyBase
-- a:long(J):com.intellij.openapi.components.StoredPropertyBase
-- a:map(java.util.Map):com.intellij.openapi.components.StoredPropertyBase
-- a:obj(java.lang.Object):com.intellij.openapi.components.StoredPropertyBase
-- a:obj(java.lang.Object,kotlin.jvm.functions.Function1):com.intellij.openapi.components.StoredPropertyBase
-- a:stateObject(com.intellij.openapi.components.BaseState):com.intellij.openapi.components.StoredPropertyBase
-- a:string(java.lang.String):com.intellij.openapi.components.StoredPropertyBase
-- a:stringSet(java.lang.String):com.intellij.openapi.components.StoredPropertyBase
-- a:treeSet():com.intellij.openapi.components.StoredPropertyBase
 com.intellij.openapi.components.StateSplitter
 - a:mergeStatesInto(org.jdom.Element,org.jdom.Element[]):V
 - a:splitState(org.jdom.Element):java.util.List
-a:com.intellij.openapi.components.StateSplitterEx
-- com.intellij.openapi.components.StateSplitter
-- <init>():V
-- ps:createItem(java.lang.String,com.intellij.util.text.UniqueNameGenerator,org.jdom.Element):com.intellij.openapi.util.Pair
-- mergeStateInto(org.jdom.Element,org.jdom.Element):V
-- ps:mergeStateInto(org.jdom.Element,org.jdom.Element,java.lang.String):V
-- f:mergeStatesInto(org.jdom.Element,org.jdom.Element[]):V
-- a:splitState(org.jdom.Element):java.util.List
-- ps:splitState(org.jdom.Element,java.lang.String):java.util.List
-com.intellij.openapi.components.StateStorageChooserEx
-- a:getResolution(com.intellij.openapi.components.Storage,com.intellij.openapi.components.StateStorageOperation):com.intellij.openapi.components.StateStorageChooserEx$Resolution
-e:com.intellij.openapi.components.StateStorageChooserEx$Resolution
-- java.lang.Enum
-- sf:CLEAR:com.intellij.openapi.components.StateStorageChooserEx$Resolution
-- sf:DO:com.intellij.openapi.components.StateStorageChooserEx$Resolution
-- sf:SKIP:com.intellij.openapi.components.StateStorageChooserEx$Resolution
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.openapi.components.StateStorageChooserEx$Resolution
-- s:values():com.intellij.openapi.components.StateStorageChooserEx$Resolution[]
 e:com.intellij.openapi.components.StateStorageOperation
 - java.lang.Enum
 - sf:READ:com.intellij.openapi.components.StateStorageOperation
@@ -252,12 +194,10 @@ e:com.intellij.openapi.components.StateStorageOperation
 - a:useSaveThreshold():com.intellij.util.ThreeState
 - a:value():java.lang.String
 f:com.intellij.openapi.components.StoragePathMacros
-- sf:APP_INTERNAL_STATE_DB:java.lang.String
 - sf:CACHE_FILE:java.lang.String
 - sf:MODULE_FILE:java.lang.String
 - sf:NON_ROAMABLE_FILE:java.lang.String
 - sf:PRODUCT_WORKSPACE_FILE:java.lang.String
-- sf:PROJECT_DEFAULT_FILE:java.lang.String
 - sf:WORKSPACE_FILE:java.lang.String
 e:com.intellij.openapi.components.StorageScheme
 - java.lang.Enum
@@ -325,8 +265,6 @@ com.intellij.openapi.module.ModuleComponent
 - f:instanceFor(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleGrouper
 - f:instanceFor(com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel):com.intellij.openapi.module.ModuleGrouper
 - bs:instanceFor$default(com.intellij.openapi.module.ModuleGrouper$Companion,com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel,I,java.lang.Object):com.intellij.openapi.module.ModuleGrouper
-f:com.intellij.openapi.module.ModuleGrouperKt
-- sf:isQualifiedModuleNamesEnabled(com.intellij.openapi.project.Project):Z
 a:com.intellij.openapi.module.ModuleManager
 - com.intellij.openapi.util.SimpleModificationTracker
 - sf:Companion:com.intellij.openapi.module.ModuleManager$Companion
@@ -386,7 +324,6 @@ com.intellij.openapi.module.ModuleUtilCore$ModuleVisitor
 - a:visit(com.intellij.openapi.module.Module):Z
 c:com.intellij.openapi.module.ModuleWithNameAlreadyExists
 - java.lang.Exception
-- <init>(java.lang.String,java.lang.String):V
 - getModuleName():java.lang.String
 a:com.intellij.openapi.module.PrimaryModuleManager
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -455,8 +392,6 @@ f:com.intellij.openapi.project.ProjectTypeService
 - s:getProjectType(com.intellij.openapi.project.Project):com.intellij.openapi.project.ProjectType
 - s:getProjectTypeIds(com.intellij.openapi.project.Project):java.util.Set
 - s:getProjectTypes(com.intellij.openapi.project.Project):java.util.Collection
-- getState():com.intellij.openapi.project.ProjectType
-- loadState(com.intellij.openapi.project.ProjectType):V
 - s:setProjectType(com.intellij.openapi.project.Project,com.intellij.openapi.project.ProjectType):V
 *:com.intellij.openapi.project.ProjectTypesProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -880,7 +815,6 @@ c:com.intellij.openapi.roots.OrderRootType
 - s:getSortedRootTypes():java.util.List
 - f:hashCode():I
 - name():java.lang.String
-- skipWriteIfEmpty():Z
 c:com.intellij.openapi.roots.OrderRootType$DocumentationRootType
 - com.intellij.openapi.roots.OrderRootType
 - <init>():V
@@ -896,9 +830,6 @@ com.intellij.openapi.roots.OrderRootsEnumerator
 c:com.intellij.openapi.roots.PersistentOrderRootType
 - com.intellij.openapi.roots.OrderRootType
 - p:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
-- getModulePathsName():java.lang.String
-- getOldSdkRootName():java.lang.String
-- getSdkRootName():java.lang.String
 com.intellij.openapi.roots.ProjectFileIndex
 - com.intellij.openapi.roots.FileIndex
 - *a:findContainingLibraries(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
@@ -1015,10 +946,8 @@ a:com.intellij.openapi.roots.ex.ProjectRootManagerEx
 - s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.roots.ex.ProjectRootManagerEx
 - a:makeRootsChange(java.lang.Runnable,com.intellij.openapi.project.RootsChangeRescanningInfo):V
 - a:makeRootsChange(java.lang.Runnable,Z,Z):V
-- a:markRootsForRefresh():java.util.List
 - a:mergeRootsChangesDuring(java.lang.Runnable):V
 - a:removeProjectJdkListener(com.intellij.openapi.roots.ex.ProjectRootManagerEx$ProjectJdkListener):V
-- a:withRootsChange(com.intellij.openapi.project.RootsChangeRescanningInfo):java.lang.AutoCloseable
 com.intellij.openapi.roots.ex.ProjectRootManagerEx$ProjectJdkListener
 - java.util.EventListener
 - a:projectJdkChanged():V
@@ -1062,10 +991,6 @@ com.intellij.openapi.roots.impl.libraries.LibraryEx$ModifiableModelEx
 - a:removeExcludedRoot(java.lang.String):Z
 - a:setKind(com.intellij.openapi.roots.libraries.PersistentLibraryKind):V
 - a:setProperties(com.intellij.openapi.roots.libraries.LibraryProperties):V
-com.intellij.openapi.roots.libraries.CustomLibraryTable
-- com.intellij.openapi.roots.libraries.LibraryTable
-- a:readExternal(org.jdom.Element):V
-- a:writeExternal(org.jdom.Element):V
 com.intellij.openapi.roots.libraries.CustomLibraryTableDescription
 - sf:CUSTOM_TABLES_EP:com.intellij.openapi.extensions.ExtensionPointName
 - a:getPresentation():com.intellij.openapi.roots.libraries.LibraryTablePresentation
@@ -1187,9 +1112,6 @@ a:com.intellij.openapi.roots.libraries.PersistentLibraryKind
 - <init>(java.lang.String):V
 - a:createDefaultProperties():com.intellij.openapi.roots.libraries.LibraryProperties
 - getAdditionalRootTypes():com.intellij.openapi.roots.OrderRootType[]
-f:com.intellij.projectModel.ProjectModelBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 - sf:Companion:com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry$Companion
 - a:findTypeById(com.intellij.platform.workspace.jps.entities.SourceRootTypeId):org.jetbrains.jps.model.module.JpsModuleSourceRootType
