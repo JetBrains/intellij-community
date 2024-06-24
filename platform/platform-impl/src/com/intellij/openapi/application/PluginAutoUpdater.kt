@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import kotlin.Result
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.forEach
@@ -33,6 +34,9 @@ import kotlin.io.path.exists
 
 @ApiStatus.Internal
 object PluginAutoUpdater {
+  @Volatile
+  private var pluginAutoUpdateResult: Result<PluginAutoUpdateStatistics>? = null
+
   /**
    * This method is called during startup, before the plugins are loaded.
    */
@@ -45,10 +49,13 @@ object PluginAutoUpdater {
         false
       }
     }
-    runCatching {
-      applyPluginUpdates(updates, logDeferred)
-    }.getOrLogException { e ->
-      logDeferred.await().error("Error occurred during application of plugin updates", e)
+    pluginAutoUpdateResult = runCatching {
+      val updatesApplied = applyPluginUpdates(updates, logDeferred)
+      PluginAutoUpdateStatistics(updatesPrepared = updates.size, pluginsUpdated = updatesApplied)
+    }.apply {
+      getOrLogException { e ->
+        logDeferred.await().error("Error occurred during application of plugin updates", e)
+      }
     }
     runCatching {
       clearUpdates()
@@ -57,9 +64,12 @@ object PluginAutoUpdater {
     }
   }
 
-  private suspend fun applyPluginUpdates(updates: Map<PluginId, PluginUpdateInfo>, logDeferred: Deferred<Logger>) {
+  /**
+   * @return number of successfully applied updates
+   */
+  private suspend fun applyPluginUpdates(updates: Map<PluginId, PluginUpdateInfo>, logDeferred: Deferred<Logger>): Int {
     if (updates.isEmpty()) {
-      return
+      return 0
     }
     logDeferred.await().info("There are ${updates.size} prepared updates for plugins. Applying...")
     val autoupdatesDir = getAutoUpdateDirPath()
@@ -97,6 +107,7 @@ object PluginAutoUpdater {
     updateCheck.rejectedUpdates.forEach { (id, reason) ->
       logDeferred.await().warn("Update for plugin $id has been rejected: $reason")
     }
+    var updatesApplied = 0
     for (id in updateCheck.updatesToApply) {
       val update = updates[id]!!
       runCatching {
@@ -106,8 +117,10 @@ object PluginAutoUpdater {
       }.onSuccess {
         logDeferred.await().info("Plugin $id has been successfully updated: " +
                                  "version ${currentDescriptors.getIdMap()[id]?.version} -> ${updateDescriptors[id]!!.version}")
+        updatesApplied++
       }
     }
+    return updatesApplied
   }
 
   private data class UpdateCheckResult(
@@ -174,4 +187,18 @@ object PluginAutoUpdater {
       !suchPluginExists
     }
   }
+
+  /**
+   * @return not null if plugin auto update was triggered
+   */
+  fun consumePluginAutoUpdateResult(): Result<PluginAutoUpdateStatistics>? {
+    val result = pluginAutoUpdateResult
+    pluginAutoUpdateResult = null
+    return result
+  }
+
+  data class PluginAutoUpdateStatistics(
+    val updatesPrepared: Int,
+    val pluginsUpdated: Int,
+  )
 }
