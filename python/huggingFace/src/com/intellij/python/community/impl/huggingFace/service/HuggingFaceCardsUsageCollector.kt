@@ -7,9 +7,12 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
+import kotlin.math.ceil
+import kotlin.math.log2
+import kotlin.math.pow
 
-object HuggingFaceCardsUsageCollector: CounterUsagesCollector() {  // PY-70535
-  private val GROUP = EventLogGroup("python.hugging.face.cards", 3)
+object HuggingFaceCardsUsageCollector: CounterUsagesCollector() {  // PY-70535 PY-73471
+  private val GROUP = EventLogGroup("python.hugging.face.cards", 4)
 
   // todo:
   // card shown in Documentation toolwindow + card type (model, dataset)
@@ -18,13 +21,18 @@ object HuggingFaceCardsUsageCollector: CounterUsagesCollector() {  // PY-70535
   private val pipelineTag = EventFields.StringValidatedByCustomRule("pipeline_tag", PipelineTagValidationRule::class.java)
 
   private val modelChoiceEntryPointField = EventFields.Enum<ModelChoiceEntryPointType>("modelChoiceEntryPoint")
+  private val cacheManagementActionSourceField = EventFields.Enum<CacheManagementActionSource>("cacheManagementActionSource")
   private val modelChoiceActiveFileTypeField = EventFields.Enum<ActiveFileType>("activeFileType")
+  private val dialogWindowResultField = EventFields.Enum<DialogWindowResult>("activeFileType")
+
   private val modelChoiceDialogClosedResulField = EventFields.Enum<ModelChoiceDialogClosedResultType>("closedResultType")
   private val durationField = EventFields.Long("duration_ms")
 
   enum class ActiveFileType { PY, IPYNB }
   enum class ModelChoiceEntryPointType { CONTEXT_MENU }  // will be extended later
   enum class ModelChoiceDialogClosedResultType { USE_MODEL, CANCEL, CLOSE }
+  enum class CacheManagementActionSource { CONTEXT_MENU, TOOLBAR }
+  enum class DialogWindowResult { OK, CANCEL }
 
   val CARD_SHOWN_ON_HOVER = GROUP.registerEvent(
     "card.shown.on.hover",
@@ -45,8 +53,27 @@ object HuggingFaceCardsUsageCollector: CounterUsagesCollector() {  // PY-70535
   val HF_MODEL_CHOICE_DIALOG_CLOSED = GROUP.registerEvent(
     "model.choice.dialog.closed",
     modelChoiceDialogClosedResulField,
-    pipelineTag,  // in case model is chosen, otherwise "undefined"
+    pipelineTag,  // in case the model is chosen, otherwise "undefined"
     durationField
+  )
+
+  val HF_CACHE_MANAGEMENT_DELETE_ITEM = GROUP.registerEvent(
+    "cache.management.item.delete.clicked",
+    cacheManagementActionSourceField,
+    dialogWindowResultField,
+    EventFields.Int("sizeOnDiskPowerOf2")
+  )
+
+  val HF_CACHE_MANAGEMENT_TOOLWINDOW_UPDATE = GROUP.registerEvent(
+    "cache.management.toolwindow.update.clicked",
+  )
+
+  val HF_CACHE_REVEAL_ITEM_IN_FILE_BROWSER = GROUP.registerEvent(
+    "cache.management.reveal.item.in.file.browser.clicked"
+  )
+
+  val HF_CACHE_ITEM_PATH_COPIED = GROUP.registerEvent(
+    "cache.management.item.path.copied"
   )
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -72,5 +99,13 @@ object HuggingFaceCardsUsageCollector: CounterUsagesCollector() {  // PY-70535
     }
 
     override fun getRuleId(): String = "PipelineTagRule"
+  }
+
+  // providing bare model/dataset size may give the user up, convert it to the closest power of 2
+  fun closestPowerOfTwo(value: Double): Int = 2.0.pow(ceil(log2(value))).toInt()
+
+  fun boolToDialogStatus(confirmed: Boolean) = when (confirmed) {
+    true -> DialogWindowResult.OK
+    false -> DialogWindowResult.CANCEL
   }
 }
