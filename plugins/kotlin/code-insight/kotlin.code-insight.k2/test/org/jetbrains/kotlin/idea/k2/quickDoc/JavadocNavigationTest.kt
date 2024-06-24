@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.editor.quickDoc
+package org.jetbrains.kotlin.idea.k2.quickDoc
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 import com.intellij.lang.documentation.psi.resolveLink
@@ -38,6 +38,38 @@ class JavadocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
         val psiPackage = JavaPsiFacade.getInstance(myFixture.project).findPackage(file.packageFqName.asString())!!
         val documentationTarget =
             resolveLink(psiPackage, DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + "foo.bar.A")
+        assertInstanceOf(documentationTarget, KotlinDocumentationTarget::class.java)
+    }
+
+    fun testLinkForClass() {
+        myFixture.configureByText(
+            KotlinFileType.INSTANCE, """ 
+            | interface A { fun foo() }
+            | """.trimMargin()
+        ) as KtFile
+        val inheritor = myFixture.addClass(
+            """class B implements A {
+            |  @Override fun foo() {}
+            |}""".trimMargin()
+        )
+        val documentationTarget =
+            resolveLink(inheritor, DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + "A")
+        assertInstanceOf(documentationTarget, KotlinDocumentationTarget::class.java)
+    }
+
+    fun testLinkForFunction() {
+        myFixture.configureByText(
+            KotlinFileType.INSTANCE, """ 
+            | interface A { fun foo() }
+            | """.trimMargin()
+        ) as KtFile
+        val inheritor = myFixture.addClass(
+            """class B implements A {
+            |  @Override fun foo() {}
+            |}""".trimMargin()
+        )
+        val documentationTarget =
+            resolveLink(inheritor.methods[0], DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + "A#foo()")
         assertInstanceOf(documentationTarget, KotlinDocumentationTarget::class.java)
     }
 }
