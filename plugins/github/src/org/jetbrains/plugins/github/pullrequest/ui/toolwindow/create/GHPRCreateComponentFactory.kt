@@ -6,20 +6,29 @@ import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil.moveToCenter
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
-import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
+import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
 import com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil
+import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsCommitInfoComponentFactory
+import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsCommitsComponentFactory
+import com.intellij.collaboration.ui.codereview.details.CommitPresentation
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.*
 import com.intellij.collaboration.util.*
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.toolWindow.InternalDecoratorImpl
@@ -29,6 +38,7 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.*
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.showAbove
 import git4idea.ui.branch.MergeDirectionComponentFactory
 import kotlinx.coroutines.*
@@ -57,6 +67,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ContainerEvent
 import java.awt.event.ContainerListener
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -81,7 +92,7 @@ internal object GHPRCreateComponentFactory {
       layout = MigLayout(LC().gridGap("0", "0").insets("0").flowY().fill())
 
       add(directionSelector(vm), CC().pushX().gap(SIDE_GAPS_L, SIDE_GAPS_L, SIDE_GAPS_M, SIDE_GAPS_M))
-      add(commitsPanel(vm).apply {
+      add(changesPanel(vm).apply {
         border = IdeBorderFactory.createBorder(SideBorder.TOP)
       }, CC().grow().push())
     }
@@ -222,33 +233,75 @@ internal object GHPRCreateComponentFactory {
   }
 
   @OptIn(FlowPreview::class)
-  private fun CoroutineScope.commitsPanel(vm: GHPRCreateViewModel): JComponent {
+  private fun CoroutineScope.changesPanel(vm: GHPRCreateViewModel): JComponent {
     val wrapper = Wrapper()
+    val errorStatusPresenter = ErrorStatusPresenter.simple(message("pull.request.create.failed.to.load.commits"),
+                                                           descriptionProvider = GHHtmlErrorPanel::getLoadingErrorText)
     launchNow {
-      vm.commits.debounce(50).collect { commitsResult ->
-        val content = commitsResult?.fold(::LoadingTextLabel,
-                                          { createCommitsPanel(vm.project, it) },
-                                          {
-                                            val errorStatusPresenter = ErrorStatusPresenter.simple(message("pull.request.create.failed.to.load.commits"),
-                                                                                                   descriptionProvider = GHHtmlErrorPanel::getLoadingErrorText)
-                                            ErrorStatusPanelFactory.create(it, errorStatusPresenter)
-                                          })
-                      ?: SimpleHtmlPane(message("pull.request.create.select.branches"))
+      vm.changesVm.debounce(50).collectScoped { changesResult ->
+        val content = changesResult?.fold({ moveToCenter(LoadingTextLabel()) },
+                                          { createChangesPanel(it) },
+                                          { moveToCenter(ErrorStatusPanelFactory.create(it, errorStatusPresenter)) })
+                      ?: SimpleHtmlPane(message("pull.request.create.select.branches")).let(CollaborationToolsUIUtil::moveToCenter)
         wrapper.setContent(content)
       }
     }
     return wrapper
   }
 
-  private fun createCommitsPanel(project: Project, commits: List<VcsCommitMetadata>): JComponent {
-    val commitsModel = SingleValueModel(commits)
-    val commitsPanel = CommitsBrowserComponentBuilder(project, commitsModel)
-      .setCustomCommitRenderer(CodeReviewCreateReviewUIUtil.createCommitListCellRenderer())
-      .showCommitDetails(true)
-      .setEmptyCommitListText(message("pull.request.create.no.commits"))
-      .create()
-    return commitsPanel
+  private fun CoroutineScope.createChangesPanel(changesVm: GHPRCreateChangesViewModel?): JComponent {
+    if (changesVm == null) {
+      return HintPane(message("pull.request.does.not.contain.commits")).let(CollaborationToolsUIUtil::moveToCenter)
+    }
+
+    val cs = this
+    val commits = CodeReviewDetailsCommitsComponentFactory
+      .create(cs, changesVm, ::createCommitsPopupPresenter)
+    val commitsDetails = CodeReviewDetailsCommitInfoComponentFactory
+      .create(cs, changesVm.selectedCommit, ::createCommitsPopupPresenter, ::SimpleHtmlPane)
+
+    val commitsPanel = VerticalListPanel(SIDE_GAPS_M).apply {
+      add(commits)
+      add(commitsDetails)
+      border = JBUI.Borders.empty(SIDE_GAPS_M, SIDE_GAPS_L)
+    }
+
+    val scrollPane = ScrollPaneFactory.createScrollPane(null, true).apply {
+      horizontalScrollBarPolicy = ScrollPaneFactory.HORIZONTAL_SCROLLBAR_NEVER
+    }
+    val panel = JPanel(BorderLayout()).apply {
+      add(commitsPanel, BorderLayout.NORTH)
+      add(scrollPane, BorderLayout.CENTER)
+    }.also {
+      DataManager.registerDataProvider(it, object : EdtNoGetDataProvider {
+        override fun dataSnapshot(sink: DataSink) {
+          sink[CodeReviewChangeListViewModel.DATA_KEY] = changesVm.commitChangesVm.value.changeListVm.value.getOrNull()
+        }
+      })
+    }
+
+    val errorStatusPresenter = ErrorStatusPresenter.simple(message("pull.request.create.failed.to.load.changes"),
+                                                           descriptionProvider = GHHtmlErrorPanel::getLoadingErrorText)
+    cs.launchNow {
+      changesVm.commitChangesVm.collectScoped { commitChangesVm ->
+        commitChangesVm.changeListVm.debounce(50).collectScoped { changeListVmResult ->
+          val content = changeListVmResult.fold({ moveToCenter(LoadingTextLabel()) },
+                                                { createChangesPanel(it) },
+                                                { moveToCenter(ErrorStatusPanelFactory.create(it, errorStatusPresenter)) })
+          scrollPane.setViewportView(content)
+          panel.revalidate()
+          panel.repaint()
+        }
+      }
+    }
+    return panel
   }
+
+  private fun CoroutineScope.createChangesPanel(changeListVm: CodeReviewChangeListViewModel): JComponent =
+    CodeReviewChangeListComponentFactory.createIn(this, changeListVm, null,
+                                                         message("pull.request.commit.does.not.contain.changes")).also {
+      it.installPopupHandler(ActionManager.getInstance().getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
+    }
 
   private fun CoroutineScope.metadataPanel(vm: GHPRCreateViewModel): JComponent {
     val reviewersHandle = createReviewersListPanelHandle(vm.reviewersVm, vm.avatarIconsProvider)
@@ -379,6 +432,13 @@ internal object GHPRCreateComponentFactory {
   }
 }
 
+private fun createCommitsPopupPresenter(commit: VcsCommitMetadata) = CommitPresentation(
+  titleHtml = commit.subject,
+  descriptionHtml = commit.fullMessage.split("\n\n").getOrNull(1).orEmpty(),
+  author = VcsUserUtil.getShortPresentation(commit.author),
+  committedDate = Date(commit.authorTime)
+)
+
 private fun CoroutineScope.createReviewersListPanelHandle(vm: LabeledListPanelViewModel<GHPullRequestRequestedReviewer>,
                                                           avatarIconsProvider: GHAvatarIconsProvider) =
   LabeledListPanelHandle(this, vm,
@@ -436,6 +496,11 @@ private fun ErrorLink(error: Throwable) =
         .createPopup().showAbove(link)
     }
   }
+
+@Suppress("FunctionName")
+private fun HintPane(message: @Nls String) = SimpleHtmlPane(message).apply {
+  foreground = UIUtil.getContextHelpForeground()
+}
 
 private var Editor.margins
   get() = (this as? EditorEx)?.scrollPane?.viewportBorder?.getBorderInsets(scrollPane.viewport) ?: JBUI.emptyInsets()

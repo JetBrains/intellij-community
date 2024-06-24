@@ -2,12 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.*
+import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
+import com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.computeEmitting
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.push.PushSpec
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -55,7 +59,8 @@ internal interface GHPRCreateViewModel {
   val repositories: Collection<GHGitRepositoryMapping>
   val branches: StateFlow<BranchesState>
 
-  val commits: StateFlow<ComputedResult<List<VcsCommitMetadata>>?>
+  val changesVm: StateFlow<ComputedResult<GHPRCreateChangesViewModel?>?>
+  val diffVm: ComputedDiffViewModel
 
   val titleText: StateFlow<String>
   val descriptionText: StateFlow<String>
@@ -101,6 +106,7 @@ internal interface GHPRCreateViewModel {
   }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class GHPRCreateViewModelImpl(override val project: Project,
                                        parentCs: CoroutineScope,
                                        private val repositoryManager: GHHostedRepositoriesManager,
@@ -123,9 +129,33 @@ internal class GHPRCreateViewModelImpl(override val project: Project,
   override val branches: StateFlow<BranchesState> = branchesWithProgress.map { it.branches }
     .stateInNow(cs, branchesWithProgress.value.branches)
 
-  override val commits: StateFlow<ComputedResult<List<VcsCommitMetadata>>?> =
-    branchesWithProgress.map { it.commitsRequest }.optionalComputationState()
-      .stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override val changesVm: StateFlow<ComputedResult<GHPRCreateChangesViewModel?>?> = branchesWithProgress.transformLatest { branches ->
+    val commits = try {
+      branches.commitsRequest?.await()
+    }
+    catch (ce: CancellationException) {
+      currentCoroutineContext().ensureActive()
+      null
+    }
+    catch (e: Exception) {
+      emit(ComputedResult.failure(e))
+      return@transformLatest
+    }
+    if (commits == null) {
+      emit(null)
+    }
+    else if (commits.isEmpty()) {
+      emit(ComputedResult.success(null))
+    }
+    else coroutineScope {
+      val settings = project.serviceAsync<GithubPullRequestsProjectUISettings>()
+      val vm = GHPRCreateChangesViewModel(project, settings, this, dataContext,
+                                          branches.branches.baseBranch!!, branches.branches.headBranch!!, commits)
+      emit(ComputedResult.success(vm))
+    }
+  }.stateInNow(cs, null)
+  override val diffVm = GHPRCreateDiffViewModel(project, cs)
 
   override val titleText: MutableStateFlow<String> = MutableStateFlow("")
   override val descriptionText: MutableStateFlow<String> = MutableStateFlow("")
@@ -177,17 +207,41 @@ internal class GHPRCreateViewModelImpl(override val project: Project,
         setTitleFromFirstCommitOrBranch(headBranch, commits)
       }
     }
+
+    cs.launchNow {
+      changesVm.flatMapLatest {
+        it?.getOrNull()?.commitChangesVm ?: flowOf(null)
+      }.flatMapLatest {
+        it?.changeListVm ?: flowOf(null)
+      }.map {
+        it?.getOrNull()
+      }.collectScoped { vm ->
+        vm?.handleSelection {
+          if (it != null) {
+            diffVm.showChanges(it)
+          }
+        }
+      }
+    }
+
+    cs.launchNow {
+      diffVm.diffVm.collectScoped {
+        it.getOrNull()?.handleSelection { producer ->
+          val change = (producer as? CodeReviewDiffRequestProducer)?.change ?: return@handleSelection
+          val changesVm = changesVm.value?.getOrNull()
+          //TODO: handle different commit
+          val commitChangesVm = changesVm?.commitChangesVm?.value
+          val changeListVm = commitChangesVm?.changeListVm?.value?.getOrNull()
+          changeListVm?.selectChange(change)
+        }
+      }
+    }
   }
 
   private fun setTitleFromFirstCommitOrBranch(headBranch: GitBranch, commits: List<VcsCommitMetadata>) {
     titleLock.withLock {
       val singleCommit = commits.singleOrNull()
-      titleText.value = if (singleCommit != null) {
-        singleCommit.fullMessage.split("\n\n").firstOrNull().orEmpty()
-      }
-      else {
-        headBranch.name
-      }
+      titleText.value = singleCommit?.subject ?: headBranch.name
     }
   }
 
@@ -442,15 +496,5 @@ private class MetadataListViewModel<T>(cs: CoroutineScope, itemsLoader: suspend 
     items.value = newList
   }
 }
-
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun <T> Flow<Deferred<T>?>.optionalComputationState(): Flow<ComputedResult<T>?> =
-  transformLatest { request ->
-    if (request == null) {
-      emit(null)
-      return@transformLatest
-    }
-    flowOf(request).computationState().collect(this)
-  }
 
 

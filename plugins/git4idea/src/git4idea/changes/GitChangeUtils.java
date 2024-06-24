@@ -488,6 +488,10 @@ public final class GitChangeUtils {
     }
   }
 
+  /**
+   * @deprecated use getThreeDotDiffOrThrow
+   */
+  @Deprecated
   public static @NotNull Collection<Change> getThreeDotDiff(@NotNull GitRepository repository,
                                                             @NotNull @NonNls String oldRevision,
                                                             @NotNull @NonNls String newRevision) {
@@ -498,6 +502,12 @@ public final class GitChangeUtils {
       LOG.info("Couldn't collect changes between " + oldRevision + " and " + newRevision, e);
       return null;
     }
+  }
+
+  public static @NotNull Collection<Change> getThreeDotDiffOrThrow(@NotNull GitRepository repository,
+                                                                   @NotNull @NonNls String oldRevision,
+                                                                   @NotNull @NonNls String newRevision) throws VcsException {
+    return getDiff(repository.getProject(), repository.getRoot(), oldRevision, newRevision, null, true, true);
   }
 
   public static class GitDiffChange implements FilePathChange {

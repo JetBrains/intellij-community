@@ -39,6 +39,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorView
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRBranchWidgetViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModelImpl
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
@@ -54,7 +55,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
   private val twVm: GHPRToolWindowViewModel,
   connection: GHRepositoryConnection
 ) : ReviewToolwindowProjectViewModel<GHPRToolWindowTab, GHPRToolWindowTabViewModel> {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(javaClass.name)
 
   internal val dataContext: GHPRDataContext = connection.dataContext
 
@@ -68,6 +69,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
   private val lazyCreateVm = SynchronizedClearableLazy {
     GHPRCreateViewModelImpl(project, cs, repoManager, GithubPullRequestsProjectUISettings.getInstance(project), connection.dataContext, this)
   }
+  internal fun getCreateVmOrNull(): GHPRCreateViewModel? = lazyCreateVm.valueIfInitialized
 
   private val pullRequestsVms = Caffeine.newBuilder().build<GHPRIdentifier, DisposalCountingHolder<GHPRViewModelContainer>> { id ->
     DisposalCountingHolder {
@@ -89,6 +91,9 @@ class GHPRToolWindowProjectViewModel internal constructor(
       tabsHelper.close(tab)
       if (reset) {
         lazyCreateVm.drop()?.let(Disposer::dispose)
+        cs.launch {
+          dataContext.filesManager.closeNewPrFile()
+        }
       }
     }
   }
