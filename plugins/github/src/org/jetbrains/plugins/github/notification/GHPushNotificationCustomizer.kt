@@ -14,7 +14,6 @@ import git4idea.push.GitPushRepoResult
 import git4idea.push.isSuccessful
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.CancellationException
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -39,17 +38,8 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
   ): List<AnAction> {
     if (!pushResult.isSuccessful) return emptyList()
     val (projectMapping, account) = findRepoAndAccount(repository, pushResult) ?: return emptyList()
-    try {
-      val exists = doesReviewExist(pushResult, projectMapping, account)
-      if (exists) return emptyList()
-    }
-    catch (ce: CancellationException) {
-      throw ce
-    }
-    catch (e: Exception) {
-      LOG.warn("Failed to lookup an existing pull request for $pushResult", e)
-      return emptyList()
-    }
+    val canCreate = canCreateReview(pushResult, projectMapping, account)
+    if (!canCreate) return emptyList()
 
     val connection = project.serviceAsync<GHRepositoryConnectionManager>().connectionState.value
     if (connection?.account != account || connection.repo != projectMapping) return emptyList()
@@ -77,14 +67,20 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
     return null
   }
 
-  private suspend fun doesReviewExist(pushResult: GitPushRepoResult, projectMapping: GHGitRepositoryMapping, account: GithubAccount): Boolean {
-    val accountManager: GHAccountManager = serviceAsync<GHAccountManager>()
-    val token = accountManager.findCredentials(account) ?: return false
-    val executor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
-    val prBranch = getReviewBranch(executor, pushResult, projectMapping, account) ?: return false
-    val pullRequest = getPullRequest(executor, projectMapping, prBranch)
+  private suspend fun canCreateReview(pushResult: GitPushRepoResult, projectMapping: GHGitRepositoryMapping, account: GithubAccount): Boolean {
+    try {
+      val accountManager: GHAccountManager = serviceAsync<GHAccountManager>()
+      val token = accountManager.findCredentials(account) ?: return false
+      val executor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
+      val prBranch = getReviewBranch(executor, pushResult, projectMapping, account) ?: return false
+      val pullRequest = findPullRequest(executor, projectMapping, prBranch)
 
-    return pullRequest != null
+      return pullRequest == null
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to lookup an existing pull request for $pushResult", e)
+      return false
+    }
   }
 
   private suspend fun getReviewBranch(
@@ -102,10 +98,10 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
     return targetBranch.removePrefix("${projectMapping.gitRemote.name}/")
   }
 
-  private suspend fun getPullRequest(
+  private suspend fun findPullRequest(
     executor: GithubApiRequestExecutor,
     projectMapping: GHGitRepositoryMapping,
-    prBranch: String
+    prBranch: String,
   ): GHPullRequest? {
     val findPullRequestByBranchesRequest = GHGQLRequests.PullRequest.findByBranches(
       repository = projectMapping.repository,
