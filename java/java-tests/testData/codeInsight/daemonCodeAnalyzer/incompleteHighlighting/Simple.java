@@ -23,6 +23,12 @@ public class Simple {
     System.out.println(s.<error descr="Cannot resolve symbol 'field'">field</error>);
   }
   
+  void callKnownCtor(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
+    new IOException(cls);
+    // No three-arg ctor anyway
+    new IOException<error descr="Cannot resolve constructor 'IOException(Cls, Cls, Cls)'">(cls, cls, cls)</error>;
+  }
+  
   void testImports(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">UnusedClass</info> inner) {
     <info descr="null">var</info> x = <error descr="Cannot resolve symbol 'Value'">Value</error>;
     System.out.println(<info descr="Not resolved until the project is fully loaded">UsedInClassObject</info>.class);

@@ -41,10 +41,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.StartupUiUtil;
@@ -1959,6 +1956,11 @@ public final class HighlightMethodUtil {
     }
     boolean reported = false;
     if (constructor == null) {
+      if (IncompleteModelUtil.isIncompleteModel(list) &&
+          ContainerUtil.exists(results, r -> r instanceof MethodCandidateInfo info && info.isPotentiallyCompatible() == ThreeState.YES) &&
+          ContainerUtil.exists(list.getExpressions(), e -> IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(e))) {
+        return;
+      }
       String name = aClass.getName();
       name += buildArgTypesList(list, true);
       String description = JavaErrorBundle.message("cannot.resolve.constructor", name);
