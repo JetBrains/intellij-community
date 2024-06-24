@@ -22,6 +22,7 @@ import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.idea.IdeaLogger
+import com.intellij.l10n.LocalizationUtil
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
@@ -100,6 +101,7 @@ object DynamicPlugins {
   fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl,
                                     baseDescriptor: IdeaPluginDescriptorImpl? = null,
                                     context: List<IdeaPluginDescriptorImpl> = emptyList()): Boolean {
+    if (LocalizationUtil.isInactiveLocalizationPlugin(descriptor)) return true
     val reason = checkCanUnloadWithoutRestart(module = descriptor, parentModule = baseDescriptor, context = context)
     if (reason != null) {
       LOG.info(reason)

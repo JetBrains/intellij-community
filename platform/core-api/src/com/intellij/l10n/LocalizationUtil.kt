@@ -3,6 +3,7 @@ package com.intellij.l10n
 
 import com.intellij.DynamicBundle
 import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -42,6 +43,7 @@ object LocalizationUtil {
     if (forcedLocale == null) {
       val englishTag = Locale.ENGLISH.toLanguageTag()
       if (languageTag != englishTag && findLanguageBundle(locale) == null) {
+        LocalizationStateService.getInstance()?.setSelectedLocale(englishTag)
         return Locale.ENGLISH
       }
     }
@@ -232,4 +234,7 @@ object LocalizationUtil {
 
     return list to map
   }
+
+  @Internal
+  fun isInactiveLocalizationPlugin(descriptor: IdeaPluginDescriptor): Boolean = LocalizationPluginHelper.getInstance()?.isInactiveLocalizationPlugin(descriptor) ?: false
 }
