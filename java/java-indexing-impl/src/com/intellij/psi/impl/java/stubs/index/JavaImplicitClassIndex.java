@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class JavaImplicitClassIndex extends StringStubIndexExtension<PsiImplicitClass> {
+public final class JavaImplicitClassIndex extends StringStubIndexExtension<PsiImplicitClass> {
   private static final JavaImplicitClassIndex ourInstance = new JavaImplicitClassIndex();
 
   public static JavaImplicitClassIndex getInstance() {
@@ -31,6 +31,6 @@ public class JavaImplicitClassIndex extends StringStubIndexExtension<PsiImplicit
   public @NotNull Collection<PsiImplicitClass> getElements(@NotNull String key,
                                                            @NotNull Project project,
                                                            @Nullable GlobalSearchScope scope) {
-    return StubIndex.getElements(JavaStubIndexKeys.IMPLICIT_CLASSES, key, project, scope, PsiImplicitClass.class);
+    return StubIndex.getElements(getKey(), key, project, scope, PsiImplicitClass.class);
   }
 }
