@@ -184,6 +184,12 @@
     "Pythonid:app:AppPyDocumentationSettings.renderExternalDocumentation",
     "Pythonid:app:AppReSTService.*",
     "Pythonid:app:PyCondaPackageService.*",
+    "Pythonid:app:PyDuplocatorSettings.distinguish_fields",
+    "Pythonid:app:PyDuplocatorSettings.distinguish_functions",
+    "Pythonid:app:PyDuplocatorSettings.distinguish_literals",
+    "Pythonid:app:PyDuplocatorSettings.distinguish_methods",
+    "Pythonid:app:PyDuplocatorSettings.distinguish_variables",
+    "Pythonid:app:PyDuplocatorSettings.lower_bound",
     "Pythonid:app:PythonFoldingSettings.*"
   ]
 }
