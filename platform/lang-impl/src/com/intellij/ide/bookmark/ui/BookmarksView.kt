@@ -40,7 +40,6 @@ import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -51,7 +50,7 @@ import java.awt.event.FocusListener
 import javax.swing.tree.TreePath
 
 class BookmarksView(val project: Project, showToolbar: Boolean?)
-  : Disposable, DataProvider, OccurenceNavigator, OnePixelSplitter(false, .3f, .1f, .9f) {
+  : Disposable, UiDataProvider, OccurenceNavigator, OnePixelSplitter(false, .3f, .1f, .9f) {
 
   companion object {
     val BOOKMARKS_VIEW: DataKey<BookmarksView> = DataKey.create("BOOKMARKS_VIEW")
@@ -95,30 +94,30 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   override fun dispose(): Unit = preview.close()
 
-  override fun getData(dataId: String): Any? = when {
-    BOOKMARKS_VIEW.`is`(dataId) -> this
-    PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
-    PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
-    PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
-    PlatformDataKeys.PROJECT.`is`(dataId) -> project
-    PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> BookmarksDeleteProvider()
-    PlatformDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
-      val selectedNodes = selectedNodes
-      DataProvider { slowDataId -> getSlowData(slowDataId, selectedNodes) }
-    }
-    else -> null
-  }
+  override fun uiDataSnapshot(sink: DataSink) {
+    val selection = selectedNodes
+    sink[BOOKMARKS_VIEW] = this
+    sink[PlatformDataKeys.TREE_EXPANDER] = treeExpander
+    sink[PlatformDataKeys.SELECTED_ITEMS] = selection?.toArray(emptyArray<Any>())
+    sink[PlatformDataKeys.SELECTED_ITEM] = selection?.firstOrNull()
+    sink[PlatformDataKeys.PROJECT] = project
+    sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = BookmarksDeleteProvider()
+    sink[LangDataKeys.IDE_VIEW] = IdeViewForBookmarksView(this, selection)
 
-  @RequiresBackgroundThread
-  private fun getSlowData(dataId: String, selection: List<AbstractTreeNode<*>>?): Any? = when {
-    PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selection?.firstOrNull()?.asVirtualFile()
-    PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selection?.mapNotNull { it.asVirtualFile() }?.ifEmpty { null }?.toTypedArray()
-    PlatformCoreDataKeys.MODULE.`is`(dataId) -> selection?.firstOrNull()?.asVirtualFile()?.validOrNull()?.let {
-      ModuleUtilCore.findModuleForFile(it, project)
+    sink.lazy(PlatformDataKeys.VIRTUAL_FILE) {
+      selection?.firstOrNull()?.asVirtualFile()
     }
-    Location.DATA_KEY.`is`(dataId) -> selection?.firstOrNull()?.toLocation()
-    LangDataKeys.IDE_VIEW.`is`(dataId) -> IdeViewForBookmarksView(this, selection)
-    else -> null
+    sink.lazy(PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
+      selection?.mapNotNull { it.asVirtualFile() }?.ifEmpty { null }?.toTypedArray()
+    }
+    sink.lazy(PlatformCoreDataKeys.MODULE) {
+      selection?.firstOrNull()?.asVirtualFile()?.validOrNull()?.let {
+        ModuleUtilCore.findModuleForFile(it, project)
+      }
+    }
+    sink.lazy(Location.DATA_KEY) {
+      selection?.firstOrNull()?.toLocation()
+    }
   }
 
   override fun getNextOccurenceActionName(): @Nls String = BookmarkBundle.message("bookmark.go.to.next.occurence.action.text")

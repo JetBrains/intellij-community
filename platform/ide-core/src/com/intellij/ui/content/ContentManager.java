@@ -4,6 +4,7 @@ package com.intellij.ui.content;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.NlsActions.ActionText;
@@ -139,6 +140,11 @@ public interface ContentManager extends Disposable, BusyObject {
   @NotNull
   ActionCallback requestFocus(@Nullable Content content, boolean forced);
 
+  /**
+   * Implement {@link com.intellij.openapi.actionSystem.UiDataProvider#uiDataSnapshot(DataSink)}
+   * in some component instead, or use separate {@link com.intellij.openapi.actionSystem.UiDataRule}.
+   */
+  @ApiStatus.Obsolete
   void addDataProvider(@NotNull DataProvider provider);
 
   @NotNull

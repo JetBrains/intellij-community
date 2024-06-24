@@ -4,6 +4,7 @@ package com.intellij.ui.tabs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.ui.DropAreaAware;
@@ -51,6 +52,8 @@ public interface JBTabs extends DropAreaAware {
   @Nullable
   DataProvider getDataProvider();
 
+  /** Override {@link com.intellij.openapi.actionSystem.UiDataProvider#uiDataSnapshot(DataSink)} instead */
+  @Deprecated(forRemoval = true)
   JBTabs setDataProvider(@NotNull DataProvider dataProvider);
 
   @NotNull

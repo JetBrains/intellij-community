@@ -7920,14 +7920,14 @@ c:com.intellij.ui.components.ActionLink
 - f:withFont(java.awt.Font):com.intellij.ui.components.ActionLink
 c:com.intellij.ui.components.AnActionLink
 - com.intellij.ui.components.ActionLink
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - <init>(com.intellij.openapi.actionSystem.AnAction,java.lang.String):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.AnAction):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.AnAction,java.lang.String):V
 - <init>(java.lang.String,java.lang.String):V
-- getData(java.lang.String):java.lang.Object
 - f:getDataProvider():com.intellij.openapi.actionSystem.DataProvider
 - f:setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ui.components.BrowserLink
 - com.intellij.ui.components.ActionLink
 - <init>(java.lang.String):V
@@ -11006,7 +11006,7 @@ c:com.intellij.ui.tabs.impl.SingleHeightTabs
 f:com.intellij.ui.tabs.impl.SingleHeightTabs$Companion
 c:com.intellij.ui.tabs.impl.TabLabel
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - javax.accessibility.Accessible
 - pf:label:com.intellij.ui.SimpleColoredComponent
 - f:apply(com.intellij.ui.tabs.UiDecorator$UiDecoration):V
@@ -11014,7 +11014,6 @@ c:com.intellij.ui.tabs.impl.TabLabel
 - editLabelForeground(java.awt.Color):java.awt.Color
 - f:getAccessibleContext():javax.accessibility.AccessibleContext
 - f:getActionsPosition():com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
-- f:getData(java.lang.String):java.lang.Object
 - pf:getEffectiveBackground():java.awt.Color
 - getIconAlpha():F
 - f:getInfo():com.intellij.ui.tabs.TabInfo
@@ -11049,6 +11048,7 @@ c:com.intellij.ui.tabs.impl.TabLabel
 - f:setText(com.intellij.ui.SimpleColoredText):V
 - p:shouldPaintFadeout():Z
 - f:toggleShowActions(Z):V
+- f:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - f:updateTabActions():Z
 pf:com.intellij.ui.tabs.impl.TabLabel$AccessibleTabLabel
 - javax.swing.JPanel$AccessibleJPanel

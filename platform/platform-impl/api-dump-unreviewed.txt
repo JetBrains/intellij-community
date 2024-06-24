@@ -2063,7 +2063,7 @@ c:com.intellij.diagnostic.ITNReporter
 c:com.intellij.diagnostic.IdeErrorsDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.diagnostic.MessagePoolListener
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:CURRENT_TRACE_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:Companion:com.intellij.diagnostic.IdeErrorsDialog$Companion
 - sf:ERROR_HANDLER_EP:com.intellij.openapi.extensions.ExtensionPointName
@@ -2075,12 +2075,12 @@ c:com.intellij.diagnostic.IdeErrorsDialog
 - p:createNorthPanel():javax.swing.JComponent
 - p:dispose():V
 - sf:findPluginId(java.lang.Throwable):com.intellij.openapi.extensions.PluginId
-- getData(java.lang.String):java.lang.Object
 - p:getDimensionServiceKey():java.lang.String
 - sf:getPlugin(com.intellij.openapi.diagnostic.IdeaLoggingEvent):com.intellij.ide.plugins.IdeaPluginDescriptor
 - sf:getSubmitter(java.lang.Throwable,com.intellij.openapi.extensions.PluginId):com.intellij.openapi.diagnostic.ErrorReportSubmitter
 - newEntryAdded():V
 - poolCleared():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateOnSubmit():V
 f:com.intellij.diagnostic.IdeErrorsDialog$Companion
 - f:confirmDisablePlugins(com.intellij.openapi.project.Project,java.util.List):V
@@ -5301,14 +5301,13 @@ f:com.intellij.ide.actions.Switcher$SwitcherPanel
 - com.intellij.util.ui.components.BorderLayoutPanel
 - com.intellij.ide.util.gotoByName.QuickSearchComponent
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - sf:Companion:com.intellij.ide.actions.Switcher$SwitcherPanel$Companion
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.awt.event.InputEvent,java.lang.Boolean,Z):V
 - f:cancel():V
 - dispose():V
 - f:getActivity():com.intellij.internal.statistic.StructuredIdeActivity
 - f:getCbShowOnlyEditedFiles():javax.swing.JCheckBox
-- getData(java.lang.String):java.lang.Object
 - f:getFiles():com.intellij.ui.components.JBList
 - sf:getFilesToShowForTest(com.intellij.openapi.project.Project):java.util.List
 - f:getNavigationData():com.intellij.ide.actions.SwitcherLogger$NavigationData
@@ -5325,6 +5324,7 @@ f:com.intellij.ide.actions.Switcher$SwitcherPanel
 - f:navigate(java.awt.event.InputEvent):V
 - registerHint(com.intellij.openapi.ui.popup.JBPopup):V
 - f:setNavigationData(com.intellij.ide.actions.SwitcherLogger$NavigationData):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - unregisterHint():V
 f:com.intellij.ide.actions.Switcher$SwitcherPanel$Companion
 - f:getFilesSelectedIndex(com.intellij.openapi.project.Project,javax.swing.JList,Z):I
@@ -6332,7 +6332,7 @@ c:com.intellij.ide.errorTreeView.NewErrorTreeViewPanel
 - com.intellij.ide.CopyProvider
 - com.intellij.ide.OccurenceNavigator
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.util.ui.MutableErrorTreeView
 - sf:Companion:com.intellij.ide.errorTreeView.NewErrorTreeViewPanel$Companion
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
@@ -6364,7 +6364,6 @@ c:com.intellij.ide.errorTreeView.NewErrorTreeViewPanel
 - p:fillRightToolbarGroup(com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getComponent():javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - f:getEmptyText():com.intellij.util.ui.StatusText
 - f:getErrorViewStructure():com.intellij.ide.errorTreeView.ErrorViewStructure
 - getGroupChildrenData(java.lang.String):java.util.List
@@ -6395,6 +6394,7 @@ c:com.intellij.ide.errorTreeView.NewErrorTreeViewPanel
 - f:setProgressText(java.lang.String):V
 - p:shouldShowFirstErrorInEditor():Z
 - f:stopProcess():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - f:updateAddedElement(com.intellij.ide.errorTreeView.ErrorTreeElement):V
 - updateTree():V
 f:com.intellij.ide.errorTreeView.NewErrorTreeViewPanel$Companion
@@ -15135,8 +15135,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 f:com.intellij.openapi.fileEditor.impl.EditorHistoryManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer
-- com.intellij.ide.actions.CloseAction$CloseTarget
-- close():V
 - f:getComponent():javax.swing.JComponent
 - f:getSelectedIndex():I
 - f:getTabCount():I
@@ -23709,7 +23707,7 @@ com.intellij.ui.EditorSettingsProvider
 - a:customizeSettings(com.intellij.openapi.editor.ex.EditorEx):V
 c:com.intellij.ui.EditorTextField
 - com.intellij.ui.components.panels.NonOpaquePanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.openapi.editor.event.DocumentListener
 - com.intellij.ui.EditorTextComponent
 - com.intellij.ui.TextAccessor
@@ -23741,7 +23739,6 @@ c:com.intellij.ui.EditorTextField
 - getBackground():java.awt.Color
 - getCaretModel():com.intellij.openapi.editor.CaretModel
 - getComponent():javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - getDocument():com.intellij.openapi.editor.Document
 - getEditor():com.intellij.openapi.editor.Editor
 - getEditor(Z):com.intellij.openapi.editor.ex.EditorEx
@@ -23794,6 +23791,7 @@ c:com.intellij.ui.EditorTextField
 - p:setupBorder(com.intellij.openapi.editor.ex.EditorEx):V
 - s:setupTextFieldEditor(com.intellij.openapi.editor.ex.EditorEx):V
 - p:shouldHaveBorder():Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateBorder(com.intellij.openapi.editor.ex.EditorEx):V
 - updateUI():V
 - validate():V
@@ -27660,11 +27658,11 @@ c:com.intellij.ui.popup.AbstractPopup
 - p:updateSpeedSearchColors(Z):V
 c:com.intellij.ui.popup.AbstractPopup$MyContentPanel
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - <init>(com.intellij.ui.PopupBorder):V
 - computePreferredSize():java.awt.Dimension
-- getData(java.lang.String):java.lang.Object
 - setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ui.popup.ActionPopupOptions
 - s:create(Z,Z,Z,Z,I,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
 - s:empty():com.intellij.ui.popup.ActionPopupOptions

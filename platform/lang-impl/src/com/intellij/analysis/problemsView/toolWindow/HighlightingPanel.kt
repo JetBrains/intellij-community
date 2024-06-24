@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.TreeExpander
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
@@ -51,9 +52,9 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   override fun getSortFoldersFirst(): Option? = null
   override fun getTreeExpander(): TreeExpander? = null
 
-  override fun getData(dataId: String): Any? {
-    if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) return getCurrentFile()
-    return super.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    sink[CommonDataKeys.VIRTUAL_FILE] = getCurrentFile()
   }
 
   override fun getSortBySeverity(): Option? {

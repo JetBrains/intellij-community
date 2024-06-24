@@ -89,7 +89,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
+public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, UiCompatibleDataProvider, OccurenceNavigator {
   @NonNls private static final String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
   private static final Logger LOG = Logger.getInstance(ConsoleViewImpl.class);
 
@@ -824,37 +824,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      EditorEx editor = (EditorEx)getEditor();
-      if (editor == null) return null;
-      EditorHyperlinkSupport hyperlinks = getHyperlinks();
-      return (DataProvider) slowId -> getSlowData(slowId, editor, hyperlinks);
-    }
-    else if (CommonDataKeys.EDITOR.is(dataId)) {
-      return getEditor();
-    }
-    else if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
-      return this;
-    }
-    else if (CommonDataKeys.CARET.is(dataId)) {
-      EditorEx editor = (EditorEx)getEditor();
-      return editor == null ? null : editor.getCaretModel().getCurrentCaret();
-    }
-    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      EditorEx editor = (EditorEx)getEditor();
-      return editor == null ? null : editor.getCopyProvider();
-    }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return myHelpId;
-    }
-    return null;
-  }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    EditorEx editor = (EditorEx)getEditor();
+    sink.set(CommonDataKeys.EDITOR, getEditor());
+    sink.set(LangDataKeys.CONSOLE_VIEW, this);
+    sink.set(PlatformCoreDataKeys.HELP_ID, myHelpId);
 
-  private @Nullable Object getSlowData(@NotNull String dataId,
-                                       @NotNull EditorEx editor,
-                                       @NotNull EditorHyperlinkSupport hyperlinks) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    if (editor == null) return;
+    sink.set(CommonDataKeys.CARET, editor.getCaretModel().getCurrentCaret());
+    sink.set(PlatformDataKeys.COPY_PROVIDER, editor.getCopyProvider());
+
+    EditorHyperlinkSupport hyperlinks = getHyperlinks();
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       int offset = editor.getCaretModel().getOffset();
       HyperlinkInfo info = hyperlinks.getHyperlinkAt(offset);
       return info == null ? null : new Navigatable() {
@@ -862,8 +843,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         @Override public boolean canNavigate() { return true; }
         @Override public boolean canNavigateToSource() { return true; }
       };
-    }
-    return null;
+    });
   }
 
   @Override

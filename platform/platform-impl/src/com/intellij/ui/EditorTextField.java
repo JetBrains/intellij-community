@@ -7,8 +7,9 @@ import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -77,7 +78,7 @@ import java.util.Set;
 /**
  * Use {@code editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);} to disable search/replace component.
  */
-public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, DataProvider, TextAccessor,
+public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, UiCompatibleDataProvider, TextAccessor,
                                                                FocusListener, MouseListener {
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
   private static final Key<LineSeparator> LINE_SEPARATOR_KEY = Key.create("ETF_LINE_SEPARATOR");
@@ -1103,20 +1104,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
     EditorEx editor = getEditor(false);
     if (editor != null && editor.isRendererMode()) {
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return editor.getCopyProvider();
-      }
-      return null;
+      sink.set(PlatformDataKeys.COPY_PROVIDER, editor.getCopyProvider());
     }
-
-    if (CommonDataKeys.EDITOR.is(dataId)) {
-      return editor;
-    }
-
-    return null;
+    sink.set(CommonDataKeys.EDITOR, editor);
   }
 
   public void setFileType(@NotNull FileType fileType) {

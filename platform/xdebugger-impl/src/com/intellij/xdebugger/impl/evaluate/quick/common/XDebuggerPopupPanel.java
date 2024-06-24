@@ -184,12 +184,20 @@ public abstract class XDebuggerPopupPanel {
 
   private static class ActionLinkButton extends AnActionLink {
 
+    final Component contextComponent;
+
     ActionLinkButton(@NotNull AnAction action,
                      @NotNull Presentation presentation,
-                     @Nullable DataProvider contextComponent) {
+                     @Nullable Component contextComponent) {
       super(StringUtil.capitalize(presentation.getText().toLowerCase(Locale.ROOT)), action);
-      setDataProvider(contextComponent);
+      this.contextComponent = contextComponent;
       setFont(UIUtil.getToolTipFont());
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      DataSink.uiDataSnapshot(sink, contextComponent);
     }
   }
 
@@ -247,9 +255,7 @@ public abstract class XDebuggerPopupPanel {
 
       myDelegate.applyTextOverride(myActionPlace, presentation);
 
-      DataProvider dataProvider = myProvider instanceof DataProvider ? (DataProvider)myProvider : null;
-
-      ActionLinkButton button = new ActionLinkButton(this, presentation, dataProvider);
+      ActionLinkButton button = new ActionLinkButton(this, presentation, myProvider);
       ClientProperty.put(button, InplaceEditor.IGNORE_MOUSE_EVENT, true);
       JPanel actionPanel = createCustomToolbarComponent(this, button);
 
