@@ -72,7 +72,7 @@ public final class LocalRefUseInfo {
     if (isDeadCodeEnabled && !inLibrary) {
       return new GlobalUsageHelperBase() {
         final Map<PsiMember, Boolean> myEntryPointCache = FactoryMap.create((PsiMember member) -> {
-          if (Registry.is("ide.unused.symbol.strict.entry.points") ? deadCodeInspection.isStrictEntryPoint(member) : deadCodeInspection.isEntryPoint(member)) return true;
+          if (Registry.is("java.unused.symbol.strict.entry.points") ? deadCodeInspection.isStrictEntryPoint(member) : deadCodeInspection.isEntryPoint(member)) return true;
           if (member instanceof PsiClass) {
             return !JBTreeTraverser
               .<PsiMember>from(m -> m instanceof PsiClass
