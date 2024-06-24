@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
@@ -21,6 +22,11 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     includeIntoSourcesArchiveFilter = BiPredicate(::isCommunityModule)
     sbomOptions.creator = "Organization: ${Suppliers.JETBRAINS}"
     sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense.JETBRAINS
+
+    productLayout.addPlatformSpec { layout, _ ->
+      layout.withModule("intellij.platform.core.nio.fs", PLATFORM_CORE_NIO_FS)
+      xBootClassPathJarNames += PLATFORM_CORE_NIO_FS
+    }
   }
 
   protected fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean {
