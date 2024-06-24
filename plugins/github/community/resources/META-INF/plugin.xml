@@ -1,4 +1,5 @@
-<idea-plugin package="org.jetbrains.plugins.github" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin package="org.jetbrains.plugins.github" xmlns:xi="http://www.w3.org/2001/XInclude"
+             allow-bundled-update="true">
   <name>GitHub</name>
   <id>org.jetbrains.plugins.github</id>
   <vendor>JetBrains</vendor>
