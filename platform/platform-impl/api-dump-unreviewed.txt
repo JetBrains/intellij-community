@@ -12034,10 +12034,6 @@ f:com.intellij.openapi.actionSystem.impl.ActionToolbarPresentationFactory
 - sf:ID_KEY:com.intellij.openapi.util.Key
 - <init>():V
 - getId():I
-f:com.intellij.openapi.actionSystem.impl.ActionToolbarSpacer
-- javax.swing.JLabel
-- <init>(Z):V
-- isHorizontal():Z
 f:com.intellij.openapi.actionSystem.impl.ActionUpdaterInterceptorImpl
 - com.intellij.openapi.actionSystem.ActionUpdaterInterceptor
 - <init>():V
