@@ -1,8 +1,8 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.ide.DataManager
 import com.intellij.internal.performance.LatencyRecord
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.actionSystem.LatencyListener
@@ -19,6 +19,7 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import java.awt.KeyboardFocusManager
+import javax.swing.JComponent
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -71,7 +72,7 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
                                 (KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.javaClass ?: "null"))
               }
               if (disableWriteProtection) {
-                val editor = (typingTarget as? DataProvider)?.let { CommonDataKeys.EDITOR.getData(it) }
+                val editor = DataManager.getInstance().getDataContext(typingTarget as? JComponent).getData(CommonDataKeys.EDITOR)
                 if (editor == null) {
                   throw Exception("Cannot find Editor")
                 }
