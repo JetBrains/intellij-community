@@ -205,7 +205,7 @@
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" exported="" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" exported="" />
     <orderEntry type="module" module-name="kotlin.onboarding" exported="" />
-    <orderEntry type="module" module-name="kotlin.onboarding.gradle" exported="" />
+    <orderEntry type="module" module-name="kotlin.onboarding.gradle" />
     <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" exported="" />
     <orderEntry type="module" module-name="kotlin.highlighting.minimal" exported="" />
     <orderEntry type="module" module-name="kotlin.formatter.minimal" exported="" />
