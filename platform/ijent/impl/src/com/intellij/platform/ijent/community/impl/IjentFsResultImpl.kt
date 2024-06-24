@@ -2,11 +2,15 @@
 package com.intellij.platform.ijent.community.impl
 
 import com.intellij.platform.ijent.fs.*
+import com.intellij.platform.ijent.fs.IjentFsResult
 
 @Suppress("unused") // Usages are to be implemented later.
 object IjentFsResultImpl {
   data class Ok<T, E : IjentFsError>(override val value: T) : IjentFsResult.Ok<T, E>
   data class Error<T, E : IjentFsError>(override val error: E) : IjentFsResult.Error<T, E>
+
+  data class BytesReadImpl(override val bytesRead: Int) : IjentOpenedFile.Reader.ReadResult.Bytes
+  data object EOFImpl : IjentOpenedFile.Reader.ReadResult.EOF
 
   data class Other(override val where: IjentPath.Absolute, override val message: String) :
     IjentFileSystemApi.FileReaderError.Other,
@@ -15,7 +19,10 @@ object IjentFsResultImpl {
     IjentFileSystemApi.SameFileError.Other,
     IjentFileSystemApi.StatError.Other,
     IjentFileSystemApi.CanonicalizeError.Other,
-    IjentOpenedFile.Reader.ReadError.Other
+    IjentOpenedFile.SeekError.Other,
+    IjentOpenedFile.TellError.Other,
+    IjentOpenedFile.Reader.ReadError.Other,
+    IjentOpenedFile.Writer.WriteError.Other
 
   data class DoesNotExist(override val where: IjentPath.Absolute, override val message: String) :
     IjentFileSystemApi.FileReaderError.DoesNotExist,

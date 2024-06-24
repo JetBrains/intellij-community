@@ -149,7 +149,7 @@ sealed interface IjentOpenedFile {
       : CloseException(where, additionalMessage), IjentFsError.Other
   }
 
-  fun tell(): IjentFsResult<
+  suspend fun tell(): IjentFsResult<
     Long,
     TellError>
 
@@ -170,10 +170,21 @@ sealed interface IjentOpenedFile {
     START, CURRENT, END,
   }
 
+
   interface Reader : IjentOpenedFile {
-    suspend fun read(buf: ByteBuffer): IjentFsResult<
-      Int,
-      ReadError>
+
+    /**
+     * If the remote file is read completely, then this function returns [ReadResult] with [ReadResult.EOF].
+     * Otherwise, if there are any data left to read, then it returns [ReadResult.Bytes]
+     */
+    suspend fun read(buf: ByteBuffer): IjentFsResult<ReadResult, ReadError>
+
+    sealed interface ReadResult {
+      interface EOF : ReadResult
+      interface Bytes : ReadResult {
+        val bytesRead: Int
+      }
+    }
 
     sealed interface ReadError : IjentFsError {
       interface InvalidValue : ReadError, IjentFsError

@@ -8,8 +8,8 @@ import java.io.IOException
 /**
  * [T] should not be `Unit`, throw a subclass of [IjentFsIOException] in such cases instead.
  */
-sealed interface IjentFsResult<T, E : IjentFsError> {
-  interface Ok<T, E : IjentFsError> : IjentFsResult<T, E> {
+sealed interface IjentFsResult<out T, E : IjentFsError> {
+  interface Ok<out T, E : IjentFsError> : IjentFsResult<T, E> {
     val value: T
   }
 

@@ -10,8 +10,6 @@ import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import kotlinx.coroutines.job
-import java.io.InputStream
-import java.io.OutputStream
 import java.net.URI
 import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.FileChannel
@@ -271,14 +269,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun setAttribute(path: Path, attribute: String?, value: Any?, vararg options: LinkOption?) {
-    TODO("Not yet implemented")
-  }
-
-  override fun newInputStream(path: Path?, vararg options: OpenOption?): InputStream {
-    TODO("Not yet implemented")
-  }
-
-  override fun newOutputStream(path: Path?, vararg options: OpenOption?): OutputStream {
     TODO("Not yet implemented")
   }
 
