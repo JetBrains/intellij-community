@@ -322,6 +322,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     MultiMap<String, PsiImportStaticStatement> staticImports = MultiMap.create();
 
     for (PsiClass psiClass : getClasses()) {
+      if (psiClass instanceof PsiImplicitClass) continue;
       String name = psiClass.getName();
       if (name != null) {
         ownClasses.putValue(name, psiClass);

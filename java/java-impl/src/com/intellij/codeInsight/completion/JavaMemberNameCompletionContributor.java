@@ -372,7 +372,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
   private static void completeMethodName(Set<LookupElement> set, PsiElement element, PrefixMatcher matcher){
     if (element instanceof PsiMethod method && method.isConstructor()) {
       PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null) {
+      if (containingClass != null && !(containingClass instanceof PsiImplicitClass)) {
         String name = containingClass.getName();
         if (StringUtil.isNotEmpty(name)) {
           addLookupItems(set, null, matcher, element.getProject(), name);

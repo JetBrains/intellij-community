@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -41,6 +41,11 @@ public class PsiImplicitClassImpl extends JavaStubPsiElement<PsiClassStub<?>> im
 
   @Override
   public @Nullable String getQualifiedName() {
+    return getName(); // implicit classes are always in the root package
+  }
+
+  @Override
+  public String getName() {
     PsiElement parent = getParent();
     if (parent instanceof PsiJavaFile) {
       return JavaImplicitClassUtil.getJvmName(((PsiJavaFile)parent).getName());

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi
 
 import com.intellij.openapi.command.WriteCommandAction
@@ -378,7 +378,6 @@ class B {}"""
         int field;
       """.trimIndent())
     val implicitClass = file.classes.single() as PsiImplicitClass
-    TestCase.assertNull(implicitClass.name)
     val method = implicitClass.methods.single()
     TestCase.assertEquals("myMethod", method.name)
     val aClass = implicitClass.innerClasses.single()

@@ -943,7 +943,7 @@ public final class ExpressionUtils {
     PsiClass memberClass = member.getContainingClass();
     if (memberClass != null) {
       if (member.hasModifierProperty(PsiModifier.STATIC)) {
-        if (memberClass.getName() == null) return null;
+        if (memberClass.getName() == null || memberClass instanceof PsiImplicitClass) return null;
         return factory.createReferenceExpression(memberClass);
       }
       PsiClass containingClass = ClassUtils.getContainingClass(ref);
