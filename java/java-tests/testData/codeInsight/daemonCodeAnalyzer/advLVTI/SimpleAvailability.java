@@ -13,6 +13,8 @@ class Main {
         var x = (<error descr="Cannot infer type for 'x', it is used in its own variable initializer">x</error> = 1) + 1;
         var y = new Object[] {<error descr="Cannot infer type for 'y', it is used in its own variable initializer">y</error> = null};
         var z = baz(<error descr="Cannot infer type for 'z', it is used in its own variable initializer">z</error> = 1);
+        var zz = <error descr="Variable 'zz' might not have been initialized">zz</error>;
+        zz.<error descr="Cannot resolve method 'hashCode()'">hashCode</error>();
     }
     
     static int baz(Object o) {return 42;}

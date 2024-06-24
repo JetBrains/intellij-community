@@ -54,6 +54,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
@@ -66,10 +67,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.InstanceOfUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.ig.psiutils.VariableNameGenerator;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
@@ -550,9 +548,8 @@ public final class HighlightUtil {
       }
 
       PsiType lType = variable.getType();
-      if (PsiTypes.nullType().equals(lType) && SyntaxTraverser.psiTraverser(initializer)
-                                          .filter(PsiLiteralExpression.class)
-                                          .find(l -> PsiTypes.nullType().equals(l.getType())) != null) {
+      if (PsiTypes.nullType().equals(lType) && 
+          ExpressionUtils.nonStructuralChildren(initializer).allMatch(ExpressionUtils::isNullLiteral)) {
         HighlightInfo.Builder info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
             .range(typeElement);

@@ -200,6 +200,19 @@ public final class IncompleteModelUtil {
     return false;
   }
 
+  private static boolean mayHaveNullTypeDueToPendingReference(@NotNull PsiExpression expression) {
+    if (!(expression instanceof PsiReferenceExpression)) return false;
+    PsiElement target = ((PsiReferenceExpression)expression).resolve();
+    if (!(target instanceof PsiLocalVariable)) return false;
+    PsiLocalVariable local = (PsiLocalVariable)target;
+    if (!local.getTypeElement().isInferredType()) return false;
+    PsiExpression initializer = local.getInitializer();
+    if (initializer == null) return false;
+    PsiType initializerType = initializer.getType();
+    return initializerType == null && mayHaveUnknownTypeDueToPendingReference(initializer) ||
+           PsiTypes.nullType().equals(initializerType) && mayHaveNullTypeDueToPendingReference(initializer);
+  }
+
   /**
    * @param ref unresolved reference to find potential imports for
    * @return list of import statements that potentially import the given unresolved reference
@@ -265,7 +278,9 @@ public final class IncompleteModelUtil {
         }
       }
       PsiType qualifierType = qualifier.getType();
-      if (isUnresolvedClassType(qualifierType) || qualifierType == null && mayHaveUnknownTypeDueToPendingReference(qualifier)) {
+      if (isUnresolvedClassType(qualifierType) ||
+          (qualifierType == null && mayHaveUnknownTypeDueToPendingReference(qualifier)) ||
+          (PsiTypes.nullType().equals(qualifierType) && mayHaveNullTypeDueToPendingReference(qualifier))) {
         return true;
       }
     }

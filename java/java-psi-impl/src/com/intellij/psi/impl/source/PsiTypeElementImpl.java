@@ -193,6 +193,10 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     else {
       for (PsiElement e = this; e != null; e = e.getNextSibling()) {
         if (e instanceof PsiExpression) {
+          if (!PsiTreeUtil.processElements(
+            e, PsiReferenceExpression.class, ref -> !ref.isReferenceTo(parent))) {
+            return null;
+          }
           if (!(e instanceof PsiArrayInitializerExpression)) {
             PsiExpression expression = (PsiExpression)e;
             RecursionGuard.StackStamp stamp = RecursionManager.markStack();

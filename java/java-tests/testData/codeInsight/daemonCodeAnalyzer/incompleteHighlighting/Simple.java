@@ -108,6 +108,16 @@ public class Simple {
     mySet.toArray(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">EMPTY_ARRAY</info>);
   }
   
+  void varTest() {
+    <info descr="null">var</info> x = <info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">getSomething</info>();
+    x.<info descr="Not resolved until the project is fully loaded">getSomethingElse</info>();
+    <info descr="null">var</info> y = x;
+    <info descr="null">var</info> z = y.<info descr="Not resolved until the project is fully loaded">getSomethingCompletelyDifferent</info>();
+    z.<info descr="Not resolved until the project is fully loaded">getFromZ</info>();
+    
+    <info descr="null">var</info> t = <error descr="Variable 't' might not have been initialized">t</error>;
+  }
+  
   void overloaded(int x) {}
   void overloaded(boolean x) {}
   
