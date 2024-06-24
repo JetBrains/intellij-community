@@ -7,7 +7,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.EventListener;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
@@ -46,6 +49,11 @@ public interface JBAccountInfoService {
   @SuppressWarnings("unused")
   @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode);
 
+  @SuppressWarnings("unused")
+  @NotNull CompletableFuture<@NotNull LicenseListResult> getAvailableLicenses(@NotNull String productCode,
+                                                                              int productReleaseVersion,
+                                                                              @NotNull LocalDate productReleaseDate);
+
   static @Nullable JBAccountInfoService getInstance() {
     return JBAccountInfoServiceHolder.INSTANCE;
   }
@@ -83,6 +91,40 @@ public interface JBAccountInfoService {
   sealed interface LoginResult permits LoginResult.LoginFailed, LoginResult.LoginSuccessful {
     record LoginSuccessful(@NotNull JBAData jbaUser) implements LoginResult { }
     record LoginFailed(@NotNull String errorMessage) implements LoginResult { }
+  }
+
+  record JbaLicense(
+    @NotNull String licenseId,
+    @NotNull JBAData jbaUser,
+    @NotNull LicenseType type,
+    @NotNull String licensedTo,
+    @NotNull LocalDate expiresOn
+  ) { }
+
+  enum LicenseType {
+    UNKNOWN,
+    COMPANY,
+    INDIVIDUAL,
+    STUDENT,
+    OPENSOURCE,
+    CLASSROOM,
+    HOBBY,
+  }
+
+  sealed interface LicenseListResult permits LicenseListResult.FetchFailure,
+                                             LicenseListResult.LicenseList,
+                                             LicenseListResult.LoginRequired {
+    record LicenseList(
+      @NotNull List<@NotNull JbaLicense> licenses,
+      @NotNull Instant recommendedValidationAt,
+      @NotNull Instant deadlineValidationAt
+    ) implements LicenseListResult { }
+
+    final class LoginRequired implements LicenseListResult {
+      public static final LoginRequired INSTANCE = new LoginRequired();
+    }
+
+    record FetchFailure(@NotNull String errorMessage) implements LicenseListResult { }
   }
 
   interface AuthStateListener extends EventListener {
