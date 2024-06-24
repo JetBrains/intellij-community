@@ -15,8 +15,16 @@ import java.util.function.Predicate;
  * A container for information about unhandled exceptions thrown from a block of code
  */
 public class UnhandledExceptions {
-  static final UnhandledExceptions EMPTY = new UnhandledExceptions(Collections.emptySet(), false);
-  static final UnhandledExceptions UNKNOWN = new UnhandledExceptions(Collections.emptySet(), true);
+  /**
+   * An empty container: no exceptions are thrown
+   */
+  public static final UnhandledExceptions EMPTY = new UnhandledExceptions(Collections.emptySet(), false);
+
+  /**
+   * A container that assumes possible unknown exceptions from unresolved methods 
+   * and no explicitly thrown exceptions
+   */
+  public static final UnhandledExceptions UNKNOWN = new UnhandledExceptions(Collections.emptySet(), true);
 
   private final Set<PsiClassType> exceptions;
   private final boolean hasUnresolvedCalls;
@@ -62,7 +70,7 @@ public class UnhandledExceptions {
    * @return merged container
    */
   @NotNull
-  UnhandledExceptions merge(@NotNull UnhandledExceptions other) {
+  public UnhandledExceptions merge(@NotNull UnhandledExceptions other) {
     boolean unresolvedCalls = hasUnresolvedCalls || other.hasUnresolvedCalls;
     if (exceptions.isEmpty()) return other.withUnresolvedCalls(unresolvedCalls);
     if (other.exceptions.isEmpty()) return this.withUnresolvedCalls(unresolvedCalls);
@@ -196,6 +204,14 @@ public class UnhandledExceptions {
       }
     }
     return result;
+  }
+
+  /**
+   * @param element Java code element (e.g., expression, or code block)
+   * @return the unhandled exceptions thrown from a given element
+   */
+  public static @NotNull UnhandledExceptions collect(@NotNull PsiElement element) {
+    return collect(element, element, true);
   }
 
   static @NotNull UnhandledExceptions collect(@NotNull PsiElement element,

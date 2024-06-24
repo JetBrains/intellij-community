@@ -131,7 +131,17 @@ public class Simple {
     Clss.Inner cls = new Clss.Inner();
     Clss.Inner[] result = (Clss.Inner[]) cls.<info descr="Not resolved until the project is fully loaded">toArray</info>(12);
   }
-  
+
+
+  void testThrow(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
+    try {
+      cls.<info descr="Not resolved until the project is fully loaded">unknownM</info>();
+    } catch (<info descr="Not resolved until the project is fully loaded">Cls</info> x) {
+
+    } catch (IOException | RuntimeException ex) {
+
+    }
+  }
   void testConcat(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
     System.out.println("hello " + cls.<info descr="Not resolved until the project is fully loaded">getSomething</info>() + "!!!");
   }

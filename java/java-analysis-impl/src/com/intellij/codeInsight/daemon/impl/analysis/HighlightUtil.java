@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.ContainerProvider;
-import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.JavaModuleSystemEx;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -1698,18 +1695,17 @@ public final class HighlightUtil {
   }
 
 
-  @NotNull
-  static Set<PsiClassType> collectUnhandledExceptions(@NotNull PsiTryStatement statement) {
-    Set<PsiClassType> thrownTypes = new HashSet<>();
+  static @NotNull UnhandledExceptions collectUnhandledExceptions(@NotNull PsiTryStatement statement) {
+    UnhandledExceptions thrownTypes = UnhandledExceptions.EMPTY;
 
     PsiCodeBlock tryBlock = statement.getTryBlock();
     if (tryBlock != null) {
-      thrownTypes.addAll(ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock));
+      thrownTypes = thrownTypes.merge(UnhandledExceptions.collect(tryBlock));
     }
 
     PsiResourceList resources = statement.getResourceList();
     if (resources != null) {
-      thrownTypes.addAll(ExceptionUtil.collectUnhandledExceptions(resources, resources));
+      thrownTypes = thrownTypes.merge(UnhandledExceptions.collect(resources));
     }
 
     return thrownTypes;
