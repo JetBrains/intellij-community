@@ -529,7 +529,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void processStepEvent(SuspendContextImpl suspendContext, StepEvent event) {
-    LOG.debug("processStepEvent on " + event);
+    logSuspendContext(suspendContext, "process step event");
     final ThreadReference thread = event.thread();
     //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
@@ -550,6 +550,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         StatisticsStorage.addStepping(this, commandToken, timeMs);
 
         final int nextStepDepth = stepDepth.get();
+        logSuspendContext(suspendContext, "nextStepDepth is " + nextStepDepth);
         if (nextStepDepth == RequestHint.RESUME) {
           getSession().clearSteppingThrough();
           shouldResume = true;
@@ -641,7 +642,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        LOG.debug("processLocatableEvent action on " + event);
+        logSuspendContext(suspendContext, "start locatable event processing");
         final SuspendManager suspendManager = getSuspendManager();
 
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
@@ -754,6 +755,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           suspendManager.voteResume(suspendContext);
         }
         else {
+          logSuspendContext(suspendContext, "suspend is expected");
           stopWatchingMethodReturn();
           //if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
           //  // there could be explicit resume as a result of call to voteSuspend()
@@ -812,12 +814,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
 
     if (!DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
-      // just usual suspend-thread stepping
+      logSuspendContext(suspendContext, "usual suspend-thread breakpoint/stepping");
       return false;
     }
 
     Function<SuspendContextImpl, Boolean> afterSwitch = null;
     if (requestor instanceof CustomProcessingLocatableEventRequestor customRequestor) {
+      logSuspendContext(suspendContext, "switcher stepping will be applied");
       afterSwitch = customRequestor.applyAfterContextSwitch();
     }
     if (afterSwitch == null) {
@@ -827,6 +830,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     List<SuspendContextImpl> suspendAllContexts =
       ContainerUtil.filter(suspendManager.getEventContexts(), c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
     if (!suspendAllContexts.isEmpty()) {
+      logSuspendContext(suspendContext, "join with suspend-all context");
       if (suspendAllContexts.size() > 1) {
         debugProcess.logError("Many suspend all switch contexts: " + suspendAllContexts);
       }
@@ -860,6 +864,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
     }
     else {
+      logSuspendContext(suspendContext, "initiate transfer to suspend-all");
       noStandardSuspendNeeded = SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext, afterSwitch);
     }
 
@@ -944,5 +949,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
   private void processDefaultEvent(SuspendContextImpl suspendContext) {
     preprocessEvent(suspendContext, null);
     getSuspendManager().voteResume(suspendContext);
+  }
+
+  private static void logSuspendContext(@NotNull SuspendContextImpl suspendContext, @NotNull String message) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("For suspend context " + suspendContext + ": " + message);
+    }
   }
 }
