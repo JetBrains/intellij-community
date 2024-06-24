@@ -6,10 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
-import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
 import org.jetbrains.kotlin.onboarding.FeedbackBundle
+import org.jetbrains.kotlin.onboarding.FeedbackNotificationWithKotlinLogo
 
 class K2FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
@@ -36,8 +36,8 @@ class K2FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
         return K2FeedbackDialog(project, forTest)
     }
 
-    override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
-        return RequestFeedbackNotification(
+    override fun createNotification(project: Project, forTest: Boolean): FeedbackNotificationWithKotlinLogo {
+        return FeedbackNotificationWithKotlinLogo(
             "Feedback In IDE",
             FeedbackBundle.message("notification.k2.satisfaction.request.title"),
             FeedbackBundle.message("notification.k2.satisfaction.request.content")
