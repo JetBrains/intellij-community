@@ -126,9 +126,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public String resolveSymLink(@NotNull VirtualFile file) {
-    String result = FileSystemUtil.resolveSymLink(file.getPath());
-    return result != null ? FileUtilRt.toSystemIndependentName(result) : null;
+  public @Nullable String resolveSymLink(@NotNull VirtualFile file) {
+    try {
+      return convertToNioFileAndCheck(file, false).toRealPath().toString();
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   @Override
