@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.icons.AllIcons;
@@ -16,7 +15,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
@@ -139,20 +137,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor impleme
       for (PsiAnnotation annotation : method.getAnnotations()) {
         PsiJavaCodeReferenceElement nameElement = annotation.getNameReferenceElement();
         if (nameElement != null && "Override".equals(nameElement.getText())) {
-          return new LineMarkerInfo<>(
-            element,
-            element.getTextRange(),
-            getDumbOverridingIcon(method),
-            e -> JavaBundle.message("action.go.to.super.method.text"),
-            (e, elt) -> {
-              DumbService.getInstance(element.getProject()).showDumbModeNotificationForFunctionality(
-                CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"),
-                DumbModeBlockedFunctionality.GotoSuperMethod
-              );
-            },
-            GutterIconRenderer.Alignment.LEFT,
-            JavaBundle.messagePointer("action.go.to.super.method.text")
-          );
+          return createSuperMethodLineMarkerInfo(element, getDumbOverridingIcon(method));
         }
       }
     }
