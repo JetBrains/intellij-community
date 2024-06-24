@@ -5,6 +5,7 @@ import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -84,11 +85,10 @@ internal class ActivityChangesBrowser(project: Project, private val isSwitchingD
     return activityFileChange.createProducer(myProject)
   }
 
-  override fun getData(dataId: String): Any? {
-    if (ActivityViewDataKeys.SELECTED_DIFFERENCES.`is`(dataId)) {
-      return VcsTreeModelData.selected(myViewer).iterateUserObjects(PresentableChange::class.java)
-    }
-    return super.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    sink[ActivityViewDataKeys.SELECTED_DIFFERENCES] =
+      VcsTreeModelData.selected(myViewer).iterateUserObjects(PresentableChange::class.java)
   }
 
   override fun createToolbarActions(): List<AnAction> {

@@ -752,14 +752,11 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      Object data = super.getData(dataId);
-      if (data != null) return data;
-      if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.is(dataId)) {
-        return myEditorDiffPreview;
-      }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      sink.set(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
-      return myCommitPanel != null ? myCommitPanel.getDataFromProviders(dataId) : null;
+      DataSink.uiDataSnapshot(sink, myCommitPanel);
     }
 
     private static void registerShortcuts(@NotNull JComponent component) {

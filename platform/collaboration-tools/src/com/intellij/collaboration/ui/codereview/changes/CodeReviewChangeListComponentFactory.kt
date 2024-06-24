@@ -11,12 +11,13 @@ import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.fileStatus
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.getDataOrSuper
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.selected
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.uiDataSnapshot
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExpandableItemsHandler
@@ -93,13 +94,12 @@ object CodeReviewChangeListComponentFactory {
     object : AsyncChangesTree(vm.project, false, false) {
       override val changesTreeModel: AsyncChangesTreeModel = treeModel
 
-      override fun getData(dataId: String): Any? {
-        return when {
-          CommonDataKeys.NAVIGATABLE.`is`(dataId) -> getSelectedFiles().singleOrNull()?.let { OpenFileDescriptor(project, it) }
-          CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> ChangesUtil.getNavigatableArray(project, getSelectedFiles())
-          SELECTED_CHANGES.`is`(dataId) -> getSelectedChanges()
-          else -> return getDataOrSuper(project, this, dataId, super.getData(dataId))
-        }
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        uiDataSnapshot(sink, project, this)
+        sink[CommonDataKeys.NAVIGATABLE] = getSelectedFiles().singleOrNull()?.let { OpenFileDescriptor(project, it) }
+        sink[CommonDataKeys.NAVIGATABLE_ARRAY] = ChangesUtil.getNavigatableArray(project, getSelectedFiles())
+        sink[SELECTED_CHANGES] = getSelectedChanges()
       }
 
       private fun getSelectedChanges(): List<RefComparisonChange> =

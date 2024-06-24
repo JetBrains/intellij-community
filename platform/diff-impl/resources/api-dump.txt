@@ -457,6 +457,7 @@ a:com.intellij.diff.impl.DiffRequestProcessor
 - p:buildToolbar(java.util.List):V
 - p:collectPopupActions(java.util.List):V
 - p:collectToolbarActions(java.util.List):V
+- p:createAfterNavigateCallback():java.lang.Runnable
 - p:createGoToChangeAction():com.intellij.openapi.actionSystem.AnAction
 - dispose():V
 - fireProcessorActivated():V
@@ -465,7 +466,6 @@ a:com.intellij.diff.impl.DiffRequestProcessor
 - getComponent():javax.swing.JComponent
 - getContext():com.intellij.diff.DiffContext
 - getContextUserData(com.intellij.openapi.util.Key):java.lang.Object
-- p:getData(java.lang.String):java.lang.Object
 - getDisposable():com.intellij.openapi.util.CheckedDisposable
 - getEmbeddedEditors():java.util.List
 - getFilesToRefresh():java.util.List

@@ -1585,7 +1585,6 @@ f:com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 - f:addListener(com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser$Listener,com.intellij.openapi.Disposable):V
 - f:createChangeProcessor(Z):com.intellij.diff.impl.DiffEditorViewer
 - dispose():V
-- getData(java.lang.String):java.lang.Object
 - getDiffRequestProducer(java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 - f:getDiffRequestProducer(java.lang.Object,Z):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 - f:getDirectChanges():java.util.List
@@ -1598,6 +1597,7 @@ f:com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 - f:setEmptyWithText(java.util.function.Consumer):V
 - f:setSelectedDetails(java.util.List):V
 - f:setToolbarHeightReferent(javax.swing.JComponent):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser$Companion
 - f:createDiffRequestProducer(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change,java.util.Map,Z):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser$Listener

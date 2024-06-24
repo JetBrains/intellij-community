@@ -77,8 +77,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
@@ -93,7 +95,8 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
  * @see com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
  * @see DiffViewerVirtualFile
  */
-public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedDisposable {
+public abstract class DiffRequestProcessor
+  implements DiffEditorViewer, CheckedDisposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
 
   private static final DataKey<DiffTool> ACTIVE_DIFF_TOOL = DataKey.create("active_diff_tool");
@@ -470,8 +473,8 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
     myContext.putUserData(key, value);
   }
 
-  protected @Nullable Object getData(@NotNull @NonNls String dataId) {
-    return null;
+  protected @Nullable Runnable createAfterNavigateCallback() {
+    return () -> DiffUtil.minimizeDiffIfOpenedInWindow(myPanel);
   }
 
   protected @NotNull List<AnAction> getNavigationActions() {
@@ -1339,18 +1342,12 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(OpenInEditorAction.AFTER_NAVIGATE_CALLBACK,
-               () -> DiffUtil.minimizeDiffIfOpenedInWindow(DiffRequestProcessor.this.myPanel));
+      sink.set(OpenInEditorAction.AFTER_NAVIGATE_CALLBACK, createAfterNavigateCallback());
 
-      for (DataProvider provider : Arrays.asList(DiffRequestProcessor.this::getData,
-                                                 myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER),
-                                                 myActiveRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER),
-                                                 myState::getData)) {
-        DataSink.uiDataSnapshot(sink, provider);
-      }
-
-      DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getTargetComponent());
-      DataSink.uiDataSnapshot(sink, contentProvider);
+      DataSink.uiDataSnapshot(sink, myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER));
+      DataSink.uiDataSnapshot(sink, myActiveRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER));
+      DataSink.uiDataSnapshot(sink, myState);
+      DataSink.uiDataSnapshot(sink, DataManagerImpl.getDataProviderEx(myContentPanel.getTargetComponent()));
 
       sink.set(CommonDataKeys.PROJECT, myProject);
       sink.set(DiffDataKeys.DIFF_CONTEXT, myContext);
@@ -1487,18 +1484,18 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
   // States
   //
 
-  private interface ViewerState {
+  private interface ViewerState extends UiDataProvider {
     @RequiresEdt
-    void init();
+    default void init() { }
 
     @RequiresEdt
-    void destroy();
+    default void destroy() { }
 
     @Nullable
-    JComponent getPreferredFocusedComponent();
+    default JComponent getPreferredFocusedComponent() { return null; }
 
-    @Nullable
-    Object getData(@NotNull @NonNls String dataId);
+    @Override
+    default void uiDataSnapshot(@NotNull DataSink sink) { }
 
     @NotNull
     DiffTool getActiveTool();
@@ -1506,24 +1503,6 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
 
   private static final class EmptyState implements ViewerState {
     private static final EmptyState INSTANCE = new EmptyState();
-
-    @Override
-    public void init() {
-    }
-
-    @Override
-    public void destroy() {
-    }
-
-    @Override
-    public @Nullable JComponent getPreferredFocusedComponent() {
-      return null;
-    }
-
-    @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      return null;
-    }
 
     @Override
     public @NotNull DiffTool getActiveTool() {
@@ -1559,16 +1538,6 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
       catch (Throwable e) {
         LOG.error(e);
       }
-    }
-
-    @Override
-    public @Nullable JComponent getPreferredFocusedComponent() {
-      return null;
-    }
-
-    @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      return null;
     }
 
     @Override
@@ -1631,11 +1600,8 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
     }
 
     @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      if (DiffDataKeys.DIFF_VIEWER.is(dataId)) {
-        return myViewer;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(DiffDataKeys.DIFF_VIEWER, myViewer);
     }
   }
 
@@ -1711,14 +1677,9 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
     }
 
     @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      if (DiffDataKeys.WRAPPING_DIFF_VIEWER.is(dataId)) {
-        return myWrapperViewer;
-      }
-      if (DiffDataKeys.DIFF_VIEWER.is(dataId)) {
-        return myViewer;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(DiffDataKeys.WRAPPING_DIFF_VIEWER, myWrapperViewer);
+      sink.set(DiffDataKeys.DIFF_VIEWER, myViewer);
     }
   }
 

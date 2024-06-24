@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.diff.actions.impl.OpenInEditorAction;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.HelpIdProvider;
@@ -836,11 +835,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     @Override
-    protected @Nullable Object getData(@NotNull String dataId) {
-      if (OpenInEditorAction.AFTER_NAVIGATE_CALLBACK.is(dataId)) {
-        return (Runnable)() -> doCancelAction();
-      }
-      return super.getData(dataId);
+    protected @NotNull Runnable createAfterNavigateCallback() {
+      return () -> doCancelAction();
     }
 
   }

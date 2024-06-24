@@ -283,25 +283,17 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     return super.getDiffRequestProducer(entry);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
-      return VcsTreeModelData.selectedUnderTag(myViewer, UNVERSIONED_FILES_TAG)
-        .iterateUserObjects(FilePath.class);
-    }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myDeleteProvider;
-    }
-    else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-      return new ChangeList[]{myChangeList};
-    }
-    else if (EXACTLY_SELECTED_FILES_DATA_KEY.is(dataId)) {
-      return VcsTreeModelData.mapToExactVirtualFile(VcsTreeModelData.exactlySelected(myViewer));
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(UNVERSIONED_FILE_PATHS_DATA_KEY,
+             VcsTreeModelData.selectedUnderTag(myViewer, UNVERSIONED_FILES_TAG)
+               .iterateUserObjects(FilePath.class));
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+    sink.set(VcsDataKeys.CHANGE_LISTS, new ChangeList[]{myChangeList});
+    sink.set(EXACTLY_SELECTED_FILES_DATA_KEY,
+             VcsTreeModelData.mapToExactVirtualFile(VcsTreeModelData.exactlySelected(myViewer)));
   }
-
 
   @NotNull
   @Override

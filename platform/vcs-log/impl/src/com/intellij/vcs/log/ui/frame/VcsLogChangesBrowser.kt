@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDataKeys
@@ -267,42 +268,26 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   val selectedChanges: List<Change>
     get() = VcsTreeModelData.selected(myViewer).userObjects(Change::class.java)
 
-  override fun getData(dataId: String): Any? {
-    if (HAS_AFFECTED_FILES.`is`(dataId)) {
-      return affectedPaths != null
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId)) {
-      val roots = HashSet(commitModel.roots)
-      val selectedData = VcsTreeModelData.selected(myViewer)
-      val superProvider = super.getData(dataId) as DataProvider?
-      return CompositeDataProvider.compose({ slowId -> getSlowData(slowId, roots, selectedData) }, superProvider)
-    }
-    else if (QuickActionProvider.KEY.`is`(dataId)) {
-      return ComponentQuickActionProvider(this@VcsLogChangesBrowser)
-    }
-    return super.getData(dataId)
-  }
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    sink[HAS_AFFECTED_FILES] = affectedPaths != null
+    sink[QuickActionProvider.KEY] = ComponentQuickActionProvider(this@VcsLogChangesBrowser)
 
-  private fun getSlowData(dataId: String,
-                          roots: Set<VirtualFile>,
-                          selectedData: VcsTreeModelData): Any? {
-    if (VcsDataKeys.VCS.`is`(dataId)) {
-      val rootsVcs = JBIterable.from(roots)
-        .map { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+    val roots = HashSet(commitModel.roots)
+    val selectedData = VcsTreeModelData.selected(myViewer)
+    sink.lazy(VcsDataKeys.VCS) {
+      val rootsVcs = JBIterable.from<VirtualFile>(roots)
+        .map<AbstractVcs?> { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
         .filterNotNull()
         .unique()
         .single()
-      if (rootsVcs != null) return rootsVcs.keyInstanceMethod
-
-      val selectionVcs = selectedData.iterateUserObjects(Change::class.java)
-        .map { change -> ChangesUtil.getFilePath(change) }
-        .map { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+      rootsVcs?.keyInstanceMethod ?: selectedData.iterateUserObjects<Change>(Change::class.java)
+        .map<FilePath> { change -> ChangesUtil.getFilePath(change) }
+        .map<AbstractVcs?> { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
         .filterNotNull()
         .unique()
-        .single()
-      return selectionVcs?.keyInstanceMethod
+        .single()?.keyInstanceMethod
     }
-    return null
   }
 
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
