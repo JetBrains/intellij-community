@@ -21,9 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
@@ -44,6 +42,9 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,6 +129,53 @@ public class XValueHint extends AbstractValueHint {
   public void hideHint() {
     super.hideHint();
     disposeVisibleHint();
+  }
+
+  public class CompositeIcon implements Icon {
+    private final Icon icon1;
+    private final Icon icon2;
+    private final boolean horizontal;
+
+    public CompositeIcon(Icon icon1, Icon icon2, boolean horizontal) {
+      this.icon1 = icon1;
+      this.icon2 = icon2;
+      this.horizontal = horizontal;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      icon1.paintIcon(c, g, x, y);
+      if (horizontal) {
+        icon2.paintIcon(c, g, x + icon1.getIconWidth(), y);
+      } else {
+        icon2.paintIcon(c, g, x, y + icon1.getIconHeight());
+      }
+    }
+
+    @Override
+    public int getIconWidth() {
+      return horizontal ? icon1.getIconWidth() + icon2.getIconWidth() : Math.max(icon1.getIconWidth(), icon2.getIconWidth());
+    }
+
+    @Override
+    public int getIconHeight() {
+      return horizontal ? Math.max(icon1.getIconHeight(), icon2.getIconHeight()) : icon1.getIconHeight() + icon2.getIconHeight();
+    }
+  }
+
+  public static class SimpleColoredTextEx extends SimpleColoredText {
+    private Icon myIcon;
+
+    @Override
+    public void setIcon(@Nullable Icon icon) {
+      myIcon = icon;
+    }
+
+    @Override
+    public void appendToComponent(@NotNull ColoredTextContainer component) {
+      super.appendToComponent(component);
+      component.setIcon(myIcon);
+    }
   }
 
   @Override
@@ -259,8 +307,12 @@ public class XValueHint extends AbstractValueHint {
 
             // On presentation change we update our shown popup and resize if needed
             if (myShown) {
-              var previousPreferredWidth = mySimpleColoredComponent.getPreferredSize().width;
+              if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress) {
+                ((SimpleColoredComponentWithProgress)mySimpleColoredComponent).stopLoading();
+              }
               Icon previousIcon = mySimpleColoredComponent.getIcon();
+              var previousPreferredWidth = mySimpleColoredComponent.getPreferredSize().width;
+
               mySimpleColoredComponent.clear();
               fillSimpleColoredComponent(mySimpleColoredComponent, previousIcon, text, myFullValueEvaluator);
 
@@ -271,7 +323,10 @@ public class XValueHint extends AbstractValueHint {
               return;
             }
 
-            mySimpleColoredComponent = createExpandableHintComponent(icon, text, getShowPopupRunnable(result, myFullValueEvaluator), myFullValueEvaluator);
+            mySimpleColoredComponent = createExpandableHintComponent(icon, text, getShowPopupRunnable(result, myFullValueEvaluator), myFullValueEvaluator, valuePresenter);
+            if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress) {
+              ((SimpleColoredComponentWithProgress)mySimpleColoredComponent).startLoading();
+            }
             showTooltipPopup(mySimpleColoredComponent);
           }
           myShown = true;

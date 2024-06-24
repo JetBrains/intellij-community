@@ -47,6 +47,11 @@ public abstract class XValuePresentation {
     return null;
   }
 
+  /**
+   * @return true if content retrieval is async
+   */
+  public boolean isAsync() { return false; }
+
   public interface XValueTextRenderer {
     /**
      * Appends {@code value} with to the node text. Invisible characters are shown in escaped form.

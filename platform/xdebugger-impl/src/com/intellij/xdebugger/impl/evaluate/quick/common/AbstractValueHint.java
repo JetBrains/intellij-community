@@ -39,6 +39,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -335,14 +336,15 @@ public abstract class AbstractValueHint {
   }
 
   protected SimpleColoredComponent createExpandableHintComponent(@Nullable Icon icon,
-                                                     final SimpleColoredText text,
-                                                     final Runnable expand,
-                                                     @Nullable XFullValueEvaluator evaluator) {
+                                                                 final SimpleColoredText text,
+                                                                 final Runnable expand,
+                                                                 @Nullable XFullValueEvaluator evaluator,
+                                                                 @Nullable XValuePresentation valuePresenter) {
     Icon notNullIcon = icon != null
                        ? IconManager.getInstance().createRowIcon(UIUtil.getTreeCollapsedIcon(), icon)
                        : UIUtil.getTreeCollapsedIcon();
 
-    SimpleColoredComponent component = fillSimpleColoredComponent(new SimpleColoredComponent(), notNullIcon, text, evaluator);
+    SimpleColoredComponent component = fillSimpleColoredComponent(createComponent(valuePresenter), notNullIcon, text, evaluator);
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -522,5 +524,9 @@ public abstract class AbstractValueHint {
 
     Dimension popupSize = myCurrentPopup.getSize();
     updatePopupBounds(popupWindow, popupSize.width + widthDelta, popupSize.height + hightDelta);
+  }
+
+  private static SimpleColoredComponent createComponent(@Nullable XValuePresentation valuePresenter) {
+    return (valuePresenter != null && valuePresenter.isAsync()) ? new SimpleColoredComponentWithProgress() : new SimpleColoredComponent();
   }
 }
