@@ -144,7 +144,7 @@ public final class ModifierChooser {
     }
   }
 
-  public static String[] addJavaFileMemberModifiers(@Nullable PsiModifierList list, @NotNull PsiElement position) {
+  private static String[] addJavaFileMemberModifiers(@Nullable PsiModifierList list, @NotNull PsiElement position) {
     if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, position) &&
         (position.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null)) {
       return addMemberModifiers(list, false, position);
