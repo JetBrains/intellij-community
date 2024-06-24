@@ -9283,6 +9283,7 @@ f:com.intellij.vcs.console.MockVcsConsoleTabService
 - <init>():V
 - addMessage(com.intellij.openapi.vcs.VcsConsoleLine):V
 - addMessage(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
+- hadMessages():Z
 - isConsoleEmpty():Z
 - isConsoleVisible():Z
 - showConsoleTab(Z,java.lang.Runnable):V
@@ -9313,6 +9314,7 @@ com.intellij.vcs.console.VcsConsoleTabService
 - a:addMessage(com.intellij.openapi.vcs.VcsConsoleLine):V
 - a:addMessage(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.console.VcsConsoleTabService
+- a:hadMessages():Z
 - a:isConsoleEmpty():Z
 - a:isConsoleVisible():Z
 - a:showConsoleTab(Z,java.lang.Runnable):V

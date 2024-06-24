@@ -28,7 +28,8 @@ class ShowVcsConsoleTabAction : DumbAwareAction() {
 
     val consoleTabService = project.serviceIfCreated<VcsConsoleTabService>()
     e.presentation.isEnabledAndVisible = consoleTabService != null &&
-                                         (!consoleTabService.isConsoleEmpty() || consoleTabService.isConsoleVisible())
+                                         consoleTabService.hadMessages() &&
+                                         !consoleTabService.isConsoleVisible()
   }
 
   override fun actionPerformed(e: AnActionEvent) {
