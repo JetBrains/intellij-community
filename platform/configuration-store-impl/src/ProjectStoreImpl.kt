@@ -404,7 +404,7 @@ private class ProjectStateStorageManager(private val project: Project) : StateSt
   rootTagName = "project",
   macroSubstitutor = TrackingPathMacroSubstitutorImpl(PathMacroManager.getInstance(project)),
   componentManager = project,
-  controller = ApplicationManager.getApplication().getService(SettingsController::class.java)?.createChild(project),
+  controller = null
 ) {
   override val isUseVfsForWrite: Boolean
     get() = !useBackgroundSave
