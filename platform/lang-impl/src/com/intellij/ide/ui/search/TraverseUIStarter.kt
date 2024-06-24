@@ -409,8 +409,18 @@ private fun processConfigurables(
 
     if (configurable is MasterDetails) {
       configurable.initUi()
-      SearchUtil.processComponent(configurable, configurableOptions, configurable.master, i18n)
-      SearchUtil.processComponent(configurable, configurableOptions, configurable.details.component, i18n)
+      SearchUtil.processComponent(
+        configurable = configurable,
+        configurableOptions = configurableOptions,
+        component = configurable.master,
+        i18n = i18n,
+      )
+      SearchUtil.processComponent(
+        configurable = configurable,
+        configurableOptions = configurableOptions,
+        component = configurable.details.component,
+        i18n = i18n,
+      )
     }
     else {
       SearchUtil.processComponent(configurable, configurableOptions, configurable.createComponent(), i18n)
