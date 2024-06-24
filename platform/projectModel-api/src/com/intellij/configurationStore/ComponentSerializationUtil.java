@@ -12,6 +12,8 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 
 public final class ComponentSerializationUtil {
+  private ComponentSerializationUtil() { }
+
   public static @NotNull <S> Class<S> getStateClass(@NotNull Class<? extends PersistentStateComponent> aClass) {
     TypeVariable<Class<PersistentStateComponent>> variable = PersistentStateComponent.class.getTypeParameters()[0];
     Type type = ClassUtil.resolveVariableInHierarchy(variable, aClass);

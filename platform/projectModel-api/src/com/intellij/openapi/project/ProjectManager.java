@@ -32,6 +32,10 @@ public abstract class ProjectManager {
     return ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
   }
 
+  @ApiStatus.Internal
+  protected ProjectManager() {
+  }
+
   /**
    * @deprecated Use {@link #TOPIC} instead
    */

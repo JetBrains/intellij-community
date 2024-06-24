@@ -2,7 +2,6 @@ f:com.intellij.ProjectTopics
 - sf:MODULES:com.intellij.util.messages.Topic
 - sf:PROJECT_ROOTS:com.intellij.util.messages.Topic
 f:com.intellij.configurationStore.ComponentSerializationUtil
-- <init>():V
 - s:getStateClass(java.lang.Class):java.lang.Class
 - s:loadComponentState(com.intellij.openapi.components.PersistentStateComponent,org.jdom.Element):V
 @:com.intellij.configurationStore.Property
@@ -91,19 +90,6 @@ a:com.intellij.openapi.components.BaseState
 - pf:stringSet(java.lang.String):com.intellij.openapi.components.StoredPropertyBase
 - pf:treeSet():com.intellij.openapi.components.StoredPropertyBase
 f:com.intellij.openapi.components.BaseState$Companion
-e:com.intellij.openapi.components.JsonSchemaType
-- java.lang.Enum
-- sf:ARRAY:com.intellij.openapi.components.JsonSchemaType
-- sf:BOOLEAN:com.intellij.openapi.components.JsonSchemaType
-- sf:INTEGER:com.intellij.openapi.components.JsonSchemaType
-- sf:NUMBER:com.intellij.openapi.components.JsonSchemaType
-- sf:OBJECT:com.intellij.openapi.components.JsonSchemaType
-- sf:STRING:com.intellij.openapi.components.JsonSchemaType
-- s:getEntries():kotlin.enums.EnumEntries
-- f:getJsonName():java.lang.String
-- f:isScalar():Z
-- s:valueOf(java.lang.String):com.intellij.openapi.components.JsonSchemaType
-- s:values():com.intellij.openapi.components.JsonSchemaType[]
 a:com.intellij.openapi.components.MainConfigurationStateSplitter
 - com.intellij.openapi.components.StateSplitter
 - <init>():V
@@ -123,8 +109,6 @@ com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 @:com.intellij.openapi.components.ReportValue
 - java.lang.annotation.Annotation
 - a:possibleValues():java.lang.String[]
-com.intellij.openapi.components.ScalarProperty
-- a:parseAndSetValue(java.lang.String):V
 a:com.intellij.openapi.components.SerializablePersistentStateComponent
 - com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 - sf:Companion:com.intellij.openapi.components.SerializablePersistentStateComponent$Companion
@@ -206,11 +190,8 @@ e:com.intellij.openapi.components.StorageScheme
 - s:valueOf(java.lang.String):com.intellij.openapi.components.StorageScheme
 - s:values():com.intellij.openapi.components.StorageScheme[]
 com.intellij.openapi.components.StoredProperty
-- a:getJsonType():com.intellij.openapi.components.JsonSchemaType
-- getModificationCount():J
 - a:getName():java.lang.String
 - a:getValue(com.intellij.openapi.components.BaseState):java.lang.Object
-- a:isEqualToDefault():Z
 - a:setName(java.lang.String):V
 - a:setValue(com.intellij.openapi.components.BaseState,java.lang.Object):V
 - a:setValue(com.intellij.openapi.components.StoredProperty):Z
@@ -247,14 +228,11 @@ com.intellij.openapi.module.ModuleComponent
 - com.intellij.openapi.components.BaseComponent
 *a:com.intellij.openapi.module.ModuleGrouper
 - *sf:Companion:com.intellij.openapi.module.ModuleGrouper$Companion
-- <init>():V
-- a:getAllModules():com.intellij.openapi.module.Module[]
 - a:getCompactGroupNodes():Z
 - a:getGroupPath(com.intellij.openapi.module.Module):java.util.List
 - a:getGroupPath(com.intellij.openapi.module.ModuleDescription):java.util.List
 - a:getGroupPathByModuleName(java.lang.String):java.util.List
 - a:getModuleAsGroupPath(com.intellij.openapi.module.Module):java.util.List
-- a:getModuleAsGroupPath(com.intellij.openapi.module.ModuleDescription):java.util.List
 - a:getShortenedName(com.intellij.openapi.module.Module):java.lang.String
 - a:getShortenedName(com.intellij.openapi.module.Module,java.lang.String):java.lang.String
 - a:getShortenedNameByFullModuleName(java.lang.String):java.lang.String
@@ -299,13 +277,11 @@ com.intellij.openapi.module.ModulePointer
 - a:getModule():com.intellij.openapi.module.Module
 - a:getModuleName():java.lang.String
 a:com.intellij.openapi.module.ModulePointerManager
-- <init>():V
 - a:create(com.intellij.openapi.module.Module):com.intellij.openapi.module.ModulePointer
 - a:create(java.lang.String):com.intellij.openapi.module.ModulePointer
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModulePointerManager
 c:com.intellij.openapi.module.ModuleUtilCore
 - sf:KEY_MODULE:com.intellij.openapi.util.Key
-- <init>():V
 - s:collectModulesDependsOn(com.intellij.openapi.module.Module,java.util.Set):V
 - s:findModuleForFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.module.Module
 - s:findModuleForFile(com.intellij.psi.PsiFile):com.intellij.openapi.module.Module
@@ -353,7 +329,6 @@ com.intellij.openapi.project.ProjectCloseHandler
 *f:com.intellij.openapi.project.ProjectCloseListener$Companion
 a:com.intellij.openapi.project.ProjectManager
 - sf:TOPIC:com.intellij.util.messages.Topic
-- <init>():V
 - a:addProjectManagerListener(com.intellij.openapi.project.Project,com.intellij.openapi.project.ProjectManagerListener):V
 - a:addProjectManagerListener(com.intellij.openapi.project.ProjectManagerListener):V
 - a:addProjectManagerListener(com.intellij.openapi.project.VetoableProjectManagerListener):V
@@ -387,7 +362,6 @@ f:com.intellij.openapi.project.ProjectType
 - setId(java.lang.String):V
 f:com.intellij.openapi.project.ProjectTypeService
 - com.intellij.openapi.components.PersistentStateComponent
-- <init>():V
 - s:clearFieldsForLightProjectInTests(com.intellij.openapi.project.Project):V
 - s:getProjectType(com.intellij.openapi.project.Project):com.intellij.openapi.project.ProjectType
 - s:getProjectTypeIds(com.intellij.openapi.project.Project):java.util.Set
@@ -866,7 +840,6 @@ com.intellij.openapi.roots.ProjectModelBuildableElement
 - a:getId():java.lang.String
 a:com.intellij.openapi.roots.ProjectRootManager
 - com.intellij.openapi.util.SimpleModificationTracker
-- <init>():V
 - a:getContentRootUrls():java.util.List
 - a:getContentRoots():com.intellij.openapi.vfs.VirtualFile[]
 - a:getContentRootsFromAllModules():com.intellij.openapi.vfs.VirtualFile[]

@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.graph.Graph;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,10 @@ import java.util.*;
 
 public class ModuleUtilCore {
   public static final Key<Module> KEY_MODULE = new Key<>("Module");
+
+  @ApiStatus.Internal
+  protected ModuleUtilCore() {
+  }
 
   public static boolean projectContainsFile(@NotNull Project project, @NotNull VirtualFile file, boolean isLibraryElement) {
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);

@@ -30,6 +30,9 @@ public final class ProjectTypeService implements PersistentStateComponent<Projec
 
   private ProjectType myProjectType;
 
+  ProjectTypeService() {
+  }
+
   /**
    * @deprecated Use {@link #getProjectTypes(Project)} instead
    */
