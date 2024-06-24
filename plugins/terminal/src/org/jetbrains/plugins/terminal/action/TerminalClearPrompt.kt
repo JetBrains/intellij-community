@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.plugins.terminal.block.prompt.clearCommandAndResetUndoRedoStack
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
@@ -15,7 +16,7 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.termin
 internal class TerminalClearPrompt : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     e.terminalFocusModel?.focusPrompt()
-    e.promptController?.model?.reset()
+    e.promptController?.model?.clearCommandAndResetUndoRedoStack()
   }
 
   override fun update(e: AnActionEvent) {

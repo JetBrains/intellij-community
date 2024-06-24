@@ -39,11 +39,10 @@ interface TerminalPromptModel : Disposable {
   var commandText: String
 
   /**
-   * Clears the command text, so only prompt is left.
-   * Also clears the document modifications history, so it is no more possible to Undo/Redo this change.
+   * Clears the document modifications history, so it is no more possible to Undo/Redo the changes made before this call.
    */
   @RequiresEdt
-  fun reset()
+  fun resetUndoRedoStack()
 
   /**
    * Updates the prompt string, leaving the command untouched.
@@ -58,4 +57,10 @@ interface TerminalPromptModel : Disposable {
   companion object {
     val KEY: Key<TerminalPromptModel> = Key.create("TerminalPromptModel")
   }
+}
+
+internal fun TerminalPromptModel.clearCommandAndResetUndoRedoStack() {
+  commandText = ""
+  editor.caretModel.moveToOffset(editor.document.textLength)
+  resetUndoRedoStack()
 }

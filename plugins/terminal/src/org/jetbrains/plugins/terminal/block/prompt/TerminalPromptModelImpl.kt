@@ -76,10 +76,7 @@ internal class TerminalPromptModelImpl(
   }
 
   @RequiresEdt
-  override fun reset() {
-    commandText = ""
-    editor.caretModel.moveToOffset(document.textLength)
-    // reset Undo/Redo actions queue to not allow undoing the prompt update
+  override fun resetUndoRedoStack() {
     val undoManager = UndoManager.getInstance(editor.project!!) as UndoManagerImpl
     undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
   }
