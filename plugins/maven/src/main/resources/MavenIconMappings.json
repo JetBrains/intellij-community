@@ -7,7 +7,10 @@
         "mavenModule.svg": "images/modulesClosed.svg",
         "mavenParentProjects.svg": "images/parentProject.svg",
         "mavenPlugin.svg": "images/mavenPlugin.svg",
-        "mavenPluginGoal.svg": "images/pluginGoal.svg",
+        "mavenPluginGoal.svg": [
+          "images/pluginGoal.svg",
+          "images/mavenRepoRemote.svg"
+        ],
         "mavenProfiles.svg": [
           "images/profilesClosed.svg",
           "images/mavenRepoFolder.svg"
