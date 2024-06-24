@@ -985,8 +985,7 @@ public final class TypeConversionUtil {
     PsiClass leftResultElement = leftResult.getElement();
     PsiClass rightResultElement = rightResult.getElement();
     if (leftResultElement == null || rightResultElement == null) {
-      if (leftResultElement == null && rightResultElement != null &&
-              left instanceof PsiClassType && left.equalsToText(JAVA_LANG_OBJECT)) {
+      if (left instanceof PsiClassType && left.equalsToText(JAVA_LANG_OBJECT)) {
         return true;
       }
       if (leftResultElement != rightResultElement) return false;
