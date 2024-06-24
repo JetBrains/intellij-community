@@ -112,7 +112,7 @@ import java.util.function.Consumer;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
-  private static boolean LOG_JDI_LOG_IN_UNIT_TESTS = true;
+  private static boolean LOG_JDI_LOG_IN_UNIT_TESTS = false;
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
