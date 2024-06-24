@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.ContinuationInterceptor
@@ -118,18 +119,36 @@ suspend fun checkCanceled() {
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
 fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
-  return runBlockingCancellable(allowOrphan = false, action)
+  return runBlockingCancellable(allowOrphan = false, compensateParallelism = true, action)
 }
 
-private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend CoroutineScope.() -> T): T {
+/**
+ * Do not use this overload unless you absolutely certain that you should.
+ * Consider using [runBlockingCancellable] without [compensateParallelism] argument instead.
+ */
+@Internal
+@InternalCoroutinesApi
+@RequiresBackgroundThread(generateAssertion = false)
+@RequiresBlockingContext
+fun <T> runBlockingCancellable(compensateParallelism: Boolean, action: suspend CoroutineScope.() -> T): T {
+  return runBlockingCancellable(allowOrphan = false, compensateParallelism = compensateParallelism, action)
+}
+
+private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParallelism: Boolean, action: suspend CoroutineScope.() -> T): T {
   assertBackgroundThreadOrWriteAction()
   return prepareThreadContext { ctx ->
     if (!allowOrphan && ctx[Job] == null && !Cancellation.isInNonCancelableSection()) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
     }
     try {
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(ctx + readActionContext(), action)
+      if (compensateParallelism) {
+        @OptIn(InternalCoroutinesApi::class)
+        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + readActionContext(), action)
+      }
+      else {
+        @Suppress("RAW_RUN_BLOCKING")
+        runBlocking(ctx + readActionContext(), action)
+      }
     }
     catch (pce: ProcessCanceledException) {
       throw pce
@@ -153,7 +172,19 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
 fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
-  return runBlockingCancellable(allowOrphan = true, action)
+  return runBlockingCancellable(allowOrphan = true, compensateParallelism = true, action)
+}
+
+/**
+ * Do not use this overload unless you absolutely certain that you should.
+ * Consider using [runBlockingMaybeCancellable] without the [compensateParallelism] argument instead.
+ */
+@Internal
+@InternalCoroutinesApi
+@RequiresBackgroundThread(generateAssertion = false)
+@RequiresBlockingContext
+fun <T> runBlockingMaybeCancellable(compensateParallelism: Boolean, action: suspend CoroutineScope.() -> T): T {
+  return runBlockingCancellable(allowOrphan = true, compensateParallelism = compensateParallelism, action)
 }
 
 @Deprecated(
