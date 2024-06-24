@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.openEditor
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,10 +27,7 @@ import com.intellij.platform.whatsNew.reaction.FUSReactionChecker
 import com.intellij.platform.whatsNew.reaction.ReactionsPanel
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.application
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.concurrency.await
 
 internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAware {
@@ -47,7 +45,9 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     }
   }
 
-  val content: WhatsNewContent? = WhatsNewContent.getWhatsNewContent()
+  private val contentAsync = appScope.async {
+    WhatsNewContent.getWhatsNewContent()
+  }
 
   suspend fun openWhatsNew(project: Project) {
     LOG.info("Open What's New page requested.")
@@ -57,6 +57,7 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
 
   private suspend fun openWhatsNewPage(project: Project, dataContext: DataContext?, byClient: Boolean = false) {
     if (JBCefApp.isSupported()) {
+      val content = contentAsync.await()
       if (content != null && content.isAvailable()) {
         openContent(project, content, dataContext, byClient)
       }
@@ -99,7 +100,7 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
   }
 
   override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = content != null
+      e.presentation.isEnabledAndVisible = runBlockingCancellable { contentAsync.await() != null }
       e.presentation.setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().fullProductName))
       e.presentation.setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().fullProductName))
   }
@@ -119,3 +120,8 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
 @Service(Service.Level.PROJECT)
 private class ScopeProvider(val scope: CoroutineScope)
 private fun Project.getScope() = this.service<ScopeProvider>().scope
+
+@Service(Service.Level.APP)
+private class AppScopeProvider(val scope: CoroutineScope)
+private val appScope: CoroutineScope
+  get() = service<AppScopeProvider>().scope

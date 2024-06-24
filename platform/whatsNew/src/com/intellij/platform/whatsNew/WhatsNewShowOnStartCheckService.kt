@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import java.util.concurrent.atomic.AtomicBoolean
@@ -23,16 +22,12 @@ internal class WhatsNewShowOnStartCheckService : ProjectActivity {
     val content = WhatsNewContent.getWhatsNewContent()
     logger.info("Got What's New content: $content")
     if (content != null) {
-      if (isWhatsNewTestMode.also { logger.info("What's New test mode: $it") }
-          || WhatsNewContentVersionChecker.isNeedToShowContent(content).also { logger.info("Should show What's New: $it") }) {
+      if (WhatsNewContentVersionChecker.isNeedToShowContent(content).also { logger.info("Should show What's New: $it") }) {
         val whatsNewAction = service<ActionManager>().getAction("WhatsNewAction") as? WhatsNewAction
         whatsNewAction?.openWhatsNew(project)
       }
     }
   }
 }
-
-internal val isWhatsNewTestMode: Boolean
-  get() = Registry.`is`("whats.new.test.mode")
 
 private val logger = logger<WhatsNewShowOnStartCheckService>()

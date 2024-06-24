@@ -34,7 +34,7 @@ internal sealed class WhatsNewContent {
     private val DataContext.project: Project?
       get() = CommonDataKeys.PROJECT.getData(this)
 
-    fun getWhatsNewContent(): WhatsNewContent? {
+    suspend fun getWhatsNewContent(): WhatsNewContent? {
       return if (WhatsNewInVisionContentProvider.isAvailable()) {
         WhatsNewVisionContent(WhatsNewInVisionContentProvider.getContent().entities.first())
       } else {

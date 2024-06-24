@@ -5,14 +5,22 @@ package com.intellij.platform.whatsNew
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.diagnostic.logger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import java.io.InputStream
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.inputStream
+import kotlin.io.path.isRegularFile
 
 internal object WhatsNewInVisionContentProvider {
-  fun isAvailable(): Boolean {
-    return WhatsNewInVisionContentProvider::class.java.getResource(getProductResourcePath()) != null
+  suspend fun isAvailable(): Boolean {
+    return content.checkAvailability()
   }
 
   @Serializable
@@ -34,33 +42,55 @@ internal object WhatsNewInVisionContentProvider {
   @Serializable
   internal data class PublicVar(val value: String, val description: String)
 
-  private fun getProductResourcePath(): String {
-    fun getResourceName(fileName: String): String {
-      val appName = ApplicationNamesInfo.getInstance().productName.lowercase()
-      val isEap = ApplicationInfo.getInstance().isEAP
-      return "/com/intellij/platform/whatsNew/$appName${
-        if (isEap) {
-          "/eap/$fileName"
-        }
-        else {
-          "/release/$fileName"
-        }
-      }"
-    }
-
-    if (isWhatsNewTestMode) {
-      val testResource = getResourceName("vision-test.json")
-      if (WhatsNewInVisionContentProvider::class.java.getResource(testResource) != null) {
-        return testResource
+  private fun getResourceName(): String {
+    val fileName = "vision.json"
+    val appName = ApplicationNamesInfo.getInstance().productName.lowercase()
+    val isEap = ApplicationInfo.getInstance().isEAP
+    return "com/intellij/platform/whatsNew/$appName${
+      if (isEap) {
+        "/eap/$fileName"
       }
-    }
-
-    return getResourceName("vision.json")
+      else {
+        "/release/$fileName"
+      }
+    }"
   }
 
-  internal fun getContent(): Container {
-    return WhatsNewInVisionContentProvider::class.java.getResourceAsStream(getProductResourcePath())?.use { inputStream ->
+  private val content: ContentSource by lazy {
+    System.getProperty(PROPERTY_WHATS_NEW_VISION_JSON)?.let { testResourcePath ->
+      logger.info("What's New test mode engaged: loading resource from \"$testResourcePath\".")
+      PathContentSource(Path(testResourcePath))
+    } ?: ResourceContentSource(WhatsNewInVisionContentProvider::class.java.classLoader, getResourceName())
+  }
+
+  internal suspend fun getContent(): Container {
+    return content.openStream()?.use { inputStream ->
       Json.decodeFromStream<Container>(inputStream)
     } ?: error("Vision page not found")
+  }
+}
+
+private const val PROPERTY_WHATS_NEW_VISION_JSON = "intellij.whats.new.vision.json"
+
+private val logger = logger<WhatsNewInVisionContentProvider>()
+
+private interface ContentSource {
+  suspend fun openStream(): InputStream?
+  suspend fun checkAvailability(): Boolean
+}
+private class PathContentSource(private val path: Path) : ContentSource {
+  override suspend fun openStream() = withContext(Dispatchers.IO) {
+    path.inputStream()
+  }
+  override suspend fun checkAvailability() = withContext(Dispatchers.IO) {
+    path.isRegularFile()
+  }
+}
+private class ResourceContentSource(private val classLoader: ClassLoader, private val resourceName: String) : ContentSource {
+  override suspend fun openStream(): InputStream? = withContext(Dispatchers.IO) {
+    classLoader.getResourceAsStream(resourceName)
+  }
+  override suspend fun checkAvailability() = withContext(Dispatchers.IO) {
+    classLoader.getResource(resourceName) != null
   }
 }
