@@ -2,6 +2,8 @@
 package com.intellij.ide.ui.search
 
 import com.intellij.BundleBase
+import com.intellij.ide.ui.search.SearchUtil.ADDITIONAL_SEARCH_LABELS_KEY
+import com.intellij.ide.ui.search.SearchUtil.SEARCH_SKIP_COMPONENT_KEY
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.Configurable
@@ -14,7 +16,6 @@ import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
 import com.intellij.ui.TabbedPaneWrapper.TabbedPaneHolder
 import com.intellij.util.IntPair
-import com.intellij.util.SmartList
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -34,11 +35,10 @@ object SearchUtil {
   @JvmField
   @Internal
   val ADDITIONAL_SEARCH_LABELS_KEY: Key<List<String>> = Key.create("ADDITIONAL_SEARCH_LABELS")
+
   @JvmField
   @Internal
   val SEARCH_SKIP_COMPONENT_KEY: Key<Boolean> = Key.create("SEARCH_SKIP_COMPONENT_KEY")
-
-  private val HTML_PATTERN: Pattern = Pattern.compile("<[^<>]*>")
 
   const val HIGHLIGHT_WITH_BORDER: String = "searchUtil.highlightWithBorder"
   private const val STYLE_END = "</style>"
@@ -48,173 +48,12 @@ object SearchUtil {
     configurable: SearchableConfigurable,
     configurableOptions: MutableSet<OptionDescription>,
     component: JComponent?,
-    i18n: Boolean
+    i18n: Boolean,
   ) {
     if (component != null) {
-      processUILabel(title = configurable.displayName, configurableOptions = configurableOptions, path = null, i18n = i18n)
-      processComponent(component = component, configurableOptions = configurableOptions, path = null, i18n = i18n)
+      processUiLabel(title = configurable.displayName, configurableOptions = configurableOptions, path = null, i18n = i18n)
+      collectSearchItemsForComponent(component = component, configurableOptions = configurableOptions, path = null, i18n = i18n)
     }
-  }
-
-  @JvmStatic
-  fun processComponent(component: JComponent, configurableOptions: MutableSet<OptionDescription>, path: String?, i18n: Boolean) {
-    if (ClientProperty.get(component, SEARCH_SKIP_COMPONENT_KEY) == true) {
-      return
-    }
-
-    val additional = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY)
-    if (additional != null) {
-      for (each in additional) {
-        processUILabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
-      }
-    }
-
-    val border = component.border
-    if (border is TitledBorder) {
-      val title = border.title
-      if (title != null) {
-        processUILabel(title = title, configurableOptions = configurableOptions, path = path, i18n = i18n)
-      }
-    }
-    val label = getLabelsFromComponent(component)
-    if (!label.isEmpty()) {
-      for (each in label) {
-        processUILabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
-      }
-    }
-    else if (component is JComboBox<*>) {
-      val labels = getItemsFromComboBox(component)
-      for (each in labels) {
-        processUILabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
-      }
-    }
-    else if (component is JTabbedPane) {
-      val tabCount = component.tabCount
-      for (i in 0 until tabCount) {
-        val title = if (path == null) component.getTitleAt(i) else path + '.' + component.getTitleAt(i)
-        processUILabel(title, configurableOptions, title, i18n)
-        val tabComponent = component.getComponentAt(i)
-        if (tabComponent is JComponent) {
-          processComponent(tabComponent, configurableOptions, title, i18n)
-        }
-      }
-    }
-    else if (component is TabbedPaneHolder) {
-      val tabbedPane = component.tabbedPaneWrapper
-      val tabCount = tabbedPane.tabCount
-      for (i in 0 until tabCount) {
-        val tabTitle = tabbedPane.getTitleAt(i)
-        val title = if (path == null) tabTitle else "$path.$tabTitle"
-        processUILabel(title, configurableOptions, title, i18n)
-        val tabComponent = tabbedPane.getComponentAt(i)
-        if (tabComponent != null) {
-          processComponent(tabComponent, configurableOptions, title, i18n)
-        }
-      }
-    }
-    else {
-      val components = component.components
-      if (components != null) {
-        for (child in components) {
-          if (child is JComponent) {
-            processComponent(component = child, configurableOptions = configurableOptions, path = path, i18n = i18n)
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * This method tries to extract a user-visible text (as opposed to an HTML markup string) from a Swing text component.
-   */
-  private fun getLabelFromTextView(component: JComponent): String? {
-    val view = component.getClientProperty("html")
-    if (view !is View) return null
-    val document = view.document ?: return null
-    val length = document.length
-    try {
-      return document.getText(0, length)
-    }
-    catch (e: BadLocationException) {
-      LOG.error(e)
-      return null
-    }
-  }
-
-  private fun getLabelFromComponent(label: JLabel): String = getLabelFromTextView(label) ?: label.text
-
-  private fun getLabelFromComponent(button: AbstractButton): String? = getLabelFromTextView(button) ?: button.text
-
-  private fun getLabelsFromComponent(component: Component?): List<String> {
-    var label: String? = null
-    when (component) {
-      is JLabel -> label = getLabelFromComponent(component)
-      is JCheckBox -> label = getLabelFromComponent(component)
-      is JRadioButton -> label = getLabelFromComponent(component)
-      is JButton -> label = getLabelFromComponent(component)
-    }
-    label = Strings.nullize(label, true)
-
-    val labels = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY)
-    if (labels != null) {
-      val al = ArrayList<String>(labels)
-      if (label != null) {
-        al.add(label)
-      }
-      return al
-    }
-    if (label == null) {
-      return SmartList()
-    }
-
-    return SmartList(label)
-  }
-
-  private fun getItemsFromComboBox(comboBox: JComboBox<*>): List<String> {
-    @Suppress("UNCHECKED_CAST")
-    var renderer = comboBox.renderer as? ListCellRenderer<Any?>
-    if (renderer == null) {
-      renderer = DefaultListCellRenderer()
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    val jList = BasicComboPopup(comboBox as JComboBox<Any?>).list
-
-    val result = ArrayList<String>()
-
-    val count = comboBox.itemCount
-    for (i in 0 until count) {
-      val value = comboBox.getItemAt(i)!!
-      val labelComponent = renderer.getListCellRendererComponent(jList, value, i, false, false)
-      val label = getLabelsFromComponent(labelComponent)
-      result.addAll(label)
-    }
-
-    return result
-  }
-
-  fun processUILabel(title: String, configurableOptions: MutableSet<OptionDescription>, path: String?, i18n: Boolean) {
-    @Suppress("NAME_SHADOWING")
-    var title = title
-    val headStart = title.indexOf("<head>")
-    val headEnd = if (headStart >= 0) title.indexOf("</head>") else -1
-    if (headEnd > headStart) {
-      title = title.substring(0, headStart) + title.substring(headEnd + "</head>".length)
-    }
-
-    title = HTML_PATTERN.matcher(title).replaceAll(" ")
-    val words = HashSet<String>()
-    SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemming(title, words, emptySet())
-    title = title.replace(BundleBase.MNEMONIC_STRING, "")
-    title = getNonWordPattern(i18n).matcher(title).replaceAll(" ")
-    for (word in words) {
-      configurableOptions.add(OptionDescription(word, title, path))
-    }
-  }
-
-  private fun getNonWordPattern(i18n: Boolean): Pattern {
-    @Suppress("RegExpSimplifiable")
-    return Pattern.compile("[" + (if (i18n) "^\\pL" else "\\W") + "&&[^\\p{Punct}\\p{Blank}]]")
   }
 
   @JvmStatic
@@ -247,7 +86,7 @@ object SearchUtil {
     configurable: SearchableConfigurable,
     rootComponent: JComponent,
     option: String?,
-    force: Boolean
+    force: Boolean,
   ): Boolean {
     rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, null)
 
@@ -348,6 +187,7 @@ object SearchUtil {
   fun markup(textToMarkup: String, filter: String?, textColor: Color, backgroundColor: Color): String {
     @Suppress("NAME_SHADOWING")
     var textToMarkup = textToMarkup
+
     @Suppress("NAME_SHADOWING")
     var filter = filter
     if (filter.isNullOrEmpty()) {
@@ -411,7 +251,7 @@ object SearchUtil {
     insideHtmlTagPattern: Pattern,
     option: String,
     textColor: Color,
-    backgroundColor: Color
+    backgroundColor: Color,
   ): String {
     val styleIdx = textToMarkup.indexOf("<style")
     val styleEndIdx = textToMarkup.indexOf("</style>")
@@ -427,7 +267,7 @@ object SearchUtil {
     insideHtmlTagPattern: Pattern,
     option: String,
     textColor: Color,
-    backgroundColor: Color
+    backgroundColor: Color,
   ): String {
     val result = StringBuilder()
     var beg = 0
@@ -459,7 +299,7 @@ object SearchUtil {
     @StyleAttributeConstant style: Int,
     foreground: Color?,
     background: Color?,
-    textRenderer: SimpleColoredComponent
+    textRenderer: SimpleColoredComponent,
   ) {
     if (matchingRanges.isEmpty()) {
       appendFragments(
@@ -503,10 +343,11 @@ object SearchUtil {
     @StyleAttributeConstant style: Int,
     foreground: Color?,
     background: Color?,
-    textRenderer: SimpleColoredComponent
+    textRenderer: SimpleColoredComponent,
   ) {
     @Suppress("NAME_SHADOWING")
     var filter = filter
+
     @Suppress("NAME_SHADOWING")
     var text = text ?: return
 
@@ -666,4 +507,161 @@ private fun addChildren(configurable: Configurable, result: MutableCollection<Co
 
 private fun highlightComponent(rootComponent: JComponent, searchString: String) {
   ApplicationManager.getApplication().messageBus.syncPublisher(ComponentHighlightingListener.TOPIC).highlight(rootComponent, searchString)
+}
+
+private val HTML_PATTERN: Pattern = Pattern.compile("<[^<>]*>")
+
+@Internal
+fun processUiLabel(title: String, configurableOptions: MutableSet<OptionDescription>, path: String?, i18n: Boolean) {
+  @Suppress("NAME_SHADOWING")
+  var title = title
+  val headStart = title.indexOf("<head>")
+  val headEnd = if (headStart >= 0) title.indexOf("</head>") else -1
+  if (headEnd > headStart) {
+    title = title.substring(0, headStart) + title.substring(headEnd + "</head>".length)
+  }
+
+  title = HTML_PATTERN.matcher(title).replaceAll(" ")
+
+  val words = HashSet<String>()
+  SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemmingAndStopWords(title, words)
+  title = title.replace(BundleBase.MNEMONIC_STRING, "")
+  title = getNonWordPattern(i18n).matcher(title).replaceAll(" ")
+  for (word in words) {
+    configurableOptions.add(OptionDescription(word, title, path))
+  }
+}
+
+private fun getNonWordPattern(i18n: Boolean): Pattern {
+  @Suppress("RegExpSimplifiable")
+  return Pattern.compile("[" + (if (i18n) "^\\pL" else "\\W") + "&&[^\\p{Punct}\\p{Blank}]]")
+}
+
+@Internal
+fun collectSearchItemsForComponent(
+  component: JComponent,
+  configurableOptions: MutableSet<OptionDescription>,
+  path: String?,
+  i18n: Boolean,
+) {
+  if (ClientProperty.isTrue(component, SEARCH_SKIP_COMPONENT_KEY)) {
+    return
+  }
+
+  ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY)?.let { additional ->
+    for (each in additional) {
+      processUiLabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
+    }
+  }
+
+  val border = component.border
+  if (border is TitledBorder) {
+    val title = border.title
+    if (title != null) {
+      processUiLabel(title = title, configurableOptions = configurableOptions, path = path, i18n = i18n)
+    }
+  }
+
+  val label = getLabelsFromComponent(component)
+  if (!label.isEmpty()) {
+    for (each in label) {
+      processUiLabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
+    }
+  }
+  else if (component is JComboBox<*>) {
+    val labels = getItemsFromComboBox(component)
+    for (each in labels) {
+      processUiLabel(title = each, configurableOptions = configurableOptions, path = path, i18n = i18n)
+    }
+  }
+  else if (component is JTabbedPane) {
+    val tabCount = component.tabCount
+    for (i in 0 until tabCount) {
+      val title = if (path == null) component.getTitleAt(i) else path + '.' + component.getTitleAt(i)
+      processUiLabel(title, configurableOptions, title, i18n)
+      val tabComponent = component.getComponentAt(i)
+      if (tabComponent is JComponent) {
+        collectSearchItemsForComponent(tabComponent, configurableOptions, title, i18n)
+      }
+    }
+  }
+  else if (component is TabbedPaneHolder) {
+    val tabbedPane = component.tabbedPaneWrapper
+    val tabCount = tabbedPane.tabCount
+    for (i in 0 until tabCount) {
+      val tabTitle = tabbedPane.getTitleAt(i)
+      val title = if (path == null) tabTitle else "$path.$tabTitle"
+      processUiLabel(title = title, configurableOptions = configurableOptions, path = title, i18n = i18n)
+      tabbedPane.getComponentAt(i)?.let {
+        collectSearchItemsForComponent(component = it, configurableOptions = configurableOptions, path = title, i18n = i18n)
+      }
+    }
+  }
+  else {
+    component.components?.let { components ->
+      for (child in components) {
+        if (child is JComponent) {
+          collectSearchItemsForComponent(component = child, configurableOptions = configurableOptions, path = path, i18n = i18n)
+        }
+      }
+    }
+  }
+}
+
+/**
+ * This method tries to extract a user-visible text (as opposed to an HTML markup string) from a Swing text component.
+ */
+private fun getLabelFromTextView(component: JComponent): String? {
+  val view = component.getClientProperty("html")
+  if (view !is View) {
+    return null
+  }
+
+  val document = view.document ?: return null
+  val length = document.length
+  try {
+    return document.getText(0, length)
+  }
+  catch (e: BadLocationException) {
+    LOG.error(e)
+    return null
+  }
+}
+
+private fun getLabelFromComponent(label: JLabel): String? = getLabelFromTextView(label) ?: label.text
+
+private fun getLabelFromComponent(button: AbstractButton): String? = getLabelFromTextView(button) ?: button.text
+
+private fun getLabelsFromComponent(component: Component?): List<String> {
+  var label: String? = when (component) {
+    is JLabel -> getLabelFromComponent(component)
+    is JCheckBox -> getLabelFromComponent(component)
+    is JRadioButton -> getLabelFromComponent(component)
+    is JButton -> getLabelFromComponent(component)
+    else -> null
+  }
+  label = label?.takeIf { it.isNotBlank() }
+
+  val labels = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY) ?: return listOfNotNull(label)
+  val list = ArrayList<String>(labels)
+  if (label != null) {
+    list.add(label)
+  }
+  return list
+}
+
+private fun getItemsFromComboBox(comboBox: JComboBox<*>): List<String> {
+  @Suppress("UNCHECKED_CAST")
+  val renderer = comboBox.renderer as? ListCellRenderer<Any?> ?: DefaultListCellRenderer()
+  @Suppress("UNCHECKED_CAST")
+  val jList = BasicComboPopup(comboBox as JComboBox<Any?>).list
+
+  val result = ArrayList<String>()
+  val count = comboBox.itemCount
+  for (i in 0 until count) {
+    val value = comboBox.getItemAt(i)
+    val labelComponent = renderer.getListCellRendererComponent(jList, value, i, false, false)
+    result.addAll(getLabelsFromComponent(labelComponent))
+  }
+  return result
 }

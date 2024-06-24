@@ -493,17 +493,15 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
                                                           @NotNull Set<? super String> result,
                                                           @NotNull Set<String> stopWords) {
     for (String opt : WORD_SEPARATOR_CHARS.split(text.toLowerCase(Locale.ENGLISH))) {
-      if (stopWords.contains(opt)) {
-        continue;
+      if (!stopWords.contains(opt) && !stopWords.contains(PorterStemmerUtil.stem(opt))) {
+        result.add(opt);
       }
-
-      String processed = PorterStemmerUtil.stem(opt);
-      if (stopWords.contains(processed)) {
-        continue;
-      }
-
-      result.add(opt);
     }
+  }
+
+  @ApiStatus.Internal
+  public static void collectProcessedWordsWithoutStemmingAndStopWords(@NotNull String text, @NotNull Set<? super String> result) {
+    Collections.addAll(result, WORD_SEPARATOR_CHARS.split(text.toLowerCase(Locale.ENGLISH)));
   }
 
   @Override
