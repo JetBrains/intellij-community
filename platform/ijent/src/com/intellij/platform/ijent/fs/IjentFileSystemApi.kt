@@ -148,6 +148,33 @@ sealed interface IjentFileSystemApi {
     class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
       : DeleteException(where, additionalMessage), IjentFsError.Other
   }
+
+
+  @Throws(CopyException::class)
+  suspend fun copy(options: CopyOptions)
+
+  interface CopyOptions
+
+  fun copyOptionsBuilder(source: IjentPath.Absolute, target: IjentPath.Absolute): CopyOptionsBuilder
+
+  interface CopyOptionsBuilder {
+    fun replaceExisting(): CopyOptionsBuilder
+    fun copyAttributes(): CopyOptionsBuilder
+    fun atomicMove(): CopyOptionsBuilder
+    fun interruptible(): CopyOptionsBuilder
+    fun nofollowLinks(): CopyOptionsBuilder
+    fun build(): CopyOptions
+  }
+
+  sealed class CopyException(
+    where: IjentPath.Absolute,
+    additionalMessage: @NlsSafe String,
+  ) : IjentFsIOException(where, additionalMessage) {
+    class SourceDoesNotExist(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CopyException(where, additionalMessage), IjentFsError.DoesNotExist
+    class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CopyException(where, additionalMessage), IjentFsError.PermissionDenied
+    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+      : CopyException(where, additionalMessage), IjentFsError.Other
+  }
 }
 
 sealed interface IjentOpenedFile {

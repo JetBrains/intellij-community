@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.IjentSessionRegistry
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
@@ -187,8 +188,31 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
   }
 
-  override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
-    TODO("Not yet implemented")
+  override fun copy(source: Path, target: Path, vararg options: CopyOption) {
+    if (StandardCopyOption.ATOMIC_MOVE in options) {
+      throw UnsupportedOperationException("Atomic move is not supported yet")
+    }
+    ensureIjentNioPath(source)
+    ensureIjentNioPath(target)
+    val sourcePath = source.ijentPath
+    val targetPath = target.ijentPath
+    ensurePathIsAbsolute(sourcePath)
+    ensurePathIsAbsolute(targetPath)
+    source.nioFs.fsBlocking {
+      var builder = source.nioFs.ijent.fs.copyOptionsBuilder(sourcePath, targetPath)
+      for (option in options) {
+        builder = when (option) {
+          StandardCopyOption.REPLACE_EXISTING -> builder.replaceExisting()
+          StandardCopyOption.COPY_ATTRIBUTES -> builder.copyAttributes()
+          StandardCopyOption.ATOMIC_MOVE -> builder.atomicMove()
+          else -> {
+            thisLogger().warn("Unknown copy option: $option. This option will be ignored.")
+            builder
+          }
+        }
+      }
+      source.nioFs.ijent.fs.copy(builder.build())
+    }
   }
 
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
