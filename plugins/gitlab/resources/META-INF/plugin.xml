@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.gitlab">
+<idea-plugin package="org.jetbrains.plugins.gitlab" allow-bundled-update="true">
   <name>GitLab</name>
   <id>org.jetbrains.plugins.gitlab</id>
   <vendor>JetBrains</vendor>
