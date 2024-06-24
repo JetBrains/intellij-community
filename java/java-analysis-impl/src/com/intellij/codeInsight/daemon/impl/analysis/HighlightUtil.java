@@ -927,14 +927,11 @@ public final class HighlightUtil {
   static HighlightInfo.Builder checkUnhandledExceptions(@NotNull PsiElement element) {
     List<PsiClassType> unhandled = ExceptionUtil.getOwnUnhandledExceptions(element);
     if (unhandled.isEmpty()) return null;
+    unhandled = ContainerUtil.filter(unhandled, type -> type.resolve() != null);
+    if (unhandled.isEmpty()) return null;
 
     HighlightInfoType highlightType = getUnhandledExceptionHighlightType(element);
     if (highlightType == null) return null;
-
-    if (IncompleteModelUtil.isIncompleteModel(element)) {
-      unhandled = ContainerUtil.filter(unhandled, type -> !IncompleteModelUtil.isUnresolvedClassType(type));
-      if (unhandled.isEmpty()) return null;
-    }
 
     TextRange textRange = computeRange(element);
     String description = getUnhandledExceptionsDescriptor(unhandled);

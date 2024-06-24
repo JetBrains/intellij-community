@@ -142,6 +142,21 @@ public class Simple {
 
     }
   }
+  
+  void testThrow2() {
+    try {
+      declaredUnknownException();
+    }
+    catch (<info descr="Not resolved until the project is fully loaded">Cls</info> x) {}
+  }
+  
+  void testThrow3() {
+    // We don't know whether Cls is checked or not
+    declaredUnknownException();
+  }
+  
+  void declaredUnknownException() throws <info descr="Not resolved until the project is fully loaded">Cls</info> {}
+  
   void testConcat(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
     System.out.println("hello " + cls.<info descr="Not resolved until the project is fully loaded">getSomething</info>() + "!!!");
   }
