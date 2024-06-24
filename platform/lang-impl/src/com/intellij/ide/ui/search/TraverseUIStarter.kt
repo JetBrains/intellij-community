@@ -15,6 +15,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.ide.ui.search.SearchUtil.processComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -410,13 +411,13 @@ private fun processConfigurables(
 
     if (configurable is MasterDetails) {
       configurable.initUi()
-      SearchUtil.processComponent(
+      processComponent(
         configurable = configurable,
         configurableOptions = configurableOptions,
         component = configurable.master,
         i18n = i18n,
       )
-      SearchUtil.processComponent(
+      processComponent(
         configurable = configurable,
         configurableOptions = configurableOptions,
         component = configurable.details.component,
@@ -424,7 +425,11 @@ private fun processConfigurables(
       )
     }
     else {
-      SearchUtil.processComponent(configurable, configurableOptions, configurable.createComponent(), i18n)
+      configurable.createComponent()?.let { component ->
+        processUiLabel(title = configurable.displayName, configurableOptions = configurableOptions, path = null, i18n = i18n)
+        collectSearchItemsForComponent(component = component, configurableOptions = configurableOptions, path = null, i18n = i18n)
+      }
+
       val unwrapped = unwrapConfigurable(configurable)
       if (unwrapped is CompositeConfigurable<*>) {
         unwrapped.disposeUIResources()
@@ -434,11 +439,10 @@ private fun processConfigurables(
           options.put(SearchableConfigurableAdapter(configurable, child), childConfigurableOptions)
 
           if (child is SearchableConfigurable) {
-            SearchUtil.processUILabel(title = child.displayName, configurableOptions = childConfigurableOptions, path = null, i18n = i18n)
+            processUiLabel(title = child.displayName, configurableOptions = childConfigurableOptions, path = null, i18n = i18n)
           }
-          val component = child.createComponent()
-          if (component != null) {
-            SearchUtil.processComponent(component, childConfigurableOptions, null, i18n)
+          child.createComponent()?.let { component ->
+            collectSearchItemsForComponent(component = component, configurableOptions = childConfigurableOptions, path = null, i18n = i18n)
           }
 
           configurableOptions.removeAll(childConfigurableOptions)
