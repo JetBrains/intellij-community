@@ -3,11 +3,12 @@ package com.intellij.platform.execution.serviceView;
 
 import com.intellij.execution.services.ServiceViewContributor;
 import com.intellij.execution.services.ServiceViewDescriptor;
+import com.intellij.execution.services.ServiceViewUIUtils;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarSpacer;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
 import com.intellij.ui.ClientProperty;
@@ -15,6 +16,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +79,7 @@ final class ServiceViewActionProvider {
         wrapper.setVisible(false);
       }
     });
-    wrapper.add(new ActionToolbarSpacer(horizontal), horizontal ? BorderLayout.EAST : BorderLayout.SOUTH);
+    wrapper.add(createEmptyToolbar(horizontal, toolbarComponent), horizontal ? BorderLayout.EAST : BorderLayout.SOUTH);
     return wrapper;
   }
 
@@ -253,6 +255,29 @@ final class ServiceViewActionProvider {
     ActionGroup group = toolbar ? descriptor.getToolbarActions() : descriptor.getPopupActions();
     return group == null ? AnAction.EMPTY_ARRAY : group.getChildren(e);
   }
+
+  public static JComponent createEmptyToolbar(boolean horizontal, JComponent targetComponent) {
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(EMPTY_ACTION);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, horizontal);
+    toolbar.setTargetComponent(targetComponent);
+    return horizontal ? ServiceViewUIUtils.wrapServicesAligned(toolbar) : toolbar.getComponent();
+  }
+
+  private static final AnAction EMPTY_ACTION = new DumbAwareAction(EmptyIcon.ICON_16) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(false);
+    }
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+    }
+  };
 
   public static final class ItemToolbarActionGroup extends ActionGroup {
     @Override
